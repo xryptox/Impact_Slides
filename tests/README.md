@@ -1,12 +1,13 @@
 # Impact Slides — Test Suite
 
-Pytest suite for `step1_preprocessor_v2_full.py` (Step 4 coverage to be added later).
+Pytest suite for both `step1_preprocessor_v2_full.py` (v2) and
+`step1_preprocessor_v3.py` (v3). Step 4 coverage to be added later.
 
 ## Run
 
 ```bash
 # from the Impact_Slides repo root
-python -m pip install pytest pytest-mock
+python -m pip install pytest pytest-mock rapidfuzz
 python -m pytest tests/ -v
 ```
 
@@ -23,6 +24,15 @@ python -m pytest tests/ -v
 | `test_ocr.py` | `_ensure_tesseract` auto-detection + `extract_pdf` OCR path (skips if Tesseract binary absent) |
 | `test_intent.py` | **Specification tests** verifying the codebase goal: source-backed, priority-ordered Evidence Register mapped to the Why→What→How→Now framework for the Analyst GPT |
 | `test_realworld.py` | **Real-data regression tests** using downloaded files (supermarket_sales.xlsx + Performance.pptx); skips if those files aren't present |
+| `test_schemas.py` | **Pydantic contract tests** — `EvidenceEntry` accepts well-formed entries & rejects all malformed variants (bad ID, out-of-range priority, unknown types, non-framework stages); runtime validation drops bad entries to errors; `--emit-schema` CLI; real-world register validates |
+| `test_pptx_extraction.py` | **v3 PPTX extraction regressions** (#13-16) — group-shape recursion, SmartArt/graphic-frame text fallback, embedded-OLE detection, spatial (top,left) multi-column ordering |
+| `test_pdf_tables.py` | **v3 merged PDF table extraction** — pdfplumber-preferred engine + PyMuPDF fallback, `--pdf-table-engine` flag, graceful degradation, enriched header/cols/cell evidence |
+| `test_cross_file_entities.py` | **v3 cross-file entity matching** — abbreviation/alias expansion, fuzzy matching + word-boundary for all lengths, per-entity "mentioned in N files" stats |
+| `test_semantic_dedup.py` | **v3 tiered semantic dedup (#20)** — embeddings/TF-IDF/fuzzy tiers, source-provenance merging, graceful degradation, templated-data false-positive guard |
+| `test_yaml_config.py` | **v3 YAML config (#21)** — CLI>YAML>default precedence ladder, store-true overrides, error paths, end-to-end `main()` integration, pure-CLI regression |
+| `test_timing.py` | **v3 time profiling (#22)** — always-on console timing, per-file durations (not cumulative), stage breakdown, PDF/DOCX timed, error-file status, persisted to summary, sorted per-file table |
+| `test_logging.py` | **v3 centralized logging + run_metadata.json (#23)** — structlog/stdlib logger factory, leveled console + run.log, git provenance (read-only), always-emitted run_metadata.json, error logging |
+| `test_stage_mapping.py` | **v3 configurable Why/What/How/Now stage mapping (#24)** — centralized stage-rules table, 3 config layers (insight_type, keyword-override, slide-type), `_stages_for()` lookup order, validation, regression guard |
 
 ## Bug-fix regressions pinned
 
@@ -42,3 +52,16 @@ python -m pytest tests/ -v
 - `test_evidence_post.py::TestCrossFile::test_dynamic_entity_derived_from_excel_categorical_values` — cross-file entity vocabulary was hardcoded; now derived from the Excel's actual categorical values (bug #12)
 - `test_pipeline.py::test_plain_text_bullets_are_captured` — text-heavy decks without bullet glyphs seeded no bullet insights (bug #13)
 - `test_pipeline.py::test_page_number_textbox_not_used_as_title` — leading page-number textboxes were used as slide titles (bug #6)
+
+### v3 enhancement regressions (`test_v3.py`)
+- `TestTrendAndConsolidation` — trend insights across time-ordered sheets + cross-sheet range consolidation (#1, #2)
+- `TestPerBulletRanking` — per-bullet insight-language ranking, no flat-0.75 (#3)
+- `TestCoverageMap` — coverage_map.json handoff + missing-stage flagging (#4)
+- `TestAggregateInsights` — computed group-by aggregate insights (#5)
+- `TestProvenance` — extraction_method on every evidence (#6)
+- `TestCsvExport` — full-field CSV export (#7)
+- `TestPerTypeCaps` — per (source, type) caps keeping highest-priority reps (#8)
+- `TestConfidenceModel` — reliability-based confidence keyed to method (#9)
+- `TestSemanticDedup` — fuzzy rephrasing collapse without losing distinct insights (#10)
+- `TestNavTextFilter` — repeated footer/navigation text dropped, unique kept (#11)
+- `TestEntitiesSummary` — top-entities summary per Excel categorical column (#12)

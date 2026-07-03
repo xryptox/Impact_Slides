@@ -17,9 +17,14 @@ Usage:
 
 import argparse
 import json
+import logging
 import math
 import os
+import platform
 import re
+import subprocess
+import sys
+import time
 import statistics
 import warnings
 from collections import defaultdict
@@ -28,6 +33,22 @@ from typing import Any, Dict, List, Optional, Iterable
 
 import pandas as pd
 
+# v3 #23: explicit version constant (previously implicit in docstrings).
+# Single source of truth consumed by run_metadata.json + the logger startup
+# banner + a future --version flag.
+__version__ = "3.0.0"
+
+# v3: Pydantic schemas are the single source of truth for the output contracts.
+# Optional at runtime: if pydantic isn't installed, validation is skipped (the
+# preprocessor still runs), but emitting the JSON schema requires it.
+try:
+    from schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
+                         EntitiesSummaryItem)
+    _HAS_PYDANTIC = True
+except ImportError:
+    EvidenceEntry = FileInventoryItem = CoverageMap = EntitiesSummaryItem = None
+    _HAS_PYDANTIC = False
+
 # ====================== OPTIONAL IMPORTS ======================
 
 # PDF support (3.1)
@@ -35,6 +56,15 @@ try:
     import fitz  # PyMuPDF
 except ImportError:
     fitz = None
+
+# v3: pdfplumber for superior PDF table detection (optional; graceful
+# degradation to PyMuPDF's find_tables() when absent). PyMuPDF stays the
+# primary engine for text/layout/OCR rendering; pdfplumber is used only for
+# table cell detection where it handles merged/spanning/unruled tables better.
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
 
 # DOCX support (3.3)
 try:
@@ -49,6 +79,208 @@ try:
 except ImportError:
     pytesseract = None
     Image = None
+
+# v3: semantic dedup clustering. numpy powers the pure-Python TF-IDF + cosine
+# tier (no sklearn dependency); sentence-transformers is an optional heavier
+# tier for true embedding-based similarity. Both are optional — the dedup pass
+# falls back to rapidfuzz char-similarity when neither is available.
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+# v3 #21: optional YAML config file support. PyYAML is optional; when absent,
+# --config is rejected with a clear message and the preprocessor runs CLI-only
+# (identical to the existing behavior). Matches the codebase's graceful-
+# degradation pattern for optional dependencies.
+try:
+    import yaml
+    _HAS_YAML = True
+except ImportError:
+    yaml = None
+    _HAS_YAML = False
+
+# v3 #23: centralized logging. structlog gives leveled, context-rich,
+# JSON-capable logs; stdlib logging is the always-available fallback so the
+# preprocessor works with zero optional deps (same graceful-degradation
+# pattern as pdfplumber/pydantic/rapidfuzz/numpy/yaml).
+try:
+    import structlog
+    _HAS_STRUCTLOG = True
+except ImportError:
+    structlog = None
+    _HAS_STRUCTLOG = False
+
+
+# ====================== VERSION + GIT PROVENANCE (v3 #23) =====================
+# Read-only helpers that stamp "which code produced this output?" into
+# run_metadata.json for reproducibility. These NEVER commit, stage, push, or
+# write anything to git — they only read .git/refs to get the current commit
+# hash and whether the working tree has uncommitted edits (dirty).
+
+def git_commit() -> Optional[str]:
+    """Short commit hash if running inside a git worktree, else None.
+    Read-only: runs `git rev-parse --short HEAD` and returns the result. Never
+    commits/stages/pushes. Returns None if git is absent or not a repo."""
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL,
+            cwd=str(Path(__file__).parent),
+            timeout=5,
+        )
+        return out.decode().strip() or None
+    except Exception:
+        return None
+
+
+def git_dirty() -> Optional[bool]:
+    """True if the working tree has uncommitted edits (so the run isn't a
+    clean reproduction of the recorded commit). None if git unavailable.
+    Read-only: `git diff --quiet` exits non-zero when there are uncommitted
+    changes. Never commits/stages/pushes."""
+    try:
+        rc = subprocess.call(
+            ["git", "diff", "--quiet"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            cwd=str(Path(__file__).parent),
+            timeout=5,
+        )
+        return rc != 0  # non-zero => working tree differs from commit
+    except Exception:
+        return None
+
+
+# ====================== LOGGER FACTORY (v3 #23) =====================
+# Centralized leveled logging replacing the ad-hoc print() pattern. structlog
+# is preferred (structured key-value context, JSON-rendered file logs);
+# stdlib logging is the always-available fallback. The verbose flag lowers
+# the console level to DEBUG instead of gating scattered `if self.verbose`
+# blocks.
+
+_LOG = None  # singleton logger for the preprocessor instance
+
+
+def get_logger(name: str = "preprocessor", log_file: Optional[Path] = None,
+               verbose: bool = False, run_id: Optional[str] = None):
+    """Build (or return the cached) preprocessor logger.
+
+    Sinks:
+      - console: human-readable, leveled (INFO by default, DEBUG if verbose)
+      - log_file: machine-readable, full-fidelity (DEBUG+), JSON-lines with
+        structlog or plain timestamped lines with stdlib
+
+    Run-wide context (version, commit, run_id) is bound once so every log
+    line is self-describing for reproducibility.
+    """
+    global _LOG
+    if _LOG is not None:
+        return _LOG
+
+    run_id = run_id or time.strftime("%Y%m%dT%H%M%S")
+    base_ctx = {
+        "version": __version__,
+        "commit": git_commit(),
+        "run_id": run_id,
+    }
+
+    if _HAS_STRUCTLOG:
+        structlog.configure(
+            processors=[
+                structlog.contextvars.merge_contextvars,
+                structlog.processors.add_log_level,
+                structlog.processors.TimeStamper(fmt="iso"),
+                structlog.processors.StackInfoRenderer(),
+                _structlog_console_renderer(),
+            ],
+            wrapper_class=structlog.make_filtering_bound_logger(
+                logging.DEBUG if verbose else logging.INFO),
+            logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
+            cache_logger_on_first_use=True,
+        )
+        log = structlog.get_logger(name).bind(**base_ctx)
+    else:
+        # stdlib logging doesn't accept arbitrary kwargs like structlog. Wrap
+        # it in a thin adapter so call sites can use the same kwarg API
+        # (log.info("msg", file=..., duration=...) regardless of backend.
+        stdlib_log = logging.getLogger(name)
+        stdlib_log.setLevel(logging.DEBUG)
+        stdlib_log.propagate = False
+        if not stdlib_log.handlers:
+            ch = logging.StreamHandler(sys.stderr)
+            ch.setLevel(logging.DEBUG if verbose else logging.INFO)
+            ch.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+            stdlib_log.addHandler(ch)
+        log = _StdlibLogAdapter(stdlib_log, base_ctx)
+
+    # File handler — machine-readable, full-fidelity. Attached to the stdlib
+    # logger underneath both backends so the file is readable everywhere.
+    if log_file is not None:
+        log_file = Path(log_file)
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        stdlib_name = name
+        fh = logging.FileHandler(log_file, mode="w", encoding="utf-8")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(
+            "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%dT%H:%M:%S",
+        ))
+        file_logger = logging.getLogger(stdlib_name + ".file")
+        file_logger.setLevel(logging.DEBUG)
+        file_logger.propagate = False
+        # Clear any handlers from a previous get_logger() call so each run
+        # writes to its own run.log (the stdlib logger is a singleton, but
+        # the FileHandler must point at THIS run's output dir).
+        for h in list(file_logger.handlers):
+            file_logger.removeHandler(h)
+            h.close()
+        file_logger.addHandler(fh)
+        log._file_logger = file_logger
+
+    _LOG = log
+    return log
+
+
+class _StdlibLogAdapter:
+    """Thin adapter over stdlib logging so call sites can use the structlog-style
+    kwarg API (log.info("msg", key=value, ...)) even when structlog isn't
+    installed. Extra kwargs are folded into the message as key=value pairs."""
+
+    def __init__(self, stdlib_logger, base_ctx: dict):
+        self._log = stdlib_logger
+        self._ctx = dict(base_ctx)
+        self._file_logger = None
+
+    def bind(self, **kwargs):
+        new = _StdlibLogAdapter(self._log, {**self._ctx, **kwargs})
+        new._file_logger = self._file_logger
+        return new
+
+    def _emit(self, level, event, kwargs):
+        merged = {**self._ctx, **kwargs}
+        extra = " ".join(f"{k}={v!r}" for k, v in merged.items())
+        msg = f"{event}" + (f" {extra}" if extra else "")
+        self._log.log(level, msg)
+        if self._file_logger is not None:
+            self._file_logger.log(level, msg)
+
+    def debug(self, event, **kw):   self._emit(logging.DEBUG, event, kw)
+    def info(self, event, **kw):    self._emit(logging.INFO, event, kw)
+    def warning(self, event, **kw): self._emit(logging.WARNING, event, kw)
+    def error(self, event, **kw):   self._emit(logging.ERROR, event, kw)
+    def exception(self, event, **kw): self._emit(logging.ERROR, event, kw)
+
+
+def _structlog_console_renderer():
+    """Pick a console renderer: colors in a TTY, plain text under capture
+    (pytest redirects) so string assertions keep working."""
+    try:
+        if sys.stderr.isatty():
+            return structlog.dev.ConsoleRenderer(colors=True)
+        return structlog.dev.ConsoleRenderer(colors=False)
+    except Exception:
+        return structlog.dev.ConsoleRenderer(colors=False)
 
 # ====================== HELPER FUNCTIONS ======================
 
@@ -176,6 +408,85 @@ def insight_priority_boost(text: str, base: float, low: float = 0.0,
     count = sum(1 for kw in _INSIGHT_KEYWORDS if kw in t)
     boost = (min(count, 4) / 4.0) * high if count else low
     return round(min(cap, base + boost), 3)
+
+
+# ====================== STAGE MAPPING RULES (v3 #24) =====================
+# Centralized Why/What/How/Now stage assignment. Single source of truth that
+# replaces ~20 scattered hardcoded `suggested_narrative_use` literals. Users can
+# override any of these three layers via the `stage_rules` YAML config key:
+#
+#   1. insight_types      — insight_type -> stages (e.g. trend_insight -> [How, What, Why])
+#   2. keyword_overrides   — text-regex -> stages, applied as a post-assignment
+#                           override (e.g. r"\brevenue\b" -> [What])
+#   3. slide_type_keywords — slide-title keyword -> slide type (extends
+#                           classify_slide's keyword lists)
+#      slide_type_stages  — slide type -> stages (overrides recommended_evidence_types)
+#
+# Precedence within _stages_for(): keyword_override (first match wins)
+# > insight_type default. User config overrides extend/replace these defaults.
+
+# Layer 1: default insight_type -> stages.
+DEFAULT_INSIGHT_TYPE_STAGES = {
+    "numeric_range":            ["What", "How"],
+    "categorical_distribution": ["Why", "What"],
+    "category_by_metric_suggestion": ["How", "What"],
+    "trend_insight":            ["How", "What", "Why"],
+    "aggregate_insight":        ["How", "What"],
+    "multi_column_suggestion":  ["How", "What"],
+    "chart_insight":            ["How", "What"],
+    "chart_data_insight":       ["How", "What"],
+    "table_cell":               ["What"],
+    "table_insight":            ["What", "Why"],
+    "text_metric":              ["How", "What"],
+    "process_step":            ["How", "What"],
+    "speaker_notes_insight":    ["How", "Why"],
+    "emphasized_text":          ["What", "How"],
+    "section_divider":          ["What"],
+    "pdf_page_insight":         ["What"],
+    "pdf_ocr_page_insight":     ["What"],
+    "pdf_table_insight":        ["What"],
+    "pdf_table_cell":           ["What"],
+    "docx_insight":             ["What"],
+    "cross_file_metric":        ["How", "Why"],
+    "bullet_insight":           ["What", "Why"],
+}
+
+# Layer 2: default text-keyword -> stages overrides (first match wins).
+# Applied AFTER the insight-type lookup so a user can redirect any evidence by
+# its text regardless of insight_type. Empty by default — the conclusion-bullet
+# "Now" logic is handled in build_evidence_register via slide_type, not here.
+DEFAULT_KEYWORD_STAGE_OVERRIDES = []
+
+# Layer 3a: slide-title keyword -> slide type (extends classify_slide).
+DEFAULT_SLIDE_TYPE_KEYWORDS = {
+    "conclusion": ["summary", "conclusion", "key takeaway", "recommendation",
+                   "next step", "call to action", "key findings", "action plan"],
+    "agenda":     ["agenda", "overview", "contents", "table of contents", "roadmap"],
+    "section":    ["section", "part ", "chapter", "module"],
+    "thank_you":  ["thank you", "thanks", "q&a", "questions", "contact"],
+    "comparison": ["vs", "versus", "comparison", "compare", "before", "after"],
+}
+
+# Layer 3b: slide type -> stages (overrides recommended_evidence_types).
+DEFAULT_SLIDE_TYPE_STAGES = {
+    "title":            ["What", "Why"],
+    "agenda":           ["What", "Why"],
+    "section":          ["What"],
+    "thank_you":        ["What"],
+    "conclusion":       ["What", "How", "Why", "Now"],
+    "data_mixed":        ["How", "What"],
+    "data_chart":       ["How", "What"],
+    "data_table":       ["What", "Why"],
+    "diagram_process":  ["How", "What"],
+    "comparison":       ["What", "Why"],
+    "quote_callout":    ["What", "Why"],
+    "content_insight":  ["What", "Why"],
+    "content_light":    ["What", "Why"],
+    "low_value":        ["What"],
+}
+
+# Conclusion-bullet stage override: bullets from conclusion slides get "Now".
+DEFAULT_CONCLUSION_BULLET_STAGES = ["Now", "What", "Why"]
 
 
 # v3: time-order detection for spreadsheet sheets. Used to decide whether
@@ -360,6 +671,233 @@ def _text_similarity(a: str, b: str) -> float:
         return SequenceMatcher(None, a, b).ratio()
 
 
+# v3: tiered semantic similarity for the dedup clustering pass.
+# Tries (1) sentence-transformers embeddings, (2) pure-numpy TF-IDF + cosine,
+# (3) rapidfuzz char-similarity — in that order — so the dedup pass can cluster
+# TRUE semantic near-duplicates (sharing few character n-grams, e.g.
+# "North America revenue grew 12%" vs "US & Canada sales up a tenth") rather
+# than only lexical rephrasings. Each tier is optional; the next is the graceful
+# fallback. Thresholds are mode-aware because cosine-of-embeddings, TF-IDF
+# cosine, and char-similarity have different score distributions.
+
+_SENTENCE_MODEL = None  # lazily-loaded sentence-transformers model (singleton)
+
+
+def _load_sentence_model():
+    """Lazily load a small sentence-transformers model. Returns None if the
+    optional dependency is unavailable or fails to load."""
+    global _SENTENCE_MODEL
+    if _SENTENCE_MODEL is False:
+        return None
+    if _SENTENCE_MODEL is not None:
+        return _SENTENCE_MODEL
+    try:
+        from sentence_transformers import SentenceTransformer
+        _SENTENCE_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+        return _SENTENCE_MODEL
+    except Exception:
+        _SENTENCE_MODEL = False  # cache the failure so we don't retry per call
+        return None
+
+
+_TFIDF_TOKEN_RE = re.compile(r"[a-z0-9]{2,}")
+
+
+def _tfidf_vectors(texts: List[str]):
+    """Build L2-normalized TF-IDF row vectors using pure numpy (no sklearn).
+    Returns an [n x vocab] matrix, or None if numpy is unavailable or no text
+    has any tokens."""
+    if np is None or not texts:
+        return None
+    tokenized = [_TFIDF_TOKEN_RE.findall((t or "").lower()) for t in texts]
+    vocab = {}
+    for toks in tokenized:
+        for tok in toks:
+            if tok not in vocab:
+                vocab[tok] = len(vocab)
+    if not vocab:
+        return None
+    n, V = len(texts), len(vocab)
+    df = np.zeros(V)
+    for toks in tokenized:
+        for tok in set(toks):
+            df[vocab[tok]] += 1
+    idf = np.log((1.0 + n) / (1.0 + df)) + 1.0  # smoothed idf
+    mat = np.zeros((n, V))
+    for i, toks in enumerate(tokenized):
+        if not toks:
+            continue
+        total = len(toks)
+        counts = {}
+        for tok in toks:
+            counts[tok] = counts.get(tok, 0) + 1
+        for tok, c in counts.items():
+            mat[i, vocab[tok]] = (c / total) * idf[vocab[tok]]
+    norms = np.linalg.norm(mat, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    return mat / norms
+
+
+# Per-mode near-duplicate thresholds.
+# - embeddings: sentence-cosine; 0.75 catches semantic near-dups (incl.
+#   synonyms) without over-merging distinct short insights. This is the only
+#   tier that bridges synonyms / no-shared-vocabulary near-dups.
+# - tfidf: word-overlap cosine; conservative 0.85 because empirical testing on
+#   the real-world dataset showed token-overlap similarity is fundamentally
+#   unsuitable for TEMPLATED evidence (numeric ranges / aggregates share
+#   boilerplate + numeric values across DISTINCT metrics, e.g.
+#   "'Tax 5%' ranges from 0.6045 to 49.26" vs "'gross income' ranges from
+#   0.6045 to 49.26" score ~0.78). Retained as an opt-in for prose-heavy,
+#   non-templated registers; NOT the auto default.
+# - fuzzy: char-similarity; 0.85 catches lexical rephrasings reliably.
+# In embeddings mode we ALSO accept a fuzzy match (OR) so exact lexical
+# near-dups a sentence model might underweight are still caught.
+_SEM_THRESHOLD = {"embeddings": 0.75, "tfidf": 0.85, "fuzzy": 0.85}
+
+
+class _SemanticDedupEngine:
+    """Tiered similarity engine for the dedup pass. Precomputes a cosine
+    similarity matrix once (for the embeddings/TF-IDF tiers) so the greedy
+    clustering loop stays cheap; the fuzzy tier computes pairwise on demand.
+
+    engine: 'auto' (best available) | 'embeddings' | 'tfidf' | 'fuzzy'
+
+    Tier order in 'auto': sentence-transformers embeddings -> rapidfuzz
+    char-similarity. (TF-IDF is intentionally NOT the auto fallback: empirical
+    testing on short evidence texts showed it has an inverted precision/recall
+    tradeoff versus char-similarity — distinct texts sharing a common keyword
+    can score higher than genuine rephrasings. It remains available as an
+    explicit opt-in tier.)
+    """
+
+    def __init__(self, texts: List[str], engine: str = "auto"):
+        self.texts = [t or "" for t in texts]
+        self.engine_requested = (engine or "auto").lower()
+        self.matrix = None      # cosine-similarity matrix (embeddings or tfidf)
+        self.mode = "fuzzy"     # resolved mode after _build
+        self.threshold = _SEM_THRESHOLD["fuzzy"]
+        self._build()
+
+    def _build(self):
+        want = self.engine_requested
+        # Tier 1: sentence-transformers embeddings (true semantic similarity;
+        # the only tier that bridges synonyms / no shared vocabulary).
+        if want in ("auto", "embeddings"):
+            model = _load_sentence_model()
+            if model is not None:
+                try:
+                    emb = model.encode(self.texts, normalize_embeddings=True,
+                                       convert_to_numpy=True)
+                    if emb is not None and len(emb) == len(self.texts):
+                        self.matrix = np.dot(emb, emb.T)
+                        self.mode = "embeddings"
+                        self.threshold = _SEM_THRESHOLD["embeddings"]
+                        return
+                except Exception:
+                    pass  # fall through to next tier
+        # Tier 2 (opt-in): pure-numpy TF-IDF + cosine. Only used when explicitly
+        # requested; not an auto fallback (see class docstring).
+        if want == "tfidf":
+            mat = _tfidf_vectors(self.texts)
+            if mat is not None:
+                self.matrix = np.dot(mat, mat.T)
+                self.mode = "tfidf"
+                self.threshold = _SEM_THRESHOLD["tfidf"]
+                return
+        # Tier 3 (auto fallback): rapidfuzz char-similarity.
+        self.mode = "fuzzy"
+        self.threshold = _SEM_THRESHOLD["fuzzy"]
+
+    def similar(self, i: int, j: int) -> bool:
+        """True if texts[i] and texts[j] are near-duplicates at this tier's
+        threshold. In embeddings mode a fuzzy match is also accepted (OR) so
+        exact lexical near-dups a sentence model underweights are still caught."""
+        if self.mode == "embeddings" and self.matrix is not None:
+            if float(self.matrix[i, j]) >= self.threshold:
+                return True
+            return _text_similarity(self.texts[i], self.texts[j]) >= _SEM_THRESHOLD["fuzzy"]
+        if self.matrix is not None:
+            return float(self.matrix[i, j]) >= self.threshold
+        return _text_similarity(self.texts[i], self.texts[j]) >= self.threshold
+
+
+# v3: cross-file entity matching helpers — abbreviation expansion + fuzzy
+# matching + word-boundary detection, so business-deck entities are linked even
+# when phrased differently across files (e.g. "US" <-> "United States",
+# "North America" <-> "North", "EMEA" <-> "Europe, Middle East, Africa").
+
+# Bidirectional abbreviation table (lowercase). Each entry maps a short form
+# to its expansion(s); the matcher treats both directions as the same entity.
+_ABBREVIATIONS = {
+    "us": ["united states", "usa", "u.s.", "u.s.a."],
+    "uk": ["united kingdom", "u.k.", "britain", "great britain"],
+    "eu": ["european union", "e.u."],
+    "emea": ["europe middle east africa", "europe, middle east, africa"],
+    "apac": ["asia pacific", "asia-pacific"],
+    "latam": ["latin america"],
+    "na": ["north america"],
+    "yoy": ["year over year", "year-over-year"],
+    "qoq": ["quarter over quarter", "quarter-over-quarter"],
+    "mom": ["month over month", "month-over-month"],
+    "kpi": ["key performance indicator"],
+    "roi": ["return on investment"],
+    "cagr": ["compound annual growth rate"],
+    "capex": ["capital expenditure", "capital expense"],
+    "opex": ["operating expenditure", "operating expense"],
+    "gaap": ["generally accepted accounting principles"],
+}
+
+
+def _entity_aliases(entity: str) -> set:
+    """Return all aliases for an entity (itself + abbreviation expansions + the
+    short form of any expansion it contains). Lowercased."""
+    e = clean_text(entity).lower()
+    if not e:
+        return set()
+    aliases = {e}
+    # short form -> expansions
+    if e in _ABBREVIATIONS:
+        aliases.update(_ABBREVIATIONS[e])
+    # if the entity *is* an expansion, add its short form
+    for short, exps in _ABBREVIATIONS.items():
+        if e in exps:
+            aliases.add(short)
+    # if the entity contains an expansion as a word, add the short form too
+    # (e.g. "united states sales" -> also match "us")
+    for short, exps in _ABBREVIATIONS.items():
+        for exp in exps:
+            if re.search(rf"\b{re.escape(exp)}\b", e):
+                aliases.add(short)
+    return aliases
+
+
+def _entity_in_text(entity: str, text: str, fuzzy_threshold: float = 0.88) -> bool:
+    """True if an entity is mentioned in text, using (1) abbreviation/alias
+    expansion, (2) word-boundary substring match, and (3) optional fuzzy
+    matching for near-spellings (rapidfuzz if available, else difflib)."""
+    t = (text or "").lower()
+    if not t:
+        return False
+    for alias in _entity_aliases(entity):
+        a = clean_text(alias).lower()
+        if not a:
+            continue
+        # word-boundary substring: robust for all lengths (not just <=4)
+        if re.search(rf"\b{re.escape(a)}\b", t):
+            return True
+    # fuzzy: check each whitespace-delimited token span against the entity.
+    # Only triggered for entities that look like single proper-noun tokens to
+    # keep it cheap and avoid false positives on common words.
+    e = clean_text(entity).lower()
+    if len(e) >= 4 and " " not in e:
+        for tok in re.findall(r"[a-z][a-z0-9.'-]+", t):
+            if len(tok) < 4:
+                continue
+            if _text_similarity(e, tok) >= fuzzy_threshold:
+                return True
+    return False
+
+
 def calculate_evidence_priority_score(
     column_name: str,
     column_type: str,
@@ -387,6 +925,92 @@ def calculate_evidence_priority_score(
 
     score += (non_null_ratio - 0.5) * 0.2
     return max(0.0, min(1.0, round(score, 3)))
+
+
+# v3 #13-16: richer PPTX extraction helpers.
+# Group recursion, SmartArt/diagram XML text fallback, embedded-OLE detection,
+# and spatial (top→left) shape ordering so multi-column slides read in order.
+try:
+    from pptx.enum.shapes import MSO_SHAPE_TYPE as _MSO_SHAPE_TYPE
+    from pptx.oxml.ns import qn as _qn
+    _A_T = _qn('a:t')   # drawingml text-run element
+except ImportError:
+    _MSO_SHAPE_TYPE = None
+    _qn = None
+    _A_T = '{http://schemas.openxmlformats.org/drawingml/2006/main}t'
+
+
+def _is_group(shape) -> bool:
+    """True if the shape is a group (has child shapes to recurse into)."""
+    try:
+        return int(shape.shape_type) == 6  # MSO_SHAPE_TYPE.GROUP
+    except Exception:
+        return False
+
+
+def _is_embedded_object(shape) -> bool:
+    """True for embedded/linked OLE objects (embedded Excel sheets, PDFs, …).
+    These carry data the preprocessor can't read directly, so the Analyst is
+    at least told they exist (see embedded_objects in slide details)."""
+    try:
+        st = int(shape.shape_type)
+        return st in (7, 10)  # EMBEDDED_OLE_OBJECT, LINKED_OLE_OBJECT
+    except Exception:
+        return False
+
+
+def _shape_position(shape):
+    """Return (top, left) for spatial sorting, or (0, 0) if unavailable."""
+    try:
+        return (int(shape.top or 0), int(shape.left or 0))
+    except Exception:
+        return (0, 0)
+
+
+def _iter_shapes_deep(shapes):
+    """Yield shapes, recursing into groups so nested text boxes are not lost.
+    Top-level shapes (and group children) are yielded in spatial (top, left)
+    order so multi-column slides read top-to-bottom, left-to-right."""
+    try:
+        ordered = sorted(shapes, key=_shape_position)
+    except Exception:
+        ordered = list(shapes)
+    for shape in ordered:
+        if _is_group(shape):
+            try:
+                yield from _iter_shapes_deep(shape.shapes)
+            except Exception:
+                pass
+        else:
+            yield shape
+
+
+def _extract_shape_text(shape) -> str:
+    """Extract text from a shape, with a richer fallback.
+
+    First tries the normal text_frame.text. If that's empty/absent (as for
+    SmartArt/diagram graphic frames, whose text lives in nested drawingml XML,
+    not a text_frame), fall back to collecting every <a:t> text-run under the
+    shape's XML element. This recovers SmartArt node labels and diagram text
+    that the simple path silently drops."""
+    try:
+        if shape.has_text_frame:
+            txt = shape.text_frame.text
+            if txt and txt.strip():
+                return txt.strip()
+    except Exception:
+        pass
+    # Fallback: pull all drawingml text runs from the shape's XML. Catches
+    # SmartArt (<dgm:>) and diagram graphic frames where has_text_frame=False.
+    try:
+        el = shape._element
+        runs = el.findall('.//' + _A_T)
+        parts = [r.text for r in runs if r.text and r.text.strip()]
+        if parts:
+            return ' '.join(p.strip() for p in parts)
+    except Exception:
+        pass
+    return ""
 
 
 # ====================== MAIN PREPROCESSOR CLASS ======================
@@ -417,6 +1041,31 @@ class ImpactSlidePreprocessorV2:
         self.enable_ocr = False # Phase 2: OCR support
         self.tesseract_cmd = None  # Path to tesseract binary; auto-detected if None
         self._ocr_available = None  # Cache for _ensure_tesseract() result
+        self.pdf_table_engine = "auto"  # v3: auto | pdfplumber | pymupdf
+        self.dedup_engine = "auto"      # v3: auto | embeddings | tfidf | fuzzy
+        # v3 #22: structured timing data. Single source of truth that feeds
+        # both the always-on console timing block and the preprocessor_summary.md
+        # "Processing Time" section, so they never drift apart.
+        self.timing = {
+            "files": [],          # [{file, category, duration_s, status}, ...]
+            "stages": {},         # {discovery, extraction, evidence_build, output}
+            "total_seconds": 0.0, # wall-clock end-to-end
+        }
+        # v3 #23: run identity for run_metadata.json + the logger. Captured
+        # at construction so __init__ time is the run's "started_at".
+        self.run_id = time.strftime("%Y%m%dT%H%M%S")
+        self.run_started_at = time.strftime("%Y-%m-%dT%H:%M:%S")
+        self.run_finished_at = None
+        self.config_snapshot = None  # set by main() with the resolved cfg dict
+        # v3 #23: centralized logger. Lazy-initialized in run() so the file
+        # path (output_dir) is known; set to None here so attribute access
+        # before run() doesn't crash.
+        self.log = None
+        # v3 #24: configurable Why/What/How/Now stage mapping. Built from the
+        # DEFAULT_* tables + any user overrides in config_snapshot["stage_rules"].
+        # Single source of truth for stage assignment — replaces ~20 scattered
+        # hardcoded suggested_narrative_use literals.
+        self.stage_rules = self._build_stage_rules()
 
     def _get_filter_thresholds(self):
         """Return filtering thresholds based on configured filter_level."""
@@ -438,6 +1087,109 @@ class ImpactSlidePreprocessorV2:
                 "max_unique_ratio": 0.90,
                 "min_priority": 0.25,
             }
+
+    # ====================== STAGE RULES (v3 #24) =====================
+
+    def _build_stage_rules(self) -> Dict[str, Any]:
+        """Build the stage-rules table from DEFAULT_* tables + user overrides.
+
+        User overrides come from self.config_snapshot["stage_rules"] (set by
+        main() from the resolved config). Overrides EXTEND/REPLACE defaults —
+        the user doesn't have to redefine the whole table. Keyword-overrides are
+        pre-compiled into regex objects at build time so the per-evidence match
+        loop stays fast (and bad patterns fail fast at startup, not mid-run).
+        """
+        cfg = getattr(self, "config_snapshot", None) or {}
+        user = cfg.get("stage_rules", {}) or {}
+
+        rules = {
+            "insight_types":    dict(DEFAULT_INSIGHT_TYPE_STAGES),
+            "keyword_overrides": list(DEFAULT_KEYWORD_STAGE_OVERRIDES),
+            "slide_type_keywords": {k: list(v) for k, v in DEFAULT_SLIDE_TYPE_KEYWORDS.items()},
+            "slide_type_stages": dict(DEFAULT_SLIDE_TYPE_STAGES),
+            "conclusion_bullet_stages": list(DEFAULT_CONCLUSION_BULLET_STAGES),
+        }
+        # Merge user overrides (replace per-key, extend keyword lists).
+        for k, v in (user.get("insight_types") or {}).items():
+            rules["insight_types"][k] = list(v)
+        for entry in (user.get("keyword_overrides") or []):
+            rules["keyword_overrides"].append(entry)
+        for k, v in (user.get("slide_type_keywords") or {}).items():
+            # user can extend (list) or replace the keyword list for a type
+            rules["slide_type_keywords"][k] = list(v)
+        for k, v in (user.get("slide_type_stages") or {}).items():
+            rules["slide_type_stages"][k] = list(v)
+        if user.get("conclusion_bullet_stages"):
+            rules["conclusion_bullet_stages"] = list(user["conclusion_bullet_stages"])
+
+        # Pre-compile keyword-override regexes (fail fast on bad patterns).
+        compiled = []
+        for entry in rules["keyword_overrides"]:
+            pat = entry["pattern"] if isinstance(entry, dict) else entry[0]
+            stages = entry["stages"] if isinstance(entry, dict) else entry[1]
+            try:
+                compiled.append((re.compile(pat, re.IGNORECASE), list(stages)))
+            except re.error as e:
+                raise ValueError(
+                    f"stage_rules.keyword_overrides: invalid regex {pat!r}: {e}"
+                )
+        rules["_compiled_keyword_overrides"] = compiled
+
+        # Validate stages against NARRATIVE_STAGES (if pydantic/schemas loaded).
+        self._validate_stage_rules(rules)
+        return rules
+
+    def _validate_stage_rules(self, rules: Dict[str, Any]) -> None:
+        """Validate that every stage in the rules is a valid NARRATIVE_STAGES
+        member. Raises ValueError at build time so a bad config fails fast."""
+        try:
+            from schemas import NARRATIVE_STAGES
+        except ImportError:
+            return  # can't validate without schemas; skip gracefully
+        for section in ("insight_types", "slide_type_stages"):
+            for k, stages in rules.get(section, {}).items():
+                for s in stages:
+                    if s not in NARRATIVE_STAGES:
+                        raise ValueError(
+                            f"stage_rules.{section}.{k}: invalid stage {s!r}; "
+                            f"must be one of {sorted(NARRATIVE_STAGES)}"
+                        )
+        for s in rules.get("conclusion_bullet_stages", []):
+            if s not in NARRATIVE_STAGES:
+                raise ValueError(
+                    f"stage_rules.conclusion_bullet_stages: invalid stage {s!r}; "
+                    f"must be one of {sorted(NARRATIVE_STAGES)}"
+                )
+        for _, stages in rules.get("_compiled_keyword_overrides", []):
+            for s in stages:
+                if s not in NARRATIVE_STAGES:
+                    raise ValueError(
+                        f"stage_rules.keyword_overrides: invalid stage {s!r}; "
+                        f"must be one of {sorted(NARRATIVE_STAGES)}"
+                    )
+
+    def _stages_for(self, insight_type: str, text: str = "",
+                    default: Optional[List[str]] = None) -> List[str]:
+        """Return the suggested_narrative_use stages for an insight.
+
+        Lookup order: (1) keyword-override (first regex match in text, if any),
+        (2) insight_types table, (3) the ``default`` arg, (4) ["What"].
+
+        This replaces every hardcoded `suggested_narrative_use` literal and is
+        the single entry point for stage assignment, so user config overrides
+        flow through automatically.
+        """
+        # Layer 2: keyword overrides (first match wins).
+        if text:
+            for pat, stages in self.stage_rules.get("_compiled_keyword_overrides", []):
+                if pat.search(text):
+                    return list(stages)
+        # Layer 1: insight-type default.
+        stages = self.stage_rules.get("insight_types", {}).get(insight_type)
+        if stages:
+            return list(stages)
+        # Fallback.
+        return list(default) if default else ["What"]
 
     def gather_files(self) -> List[Path]:
         if not self.input_path.exists():
@@ -789,75 +1541,170 @@ class ImpactSlidePreprocessorV2:
             return {"file_id": item["file_id"], "status": "error", "error": str(e)}
 
     def run(self):
+        # v3 #23: initialize the centralized logger (console + run.log file).
+        # Done here (not __init__) because output_dir must exist for the file.
+        global _LOG, _LOG_FILE
+        _LOG_FILE = self.output_dir / "run.log"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        _LOG = None  # reset singleton so each run() gets a fresh logger
+        self.log = get_logger(
+            name="preprocessor", log_file=_LOG_FILE,
+            verbose=self.verbose, run_id=self.run_id,
+        )
+
         print("\n=== Impact Slide Preprocessor v3 ===")
         print(f"Filter level: {self.filter_level}")
+        self.log.info("pipeline_start", filter_level=self.filter_level,
+                       input=str(self.input_path), output=str(self.output_dir))
         if self.verbose:
             print(f"Boost keywords: {self.boost_keywords}")
             print(f"Export options: MD={self.export_md}, CSV={self.export_csv}")
+            self.log.debug("config", boost_keywords=self.boost_keywords,
+                           export_md=self.export_md, export_csv=self.export_csv)
 
+        run_start = time.perf_counter()
+
+        # [1/5] File discovery & inventory.
+        t0 = time.perf_counter()
         files = self.gather_files()
         self.inventory = self.build_file_inventory(files)
+        self.timing["stages"]["discovery"] = round(time.perf_counter() - t0, 3)
         print(f"[1/5] Discovered {len(files)} files ({len(self.inventory)} readable)")
+        self.log.info("files_discovered", total=len(files), readable=len(self.inventory))
 
         spreadsheet_count = 0
         pptx_count = 0
-        start_time = __import__('time').time()
+        t_extract = time.perf_counter()
 
         for item in self.inventory:
             if item["access_status"] != "readable":
                 continue
             path = Path(item["absolute_path"])
+            f0 = time.perf_counter()  # per-file wall-clock (not cumulative)
+            category = None
+            status = "ok"
 
             if item["category"] == "spreadsheet":
+                category = "spreadsheet"
                 print(f"[2/5] Processing spreadsheet: {item['file_name']}")
                 profile = self.extract_spreadsheet(path, item)
                 self.excel_profiles.append(profile)
                 spreadsheet_count += 1
                 if profile.get("status") == "error":
                     self.errors.append(profile)
+                    status = "error"
+                    self.log.error("spreadsheet_failed", file=item['file_name'])
                 else:
                     sheet_count = len(profile.get("sheets", []))
                     msg = f"       -> Analyzed {sheet_count} sheets"
                     if self.verbose:
-                        msg += f" | Time: {__import__('time').time() - start_time:.2f}s"
+                        msg += f" | Time: {time.perf_counter() - f0:.2f}s"
                     print(msg)
+                    self.log.info("spreadsheet_processed", file=item['file_name'],
+                                  sheets=sheet_count)
 
             elif item["category"] == "other" and item["file_name"].lower().endswith(".pptx"):
+                category = "pptx"
                 print(f"[3/5] Processing PPTX: {item['file_name']}")
                 pptx_analysis = self.extract_pptx(path)
                 self.pptx_profiles.append(pptx_analysis)
                 pptx_count += 1
                 if pptx_analysis.get("status") == "error":
                     self.errors.append(pptx_analysis)
+                    status = "error"
+                    self.log.error("pptx_failed", file=item['file_name'])
                 else:
                     slide_count = pptx_analysis.get("total_slides", 0)
                     msg = f"       -> Analyzed {slide_count} slides"
                     if self.verbose:
-                        msg += f" | Time: {__import__('time').time() - start_time:.2f}s"
+                        msg += f" | Time: {time.perf_counter() - f0:.2f}s"
                     print(msg)
+                    self.log.info("pptx_processed", file=item['file_name'],
+                                  slides=slide_count)
 
             elif item["category"] == "pdf":
+                category = "pdf"
                 print(f"[3/5] Processing PDF: {item['file_name']}")
                 pdf_profile = self.extract_pdf(path, use_ocr=self.enable_ocr)
                 self.pdf_profiles.append(pdf_profile)
+                if pdf_profile.get("status") == "error":
+                    status = "error"
+                    self.log.error("pdf_failed", file=item['file_name'])
+                else:
+                    self.log.info("pdf_processed", file=item['file_name'],
+                                 pages=pdf_profile.get("total_pages", 0))
 
             elif item["category"] == "docx":
+                category = "docx"
                 print(f"[3/5] Processing DOCX: {item['file_name']}")
                 docx_profile = self.extract_docx(path)
                 self.docx_profiles.append(docx_profile)
+                if docx_profile.get("status") == "error":
+                    status = "error"
+                    self.log.error("docx_failed", file=item['file_name'])
+                else:
+                    self.log.info("docx_processed", file=item['file_name'])
+
+            # Record this file's own duration (independent of other files —
+            # fixes the old cumulative-elapsed-time bug).
+            if category:
+                self.timing["files"].append({
+                    "file": item["file_name"],
+                    "category": category,
+                    "duration_s": round(time.perf_counter() - f0, 3),
+                    "status": status,
+                })
+
+        self.timing["stages"]["extraction"] = round(time.perf_counter() - t_extract, 3)
+        self.log.info("extraction_complete", duration_s=self.timing["stages"]["extraction"],
+                      files=len(self.timing["files"]))
 
         print(f"[4/5] Building Evidence Register from {spreadsheet_count} Excel + {pptx_count} PPTX files...")
 
-        # Build rich Evidence Register from all processed data
+        # Build rich Evidence Register from all processed data.
+        t0 = time.perf_counter()
         self.evidence_register = self.build_evidence_register()
+        self.timing["stages"]["evidence_build"] = round(time.perf_counter() - t0, 3)
+        self.log.info("evidence_built", entries=len(self.evidence_register),
+                      duration_s=self.timing["stages"]["evidence_build"])
 
+        t0 = time.perf_counter()
+        # Record total-so-far before saving so the summary has a near-complete
+        # total; _save_outputs() generates the summary internally, and we
+        # refresh it once more below with the exact output-stage duration.
+        self.timing["total_seconds"] = round(time.perf_counter() - run_start, 3)
         self._save_outputs()
+        self.timing["stages"]["output"] = round(time.perf_counter() - t0, 3)
+        self.timing["total_seconds"] = round(time.perf_counter() - run_start, 3)
+        # Refresh the summary report with the final, exact timing numbers
+        # (the in-_save_outputs copy was written before output/total were set).
+        self._generate_summary_report()
+        self.run_finished_at = time.strftime("%Y-%m-%dT%H:%M:%S")
+
         print(f"[5/5] Complete. Evidence entries: {len(self.evidence_register) if hasattr(self, 'evidence_register') else 0}")
 
-        if self.verbose:
-            total_time = __import__('time').time() - start_time
-            print(f"\n[Verbose] Total processing time: {total_time:.2f} seconds")
-            print(f"[Verbose] Average time per file: {total_time / max(1, len(self.inventory)):.2f}s")
+        # v3 #23: always emit run_metadata.json (the reproducibility artifact).
+        self._emit_run_metadata()
+
+        self.log.info("pipeline_complete",
+                      total_seconds=self.timing['total_seconds'],
+                      evidence_entries=len(self.evidence_register) if hasattr(self, 'evidence_register') else 0)
+
+        # v3 #22: always-on timing summary (not verbose-gated). One line for
+        # stages, one for per-file breakdown (slowest first).
+        st = self.timing["stages"]
+        n_files = len(self.timing["files"])
+        print(f"[Timing] Total: {self.timing['total_seconds']:.2f}s | "
+              f"Discovery: {st.get('discovery', 0):.2f}s | "
+              f"Extraction: {st.get('extraction', 0):.2f}s ({n_files} files) | "
+              f"Evidence build: {st.get('evidence_build', 0):.2f}s | "
+              f"Output: {st.get('output', 0):.2f}s")
+        if self.timing["files"]:
+            per_file = " | ".join(
+                f"{f['file']} {f['duration_s']:.2f}s"
+                for f in sorted(self.timing["files"], key=lambda x: x["duration_s"], reverse=True)
+            )
+            print(f"[Timing] Per file: {per_file}")
 
     def build_evidence_register(self) -> List[Dict]:
         """
@@ -891,17 +1738,9 @@ class ImpactSlidePreprocessorV2:
 
                     insight_type = finding.get("type", "unknown")
 
-                    # Determine suggested narrative use
-                    if insight_type == "numeric_range":
-                        suggested_use = ["What", "How"]
-                    elif insight_type == "categorical_distribution":
-                        suggested_use = ["Why", "What"]
-                    elif insight_type == "trend_insight":
-                        suggested_use = ["How", "What", "Why"]
-                    elif insight_type == "aggregate_insight":
-                        suggested_use = ["How", "What"]
-                    else:
-                        suggested_use = ["What"]
+                    # v3 #24: stage assignment via the centralized table (was
+                    # a hardcoded if/elif chain).
+                    suggested_use = self._stages_for(insight_type, finding.get("text", ""))
 
                     ev = {
                         "evidence_id": f"E{evidence_id:04d}",
@@ -932,7 +1771,7 @@ class ImpactSlidePreprocessorV2:
                         "text": finding.get("text", ""),
                         "priority_score": finding.get("priority_score", 0.83),
                         "confidence": "high",
-                        "suggested_narrative_use": ["How", "What"],
+                        "suggested_narrative_use": self._stages_for("aggregate_insight", finding.get("text", "")),
                         "source_location": finding.get("location", sheet_name),
                     }
                     evidence.append(ev)
@@ -948,7 +1787,7 @@ class ImpactSlidePreprocessorV2:
                         "text": insight.get("text", ""),
                         "priority_score": 0.65,
                         "confidence": "medium",
-                        "suggested_narrative_use": ["How", "What"],
+                        "suggested_narrative_use": self._stages_for("multi_column_suggestion", insight.get("text", "")),
                         "source_location": sheet_name,
                     }
                     evidence.append(ev)
@@ -983,7 +1822,8 @@ class ImpactSlidePreprocessorV2:
                     "text": ev_text,
                     "priority_score": round(cls.get("priority_for_evidence", 0.5), 3),
                     "confidence": "high" if cls.get("confidence", 0.5) > 0.8 else "medium",
-                    "suggested_narrative_use": cls.get("recommended_evidence_types", ["What", "Why"]),
+                    "suggested_narrative_use": self._stages_for(None, ev_text,
+                        default=cls.get("recommended_evidence_types") or self.stage_rules.get("slide_type_stages", {}).get(cls.get("type"), ["What", "Why"])),
                     "source_location": f"Slide {slide['slide_index']}",
                     "pptx_classification": cls,
                 }
@@ -1001,7 +1841,7 @@ class ImpactSlidePreprocessorV2:
                             "text": f"Chart: '{chart.get('title', 'Untitled')}' with series: {', '.join(chart.get('series', []))}",
                             "priority_score": 0.88,
                             "confidence": "high",
-                            "suggested_narrative_use": ["How", "What"],
+                            "suggested_narrative_use": self._stages_for("chart_insight", chart.get('title', '')),
                             "source_location": f"Slide {slide['slide_index']}",
                         }
                         evidence.append(chart_ev)
@@ -1022,7 +1862,7 @@ class ImpactSlidePreprocessorV2:
                                     "text": data_text,
                                     "priority_score": 0.85,
                                     "confidence": "high",
-                                    "suggested_narrative_use": ["How", "What"],
+                                    "suggested_narrative_use": self._stages_for("chart_data_insight", data_text),
                                     "source_location": f"Slide {slide['slide_index']}",
                                 }
                                 evidence.append(chart_data_ev)
@@ -1078,7 +1918,7 @@ class ImpactSlidePreprocessorV2:
                                     "text": f"Table cell (r{cell['row']},c{cell['col']}): {cell['value']}",
                                     "priority_score": cell["priority"],
                                     "confidence": "medium",
-                                    "suggested_narrative_use": ["What"],
+                                    "suggested_narrative_use": self._stages_for("table_cell", str(cell.get('value', ''))),
                                     "source_location": f"Slide {slide['slide_index']}",
                                     "table_cell": True,
                                 }
@@ -1093,7 +1933,7 @@ class ImpactSlidePreprocessorV2:
                                 "text": f"Table ({tbl.get('rows')} rows × {tbl.get('cols')} cols)",
                                 "priority_score": 0.82,
                                 "confidence": "high",
-                                "suggested_narrative_use": ["What", "Why"],
+                                "suggested_narrative_use": self._stages_for("table_insight", f"Table {tbl.get('rows')}x{tbl.get('cols')}"),
                                 "source_location": f"Slide {slide['slide_index']}",
                             }
                             evidence.append(table_ev)
@@ -1110,7 +1950,7 @@ class ImpactSlidePreprocessorV2:
                             "text": f"{m.get('context', '')}",
                             "priority_score": 0.82,
                             "confidence": "high",
-                            "suggested_narrative_use": ["How", "What"],
+                            "suggested_narrative_use": self._stages_for("text_metric", m.get('context', '')),
                             "source_location": f"Slide {slide['slide_index']}",
                             "metric_value": m.get("value"),
                             "metric_type": m.get("type"),
@@ -1126,7 +1966,7 @@ class ImpactSlidePreprocessorV2:
                             "text": f"Key metric on slide {slide['slide_index']}: {metric}",
                             "priority_score": 0.78,
                             "confidence": "medium",
-                            "suggested_narrative_use": ["How", "What"],
+                            "suggested_narrative_use": self._stages_for("text_metric", str(metric)),
                             "source_location": f"Slide {slide['slide_index']}",
                         }
                         evidence.append(metric_ev)
@@ -1134,16 +1974,29 @@ class ImpactSlidePreprocessorV2:
 
                 # Key bullets from conclusion / insight slides
                 if slide_type in ["conclusion", "content_insight"]:
-                    # Conclusion/recommendation bullets feed the 'Now' (call-to-action)
-                    # stage of the Why->What->How->Now structure; general insight
-                    # bullets feed What/Why.
-                    bullet_use = ["Now", "What", "Why"] if slide_type == "conclusion" else ["What", "Why"]
+                    # v3 #24: conclusion-bullet stages now come from the
+                    # configurable table (conclusion_bullet_stages) instead of
+                    # a hardcoded literal. The keyword-override layer in
+                    # _stages_for() can still redirect individual bullets by
+                    # their text (e.g. a bullet mentioning 'revenue').
+                    if slide_type == "conclusion":
+                        bullet_use = list(self.stage_rules.get("conclusion_bullet_stages", DEFAULT_CONCLUSION_BULLET_STAGES))
+                    else:
+                        bullet_use = self._stages_for("bullet_insight", "")
                     for bullet in details.get("key_bullets", [])[:3]:
                         # v3 #3: rank individual bullets by insight-language
                         # density. Previously every bullet scored a flat 0.75,
                         # so "Recommendation: expand" ranked equal to "LogLevel...".
                         # Now insight-bearing bullets get up to +0.25.
                         bp = insight_priority_boost(bullet, 0.75)
+                        # v3 #24: per-bullet stage = keyword override (first
+                        # match) else the slide-type default (conclusion stages
+                        # or bullet_insight default).
+                        bullet_stages = list(bullet_use)
+                        for pat, stages in self.stage_rules.get("_compiled_keyword_overrides", []):
+                            if pat.search(bullet):
+                                bullet_stages = list(stages)
+                                break
                         bullet_ev = {
                             "evidence_id": f"E{evidence_id:04d}",
                             "source_file": source_file,
@@ -1151,7 +2004,7 @@ class ImpactSlidePreprocessorV2:
                             "text": bullet,
                             "priority_score": bp,
                             "confidence": "high" if bp >= 0.85 else "medium",
-                            "suggested_narrative_use": bullet_use,
+                            "suggested_narrative_use": bullet_stages,
                             "source_location": f"Slide {slide['slide_index']}",
                         }
                         evidence.append(bullet_ev)
@@ -1168,7 +2021,7 @@ class ImpactSlidePreprocessorV2:
                                 "text": step,
                                 "priority_score": 0.76,
                                 "confidence": "medium",
-                                "suggested_narrative_use": ["How", "What"],
+                                "suggested_narrative_use": self._stages_for("process_step", step),
                                 "source_location": f"Slide {slide['slide_index']}",
                             }
                             evidence.append(step_ev)
@@ -1184,7 +2037,7 @@ class ImpactSlidePreprocessorV2:
                         "text": notes[:300],
                         "priority_score": 0.85,
                         "confidence": "high",
-                        "suggested_narrative_use": ["How", "Why"],
+                        "suggested_narrative_use": self._stages_for("speaker_notes_insight", notes[:300]),
                         "source_location": f"Slide {slide['slide_index']}",
                     }
                     evidence.append(notes_ev)
@@ -1199,7 +2052,7 @@ class ImpactSlidePreprocessorV2:
                         "text": bold,
                         "priority_score": 0.78,
                         "confidence": "medium",
-                        "suggested_narrative_use": ["What", "How"],
+                        "suggested_narrative_use": self._stages_for("emphasized_text", bold),
                         "source_location": f"Slide {slide['slide_index']}",
                     }
                     evidence.append(bold_ev)
@@ -1214,7 +2067,7 @@ class ImpactSlidePreprocessorV2:
                     "text": f"Section divider: {slide_title}",
                     "priority_score": 0.22,
                     "confidence": "medium",
-                    "suggested_narrative_use": ["What"],
+                    "suggested_narrative_use": self._stages_for("section_divider", slide_title),
                     "source_location": f"Slide {slide['slide_index']}",
                 }
                 evidence.append(section_ev)
@@ -1252,7 +2105,7 @@ class ImpactSlidePreprocessorV2:
                         "text": f"Page {page['page']}: {text[:150]}...",
                         "priority_score": round(base_priority, 3),
                         "confidence": "medium" if is_ocr else ("high" if has_insight else "medium"),
-                        "suggested_narrative_use": ["What"],
+                        "suggested_narrative_use": self._stages_for(insight_type, text),
                         "source_location": f"Page {page['page']}",
                         "ocr_used": is_ocr,
                     }
@@ -1260,20 +2113,23 @@ class ImpactSlidePreprocessorV2:
                     evidence_id += 1
 
             for tbl in pdf_profile.get("tables", []):
-                # Improved PDF Table evidence (Step 4)
+                # v3: richer PDF table evidence using the merged pdfplumber/PyMuPDF
+                # output (header + cols + engine) instead of just row count + preview.
                 rows = tbl.get("data", [])
-                preview = ""
-                if rows:
-                    first_row = rows[0] if rows else []
-                    preview = " | ".join(str(c) for c in first_row[:4])
+                header = tbl.get("header") or (rows[0] if rows else [])
+                cols = tbl.get("cols") or (len(header) if header else 0)
+                engine = tbl.get("engine", "pymupdf")
+                preview = " | ".join(str(c) for c in header[:4]) if header else ""
 
-                text = f"PDF Table on page {tbl['page']} ({tbl['rows']} rows)"
+                text = f"PDF Table on page {tbl['page']} ({tbl.get('rows', len(rows))} rows × {cols} cols)"
                 if preview:
                     text += f": {preview}"
 
                 priority = 0.72
                 if len(rows) > 3:
                     priority = 0.78
+                # pdfplumber detection is more reliable -> higher confidence
+                confidence = "high" if engine == "pdfplumber" else "medium"
 
                 ev = {
                     "evidence_id": f"E{evidence_id:04d}",
@@ -1281,12 +2137,29 @@ class ImpactSlidePreprocessorV2:
                     "insight_type": "pdf_table_insight",
                     "text": text,
                     "priority_score": priority,
-                    "confidence": "medium",
-                    "suggested_narrative_use": ["What"],
+                    "confidence": confidence,
+                    "suggested_narrative_use": self._stages_for("pdf_table_insight", text),
                     "source_location": f"Page {tbl['page']}",
                 }
                 evidence.append(ev)
                 evidence_id += 1
+                # v3: also seed per-cell evidence (capped) so the Analyst gets the
+                # actual table contents, not just a one-line summary.
+                for r_idx, row in enumerate(rows[:5]):
+                    for c_idx, cell in enumerate(row[:6]):
+                        if cell and str(cell).strip():
+                            cell_ev = {
+                                "evidence_id": f"E{evidence_id:04d}",
+                                "source_file": source_file,
+                                "insight_type": "pdf_table_cell",
+                                "text": f"PDF table cell (p{tbl['page']} r{r_idx} c{c_idx}): {cell}",
+                                "priority_score": 0.70,
+                                "confidence": confidence,
+                                "suggested_narrative_use": self._stages_for("pdf_table_cell", str(cell)),
+                                "source_location": f"Page {tbl['page']}",
+                            }
+                            evidence.append(cell_ev)
+                            evidence_id += 1
 
         for docx_profile in getattr(self, "docx_profiles", []):
             if docx_profile.get("status") != "ok":
@@ -1302,7 +2175,7 @@ class ImpactSlidePreprocessorV2:
                         "text": para[:200],
                         "priority_score": 0.60,
                         "confidence": "medium",
-                        "suggested_narrative_use": ["What"],
+                        "suggested_narrative_use": self._stages_for("docx_insight", para[:200]),
                         "source_location": "DOCX",
                     }
                     evidence.append(ev)
@@ -1340,8 +2213,40 @@ class ImpactSlidePreprocessorV2:
         self.coverage_map = self._build_coverage_map(evidence)
         if self.entities_summary:
             self.coverage_map["entities_summary_count"] = len(self.entities_summary)
+        # v3: surface per-entity mention stats (which entities appear across how
+        # many files) into the coverage map so the Analyst GPT gets a structured
+        # cross-file signal.
+        if getattr(self, "_entity_mention_stats", None):
+            self.coverage_map["entity_mentions"] = self._entity_mention_stats
+
+        # v3: validate every evidence entry against the Pydantic contract before
+        # it's handed off. Malformed entries are dropped to processing_errors
+        # instead of silently shipping bad data to the Analyst GPT.
+        evidence = self._validate_evidence(evidence)
 
         return evidence
+
+    def _validate_evidence(self, evidence: List[Dict]) -> List[Dict]:
+        """Validate evidence entries against the EvidenceEntry schema. Bad entries
+        are logged to self.errors and dropped. If pydantic isn't installed, this
+        is a no-op (the pipeline still runs, just without runtime guarantees)."""
+        if not _HAS_PYDANTIC:
+            return evidence
+        kept = []
+        for ev in evidence:
+            try:
+                EvidenceEntry(**ev)
+                kept.append(ev)
+            except Exception as ex:
+                self.errors.append({
+                    "file": ev.get("source_file", "?"),
+                    "evidence_id": ev.get("evidence_id", "?"),
+                    "error": f"schema validation failed: {ex}",
+                })
+        if len(kept) < len(evidence):
+            print(f"       [warn] {len(evidence) - len(kept)} evidence entries failed "
+                  f"schema validation and were dropped (see processing_errors.json)")
+        return kept
 
     def _build_coverage_map(self, evidence: List[Dict]) -> Dict[str, Any]:
         """Summarise evidence coverage by narrative stage and source file."""
@@ -1364,13 +2269,21 @@ class ImpactSlidePreprocessorV2:
 
     def _deduplicate_evidence(self, evidence: List[Dict]) -> List[Dict]:
         """
-        Item 4.2 (+ v3 #10): Remove near-duplicate evidence entries.
+        Item 4.2 (+ v3 #10, v3 #20): Remove near-duplicate evidence entries.
         Keeps the highest priority version of similar evidence.
 
         Two passes: (1) exact normalized-prefix dedup (cheap, catches the
-        cross-sheet/column repeats), then (2) semantic near-dup using fuzzy
-        similarity (catches bullets phrased slightly differently, e.g.
-        "Recommendation: expand North" vs "Recommend expanding North").
+        cross-sheet/column repeats), then (2) semantic near-dup clustering.
+
+        v3 #20: Pass 2 now uses a TIERED semantic engine (sentence-transformers
+        embeddings -> pure-numpy TF-IDF + cosine -> rapidfuzz char-similarity)
+        so it clusters TRUE semantic near-duplicates (sharing few character
+        n-grams, e.g. "North America revenue grew 12%" vs "US & Canada sales up
+        a tenth") rather than only lexical rephrasings. When a near-dup is
+        dropped, its source_file + evidence_id are merged onto the surviving
+        entry (dedup_merged_sources / dedup_merged_ids) so source provenance is
+        preserved instead of silently lost. The dedup engine is selectable via
+        self.dedup_engine (auto/embeddings/tfidf/fuzzy).
         """
         if not evidence:
             return evidence
@@ -1387,30 +2300,60 @@ class ImpactSlidePreprocessorV2:
                 seen_texts[norm_text] = ev
         pass1 = list(seen_texts.values())
 
-        # Pass 2: semantic near-dup. Compare each candidate to the kept set;
-        # drop it if it's >= SEMANTIC_DUP_THRESHOLD similar to a higher-priority
-        # kept entry. Bounded to O(n*k) by only scanning short text entries
-        # (bullets/paragraphs/cells) where phrasing variance is common. 0.85
-        # catches rephrasings (e.g. "Recommendation: expand" vs "Recommend
-        # expanding") while still preserving genuinely different insights.
-        SEMANTIC_DUP_THRESHOLD = 0.85
-        kept = []
-        for ev in sorted(pass1, key=lambda x: x.get("priority_score", 0), reverse=True):
-            text = ev.get("text", "").strip().lower()
-            if not text or len(text) > 200:
-                kept.append(ev)
+        # Pass 2: tiered semantic near-dup clustering. Only short text entries
+        # (bullets/paragraphs/cells, <=200 chars) are clustered, where phrasing
+        # variance is common; longer entries are kept as-is to avoid merging
+        # genuinely distinct long insights. The engine precomputes a similarity
+        # matrix once (for embeddings/TF-IDF), so the greedy loop stays cheap.
+        candidates = []   # list of pass1 indices that are clusterable
+        cand_texts = []
+        for i, ev in enumerate(pass1):
+            raw = ev.get("text", "")
+            text = raw.strip().lower()
+            if text and len(raw) <= 200:
+                candidates.append(i)
+                cand_texts.append(text)
+        cand_map = {pi: ci for ci, pi in enumerate(candidates)}  # pass1_idx -> cand_idx
+        engine = _SemanticDedupEngine(cand_texts, engine=getattr(self, "dedup_engine", "auto"))
+
+        order = sorted(range(len(pass1)),
+                       key=lambda i: pass1[i].get("priority_score", 0), reverse=True)
+        kept = []  # list of (pass1_idx, ev)
+        for pi in order:
+            ev = pass1[pi]
+            raw = ev.get("text", "")
+            text = raw.strip().lower()
+            if not text or len(raw) > 200:
+                kept.append((pi, ev))
+                continue
+            ci = cand_map.get(pi)
+            if ci is None:
+                kept.append((pi, ev))
                 continue
             is_dup = False
-            for k in kept:
-                ktext = k.get("text", "").strip().lower()
-                if len(ktext) > 200:
+            for (kpi, k) in kept:
+                kci = cand_map.get(kpi)
+                if kci is None:
                     continue
-                if _text_similarity(text, ktext) >= SEMANTIC_DUP_THRESHOLD:
+                if len(k.get("text", "")) > 200:
+                    continue
+                if engine.similar(ci, kci):
                     is_dup = True
+                    # Merge source provenance from the dropped near-dup onto the
+                    # surviving (higher-priority) entry so the Analyst GPT still
+                    # sees that multiple sources backed this insight.
+                    merged_src = k.setdefault("dedup_merged_sources", [])
+                    merged_ids = k.setdefault("dedup_merged_ids", [])
+                    src = ev.get("source_file")
+                    if src and src not in merged_src and src != k.get("source_file"):
+                        merged_src.append(src)
+                    eid = ev.get("evidence_id")
+                    if eid and eid != k.get("evidence_id") and eid not in merged_ids:
+                        merged_ids.append(eid)
                     break
             if not is_dup:
-                kept.append(ev)
-        return kept
+                kept.append((pi, ev))
+        return [ev for (_, ev) in kept]
 
     def _apply_boost_rules(self, evidence: List[Dict]) -> List[Dict]:
         """
@@ -1476,6 +2419,8 @@ class ImpactSlidePreprocessorV2:
             return "text_layer"
         if itype in ("pdf_table_insight",):
             return "text_layer"
+        if itype == "pdf_table_cell":
+            return "table_cell"
         if itype == "bullet_insight":
             return "bullet"
         if itype == "docx_insight":
@@ -1591,39 +2536,58 @@ class ImpactSlidePreprocessorV2:
                         v = clean_text(tv.get("value")).lower()
                         # Multi-word / longer categorical values are real
                         # entities; skip trivial ones (single letters, digits).
-                        if v and len(v) >= 3 and not v.replace(".", "").isdigit():
+                        # Also keep short values that are known abbreviations
+                        # (US, EU, EMEA, ...) so the abbreviation-expansion
+                        # matcher can link them to their full forms elsewhere.
+                        is_abbrev = v in _ABBREVIATIONS
+                        if v and (len(v) >= 3 or is_abbrev) and not v.replace(".", "").isdigit():
                             derived.add(v)
         keywords |= derived
 
         excel_entities = set()
         pptx_entities = set()
+        # v3: track per-entity mention stats so the Analyst GPT gets a
+        # structured "this entity appears in N files" signal, not just a
+        # binary "in both". Maps entity -> set of source files mentioning it.
+        entity_files: Dict[str, set] = defaultdict(set)
 
         for ev in all_evidence:   # Search in ALL evidence, not just numeric
             text = ev.get("text", "").lower()
             src = str(ev.get("source_file", "")).lower()
+            src_name = ev.get("source_file")
             for kw in keywords:
-                if kw and kw in text:
-                    # Use word-boundary match for short keywords to avoid
-                    # substring false positives (e.g. 'east' inside 'yeast').
-                    if len(kw) <= 4 and not re.search(rf"\b{re.escape(kw)}\b", text):
-                        continue
+                if kw and _entity_in_text(kw, text):
                     if src.endswith(".xlsx"):
                         excel_entities.add(kw)
                     elif src.endswith(".pptx"):
                         pptx_entities.add(kw)
+                    if src_name:
+                        entity_files[kw].add(src_name)
 
         common_entities = excel_entities.intersection(pptx_entities)
         # Cap entity matches so a large shared vocabulary can't flood the register.
         ENTITY_CROSS_CAP = 5
-        for entity in list(common_entities)[:ENTITY_CROSS_CAP]:
+        self._entity_mention_stats = {}  # surfaced into the coverage map
+        for entity in sorted(common_entities,
+                             key=lambda e: len(entity_files.get(e, set())),
+                             reverse=True)[:ENTITY_CROSS_CAP]:
+            files_list = sorted(entity_files.get(entity, set()))
+            n_files = len(files_list)
+            self._entity_mention_stats[entity] = {
+                "files": files_list, "file_count": n_files,
+                "in_excel": entity in excel_entities,
+                "in_pptx": entity in pptx_entities,
+            }
             cross_ev = {
                 "evidence_id": f"E{evidence_id:04d}",
                 "source_file": related[0] if related else None,
                 "insight_type": "cross_file_metric",
-                "text": f"'{entity.title()}' mentioned in both Excel data and PPTX narrative",
+                "text": (f"'{entity.title()}' mentioned in {n_files} file(s): "
+                         f", ".join(files_list) if files_list
+                         else f"'{entity.title()}' mentioned in both Excel data and PPTX narrative"),
                 "priority_score": 0.90,
                 "confidence": "high",
-                "suggested_narrative_use": ["How", "Why"],
+                "suggested_narrative_use": self._stages_for("cross_file_metric", entity),
                 "source_location": "Cross-file",
                 "related_files": related,
             }
@@ -1670,7 +2634,7 @@ class ImpactSlidePreprocessorV2:
                         "text": f"Numeric value '{num}' appears in both Excel and PPTX",
                         "priority_score": 0.88,
                         "confidence": "medium",
-                        "suggested_narrative_use": ["How", "What"],
+                        "suggested_narrative_use": self._stages_for("cross_file_metric", str(num)),
                         "source_location": "Cross-file",
                         "related_files": related,
                     }
@@ -1688,6 +2652,13 @@ class ImpactSlidePreprocessorV2:
 
         with open(self.output_dir / "excel_profile.json", "w") as f:
             json.dump(self.excel_profiles, f, indent=2)
+
+        # v3: emit the Evidence Register JSON Schema (the contract the Analyst
+        # GPT can reference). Always written when pydantic is available so the
+        # schema stays in sync with the actual data shape.
+        if _HAS_PYDANTIC:
+            with open(self.output_dir / "evidence_schema.json", "w") as f:
+                json.dump(EvidenceEntry.model_json_schema(), f, indent=2)
 
         if self.pptx_profiles:
             with open(self.output_dir / "pptx_profile.json", "w") as f:
@@ -1774,12 +2745,99 @@ class ImpactSlidePreprocessorV2:
 
         print(f"Outputs saved to: {self.output_dir}")
 
+    def _emit_run_metadata(self):
+        """v3 #23: write run_metadata.json — the reproducibility artifact.
+
+        Always emitted (not gated). Captures preprocessor version, git commit,
+        run timestamps, the resolved config snapshot (from #21), per-stage
+        timing (from #22), the optional-deps inventory (which fallback tiers
+        were active), and high-level counts. So any past run can be traced to
+        its exact code + config + environment and reproduced.
+        """
+        import sys
+        metadata = {
+            "preprocessor_version": __version__,
+            "git": {
+                "commit": git_commit(),
+                "dirty": git_dirty(),
+            },
+            "run_id": self.run_id,
+            "started_at": self.run_started_at,
+            "finished_at": self.run_finished_at,
+            "total_seconds": self.timing.get("total_seconds", 0),
+            "timing": self.timing,
+            "config": self.config_snapshot or {},
+            "environment": {
+                "python_version": sys.version.split()[0],
+                "platform": platform.platform(),
+                "optional_deps": {
+                    "fitz_pymupdf": fitz is not None,
+                    "pdfplumber": pdfplumber is not None,
+                    "docx": Document is not None,
+                    "pytesseract": pytesseract is not None,
+                    "pydantic": _HAS_PYDANTIC,
+                    "numpy": np is not None,
+                    "rapidfuzz": self._has_rapidfuzz(),
+                    "sentence_transformers": self._has_sentence_transformers(),
+                    "yaml": _HAS_YAML,
+                    "structlog": _HAS_STRUCTLOG,
+                },
+            },
+            "counts": {
+                "files_discovered": len(self.inventory),
+                "files_processed": len(self.timing.get("files", [])),
+                "evidence_entries": len(self.evidence_register) if hasattr(self, "evidence_register") else 0,
+                "errors": len(self.errors),
+                "filtered": len(self.filtered_items),
+            },
+        }
+        path = self.output_dir / "run_metadata.json"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
+        if self.log:
+            self.log.info("run_metadata_emitted", path=str(path))
+
+    @staticmethod
+    def _has_rapidfuzz() -> bool:
+        try:
+            import rapidfuzz
+            return True
+        except ImportError:
+            return False
+
+    @staticmethod
+    def _has_sentence_transformers() -> bool:
+        try:
+            import sentence_transformers
+            return True
+        except ImportError:
+            return False
+
     def _generate_summary_report(self):
         """Generate a human-readable Markdown summary report."""
         lines = []
         lines.append("# Preprocessor Summary Report\n")
         lines.append(f"**Filter Level:** `{self.filter_level}`\n")
         lines.append(f"**Generated at:** {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+        # v3 #22: Processing Time (always present — runtime is a top-level fact
+        # about the run). Placed before File Inventory so total runtime is the
+        # first thing the reader sees.
+        lines.append("## Processing Time\n")
+        st = self.timing.get("stages", {})
+        lines.append(f"- **Total runtime:** {self.timing.get('total_seconds', 0):.2f}s\n")
+        lines.append(f"- **Discovery:** {st.get('discovery', 0):.2f}s\n")
+        n_files = len(self.timing.get("files", []))
+        lines.append(f"- **Extraction:** {st.get('extraction', 0):.2f}s ({n_files} files)\n")
+        lines.append(f"- **Evidence register build:** {st.get('evidence_build', 0):.2f}s\n")
+        lines.append(f"- **Output & report:** {st.get('output', 0):.2f}s\n\n")
+        if self.timing.get("files"):
+            lines.append("### Per-File Timing\n")
+            lines.append("| File | Category | Duration | Status |\n")
+            lines.append("|------|----------|----------|--------|\n")
+            for f in sorted(self.timing["files"], key=lambda x: x["duration_s"], reverse=True):
+                lines.append(f"| {f['file']} | {f['category']} | {f['duration_s']:.2f}s | {f['status']} |\n")
+            lines.append("\n")
 
         # File Inventory Summary
         total_files = len(self.inventory)
@@ -1881,6 +2939,8 @@ class ImpactSlidePreprocessorV2:
         lines.append("## Generated Output Files\n")
         lines.append("- `file_inventory.json`\n")
         lines.append("- `excel_profile.json`\n")
+        if _HAS_PYDANTIC:
+            lines.append("- `evidence_schema.json` (Analyst GPT contract)\n")
         if self.pptx_profiles:
             lines.append("- `pptx_profile.json`\n")
         if hasattr(self, "evidence_register") and self.evidence_register:
@@ -1951,7 +3011,7 @@ class ImpactSlidePreprocessorV2:
             "type": "content_light",
             "confidence": 0.6,
             "evidence_tags": [],
-            "recommended_evidence_types": ["What", "Why"],
+            "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("content_light", ["What", "Why"]),
             "position": "middle",
             "priority_for_evidence": 0.5,
         }
@@ -1967,8 +3027,9 @@ class ImpactSlidePreprocessorV2:
             return classification
 
         # --- Agenda / Overview ---
-        if any(kw in title_lower for kw in ["agenda", "overview", "contents", "table of contents", "roadmap"]):
-            classification.update({"type": "agenda", "confidence": 0.9, "priority_for_evidence": 0.3})
+        if any(kw in title_lower for kw in self.stage_rules.get("slide_type_keywords", {}).get("agenda", DEFAULT_SLIDE_TYPE_KEYWORDS["agenda"])):
+            classification.update({"type": "agenda", "confidence": 0.9, "priority_for_evidence": 0.3,
+                                   "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("agenda", ["What", "Why"])})
             return classification
 
         # --- Diagram / Process flow scoring (computed early so the section-divider
@@ -1984,34 +3045,35 @@ class ImpactSlidePreprocessorV2:
             diagram_score += 2
 
         # --- Section divider (Item 1.5) ---
-        if is_section_slide or (any(kw in title_lower for kw in ["section", "part ", "chapter", "module"]) and diagram_score < 3):
-            classification.update({"type": "section", "confidence": 0.88, "priority_for_evidence": 0.22})
+        if is_section_slide or (any(kw in title_lower for kw in self.stage_rules.get("slide_type_keywords", {}).get("section", DEFAULT_SLIDE_TYPE_KEYWORDS["section"])) and diagram_score < 3):
+            classification.update({"type": "section", "confidence": 0.88, "priority_for_evidence": 0.22,
+                                   "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("section", ["What"])})
             return classification
 
         # --- Thank you / Q&A ---
-        if is_last and any(kw in title_lower for kw in ["thank you", "thanks", "q&a", "questions", "contact"]):
-            classification.update({"type": "thank_you", "confidence": 0.95, "priority_for_evidence": 0.1})
+        if is_last and any(kw in title_lower for kw in self.stage_rules.get("slide_type_keywords", {}).get("thank_you", DEFAULT_SLIDE_TYPE_KEYWORDS["thank_you"])):
+            classification.update({"type": "thank_you", "confidence": 0.95, "priority_for_evidence": 0.1,
+                                   "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("thank_you", ["What"])})
             return classification
 
         # --- Conclusion / Recommendations ---
-        if any(kw in title_lower for kw in ["summary", "conclusion", "key takeaway", "recommendation",
-                                            "next step", "call to action", "key findings", "action plan"]):
+        if any(kw in title_lower for kw in self.stage_rules.get("slide_type_keywords", {}).get("conclusion", DEFAULT_SLIDE_TYPE_KEYWORDS["conclusion"])):
             classification.update({"type": "conclusion", "confidence": 0.9, "priority_for_evidence": 0.85,
-                                   "recommended_evidence_types": ["What", "How", "Why", "Now"]})
+                                   "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("conclusion", ["What", "How", "Why", "Now"])})
             return classification
 
         # --- Data-rich slides (high evidence value) ---
         if chart_count >= 2 and table_count >= 1:
             classification.update({"type": "data_mixed", "confidence": 0.9, "priority_for_evidence": 0.95,
-                                   "evidence_tags": ["numeric", "categorical"], "recommended_evidence_types": ["How", "What"]})
+                                   "evidence_tags": ["numeric", "categorical"], "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("data_mixed", ["How", "What"])})
             return classification
         if chart_count >= 1:
             classification.update({"type": "data_chart", "confidence": 0.9, "priority_for_evidence": 0.9,
-                                   "evidence_tags": ["numeric"], "recommended_evidence_types": ["How", "What"]})
+                                   "evidence_tags": ["numeric"], "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("data_chart", ["How", "What"])})
             return classification
         if table_count >= 1:
             classification.update({"type": "data_table", "confidence": 0.85, "priority_for_evidence": 0.85,
-                                   "evidence_tags": ["categorical", "numeric"], "recommended_evidence_types": ["What", "Why"]})
+                                   "evidence_tags": ["categorical", "numeric"], "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("data_table", ["What", "Why"])})
             return classification
 
         # --- Diagram / Process flows (Item 4.3 improved) ---
@@ -2026,9 +3088,9 @@ class ImpactSlidePreprocessorV2:
             return classification
 
         # --- Comparison slides ---
-        if any(kw in title_lower for kw in ["vs", "versus", "comparison", "compare", "before", "after"]):
+        if any(kw in title_lower for kw in self.stage_rules.get("slide_type_keywords", {}).get("comparison", DEFAULT_SLIDE_TYPE_KEYWORDS["comparison"])):
             classification.update({"type": "comparison", "confidence": 0.8, "priority_for_evidence": 0.75,
-                                   "recommended_evidence_types": ["What", "Why"]})
+                                   "recommended_evidence_types": self.stage_rules.get("slide_type_stages", {}).get("comparison", ["What", "Why"])})
 
         # --- Quote / Callout ---
         if word_count < 40 and picture_count == 0 and shape_count <= 3:
@@ -2083,12 +3145,34 @@ class ImpactSlidePreprocessorV2:
                 bold_texts = []      # Item 1.6: emphasized text
                 theme_colors = []    # Item 1.4 (light)
 
-                for shape in slide.shapes:
+                embedded_objects = []   # v3 #15: embedded/linked OLE objects (counted, content unreadable)
+                # v3 #13-16: iterate shapes deeply (recursing into groups) in
+                # spatial (top, left) order so multi-column slides read in order
+                # and nested/grouped text boxes are not lost.
+                for shape in _iter_shapes_deep(slide.shapes):
                     shape_count += 1
 
-                    if shape.has_text_frame:
-                        text = shape.text_frame.text.strip()
-                        if text:
+                    # v3 #15: detect embedded/linked OLE objects (embedded Excel
+                    # sheets, PDFs, …). Their content can't be read here, but we
+                    # record them so the Analyst knows unread signal exists.
+                    if _is_embedded_object(shape):
+                        try:
+                            embedded_objects.append(shape.name or "Embedded Object")
+                        except Exception:
+                            embedded_objects.append("Embedded Object")
+                        continue
+
+                    # v3 #14: richer text extraction — falls back to drawingml
+                    # <a:t> runs for SmartArt/diagram graphic frames whose text
+                    # isn't exposed via text_frame.
+                    text = _extract_shape_text(shape)
+                    if text:
+                        has_tf = False
+                        try:
+                            has_tf = shape.has_text_frame
+                        except Exception:
+                            has_tf = False
+                        if has_tf or text:
                             word_count += len(text.split())
                             text_shapes += 1
 
@@ -2134,16 +3218,18 @@ class ImpactSlidePreprocessorV2:
                                 extracted_advanced_metrics.append(m)
                                 extracted_metrics.append(m["value"])
 
-                            # Item 1.6: Detect bold / emphasized text
-                            try:
-                                for para in shape.text_frame.paragraphs:
-                                    for run in para.runs:
-                                        if run.font.bold:
-                                            bold_text = run.text.strip()
-                                            if bold_text and 5 < len(bold_text) < 120:
-                                                bold_texts.append(bold_text)
-                            except Exception:
-                                pass
+                            # Item 1.6: Detect bold / emphasized text (only when
+                            # a real text_frame is available for run-level access)
+                            if has_tf:
+                                try:
+                                    for para in shape.text_frame.paragraphs:
+                                        for run in para.runs:
+                                            if run.font.bold:
+                                                bold_text = run.text.strip()
+                                                if bold_text and 5 < len(bold_text) < 120:
+                                                    bold_texts.append(bold_text)
+                                except Exception:
+                                    pass
 
                     if shape.has_chart:
                         chart_count += 1
@@ -2323,7 +3409,8 @@ class ImpactSlidePreprocessorV2:
                         "process_steps": process_steps[:8],
                         "speaker_notes": speaker_notes,       # Item 1.3
                         "bold_texts": bold_texts[:6],         # Item 1.6
-                        "theme_colors": list(set(theme_colors))[:4]   # Item 1.4 (light)
+                        "theme_colors": list(set(theme_colors))[:4],   # Item 1.4 (light)
+                        "embedded_objects": embedded_objects,          # v3 #15: OLE objects (content unreadable)
                     }
                 })
 
@@ -2407,6 +3494,91 @@ class ImpactSlidePreprocessorV2:
         self._ocr_available = False
         return False
 
+    def _extract_pdf_tables(self, path: Path, engine: str = "auto") -> List[Dict]:
+        """Extract tables from a PDF, merging the best of pdfplumber and PyMuPDF.
+
+        - engine='auto' (default): prefer pdfplumber (better cell detection for
+          ruled/unruled/merged tables), fall back to PyMuPDF's find_tables().
+        - engine='pdfplumber': use pdfplumber only.
+        - engine='pymupdf': use PyMuPDF only.
+
+        Returns a list of {page, rows, cols, header, data, bbox, engine} dicts.
+        Enriches over the old output (which only had rows + first 5 raw rows)
+        so pdf_table_insight evidence can carry header + cell-level structure.
+        """
+        results: List[Dict] = []
+        use_pdfplumber = (engine == "pdfplumber") or (engine == "auto" and pdfplumber is not None)
+        use_pymupdf = fitz is not None and (engine == "pymupdf" or (engine == "auto" and not use_pdfplumber))
+
+        if use_pdfplumber:
+            try:
+                import pdfplumber as _pp
+                with _pp.open(str(path)) as pdf:
+                    for pno, page in enumerate(pdf.pages, 1):
+                        try:
+                            found = page.find_tables()
+                        except Exception:
+                            found = []
+                        for t in found:
+                            try:
+                                data = t.extract() or []
+                            except Exception:
+                                data = []
+                            # normalize cells to strings and cap rows
+                            norm = [[("" if c is None else str(c).strip()) for c in row]
+                                    for row in data[:8]]
+                            if not norm:
+                                continue
+                            header = norm[0] if norm else []
+                            results.append({
+                                "page": pno,
+                                "rows": len(data),
+                                "cols": max((len(r) for r in norm), default=0),
+                                "header": header,
+                                "data": norm,
+                                "bbox": list(t.bbox) if getattr(t, "bbox", None) else None,
+                                "engine": "pdfplumber",
+                            })
+            except Exception as e:
+                if self.verbose:
+                    print(f"       pdfplumber table extraction failed: {e}")
+                # fall through to PyMuPDF if auto
+                if engine == "auto":
+                    use_pymupdf = fitz is not None
+
+        if use_pymupdf and fitz is not None:
+            try:
+                doc = fitz.open(str(path))
+                for pno, page in enumerate(doc, 1):
+                    try:
+                        tabs = page.find_tables()
+                    except Exception:
+                        tabs = []
+                    for t in tabs:
+                        try:
+                            data = t.extract() or []
+                        except Exception:
+                            data = []
+                        norm = [[("" if c is None else str(c).strip()) for c in row]
+                                for row in data[:8]]
+                        if not norm:
+                            continue
+                        header = norm[0] if norm else []
+                        results.append({
+                            "page": pno,
+                            "rows": len(data),
+                            "cols": max((len(r) for r in norm), default=0),
+                            "header": header,
+                            "data": norm,
+                            "bbox": list(t.bbox) if getattr(t, "bbox", None) else None,
+                            "engine": "pymupdf",
+                        })
+                doc.close()
+            except Exception as e:
+                if self.verbose:
+                    print(f"       PyMuPDF table extraction failed: {e}")
+        return results
+
     def extract_pdf(self, path: Path, use_ocr: bool = False) -> Dict[str, Any]:
         if fitz is None:
             return {"file": str(path), "status": "error", "error": "PyMuPDF not installed"}
@@ -2415,7 +3587,6 @@ class ImpactSlidePreprocessorV2:
             doc = fitz.open(str(path))
             total_pages = len(doc)
             pages = []
-            tables = []
 
             # Resolve the Tesseract binary once for the whole document.
             ocr_available = use_ocr and self._ensure_tesseract()
@@ -2450,19 +3621,13 @@ class ImpactSlidePreprocessorV2:
                     "ocr_used": ocr_used_this_page
                 })
 
-                # Extract tables (basic)
-                try:
-                    tabs = page.find_tables()
-                    for tab in tabs:
-                        tables.append({
-                            "page": page_num,
-                            "rows": len(tab.extract()),
-                            "data": tab.extract()[:5]
-                        })
-                except:
-                    pass
-
             doc.close()
+
+            # v3: table extraction via the merged pdfplumber/PyMuPDF engine.
+            # PyMuPDF stays primary for text/layout/OCR; pdfplumber (optional)
+            # is preferred for table cell detection where it handles
+            # merged/spanning/unruled tables better than PyMuPDF's default.
+            tables = self._extract_pdf_tables(path, engine=self.pdf_table_engine)
 
             return {
                 "file": str(path),
@@ -2686,7 +3851,109 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
     print("=" * 78 + "\n")
 
 
-if __name__ == "__main__":
+# ====================== YAML CONFIG SUPPORT (v3 #21) =====================
+# Layered config: CLI flag (explicit) > YAML value > argparse default.
+# CONFIG_DEFAULTS is the single source of truth — argparse defaults and YAML
+# defaults stay in sync because both derive from this dict. CONFIG_CHOICES
+# mirrors the `choices=[...]` on argparse flags so YAML values are validated
+# the same way CLI values are.
+CONFIG_DEFAULTS = {
+    "input": None,
+    "output": None,
+    "filter_level": "conservative",
+    "boost_keywords": [],
+    "verbose": False,
+    "export_md": False,
+    "export_csv": False,
+    "enable_ocr": False,
+    "tesseract_cmd": None,
+    "pdf_table_engine": "auto",
+    "dedup_engine": "auto",
+    "inspect": False,
+    "inspect_top": 15,
+    "emit_schema": False,
+    "stage_rules": None,    # v3 #24: optional Why/What/How/Now mapping overrides
+}
+
+CONFIG_CHOICES = {
+    "filter_level": ("conservative", "moderate", "permissive"),
+    "pdf_table_engine": ("auto", "pdfplumber", "pymupdf"),
+    "dedup_engine": ("auto", "embeddings", "tfidf", "fuzzy"),
+}
+
+
+def load_config(path):
+    """Load a YAML config file into a dict.
+
+    - path is None -> returns {} (no config; CLI-only mode).
+    - path given but missing -> raises FileNotFoundError (a typo'd --config
+      must never silently fall back to defaults and run against the wrong
+      input folder).
+    - PyYAML not installed -> raises RuntimeError with a clear pip hint.
+    - Top level must be a YAML mapping.
+    """
+    if not path:
+        return {}
+    if not _HAS_YAML:
+        raise RuntimeError(
+            "--config requires PyYAML which is not installed. "
+            "Install it with: pip install pyyaml"
+        )
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"Config file not found: {path}")
+    with open(p, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)  # safe_load, never load() — config files are shared
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"Config file {path} must contain a YAML mapping at the top level, "
+            f"got {type(data).__name__}"
+        )
+    return data
+
+
+def _cli_was_set(parser, args, key: str) -> bool:
+    """True iff the user explicitly passed --key on the command line (vs
+    relying on the argparse default). Determined by comparing the parsed value
+    against the parser's registered default, so YAML can override any flag the
+    user did not type."""
+    return getattr(args, key, None) != parser.get_default(key)
+
+
+def merge_config(parser, args) -> dict:
+    """Resolve the layered config: CLI (explicit) > YAML > defaults.
+
+    Returns a plain dict keyed by CONFIG_DEFAULTS keys (snake_case)."""
+    result = dict(CONFIG_DEFAULTS)
+    yaml_cfg = getattr(args, "config_data", {}) or {}
+    result.update(yaml_cfg)  # YAML overrides defaults
+    for key in CONFIG_DEFAULTS:
+        if _cli_was_set(parser, args, key):
+            result[key] = getattr(args, key)  # explicit CLI wins
+    return result
+
+
+def validate_config(cfg: dict) -> None:
+    """Validate config values against CONFIG_CHOICES (mirrors argparse
+    `choices=[...]`). Raises ValueError on a bad value so a YAML typo fails
+    fast with a clear message instead of silently misbehaving."""
+    for key, allowed in CONFIG_CHOICES.items():
+        v = cfg.get(key)
+        if v is not None and v not in allowed:
+            raise ValueError(
+                f"config '{key}'={v!r} is invalid; must be one of {list(allowed)}"
+            )
+    if not isinstance(cfg.get("inspect_top", 15), int):
+        raise ValueError(
+            f"config 'inspect_top' must be an integer, got {cfg.get('inspect_top')!r}"
+        )
+
+
+def main(argv=None):
+    """CLI entry point. argv defaults to sys.argv[1:] so the function is
+    callable from tests without touching sys.argv."""
     parser = argparse.ArgumentParser(description="Impact Slide Preprocessor v3")
     parser.add_argument("--input", required=False, help="Input folder path")
     parser.add_argument("--output", required=False, help="Output folder path")
@@ -2704,27 +3971,79 @@ if __name__ == "__main__":
                         help="Enable OCR for scanned PDFs (Phase 2)")
     parser.add_argument("--tesseract-cmd", default=None,
                         help="Path to the Tesseract OCR binary (auto-detected if omitted)")
+    parser.add_argument("--pdf-table-engine", choices=["auto", "pdfplumber", "pymupdf"],
+                        default="auto",
+                        help="PDF table detection backend (default: auto = prefer pdfplumber, fall back to PyMuPDF)")
+    parser.add_argument("--dedup-engine", choices=["auto", "embeddings", "tfidf", "fuzzy"],
+                        default="auto",
+                        help="Semantic near-dup dedup engine (default: auto = prefer sentence-transformers embeddings, fall back to rapidfuzz char-similarity). "
+                             "embeddings/tfidf/fuzzy force a tier (graceful fallback if unavailable). "
+                             "Note: tfidf is opt-in for prose-heavy registers; empirical testing showed it over-merges templated evidence.")
     parser.add_argument("--inspect", action="store_true", default=False,
                         help="Print a readable top-N Evidence Register summary to the console after running")
     parser.add_argument("--inspect-top", type=int, default=15,
                         help="Number of top-priority evidence entries to show with --inspect (default: 15)")
-    args = parser.parse_args()
+    parser.add_argument("--emit-schema", action="store_true", default=False,
+                        help="Write evidence_schema.json (the Analyst GPT contract) to --output and exit, without processing files")
+    parser.add_argument("--config", default=None,
+                        help="Path to a YAML config file. CLI flags override YAML; YAML overrides defaults. "
+                             "(optional; requires PyYAML). Keys mirror the CLI flags in snake_case "
+                             "(e.g. filter_level, dedup_engine, boost_keywords).")
+    args = parser.parse_args(argv)
 
-    if args.input and args.output:
+    # --- v3 #21: layered config resolution (CLI > YAML > default) ----------
+    # Load the YAML config (if --config given), then merge with CLI args so
+    # every downstream branch reads from a single resolved `cfg` dict. Errors
+    # in the config (missing file, bad value, PyYAML absent) fail fast with a
+    # clear message and a non-zero exit code.
+    try:
+        args.config_data = load_config(args.config)
+        cfg = merge_config(parser, args)
+        validate_config(cfg)
+    except (FileNotFoundError, RuntimeError, ValueError) as e:
+        print(f"Config error: {e}")
+        return 1
+
+    # Standalone schema emission: writes the JSON Schema for EvidenceEntry so it
+    # can be embedded into the Analyst GPT prompt, without running the pipeline.
+    if cfg["emit_schema"] and cfg["output"]:
+        out_dir = Path(cfg["output"])
+        out_dir.mkdir(parents=True, exist_ok=True)
+        if not _HAS_PYDANTIC:
+            print("pydantic is not installed; cannot emit schema. pip install pydantic")
+        else:
+            with open(out_dir / "evidence_schema.json", "w") as f:
+                json.dump(EvidenceEntry.model_json_schema(), f, indent=2)
+            print(f"Evidence schema written to {out_dir / 'evidence_schema.json'}")
+    elif cfg["input"] and cfg["output"]:
         preprocessor = ImpactSlidePreprocessorV2(
-            input_path=args.input,
-            output_dir=args.output,
-            filter_level=args.filter_level,
-            boost_keywords=args.boost_keywords
+            input_path=cfg["input"],
+            output_dir=cfg["output"],
+            filter_level=cfg["filter_level"],
+            boost_keywords=cfg["boost_keywords"],
         )
-        preprocessor.verbose = args.verbose
-        preprocessor.export_md = args.export_md
-        preprocessor.export_csv = args.export_csv
-        preprocessor.enable_ocr = args.enable_ocr
-        preprocessor.tesseract_cmd = args.tesseract_cmd
+        preprocessor.verbose = cfg["verbose"]
+        preprocessor.export_md = cfg["export_md"]
+        preprocessor.export_csv = cfg["export_csv"]
+        preprocessor.enable_ocr = cfg["enable_ocr"]
+        preprocessor.tesseract_cmd = cfg["tesseract_cmd"]
+        preprocessor.pdf_table_engine = cfg["pdf_table_engine"]
+        preprocessor.dedup_engine = cfg["dedup_engine"]
+        # v3 #23: snapshot the resolved config (after all attribute sets) so
+        # run_metadata.json records exactly which options produced this output.
+        preprocessor.config_snapshot = dict(cfg)
+        # v3 #24: (re)build stage rules now that config_snapshot is set, so any
+        # user stage_rules overrides take effect before run() uses them.
+        preprocessor.stage_rules = preprocessor._build_stage_rules()
         preprocessor.run()
-        if args.inspect:
-            inspect_register(args.output, top_n=args.inspect_top)
+        if cfg["inspect"]:
+            inspect_register(cfg["output"], top_n=cfg["inspect_top"])
     else:
         print("No input/output provided. Running built-in test...")
         test_preprocessor()
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

@@ -1,0 +1,57 @@
+# Impact Slide Preprocessor v3 — example YAML config
+# ----------------------------------------------------------------------------
+# Usage:
+#   python step1_preprocessor_v3.py --config config.example.yaml
+#   python step1_preprocessor_v3.py --config config.example.yaml --inspect-top 5
+#
+# Precedence (highest wins):  CLI flag  >  YAML value  >  argparse default
+# So any flag you pass on the command line overrides what's set here, and any
+# key you omit here falls back to the preprocessor's built-in default.
+#
+# Keys mirror the CLI flags in snake_case (e.g. --filter-level -> filter_level,
+# --dedup-engine -> dedup_engine, --boost-keywords -> boost_keywords).
+# Requires PyYAML:  pip install pyyaml  (optional; --config errors clearly if
+# PyYAML is absent, and pure-CLI usage is unaffected).
+
+# --- Required: where to read source files and write outputs ----------------
+input:  C:/Users/Ag1Le/Documents/realworld_test/input
+output: C:/Users/Ag1Le/Documents/realworld_test/output
+
+# --- Filtering & evidence quality ------------------------------------------
+filter_level: permissive        # conservative | moderate | permissive
+dedup_engine: auto              # auto | embeddings | tfidf | fuzzy
+pdf_table_engine: auto          # auto | pdfplumber | pymupdf
+boost_keywords: [recommend, critical, growth, revenue]
+
+# --- Configurable Why/What/How/Now stage mapping (v3 #24, optional) --------
+# Override or extend how evidence is mapped to the narrative framework.
+# All three layers are optional; omit the whole block to use built-in defaults.
+# stage_rules:
+#   insight_types:                    # override the default insight_type -> stages
+#     trend_insight: [How, Now]       # e.g. trends to the Now (action) stage
+#     aggregate_insight: [How, What]
+#   keyword_overrides:                # text-regex -> stages (first match wins)
+#     - pattern: "\\brevenue\\b"      # any evidence mentioning 'revenue'
+#       stages: [What, Now]
+#     - pattern: "\\bchurn\\b|\\bretention\\b"
+#       stages: [How, Now]
+#   slide_type_keywords:              # extend slide-title keyword -> type lists
+#     conclusion: [summary, conclusion, wrap-up]  # adds 'wrap-up'
+#   slide_type_stages:                # override slide type -> stages
+#     data_chart: [How]               # charts map to How only
+#   conclusion_bullet_stages: [Now, How]  # conclusion bullets get these stages
+
+# --- Output formats --------------------------------------------------------
+export_md: true
+export_csv: false
+
+# --- OCR (optional; for scanned PDFs) --------------------------------------
+enable_ocr: false
+# tesseract_cmd: C:/Program Files/Tesseract-OCR/tesseract.exe   # auto-detected if omitted
+
+# --- Console inspection ----------------------------------------------------
+inspect: true
+inspect_top: 20
+
+# verbose: false
+# emit_schema: false             # true = write evidence_schema.json and exit (no processing)

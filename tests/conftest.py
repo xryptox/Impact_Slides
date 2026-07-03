@@ -122,6 +122,30 @@ def make_pptx(tmp_workspace):
                 if spec["chart"].get("title"):
                     gframe.chart.has_title = True
                     gframe.chart.chart_title.text_frame.text = spec["chart"]["title"]
+            # group: list of {text} textboxes that get nested inside a group shape
+            if spec.get("group"):
+                boxes = []
+                for i, g in enumerate(spec["group"]):
+                    bx = slide.shapes.add_textbox(Inches(1 + i * 2), Inches(1.5), Inches(1.8), Inches(0.5))
+                    if g.get("text"):
+                        bx.text_frame.text = g["text"]
+                    boxes.append(bx)
+                if boxes:
+                    slide.shapes.add_group_shape(boxes)
+            # smartart: inject a graphicFrame with a:t text runs (SmartArt-like)
+            if spec.get("smartart"):
+                from lxml import etree
+                from xml.sax.saxutils import escape as _esc
+                runs = "".join(f"<a:t>{_esc(t)}</a:t>" for t in spec["smartart"])
+                gf_xml = (
+                    '<p:graphicFrame xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" '
+                    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+                    '<p:nvGraphicFramePr><p:cNvPr id="99" name="SmartArt1"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>'
+                    '<p:xfrm><a:off x="1000000" y="3000000"/><a:ext cx="5000000" cy="1000000"/></p:xfrm>'
+                    f'<a:graphic><a:graphicData uri="x"><x:d xmlns:x="x">{runs}</x:d></a:graphicData></a:graphic>'
+                    '</p:graphicFrame>'
+                )
+                slide.shapes._spTree.append(etree.fromstring(gf_xml))
         path = tmp_workspace / "input" / name
         path.parent.mkdir(parents=True, exist_ok=True)
         prs.save(path)

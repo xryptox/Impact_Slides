@@ -5,7 +5,7 @@ This project ships **two versions** of the Step 1 preprocessor:
 | Version | File | Status |
 |---------|------|--------|
 | **v2** | `step1_preprocessor_v2_full.py` | Stable, fully tested (201 tests). The bug-fix baseline. |
-| **v3** | `step1_preprocessor_v3.py` | **Active development.** Adds five insight-quality enhancements over v2 (29 dedicated tests). |
+| **v3** | `step1_preprocessor_v3.py` | **Active development.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, and configurable Why/What/How/Now stage mapping (183 dedicated tests). |
 
 Both produce the same Evidence Register handoff for the Impact Slide Analyst
 GPT; v3 emits a richer register. Use v3 going forward; v2 remains for
@@ -32,6 +32,7 @@ reference/regression.
 10. [Quick Start](#quick-start)
 11. [Inspecting Insight Quality](#inspecting-insight-quality)
 12. [Testing](#testing)
+12. [Schema Contract (Pydantic)](#schema-contract-pydantic)
 13. [Design Notes & Quality Guardrails](#design-notes--quality-guardrails)
 
 ---
@@ -68,7 +69,7 @@ clearly supported — so insights stay traceable from source file → slide.
                                        │  gather_files() + build_file_inventory()
                                        ▼
                 ┌─────────────────────────────────────────────┐
-                │            ImpactSlidePreprocessorV2         │
+                │            ImpactSlidePreprocessorV2        │
                 │                                             │
                 │  ┌─────────────┐  ┌──────────────────────┐  │
                 │  │  EXTRACTORS │  │   SCORING / FILTERING│  │
@@ -221,6 +222,16 @@ exports, and (if `--inspect`) prints the console summary.
   outrank real insights.
 - **Bullet capture** — both bulleted lines (`•`/`-`/`–`/`▪`/`*`) **and**
   substantive plain-text lines (≥4 words) so text-heavy decks are seeded.
+- **Group-shape recursion** (v3) — nested textboxes inside groups are walked
+  via `_iter_shapes_deep()`, so grouped content is no longer lost.
+- **SmartArt / graphic-frame fallback** (v3) — when a shape has no `text_frame`
+  (SmartArt, diagrams), `_extract_shape_text()` pulls text from the drawingml
+  `<a:t>` runs in the shape's XML.
+- **Embedded-object detection** (v3) — embedded/linked OLE objects (embedded
+  Excel sheets, PDFs, …) are counted and listed in slide details
+  (`embedded_objects`) so the Analyst knows unread signal exists.
+- **Spatial shape ordering** (v3) — shapes are iterated in `(top, left)` order
+  so multi-column slides concatenate in reading order, not insertion order.
 - **Speaker notes**, **bold/emphasized text**, **theme colors**, **process
   steps** from diagram shapes.
 - **Title-capture guard** — a leading numeric-only (page-number) textbox is no
@@ -231,7 +242,13 @@ exports, and (if `--inspect`) prints the console summary.
 - **OCR fallback** for scanned pages via Tesseract (300 DPI).
 - **Tesseract auto-detection** — honors `--tesseract-cmd`, then probes `PATH`
   and common Windows/Linux install locations; warns clearly if missing.
-- **Table extraction**.
+- **Merged table extraction** (v3) — `pdfplumber` (optional) is preferred for
+  table cell detection because it handles ruled/unruled/merged/spanning tables
+  better than PyMuPDF's default; PyMuPDF's `find_tables()` is the graceful
+  fallback when pdfplumber is absent. Selectable via `--pdf-table-engine`
+  (`auto`/`pdfplumber`/`pymupdf`). Each detected table now carries `header`,
+  `cols`, `bbox`, and `engine`, and seeds per-cell `pdf_table_cell` evidence
+  (pdfplumber-detected tables get `confidence=high`).
 - **Correct `ocr_used` flagging** per page.
 
 ### Evidence register intelligence
@@ -241,9 +258,50 @@ exports, and (if `--inspect`) prints the console summary.
   `suggested_narrative_use`; conclusion/recommendation bullets are tagged with
   `Now` (the call-to-action stage).
 - **Cross-file relationships** — entity-based (dynamic, from Excel values) and
-  distinctive-numeric, with word-boundary matching for short keywords.
-- **Deduplication**, **boost keywords**, **priority sort**.
+  distinctive-numeric, with **abbreviation/alias expansion** (US↔United States,
+  EMEA↔expansion, YoY↔year-over-year, …), **word-boundary matching for all
+  keyword lengths**, and **optional fuzzy matching** (rapidfuzz, difflib
+  fallback) for near-spellings (Naypyitaw↔Naypyidaw). Per-entity
+  **"mentioned in N files"** stats are tracked and surfaced in the cross-file
+  evidence text + the coverage map's `entity_mentions` block.
+- **Deduplication** (v3 #20: tiered semantic) — Pass 1 lexical (normalized
+  first-120-chars) catches exact repeats; Pass 2 clusters near-duplicates via
+  a **tiered semantic engine** selectable with `--dedup-engine`
+  (`auto`/`embeddings`/`tfidf`/`fuzzy`). `auto` prefers **sentence-transformers
+  embeddings** (the only tier that bridges synonyms / no-shared-vocabulary
+  near-dups, e.g. "North America revenue grew 12%" ↔ "US & Canada sales up a
+  tenth") and falls back to **rapidfuzz char-similarity** (catches lexical
+  rephrasings like "Recommendation: expand" ↔ "Recommend expanding"). When a
+  near-dup is dropped, its `source_file` + `evidence_id` are merged onto the
+  surviving entry (`dedup_merged_sources` / `dedup_merged_ids`) so source
+  provenance is preserved. **TF-IDF + cosine** is available as an explicit
+  opt-in for prose-heavy registers, but empirical testing showed it over-merges
+  templated evidence (distinct metrics sharing boilerplate + numeric values),
+  so it is not the auto default. Plus **boost keywords**, **priority sort**.
 - **Source-backing** — every entry traces to a real file + sheet/slide/page.
+- **Time profiling (v3 #22)** — always-on (not verbose-gated). Every run prints
+  a `[Timing]` summary to the console (total + per-stage: discovery,
+  extraction, evidence-build, output) and a per-file breakdown sorted slowest-
+  first. The same data is persisted to `preprocessor_summary.md` as a
+  **Processing Time** section + per-file table, so you can see which file type
+  dominates runtime. Uses `time.perf_counter()` (monotonic); per-file durations
+  are independent deltas (not cumulative since run start).
+- **Centralized logging + reproducibility (v3 #23)** — leveled logging
+  (structlog preferred, stdlib fallback) replaces the ad-hoc `print()` pattern.
+  Every run emits a timestamped `run.log` (full-fidelity DEBUG+) and an
+  always-on `run_metadata.json` capturing preprocessor version, git commit +
+  dirty flag, run timestamps, the resolved config snapshot (#21), per-stage
+  timing (#22), the optional-deps inventory (which fallback tiers were active),
+  and high-level counts — so any past run can be traced to its exact code +
+  config + environment and reproduced. Git helpers are read-only (never
+  commit/stage/push).
+- **Configurable stage mapping (v3 #24)** — the Why→What→How→Now assignment
+  is no longer hardcoded at ~20 evidence-creation sites. A centralized
+  `stage_rules` table (3 layers: insight-type→stage, text-keyword→stage regex,
+  slide-type→stage) drives all assignments, and users can override any layer
+  via YAML config. Lookup order: keyword-override (first match) > insight-type
+  default > fallback `What`. Validated against `NARRATIVE_STAGES` at config
+  load (fail fast on bad stage names / bad regex).
 
 ---
 
@@ -269,11 +327,16 @@ All written to `--output`. (The **Evidence Register** — the main Analyst hando
 | `excel_profile.json` | always | Per-file → per-sheet: numeric/categorical/date profiles, findings, multi-column insights, priority scores. |
 | `pptx_profile.json` | if PPTX input | Per-file → per-slide: classification, visual counts, chart/table/bullet/notes details. |
 | **`evidence_register_seed.json`** | if evidence found | **The main handoff to the Analyst GPT.** Priority-sorted list of evidence entries. |
+| `coverage_map.json` | v3, if evidence found | Coverage summary: per Why/What/How/Now stage counts, stages with no evidence, per-source-file counts, avg priority. |
+| `entities_summary.json` | v3, if Excel input | Top values per Excel categorical column with counts + share % — segmentation anchors for the Analyst. |
+| `evidence_schema.json` | v3, if pydantic installed | The JSON Schema for an EvidenceEntry — the machine-readable contract the Analyst GPT can reference (generated via `EvidenceEntry.model_json_schema()`). |
 | `filtering_log.json` | if items filtered | Why each column/insight was dropped (reason + thresholds) — useful for debugging. |
 | `processing_errors.json` | if errors | Per-file error messages (e.g. missing Tesseract, unreadable file). |
-| `preprocessor_summary.md` | always | Human-readable report: inventory, Excel/PPTX summaries, evidence breakdown, top-5, classification table. |
+| `preprocessor_summary.md` | always | Human-readable report: inventory, **Processing Time** (v3 #22), Excel/PPTX summaries, evidence breakdown, coverage map, top-5, classification table. |
+| `run.log` | v3, always | Timestamped, leveled log of every pipeline event (structlog/stdlib; full-fidelity DEBUG+). Machine-readable, so you can diff run N vs run N−1. |
+| `run_metadata.json` | v3, always | **Reproducibility artifact:** preprocessor version, git commit + dirty flag, run timestamps, resolved config snapshot (#21), per-stage timing (#22), optional-deps inventory (which fallback tiers were active), high-level counts. |
 | `evidence_register.md` | `--export-md` | Evidence register as Markdown. |
-| `evidence_register.csv` | `--export-csv` | Evidence register as CSV (evidence_id, insight_type, text, priority_score, confidence, suggested_narrative_use, source_location). |
+| `evidence_register.csv` | `--export-csv` | Evidence register as CSV — full field set (v3): evidence_id, source_file, column_name, insight_type, extraction_method, text, priority_score, confidence, suggested_narrative_use, source_location, ocr_used, related_files, boosted_by_rule. |
 
 ### `evidence_register_seed.json` entry shape
 
@@ -284,9 +347,10 @@ All written to `--output`. (The **Evidence Register** — the main Analyst hando
   "sheet_name": "January",                // or null for non-Excel
   "column_name": "Unit price",            // Excel-derived only
   "insight_type": "numeric_range",        // see "insight types" below
+  "extraction_method": "numeric_range",   // v3 #6: how derived (computed/chart_data/text_layer/ocr/bullet/table_cell/…)
   "text": "January: 'Unit price' ranges from 10.53 to 99.96.",
   "priority_score": 0.85,                 // 0.0–1.0, sorted descending
-  "confidence": "high",                   // high | medium
+  "confidence": "high",                   // high | medium (v3 #9: keyed to extraction_method reliability)
   "suggested_narrative_use": ["What","How"], // subset of Why/What/How/Now
   "source_location": "January",           // sheet / "Slide N" / "Page N" / "Cross-file"
   "ocr_used": false                       // PDF pages only
@@ -327,6 +391,8 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 |------|------|---------|-------------|
 | `--enable-ocr` | flag | off | Enable OCR fallback for scanned PDFs. Without it, scanned pages yield no text. |
 | `--tesseract-cmd` | path | auto | Path to the Tesseract binary. Auto-detected (`PATH` + common Windows/Linux locations) if omitted. |
+| `--pdf-table-engine` | choice | `auto` | PDF table detection backend. `auto` = prefer pdfplumber, fall back to PyMuPDF; `pdfplumber`/`pymupdf` force a backend. |
+| `--dedup-engine` | choice | `auto` | Semantic near-dup dedup engine. `auto` = prefer sentence-transformers embeddings, fall back to rapidfuzz char-similarity; `embeddings`/`tfidf`/`fuzzy` force a tier (graceful fallback). `tfidf` is opt-in for prose-heavy registers (over-merges templated evidence). |
 
 ### Export arguments
 
@@ -342,6 +408,39 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 | `--inspect` | flag | off | Print a readable top-N Evidence Register summary to the console after running. |
 | `--inspect-top` | int | 15 | Number of top-priority entries to show with `--inspect`. |
 
+### Schema argument (v3)
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--emit-schema` | flag | off | Write `evidence_schema.json` (the Analyst GPT contract, generated from the Pydantic `EvidenceEntry` model) to `--output` and exit, without processing any files. Use this to refresh the schema you embed in the Analyst GPT prompt whenever the model changes. Requires pydantic. |
+
+### Config argument (v3 #21)
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--config` | path | none | Path to a **YAML config file**. Keys mirror the CLI flags in snake_case (`filter_level`, `dedup_engine`, `boost_keywords`, …). Precedence: **CLI flag > YAML value > argparse default**, so any flag passed on the command line overrides the file, and any key omitted from the file falls back to the built-in default. Requires PyYAML (`pip install pyyaml`); when absent, `--config` errors clearly and pure-CLI usage is unaffected. |
+
+#### YAML config example
+
+See [`config.example.yaml`](config.example.yaml) for a full template. A minimal one:
+
+```yaml
+input:  ./realworld_test/input
+output: ./realworld_test/output
+filter_level: permissive
+dedup_engine: auto
+boost_keywords: [recommend, critical, growth]
+inspect: true
+inspect_top: 20
+```
+
+Then run:
+```bash
+python step1_preprocessor_v3.py --config config.example.yaml
+# CLI flags still override the file on a one-off basis:
+python step1_preprocessor_v3.py --config config.example.yaml --inspect-top 5
+```
+
 ---
 
 ## Installation & Dependencies
@@ -349,16 +448,25 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 **Python 3.10+** (tested on 3.14).
 
 ```bash
-python -m pip install pandas openpyxl python-pptx PyMuPDF python-docx Pillow pytesseract
+python -m pip install pandas openpyxl python-pptx PyMuPDF python-docx Pillow pytesseract pydantic rapidfuzz pdfplumber numpy sentence-transformers pyyaml structlog
+# Core deps (required): pandas openpyxl python-pptx PyMuPDF python-docx Pillow pytesseract
+# v3 optional (graceful degradation if absent): pydantic rapidfuzz pdfplumber numpy sentence-transformers
 ```
 
 | Package | Purpose |
 |---------|---------|
 | `pandas` + `openpyxl` | Excel/CSV profiling (required) |
 | `python-pptx` | PPTX extraction (required for `.pptx`) |
-| `PyMuPDF` (`fitz`) | PDF text/table extraction (required for `.pdf`) |
+| `PyMuPDF` (`fitz`) | PDF text/layout/OCR rendering (required for `.pdf`) |
+| `pdfplumber` | Superior PDF table cell detection — ruled/unruled/merged tables (v3; optional — falls back to PyMuPDF's `find_tables()`) |
 | `python-docx` | DOCX extraction (required for `.docx`) |
 | `Pillow` + `pytesseract` | OCR for scanned PDFs (only needed with `--enable-ocr`) |
+| `pydantic` | Schema contracts for the Evidence Register + JSON Schema generation (v3; optional — if absent, runtime validation is skipped but the pipeline runs) |
+| `rapidfuzz` | Semantic near-dup dedup + cross-file fuzzy entity matching (#10, #17-19; optional — falls back to stdlib `difflib`) |
+| `numpy` | Pure-numpy TF-IDF + cosine for the opt-in `tfidf` dedup tier (#20; optional — falls back to rapidfuzz/difflib) |
+| `sentence-transformers` | Embedding-based semantic dedup — the only tier that bridges synonym / no-shared-vocab near-dups (#20; optional — `auto` falls back to rapidfuzz when absent) |
+| `PyYAML` | `--config` YAML config file support (#21; optional — `--config` errors clearly when absent; pure-CLI usage unaffected) |
+| `structlog` | Centralized leveled logging (#23; optional — falls back to stdlib `logging`; both write `run.log` + `run_metadata.json`) |
 
 **External binary for OCR:** Tesseract OCR.
 - **Windows:** `winget install UB-Mannheim.TesseractOCR` (lands in
@@ -397,6 +505,11 @@ python step1_preprocessor_v3.py \
 python step1_preprocessor_v3.py \
   --input ./files --output ./out \
   --export-md --export-csv
+
+# 5. YAML config (commit-able, reproducible runs) — see config.example.yaml
+python step1_preprocessor_v3.py --config config.example.yaml
+# CLI flags still override the file on a one-off basis:
+python step1_preprocessor_v3.py --config config.example.yaml --inspect-top 5
 ```
 
 > Swap `step1_preprocessor_v3.py` for `step1_preprocessor_v2_full.py` to run
@@ -404,7 +517,8 @@ python step1_preprocessor_v3.py \
 
 **What to open first:** `output/preprocessor_summary.md` — the human-readable
 overview. Then `evidence_register_seed.json` — the Analyst handoff. v3 also
-writes `coverage_map.json` — a per-stage / per-source coverage summary.
+writes `coverage_map.json` — a per-stage / per-source coverage summary — and
+v3 also writes `entities_summary.json` (top categorical values per Excel column).
 
 ---
 
@@ -436,7 +550,7 @@ The test suite lives in `tests/` and uses `pytest`.
 
 ```bash
 python -m pip install pytest pytest-mock
-python -m pytest                 # full suite (~67s; 230 passed + 8 skipped = 238 collected)
+python -m pytest                 # full suite (~71s; 384 passed + 8 skipped = 392 collected)
 python -m pytest tests/ -v       # verbose
 python -m pytest -k ocr -v       # just OCR-regression tests
 ```
@@ -454,7 +568,16 @@ python -m pytest -k ocr -v       # just OCR-regression tests
 | `test_ocr.py` | `_ensure_tesseract` auto-detection + `extract_pdf` OCR path (skips if Tesseract absent). |
 | `test_intent.py` | **Specification tests** verifying the codebase goal: source-backed, priority-ordered register mapped to Why→What→How→Now. |
 | `test_realworld.py` | **Real-data regressions** using downloaded files (supermarket_sales.xlsx + Performance.pptx); skips if absent. |
-| `test_v3.py` | **v3 enhancement regressions** — trends, cross-sheet consolidation, per-bullet ranking, coverage map, aggregates (synthetic + real-data). |
+| `test_v3.py` | **v3 enhancement regressions** — trends, cross-sheet consolidation, per-bullet ranking, coverage map, aggregates, provenance, CSV fields, per-type caps, confidence model, semantic dedup, nav-text filter, entities summary (synthetic + real-data). |
+| `test_schemas.py` | **Pydantic contract tests** — `EvidenceEntry` accepts well-formed entries & rejects all malformed variants; runtime validation drops bad entries to errors; `--emit-schema` CLI; real register validates. |
+| `test_pptx_extraction.py` | **v3 PPTX extraction regressions** — group-shape recursion, SmartArt/graphic-frame text fallback, embedded-OLE detection, spatial (top,left) multi-column ordering. |
+| `test_pdf_tables.py` | **v3 merged PDF table extraction** — pdfplumber-preferred engine + PyMuPDF fallback, `--pdf-table-engine` flag, graceful degradation, enriched header/cols/cell evidence. |
+| `test_cross_file_entities.py` | **v3 cross-file entity matching** — abbreviation/alias expansion, fuzzy matching + word-boundary for all lengths, per-entity "mentioned in N files" stats in evidence + coverage map. |
+| `test_semantic_dedup.py` | **v3 tiered semantic dedup (#20)** — sentence-transformers embeddings tier (mocked), pure-numpy TF-IDF+cosine opt-in tier, rapidfuzz fuzzy fallback, source-provenance merging (`dedup_merged_sources`/`dedup_merged_ids`), graceful degradation, templated-data false-positive guard. |
+| `test_yaml_config.py` | **v3 YAML config (#21)** — CLI>YAML>default precedence ladder, store-true overrides, boost-keyword lists, error paths (missing file, bad choice, bad type, non-mapping, no-PyYAML), end-to-end `main()` integration, pure-CLI regression. |
+| `test_timing.py` | **v3 time profiling (#22)** — always-on console timing, per-file durations (not cumulative — the old bug), stage breakdown, PDF/DOCX timed, error-file status, persisted to `preprocessor_summary.md`, sorted per-file table. |
+| `test_logging.py` | **v3 centralized logging + run_metadata.json (#23)** — structlog/stdlib logger factory with leveled console + run.log file, git provenance helpers (read-only), always-emitted run_metadata.json (version, commit, config snapshot, timing, optional-deps inventory, counts), error logging. |
+| `test_stage_mapping.py` | **v3 configurable Why/What/How/Now stage mapping (#24)** — centralized stage-rules table replacing ~20 hardcoded literals, 3 config layers (insight_type, keyword-override, slide-type), `_stages_for()` lookup order, validation (bad stage/regex), regression guard. |
 | `test_my_files.py` | **Template** to validate the preprocessor against *your own* files — set `MY_FILES` env var or edit `MY_FILES_DIR`, then run. |
 
 ### Running tests against your own files (`tests/test_my_files.py`)
@@ -495,7 +618,7 @@ insights are "right" (use `--inspect` for that manual review).
 
 ## v3 Enhancements (over v2)
 
-`step1_preprocessor_v3.py` adds five insight-quality improvements, each pinned
+`step1_preprocessor_v3.py` adds twelve insight-quality improvements, each pinned
 by tests in `tests/test_v3.py`. Validated against the real-world files
 (supermarket_sales.xlsx + Performance.pptx):
 
@@ -506,10 +629,57 @@ by tests in `tests/test_v3.py`. Validated against the real-world files
 | 3 | **Per-bullet insight ranking** — individual bullets are scored by insight-language density via `insight_priority_boost()`, so "Recommendation: expand" outranks "LogLevel: …". | all 61 bullets flat at 0.75 | insight bullets boosted up to 0.94; generic stay at 0.75 |
 | 4 | **Coverage map handoff** — a new `coverage_map.json` summarizes evidence per Why/What/How/Now stage and per source file, flagging stages with no evidence (e.g. `Now` empty). | no coverage signal | `coverage_map.json` + summary-report section |
 | 5 | **Computed aggregate insights** — numeric×categorical group-bys are actually computed (not just suggested) and emitted as `aggregate_insight` with per-group totals. | 1 suggestion only | **18** concrete aggregates (e.g. "Unit price by Branch: A=6349, B=6544, C=6860") |
+| 6 | **Extraction-method provenance** — every evidence carries an `extraction_method` (`computed`/`chart_data`/`text_layer`/`ocr`/`bullet`/`table_cell`/…) so the Analyst GPT can weight reliability. | no provenance | method on all entries |
+| 7 | **Full-field CSV export** — `--export-csv` now writes the complete field set (source_file, column_name, extraction_method, ocr_used, related_files, boosted_by_rule) instead of 7 columns; lists are joined for CSV. | 7 CSV columns | **15** fields |
+| 8 | **Per (source, type) caps** — bullet_insight ≤20, pptx_slide_insight ≤15, table_cell ≤12, categorical_distribution ≤12, so one source can't flood the register; highest-priority representatives kept. | unbounded (170 entries) | capped (94 entries, same signal density) |
+| 9 | **Reliability-based confidence** — confidence is keyed to extraction method (computed/chart/numeric = high; OCR/bullet/table_cell = medium), downgrading over-confident entries. | arbitrary binary | method-driven |
+| 10 | **Semantic near-dup dedup** — fuzzy similarity (rapidfuzz, difflib fallback) collapses rephrasings ("Recommendation: expand" ≈ "Recommend expanding") at threshold 0.85, while preserving genuinely distinct insights. | exact-prefix only | exact + semantic |
+| 11 | **PPTX navigation-text filtering** — bullets duplicating the slide title or repeated across ≥30% of slides (footers/headers/section labels) are dropped; unique insights kept. | nav text leaked in | nav text filtered |
+| 12 | **Top-entities summary** — a new `entities_summary.json` lists the top values per Excel categorical column with counts and share %, giving the Analyst ready-made segmentation anchors. | none | `entities_summary.json` (21 columns on the real file) |
 
 New module-level helpers: `sheet_time_rank()`, `insight_priority_boost()`,
-`_parse_numeric_token()`. New evidence types: `trend_insight`,
-`aggregate_insight`. New output file: `coverage_map.json`.
+`_parse_numeric_token()`, `confidence_for_method()`, `_text_similarity()`,
+`_iter_shapes_deep()`, `_extract_shape_text()`, `_is_group()`,
+`_is_embedded_object()`, `_shape_position()`. New evidence types: `trend_insight`,
+`aggregate_insight`. New output files: `coverage_map.json`, `entities_summary.json`.
+
+---
+
+## Schema Contract (Pydantic)
+
+The shape of the Evidence Register — the contract the Impact Slide Analyst GPT
+treats as its source of truth — is formally defined in **`schemas.py`** as
+Pydantic `BaseModel` classes. This makes it a single source of truth instead
+of three loose places (README prose, dict-building code, GPT-prompt text) that
+can drift apart.
+
+**What this gives you:**
+
+1. **Runtime validation** — before the register is written, every entry is
+   validated against `EvidenceEntry`. Malformed entries (bad `evidence_id`,
+   out-of-range `priority_score`, unknown `insight_type`, non-framework
+   narrative stage, …) are dropped to `processing_errors.json` instead of
+   silently shipping bad data to the GPT.
+2. **A machine-readable GPT contract** — `EvidenceEntry.model_json_schema()` is
+   auto-generated as `evidence_schema.json` on every run (and via
+   `--emit-schema`). Paste that JSON Schema straight into the Analyst GPT
+   prompt instead of a fragile prose description; refresh it whenever the model
+   changes.
+3. **One-place schema evolution** — when v4 adds a field or evidence type,
+   change `schemas.py` and the README, code, JSON output, and GPT contract all
+   stay in sync because they derive from it.
+
+The models: `EvidenceEntry` (the core contract), `FileInventoryItem`,
+`CoverageMap`, `EntitiesSummaryItem`. Constrained fields: `evidence_id`
+(matches `E\d{4}`), `priority_score` (0.0–1.0), `insight_type` &
+`extraction_method` & `confidence` (enum sets), `suggested_narrative_use`
+(subset of Why/What/How/Now). Extra optional fields (`related_files`,
+`boosted_by_rule`, `pptx_classification`, `group_by`, `metric_value`,
+`metric_type`, `table_cell`) pass through unchanged.
+
+Pydantic is optional at runtime: if it's not installed, the pipeline still
+runs (validation is skipped), but `evidence_schema.json` won't be emitted.
+Install it with `pip install pydantic`.
 
 ---
 
