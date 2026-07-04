@@ -5,7 +5,7 @@ This project ships **two versions** of the Step 1 preprocessor:
 | Version | File | Status |
 |---------|------|--------|
 | **v2** | `step1_preprocessor_v2_full.py` | Stable, fully tested (201 tests). The bug-fix baseline. |
-| **v3** | `step1_preprocessor_v3.py` | **Active development.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, and configurable Why/What/How/Now stage mapping (183 dedicated tests). |
+| **v3** | `step1_preprocessor_v3.py` | **Active development.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
 
 Both produce the same Evidence Register handoff for the Impact Slide Analyst
 GPT; v3 emits a richer register. Use v3 going forward; v2 remains for
@@ -302,6 +302,16 @@ exports, and (if `--inspect`) prints the console summary.
   via YAML config. Lookup order: keyword-override (first match) > insight-type
   default > fallback `What`. Validated against `NARRATIVE_STAGES` at config
   load (fail fast on bad stage names / bad regex).
+- **Advanced analytics (v3 #25)** — three high-signal analytical passes that
+  feed the What/How stages: (1) **IQR outlier detection** per numeric column
+  (Q1−1.5×IQR / Q3+1.5×IQR bounds; emits `outlier_insight` with count, bounds,
+  and example values); (2) **correlation hints** between numeric column pairs
+  (Pearson r; emits `correlation_insight` when |r|≥0.6, priority scales with |r|,
+  capped at 8 pairs); (3) **robust within-sheet YoY/QoQ/MoM period trends** —
+  detects the period from a date column's span (YoY if >365 days, QoQ if >90,
+  MoM otherwise), groups numeric metrics by period, and computes deltas
+  (`period_trend_insight`). Much more robust than the cross-sheet sheet-name
+  heuristic (#1) — works on a single sheet with a Date column.
 
 ---
 
@@ -550,7 +560,7 @@ The test suite lives in `tests/` and uses `pytest`.
 
 ```bash
 python -m pip install pytest pytest-mock
-python -m pytest                 # full suite (~71s; 384 passed + 8 skipped = 392 collected)
+python -m pytest                 # full suite (~73s; 400 passed + 8 skipped = 408 collected)
 python -m pytest tests/ -v       # verbose
 python -m pytest -k ocr -v       # just OCR-regression tests
 ```
@@ -578,6 +588,7 @@ python -m pytest -k ocr -v       # just OCR-regression tests
 | `test_timing.py` | **v3 time profiling (#22)** — always-on console timing, per-file durations (not cumulative — the old bug), stage breakdown, PDF/DOCX timed, error-file status, persisted to `preprocessor_summary.md`, sorted per-file table. |
 | `test_logging.py` | **v3 centralized logging + run_metadata.json (#23)** — structlog/stdlib logger factory with leveled console + run.log file, git provenance helpers (read-only), always-emitted run_metadata.json (version, commit, config snapshot, timing, optional-deps inventory, counts), error logging. |
 | `test_stage_mapping.py` | **v3 configurable Why/What/How/Now stage mapping (#24)** — centralized stage-rules table replacing ~20 hardcoded literals, 3 config layers (insight_type, keyword-override, slide-type), `_stages_for()` lookup order, validation (bad stage/regex), regression guard. |
+| `test_analytics.py` | **v3 IQR outlier detection, correlation hints, period trends (#25)** — IQR outlier bounds per numeric column, Pearson correlation between numeric pairs (|r|≥0.6), within-sheet YoY/QoQ/MoM trends via date-column period grouping, schema/stage registration. |
 | `test_my_files.py` | **Template** to validate the preprocessor against *your own* files — set `MY_FILES` env var or edit `MY_FILES_DIR`, then run. |
 
 ### Running tests against your own files (`tests/test_my_files.py`)

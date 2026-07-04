@@ -431,6 +431,9 @@ DEFAULT_INSIGHT_TYPE_STAGES = {
     "categorical_distribution": ["Why", "What"],
     "category_by_metric_suggestion": ["How", "What"],
     "trend_insight":            ["How", "What", "Why"],
+    "period_trend_insight":    ["How", "What", "Why"],
+    "outlier_insight":         ["What", "How"],
+    "correlation_insight":    ["How", "What"],
     "aggregate_insight":        ["How", "What"],
     "multi_column_suggestion":  ["How", "What"],
     "chart_insight":            ["How", "What"],
@@ -1328,6 +1331,37 @@ class ImpactSlidePreprocessorV2:
                     "location": sheet_name,
                     "column": col_name,
                 })
+
+                # v3 #25: IQR outlier detection per numeric column. Values
+                # below Q1 - 1.5*IQR or above Q3 + 1.5*IQR are statistical
+                # outliers — extremely high-signal for the 'What' stage
+                # (anomalies worth investigating) and 'How' (root-cause analysis).
+                try:
+                    q1 = float(numeric.quantile(0.25))
+                    q3 = float(numeric.quantile(0.75))
+                    iqr = q3 - q1
+                    if iqr > 0:
+                        lower_bound = q1 - 1.5 * iqr
+                        upper_bound = q3 + 1.5 * iqr
+                        outliers = numeric[(numeric < lower_bound) | (numeric > upper_bound)]
+                        outlier_count = int(outliers.shape[0])
+                        if outlier_count > 0:
+                            outlier_pct = round(outlier_count / numeric_count * 100, 1)
+                            sample_vals = [clean_text(v) for v in outliers.head(3).tolist()]
+                            direction = "high" if outliers.mean() > profile.get("mean", 0) else "low"
+                            findings.append({
+                                "type": "outlier_insight",
+                                "text": (f"{sheet_name}: '{col_name}' has {outlier_count} outlier(s) "
+                                         f"({outlier_pct}% of data) outside [{round(lower_bound, 2)}, "
+                                         f"{round(upper_bound, 2)}] (IQR method). Examples: {', '.join(sample_vals)}."),
+                                "priority_score": 0.82,
+                                "location": sheet_name,
+                                "column": col_name,
+                            })
+                            profile["outlier_count"] = outlier_count
+                            profile["outlier_bounds"] = [round(lower_bound, 2), round(upper_bound, 2)]
+                except Exception:
+                    pass
                 continue
 
             # --- Date ---
@@ -1392,6 +1426,45 @@ class ImpactSlidePreprocessorV2:
                     "column": col_name,
                 })
 
+        # v3 #25: correlation hints between numeric columns. Compute Pearson r
+        # for each pair of non-ID numeric columns; emit a correlation_insight
+        # when |r| >= 0.6 (moderate+) so the analyst sees which metrics move
+        # together. Extremely high-signal for the 'How' stage (driver analysis).
+        # Cap at top 8 pairs by |r| to keep the register compact.
+        correlation_findings = []
+        numeric_non_id = [p for p in numeric_profiles if not p.get("is_identifier")]
+        if len(numeric_non_id) >= 2:
+            corr_pairs = []
+            for i, p1 in enumerate(numeric_non_id):
+                for p2 in numeric_non_id[i + 1:]:
+                    c1, c2 = p1["column"], p2["column"]
+                    if c1 not in data.columns or c2 not in data.columns:
+                        continue
+                    try:
+                        s1 = pd.to_numeric(data[c1], errors="coerce")
+                        s2 = pd.to_numeric(data[c2], errors="coerce")
+                        paired = pd.concat([s1, s2], axis=1).dropna()
+                        if len(paired) < 5:
+                            continue
+                        r = float(paired.iloc[:, 0].corr(paired.iloc[:, 1]))
+                        if not pd.isna(r) and abs(r) >= 0.6:
+                            corr_pairs.append((abs(r), r, c1, c2, len(paired)))
+                    except Exception:
+                        pass
+            corr_pairs.sort(key=lambda x: x[0], reverse=True)
+            for _, r, c1, c2, n in corr_pairs[:8]:
+                direction = "positive" if r > 0 else "negative"
+                strength = "strong" if abs(r) >= 0.8 else "moderate"
+                correlation_findings.append({
+                    "type": "correlation_insight",
+                    "text": (f"{sheet_name}: '{c1}' and '{c2}' have a {strength} {direction} "
+                             f"correlation (r={r:.2f}, n={n}). They move {'together' if r > 0 else 'in opposite directions'}."),
+                    "priority_score": round(0.80 + abs(r) * 0.10, 3),
+                    "location": sheet_name,
+                    "columns": [c1, c2],
+                })
+        findings.extend(correlation_findings)
+
         # Basic multi-column insight
         multi_column_insights = []
         if numeric_profiles and categorical_profiles:
@@ -1431,6 +1504,15 @@ class ImpactSlidePreprocessorV2:
                 except Exception:
                     pass
 
+        # v3 #25: within-sheet YoY/QoQ/MoM period trends. If the sheet has a
+        # date column AND numeric columns, detect the period span and compute
+        # per-period deltas (e.g. monthly mean revenue Jan vs Feb = +12%).
+        # Much more robust than the cross-sheet sheet-name heuristic (#1) —
+        # works even when all data is in one sheet with a Date column.
+        period_trend_findings = self._detect_period_trends(
+            data, date_profiles, numeric_profiles, sheet_name)
+        findings.extend(period_trend_findings)
+
         return {
             "sheet_name": sheet_name,
             "status": "ok",
@@ -1460,6 +1542,102 @@ class ImpactSlidePreprocessorV2:
             if score > best_score or (score == best_score and unique_ratio > best_unique):
                 best_score, best_unique, best_row = score, unique_ratio, idx
         return best_row
+
+    def _detect_period_trends(self, data: pd.DataFrame, date_profiles: List[Dict],
+                               numeric_profiles: List[Dict], sheet_name: str) -> List[Dict]:
+        """v3 #25: Detect within-sheet YoY/QoQ/MoM trends.
+
+        If the sheet has a date column, group numeric metrics by the detected
+        period (year, quarter, or month) and compute deltas between consecutive
+        periods. Emits 'period_trend_insight' findings — much more robust than
+        the cross-sheet heuristic (#1) because it works on a single sheet with
+        a Date column (the common real-world pattern).
+        """
+        if not date_profiles or not numeric_profiles:
+            return []
+
+        # Find the best date column (most non-null dates).
+        best_date_col = None
+        best_date_series = None
+        best_date_count = 0
+        for dp in date_profiles:
+            col = dp["column"]
+            if col not in data.columns:
+                continue
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    ds = pd.to_datetime(data[col], errors="coerce")
+                count = int(ds.notna().sum())
+                if count > best_date_count and count >= 2:
+                    best_date_col = col
+                    best_date_series = ds
+                    best_date_count = count
+            except Exception:
+                pass
+
+        if best_date_series is None or best_date_count < 2:
+            return []
+
+        # Determine the period: if dates span > 1 year, use YoY; if > 1 quarter
+        # within a year, use QoQ; else use MoM.
+        dates_clean = best_date_series.dropna()
+        try:
+            min_date = dates_clean.min()
+            max_date = dates_clean.max()
+            span_days = (max_date - min_date).days
+        except Exception:
+            return []
+
+        if span_days < 40:
+            return []  # too short for any meaningful trend
+
+        # Period detection: YoY if span > 365, QoQ if span > 90, else MoM.
+        if span_days > 365:
+            period_label = "YoY"
+            period_group = dates_clean.dt.year
+        elif span_days > 90:
+            period_label = "QoQ"
+            period_group = dates_clean.dt.year.astype(str) + "-Q" + dates_clean.dt.quarter.astype(str)
+        else:
+            period_label = "MoM"
+            period_group = dates_clean.dt.year.astype(str) + "-" + dates_clean.dt.month.astype(str).str.zfill(2)
+
+        findings = []
+        for np_profile in numeric_profiles:
+            if np_profile.get("is_identifier"):
+                continue
+            col = np_profile["column"]
+            if col not in data.columns or col == best_date_col:
+                continue
+            try:
+                vals = pd.to_numeric(data[col], errors="coerce")
+                df = pd.DataFrame({"period": period_group, "val": vals})
+                df = df.dropna()
+                if len(df) < 2:
+                    continue
+                per_period = df.groupby("period")["val"].mean().sort_index()
+                if len(per_period) < 2:
+                    continue
+                first_p, last_p = per_period.index[0], per_period.index[-1]
+                first_v, last_v = float(per_period.iloc[0]), float(per_period.iloc[-1])
+                if first_v == 0:
+                    continue
+                pct = round((last_v - first_v) / abs(first_v) * 100, 1)
+                direction = "increase" if pct >= 0 else "decrease"
+                findings.append({
+                    "type": "period_trend_insight",
+                    "text": (f"{sheet_name}: '{col}' shows a {direction} of {abs(pct)}% "
+                             f"({period_label}) from {first_p} ({first_v:.2f}) to "
+                             f"{last_p} ({last_v:.2f})."),
+                    "priority_score": 0.87,
+                    "location": sheet_name,
+                    "column": col,
+                    "period_type": period_label,
+                })
+            except Exception:
+                pass
+        return findings[:10]  # cap to keep the register compact
 
     def extract_spreadsheet(self, path: Path, item: Dict) -> Dict:
         try:
@@ -2401,7 +2579,8 @@ class ImpactSlidePreprocessorV2:
     @staticmethod
     def _method_for_insight(itype: str, ev: Dict) -> str:
         """Map an insight_type (and entry flags) to an extraction method."""
-        if itype in ("trend_insight", "aggregate_insight"):
+        if itype in ("trend_insight", "period_trend_insight", "aggregate_insight",
+                     "outlier_insight", "correlation_insight"):
             return "computed"
         if itype == "chart_data_insight":
             return "chart_data"
@@ -2448,6 +2627,9 @@ class ImpactSlidePreprocessorV2:
             "pptx_slide_insight": 15,
             "table_cell": 12,
             "categorical_distribution": 12,
+            "outlier_insight": 10,
+            "correlation_insight": 8,
+            "period_trend_insight": 10,
         }
         buckets = defaultdict(list)
         for ev in evidence:

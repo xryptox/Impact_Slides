@@ -33,6 +33,7 @@ python -m pytest tests/ -v
 | `test_timing.py` | **v3 time profiling (#22)** — always-on console timing, per-file durations (not cumulative), stage breakdown, PDF/DOCX timed, error-file status, persisted to summary, sorted per-file table |
 | `test_logging.py` | **v3 centralized logging + run_metadata.json (#23)** — structlog/stdlib logger factory, leveled console + run.log, git provenance (read-only), always-emitted run_metadata.json, error logging |
 | `test_stage_mapping.py` | **v3 configurable Why/What/How/Now stage mapping (#24)** — centralized stage-rules table, 3 config layers (insight_type, keyword-override, slide-type), `_stages_for()` lookup order, validation, regression guard |
+| `test_analytics.py` | **v3 IQR outlier detection, correlation hints, period trends (#25)** — IQR bounds, Pearson correlation (|r|≥0.6), YoY/QoQ/MoM date-column trends, schema/stage registration |
 
 ## Bug-fix regressions pinned
 

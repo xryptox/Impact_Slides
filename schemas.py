@@ -48,6 +48,9 @@ INSIGHT_TYPES = {
     "docx_insight",
     "trend_insight",
     "aggregate_insight",
+    "outlier_insight",
+    "correlation_insight",
+    "period_trend_insight",
     "cross_file_metric",
 }
 
