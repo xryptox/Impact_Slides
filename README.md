@@ -5,7 +5,8 @@ This project ships **two versions** of the Step 1 preprocessor:
 | Version | File | Status |
 |---------|------|--------|
 | **v2** | `step1_preprocessor_v2_full.py` | Stable, fully tested (201 tests). The bug-fix baseline. |
-| **v3** | `step1_preprocessor_v3.py` | **Active development.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
+| **v4** | `step1_preprocessor_v4.py` | **Active development.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). |
+| **v3** | `step1_preprocessor_v3.py` | **Stable baseline.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
 
 Both produce the same Evidence Register handoff for the Impact Slide Analyst
 GPT; v3 emits a richer register. Use v3 going forward; v2 remains for
@@ -312,6 +313,24 @@ exports, and (if `--inspect`) prints the console summary.
   MoM otherwise), groups numeric metrics by period, and computes deltas
   (`period_trend_insight`). Much more robust than the cross-sheet sheet-name
   heuristic (#1) — works on a single sheet with a Date column.
+- **Analyst Briefing Generator (v4 #26)** — a condensed strategic handoff for
+  the Impact Slide Analyst GPT (Step 2). Emits `analyst_briefing.md` +
+  `analyst_briefing.json` unconditionally, containing: (1) a **Narrative
+  Readiness Score** (0–100 composite + per Why/What/How/Now stage) from a
+  5-component weighted model (coverage balance 30%, priority quality 25%,
+  cross-file connectivity 20%, recommendation strength 15%, signal ratio 10%);
+  (2) **ranked Suggested Focus Areas** scored by a 5-factor model (avg
+  priority + cross-file strength + insight-quality boost + source diversity +
+  business-relevance signals) over multi-signal theme detection (column
+  names, "X by Y" patterns, cross-file entities, business keywords, derived-
+  insight boosts, near-duplicate theme merging); (3) the top cross-file
+  relationships surfaced compactly; (4) quality flags
+  (`missing_now_stage`, `no_cross_file_links`, `single_source`, …) and
+  slide-building recommendations. Lives in `analyst_briefing.py` (decoupled,
+  fully unit-testable); weights + business keywords overridable via YAML
+  `briefing:` config; `--focus-areas N` CLI flag controls how many areas to
+  surface. A `briefing` summary block is also added to `run_metadata.json`
+  and a Narrative Readiness section to `preprocessor_summary.md`.
 
 ---
 
@@ -339,12 +358,14 @@ All written to `--output`. (The **Evidence Register** — the main Analyst hando
 | **`evidence_register_seed.json`** | if evidence found | **The main handoff to the Analyst GPT.** Priority-sorted list of evidence entries. |
 | `coverage_map.json` | v3, if evidence found | Coverage summary: per Why/What/How/Now stage counts, stages with no evidence, per-source-file counts, avg priority. |
 | `entities_summary.json` | v3, if Excel input | Top values per Excel categorical column with counts + share % — segmentation anchors for the Analyst. |
+| **`analyst_briefing.md`** | **v4, always** | **The condensed strategic handoff to the Analyst GPT.** Narrative Readiness Score + components, per-stage sub-scores, ranked Suggested Focus Areas, top cross-file relationships, quality flags, slide-building recommendations. |
+| `analyst_briefing.json` | v4, always | Structured version of `analyst_briefing.md` for agents/tooling. |
 | `evidence_schema.json` | v3, if pydantic installed | The JSON Schema for an EvidenceEntry — the machine-readable contract the Analyst GPT can reference (generated via `EvidenceEntry.model_json_schema()`). |
 | `filtering_log.json` | if items filtered | Why each column/insight was dropped (reason + thresholds) — useful for debugging. |
 | `processing_errors.json` | if errors | Per-file error messages (e.g. missing Tesseract, unreadable file). |
-| `preprocessor_summary.md` | always | Human-readable report: inventory, **Processing Time** (v3 #22), Excel/PPTX summaries, evidence breakdown, coverage map, top-5, classification table. |
+| `preprocessor_summary.md` | always | Human-readable report: inventory, **Processing Time** (v3 #22), Excel/PPTX summaries, evidence breakdown, coverage map, **Narrative Readiness** (v4 #26), top-5, classification table. |
 | `run.log` | v3, always | Timestamped, leveled log of every pipeline event (structlog/stdlib; full-fidelity DEBUG+). Machine-readable, so you can diff run N vs run N−1. |
-| `run_metadata.json` | v3, always | **Reproducibility artifact:** preprocessor version, git commit + dirty flag, run timestamps, resolved config snapshot (#21), per-stage timing (#22), optional-deps inventory (which fallback tiers were active), high-level counts. |
+| `run_metadata.json` | v3, always | **Reproducibility artifact:** preprocessor version, git commit + dirty flag, run timestamps, resolved config snapshot (#21), per-stage timing (#22), optional-deps inventory (which fallback tiers were active), high-level counts, **+ `briefing` block** (v4 #26: readiness score, stage scores, focus areas, quality flags). |
 | `evidence_register.md` | `--export-md` | Evidence register as Markdown. |
 | `evidence_register.csv` | `--export-csv` | Evidence register as CSV — full field set (v3): evidence_id, source_file, column_name, insight_type, extraction_method, text, priority_score, confidence, suggested_narrative_use, source_location, ocr_used, related_files, boosted_by_rule. |
 
@@ -417,6 +438,7 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 |------|------|---------|-------------|
 | `--inspect` | flag | off | Print a readable top-N Evidence Register summary to the console after running. |
 | `--inspect-top` | int | 15 | Number of top-priority entries to show with `--inspect`. |
+| `--focus-areas` | int | 5 | v4 #26: number of ranked focus areas to surface in the Analyst Briefing. |
 
 ### Schema argument (v3)
 
@@ -560,7 +582,7 @@ The test suite lives in `tests/` and uses `pytest`.
 
 ```bash
 python -m pip install pytest pytest-mock
-python -m pytest                 # full suite (~73s; 400 passed + 8 skipped = 408 collected)
+python -m pytest                 # full suite (~73s; 430 passed + 8 skipped = 438 collected)
 python -m pytest tests/ -v       # verbose
 python -m pytest -k ocr -v       # just OCR-regression tests
 ```
@@ -589,6 +611,7 @@ python -m pytest -k ocr -v       # just OCR-regression tests
 | `test_logging.py` | **v3 centralized logging + run_metadata.json (#23)** — structlog/stdlib logger factory with leveled console + run.log file, git provenance helpers (read-only), always-emitted run_metadata.json (version, commit, config snapshot, timing, optional-deps inventory, counts), error logging. |
 | `test_stage_mapping.py` | **v3 configurable Why/What/How/Now stage mapping (#24)** — centralized stage-rules table replacing ~20 hardcoded literals, 3 config layers (insight_type, keyword-override, slide-type), `_stages_for()` lookup order, validation (bad stage/regex), regression guard. |
 | `test_analytics.py` | **v3 IQR outlier detection, correlation hints, period trends (#25)** — IQR outlier bounds per numeric column, Pearson correlation between numeric pairs (|r|≥0.6), within-sheet YoY/QoQ/MoM trends via date-column period grouping, schema/stage registration. |
+| `test_analyst_briefing.py` | **v4 Analyst Briefing Generator (#26)** — Narrative Readiness 5-component score + per-stage sub-scores, multi-signal Focus Area detection + near-duplicate merging + ranking, quality flags + slide-building recommendations, Markdown rendering, pipeline integration (artefact emission, run_metadata block, summary section, `--focus-areas` CLI, zero-evidence case). |
 | `test_my_files.py` | **Template** to validate the preprocessor against *your own* files — set `MY_FILES` env var or edit `MY_FILES_DIR`, then run. |
 
 ### Running tests against your own files (`tests/test_my_files.py`)

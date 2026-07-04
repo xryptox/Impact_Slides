@@ -53,5 +53,28 @@ enable_ocr: false
 inspect: true
 inspect_top: 20
 
+# --- v4 #26: Analyst Briefing -----------------------------------------------
+# Number of ranked focus areas to surface in analyst_briefing.md/.json.
+focus_areas: 5
+# Optional: override the readiness/focus weight tables (both must list the
+# exact keys below and sum to 1.0). Omit to use the built-in defaults.
+# briefing:
+#   readiness_weights:
+#     coverage_balance: 0.30
+#     priority_quality: 0.25
+#     cross_file_connectivity: 0.20
+#     recommendation_strength: 0.15
+#     signal_ratio: 0.10
+#   focus_weights:
+#     avg_priority: 0.30
+#     cross_file_strength: 0.25
+#     insight_quality_boost: 0.20
+#     source_diversity: 0.15
+#     business_relevance_signals: 0.10
+#   business_keywords:        # extends the built-in set used for theme detection
+#     - revenue
+#     - margin
+#     - adoption
+
 # verbose: false
 # emit_schema: false             # true = write evidence_schema.json and exit (no processing)

@@ -171,7 +171,59 @@ class EntitiesSummaryItem(BaseModel):
     top_values: List[Dict[str, Any]]
 
 
+# --------------------------------------------------------------------------- #
+# v4: Analyst Briefing contracts
+# --------------------------------------------------------------------------- #
+class StageScore(BaseModel):
+    """Per-stage (Why/What/How/Now) readiness sub-score."""
+    model_config = ConfigDict(extra="allow")
+    stage: str
+    score: int = Field(ge=0, le=100)
+    evidence_count: int = Field(ge=0)
+    avg_priority: float = Field(ge=0.0, le=1.0)
+    note: Optional[str] = None
+
+
+class NarrativeReadiness(BaseModel):
+    """Composite Narrative Readiness Score (0-100) + per-stage breakdown."""
+    model_config = ConfigDict(extra="allow")
+    overall_score: int = Field(ge=0, le=100)
+    components: Dict[str, float] = Field(
+        description="5 component sub-scores (0-100): coverage_balance, "
+                   "priority_quality, cross_file_connectivity, "
+                   "recommendation_strength, signal_ratio.")
+    stage_scores: Dict[str, StageScore]
+    explanation: str
+
+
+class FocusArea(BaseModel):
+    """A ranked, multi-signal-scored business theme the analyst should focus on."""
+    model_config = ConfigDict(extra="allow")
+    rank: int = Field(ge=1)
+    area: str
+    score: float = Field(ge=0.0, le=100.0)
+    reason: str
+    evidence_count: int = Field(ge=0)
+    dominant_stages: List[str]
+    top_evidence_ids: List[str] = Field(default_factory=list)
+
+
+class AnalystBriefing(BaseModel):
+    """analyst_briefing.json — the condensed strategic handoff to Step 2."""
+    model_config = ConfigDict(extra="allow")
+    run_id: str
+    source_folder: str
+    total_evidence: int = Field(ge=0)
+    average_priority: float = Field(ge=0.0, le=1.0)
+    narrative_readiness: NarrativeReadiness
+    top_cross_file_relationships: List[Dict[str, Any]]
+    suggested_focus_areas: List[FocusArea]
+    quality_flags: List[str]
+    recommendations: List[str]
+
+
 __all__ = [
     "EvidenceEntry", "FileInventoryItem", "CoverageMap", "EntitiesSummaryItem",
+    "StageScore", "NarrativeReadiness", "FocusArea", "AnalystBriefing",
     "INSIGHT_TYPES", "EXTRACTION_METHODS", "CONFIDENCE_LEVELS", "NARRATIVE_STAGES",
 ]

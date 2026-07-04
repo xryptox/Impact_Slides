@@ -34,6 +34,7 @@ python -m pytest tests/ -v
 | `test_logging.py` | **v3 centralized logging + run_metadata.json (#23)** — structlog/stdlib logger factory, leveled console + run.log, git provenance (read-only), always-emitted run_metadata.json, error logging |
 | `test_stage_mapping.py` | **v3 configurable Why/What/How/Now stage mapping (#24)** — centralized stage-rules table, 3 config layers (insight_type, keyword-override, slide-type), `_stages_for()` lookup order, validation, regression guard |
 | `test_analytics.py` | **v3 IQR outlier detection, correlation hints, period trends (#25)** — IQR bounds, Pearson correlation (|r|≥0.6), YoY/QoQ/MoM date-column trends, schema/stage registration |
+| `test_analyst_briefing.py` | **v4 Analyst Briefing Generator (#26)** — Narrative Readiness 5-component score + per-stage sub-scores, multi-signal Focus Area detection + near-duplicate merging + ranking, quality flags + slide-building recommendations, Markdown rendering, pipeline integration (artefact emission, run_metadata block, summary section, `--focus-areas` CLI, zero-evidence case) |
 
 ## Bug-fix regressions pinned
 
