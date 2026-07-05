@@ -3221,6 +3221,15 @@ class ImpactSlidePreprocessorV4:
 
             doc.close()
 
+            # Strip running headers/footers and isolated page numbers from
+            # every page's text. A running header is a short line that
+            # appears at the top (first 2 lines) or bottom (last 2 lines) of
+            # >= 30% of pages — e.g. "Table of Contents" on 193/232 pages of
+            # a 10-K. Isolated page-number lines (pure digits, F-33, roman
+            # numerals, <= 6 chars) in the first/last 2 lines are also
+            # stripped. Mirrors the v3 #11 PPTX deck-wide navigation filter.
+            pages = self._strip_pdf_running_headers(pages)
+
             # v3: table extraction via the merged pdfplumber/PyMuPDF engine.
             # PyMuPDF stays primary for text/layout/OCR; pdfplumber (optional)
             # is preferred for table cell detection where it handles
@@ -3236,6 +3245,76 @@ class ImpactSlidePreprocessorV4:
             }
         except Exception as e:
             return {"file": str(path), "status": "error", "error": str(e)}
+
+    # ----- running header/footer stripping (PDF) -------------------------- #
+
+    # A line is considered a page number if it is short (<= 6 chars) and
+    # matches one of: pure digits, letter-dash-digits (F-33, A-12), or
+    # roman numerals (i, ii, iii, iv, v, vi, ... up to xx).
+    _PAGE_NUM_RE = re.compile(
+        r"^(?:\d{1,5}|[A-Z]-\d{1,4}|[ivxlcmIVXLCM]{1,6})$"
+    )
+
+    def _strip_pdf_running_headers(self, pages: List[Dict]) -> List[Dict]:
+        """Detect and strip running headers/footers + isolated page numbers
+        from each page's text.
+
+        A running header/footer is a short text line that appears at the top
+        (first 2 lines) or bottom (last 2 lines) of >= 30% of pages (minimum
+        3 pages). These are PDF boilerplate (e.g. "Table of Contents" on
+        193/232 pages of a 10-K) that PyMuPDF includes in the page text but
+        that carries no insight value.
+
+        Isolated page-number lines (pure digits, F-33, roman numerals) in
+        the first/last 2 lines are also stripped from every page.
+
+        This mirrors the v3 #11 PPTX deck-wide navigation/section-header
+        filter and is a pure function of the pages list.
+        """
+        if len(pages) < 3:
+            return pages  # too few pages to detect running headers
+
+        from collections import Counter
+
+        # --- 1. detect running headers/footers by frequency -------------- #
+        # Check the first 2 and last 2 non-empty lines of each page.
+        first_lines: Counter = Counter()
+        last_lines: Counter = Counter()
+        page_line_cache: List[List[str]] = []  # cache non-empty lines per page
+
+        for pg in pages:
+            lines = [ln.strip() for ln in pg.get("text", "").split("\n")
+                     if ln.strip()]
+            page_line_cache.append(lines)
+            for ln in lines[:2]:
+                first_lines[ln] += 1
+            for ln in lines[-2:]:
+                last_lines[ln] += 1
+
+        threshold = max(3, int(len(pages) * 0.30))
+        running_headers = {ln for ln, c in first_lines.items() if c >= threshold}
+        running_footers = {ln for ln, c in last_lines.items() if c >= threshold}
+        boilerplate = running_headers | running_footers
+
+        # --- 2. strip boilerplate + isolated page numbers ---------------- #
+        for pg, lines in zip(pages, page_line_cache):
+            if not lines:
+                continue
+            kept = []
+            for i, ln in enumerate(lines):
+                # Strip running headers/footers (any position).
+                if ln in boilerplate:
+                    continue
+                # Strip isolated page numbers, but only in the first 2 or
+                # last 2 lines (body page references like "See Note 5" must
+                # survive).
+                is_edge = i < 2 or i >= len(lines) - 2
+                if is_edge and len(ln) <= 6 and self._PAGE_NUM_RE.match(ln):
+                    continue
+                kept.append(ln)
+            pg["text"] = "\n".join(kept)[:5000]
+
+        return pages
 
     # ====================== DOCX SUPPORT (3.3) ======================
 
