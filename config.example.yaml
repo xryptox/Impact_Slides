@@ -56,6 +56,10 @@ inspect_top: 20
 # --- v4 #26: Analyst Briefing -----------------------------------------------
 # Number of ranked focus areas to surface in analyst_briefing.md/.json.
 focus_areas: 5
+# Maximum characters of the `text` field on every evidence entry (default 800,
+# the schemas.MAX_TEXT_LENGTH ceiling). Lower this for a tighter Analyst-GPT
+# token budget; cannot exceed the schema ceiling.
+# max_text_length: 800
 # Optional: override the readiness/focus weight tables (both must list the
 # exact keys below and sum to 1.0). Omit to use the built-in defaults.
 # briefing:

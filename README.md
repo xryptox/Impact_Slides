@@ -484,6 +484,7 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 | `--output` | path | — | **Required.** Folder where outputs are written (created if missing). |
 | `--filter-level` | choice | `conservative` | Filtering strictness. `conservative` = strict (min priority 0.25, ≥10% non-null, ≤90% unique); `moderate` = balanced (0.15 / 5% / 92%); `permissive` = minimal (0.05 / 2% / 98%). Lower levels retain more evidence. |
 | `--focus-areas` | int | `5` | v4 #26: number of ranked Suggested Focus Areas to surface in the Analyst Briefing (`analyst_briefing.md`/`.json`). |
+| `--max-text-length` | int | `800` | Maximum characters of the `text` field on every evidence entry (the `schemas.MAX_TEXT_LENGTH` ceiling). Applied uniformly at validation time so the register stays compact and the Analyst GPT token budget is predictable. Lower this (e.g. `500`) for a tighter budget; cannot exceed the schema ceiling (`800`). |
 | `--boost-keywords` | list | `[]` | Keywords that bump an evidence entry's priority by +0.15 (capped at 0.98), case-insensitive. Example: `--boost-keywords recommend critical growth`. |
 | `--verbose` | flag | off | Detailed console logging (boost keywords, export options, per-file timing, OCR errors). |
 
@@ -533,6 +534,7 @@ filter_level: permissive
 dedup_engine: auto
 boost_keywords: [recommend, critical, growth]
 focus_areas: 5                  # v4 #26
+# max_text_length: 800          # uniform evidence `text` cap (schema ceiling)
 inspect: true
 inspect_top: 20
 ```

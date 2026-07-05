@@ -22,6 +22,16 @@ from typing import List, Optional, Any, Dict
 from pydantic import BaseModel, ConfigDict, Field
 
 # --------------------------------------------------------------------------- #
+# Canonical limits (schema = single source of truth). config.py / cli.py /
+# preprocessor.py all reference these so the contract can't drift out of sync.
+# --------------------------------------------------------------------------- #
+#: Maximum length (characters) of the `text` field on every EvidenceEntry.
+#: Applied uniformly at validation time so the register stays compact and the
+#: Analyst GPT token budget is predictable. Overridable via --max-text-length
+#: / YAML, but the schema always enforces this as the hard ceiling.
+MAX_TEXT_LENGTH = 800
+
+# --------------------------------------------------------------------------- #
 # Enumerations (kept as plain strings via Literal-free validation so that
 # adding a new type is a one-line change here). Listed explicitly so unknown
 # values are rejected at validation time.
@@ -90,7 +100,9 @@ class EvidenceEntry(BaseModel):
                              description="Unique ID preserved by the Analyst GPT.")
     source_file: str = Field(description="Real input file this insight came from.")
     insight_type: str = Field(description="One of the known insight types.")
-    text: str = Field(description="Human-readable insight text.")
+    text: str = Field(max_length=MAX_TEXT_LENGTH,
+                             description="Human-readable insight text (truncated to "
+                                        f"{MAX_TEXT_LENGTH} chars by the preprocessor).")
     priority_score: float = Field(ge=0.0, le=1.0,
                                   description="Priority 0–1; register is sorted descending.")
     confidence: str = Field(description="Reliability level (high | medium | low).")
@@ -226,4 +238,5 @@ __all__ = [
     "EvidenceEntry", "FileInventoryItem", "CoverageMap", "EntitiesSummaryItem",
     "StageScore", "NarrativeReadiness", "FocusArea", "AnalystBriefing",
     "INSIGHT_TYPES", "EXTRACTION_METHODS", "CONFIDENCE_LEVELS", "NARRATIVE_STAGES",
+    "MAX_TEXT_LENGTH",
 ]

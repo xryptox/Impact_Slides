@@ -314,6 +314,14 @@ class ImpactSlidePreprocessorV4:
         self.briefing_readiness_weights = None
         self.briefing_focus_weights = None
         self.briefing_business_keywords = None
+        # Uniform ceiling on the `text` field of every evidence entry. The
+        # canonical constant lives in schemas.MAX_TEXT_LENGTH; the preprocessor
+        # truncates to this length (or a user-lowered value) in _validate_
+        # evidence() so the register stays compact and the Analyst GPT token
+        # budget is predictable. Set from cfg in cli.main(); the default is
+        # the schema ceiling.
+        from .schemas import MAX_TEXT_LENGTH as _SCHEMA_MAX_TEXT
+        self.max_text_length = _SCHEMA_MAX_TEXT
         # Generated artefacts (set by _generate_analyst_briefing()).
         self.analyst_briefing_md = None
         self.analyst_briefing_json = None
@@ -1495,10 +1503,10 @@ class ImpactSlidePreprocessorV4:
                         "evidence_id": f"E{evidence_id:04d}",
                         "source_file": source_file,
                         "insight_type": "speaker_notes_insight",
-                        "text": notes[:300],
+                        "text": notes,
                         "priority_score": 0.85,
                         "confidence": "high",
-                        "suggested_narrative_use": self._stages_for("speaker_notes_insight", notes[:300]),
+                        "suggested_narrative_use": self._stages_for("speaker_notes_insight", notes),
                         "source_location": f"Slide {slide['slide_index']}",
                     }
                     evidence.append(notes_ev)
@@ -1563,7 +1571,7 @@ class ImpactSlidePreprocessorV4:
                         "evidence_id": f"E{evidence_id:04d}",
                         "source_file": source_file,
                         "insight_type": insight_type,
-                        "text": f"Page {page['page']}: {text[:150]}...",
+                        "text": f"Page {page['page']}: {text}",
                         "priority_score": round(base_priority, 3),
                         "confidence": "medium" if is_ocr else ("high" if has_insight else "medium"),
                         "suggested_narrative_use": self._stages_for(insight_type, text),
@@ -1633,10 +1641,10 @@ class ImpactSlidePreprocessorV4:
                         "evidence_id": f"E{evidence_id:04d}",
                         "source_file": source_file,
                         "insight_type": "docx_insight",
-                        "text": para[:200],
+                        "text": para,
                         "priority_score": 0.60,
                         "confidence": "medium",
-                        "suggested_narrative_use": self._stages_for("docx_insight", para[:200]),
+                        "suggested_narrative_use": self._stages_for("docx_insight", para),
                         "source_location": "DOCX",
                     }
                     evidence.append(ev)
@@ -1690,7 +1698,21 @@ class ImpactSlidePreprocessorV4:
     def _validate_evidence(self, evidence: List[Dict]) -> List[Dict]:
         """Validate evidence entries against the EvidenceEntry schema. Bad entries
         are logged to self.errors and dropped. If pydantic isn't installed, this
-        is a no-op (the pipeline still runs, just without runtime guarantees)."""
+        is a no-op (the pipeline still runs, just without runtime guarantees).
+
+        Uniformly truncates every entry's `text` field to self.max_text_length
+        (default = schemas.MAX_TEXT_LENGTH = 800) *before* validation, so the
+        schema's max_length constraint never rejects a too-long string — it
+        just sees the already-truncated text. This replaces the per-extractor
+        caps (150/200/300) that were applied inconsistently across PDF/PPTX/
+        DOCX paths; those extractors now store the full text and this single
+        chokepoint enforces the ceiling."""
+        cap = self.max_text_length
+        for ev in evidence:
+            t = ev.get("text")
+            if isinstance(t, str) and len(t) > cap:
+                # Truncate to cap-1 chars + ellipsis (U+2026) = exactly cap chars.
+                ev["text"] = t[:cap - 1] + "\u2026"
         if not _HAS_PYDANTIC:
             return evidence
         kept = []

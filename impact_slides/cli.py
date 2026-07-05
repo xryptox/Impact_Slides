@@ -255,6 +255,10 @@ def main(argv=None):
                         help="Write evidence_schema.json (the Analyst GPT contract) to --output and exit, without processing files")
     parser.add_argument("--focus-areas", type=int, default=5,
                         help="v4 #26: number of ranked focus areas to surface in the Analyst Briefing (default: 5)")
+    parser.add_argument("--max-text-length", type=int, default=None,
+                        help="Maximum characters of the `text` field on every evidence entry "
+                             "(default: 800, the schema ceiling). Lower this for a tighter "
+                             "Analyst-GPT token budget; cannot exceed the schema ceiling.")
     parser.add_argument("--config", default=None,
                         help="Path to a YAML config file. CLI flags override YAML; YAML overrides defaults. "
                              "(optional; requires PyYAML). Keys mirror the CLI flags in snake_case "
@@ -300,6 +304,7 @@ def main(argv=None):
         preprocessor.pdf_table_engine = cfg["pdf_table_engine"]
         preprocessor.dedup_engine = cfg["dedup_engine"]
         preprocessor.focus_areas_count = cfg["focus_areas"]
+        preprocessor.max_text_length = cfg["max_text_length"]
         # v4 #26: apply optional briefing config from YAML (weights + business
         # keywords). CLI defaults are 5 / built-ins; YAML can override without a
         # dedicated flag. Validated above in validate_config().

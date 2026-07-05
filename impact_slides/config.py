@@ -20,6 +20,8 @@ except ImportError:  # pragma: no cover - graceful degradation
     _HAS_YAML = False
 
 
+from .schemas import MAX_TEXT_LENGTH as _SCHEMA_MAX_TEXT_LENGTH
+
 CONFIG_DEFAULTS = {
     "input": None,
     "output": None,
@@ -38,6 +40,7 @@ CONFIG_DEFAULTS = {
     "stage_rules": None,    # v3 #24: optional Why/What/How/Now mapping overrides
     "focus_areas": 5,       # v4 #26: number of focus areas in the briefing
     "briefing": None,       # v4 #26: optional briefing config (weights, business_keywords)
+    "max_text_length": _SCHEMA_MAX_TEXT_LENGTH,  # uniform evidence `text` cap
 }
 
 CONFIG_CHOICES = {
@@ -119,6 +122,20 @@ def validate_config(cfg: Dict[str, Any]) -> None:
     if not isinstance(fa, int) or fa < 1:
         raise ValueError(
             f"config 'focus_areas' must be a positive integer, got {fa!r}"
+        )
+    # max_text_length must be a positive integer and cannot exceed the schema
+    # ceiling (the Pydantic field's max_length is the hard contract — a user
+    # value above it would pass the preprocessor's truncation but then fail
+    # schema validation, so clamp here with a clear error).
+    mtl = cfg.get("max_text_length", _SCHEMA_MAX_TEXT_LENGTH)
+    if not isinstance(mtl, int) or mtl < 1:
+        raise ValueError(
+            f"config 'max_text_length' must be a positive integer, got {mtl!r}"
+        )
+    if mtl > _SCHEMA_MAX_TEXT_LENGTH:
+        raise ValueError(
+            f"config 'max_text_length'={mtl} exceeds the schema ceiling "
+            f"({_SCHEMA_MAX_TEXT_LENGTH}); use a value <= {_SCHEMA_MAX_TEXT_LENGTH}"
         )
     # v4 #26: validate optional briefing weights/business_keywords shape.
     br = cfg.get("briefing")
