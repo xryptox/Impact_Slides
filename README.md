@@ -72,6 +72,11 @@ constructs the trunk class `ImpactSlidePreprocessorV4` from
 `impact_slides.preprocessor`. Every leaf module is a small (<200 LOC) pure
 module that fits in a single read and is unit-testable in isolation.
 
+![Impact Slide Preprocessor v4 Architecture](docs/images/architecture_v4.svg)
+
+<details>
+<summary>ASCII fallback (click to expand)</summary>
+
 ```
                 ┌─────────────────────────────────────────────┐
    source files │  .xlsx .pptx .pdf .docx  (+.csv/.xls/.xlsm) │
@@ -137,6 +142,8 @@ module that fits in a single read and is unit-testable in isolation.
                 │  run.log  (+ evidence_register.csv/.md)       │
                 └─────────────────────────────────────────────┘
 ```
+
+</details>
 
 ### Key components
 
