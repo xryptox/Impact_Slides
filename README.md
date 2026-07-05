@@ -5,7 +5,7 @@ This project ships **two versions** of the Step 1 preprocessor:
 | Version | File | Status |
 |---------|------|--------|
 | **v2** | `step1_preprocessor_v2_full.py` | Stable, fully tested (201 tests). The bug-fix baseline. |
-| **v4** | `step1_preprocessor_v4.py` | **Active development.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). |
+| **v4** | `step1_preprocessor_v4.py` | **Active development.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). **v4 is modularized** into the `impact_slides/` package (13 modules); `step1_preprocessor_v4.py` is now a 55-line forwarding shim. |
 | **v3** | `step1_preprocessor_v3.py` | **Stable baseline.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
 
 Both produce the same Evidence Register handoff for the Impact Slide Analyst
@@ -331,6 +331,37 @@ exports, and (if `--inspect`) prints the console summary.
   `briefing:` config; `--focus-areas N` CLI flag controls how many areas to
   surface. A `briefing` summary block is also added to `run_metadata.json`
   and a Narrative Readiness section to `preprocessor_summary.md`.
+
+### Package architecture (v4 modular refactor, complete)
+
+v4 is modularized into the `impact_slides/` package. Each leaf is a small
+(<200 LOC) pure module that fits in a single read and is unit-testable in
+isolation; the trunk class lives in `preprocessor.py` and the CLI in `cli.py`.
+`step1_preprocessor_v4.py` is now a 55-line forwarding shim (PEP 562
+`__getattr__`) so every existing `import step1_preprocessor_v4` + CLI
+invocation keeps working unchanged — the 430-test suite needed **zero edits**.
+
+```
+impact_slides/
+├── __init__.py            package entry (lazy-imports the trunk)
+├── schemas.py             Pydantic contracts (single source of truth)
+├── analyst_briefing.py    v4 #26 Narrative Readiness + Focus Area generator
+├── text_utils.py          clean_text, get_column_letter, confidence_for_method
+├── heuristics.py          identifier/system/noise detection, sheet_time_rank
+├── text_analysis.py       insight-language detection + priority scoring
+├── logging_setup.py      logger factory + read-only git provenance
+├── config.py              YAML config resolution + validation
+├── stage_mapping.py      Why/What/How/Now stage-rule tables
+├── dedup.py               tiered semantic dedup engine (embeddings/tfidf/fuzzy)
+├── cross_file.py          abbreviation/entity matching helpers
+├── pptx_extract.py        PPTX shape helpers (group/SmartArt/spatial ordering)
+├── preprocessor.py        TRUNK: ImpactSlidePreprocessorV4 class + helpers
+└── cli.py                 main() + test_preprocessor() + inspect_register()
+```
+Dependency layering (acyclic): leaves → `preprocessor` (trunk) → `cli` →
+`step1_preprocessor_v4.py` shim. New code should import from the package
+directly (`from impact_slides.preprocessor import ImpactSlidePreprocessorV4`);
+the shim exists only for backward compatibility.
 
 ---
 
