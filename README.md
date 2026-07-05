@@ -5,7 +5,7 @@ This project ships **two versions** of the Step 1 preprocessor:
 | Version | File | Status |
 |---------|------|--------|
 | **v2** | `step1_preprocessor_v2_full.py` | Stable, fully tested (201 tests). The bug-fix baseline. |
-| **v4** | `step1_preprocessor_v4.py` | **Active development.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). **v4 is mid-refactor** into the `impact_slides/` package (10 leaf modules extracted so far; the trunk class + CLI remain in the monolith during the phased move). |
+| **v4** | `step1_preprocessor_v4.py` | **Active development.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). **v4 is modularized** into the `impact_slides/` package (13 modules); `step1_preprocessor_v4.py` is now a 55-line forwarding shim. |
 | **v3** | `step1_preprocessor_v3.py` | **Stable baseline.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
 
 Both produce the same Evidence Register handoff for the Impact Slide Analyst
@@ -332,12 +332,14 @@ exports, and (if `--inspect`) prints the console summary.
   surface. A `briefing` summary block is also added to `run_metadata.json`
   and a Narrative Readiness section to `preprocessor_summary.md`.
 
-### Package architecture (v4 refactor, in progress)
+### Package architecture (v4 modular refactor, complete)
 
-v4 is being modularized into the `impact_slides/` package. Each leaf is a small
+v4 is modularized into the `impact_slides/` package. Each leaf is a small
 (<200 LOC) pure module that fits in a single read and is unit-testable in
-isolation; the trunk class + CLI remain in `step1_preprocessor_v4.py` during
-the phased move (the deep methods are tightly coupled to `self.*` state).
+isolation; the trunk class lives in `preprocessor.py` and the CLI in `cli.py`.
+`step1_preprocessor_v4.py` is now a 55-line forwarding shim (PEP 562
+`__getattr__`) so every existing `import step1_preprocessor_v4` + CLI
+invocation keeps working unchanged — the 430-test suite needed **zero edits**.
 
 ```
 impact_slides/
@@ -352,12 +354,14 @@ impact_slides/
 ├── stage_mapping.py      Why/What/How/Now stage-rule tables
 ├── dedup.py               tiered semantic dedup engine (embeddings/tfidf/fuzzy)
 ├── cross_file.py          abbreviation/entity matching helpers
-└── pptx_extract.py        PPTX shape helpers (group/SmartArt/spatial ordering)
+├── pptx_extract.py        PPTX shape helpers (group/SmartArt/spatial ordering)
+├── preprocessor.py        TRUNK: ImpactSlidePreprocessorV4 class + helpers
+└── cli.py                 main() + test_preprocessor() + inspect_register()
 ```
-The monolith (`step1_preprocessor_v4.py`) imports these under their original
-module-level names, so all 430 tests + the CLI keep working unchanged. Phases
-1–3 are complete; Phase 4 (move the trunk class into `preprocessor.py` + make
-`step1_preprocessor_v4.py` a thin shim) is pending.
+Dependency layering (acyclic): leaves → `preprocessor` (trunk) → `cli` →
+`step1_preprocessor_v4.py` shim. New code should import from the package
+directly (`from impact_slides.preprocessor import ImpactSlidePreprocessorV4`);
+the shim exists only for backward compatibility.
 
 ---
 
