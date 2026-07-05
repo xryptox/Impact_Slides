@@ -30,7 +30,7 @@ import pytest
 import step1_preprocessor_v4 as m
 
 # Import the briefing module directly for pure unit tests.
-import analyst_briefing as ab
+from impact_slides import analyst_briefing as ab
 
 
 # --------------------------------------------------------------------------- #

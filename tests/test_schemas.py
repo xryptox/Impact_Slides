@@ -23,7 +23,7 @@ from pathlib import Path
 import pytest
 
 import step1_preprocessor_v3 as m
-from schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
+from impact_slides.schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
                      EntitiesSummaryItem, INSIGHT_TYPES, EXTRACTION_METHODS,
                      CONFIDENCE_LEVELS, NARRATIVE_STAGES)
 

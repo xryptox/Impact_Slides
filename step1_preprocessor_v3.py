@@ -42,7 +42,7 @@ __version__ = "3.0.0"
 # Optional at runtime: if pydantic isn't installed, validation is skipped (the
 # preprocessor still runs), but emitting the JSON schema requires it.
 try:
-    from schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
+    from impact_slides.schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
                          EntitiesSummaryItem)
     _HAS_PYDANTIC = True
 except ImportError:
@@ -1146,7 +1146,7 @@ class ImpactSlidePreprocessorV2:
         """Validate that every stage in the rules is a valid NARRATIVE_STAGES
         member. Raises ValueError at build time so a bad config fails fast."""
         try:
-            from schemas import NARRATIVE_STAGES
+            from impact_slides.schemas import NARRATIVE_STAGES
         except ImportError:
             return  # can't validate without schemas; skip gracefully
         for section in ("insight_types", "slide_type_stages"):

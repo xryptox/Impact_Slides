@@ -69,7 +69,7 @@ class TestDefaults:
         p.run()
         ev = json.load(open(out / "evidence_register_seed.json"))
         # every entry has valid stages
-        from schemas import NARRATIVE_STAGES
+        from impact_slides.schemas import NARRATIVE_STAGES
         for e in ev:
             for s in e["suggested_narrative_use"]:
                 assert s in NARRATIVE_STAGES

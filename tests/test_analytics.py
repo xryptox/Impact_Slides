@@ -216,7 +216,7 @@ class TestPeriodTrends:
 # --------------------------------------------------------------------------- #
 class TestSchemaRegistration:
     def test_new_types_in_schema(self):
-        from schemas import INSIGHT_TYPES
+        from impact_slides.schemas import INSIGHT_TYPES
         assert "outlier_insight" in INSIGHT_TYPES
         assert "correlation_insight" in INSIGHT_TYPES
         assert "period_trend_insight" in INSIGHT_TYPES
