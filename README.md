@@ -1,16 +1,18 @@
 # Impact Slide Preprocessor — Step 1
 
-This project ships **two versions** of the Step 1 preprocessor:
+This project ships **three versions** of the Step 1 preprocessor:
 
 | Version | File | Status |
 |---------|------|--------|
+| **v4** | `step1_preprocessor_v4.py` (55-line shim → `impact_slides/` package) | **Active development — recommended.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). **v4 is modularized** into the `impact_slides/` package (13 modules); `step1_preprocessor_v4.py` is a 55-line forwarding shim (PEP 562 `__getattr__`) so every existing `import step1_preprocessor_v4` + CLI invocation keeps working unchanged. |
+| **v3** | `step1_preprocessor_v3.py` | **Stable baseline** (frozen regression net). Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
 | **v2** | `step1_preprocessor_v2_full.py` | Stable, fully tested (201 tests). The bug-fix baseline. |
-| **v4** | `step1_preprocessor_v4.py` | **Active development.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). **v4 is modularized** into the `impact_slides/` package (13 modules); `step1_preprocessor_v4.py` is now a 55-line forwarding shim. |
-| **v3** | `step1_preprocessor_v3.py` | **Stable baseline.** Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
 
-Both produce the same Evidence Register handoff for the Impact Slide Analyst
-GPT; v3 emits a richer register. Use v3 going forward; v2 remains for
-reference/regression.
+All three produce the same Evidence Register handoff for the Impact Slide
+Analyst GPT; each version is a superset of the previous. **Use v4 going
+forward** — it's modularized (each leaf module is single-read and independently
+testable) and emits the strategic Analyst Briefing on top of the v3 register.
+v3/v2 remain as frozen regression baselines.
 
 > **Role in the Impact Slides workflow:** Step 1 — Python preprocessor.
 > Ingests business source files (Excel, PowerPoint, PDF, Word) and produces a
@@ -444,6 +446,7 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 | `--input` | path | — | **Required.** Folder of source files (searched recursively). |
 | `--output` | path | — | **Required.** Folder where outputs are written (created if missing). |
 | `--filter-level` | choice | `conservative` | Filtering strictness. `conservative` = strict (min priority 0.25, ≥10% non-null, ≤90% unique); `moderate` = balanced (0.15 / 5% / 92%); `permissive` = minimal (0.05 / 2% / 98%). Lower levels retain more evidence. |
+| `--focus-areas` | int | `5` | v4 #26: number of ranked Suggested Focus Areas to surface in the Analyst Briefing (`analyst_briefing.md`/`.json`). |
 | `--boost-keywords` | list | `[]` | Keywords that bump an evidence entry's priority by +0.15 (capped at 0.98), case-insensitive. Example: `--boost-keywords recommend critical growth`. |
 | `--verbose` | flag | off | Detailed console logging (boost keywords, export options, per-file timing, OCR errors). |
 
@@ -469,7 +472,6 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 |------|------|---------|-------------|
 | `--inspect` | flag | off | Print a readable top-N Evidence Register summary to the console after running. |
 | `--inspect-top` | int | 15 | Number of top-priority entries to show with `--inspect`. |
-| `--focus-areas` | int | 5 | v4 #26: number of ranked focus areas to surface in the Analyst Briefing. |
 
 ### Schema argument (v3)
 
@@ -493,16 +495,52 @@ output: ./realworld_test/output
 filter_level: permissive
 dedup_engine: auto
 boost_keywords: [recommend, critical, growth]
+focus_areas: 5                  # v4 #26
 inspect: true
 inspect_top: 20
 ```
 
 Then run:
 ```bash
-python step1_preprocessor_v3.py --config config.example.yaml
+python step1_preprocessor_v4.py --config config.example.yaml
 # CLI flags still override the file on a one-off basis:
-python step1_preprocessor_v3.py --config config.example.yaml --inspect-top 5
+python step1_preprocessor_v4.py --config config.example.yaml --inspect-top 5
 ```
+
+#### YAML briefing config (v4 #26)
+
+The Analyst Briefing (Narrative Readiness + Focus Areas) is configurable via
+the optional `briefing:` key. Two sub-keys are accepted:
+
+- `business_keywords: [a, b, c]` — extends the built-in keyword set used by
+  theme detection (signal 4 of the multi-signal scorer).
+- `readiness_weights:` / `focus_weights:` — override the 5-factor weight
+  tables. Keys must match exactly (see below) and values must sum to **1.0**;
+  a bad shape fails fast at `validate_config()`.
+
+```yaml
+briefing:
+  business_keywords:
+    - revenue
+    - margin
+    - adoption
+  readiness_weights:           # keys must be exactly these, summing to 1.0
+    coverage_balance: 0.30
+    priority_quality: 0.25
+    cross_file_connectivity: 0.20
+    recommendation_strength: 0.15
+    signal_ratio: 0.10
+  focus_weights:               # keys must be exactly these, summing to 1.0
+    avg_priority: 0.30
+    cross_file_strength: 0.25
+    insight_quality_boost: 0.20
+    source_diversity: 0.15
+    business_relevance_signals: 0.10
+```
+
+Omit any sub-key to use the built-in default for it. The weights are also the
+documented contract for what the readiness score and focus-area score measure
+(see **Analyst Briefing Generator (v4 #26)** in the Functionality section above).
 
 ---
 
@@ -545,43 +583,168 @@ Without Tesseract, the pipeline still runs; scanned PDFs simply yield no text
 
 ## Quick Start
 
+`step1_preprocessor_v4.py` is the active entry point. It's now a 55-line
+forwarding shim that delegates to the modular `impact_slides/` package — so
+every invocation style below works unchanged, whether you drive it from the
+CLI, a YAML config, or a Python import. (v3/v2 baselines are also present if
+you need the frozen regression versions; swap the filename.)
+
+### 1. CLI with flags (most common)
+
 ```bash
-# 1. Basic run (v3 — recommended)
-python step1_preprocessor_v3.py \
-  --input "C:/path/to/source_files" \
-  --output "C:/path/to/output"
-
-# 2. Permissive filtering + boost key terms + console review
-python step1_preprocessor_v3.py \
-  --input ./files --output ./out \
+python step1_preprocessor_v4.py \
+  --input  ./source_files \
+  --output ./output \
   --filter-level permissive \
-  --boost-keywords recommend critical growth \
-  --inspect --inspect-top 20
-
-# 3. Scanned PDFs included
-python step1_preprocessor_v3.py \
-  --input ./files --output ./out \
-  --enable-ocr \
-  --inspect
-
-# 4. Export register as Markdown + CSV for sharing
-python step1_preprocessor_v3.py \
-  --input ./files --output ./out \
-  --export-md --export-csv
-
-# 5. YAML config (commit-able, reproducible runs) — see config.example.yaml
-python step1_preprocessor_v3.py --config config.example.yaml
-# CLI flags still override the file on a one-off basis:
-python step1_preprocessor_v3.py --config config.example.yaml --inspect-top 5
+  --focus-areas 4 \
+  --export-csv \
+  --boost-keywords revenue growth \
+  --inspect --inspect-top 3
 ```
 
-> Swap `step1_preprocessor_v3.py` for `step1_preprocessor_v2_full.py` to run
-> the v2 baseline. Both accept the same CLI flags.
+`--focus-areas N` is the v4 #26 flag: how many ranked Suggested Focus Areas
+the Analyst Briefing surfaces (default 5). See the **CLI Reference** below for
+the full flag list.
+
+### 2. CLI with YAML config
+
+```bash
+python step1_preprocessor_v4.py --config config.yaml
+```
+
+Where `config.yaml` (keys mirror CLI flags in snake_case; see
+`config.example.yaml` for the fully annotated template):
+
+```yaml
+# config.yaml
+input: ./source_files
+output: ./output
+filter_level: permissive
+focus_areas: 3
+export_csv: true
+briefing:
+  business_keywords:     # extends the built-in set used for theme detection
+    - revenue
+    - margin
+    - gross
+  # Optional weight overrides (keys must match exactly + sum to 1.0):
+  # readiness_weights:
+  #   coverage_balance: 0.30
+  #   priority_quality: 0.25
+  #   cross_file_connectivity: 0.20
+  #   recommendation_strength: 0.15
+  #   signal_ratio: 0.10
+```
+
+**Precedence:** CLI flag (explicit) > YAML value > argparse default. So you
+can mix — e.g. a YAML config with `filter_level: permissive` but override just
+the output dir on the CLI:
+
+```bash
+python step1_preprocessor_v4.py --config config.yaml --output ./run_2026_07_04
+```
+
+A bad config (wrong keys, weights not summing to 1.0, bad enum value) fails
+fast with `Config error: ...` and exits non-zero — it never silently falls back
+to defaults against the wrong input folder.
+
+### 3. Python import — CLI-tag style
+
+For tests / scripting. The shim forwards the full namespace, so
+`import step1_preprocessor_v4 as m` gives you the class, the helpers, the
+tables, and the optional-dep flags:
+
+```python
+import step1_preprocessor_v4 as m   # the shim; forwards to impact_slides.*
+
+p = m.ImpactSlidePreprocessorV4(
+    input_path="./source_files",
+    output_dir="./output",
+    filter_level="permissive",
+    boost_keywords=["revenue", "growth"],
+)
+# These attributes mirror the CLI flags:
+p.focus_areas_count = 2          # --focus-areas 2
+p.export_csv = True              # --export-csv
+p.enable_ocr = False             # --enable-ocr off
+p.dedup_engine = "auto"          # --dedup-engine auto
+p.config_snapshot = dict(m.CONFIG_DEFAULTS)   # for run_metadata.json
+p.stage_rules = p._build_stage_rules()        # apply any stage_rules overrides
+p.run()
+
+# m also exposes: main(), test_preprocessor(), inspect_register(),
+# clean_text, _SemanticDedupEngine, git_commit, _HAS_PYDANTIC, etc.
+```
+
+**New code should prefer importing from the package directly** (the shim is
+for backward compat, kept so the 430-test suite needed zero edits):
+```python
+from impact_slides.preprocessor import ImpactSlidePreprocessorV4
+from impact_slides.cli import main
+```
+
+### 4. Python import — YAML-config style
+
+For scripting when you want the same layered config resolution `main()` uses.
+`load_config` / `merge_config` / `validate_config` / `CONFIG_DEFAULTS` all
+forward to `impact_slides.config` through the shim:
+
+```python
+import step1_preprocessor_v4 as m
+
+# 1. Load + resolve the YAML config (same path cli.main() takes)
+yaml_cfg = m.load_config("config.yaml")          # {} if path is None; raises FileNotFoundError on typo
+cfg = dict(m.CONFIG_DEFAULTS)
+cfg.update(yaml_cfg)                             # YAML overrides defaults
+cfg["input"], cfg["output"] = "./source_files", "./output"
+m.validate_config(cfg)                           # fail-fast on bad values
+
+# 2. Build the preprocessor from the resolved cfg (mirror cli.main)
+p = m.ImpactSlidePreprocessorV4(
+    input_path=cfg["input"],
+    output_dir=cfg["output"],
+    filter_level=cfg["filter_level"],
+    boost_keywords=cfg["boost_keywords"],
+)
+p.focus_areas_count = cfg["focus_areas"]
+p.export_csv = cfg["export_csv"]
+br = cfg.get("briefing") or {}
+p.briefing_readiness_weights = br.get("readiness_weights")
+p.briefing_focus_weights = br.get("focus_weights")
+p.briefing_business_keywords = br.get("business_keywords")
+p.config_snapshot = dict(cfg)
+p.stage_rules = p._build_stage_rules()
+p.run()
+```
+
+> Note: the true CLI precedence (`_cli_was_set`) needs an argparse `parser` +
+> `args` object. The pure-Python snippet above does a plain YAML-over-defaults
+> merge; if you need exact CLI-tag precedence, call
+> `m.main(["--config", "config.yaml", "--input", ..., "--output", ...])` instead —
+> that runs the real `cli.main()` with full precedence resolution.
+
+### What gets written
+
+Every invocation writes the same output set to `--output`:
+
+```
+evidence_register_seed.json   <- the main handoff (priority-sorted)
+analyst_briefing.md           <- v4 #26 strategic briefing (human+LLM)
+analyst_briefing.json         <- v4 #26 structured briefing
+coverage_map.json             <- Why/What/How/Now coverage
+entities_summary.json         <- top values per Excel categorical column
+excel_profile.json / pptx_profile.json   <- per-file extraction profiles
+preprocessor_summary.md       <- human report (incl. Narrative Readiness section)
+run_metadata.json             <- reproducibility (incl. briefing block)
+run.log                       <- timestamped event log
+evidence_register.csv         <- only with --export-csv / export_csv: true
+evidence_schema.json          <- only with --emit-schema
+```
 
 **What to open first:** `output/preprocessor_summary.md` — the human-readable
-overview. Then `evidence_register_seed.json` — the Analyst handoff. v3 also
-writes `coverage_map.json` — a per-stage / per-source coverage summary — and
-v3 also writes `entities_summary.json` (top categorical values per Excel column).
+overview (now includes a Narrative Readiness section). Then
+`analyst_briefing.md` — the v4 strategic handoff. Then
+`evidence_register_seed.json` — the Analyst GPT's raw material.
 
 ---
 
