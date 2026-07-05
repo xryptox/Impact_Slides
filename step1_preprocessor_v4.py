@@ -61,8 +61,9 @@ __version__ = "4.0.0"
 # v3: Pydantic schemas are the single source of truth for the output contracts.
 # Optional at runtime: if pydantic isn't installed, validation is skipped (the
 # preprocessor still runs), but emitting the JSON schema requires it.
+# v4 refactor: the models now live in impact_slides.schemas (the package leaf).
 try:
-    from schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
+    from impact_slides.schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
                          EntitiesSummaryItem, AnalystBriefing, NarrativeReadiness,
                          FocusArea, StageScore)
     _HAS_PYDANTIC = True
@@ -75,7 +76,7 @@ except ImportError:
 # somehow cannot be imported, the briefing artefacts are simply skipped (the
 # pipeline still runs and every other output is produced).
 try:
-    from analyst_briefing import (
+    from impact_slides.analyst_briefing import (
         AnalystBriefingGenerator, READINESS_WEIGHTS, FOCUS_WEIGHTS,
         DEFAULT_BUSINESS_KEYWORDS, render_briefing_markdown,
     )
@@ -156,39 +157,49 @@ except ImportError:
 # run_metadata.json for reproducibility. These NEVER commit, stage, push, or
 # write anything to git — they only read .git/refs to get the current commit
 # hash and whether the working tree has uncommitted edits (dirty).
+#
+# v4 refactor: the implementations now live in the modular `impact_slides`
+# package (logging_setup.py, text_utils.py, heuristics.py, text_analysis.py,
+# config.py). The monolith re-exports them under their original module-level
+# names so every existing call site + the 430-test suite keep working
+# unchanged. The original monolith bodies were relocated verbatim.
+from impact_slides.logging_setup import (
+    git_commit as _pkg_git_commit, git_dirty as _pkg_git_dirty,
+    get_logger as _pkg_get_logger, _StdlibLogAdapter,
+    _structlog_console_renderer as _pkg_structlog_console_renderer,
+)
+from impact_slides.text_utils import (
+    clean_text, get_column_letter, excel_addr, safe_stat, compact_value,
+    confidence_for_method, _METHOD_RELIABILITY,
+)
+from impact_slides.heuristics import (
+    sheet_time_rank, _parse_numeric_token, make_unique_columns,
+    is_likely_identifier_column, is_generic_system_column, _looks_like_noise_cell,
+    _NOISE_CELL_PATTERNS, _MONTH_RE, _QUARTER_RE, _YEAR_RE,
+)
+from impact_slides.text_analysis import (
+    extract_advanced_metrics, contains_insight_language, insight_priority_boost,
+    calculate_evidence_priority_score, _INSIGHT_KEYWORDS,
+)
+from impact_slides.stage_mapping import (
+    DEFAULT_INSIGHT_TYPE_STAGES, DEFAULT_KEYWORD_STAGE_OVERRIDES,
+    DEFAULT_SLIDE_TYPE_KEYWORDS, DEFAULT_SLIDE_TYPE_STAGES,
+    DEFAULT_CONCLUSION_BULLET_STAGES,
+)
+from impact_slides.config import (
+    CONFIG_DEFAULTS, CONFIG_CHOICES, load_config, merge_config, validate_config,
+    _cli_was_set, _HAS_YAML,
+)
+# (schemas + analyst_briefing names already imported at the top of this file
+# under the _HAS_PYDANTIC / _HAS_BRIEFING guards.)
+
 
 def git_commit() -> Optional[str]:
-    """Short commit hash if running inside a git worktree, else None.
-    Read-only: runs `git rev-parse --short HEAD` and returns the result. Never
-    commits/stages/pushes. Returns None if git is absent or not a repo."""
-    try:
-        out = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],
-            stderr=subprocess.DEVNULL,
-            cwd=str(Path(__file__).parent),
-            timeout=5,
-        )
-        return out.decode().strip() or None
-    except Exception:
-        return None
+    return _pkg_git_commit()
 
 
 def git_dirty() -> Optional[bool]:
-    """True if the working tree has uncommitted edits (so the run isn't a
-    clean reproduction of the recorded commit). None if git unavailable.
-    Read-only: `git diff --quiet` exits non-zero when there are uncommitted
-    changes. Never commits/stages/pushes."""
-    try:
-        rc = subprocess.call(
-            ["git", "diff", "--quiet"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            cwd=str(Path(__file__).parent),
-            timeout=5,
-        )
-        return rc != 0  # non-zero => working tree differs from commit
-    except Exception:
-        return None
+    return _pkg_git_dirty()
 
 
 # ====================== LOGGER FACTORY (v3 #23) =====================
@@ -203,82 +214,8 @@ _LOG = None  # singleton logger for the preprocessor instance
 
 def get_logger(name: str = "preprocessor", log_file: Optional[Path] = None,
                verbose: bool = False, run_id: Optional[str] = None):
-    """Build (or return the cached) preprocessor logger.
-
-    Sinks:
-      - console: human-readable, leveled (INFO by default, DEBUG if verbose)
-      - log_file: machine-readable, full-fidelity (DEBUG+), JSON-lines with
-        structlog or plain timestamped lines with stdlib
-
-    Run-wide context (version, commit, run_id) is bound once so every log
-    line is self-describing for reproducibility.
-    """
-    global _LOG
-    if _LOG is not None:
-        return _LOG
-
-    run_id = run_id or time.strftime("%Y%m%dT%H%M%S")
-    base_ctx = {
-        "version": __version__,
-        "commit": git_commit(),
-        "run_id": run_id,
-    }
-
-    if _HAS_STRUCTLOG:
-        structlog.configure(
-            processors=[
-                structlog.contextvars.merge_contextvars,
-                structlog.processors.add_log_level,
-                structlog.processors.TimeStamper(fmt="iso"),
-                structlog.processors.StackInfoRenderer(),
-                _structlog_console_renderer(),
-            ],
-            wrapper_class=structlog.make_filtering_bound_logger(
-                logging.DEBUG if verbose else logging.INFO),
-            logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
-            cache_logger_on_first_use=True,
-        )
-        log = structlog.get_logger(name).bind(**base_ctx)
-    else:
-        # stdlib logging doesn't accept arbitrary kwargs like structlog. Wrap
-        # it in a thin adapter so call sites can use the same kwarg API
-        # (log.info("msg", file=..., duration=...) regardless of backend.
-        stdlib_log = logging.getLogger(name)
-        stdlib_log.setLevel(logging.DEBUG)
-        stdlib_log.propagate = False
-        if not stdlib_log.handlers:
-            ch = logging.StreamHandler(sys.stderr)
-            ch.setLevel(logging.DEBUG if verbose else logging.INFO)
-            ch.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-            stdlib_log.addHandler(ch)
-        log = _StdlibLogAdapter(stdlib_log, base_ctx)
-
-    # File handler — machine-readable, full-fidelity. Attached to the stdlib
-    # logger underneath both backends so the file is readable everywhere.
-    if log_file is not None:
-        log_file = Path(log_file)
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        stdlib_name = name
-        fh = logging.FileHandler(log_file, mode="w", encoding="utf-8")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(logging.Formatter(
-            "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
-            datefmt="%Y-%m-%dT%H:%M:%S",
-        ))
-        file_logger = logging.getLogger(stdlib_name + ".file")
-        file_logger.setLevel(logging.DEBUG)
-        file_logger.propagate = False
-        # Clear any handlers from a previous get_logger() call so each run
-        # writes to its own run.log (the stdlib logger is a singleton, but
-        # the FileHandler must point at THIS run's output dir).
-        for h in list(file_logger.handlers):
-            file_logger.removeHandler(h)
-            h.close()
-        file_logger.addHandler(fh)
-        log._file_logger = file_logger
-
-    _LOG = log
-    return log
+    return _pkg_get_logger(name=name, log_file=log_file, verbose=verbose,
+                          run_id=run_id, version=__version__)
 
 
 class _StdlibLogAdapter:
@@ -312,390 +249,11 @@ class _StdlibLogAdapter:
 
 
 def _structlog_console_renderer():
-    """Pick a console renderer: colors in a TTY, plain text under capture
-    (pytest redirects) so string assertions keep working."""
-    try:
-        if sys.stderr.isatty():
-            return structlog.dev.ConsoleRenderer(colors=True)
-        return structlog.dev.ConsoleRenderer(colors=False)
-    except Exception:
-        return structlog.dev.ConsoleRenderer(colors=False)
+    return _pkg_structlog_console_renderer()
 
 # ====================== HELPER FUNCTIONS ======================
-
-def clean_text(text: Any) -> str:
-    if pd.isna(text):
-        return ""
-    return str(text).strip()
-
-
-def get_column_letter(col_idx: int) -> str:
-    result = ""
-    while col_idx > 0:
-        col_idx, remainder = divmod(col_idx - 1, 26)
-        result = chr(65 + remainder) + result
-    return result
-
-
-def excel_addr(row: int, col: int) -> str:
-    return f"{get_column_letter(col)}{row}"
-
-
-def safe_stat(values: Iterable[float], fn) -> Optional[float]:
-    vals = [float(v) for v in values if v is not None and not math.isnan(float(v))]
-    if not vals:
-        return None
-    try:
-        return round(float(fn(vals)), 4)
-    except Exception:
-        return None
-
-
-def compact_value(v: Any) -> Any:
-    if pd.isna(v):
-        return None
-    if isinstance(v, float):
-        return round(v, 4)
-    return v
-
-
-def extract_advanced_metrics(text: str) -> List[Dict[str, str]]:
-    """
-    Advanced metric extraction for PPTX text (Item 4.2).
-    Returns list of {'value': str, 'context': str} dicts.
-    """
-    if not text:
-        return []
-
-    metrics = []
-    # High-quality patterns for business metrics
-    patterns = [
-        # Percentage with direction and optional decimal
-        (r'([\+\-]?\d+(?:\.\d+)?\s*%)', 'percentage'),
-        # Currency amounts (supports $ € £ and K/M/B suffix)
-        (r'([\$€£]\s*\d+(?:\.\d+)?\s*[KMB]?)', 'currency'),
-        # Multipliers (x or ×)
-        (r'(\d+(?:\.\d+)?\s*[×x])', 'multiplier'),
-        # Simple ratios/ranges (e.g. 12-18%)
-        (r'(\d+(?:\.\d+)?\s*[-–]\s*\d+(?:\.\d+)?\s*%)', 'range'),
-    ]
-
-    lines = text.splitlines()
-    for line in lines:
-        line_stripped = line.strip()
-        if not line_stripped:
-            continue
-        for pattern, mtype in patterns:
-            for match in re.finditer(pattern, line_stripped):
-                value = match.group(1).strip()
-                # Store context (the full bullet/sentence)
-                context = line_stripped[:120]
-                metrics.append({
-                    "value": value,
-                    "type": mtype,
-                    "context": context
-                })
-    return metrics[:10]  # safety cap
-
-
-def contains_insight_language(text: str) -> float:
-    """
-    Returns a score 0-1 indicating how 'insightful' the text sounds.
-    Used for Item 4.1 content prioritization.
-    """
-    if not text:
-        return 0.0
-
-    insight_keywords = [
-        'recommend', 'recommendation', 'key', 'critical', 'significant',
-        'record', 'highest', 'lowest', 'growth', 'decline', 'risk',
-        'opportunity', 'important', 'major', 'strongest', 'weakest',
-        'outperform', 'underperform', 'increase', 'decrease', 'expand',
-        'reduce', 'improve', 'challenge', 'success', 'issue'
-    ]
-
-    text_lower = text.lower()
-    count = sum(1 for kw in insight_keywords if kw in text_lower)
-    # Normalize: more than 4 insight words = max score
-    return min(1.0, count / 4.0)
-
-
-# v3: insight-language priority boost for individual text fragments (bullets,
-# paragraphs). Previously only whole slides were boosted; individual bullets all
-# landed at a flat 0.75, so "Recommendation: expand" ranked equal to "LogLevel:...".
-_INSIGHT_KEYWORDS = [
-    'recommend', 'recommendation', 'key', 'critical', 'significant',
-    'record', 'highest', 'lowest', 'growth', 'decline', 'risk',
-    'opportunity', 'important', 'major', 'strongest', 'weakest',
-    'outperform', 'underperform', 'increase', 'decrease', 'expand',
-    'reduce', 'improve', 'challenge', 'success', 'issue', 'next step',
-    'call to action', 'action plan', 'priority', 'target', 'goal',
-]
-
-
-def insight_priority_boost(text: str, base: float, low: float = 0.0,
-                            high: float = 0.25, cap: float = 0.98) -> float:
-    """Return base + a boost proportional to insight-language density.
-
-    0 insight keywords -> no boost; >=4 -> ``high`` boost. Capped at ``cap``.
-    Used per-bullet / per-paragraph so insight-bearing fragments outrank generic
-    list items.
-    """
-    if not text:
-        return base
-    t = text.lower()
-    count = sum(1 for kw in _INSIGHT_KEYWORDS if kw in t)
-    boost = (min(count, 4) / 4.0) * high if count else low
-    return round(min(cap, base + boost), 3)
-
-
-# ====================== STAGE MAPPING RULES (v3 #24) =====================
-# Centralized Why/What/How/Now stage assignment. Single source of truth that
-# replaces ~20 scattered hardcoded `suggested_narrative_use` literals. Users can
-# override any of these three layers via the `stage_rules` YAML config key:
-#
-#   1. insight_types      — insight_type -> stages (e.g. trend_insight -> [How, What, Why])
-#   2. keyword_overrides   — text-regex -> stages, applied as a post-assignment
-#                           override (e.g. r"\brevenue\b" -> [What])
-#   3. slide_type_keywords — slide-title keyword -> slide type (extends
-#                           classify_slide's keyword lists)
-#      slide_type_stages  — slide type -> stages (overrides recommended_evidence_types)
-#
-# Precedence within _stages_for(): keyword_override (first match wins)
-# > insight_type default. User config overrides extend/replace these defaults.
-
-# Layer 1: default insight_type -> stages.
-DEFAULT_INSIGHT_TYPE_STAGES = {
-    "numeric_range":            ["What", "How"],
-    "categorical_distribution": ["Why", "What"],
-    "category_by_metric_suggestion": ["How", "What"],
-    "trend_insight":            ["How", "What", "Why"],
-    "period_trend_insight":    ["How", "What", "Why"],
-    "outlier_insight":         ["What", "How"],
-    "correlation_insight":    ["How", "What"],
-    "aggregate_insight":        ["How", "What"],
-    "multi_column_suggestion":  ["How", "What"],
-    "chart_insight":            ["How", "What"],
-    "chart_data_insight":       ["How", "What"],
-    "table_cell":               ["What"],
-    "table_insight":            ["What", "Why"],
-    "text_metric":              ["How", "What"],
-    "process_step":            ["How", "What"],
-    "speaker_notes_insight":    ["How", "Why"],
-    "emphasized_text":          ["What", "How"],
-    "section_divider":          ["What"],
-    "pdf_page_insight":         ["What"],
-    "pdf_ocr_page_insight":     ["What"],
-    "pdf_table_insight":        ["What"],
-    "pdf_table_cell":           ["What"],
-    "docx_insight":             ["What"],
-    "cross_file_metric":        ["How", "Why"],
-    "bullet_insight":           ["What", "Why"],
-}
-
-# Layer 2: default text-keyword -> stages overrides (first match wins).
-# Applied AFTER the insight-type lookup so a user can redirect any evidence by
-# its text regardless of insight_type. Empty by default — the conclusion-bullet
-# "Now" logic is handled in build_evidence_register via slide_type, not here.
-DEFAULT_KEYWORD_STAGE_OVERRIDES = []
-
-# Layer 3a: slide-title keyword -> slide type (extends classify_slide).
-DEFAULT_SLIDE_TYPE_KEYWORDS = {
-    "conclusion": ["summary", "conclusion", "key takeaway", "recommendation",
-                   "next step", "call to action", "key findings", "action plan"],
-    "agenda":     ["agenda", "overview", "contents", "table of contents", "roadmap"],
-    "section":    ["section", "part ", "chapter", "module"],
-    "thank_you":  ["thank you", "thanks", "q&a", "questions", "contact"],
-    "comparison": ["vs", "versus", "comparison", "compare", "before", "after"],
-}
-
-# Layer 3b: slide type -> stages (overrides recommended_evidence_types).
-DEFAULT_SLIDE_TYPE_STAGES = {
-    "title":            ["What", "Why"],
-    "agenda":           ["What", "Why"],
-    "section":          ["What"],
-    "thank_you":        ["What"],
-    "conclusion":       ["What", "How", "Why", "Now"],
-    "data_mixed":        ["How", "What"],
-    "data_chart":       ["How", "What"],
-    "data_table":       ["What", "Why"],
-    "diagram_process":  ["How", "What"],
-    "comparison":       ["What", "Why"],
-    "quote_callout":    ["What", "Why"],
-    "content_insight":  ["What", "Why"],
-    "content_light":    ["What", "Why"],
-    "low_value":        ["What"],
-}
-
-# Conclusion-bullet stage override: bullets from conclusion slides get "Now".
-DEFAULT_CONCLUSION_BULLET_STAGES = ["Now", "What", "Why"]
-
-
-# v3: time-order detection for spreadsheet sheets. Used to decide whether
-# per-sheet numeric ranges can be connected into a trend across time.
-_MONTH_RE = re.compile(r'^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*',
-                       re.IGNORECASE)
-_QUARTER_RE = re.compile(r'^q[1-4]\b', re.IGNORECASE)
-_YEAR_RE = re.compile(r'^(19|20)\d{2}\b')
-
-
-def sheet_time_rank(sheet_name: str) -> Optional[int]:
-    """Return a sortable integer rank for a sheet that looks time-ordered
-    (month / quarter / year), else None. Months rank 1..12, quarters 1..4
-    (×100), years as their numeric value (×10000). Two sheets that both rank
-    non-None are considered part of one time series."""
-    s = clean_text(sheet_name).lower()
-    if not s:
-        return None
-    m = _MONTH_RE.match(s)
-    if m:
-        return {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-                'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12}[m.group(1)]
-    q = _QUARTER_RE.match(s)
-    if q:
-        return int(q.group(0)[1]) * 100
-    y = _YEAR_RE.match(s)
-    if y:
-        return int(y.group(0)) * 10000
-    return None
-
-
-def _parse_numeric_token(token: str) -> Optional[float]:
-    """Parse a numeric value out of a finding text like 'ranges from 10.53 to 99.96.'"""
-    nums = re.findall(r'-?\d+(?:\.\d+)?', token or "")
-    if nums:
-        try:
-            return float(nums[0])
-        except ValueError:
-            return None
-    return None
-
-
-def make_unique_columns(values: List[Any]) -> List[str]:
-    cols = []
-    counts: Dict[str, int] = defaultdict(int)
-    for idx, value in enumerate(values, 1):
-        base = clean_text(value) or f"Column {get_column_letter(idx)}"
-        base = base[:80]
-        counts[base] += 1
-        cols.append(base if counts[base] == 1 else f"{base}_{counts[base]}")
-    return cols
-
-
-def is_likely_identifier_column(col_name: str, series: pd.Series) -> bool:
-    """Detect common ID / Serial Number columns.
-
-    Two signals are used:
-      1. The column name matches common identifier names (S.No, ID, Serial,
-         Row, Key, Index, Number, Seq, UUID, GUID) -> identifier (strong signal).
-      2. The column is unnamed/generic AND its values form a contiguous
-         ascending integer row index (1..N or 0..N-1) -> identifier.
-
-    A sequential-by-1 numeric column with a real business name (e.g. a metric
-    that happens to increment by exactly 1) is NOT treated as an identifier,
-    so genuine business data is not misfiltered. Likewise a descending-by-1
-    sequence is not treated as an ID on its own (rare for IDs, common for
-    metrics/rankings).
-    """
-    col_lower = clean_text(col_name).lower()
-    id_patterns = [r'\bs\.?no\.?\b', r'\bserial\b', r'\bseq\b', r'\brow\b',
-                   r'\bid\b', r'\bkey\b', r'\bindex\b', r'\bnumber\b', r'\buuid\b', r'\bguid\b']
-    if any(re.search(p, col_lower) for p in id_patterns):
-        return True
-
-    # Only infer an identifier from the *value* pattern when the column is
-    # unnamed/generic. A named business column that increments by 1 is almost
-    # always a real metric, not an ID.
-    is_generic_name = (not col_lower) or col_lower.startswith("column ")
-    if not is_generic_name:
-        return False
-
-    numeric = pd.to_numeric(series, errors="coerce")
-    if not (numeric.notna().all() and len(numeric) > 1):
-        return False
-
-    # IDs are whole numbers.
-    if not (numeric == numeric.astype("int64")).all():
-        return False
-
-    # Must be a contiguous ascending row index starting at 0 or 1: e.g.
-    # 1,2,3,...,N  or  0,1,2,...,N-1. No gaps, no duplicates, no negatives.
-    diffs = numeric.diff().dropna()
-    min_val = int(numeric.min())
-    max_val = int(numeric.max())
-    is_row_index = (
-        (diffs == 1).all()
-        and min_val in (0, 1)
-        and (max_val - min_val + 1) == len(numeric)
-        and numeric.is_unique
-    )
-    return bool(is_row_index)
-
-
-def is_generic_system_column(col_name: str) -> bool:
-    """Detect common system/technical columns that are rarely useful in presentations."""
-    col_lower = clean_text(col_name).lower()
-    system_patterns = [
-        r'created', r'modified', r'updated', r'last_', r'insert', r'delete',
-        r'guid', r'uuid', r'hash', r'checksum', r'internal', r'system',
-        r'flag', r'is_', r'has_', r'enabled', r'active_flag'
-    ]
-    return any(re.search(p, col_lower) for p in system_patterns)
-
-
-# Patterns that mark a PPTX table cell as technical noise rather than a
-# business insight. Used by the table-cell priority scorer to stop IPs / URLs /
-# user-agents / HTTP requests from outranking real evidence.
-_NOISE_CELL_PATTERNS = [
-    re.compile(r'^\d{1,3}(?:\.\d{1,3}){3}$'),                       # IPv4 address
-    re.compile(r'^[0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7}$'),    # IPv6-ish
-    re.compile(r'^https?://', re.IGNORECASE),                       # URL
-    re.compile(r'^www\.', re.IGNORECASE),                           # URL
-    re.compile(r'\.(?:html?|php|cgi|jpg|jpeg|png|gif|css|js|pdf)(?:\?|$)', re.IGNORECASE),  # file path / asset
-    re.compile(r'^(?:GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+', re.IGNORECASE),            # HTTP request line
-    re.compile(r'Mozilla|Gecko|AppleWebKit|Trident|Firefox|Chrome|Safari|MSIE', re.IGNORECASE),  # user-agent
-    re.compile(r'^\[\d{1,2}/[A-Za-z]{3}/\d{4}'),                    # CLF log timestamp [09/Apr/2008:07:46:54 +0000]
-    re.compile(r'^/(?:[\w.-]+/)+[\w.-]*$'),                         # unix-style path
-    re.compile(r'^[A-Za-z]:\\', re.IGNORECASE),                    # windows path
-]
-
-
-def _looks_like_noise_cell(val: str) -> bool:
-    """Return True if a table-cell value looks like technical noise (IP, URL,
-    user-agent, file path, HTTP request, log timestamp) rather than a business
-    insight. Such cells are demoted in priority so they don't outrank real
-    evidence."""
-    v = (val or "").strip()
-    if not v or len(v) > 300:
-        return False
-    return any(p.search(v) for p in _NOISE_CELL_PATTERNS)
-
-
-# v3 #6 / #9: provenance + reliability-based confidence.
-# Each evidence entry gets an `extraction_method` (how the insight was derived)
-# and a confidence level keyed to the reliability of that method, so the
-# Analyst GPT can weight computed/chart data higher than OCR'd text.
-_METHOD_RELIABILITY = {
-    # method           -> confidence
-    "computed":        "high",   # trend / aggregate — derived from raw data
-    "chart_data":      "high",   # numeric values read from a chart series
-    "numeric_range":   "high",   # min/max computed from a column
-    "categorical":     "high",   # distribution computed from a column
-    "table_cell":      "medium", # a cell value (may be example noise)
-    "text_layer":      "high",   # PDF native text layer
-    "ocr":             "medium", # Tesseract OCR (prone to artifacts)
-    "bullet":          "medium", # a slide bullet line
-    "paragraph":       "medium", # a docx paragraph
-    "cross_file":      "medium", # inferred relationship
-    "classifier":      "medium", # slide-classification derived
-    "unknown":         "medium",
-}
-
-
-def confidence_for_method(method: str) -> str:
-    """Return the reliability-based confidence for an extraction method."""
-    return _METHOD_RELIABILITY.get(method, _METHOD_RELIABILITY["unknown"])
-
+# (Re-exported from the modular package leaves; kept as module-level names
+# so the monolith's existing call sites and tests keep working unchanged.)
 
 def _text_similarity(a: str, b: str) -> float:
     """Similarity ratio 0-1 between two strings. Uses rapidfuzz if available
@@ -940,33 +498,8 @@ def _entity_in_text(entity: str, text: str, fuzzy_threshold: float = 0.88) -> bo
     return False
 
 
-def calculate_evidence_priority_score(
-    column_name: str,
-    column_type: str,
-    is_identifier: bool = False,
-    unique_ratio: float = 0.0,
-    non_null_ratio: float = 1.0,
-    has_business_name: bool = True
-) -> float:
-    """Calculate priority score for evidence (higher = more useful)."""
-    if is_identifier:
-        return 0.15
-
-    score = 0.5
-    if column_type == "numeric":
-        score += 0.25
-    elif column_type == "categorical":
-        score += 0.20
-    elif column_type == "date":
-        score += 0.15
-
-    if column_type == "categorical" and unique_ratio > 0.7:
-        score -= 0.25
-    if not has_business_name:
-        score -= 0.15
-
-    score += (non_null_ratio - 0.5) * 0.2
-    return max(0.0, min(1.0, round(score, 3)))
+# (calculate_evidence_priority_score moved to impact_slides.text_analysis;
+# imported above under its original name.)
 
 
 # v3 #13-16: richer PPTX extraction helpers.
@@ -4201,139 +3734,6 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
     print(f" Summary report: {out / 'preprocessor_summary.md'}")
     print("=" * 78 + "\n")
 
-
-# ====================== YAML CONFIG SUPPORT (v3 #21) =====================
-# Layered config: CLI flag (explicit) > YAML value > argparse default.
-# CONFIG_DEFAULTS is the single source of truth — argparse defaults and YAML
-# defaults stay in sync because both derive from this dict. CONFIG_CHOICES
-# mirrors the `choices=[...]` on argparse flags so YAML values are validated
-# the same way CLI values are.
-CONFIG_DEFAULTS = {
-    "input": None,
-    "output": None,
-    "filter_level": "conservative",
-    "boost_keywords": [],
-    "verbose": False,
-    "export_md": False,
-    "export_csv": False,
-    "enable_ocr": False,
-    "tesseract_cmd": None,
-    "pdf_table_engine": "auto",
-    "dedup_engine": "auto",
-    "inspect": False,
-    "inspect_top": 15,
-    "emit_schema": False,
-    "stage_rules": None,    # v3 #24: optional Why/What/How/Now mapping overrides
-    "focus_areas": 5,       # v4 #26: number of focus areas in the briefing
-    "briefing": None,       # v4 #26: optional briefing config (weights, business_keywords)
-}
-
-CONFIG_CHOICES = {
-    "filter_level": ("conservative", "moderate", "permissive"),
-    "pdf_table_engine": ("auto", "pdfplumber", "pymupdf"),
-    "dedup_engine": ("auto", "embeddings", "tfidf", "fuzzy"),
-}
-
-
-def load_config(path):
-    """Load a YAML config file into a dict.
-
-    - path is None -> returns {} (no config; CLI-only mode).
-    - path given but missing -> raises FileNotFoundError (a typo'd --config
-      must never silently fall back to defaults and run against the wrong
-      input folder).
-    - PyYAML not installed -> raises RuntimeError with a clear pip hint.
-    - Top level must be a YAML mapping.
-    """
-    if not path:
-        return {}
-    if not _HAS_YAML:
-        raise RuntimeError(
-            "--config requires PyYAML which is not installed. "
-            "Install it with: pip install pyyaml"
-        )
-    p = Path(path)
-    if not p.exists():
-        raise FileNotFoundError(f"Config file not found: {path}")
-    with open(p, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)  # safe_load, never load() — config files are shared
-    if data is None:
-        return {}
-    if not isinstance(data, dict):
-        raise ValueError(
-            f"Config file {path} must contain a YAML mapping at the top level, "
-            f"got {type(data).__name__}"
-        )
-    return data
-
-
-def _cli_was_set(parser, args, key: str) -> bool:
-    """True iff the user explicitly passed --key on the command line (vs
-    relying on the argparse default). Determined by comparing the parsed value
-    against the parser's registered default, so YAML can override any flag the
-    user did not type."""
-    return getattr(args, key, None) != parser.get_default(key)
-
-
-def merge_config(parser, args) -> dict:
-    """Resolve the layered config: CLI (explicit) > YAML > defaults.
-
-    Returns a plain dict keyed by CONFIG_DEFAULTS keys (snake_case)."""
-    result = dict(CONFIG_DEFAULTS)
-    yaml_cfg = getattr(args, "config_data", {}) or {}
-    result.update(yaml_cfg)  # YAML overrides defaults
-    for key in CONFIG_DEFAULTS:
-        if _cli_was_set(parser, args, key):
-            result[key] = getattr(args, key)  # explicit CLI wins
-    return result
-
-
-def validate_config(cfg: dict) -> None:
-    """Validate config values against CONFIG_CHOICES (mirrors argparse
-    `choices=[...]`). Raises ValueError on a bad value so a YAML typo fails
-    fast with a clear message instead of silently misbehaving."""
-    for key, allowed in CONFIG_CHOICES.items():
-        v = cfg.get(key)
-        if v is not None and v not in allowed:
-            raise ValueError(
-                f"config '{key}'={v!r} is invalid; must be one of {list(allowed)}"
-            )
-    if not isinstance(cfg.get("inspect_top", 15), int):
-        raise ValueError(
-            f"config 'inspect_top' must be an integer, got {cfg.get('inspect_top')!r}"
-        )
-    # v4 #26: focus_areas must be a positive integer.
-    fa = cfg.get("focus_areas", 5)
-    if not isinstance(fa, int) or fa < 1:
-        raise ValueError(
-            f"config 'focus_areas' must be a positive integer, got {fa!r}"
-        )
-    # v4 #26: validate optional briefing weights/buisness_keywords shape.
-    br = cfg.get("briefing")
-    if br is not None:
-        if not isinstance(br, dict):
-            raise ValueError("config 'briefing' must be a mapping")
-        for wkey in ("readiness_weights", "focus_weights"):
-            w = br.get(wkey)
-            if w is None:
-                continue
-            if not isinstance(w, dict):
-                raise ValueError(f"config 'briefing.{wkey}' must be a mapping")
-            from analyst_briefing import READINESS_WEIGHTS as _RW, FOCUS_WEIGHTS as _FW
-            ref = _RW if wkey == "readiness_weights" else _FW
-            if set(w.keys()) != set(ref.keys()):
-                raise ValueError(
-                    f"config 'briefing.{wkey}' keys must be {sorted(ref.keys())}; "
-                    f"got {sorted(w.keys())}"
-                )
-            tot = sum(w.values())
-            if not (0.999 <= tot <= 1.001):
-                raise ValueError(
-                    f"config 'briefing.{wkey}' weights must sum to 1.0; got {tot}"
-                )
-        bk = br.get("business_keywords")
-        if bk is not None and not isinstance(bk, list):
-            raise ValueError("config 'briefing.business_keywords' must be a list")
 
 
 def main(argv=None):
