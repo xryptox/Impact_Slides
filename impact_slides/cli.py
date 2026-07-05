@@ -94,6 +94,24 @@ def test_preprocessor():
         print("\nTest completed successfully!")
 
 
+def _console_safe(text: str) -> str:
+    """Replace characters the console's encoding can't represent.
+
+    On Windows the default console encoding is often cp1252, which can't
+    encode symbols like ☑ (U+2611) or various Unicode dashes/bullets found in
+    real PDF text. This replaces such characters with '?' so inspect_register
+    never crashes with UnicodeEncodeError on the console pretty-printer.
+    """
+    if not text:
+        return text
+    enc = sys.stdout.encoding or "utf-8"
+    try:
+        text.encode(enc)
+        return text
+    except (UnicodeEncodeError, LookupError):
+        return text.encode(enc, errors="replace").decode(enc, errors="replace")
+
+
 def inspect_register(output_dir: str, top_n: int = 15) -> None:
     """Print a readable top-N summary of the Evidence Register to the console.
 
@@ -158,7 +176,7 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
         use = "/".join(e.get("suggested_narrative_use", []))
         text = e.get("text", "").replace("\n", " ")
         print(f"\n[{eid}] p={prio:.2f}  {itype}  ({src} @ {loc})")
-        print(f"   stages: {use}   | {text[:120]}")
+        print(f"   stages: {use}   | {_console_safe(text[:120])}")
 
     # Quality flags
     print()
