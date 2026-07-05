@@ -468,7 +468,11 @@ class ImpactSlidePreprocessorV4:
     def gather_files(self) -> List[Path]:
         if not self.input_path.exists():
             raise FileNotFoundError(f"Input path not found: {self.input_path}")
-        files = [p for p in self.input_path.rglob("*") if p.is_file() and not p.name.startswith('.')]
+        # v4 fix: accept a single file as input, not only a directory.
+        if self.input_path.is_file():
+            files = [self.input_path] if not self.input_path.name.startswith('.') else []
+        else:
+            files = [p for p in self.input_path.rglob("*") if p.is_file() and not p.name.startswith('.')]
         return files
 
     def build_file_inventory(self, files: List[Path]) -> List[Dict]:
