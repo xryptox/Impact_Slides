@@ -65,67 +65,118 @@ clearly supported — so insights stay traceable from source file → slide.
 
 ## Architecture
 
+v4 is modularized into the `impact_slides/` package (13 modules). The entry
+point `step1_preprocessor_v4.py` is a 55-line forwarding shim (PEP 562
+`__getattr__`) that delegates to `impact_slides.cli.main()`, which in turn
+constructs the trunk class `ImpactSlidePreprocessorV4` from
+`impact_slides.preprocessor`. Every leaf module is a small (<200 LOC) pure
+module that fits in a single read and is unit-testable in isolation.
+
 ```
                 ┌─────────────────────────────────────────────┐
    source files │  .xlsx .pptx .pdf .docx  (+.csv/.xls/.xlsm) │
                 └──────────────────────┬──────────────────────┘
                                        │  gather_files() + build_file_inventory()
                                        ▼
+  step1_preprocessor_v4.py  (55-line shim → impact_slides.cli.main)
+                                       │
+                                       ▼
                 ┌─────────────────────────────────────────────┐
-                │            ImpactSlidePreprocessorV2        │
+                │       impact_slides.preprocessor             │
+                │       ImpactSlidePreprocessorV4  (trunk)     │
                 │                                             │
                 │  ┌─────────────┐  ┌──────────────────────┐  │
                 │  │  EXTRACTORS │  │   SCORING / FILTERING│  │
-                │  │             │  │                      │  │
-                │  │ extract_    │  │ classify_slide()     │  │
-                │  │  spreadsheet│  │ calculate_evidence_  │  │
-                │  │ extract_pptx│  │  priority_score()    │  │
-                │  │ extract_pdf │  │ is_likely_identifier_│  │
-                │  │ extract_docx│  │  column()            │  │
-                │  │             │  │ _looks_like_noise_   │  │
-                │  └──────┬──────┘  │  cell()              │  │
-                │         │         │ _get_filter_         │  │
-                │         │         │  thresholds()        │  │
-                │         ▼         └──────────┬───────────┘  │
-                │  ┌──────────────────────────▼────────────┐  │
-                │  │     build_evidence_register()         │  │
-                │  │  • per-source evidence extraction     │  │
-                │  │  • cross-file relationship detection  │  │
-                │  │  • priority sort                      │  │
-                │  │  • deduplication                      │  │
-                │  │  • boost-keyword application          │  │
-                │  └──────────────────┬────────────────────┘  │
-                └─────────────────────┼───────────────────────┘
+                │  │ (trunk mthds│  │ (leaf modules)       │  │
+                │  │  use leaves)│  │                      │  │
+                │  │             │  │ text_analysis:        │  │
+                │  │ extract_    │  │  priority scoring     │  │
+                │  │  spreadsheet│  │ heuristics:           │  │
+                │  │  → profile_ │  │  identifier/noise det │  │
+                │  │    dataframe│  │ stage_mapping:        │  │
+                │  │    → #25    │  │  Why/What/How/Now     │  │
+                │  │    analytics│  │ dedup: tiered semantic│  │
+                │  │ extract_pptx│  │ cross_file: entity    │  │
+                │  │  → pptx_    │  │  matching             │  │
+                │  │    extract  │  │ _get_filter_         │  │
+                │  │    helpers  │  │  thresholds()        │  │
+                │  │ extract_pdf │  └──────────┬───────────┘  │
+                │  │ extract_docx│             │              │
+                │  └──────┬──────┘             │              │
+                │         │                    ▼              │
+                │         ▼         ┌──────────────────────┐   │
+                │  ┌────────────────▼────────────────────┐   │
+                │  │     build_evidence_register()       │   │
+                │  │  • per-source evidence extraction   │   │
+                │  │  • cross-file relationship detection│   │
+                │  │  • tiered semantic deduplication    │   │
+                │  │  • boost-keyword + per-type caps    │   │
+                │  │  • provenance + confidence stamping │   │
+                │  │  • Pydantic schema validation       │   │
+                │  │  • coverage_map + entities_summary  │   │
+                │  └──────────────────┬────────────────────┘   │
+                │                     │                        │
+                │            v4 #26:  ▼                        │
+                │  ┌──────────────────────────────────────┐   │
+                │  │ _generate_analyst_briefing()         │   │
+                │  │  → impact_slides.analyst_briefing:   │   │
+                │  │    NarrativeScorer +                 │   │
+                │  │    AnalystBriefingGenerator          │   │
+                │  └──────────────────┬────────────────────┘   │
+                └─────────────────────┼────────────────────────┘
                                       ▼
                 ┌─────────────────────────────────────────────┐
                 │            OUTPUT FILES (JSON + MD)         │
                 │  evidence_register_seed.json  ← main handoff│
-                │  file_inventory.json  excel_profile.json    │
-                │  pptx_profile.json  filtering_log.json      │
-                │  processing_errors.json  preprocessor_*.md  │
+                │  analyst_briefing.md/.json    ← v4 #26 handoff│
+                │  coverage_map.json  entities_summary.json   │
+                │  excel_profile.json  pptx_profile.json       │
+                │  file_inventory.json  filtering_log.json     │
+                │  processing_errors.json  evidence_schema.json│
+                │  preprocessor_summary.md  run_metadata.json  │
+                │  run.log  (+ evidence_register.csv/.md)       │
                 └─────────────────────────────────────────────┘
 ```
 
 ### Key components
 
-| Component | Responsibility |
-|-----------|----------------|
-| `ImpactSlidePreprocessorV2` | Main orchestrator class. Holds config, runs the 5-step pipeline, owns all state. |
-| `gather_files()` / `build_file_inventory()` | Recursively discover files; classify by extension; check readability. |
-| `extract_spreadsheet()` → `profile_dataframe()` | Per-sheet profiling with header-row detection, column typing, findings generation. |
-| `extract_pptx()` → `classify_slide()` | Per-slide shape analysis, classification into 17 slide types, rich detail extraction. |
-| `extract_pdf()` + `_ensure_tesseract()` | PDF text extraction with OCR fallback for scanned pages. |
-| `extract_docx()` | Word document paragraph + table extraction. |
-| `build_evidence_register()` | Assembles, scores, sorts, deduplicates, and boosts all evidence. |
-| `_find_cross_file_relationships()` | Detects shared entities/values between Excel and PPTX. |
-| `_save_outputs()` + `_generate_summary_report()` | Emits all JSON + a human-readable Markdown summary. |
-| `inspect_register()` | Console pretty-printer for quick manual review (`--inspect`). |
+| Component | Module | Responsibility |
+|-----------|--------|----------------|
+| `ImpactSlidePreprocessorV4` | `impact_slides.preprocessor` | Main orchestrator class. Holds config, runs the 5-step pipeline, owns all state. The deep methods (`run`, `build_evidence_register`, `extract_*`, `profile_dataframe`, `classify_slide`) live here — they're tightly coupled to `self.*` state, so they stayed on the trunk during the refactor. |
+| `gather_files()` / `build_file_inventory()` | `preprocessor` | Recursively discover files; classify by extension; check readability. |
+| `extract_spreadsheet()` → `profile_dataframe()` | `preprocessor` | Per-sheet profiling + v3 #25 analytics (IQR outliers, correlation, YoY/QoQ/MoM period trends). |
+| `extract_pptx()` → `classify_slide()` | `preprocessor` + `pptx_extract` | Per-slide shape analysis (group recursion, SmartArt fallback, spatial ordering), classification into 17 slide types. |
+| `extract_pdf()` + `_ensure_tesseract()` | `preprocessor` | PDF text + table extraction (pdfplumber/PyMuPDF merge) with OCR fallback. |
+| `extract_docx()` | `preprocessor` | Word document paragraph + table extraction. |
+| `build_evidence_register()` | `preprocessor` | Assembles, scores, sorts, deduplicates, boosts, validates all evidence. |
+| `_find_cross_file_relationships()` | `preprocessor` (+ `cross_file` helpers) | Detects shared entities/values between Excel and PPTX via abbreviation expansion + fuzzy matching. |
+| `_deduplicate_evidence()` | `preprocessor` (+ `dedup` engine) | Tiered semantic near-dup clustering (embeddings → fuzzy); source-merging provenance. |
+| `_generate_analyst_briefing()` | `preprocessor` → `analyst_briefing` | v4 #26: builds the Narrative Readiness Score + ranked Focus Areas + quality flags + recommendations. |
+| `_stages_for()` / `_build_stage_rules()` | `preprocessor` (+ `stage_mapping` tables) | v3 #24: configurable Why/What/How/Now stage assignment (3-layer rules table). |
+| `clean_text`, `confidence_for_method`, … | `text_utils` / `heuristics` / `text_analysis` | Pure helpers used across the pipeline. |
+| `get_logger()`, `git_commit()`, `git_dirty()` | `logging_setup` | v3 #23: centralized structlog/stdlib logger + read-only git provenance. |
+| `load_config()` / `merge_config()` / `validate_config()` | `config` | v3 #21: YAML config resolution (CLI > YAML > default). |
+| `main()` / `test_preprocessor()` / `inspect_register()` | `cli` | Argparse entry point + console helpers. |
+| `EvidenceEntry` / `AnalystBriefing` / … | `schemas` | Pydantic contracts — single source of truth for output shapes; `--emit-schema` serializes them. |
 
 ### Optional dependencies (graceful degradation)
-PDF (`fitz`/PyMuPDF), DOCX (`python-docx`), and OCR (`pytesseract` + `PIL`) are
-imported in `try/except ImportError` blocks. If a library is missing, the
-relevant extractor simply reports `"error"` status for that file type instead
-of crashing — the rest of the pipeline still runs.
+
+Every optional dependency is imported in a `try/except ImportError` block in
+the module that needs it (no shared `deps.py` — that would re-couple what the
+refactor decoupled). If a library is missing, the relevant feature degrades
+cleanly instead of crashing:
+
+| Dependency | Used by | Fallback when absent |
+|---|---|---|
+| `fitz` (PyMuPDF) / `pdfplumber` | `preprocessor.extract_pdf` | PDF extractor reports `"error"` status; rest of pipeline runs. |
+| `python-docx` | `preprocessor.extract_docx` | DOCX extractor reports `"error"` status. |
+| `pytesseract` + `Pillow` | `preprocessor._ensure_tesseract` | Scanned PDFs yield no text; `processing_errors.json` records a warning. |
+| `pydantic` | `schemas`, `preprocessor._validate_evidence` | Runtime validation skipped (pipeline runs); `--emit-schema` unavailable. |
+| `rapidfuzz` | `dedup`, `cross_file`, `analyst_briefing` | Falls back to stdlib `difflib` for char-similarity. |
+| `numpy` | `dedup._tfidf_vectors`, `preprocessor` analytics | TF-IDF dedup tier unavailable; outlier/correlation math skips. |
+| `sentence-transformers` | `dedup._load_sentence_model` | `auto` dedup falls back to rapidfuzz char-similarity. |
+| `PyYAML` | `config.load_config` | `--config` errors clearly with a pip hint; pure-CLI usage unaffected. |
+| `structlog` | `logging_setup.get_logger` | Falls back to stdlib `logging` via `_StdlibLogAdapter`; same kwarg API. |
 
 ---
 
@@ -334,36 +385,15 @@ exports, and (if `--inspect`) prints the console summary.
   surface. A `briefing` summary block is also added to `run_metadata.json`
   and a Narrative Readiness section to `preprocessor_summary.md`.
 
-### Package architecture (v4 modular refactor, complete)
+### Package layout
 
-v4 is modularized into the `impact_slides/` package. Each leaf is a small
-(<200 LOC) pure module that fits in a single read and is unit-testable in
-isolation; the trunk class lives in `preprocessor.py` and the CLI in `cli.py`.
-`step1_preprocessor_v4.py` is now a 55-line forwarding shim (PEP 562
-`__getattr__`) so every existing `import step1_preprocessor_v4` + CLI
-invocation keeps working unchanged — the 430-test suite needed **zero edits**.
-
-```
-impact_slides/
-├── __init__.py            package entry (lazy-imports the trunk)
-├── schemas.py             Pydantic contracts (single source of truth)
-├── analyst_briefing.py    v4 #26 Narrative Readiness + Focus Area generator
-├── text_utils.py          clean_text, get_column_letter, confidence_for_method
-├── heuristics.py          identifier/system/noise detection, sheet_time_rank
-├── text_analysis.py       insight-language detection + priority scoring
-├── logging_setup.py      logger factory + read-only git provenance
-├── config.py              YAML config resolution + validation
-├── stage_mapping.py      Why/What/How/Now stage-rule tables
-├── dedup.py               tiered semantic dedup engine (embeddings/tfidf/fuzzy)
-├── cross_file.py          abbreviation/entity matching helpers
-├── pptx_extract.py        PPTX shape helpers (group/SmartArt/spatial ordering)
-├── preprocessor.py        TRUNK: ImpactSlidePreprocessorV4 class + helpers
-└── cli.py                 main() + test_preprocessor() + inspect_register()
-```
-Dependency layering (acyclic): leaves → `preprocessor` (trunk) → `cli` →
-`step1_preprocessor_v4.py` shim. New code should import from the package
-directly (`from impact_slides.preprocessor import ImpactSlidePreprocessorV4`);
-the shim exists only for backward compatibility.
+The full `impact_slides/` package tree and dependency layering are documented
+in the **Architecture** section above (Key components table + the diagram).
+In short: 13 modules, acyclic layering (leaves → `preprocessor` trunk →
+`cli` → `step1_preprocessor_v4.py` shim). New code should import from the
+package directly (`from impact_slides.preprocessor import ImpactSlidePreprocessorV4`);
+the shim exists only for backward compatibility (the 430-test suite needed
+zero edits).
 
 ---
 
