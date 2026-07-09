@@ -104,6 +104,7 @@ Each entry is an `EvidenceEntry`:
 | `sheet_name` | string \| null | Excel sheet, else null. |
 | `column_name` | string \| null | Excel column, else null. |
 | `insight_type` | string | One of 25 known types (see below). |
+| `semantic_type` | `Metric`\|`Claim`\|`Quote`\|`Risk`\|null | v4 GPT-friendly bucket assigned by the preprocessor (insight_type map + risk-keyword override). **Read this for your Evidence Register "Type" column** instead of inferring from `insight_type`. `null` only on legacy v2/v3 registers. |
 | `extraction_method` | string \| null | `computed`/`chart_data`/`numeric_range`/`categorical`/`table_cell`/`text_layer`/`ocr`/`bullet`/`paragraph`/`cross_file`/`classifier`/`unknown`. Use to weight reliability. |
 | `text` | string (≤800 chars) | The human-readable insight. The preprocessor truncates to the schema ceiling. |
 | `priority_score` | float 0.0–1.0 | Register is sorted descending by this. |
@@ -126,8 +127,11 @@ Each entry is an `EvidenceEntry`:
 `aggregate_insight`, `outlier_insight`, `correlation_insight`,
 `period_trend_insight`, `cross_file_metric`.
 
-**Type examples for your Evidence Register column:** Metric, Quote, Claim,
-Story, Visual, Brand Cue, Existing Slide Issue, Risk, Assumption.
+**Type examples for your Evidence Register column:** prefer the preprocessor's
+`semantic_type` (`Metric`/`Claim`/`Quote`/`Risk`) — it's already computed from
+`insight_type` + risk-keyword detection; fall back to `Story`/`Visual`/`Brand
+Cue`/`Existing Slide Issue`/`Assumption` only for entries the 4 buckets don't
+cover.
 
 ### Analyst Briefing (`analyst_briefing.md` / `.json`) — use it actively
 

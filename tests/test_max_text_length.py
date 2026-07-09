@@ -56,7 +56,7 @@ class TestEvidenceEntryTextLength:
         text = "x" * MAX_TEXT_LENGTH
         ev = EvidenceEntry(
             evidence_id="E0001", source_file="f.xlsx",
-            insight_type="numeric_range", text=text,
+            insight_type="numeric_range", semantic_type="Metric", text=text,
             priority_score=0.5, confidence="high",
             suggested_narrative_use=["What"], source_location="S1",
         )
@@ -67,7 +67,7 @@ class TestEvidenceEntryTextLength:
         with pytest.raises(Exception):
             EvidenceEntry(
                 evidence_id="E0001", source_file="f.xlsx",
-                insight_type="numeric_range", text=text,
+                insight_type="numeric_range", semantic_type="Metric", text=text,
                 priority_score=0.5, confidence="high",
                 suggested_narrative_use=["What"], source_location="S1",
             )

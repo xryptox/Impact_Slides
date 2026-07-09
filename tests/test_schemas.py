@@ -51,6 +51,7 @@ def _good_entry(**overrides):
         "evidence_id": "E0001",
         "source_file": "data.xlsx",
         "insight_type": "numeric_range",
+        "semantic_type": "Metric",
         "text": "Revenue ranges from 10 to 99.",
         "priority_score": 0.85,
         "confidence": "high",

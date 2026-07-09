@@ -186,6 +186,20 @@ from impact_slides.stage_mapping import (
     DEFAULT_SLIDE_TYPE_KEYWORDS, DEFAULT_SLIDE_TYPE_STAGES,
     DEFAULT_CONCLUSION_BULLET_STAGES,
 )
+# v4: semantic_type default tables (Metric/Claim/Quote/Risk). The
+# deterministic insight_type->semantic_type map + the risk-keyword override
+# layer both live in schemas.py (schema = single source of truth); the build/
+# validate/lookup happens on the trunk (mirrors stage_rules). Imported here so
+# _build_semantic_type_rules() can reach them without re-importing per call.
+try:
+    from impact_slides.schemas import (
+        DEFAULT_SEMANTIC_TYPE_MAP, DEFAULT_SEMANTIC_KEYWORD_OVERRIDES,
+        SEMANTIC_TYPES,
+    )
+except ImportError:  # pragma: no cover - schemas always present in v4
+    DEFAULT_SEMANTIC_TYPE_MAP = {}
+    DEFAULT_SEMANTIC_KEYWORD_OVERRIDES = []
+    SEMANTIC_TYPES = {"Metric", "Claim", "Quote", "Risk"}
 from impact_slides.config import (
     CONFIG_DEFAULTS, CONFIG_CHOICES, load_config, merge_config, validate_config,
     _cli_was_set, _HAS_YAML,
@@ -322,6 +336,14 @@ class ImpactSlidePreprocessorV4:
         # the schema ceiling.
         from .schemas import MAX_TEXT_LENGTH as _SCHEMA_MAX_TEXT
         self.max_text_length = _SCHEMA_MAX_TEXT
+        # v4: semantic_type (Metric/Claim/Quote/Risk) assignment settings.
+        # semantic_type_keywords = extra plain substrings (from --semantic-type-
+        # keywords / YAML) that reclassify matching evidence to "Risk". The
+        # compiled rules table is built from the schema defaults + these
+        # keywords in _build_semantic_type_rules(); rebuilt in cli.main() after
+        # config is applied so user keywords take effect before run().
+        self.semantic_type_keywords = []
+        self.semantic_type_rules = self._build_semantic_type_rules()
         # Generated artefacts (set by _generate_analyst_briefing()).
         self.analyst_briefing_md = None
         self.analyst_briefing_json = None
@@ -472,6 +494,57 @@ class ImpactSlidePreprocessorV4:
             return list(stages)
         # Fallback.
         return list(default) if default else ["What"]
+
+    # ================ SEMANTIC TYPE RULES (v4) ================
+
+    def _build_semantic_type_rules(self) -> Dict[str, Any]:
+        """Build the semantic_type assignment table from schema defaults + user
+        overrides.
+
+        Returns a dict with:
+          - "type_map": insight_type -> semantic_type (DEFAULT_SEMANTIC_TYPE_MAP)
+          - "compiled_keyword_overrides": [(compiled_regex, semantic_type), ...]
+
+        The keyword-override layer is applied AFTER the insight-type map
+        (first match in `text` wins) so risk-language evidence surfaces as
+        "Risk" regardless of insight_type — mirrors the stage_rules 3-layer
+        pattern. User overrides come from ``self.semantic_type_keywords`` (a
+        list of plain substrings, all mapped to "Risk" as word-boundary regexes).
+        Bad regexes (built-in or user) fail fast at startup, not mid-run.
+        """
+        type_map = dict(DEFAULT_SEMANTIC_TYPE_MAP)
+        compiled = []
+        for pat, stype in DEFAULT_SEMANTIC_KEYWORD_OVERRIDES:
+            try:
+                compiled.append((re.compile(pat, re.IGNORECASE), stype))
+            except re.error as e:  # pragma: no cover - built-ins are static
+                raise ValueError(
+                    f"semantic_type keyword override: invalid regex {pat!r}: {e}"
+                )
+        for kw in self.semantic_type_keywords or []:
+            kw = str(kw).strip()
+            if not kw:
+                continue
+            # User keywords are plain substrings -> word-boundary regexes.
+            compiled.append(
+                (re.compile(rf"\b{re.escape(kw)}\b", re.IGNORECASE), "Risk")
+            )
+        return {"type_map": type_map, "compiled_keyword_overrides": compiled}
+
+    def _semantic_type_for(self, insight_type: str, text: str = "") -> str:
+        """Return the semantic_type for one evidence entry.
+
+        Lookup order: (1) keyword-override (first regex match in ``text``),
+        (2) insight_type -> semantic_type map, (3) fallback ``"Claim"``.
+        Single entry point for semantic_type assignment so user keyword config
+        flows through automatically.
+        """
+        rules = self.semantic_type_rules
+        if text:
+            for pat, stype in rules.get("compiled_keyword_overrides", []):
+                if pat.search(text):
+                    return stype
+        return rules.get("type_map", {}).get(insight_type, "Claim")
 
     def gather_files(self) -> List[Path]:
         if not self.input_path.exists():
@@ -1713,6 +1786,15 @@ class ImpactSlidePreprocessorV4:
             if isinstance(t, str) and len(t) > cap:
                 # Truncate to cap-1 chars + ellipsis (U+2026) = exactly cap chars.
                 ev["text"] = t[:cap - 1] + "\u2026"
+            # v4: assign semantic_type (Metric/Claim/Quote/Risk) per entry. Done
+            # in this same loop so the field is populated even when pydantic is
+            # absent (the JSON output still carries it). Don't overwrite an
+            # explicit assignment from an extractor; the keyword-override layer
+            # can reclassify risk-language evidence to "Risk" regardless of
+            # insight_type.
+            if "semantic_type" not in ev:
+                ev["semantic_type"] = self._semantic_type_for(
+                    ev.get("insight_type", ""), ev.get("text") or "")
         if not _HAS_PYDANTIC:
             return evidence
         kept = []
@@ -2271,7 +2353,7 @@ class ImpactSlidePreprocessorV4:
                         all_fields.append(k)
             # Put the key fields first in a sensible order, then any extras.
             preferred = ["evidence_id", "source_file", "sheet_name", "column_name",
-                         "insight_type", "extraction_method", "text", "priority_score",
+                         "insight_type", "semantic_type", "extraction_method", "text", "priority_score",
                          "confidence", "suggested_narrative_use", "source_location",
                          "ocr_used", "related_files", "boosted_by_rule"]
             ordered = [f for f in preferred if f in seen] + [f for f in all_fields if f not in preferred]

@@ -60,6 +60,10 @@ focus_areas: 5
 # the schemas.MAX_TEXT_LENGTH ceiling). Lower this for a tighter Analyst-GPT
 # token budget; cannot exceed the schema ceiling.
 # max_text_length: 800
+# v4: extra keywords that reclassify matching evidence to semantic_type="Risk"
+# (plain substrings, case-insensitive, word-boundary match; extend the built-in
+# risk-language set risk/exposure/volatility/headwind/vulnerable/downside/uncertain).
+# semantic_type_keywords: [churn, breach, compliance]
 # Optional: override the readiness/focus weight tables (both must list the
 # exact keys below and sum to 1.0). Omit to use the built-in defaults.
 # briefing:

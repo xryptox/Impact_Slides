@@ -41,6 +41,7 @@ CONFIG_DEFAULTS = {
     "focus_areas": 5,       # v4 #26: number of focus areas in the briefing
     "briefing": None,       # v4 #26: optional briefing config (weights, business_keywords)
     "max_text_length": _SCHEMA_MAX_TEXT_LENGTH,  # uniform evidence `text` cap
+    "semantic_type_keywords": [],  # v4: extra Risk keywords (plain substrings)
 }
 
 CONFIG_CHOICES = {
@@ -163,3 +164,18 @@ def validate_config(cfg: Dict[str, Any]) -> None:
         bk = br.get("business_keywords")
         if bk is not None and not isinstance(bk, list):
             raise ValueError("config 'briefing.business_keywords' must be a list")
+    # v4: semantic_type_keywords — extra plain substrings that reclassify
+    # matching evidence to "Risk" (extends the built-in risk-language set).
+    stk = cfg.get("semantic_type_keywords", [])
+    if stk is None:
+        stk = []
+        cfg["semantic_type_keywords"] = stk
+    if not isinstance(stk, list):
+        raise ValueError(
+            f"config 'semantic_type_keywords' must be a list, got {type(stk).__name__}"
+        )
+    for kw in stk:
+        if not isinstance(kw, str):
+            raise ValueError(
+                f"config 'semantic_type_keywords' entries must be strings, got {kw!r}"
+            )

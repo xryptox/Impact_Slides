@@ -73,6 +73,62 @@ EXTRACTION_METHODS = {
 CONFIDENCE_LEVELS = {"high", "medium", "low"}
 NARRATIVE_STAGES = {"Why", "What", "How", "Now"}
 
+# --------------------------------------------------------------------------- #
+# v4: semantic_type — a GPT-friendly 4-bucket categorization (Metric/Claim/
+# Quote/Risk) that sits alongside the 25-value insight_type. The preprocessor
+# assigns it deterministically from insight_type (DEFAULT_SEMANTIC_TYPE_MAP)
+# with a keyword-override layer (DEFAULT_SEMANTIC_KEYWORD_OVERRIDES) that
+# reclassifies risk-language evidence to "Risk" regardless of insight_type.
+# Mirrors the stage_mapping 3-layer pattern (data here, build/lookup on the
+# trunk). Both tables derive from the schema so the README, code, and Analyst
+# GPT prompt can't drift out of sync.
+# --------------------------------------------------------------------------- #
+SEMANTIC_TYPES = {"Metric", "Claim", "Quote", "Risk"}
+
+#: Deterministic insight_type -> semantic_type map. Every INSIGHT_TYPES member
+#: must appear here (enforced by tests). The three ambiguous structural types
+#: (process_step, section_divider, multi_column_suggestion) default to Claim
+#: (the safe catch-all — not a hard number, not a verbatim quote).
+DEFAULT_SEMANTIC_TYPE_MAP: Dict[str, str] = {
+    # --- Metric (hard numbers / computed stats / chart values) ---
+    "numeric_range": "Metric",
+    "categorical_distribution": "Metric",
+    "aggregate_insight": "Metric",
+    "trend_insight": "Metric",
+    "period_trend_insight": "Metric",
+    "outlier_insight": "Metric",
+    "correlation_insight": "Metric",
+    "chart_data_insight": "Metric",
+    "chart_insight": "Metric",
+    "text_metric": "Metric",
+    "cross_file_metric": "Metric",
+    "table_cell": "Metric",
+    "table_insight": "Metric",
+    "pdf_table_insight": "Metric",
+    "pdf_table_cell": "Metric",
+    # --- Claim (prose assertions / slide-level statements) ---
+    "bullet_insight": "Claim",
+    "pptx_slide_insight": "Claim",
+    "pdf_page_insight": "Claim",
+    "pdf_ocr_page_insight": "Claim",
+    "docx_insight": "Claim",
+    "process_step": "Claim",            # ambiguous -> safe catch-all
+    "section_divider": "Claim",        # ambiguous -> safe catch-all
+    "multi_column_suggestion": "Claim",# ambiguous (it's a suggestion) -> catch-all
+    # --- Quote (verbatim speaker / emphasized text) ---
+    "speaker_notes_insight": "Quote",
+    "emphasized_text": "Quote",
+}
+
+#: Keyword-override layer: (regex_pattern, semantic_type) tuples, applied
+#: AFTER the insight-type map (first match in `text` wins). Surfaces risk
+#: language as "Risk" regardless of insight_type. Users extend this set via
+#: the `semantic_type_keywords` config key (plain substrings -> word-boundary
+#: regexes, all mapped to "Risk").
+DEFAULT_SEMANTIC_KEYWORD_OVERRIDES: List = [
+    (r"\brisks?\b|\bexposure\b|\bvolatil\w*\b|\bheadwind\w*\b|\bvulnerab\w*\b|\bdownside\b|\buncertain\w*\b", "Risk"),
+]
+
 
 def _validate_in(value: str, allowed: set, field_name: str) -> str:
     if value not in allowed:
@@ -100,6 +156,18 @@ class EvidenceEntry(BaseModel):
                              description="Unique ID preserved by the Analyst GPT.")
     source_file: str = Field(description="Real input file this insight came from.")
     insight_type: str = Field(description="One of the known insight types.")
+    # v4: GPT-friendly 4-bucket category assigned by the preprocessor from
+    # insight_type + a risk-keyword override layer. Optional in the SCHEMA
+    # (default None) so the frozen v2/v3 regression baselines — which share
+    # this schema but don't assign the field — still validate cleanly; the v4
+    # chokepoint (_validate_evidence) always populates a real value, so every
+    # v4-generated register the Analyst GPT consumes carries it.
+    semantic_type: Optional[str] = Field(
+        default=None,
+        description="GPT-friendly category: one of "
+                   f"{sorted(SEMANTIC_TYPES)}. Assigned by the v4 preprocessor "
+                   "(insight_type map + risk-keyword override); preserved by the "
+                   "Analyst GPT. None on legacy v2/v3 registers.")
     text: str = Field(max_length=MAX_TEXT_LENGTH,
                              description="Human-readable insight text (truncated to "
                                         f"{MAX_TEXT_LENGTH} chars by the preprocessor).")
@@ -127,6 +195,12 @@ class EvidenceEntry(BaseModel):
         return _validate_in(v, INSIGHT_TYPES, "insight_type")
 
     @classmethod
+    def _validate_semantic_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return _validate_in(v, SEMANTIC_TYPES, "semantic_type")
+
+    @classmethod
     def _validate_extraction_method(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
@@ -145,6 +219,7 @@ class EvidenceEntry(BaseModel):
     # Pydantic v2 field validators (plain functions to avoid decorator import).
     from pydantic import field_validator
     _v_insight = field_validator("insight_type")(_validate_insight_type)
+    _v_semantic = field_validator("semantic_type")(_validate_semantic_type)
     _v_method = field_validator("extraction_method")(_validate_extraction_method)
     _v_conf = field_validator("confidence")(_validate_confidence)
     _v_stages = field_validator("suggested_narrative_use")(_validate_stages)
@@ -239,4 +314,5 @@ __all__ = [
     "StageScore", "NarrativeReadiness", "FocusArea", "AnalystBriefing",
     "INSIGHT_TYPES", "EXTRACTION_METHODS", "CONFIDENCE_LEVELS", "NARRATIVE_STAGES",
     "MAX_TEXT_LENGTH",
+    "SEMANTIC_TYPES", "DEFAULT_SEMANTIC_TYPE_MAP", "DEFAULT_SEMANTIC_KEYWORD_OVERRIDES",
 ]

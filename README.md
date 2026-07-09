@@ -437,7 +437,7 @@ All written to `--output`. (The **Evidence Register** — the main Analyst hando
 | `run.log` | v3, always | Timestamped, leveled log of every pipeline event (structlog/stdlib; full-fidelity DEBUG+). Machine-readable, so you can diff run N vs run N−1. |
 | `run_metadata.json` | v3, always | **Reproducibility artifact:** preprocessor version, git commit + dirty flag, run timestamps, resolved config snapshot (#21), per-stage timing (#22), optional-deps inventory (which fallback tiers were active), high-level counts, **+ `briefing` block** (v4 #26: readiness score, stage scores, focus areas, quality flags). |
 | `evidence_register.md` | `--export-md` | Evidence register as Markdown. |
-| `evidence_register.csv` | `--export-csv` | Evidence register as CSV — full field set (v3): evidence_id, source_file, column_name, insight_type, extraction_method, text, priority_score, confidence, suggested_narrative_use, source_location, ocr_used, related_files, boosted_by_rule. |
+| `evidence_register.csv` | `--export-csv` | Evidence register as CSV — full field set (v3): evidence_id, source_file, column_name, insight_type, semantic_type (v4), extraction_method, text, priority_score, confidence, suggested_narrative_use, source_location, ocr_used, related_files, boosted_by_rule. |
 
 ### `evidence_register_seed.json` entry shape
 
@@ -448,6 +448,7 @@ All written to `--output`. (The **Evidence Register** — the main Analyst hando
   "sheet_name": "January",                // or null for non-Excel
   "column_name": "Unit price",            // Excel-derived only
   "insight_type": "numeric_range",        // see "insight types" below
+  "semantic_type": "Metric",            // v4: GPT-friendly bucket (Metric|Claim|Quote|Risk); see mapping below
   "extraction_method": "numeric_range",   // v3 #6: how derived (computed/chart_data/text_layer/ocr/bullet/table_cell/…)
   "text": "January: 'Unit price' ranges from 10.53 to 99.96.",
   "priority_score": 0.85,                 // 0.0–1.0, sorted descending
@@ -465,6 +466,27 @@ All written to `--output`. (The **Evidence Register** — the main Analyst hando
 `speaker_notes_insight`, `emphasized_text`, `section_divider`,
 `pdf_page_insight`, `pdf_ocr_page_insight`, `pdf_table_insight`,
 `docx_insight`, `cross_file_metric`.
+
+### Evidence `semantic_type` (v4)
+
+A GPT-friendly 4-bucket category assigned by the preprocessor alongside
+`insight_type`, so the Analyst GPT can quickly weight evidence as a hard
+number, a prose assertion, a verbatim quote, or a risk:
+
+| `semantic_type` | insight_types that map to it |
+|---|---|
+| **Metric** | `numeric_range`, `categorical_distribution`, `aggregate_insight`, `trend_insight`, `period_trend_insight`, `outlier_insight`, `correlation_insight`, `chart_data_insight`, `chart_insight`, `text_metric`, `cross_file_metric`, `table_cell`, `table_insight`, `pdf_table_insight`, `pdf_table_cell` |
+| **Claim** | `bullet_insight`, `pptx_slide_insight`, `pdf_page_insight`, `pdf_ocr_page_insight`, `docx_insight`, `process_step`, `section_divider`, `multi_column_suggestion` (the 3 structural types default to Claim — the safe catch-all) |
+| **Quote** | `speaker_notes_insight`, `emphasized_text` (verbatim text) |
+| **Risk** | never auto-assigned from `insight_type`; only via the **risk-keyword override layer** — evidence whose `text` matches a risk-language regex (`risk`, `exposure`, `volatility`, `headwind`, `vulnerable`, `downside`, `uncertain…`) is reclassified to `Risk` regardless of its `insight_type`. Extend the keyword set with `--semantic-type-keywords` / YAML `semantic_type_keywords`. |
+
+The field is **optional in the schema** (default `None`) so the frozen v2/v3
+regression baselines — which share `schemas.py` but predate the field — still
+validate cleanly. The v4 chokepoint (`_validate_evidence()`) always populates
+a real value before the register is written, so **every v4-generated register
+carries `semantic_type`** (the only kind the Analyst GPT consumes). The GPT
+preserves it like `evidence_id`. Lookup order: keyword-override (first regex
+match in `text`) → insight-type map → fallback `Claim`.
 
 ---
 
@@ -485,6 +507,7 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 | `--filter-level` | choice | `conservative` | Filtering strictness. `conservative` = strict (min priority 0.25, ≥10% non-null, ≤90% unique); `moderate` = balanced (0.15 / 5% / 92%); `permissive` = minimal (0.05 / 2% / 98%). Lower levels retain more evidence. |
 | `--focus-areas` | int | `5` | v4 #26: number of ranked Suggested Focus Areas to surface in the Analyst Briefing (`analyst_briefing.md`/`.json`). |
 | `--max-text-length` | int | `800` | Maximum characters of the `text` field on every evidence entry (the `schemas.MAX_TEXT_LENGTH` ceiling). Applied uniformly at validation time so the register stays compact and the Analyst GPT token budget is predictable. Lower this (e.g. `500`) for a tighter budget; cannot exceed the schema ceiling (`800`). |
+| `--semantic-type-keywords` | list | `[]` | v4: extra keywords (plain substrings, case-insensitive, word-boundary match) that reclassify matching evidence to `semantic_type="Risk"`. Extends the built-in risk-language set (`risk`/`exposure`/`volatility`/`headwind`/`vulnerable`/`downside`/`uncertain…`). Example: `--semantic-type-keywords churn breach compliance`. |
 | `--boost-keywords` | list | `[]` | Keywords that bump an evidence entry's priority by +0.15 (capped at 0.98), case-insensitive. Example: `--boost-keywords recommend critical growth`. |
 | `--verbose` | flag | off | Detailed console logging (boost keywords, export options, per-file timing, OCR errors). |
 

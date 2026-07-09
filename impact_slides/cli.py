@@ -143,6 +143,7 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
 
     # Breakdowns
     by_type = Counter(e.get("insight_type", "?") for e in ev)
+    by_semantic = Counter(e.get("semantic_type", "?") for e in ev)
     by_src = Counter(e.get("source_file", "?") for e in ev)
     avg_prio = sum(e.get("priority_score", 0) for e in ev) / len(ev)
     stages_used = set()
@@ -161,6 +162,10 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
     print(" By insight type:")
     for t, c in by_type.most_common():
         print(f"   {c:>4}  {t}")
+    print()
+    print(" By semantic type (Metric/Claim/Quote/Risk):")
+    for t, c in by_semantic.most_common():
+        print(f"   {c:>4}  {t}")
 
     # Top-N detail
     print()
@@ -171,11 +176,12 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
         eid = e.get("evidence_id", "?")
         prio = e.get("priority_score", 0)
         itype = e.get("insight_type", "?")
+        stype = e.get("semantic_type", "?")
         src = e.get("source_file", "?")
         loc = e.get("source_location", "?")
         use = "/".join(e.get("suggested_narrative_use", []))
         text = e.get("text", "").replace("\n", " ")
-        print(f"\n[{eid}] p={prio:.2f}  {itype}  ({src} @ {loc})")
+        print(f"\n[{eid}] p={prio:.2f}  {itype}/{stype}  ({src} @ {loc})")
         print(f"   stages: {use}   | {_console_safe(text[:120])}")
 
     # Quality flags
@@ -259,6 +265,11 @@ def main(argv=None):
                         help="Maximum characters of the `text` field on every evidence entry "
                              "(default: 800, the schema ceiling). Lower this for a tighter "
                              "Analyst-GPT token budget; cannot exceed the schema ceiling.")
+    parser.add_argument("--semantic-type-keywords", nargs="*", default=[],
+                        help="Extra keywords that reclassify matching evidence to "
+                             "semantic_type=\"Risk\" (plain substrings, case-insensitive, "
+                             "word-boundary match). Extends the built-in risk-language set. "
+                             "Example: --semantic-type-keywords churn breach compliance")
     parser.add_argument("--config", default=None,
                         help="Path to a YAML config file. CLI flags override YAML; YAML overrides defaults. "
                              "(optional; requires PyYAML). Keys mirror the CLI flags in snake_case "
@@ -305,6 +316,11 @@ def main(argv=None):
         preprocessor.dedup_engine = cfg["dedup_engine"]
         preprocessor.focus_areas_count = cfg["focus_areas"]
         preprocessor.max_text_length = cfg["max_text_length"]
+        # v4: semantic_type (Metric/Claim/Quote/Risk) — apply user Risk-keyword
+        # overrides from CLI/YAML, then rebuild the compiled rules table so the
+        # user keywords take effect before run() (mirrors stage_rules rebuild).
+        preprocessor.semantic_type_keywords = cfg["semantic_type_keywords"]
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
         # v4 #26: apply optional briefing config from YAML (weights + business
         # keywords). CLI defaults are 5 / built-ins; YAML can override without a
         # dedicated flag. Validated above in validate_config().
