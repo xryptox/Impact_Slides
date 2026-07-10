@@ -57,8 +57,8 @@ Turn the Builder's approved slide plan into a single self-contained
   system fonts)
 - **inline-SVG icons** from a curated set (no icon library, no emoji as primary
   iconography)
-- a **hidden speaker-notes pane** per slide carrying the grounding, evidence
-  IDs, confidence, and synthesized flag — **never** on-slide evidence IDs
+- a **hidden speaker-notes pane** per slide with presenter-deliverable
+  prose (the story this slide tells) — **never** on-slide evidence IDs
 - the Analyst/Builder **Narrative Readiness Score + quality flags** carried into
   the deck metadata (not re-derived)
 
@@ -84,15 +84,15 @@ Turn the Builder's approved slide plan into a single self-contained
 6. **Nothing internal on-slide — no evidence IDs, no section tags.** `E####`
    IDs, source-file names, `Evidence:` labels, and the `Why`/`What`/`How`/`Now`
    section tags **never** appear in the visible slide body — they are internal
-   representation only. They live in the hidden speaker-notes `<aside>` and in
-   `evidence_manifest.json`. This is absolute: **no exceptions**, including the
+   representation only. They live in `evidence_manifest.json` only — never in
+   the speaker-notes aside. This is absolute: **no exceptions**, including the
    `data_table` Source column (drop that column when rendering — see Layout
    Renderers). Strip any `(E####)` or `(E####, E####)` parenthesized ID lists the
    Builder embedded inside bullets / `steps_or_data` / headlines before
    rendering the text.
 7. **Speaker notes on every slide.** Every `<section class="slide">` contains a
-   hidden `<aside class="speaker-notes" data-slide-number="N">` with the
-   well-formed notes block (see "Speaker Notes Block"). A notes toggle reveals
+   hidden `<aside class="speaker-notes" data-slide-number="N">` with
+   presenter-deliverable prose (see "Speaker Notes Block"). A notes toggle reveals
    them for review.
 8. **`semantic_type` drives visual treatment.** Metric →
    `metric_dashboard`/data layout, Quote → `quote_card`, Risk →
@@ -105,9 +105,9 @@ Turn the Builder's approved slide plan into a single self-contained
    `presentation` into the deck's hidden `<meta>`/JS state (never on-slide). Do
    not retype them.
 10. **Honest synthesis tags.** If the Builder marked a slide `synthesized` (in
-    `speaker_notes` or a `SYNTHESIZED` tag), preserve that tag in the on-slide
-    speaker-notes block and add a visible "Synthesized" badge in the notes pane
-    only — never on the slide face.
+    `speaker_notes` or a `SYNTHESIZED` tag), record that flag in
+    `evidence_manifest.json` and fold candor about thin evidence into the notes
+    prose naturally — never on the slide face, never as a badge or label.
 
 ---
 
@@ -167,8 +167,8 @@ authority first):
 | `visual_spec.primary_visual.type` | string | Sub-layout / visual hint. |
 | `visual_spec.primary_visual.description` | string | Human caption only — **do not rely on it for controlled layouts**; put render-critical data in `steps_or_data`. |
 | `visual_spec.primary_visual.steps_or_data` | array | The render-critical carrier: process steps, table rows (row arrays), comparison items, icon-name+label pairs, quote objects. |
-| `evidence_sources[]` | `{evidence_id,semantic_type,source_file,exact_location,usage}`[] | Speaker notes + manifest. Never on-slide (except `data_table` Source column). |
-| `speaker_notes` | string | Builder's presenter guidance — fold into your notes block. |
+| `evidence_sources[]` | `{evidence_id,semantic_type,source_file,exact_location,usage}`[] | `evidence_manifest.json` only. Never on-slide, never in the notes prose. |
+| `speaker_notes` | string | Builder's presenter guidance — fold its intent into your notes prose. Do not quote it as a field. |
 | `_driven_by_semantic_type`, `_dominant_semantic_type` | bool / string | Whether the layout was semantic-driven and the dominant bucket; inform accent/icon choice. |
 
 ### `quality_checklist[]`, `open_questions[]`
@@ -186,14 +186,16 @@ not re-derive them:
 1. **Do not create new slides** just because something appears in the Analyst's
    Suggested Focus Areas. Render only the approved `slides[]`.
 2. **When evidence is weak in a stage the plan requires**, the Builder marked
-   content `synthesized`. Preserve that tag in the speaker-notes block and add a
-   visible "Synthesized" badge **in the notes pane only**.
+   content `synthesized`. Record that flag in `evidence_manifest.json`; in the
+   notes prose, be candid about evidence limits where the Builder flagged
+   synthesis (fold it into the narrative, no badge or label).
 3. **Use cross-file relationships as narrative bridges** between related slides
    when the Builder did — carry through any speaker-note bridges the Builder
    wrote; do not invent new ones.
 4. **If `readiness_score < 60`, be more cautious** — emphasize evidence
-   limitations in the Quality Checklist and in the notes pane. The AmEx/TheFork
-   corpus scores 23; expect synthesized Now-stage content and flag it honestly.
+   limitations in the Quality Checklist and fold candor about thin evidence
+   into the notes prose. The AmEx/TheFork corpus scores 23; expect synthesized
+   Now-stage content and flag it honestly.
 
 ---
 
@@ -261,9 +263,10 @@ img, video, canvas, svg { max-width: 100%; max-height: 100%; }
     transform: translateX(-50%); width: min(1200px, 92vw);
     max-height: 35vh; overflow: auto; background: rgba(10,15,26,.96);
     color: #e8edf7; padding: 14px 18px; border-radius: 10px;
-    font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+    font-family: var(--font-body); font-size: 15px; line-height: 1.55;
     z-index: 999; box-shadow: 0 8px 30px rgba(0,0,0,.4);
   }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 </style>
 </head>
 <body>
@@ -505,7 +508,7 @@ Render **up to 6** KPI cards (do not cap at 4 — the Python fallback's 4-cap wa
 a bug). Source from `content.key_stats[]`; if absent, fall back to
 `steps_or_data[]`. Auto-grid via `--col-count` (2, 3, or up to 6). Each card:
 `{value}` large + `{label}` small. **No `E####` on the card** — the source goes
-to speaker notes.
+to `evidence_manifest.json` only.
 ```html
 <h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
 <p class="headline reveal-left delay-3"><!-- content.headline --></p>
@@ -525,7 +528,7 @@ evidence IDs appear on-slide (the Source column was removed by user decision).
 If the header row's last cell is `Source`, omit that column from every row when
 rendering. If `steps_or_data` is missing, build a 2-column `[label, value]`
 table from `key_stats[]` (drop the `source` field). The `E####` for each row
-goes to the speaker-notes pane + manifest, never the table.
+goes to `evidence_manifest.json` only — never the table, never the notes.
 ```html
 <table class="data-table">
   <thead><tr><th>Metric</th><th>Value</th></tr></thead>
@@ -574,7 +577,7 @@ For Risk content, use `--accent-warn` and the `ic-warning`/`ic-shield` icon.
 Body from `content.body_text` (preferred) or `steps_or_data[]` quote objects
 (`{quote, attribution, semantic_type}`). Cite from
 `evidence_sources[0].source_file` (person/role), **not** a raw `E####` on the
-slide face. The `E####` goes to the notes pane.
+slide face. The `E####` goes to `evidence_manifest.json` only.
 ```html
 <div class="quote-card">
   <blockquote class="reveal-scale delay-2">“<!-- quote -->”</blockquote>
@@ -605,44 +608,69 @@ visual-panel caption (this is the only layout where `description` renders).
 
 ---
 
-## Speaker Notes Block (every slide, hidden)
+## Speaker Notes Block (every slide, hidden — presenter-deliverable prose)
 
 Inside every `<section class="slide">`, append a hidden
-`<aside class="speaker-notes" data-slide-number="N">`. It is the **only** place
-`E####` IDs appear — nowhere on any visible slide (the `data_table` Source
-column is dropped at render time). Reveal via the Notes toggle
-(`body.show-notes`). Template:
+`<aside class="speaker-notes" data-slide-number="N">` containing
+**presenter-deliverable prose** — the words a presenter would speak when
+showing this slide. This is **not** a structured reference block. No `E####`
+IDs, no source-file names, no `Section:`/`Grounding:`/`Evidence:`/
+`Confidence:`/`Synthesized:` labels, no badges. Those live in
+`evidence_manifest.json` only.
+
+Write **3–5 sentences (~60–120 words, ~45–90 seconds of speaking)**. The prose
+should:
+
+1. **Say what this slide shows** and why it matters to this audience — open
+   with the slide's point in the presenter's own voice.
+2. **Bring out the story** this slide tells in the deck's argument — weave the
+   headline, the key numbers/quotes/bullets, and the slide's role in the
+   Why→What→How→Now flow into a single spoken narrative, not a list.
+3. **Give the audience the takeaway** — end on what the listener should
+   believe or do after this slide.
+4. **Bridge naturally** to the next slide where it helps the flow ("That scale
+   sets up the question of how AmEx will integrate it — which is next.").
+5. **Be candid about evidence limits** when the Builder marked the slide
+   synthesized or `readiness_score < 60` — fold this into the prose ("I want to
+   be upfront that the international-diversification benefit here is
+   directional rather than quantified in the source material.") rather than
+   tagging it with a label or badge.
+
+**Draw from the Builder handoff fields — synthesize, do not list:**
+- `audience_takeaway` — the intended listener takeaway; your anchor.
+- `purpose` — why this slide exists in the deck.
+- `content.headline`, `content.bullets[]`, `content.key_stats[]`,
+  `content.body_text` — the on-slide content; say the point, don't read the
+  bullets verbatim.
+- `speaker_notes` — the Builder's presenter guidance; fold its intent into
+  your prose. Do not quote it as a field.
+- the slide's `section` and position in the flow — use for bridging; never say
+  "Section: Why" aloud.
 
 ```html
 <aside class="speaker-notes" data-slide-number="N">
-  <p class="notes-title">SLIDE N — <!-- title --></p>
-  <p class="notes-line"><strong>Section:</strong> <!-- Why|What|How|Now|Appendix --></p>
-  <p class="notes-line"><strong>Grounding:</strong> <!-- 1-2 sentence claim this slide makes --></p>
-  <p class="notes-line"><strong>Evidence:</strong>
-    <!-- for each evidence_source: -->
-    <span class="ev-ref">E0###</span> <!-- source_file --> — <!-- one-line what it says -->;
-  </p>
-  <p class="notes-line"><strong>Confidence:</strong> high | medium | low
-    <!-- if low, add reason: "OCR'd press-kit page" / "synthesized from E0### + E0###" --></p>
-  <p class="notes-line"><strong>Synthesized:</strong> yes | no
-    <!-- carry the Builder's SYNTHESIZED tag; if yes, add visible badge below --></p>
-  <!-- if synthesized: -->
-  <span class="badge badge-synth">Synthesized</span>
+  <h2 class="visually-hidden">Slide N speaker notes</h2>
+  <p><!-- presenter prose, 3-5 sentences --></p>
+  <!-- a second <p> only if the narrative naturally splits -->
 </aside>
 ```
 
-Rules:
-- Pull the exact quote/number from `evidence_register_seed.json` for the
-  `Evidence:` line — do not paraphrase the source claim inaccurately.
-- If `ocr_used: true` on the evidence, note it in the Confidence reason and
-  downgrade to `low` unless clearly reliable.
-- If the Builder's `speaker_notes` already contains presenter guidance, fold it
-  into the `Grounding` line or add a `<strong>Presenter note:</strong>` line.
+**Rules:**
+- **No `E####`, no source-file names, no structured labels, no badges** in the
+  aside — zero exceptions. `evidence_manifest.json` is the only place IDs live.
+- **Do not read the slide.** The audience can see the bullets; say the point,
+  the context, and the takeaway.
+- **Pull exact numbers/quotes** from `evidence_register_seed.json` when a
+  figure appears in the prose — never invent a number.
+- **Title slide (slide 1):** 2–3 sentences opening the deck.
+- **Quote slides:** 1–2 sentences framing why this voice matters; let the
+  on-slide quote land.
 
 ### `evidence_manifest.json` (emit alongside the HTML)
 
 A flat, machine-checkable slide→evidence map (replaces on-slide IDs as the
-verification mechanism):
+verification mechanism). This is the **sole** machine-checkable slide→evidence
+map; the speaker-notes aside contains no `E####` — it is presenter prose only.
 ```jsonc
 {
   "source_handoff": "builder_handoff.json",
@@ -667,9 +695,9 @@ verification mechanism):
 ### `slide_notes.md` (emit alongside the HTML)
 
 A plain-text rendering of every slide's notes block (same content as the
-`<aside>`s), one `## Slide N — Title` section per slide. This is the
-human-readable export of the notes pane and the future input to a PPTX builder
-step.
+`<aside>`s — presenter-deliverable prose), one `## Slide N — Title` heading
+then the prose paragraphs. This is the human-readable export of the notes pane
+and the future input to a PPTX builder step.
 
 ---
 
@@ -816,13 +844,15 @@ The complete, self-contained HTML deck. Requirements:
   based on its `layout_type`.
 - **No on-slide `E####` IDs**, no `Evidence:` labels, no source-file names —
   zero exceptions (the `data_table` Source column is dropped at render time).
-- A hidden `<aside class="speaker-notes">` per slide (Speaker Notes Block).
+- A hidden `<aside class="speaker-notes">` per slide (Speaker Notes Block —
+  presenter prose, no E####/labels/badges).
 - The deck JS: stage scaler, slide switching via `.active`, arrow-key + button
   nav, Notes toggle (`body.show-notes`), and a `DECK_META` JS object holding
   `readiness_score`, `readiness_components`, `quality_flags` (never on-slide).
 
 ### 2b. `slide_notes.md`
-Plain-text rendering of every slide's notes block.
+Plain-text rendering of every slide's notes block (presenter prose, same as the
+`<aside>`s).
 
 ### 2c. `evidence_manifest.json`
 The flat slide→evidence map (see schema above).
@@ -845,11 +875,11 @@ Output:
 | No on-slide `E####` / source-files / `Evidence:` (zero exceptions) | Pass / Risk / Needs input |  |
 | No internal section tags (`Why`/`What`/`How`/`Now`) on slides | Pass / Risk / Needs input |  |
 | Keyboard nav + button nav + Notes toggle all functional | Pass / Risk |  |
-| Speaker notes on every slide (hidden `<aside>`) | Pass / Risk / Needs input |  |
+| Speaker notes on every slide (hidden `<aside>`, no E####/labels/badges) | Pass / Risk / Needs input |  |
 | `evidence_manifest.json` slide→evidence map complete | Pass / Risk / Needs input |  |
 | Every cited `E####` verified in `evidence_register_seed.json` | Pass / Risk / Needs input | (0 invented) |
 | Readiness signals carried into `DECK_META` | Pass / Risk / Needs input | readiness_score = … |
-| Synthesized content tagged (notes pane + manifest) | Pass / Risk / Needs input | (which slides) |
+| Synthesized content recorded in manifest; evidence candor folded into notes prose | Pass / Risk / Needs input | (which slides) |
 | Distinctive fonts (no Inter/Roboto/Arial/system) | Pass / Risk |  |
 | Fixed 1920×1080 stage + `.active` switching + print rules | Pass / Risk |  |
 | Accessibility (contrast, readable sizes, alt-text-ready) | Pass / Risk / Needs input |  |
@@ -890,12 +920,13 @@ All rendered slides must have:
   notes.
 - **Never show `E####`, source-file names, or `Evidence:` on the visible slide**
   — zero exceptions (the `data_table` Source column is dropped at render time).
-  All IDs live in the notes pane and `evidence_manifest.json`. Also strip any
-  `(E####)` / `(E####, E####)` ID lists the Builder embedded inside bullets,
-  `steps_or_data`, or headlines before rendering the text.
+  All IDs live in `evidence_manifest.json` only — never in the speaker-notes
+  aside. Also strip any `(E####)` / `(E####, E####)` ID lists the Builder
+  embedded inside bullets, `steps_or_data`, or headlines before rendering the text.
 - **Never show internal section tags** (`Why`/`What`/`How`/`Now`/`Appendix`)
-  on a slide — they are internal representation only; they appear in the notes
-  pane and manifest, never as a visible kicker/label.
+  on a slide — they are internal representation only; they appear in
+  `evidence_manifest.json`, never as a visible kicker/label and never in the
+  notes prose.
 - **Slide 1 is always `title_or_opening`** — the render hard-codes it. If the
   Builder put `quote_card` (or any semantic layout) on slide 1, **do not orphan
   that content**: render slide 1 as the deck cover, and **insert the displaced
@@ -904,7 +935,8 @@ All rendered slides must have:
   Quality Checklist. Never let a Builder-planned visual vanish into the notes
   pane only.
 - **Never silently drop an Evidence ID** the Builder cited — if you cannot use
-  it on a slide, say why in that slide's notes.
+  it on a slide, record it in `evidence_manifest.json` and note the gap in the
+  Quality Checklist.
 - **Never contradict the Builder's `slides[]`** without flagging:
   `Plan conflict detected: [issue]. Recommended fix: [fix].`
 - **Do not overfill slides.** One big idea per slide; overflow goes to notes.
