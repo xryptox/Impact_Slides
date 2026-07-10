@@ -42,12 +42,16 @@ CONFIG_DEFAULTS = {
     "briefing": None,       # v4 #26: optional briefing config (weights, business_keywords)
     "max_text_length": _SCHEMA_MAX_TEXT_LENGTH,  # uniform evidence `text` cap
     "semantic_type_keywords": [],  # v4: extra Risk keywords (plain substrings)
+    "semantic_detection": "default",  # v4: {off,loose,default,strict} Quote/Metric content layers
+    "downweight_keywords": [],     # v4: extra boilerplate keywords to DOWNWEIGHT (extends built-in legal set)
+    "no_downweight_boilerplate": False,  # v4: escape hatch — disable built-in legal-boilerplate downweight
 }
 
 CONFIG_CHOICES = {
     "filter_level": ("conservative", "moderate", "permissive"),
     "pdf_table_engine": ("auto", "pdfplumber", "pymupdf"),
     "dedup_engine": ("auto", "embeddings", "tfidf", "fuzzy"),
+    "semantic_detection": ("off", "loose", "default", "strict"),
 }
 
 
@@ -179,3 +183,26 @@ def validate_config(cfg: Dict[str, Any]) -> None:
             raise ValueError(
                 f"config 'semantic_type_keywords' entries must be strings, got {kw!r}"
             )
+    # v4: downweight_keywords — extra plain substrings that DOWNWEIGHT matching
+    # evidence (lowers priority_score), extending the built-in legal-boilerplate
+    # regex set. Mirrors boost_keywords validation. no_downweight_boilerplate is a
+    # bool escape hatch that disables ONLY the built-in legal patterns (user
+    # downweight_keywords still apply).
+    dwk = cfg.get("downweight_keywords", [])
+    if dwk is None:
+        dwk = []
+        cfg["downweight_keywords"] = dwk
+    if not isinstance(dwk, list):
+        raise ValueError(
+            f"config 'downweight_keywords' must be a list, got {type(dwk).__name__}"
+        )
+    for kw in dwk:
+        if not isinstance(kw, str):
+            raise ValueError(
+                f"config 'downweight_keywords' entries must be strings, got {kw!r}"
+            )
+    ndb = cfg.get("no_downweight_boilerplate", False)
+    if not isinstance(ndb, bool):
+        raise ValueError(
+            f"config 'no_downweight_boilerplate' must be a bool, got {type(ndb).__name__}"
+        )

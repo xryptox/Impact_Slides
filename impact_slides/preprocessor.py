@@ -58,6 +58,14 @@ import pandas as pd
 # banner + a future --version flag.
 __version__ = "4.0.0"
 
+# v4: legal-boilerplate downweight tuning (the inverse of boost_keywords).
+# Penalty subtracted from priority_score on a downweight match; floored so
+# scores stay non-negative. Tuned so a 0.83 boilerplate page sinks to ~0.63,
+# below content-aware DOCX rationale quotes (~0.70-0.95), without making any
+# entry vanish from the register.
+_DOWNWEIGHT_PENALTY = 0.20
+_DOWNWEIGHT_FLOOR = 0.05
+
 # v3: Pydantic schemas are the single source of truth for the output contracts.
 # Optional at runtime: if pydantic isn't installed, validation is skipped (the
 # preprocessor still runs), but emitting the JSON schema requires it.
@@ -180,6 +188,7 @@ from impact_slides.heuristics import (
 from impact_slides.text_analysis import (
     extract_advanced_metrics, contains_insight_language, insight_priority_boost,
     calculate_evidence_priority_score, _INSIGHT_KEYWORDS,
+    DEFAULT_LEGAL_BOILERPLATE_PATTERNS,
 )
 from impact_slides.stage_mapping import (
     DEFAULT_INSIGHT_TYPE_STAGES, DEFAULT_KEYWORD_STAGE_OVERRIDES,
@@ -195,11 +204,17 @@ try:
     from impact_slides.schemas import (
         DEFAULT_SEMANTIC_TYPE_MAP, DEFAULT_SEMANTIC_KEYWORD_OVERRIDES,
         SEMANTIC_TYPES,
+        SEMANTIC_DETECTION_LEVELS, SEMANTIC_DETECTION_PROSE_TYPES,
+        DEFAULT_SEMANTIC_QUOTE_PATTERNS, DEFAULT_SEMANTIC_METRIC_PATTERNS,
     )
 except ImportError:  # pragma: no cover - schemas always present in v4
     DEFAULT_SEMANTIC_TYPE_MAP = {}
     DEFAULT_SEMANTIC_KEYWORD_OVERRIDES = []
     SEMANTIC_TYPES = {"Metric", "Claim", "Quote", "Risk"}
+    SEMANTIC_DETECTION_LEVELS = ("off", "loose", "default", "strict")
+    SEMANTIC_DETECTION_PROSE_TYPES = {"default": frozenset(), "loose": frozenset(), "strict": frozenset()}
+    DEFAULT_SEMANTIC_QUOTE_PATTERNS = {"default": [], "loose": [], "strict": []}
+    DEFAULT_SEMANTIC_METRIC_PATTERNS = {"default": [], "loose": [], "strict": []}
 from impact_slides.config import (
     CONFIG_DEFAULTS, CONFIG_CHOICES, load_config, merge_config, validate_config,
     _cli_was_set, _HAS_YAML,
@@ -343,7 +358,22 @@ class ImpactSlidePreprocessorV4:
         # keywords in _build_semantic_type_rules(); rebuilt in cli.main() after
         # config is applied so user keywords take effect before run().
         self.semantic_type_keywords = []
+        # v4: --semantic-detection {off,loose,default,strict} knob controls two
+        # content-aware layers (Quote, then Metric) that run after the Risk
+        # keyword-override and before the insight-type map. `default` is shipped
+        # ON (prose-scoped to bullet/pdf/docx; pptx excluded); `off` is the
+        # escape hatch. Built in _build_semantic_type_rules(); rebuilt in
+        # cli.main() after config is applied.
+        self.semantic_detection = "default"
         self.semantic_type_rules = self._build_semantic_type_rules()
+        # v4: legal-boilerplate downweight (inverse of boost_keywords). Built-in
+        # DEFAULT_LEGAL_BOILERPLATE_PATTERNS ship ON by default; user substrings
+        # from --downweight-keywords / YAML extend the set. --no-downweight-
+        # boilerplate disables ONLY the built-in legal patterns. Compiled rules
+        # built in _build_downweight_rules(); rebuilt in cli.main() after config.
+        self.downweight_keywords = []
+        self.no_downweight_boilerplate = False
+        self.downweight_rules = self._build_downweight_rules()
         # Generated artefacts (set by _generate_analyst_briefing()).
         self.analyst_briefing_md = None
         self.analyst_briefing_json = None
@@ -504,13 +534,21 @@ class ImpactSlidePreprocessorV4:
         Returns a dict with:
           - "type_map": insight_type -> semantic_type (DEFAULT_SEMANTIC_TYPE_MAP)
           - "compiled_keyword_overrides": [(compiled_regex, semantic_type), ...]
+          - "prose_types": frozenset of insight_types eligible for the Quote/
+            Metric content-detection layers (empty when `semantic_detection`
+            is "off" or unknown)
+          - "compiled_quote_patterns": [(compiled_regex, "Quote"), ...]
+          - "compiled_metric_patterns": [(compiled_regex, "Metric"), ...]
 
-        The keyword-override layer is applied AFTER the insight-type map
-        (first match in `text` wins) so risk-language evidence surfaces as
-        "Risk" regardless of insight_type — mirrors the stage_rules 3-layer
-        pattern. User overrides come from ``self.semantic_type_keywords`` (a
-        list of plain substrings, all mapped to "Risk" as word-boundary regexes).
-        Bad regexes (built-in or user) fail fast at startup, not mid-run.
+        Lookup order in _semantic_type_for: (1) Risk keyword-override (first
+        match wins), (2) Quote content-detection (prose-scoped), (3) Metric
+        content-detection (prose-scoped), (4) insight_type map, (5) fallback
+        "Claim". Precedence: a quoted risk statement -> Risk; a quoted number ->
+        Quote; a bare magnitude in prose -> Metric.
+
+        User overrides come from ``self.semantic_type_keywords`` (a list of
+        plain substrings, all mapped to "Risk" as word-boundary regexes). Bad
+        regexes (built-in or user) fail fast at startup, not mid-run.
         """
         type_map = dict(DEFAULT_SEMANTIC_TYPE_MAP)
         compiled = []
@@ -529,19 +567,64 @@ class ImpactSlidePreprocessorV4:
             compiled.append(
                 (re.compile(rf"\b{re.escape(kw)}\b", re.IGNORECASE), "Risk")
             )
-        return {"type_map": type_map, "compiled_keyword_overrides": compiled}
+        # v4: content-aware Quote/Metric layers keyed by --semantic-detection.
+        level = self.semantic_detection or "default"
+        if level == "off" or level not in SEMANTIC_DETECTION_PROSE_TYPES:
+            prose_types = frozenset()
+            quote_pats, metric_pats = [], []
+        else:
+            prose_types = SEMANTIC_DETECTION_PROSE_TYPES[level]
+            quote_pats, metric_pats = [], []
+            for pat, stype in DEFAULT_SEMANTIC_QUOTE_PATTERNS.get(level, []):
+                try:
+                    quote_pats.append((re.compile(pat, re.IGNORECASE), stype))
+                except re.error as e:  # pragma: no cover - built-ins are static
+                    raise ValueError(
+                        f"semantic_type quote pattern: invalid regex {pat!r}: {e}"
+                    )
+            for pat, stype in DEFAULT_SEMANTIC_METRIC_PATTERNS.get(level, []):
+                try:
+                    metric_pats.append((re.compile(pat, re.IGNORECASE), stype))
+                except re.error as e:  # pragma: no cover - built-ins are static
+                    raise ValueError(
+                        f"semantic_type metric pattern: invalid regex {pat!r}: {e}"
+                    )
+        return {
+            "type_map": type_map,
+            "compiled_keyword_overrides": compiled,
+            "prose_types": prose_types,
+            "compiled_quote_patterns": quote_pats,
+            "compiled_metric_patterns": metric_pats,
+        }
 
     def _semantic_type_for(self, insight_type: str, text: str = "") -> str:
         """Return the semantic_type for one evidence entry.
 
-        Lookup order: (1) keyword-override (first regex match in ``text``),
-        (2) insight_type -> semantic_type map, (3) fallback ``"Claim"``.
-        Single entry point for semantic_type assignment so user keyword config
+        Lookup order (5 layers):
+          (1) keyword-override (first regex match in ``text``) -> Risk
+          (2) Quote content-detection (prose-scoped, per --semantic-detection)
+          (3) Metric content-detection (prose-scoped, per --semantic-detection)
+          (4) insight_type -> semantic_type map
+          (5) fallback ``"Claim"``.
+        Precedence: a quoted risk statement -> Risk (layer 1 wins over 2); a
+        quoted number -> Quote (layer 2 wins over 3); a bare magnitude in
+        prose -> Metric. Layers 2 & 3 only run on prose insight_types in the
+        active level's prose set, so an insight_type already mapped to Metric
+        (numeric_range, table_cell, ...) skips straight to the map.
+        Single entry point for semantic_type assignment so user config
         flows through automatically.
         """
         rules = self.semantic_type_rules
         if text:
             for pat, stype in rules.get("compiled_keyword_overrides", []):
+                if pat.search(text):
+                    return stype
+        prose = rules.get("prose_types", frozenset())
+        if text and insight_type in prose:
+            for pat, stype in rules.get("compiled_quote_patterns", []):
+                if pat.search(text):
+                    return stype
+            for pat, stype in rules.get("compiled_metric_patterns", []):
                 if pat.search(text):
                     return stype
         return rules.get("type_map", {}).get(insight_type, "Claim")
@@ -1710,12 +1793,21 @@ class ImpactSlidePreprocessorV4:
 
             for para in docx_profile.get("paragraphs", [])[:10]:
                 if len(para) > 20:
+                    # v4 (Approach C): content-aware DOCX priority. Previously a
+                    # flat 0.60 regardless of content, which capped genuinely
+                    # high-narrative-value prose (deal-rationale quotes) BELOW
+                    # legal PDF pages that tripped the domain-blind
+                    # contains_insight_language() heuristic. Now mirror the PDF
+                    # bullet/paragraph path: base 0.70 + insight-language boost,
+                    # so content-bearing DOCX prose can reach ~0.95 and outrank
+                    # boilerplate (which Approach A separately downweights).
+                    docx_priority = insight_priority_boost(para, 0.70)
                     ev = {
                         "evidence_id": f"E{evidence_id:04d}",
                         "source_file": source_file,
                         "insight_type": "docx_insight",
                         "text": para,
-                        "priority_score": 0.60,
+                        "priority_score": docx_priority,
                         "confidence": "medium",
                         "suggested_narrative_use": self._stages_for("docx_insight", para),
                         "source_location": "DOCX",
@@ -1738,6 +1830,11 @@ class ImpactSlidePreprocessorV4:
 
         # === Item 4.3: Apply configurable boost keywords ===
         evidence = self._apply_boost_rules(evidence)
+
+        # v4: apply legal-boilerplate downweight (inverse of boost). Runs BEFORE
+        # per-type caps so caps keep the highest-priority representatives and
+        # the rationale quotes we just promoted are not capped away.
+        evidence = self._apply_downweight_rules(evidence)
 
         # v3 #8: cap per (source_file, insight_type) so one source can't flood
         evidence = self._apply_per_type_caps(evidence)
@@ -1940,6 +2037,59 @@ class ImpactSlidePreprocessorV4:
 
         return evidence
 
+    def _build_downweight_rules(self) -> Dict[str, Any]:
+        """Build the downweight rule table from the built-in legal-boilerplate
+        regex set + user substrings.
+
+        Returns a dict with:
+          - "compiled_patterns": [(compiled_regex, label), ...]
+
+        The built-in ``DEFAULT_LEGAL_BOILERPLATE_PATTERNS`` are included unless
+        ``self.no_downweight_boilerplate`` is set (the ``--no-downweight-
+        boilerplate`` escape hatch). User substrings from
+        ``self.downweight_keywords`` are compiled as word-boundary regexes and
+        appended (they EXTEND the built-in set, never replace it — mirrors
+        boost_keywords extension semantics). Bad regexes fail fast at startup.
+        """
+        compiled = []
+        if not self.no_downweight_boilerplate:
+            for pat in DEFAULT_LEGAL_BOILERPLATE_PATTERNS:
+                compiled.append((pat, "built-in-legal-boilerplate"))
+        for kw in self.downweight_keywords or []:
+            kw = str(kw).strip()
+            if not kw:
+                continue
+            compiled.append(
+                (re.compile(rf"\b{re.escape(kw)}\b", re.IGNORECASE), f"user:{kw}")
+            )
+        return {"compiled_patterns": compiled}
+
+    def _apply_downweight_rules(self, evidence: List[Dict]) -> List[Dict]:
+        """v4: DOWNWEIGHT evidence that matches boilerplate patterns (the inverse
+        of ``_apply_boost_rules``). For each entry, test its ``text`` against
+        the compiled downweight patterns; on the first match subtract a
+        penalty and stamp ``downweighted_by_rule``. Scores are floored at
+        ``_DOWNWEIGHT_FLOOR`` so they stay non-negative. Called right after
+        ``_apply_boost_rules`` and before ``_apply_per_type_caps`` so caps keep
+        the highest-priority representatives (rationale quotes we just
+        promoted are not capped away).
+        """
+        patterns = self.downweight_rules.get("compiled_patterns", [])
+        if not patterns:
+            return evidence
+        for ev in evidence:
+            text = ev.get("text", "")
+            if not text:
+                continue
+            for pat, label in patterns:
+                if pat.search(text):
+                    current = ev.get("priority_score", 0.5)
+                    ev["priority_score"] = round(
+                        max(_DOWNWEIGHT_FLOOR, current - _DOWNWEIGHT_PENALTY), 3)
+                    ev["downweighted_by_rule"] = label
+                    break   # only downweight once per entry
+        return evidence
+
     def _apply_provenance_and_confidence(self, evidence: List[Dict]) -> List[Dict]:
         """
         v3 #6 + #9: stamp every evidence with an `extraction_method` (how the
@@ -2017,6 +2167,18 @@ class ImpactSlidePreprocessorV4:
             "outlier_insight": 10,
             "correlation_insight": 8,
             "period_trend_insight": 10,
+            # v4 (Approach D): cap the high-volume prose insight types so a
+            # single large legal/contract PDF (e.g. an M&A agreement with 86+
+            # pages) or a long DOCX cannot flood the register by sheer volume.
+            # Caps are per (source_file, insight_type), so 3 PDFs can still
+            # contribute 40 page-insights each, but one 200-page agreement
+            # won't dominate. Values kept proportional to the existing caps
+            # (prose types are higher-value per-entry than table cells but
+            # lower than analytical types, so 40/30 sits between pptx_slide 15
+            # and bullet 20 scaled up for document length).
+            "pdf_page_insight": 40,
+            "pdf_ocr_page_insight": 40,
+            "docx_insight": 30,
         }
         buckets = defaultdict(list)
         for ev in evidence:

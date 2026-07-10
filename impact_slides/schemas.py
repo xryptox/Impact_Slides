@@ -129,6 +129,122 @@ DEFAULT_SEMANTIC_KEYWORD_OVERRIDES: List = [
     (r"\brisks?\b|\bexposure\b|\bvolatil\w*\b|\bheadwind\w*\b|\bvulnerab\w*\b|\bdownside\b|\buncertain\w*\b", "Risk"),
 ]
 
+# --------------------------------------------------------------------------- #
+# v4: content-aware Quote / Metric detection layers (semantic_detection)
+# --------------------------------------------------------------------------- #
+# A single --semantic-detection {off,loose,default,strict} knob controls two
+# extra _semantic_type_for layers that run AFTER the Risk keyword-override and
+# BEFORE the insight-type map:
+#   (1) Risk keyword-override  -> Risk   [always on; independent of this knob]
+#   (2) Quote detection        -> Quote  [this knob]
+#   (3) Metric detection       -> Metric [this knob]
+#   (4) insight_type map       (existing)
+#   (5) fallback "Claim"       (existing)
+# Precedence: a quoted risk statement -> Risk (layer 1 wins); a quoted number
+# -> Quote (layer 2 before 3); a bare magnitude in prose -> Metric.
+#
+# Both content layers are PROSE-SCOPED: they only run on insight_types in the
+# level's prose set (bullet/pdf_page/pdf_ocr_page/docx by default; `loose` adds
+# pptx_slide_insight). They NEVER re-classify an insight_type already mapped to
+# Metric (numeric_range, table_cell, ...) — those skip straight to the map.
+# This scope guard is what keeps `test_claim_for_bullet` (text
+# "Revenue ranges 10 to 99.") green: "10 to 99" has no currency / % / magnitude
+# word, so the strict regexes do not fire. Do NOT loosen the regexes to match
+# bare "X to Y" ranges without a unit, or that fixture silently flips.
+SEMANTIC_DETECTION_LEVELS = ("off", "loose", "default", "strict")
+
+#: Prose insight_types eligible for Quote/Metric content-detection, per level.
+#: `default`/`strict` exclude pptx_slide_insight (fragmented slide text causes
+#: false positives); `loose` includes it. `off` disables both layers regardless.
+SEMANTIC_DETECTION_PROSE_TYPES: Dict[str, frozenset] = {
+    "loose": frozenset({
+        "bullet_insight", "pptx_slide_insight", "pdf_page_insight",
+        "pdf_ocr_page_insight", "docx_insight",
+    }),
+    "default": frozenset({
+        "bullet_insight", "pdf_page_insight", "pdf_ocr_page_insight",
+        "docx_insight",
+    }),
+    "strict": frozenset({
+        "bullet_insight", "pdf_page_insight", "pdf_ocr_page_insight",
+        "docx_insight",
+    }),
+}
+
+# Quote character class (bare chars, no brackets): straight + typographic
+# curly quotes (real DOCX/PDF prose frequently uses U+201C / U+201D, not ASCII
+# "). Patterns build [{_Q}] (any quote) / [^{_Q}] (not a quote) from this.
+_Q = '"\u201c\u201d'
+
+#: Quote-detection regexes per level (first match in `text` -> "Quote").
+#: Attribution-gated so scare quotes / marketing superlatives don't fire.
+DEFAULT_SEMANTIC_QUOTE_PATTERNS: Dict[str, List] = {
+    # default: quoted span (>=8 chars) + a speech verb / title / Person Name
+    # nearby, OR colon-then-quote, OR a long (>=60 char) quoted block.
+    "default": [
+        (rf'[{_Q}][^{_Q}]{{8,200}}[{_Q}]\s*(?:[,\u2014-]\s*)?'
+         r'(?:said|stated|noted|added|explained|commented|remarked|told|CEO|CFO|'
+         r'COO|CTO|Chairman|president|founder|director|Chief\s+\w+\s+Officer|'
+         r'[A-Z][a-z]+\s+[A-Z][a-z]+)', "Quote"),
+        (rf':\s*[{_Q}][^{_Q}]{{8,200}}[{_Q}]', "Quote"),
+        (rf'[{_Q}][^{_Q}]{{60,800}}[{_Q}]', "Quote"),
+    ],
+    # strict: require an attribution cue (drop the long-block heuristic that
+    # can false-positive on long non-speech quoted spans); raise min to 15.
+    "strict": [
+        (rf'[{_Q}][^{_Q}]{{15,200}}[{_Q}]\s*(?:[,\u2014-]\s*)?'
+         r'(?:said|stated|noted|added|explained|commented|remarked|told|CEO|CFO|'
+         r'COO|CTO|Chairman|president|founder|director|Chief\s+\w+\s+Officer|'
+         r'[A-Z][a-z]+\s+[A-Z][a-z]+)', "Quote"),
+        (rf':\s*[{_Q}][^{_Q}]{{15,200}}[{_Q}]', "Quote"),
+    ],
+    # loose: lower min to 5 chars and add any quoted span >=20 chars (catches
+    # marketing pull-quotes on slides when pptx_slide_insight is in scope).
+    "loose": [
+        (rf'[{_Q}][^{_Q}]{{5,200}}[{_Q}]\s*(?:[,\u2014-]\s*)?'
+         r'(?:said|stated|noted|added|explained|commented|remarked|told|CEO|CFO|'
+         r'COO|CTO|Chairman|president|founder|director|Chief\s+\w+\s+Officer|'
+         r'[A-Z][a-z]+\s+[A-Z][a-z]+)', "Quote"),
+        (rf':\s*[{_Q}][^{_Q}]{{5,200}}[{_Q}]', "Quote"),
+        (rf'[{_Q}][^{_Q}]{{20,800}}[{_Q}]', "Quote"),
+    ],
+}
+
+#: Metric-detection regexes per level (first match in `text` -> "Metric").
+#: Magnitude-gated so plain small integers ("3 options", "two reasons") and bare
+#: ranges ("10 to 99") do NOT fire — only currency+magnitude, grouped
+#: thousands, percentages, or bare magnitude words qualify in `default`.
+_CUR = r'[$\u20ac\u00a3\u00a5]'
+_KPI = (r'revenue|EBITDA|EBIT|EPS|ARR|MAU|net income|gross margin|market cap|'
+        r'valuation|ROI|CAC|LTV|ARPU|profit|margin|growth rate')
+DEFAULT_SEMANTIC_METRIC_PATTERNS: Dict[str, List] = {
+    # default: currency+magnitude, currency+grouped-thousands, percentage,
+    # bare magnitude word ("28 million").
+    "default": [
+        (rf'{_CUR}\s?\d{{1,3}}(?:[.,]\d{{2,3}})*\s?(?:million|billion|MM|bn|M\b|B\b)', "Metric"),
+        (rf'{_CUR}\s?\d{{1,3}}(?:,\d{{3}})+', "Metric"),
+        (r'\b\d{1,3}(?:\.\d+)?\s?%', "Metric"),
+        (r'\b\d+(?:\.\d+)?\s?(?:million|billion|MM|bn)\b', "Metric"),
+    ],
+    # strict: currency requires an explicit magnitude word (no single M/B);
+    # percentage requires a KPI word nearby (no bare %); KPI+magnitude.
+    "strict": [
+        (rf'{_CUR}\s?\d{{1,3}}(?:[.,]\d{{2,3}})*\s?(?:million|billion|MM|bn)', "Metric"),
+        (rf'{_CUR}\s?\d{{1,3}}(?:,\d{{3}})+', "Metric"),
+        (rf'\b(?:{_KPI})\b[^\n]{{0,40}}?\d{{1,3}}(?:\.\d+)?\s?%', "Metric"),
+        (rf'\b(?:{_KPI})\b[^\n]{{0,40}}?\d+(?:\.\d+)?\s?(?:million|billion|MM|bn)\b', "Metric"),
+    ],
+    # loose: add bare large currency (>=4 digits) and KPI+any-digit.
+    "loose": [
+        (rf'{_CUR}\s?\d{{1,3}}(?:[.,]\d{{2,3}})*\s?(?:million|billion|MM|bn|M\b|B\b)', "Metric"),
+        (rf'{_CUR}\s?\d{{4,}}', "Metric"),
+        (rf'{_CUR}\s?\d{{1,3}}(?:,\d{{3}})+', "Metric"),
+        (r'\b\d{1,3}(?:\.\d+)?\s?%', "Metric"),
+        (r'\b\d+(?:\.\d+)?\s?(?:million|billion|MM|bn)\b', "Metric"),
+        (rf'\b(?:{_KPI})\b[^\n]{{0,40}}?\d', "Metric"),
+    ],
+}
+
 
 def _validate_in(value: str, allowed: set, field_name: str) -> str:
     if value not in allowed:
@@ -315,4 +431,6 @@ __all__ = [
     "INSIGHT_TYPES", "EXTRACTION_METHODS", "CONFIDENCE_LEVELS", "NARRATIVE_STAGES",
     "MAX_TEXT_LENGTH",
     "SEMANTIC_TYPES", "DEFAULT_SEMANTIC_TYPE_MAP", "DEFAULT_SEMANTIC_KEYWORD_OVERRIDES",
+    "SEMANTIC_DETECTION_LEVELS", "SEMANTIC_DETECTION_PROSE_TYPES",
+    "DEFAULT_SEMANTIC_QUOTE_PATTERNS", "DEFAULT_SEMANTIC_METRIC_PATTERNS",
 ]

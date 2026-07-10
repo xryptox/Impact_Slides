@@ -334,3 +334,331 @@ class TestCLISemanticTypeKeywords:
     def test_cli_flag_default_is_empty(self, tmp_path):
         proc = self._run(tmp_path=tmp_path)
         assert proc.returncode == 0
+
+
+# --------------------------------------------------------------------------- #
+# v4: content-aware Quote / Metric detection layers (--semantic-detection)
+# --------------------------------------------------------------------------- #
+from impact_slides.schemas import (
+    SEMANTIC_DETECTION_LEVELS, SEMANTIC_DETECTION_PROSE_TYPES,
+    DEFAULT_SEMANTIC_QUOTE_PATTERNS, DEFAULT_SEMANTIC_METRIC_PATTERNS,
+)
+
+
+class TestSemanticDetectionConstants:
+    def test_levels_are_four(self):
+        assert SEMANTIC_DETECTION_LEVELS == ("off", "loose", "default", "strict")
+
+    def test_constants_exported_in_all(self):
+        from impact_slides import schemas
+        for name in ("SEMANTIC_DETECTION_LEVELS", "SEMANTIC_DETECTION_PROSE_TYPES",
+                     "DEFAULT_SEMANTIC_QUOTE_PATTERNS", "DEFAULT_SEMANTIC_METRIC_PATTERNS"):
+            assert name in schemas.__all__
+
+    def test_prose_types_exclude_pptx_in_default_and_strict(self):
+        # Point 3 (option 3b): pptx_slide_insight excluded from default/strict.
+        for level in ("default", "strict"):
+            assert "pptx_slide_insight" not in SEMANTIC_DETECTION_PROSE_TYPES[level]
+            assert "bullet_insight" in SEMANTIC_DETECTION_PROSE_TYPES[level]
+
+    def test_prose_types_include_pptx_in_loose(self):
+        assert "pptx_slide_insight" in SEMANTIC_DETECTION_PROSE_TYPES["loose"]
+
+    def test_all_quote_patterns_target_quote(self):
+        import re
+        for level in ("loose", "default", "strict"):
+            for pat, stype in DEFAULT_SEMANTIC_QUOTE_PATTERNS[level]:
+                assert stype == "Quote"
+                re.compile(pat)  # bad patterns fail fast
+
+    def test_all_metric_patterns_target_metric(self):
+        import re
+        for level in ("loose", "default", "strict"):
+            for pat, stype in DEFAULT_SEMANTIC_METRIC_PATTERNS[level]:
+                assert stype == "Metric"
+                re.compile(pat)
+
+    def test_strict_has_fewer_patterns_than_default(self):
+        # strict drops the long-block quote heuristic (no attribution).
+        assert len(DEFAULT_SEMANTIC_QUOTE_PATTERNS["strict"]) \
+            < len(DEFAULT_SEMANTIC_QUOTE_PATTERNS["default"])
+
+    def test_loose_has_more_metric_patterns_than_default(self):
+        # loose adds bare-large-currency + KPI+digit.
+        assert len(DEFAULT_SEMANTIC_METRIC_PATTERNS["loose"]) \
+            > len(DEFAULT_SEMANTIC_METRIC_PATTERNS["default"])
+
+
+class TestQuoteDetection:
+    """Layer 2: attribution-gated Quote detection on prose insight_types."""
+    def _p(self, preprocessor):
+        preprocessor.semantic_detection = "default"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        return preprocessor
+
+    def test_curly_quote_with_attribution_becomes_quote(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="\u201cdining is one of the most important ways we connect,\u201d said Marquez.")])
+        assert out[0]["semantic_type"] == "Quote"
+
+    def test_straight_quote_with_attribution_becomes_quote(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text='"dining is core to how we live," said Marquez.')])
+        assert out[0]["semantic_type"] == "Quote"
+
+    def test_colon_then_quote_becomes_quote(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='Squeri said: "This acquisition creates real value."')])
+        assert out[0]["semantic_type"] == "Quote"
+
+    def test_long_quoted_block_becomes_quote_default(self, preprocessor):
+        # default has a long-block heuristic (>=60 chars) without attribution.
+        p = self._p(preprocessor)
+        long_quote = ('\u201cWe believe this acquisition creates a once-in-a-'
+                      'generation opportunity to redefine how diners discover '
+                      'restaurants and run businesses across the globe.\u201d')
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight", text=long_quote)])
+        assert out[0]["semantic_type"] == "Quote"
+
+    def test_scare_quote_stays_claim(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text='the \u201cbest\u201d option for diners is here.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_short_quote_without_attribution_stays_claim(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text='He called it \u201cfine\u201d and moved on.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_strict_requires_attribution_no_long_block(self, preprocessor):
+        # strict drops the long-block heuristic, so a long quote WITHOUT
+        # attribution stays Claim.
+        preprocessor.semantic_detection = "strict"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        long_quote = ('\u201cWe believe this acquisition creates a once-in-a-'
+                      'generation opportunity to redefine how diners discover '
+                      'restaurants and run businesses across the globe.\u201d')
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight", text=long_quote)])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_quote_layer_skips_pptx_in_default(self, preprocessor):
+        # Point 3 (3b): pptx_slide_insight is NOT in the default prose set, so
+        # a quoted span on a slide stays Claim until the Builder overrides.
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pptx_slide_insight",
+            text='\u201cWe are building the future of dining,\u201d said Squeri.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_quote_layer_includes_pptx_in_loose(self, preprocessor):
+        preprocessor.semantic_detection = "loose"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="pptx_slide_insight",
+            text='\u201cWe are building the future of dining,\u201d said Squeri.')])
+        assert out[0]["semantic_type"] == "Quote"
+
+
+class TestMetricDetection:
+    """Layer 3: magnitude-gated Metric detection on prose insight_types."""
+    def _p(self, preprocessor):
+        preprocessor.semantic_detection = "default"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        return preprocessor
+
+    def test_currency_magnitude_becomes_metric(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="TheFork LTM revenue was $232M.")])
+        assert out[0]["semantic_type"] == "Metric"
+
+    def test_currency_grouped_thousands_becomes_metric(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="Deal value of $700,000,000 all cash.")])
+        assert out[0]["semantic_type"] == "Metric"
+
+    def test_percentage_becomes_metric(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="Growth of 23% year over year.")])
+        assert out[0]["semantic_type"] == "Metric"
+
+    def test_bare_magnitude_becomes_metric(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="adj EBITDA of 28 million euros.")])
+        assert out[0]["semantic_type"] == "Metric"
+
+    def test_does_not_fire_on_bare_range(self, preprocessor):
+        # REGRESSION GUARD: the _ev() default text "Revenue ranges 10 to 99."
+        # has no currency / % / magnitude word, so it must stay Claim. Do NOT
+        # loosen the Metric regexes to match bare "X to Y" ranges, or this
+        # (and test_claim_for_bullet) silently flips to Metric.
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="bullet_insight",
+            text="Revenue ranges 10 to 99.")])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_does_not_fire_on_small_integer(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="We considered 3 options for the deal.")])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_strict_rejects_bare_percentage(self, preprocessor):
+        # strict requires a KPI word near the %; bare "23%" stays Claim.
+        preprocessor.semantic_detection = "strict"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="Growth of 23% year over year.")])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_strict_accepts_kpi_percentage(self, preprocessor):
+        preprocessor.semantic_detection = "strict"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="Revenue growth of 23% year over year.")])
+        assert out[0]["semantic_type"] == "Metric"
+
+    def test_loose_fires_on_bare_large_currency(self, preprocessor):
+        # loose adds bare-large-currency (>=4 digits) without a magnitude word.
+        preprocessor.semantic_detection = "loose"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="The deal was worth $7000 in fees.")])
+        assert out[0]["semantic_type"] == "Metric"
+
+
+class TestDetectionPrecedence:
+    """Layer ordering: Risk > Quote > Metric > map > Claim."""
+    def test_risk_beats_quote(self, preprocessor):
+        # Point 2: a quoted risk statement -> Risk (layer 1 wins over layer 2).
+        preprocessor.semantic_detection = "default"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text='\u201cWe face significant risk and volatility in the market,\u201d said the CEO.')])
+        assert out[0]["semantic_type"] == "Risk"
+
+    def test_quote_beats_metric(self, preprocessor):
+        # Point 1: a quoted sentence containing a number -> Quote (layer 2 wins
+        # over layer 3) because attribution is the rarer, stronger signal.
+        preprocessor.semantic_detection = "default"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text='\u201cThis is a $700M opportunity for us,\u201d said Squeri.')])
+        assert out[0]["semantic_type"] == "Quote"
+
+    def test_metric_layer_skips_non_prose_insight_types(self, preprocessor):
+        # numeric_range is already Metric in the map; the content layers must NOT
+        # re-classify it (scope guard). It stays Metric via the map regardless
+        # of text content.
+        preprocessor.semantic_detection = "default"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="numeric_range",
+            text="plain text with no numbers here")])
+        assert out[0]["semantic_type"] == "Metric"
+
+
+class TestSemanticDetectionOff:
+    """--semantic-detection off disables both content layers (escape hatch)."""
+    def test_off_disables_quote_detection(self, preprocessor):
+        preprocessor.semantic_detection = "off"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text='\u201cdining is core to how we live,\u201d said Marquez.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_off_disables_metric_detection(self, preprocessor):
+        preprocessor.semantic_detection = "off"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="TheFork revenue was $232M.")])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_off_still_applies_risk_keyword_override(self, preprocessor):
+        # The Risk keyword-override layer is independent of this knob.
+        preprocessor.semantic_detection = "off"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        out = preprocessor._validate_evidence([_ev(
+            insight_type="docx_insight",
+            text="Volatility exposes downside risk to the outlook.")])
+        assert out[0]["semantic_type"] == "Risk"
+
+    def test_off_empty_prose_types(self, preprocessor):
+        preprocessor.semantic_detection = "off"
+        rules = preprocessor._build_semantic_type_rules()
+        assert rules["prose_types"] == frozenset()
+        assert rules["compiled_quote_patterns"] == []
+        assert rules["compiled_metric_patterns"] == []
+
+
+class TestConfigSemanticDetection:
+    def test_config_default_is_default(self):
+        assert CONFIG_DEFAULTS["semantic_detection"] == "default"
+
+    def test_validate_accepts_each_level(self):
+        for level in ("off", "loose", "default", "strict"):
+            cfg = dict(CONFIG_DEFAULTS)
+            cfg["semantic_detection"] = level
+            validate_config(cfg)
+
+    def test_validate_rejects_unknown_level(self):
+        cfg = dict(CONFIG_DEFAULTS)
+        cfg["semantic_detection"] = "aggressive"
+        with pytest.raises(ValueError, match="semantic_detection"):
+            validate_config(cfg)
+
+
+class TestCLISemanticDetection:
+    def _run(self, *extra, tmp_path):
+        out = tmp_path / "out"
+        out.mkdir()
+        cmd = [sys.executable, "step1_preprocessor_v4.py",
+               "--input", str(tmp_path), "--output", str(out),
+               "--emit-schema"]  # exits early; just tests arg parsing
+        cmd.extend(extra)
+        return subprocess.run(cmd, capture_output=True, text=True,
+                              cwd=str(Path(__file__).resolve().parent.parent))
+
+    def test_cli_accepts_default(self, tmp_path):
+        proc = self._run("--semantic-detection", "default", tmp_path=tmp_path)
+        assert proc.returncode == 0
+
+    def test_cli_accepts_strict(self, tmp_path):
+        proc = self._run("--semantic-detection", "strict", tmp_path=tmp_path)
+        assert proc.returncode == 0
+
+    def test_cli_accepts_off(self, tmp_path):
+        proc = self._run("--semantic-detection", "off", tmp_path=tmp_path)
+        assert proc.returncode == 0
+
+    def test_cli_rejects_unknown_level(self, tmp_path):
+        proc = self._run("--semantic-detection", "aggressive", tmp_path=tmp_path)
+        assert proc.returncode != 0

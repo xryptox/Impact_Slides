@@ -64,6 +64,25 @@ focus_areas: 5
 # (plain substrings, case-insensitive, word-boundary match; extend the built-in
 # risk-language set risk/exposure/volatility/headwind/vulnerable/downside/uncertain).
 # semantic_type_keywords: [churn, breach, compliance]
+# v4: controls two content-aware semantic_type layers (Quote detection, then
+# Metric detection) that run AFTER the risk-keyword override and BEFORE the
+# insight-type map. Prose-scoped (bullet/pdf/docx by default). Precedence:
+# a quoted risk -> Risk; a quoted number -> Quote; a bare magnitude -> Metric.
+#   off     = disable both layers (escape hatch; risk-keyword override still on)
+#   loose   = add pptx_slide_insight + relaxed regexes (more recall, more false +)
+#   default = balanced (shipped ON; pptx excluded to avoid slide-text false +)
+#   strict  = tighter regexes (require attribution for quotes, KPI context for %)
+# semantic_detection: default
+# v4: extra keywords that DOWNWEIGHT matching evidence (lowers priority_score by
+# 0.20, floored at 0.05; plain substrings, case-insensitive, word-boundary match).
+# EXTENDS the built-in legal-boilerplate regex set ("X means", "Section N.N",
+# Indemnification, Group Companies, hereby ... sells/assigns) — does NOT replace it.
+# Use for non-legal boilerplate you want sunk in your corpus.
+# downweight_keywords: [hereby, notwithstanding]
+# v4: escape hatch — disable the built-in legal-boilerplate downweight patterns
+# entirely (user downweight_keywords still apply). Use for non-legal corpora where
+# the built-in legal patterns would cause false-positive downweighting.
+# no_downweight_boilerplate: false
 # Optional: override the readiness/focus weight tables (both must list the
 # exact keys below and sum to 1.0). Omit to use the built-in defaults.
 # briefing:

@@ -145,6 +145,7 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
     by_type = Counter(e.get("insight_type", "?") for e in ev)
     by_semantic = Counter(e.get("semantic_type", "?") for e in ev)
     by_src = Counter(e.get("source_file", "?") for e in ev)
+    by_downweight = Counter(e.get("downweighted_by_rule") for e in ev if e.get("downweighted_by_rule"))
     avg_prio = sum(e.get("priority_score", 0) for e in ev) / len(ev)
     stages_used = set()
     for e in ev:
@@ -166,6 +167,11 @@ def inspect_register(output_dir: str, top_n: int = 15) -> None:
     print(" By semantic type (Metric/Claim/Quote/Risk):")
     for t, c in by_semantic.most_common():
         print(f"   {c:>4}  {t}")
+    if by_downweight:
+        print()
+        print(" Downweighted by rule (legal boilerplate / user keywords):")
+        for r, c in by_downweight.most_common():
+            print(f"   {c:>4}  {r}")
 
     # Top-N detail
     print()
@@ -270,6 +276,27 @@ def main(argv=None):
                              "semantic_type=\"Risk\" (plain substrings, case-insensitive, "
                              "word-boundary match). Extends the built-in risk-language set. "
                              "Example: --semantic-type-keywords churn breach compliance")
+    parser.add_argument("--semantic-detection", default="default",
+                        choices=["off", "loose", "default", "strict"],
+                        help="v4: controls two content-aware semantic_type layers that run "
+                             "after the Risk keyword-override and before the insight-type map: "
+                             "Quote detection (attribution-gated quoted spans) then Metric "
+                             "detection (currency+magnitude / percentage / bare magnitude). "
+                             "'default' = prose-scoped (bullet/pdf/docx, excludes pptx); "
+                             "'strict' = same scope, tighter regexes (require attribution for "
+                             "quotes, KPI context for percentages); 'loose' = adds pptx_slide + "
+                             "relaxed regexes; 'off' = disable both layers (escape hatch).")
+    parser.add_argument("--downweight-keywords", nargs="*", default=[],
+                        help="v4: extra keywords that DOWNWEIGHT matching evidence "
+                             "(lowers priority_score by 0.20, floored at 0.05). Plain substrings, "
+                             "case-insensitive, word-boundary match. EXTENDS the built-in "
+                             "legal-boilerplate regex set (does not replace it). "
+                             "Example: --downweight-keywords 'hereby' 'notwithstanding'")
+    parser.add_argument("--no-downweight-boilerplate", action="store_true", default=False,
+                        help="v4: escape hatch — disable the built-in legal-boilerplate "
+                             "downweight patterns entirely (user --downweight-keywords still apply). "
+                             "Use for non-legal corpora where the built-in legal patterns would "
+                             "cause false-positive downweighting.")
     parser.add_argument("--config", default=None,
                         help="Path to a YAML config file. CLI flags override YAML; YAML overrides defaults. "
                              "(optional; requires PyYAML). Keys mirror the CLI flags in snake_case "
@@ -320,7 +347,15 @@ def main(argv=None):
         # overrides from CLI/YAML, then rebuild the compiled rules table so the
         # user keywords take effect before run() (mirrors stage_rules rebuild).
         preprocessor.semantic_type_keywords = cfg["semantic_type_keywords"]
+        preprocessor.semantic_detection = cfg["semantic_detection"]
         preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        # v4: legal-boilerplate downweight (inverse of boost_keywords). Apply
+        # user keywords + the no-downweight-boilerplate escape hatch from
+        # CLI/YAML, then rebuild the compiled rule table so they take effect
+        # before run() (mirrors the semantic_type/stage_rules rebuild pattern).
+        preprocessor.downweight_keywords = cfg["downweight_keywords"]
+        preprocessor.no_downweight_boilerplate = cfg["no_downweight_boilerplate"]
+        preprocessor.downweight_rules = preprocessor._build_downweight_rules()
         # v4 #26: apply optional briefing config from YAML (weights + business
         # keywords). CLI defaults are 5 / built-ins; YAML can override without a
         # dedicated flag. Validated above in validate_config().

@@ -251,6 +251,21 @@ Each page is tagged `ocr_used: true/false`.
    first 120 chars) collapse to the highest-priority version.
 5. **Applies boost keywords** (`_apply_boost_rules`): evidence whose text
    contains a `--boost-keywords` term gets +0.15 priority (capped at 0.98).
+6. **Applies legal-boilerplate downweight** (`_apply_downweight_rules`, v4):
+   evidence whose text matches a built-in legal-boilerplate regex pattern
+   (e.g. `"X" means`, `has the meaning set forth in Section N.N`, `Indemnification`,
+   `Group Companies`, `hereby ... sells/assigns/transfers/conveys`) gets **−0.20**
+   priority (floored at 0.05), stamped `downweighted_by_rule`. This is the
+   inverse of `--boost-keywords` and stops M&A agreements / contracts from
+   drowning out deal-relevance evidence (the `contains_insight_language()`
+   heuristic is domain-blind and fires on `risk`/`key`/`important` in legal
+   context). Ship-on-by-default with a `--no-downweight-boilerplate` escape
+   hatch; `--downweight-keywords` extends the set for non-legal boilerplate.
+7. **Caps per (source_file, insight_type)** (`_apply_per_type_caps`): high-volume
+   prose types (`pdf_page_insight`/`pdf_ocr_page_insight` ≤40, `docx_insight` ≤30,
+   plus the v3 caps for bullets/slides/table cells) so one large legal PDF or
+   long DOCX cannot flood the register by sheer volume. Keeps the highest-
+   priority representatives.
 
 ### Step 5 — Output (`_save_outputs`)
 Writes all JSON outputs, the Markdown summary report, optional Markdown/CSV
@@ -437,7 +452,7 @@ All written to `--output`. (The **Evidence Register** — the main Analyst hando
 | `run.log` | v3, always | Timestamped, leveled log of every pipeline event (structlog/stdlib; full-fidelity DEBUG+). Machine-readable, so you can diff run N vs run N−1. |
 | `run_metadata.json` | v3, always | **Reproducibility artifact:** preprocessor version, git commit + dirty flag, run timestamps, resolved config snapshot (#21), per-stage timing (#22), optional-deps inventory (which fallback tiers were active), high-level counts, **+ `briefing` block** (v4 #26: readiness score, stage scores, focus areas, quality flags). |
 | `evidence_register.md` | `--export-md` | Evidence register as Markdown. |
-| `evidence_register.csv` | `--export-csv` | Evidence register as CSV — full field set (v3): evidence_id, source_file, column_name, insight_type, semantic_type (v4), extraction_method, text, priority_score, confidence, suggested_narrative_use, source_location, ocr_used, related_files, boosted_by_rule. |
+| `evidence_register.csv` | `--export-csv` | Evidence register as CSV — full field set (v3): evidence_id, source_file, column_name, insight_type, semantic_type (v4), extraction_method, text, priority_score, confidence, suggested_narrative_use, source_location, ocr_used, related_files, boosted_by_rule, downweighted_by_rule (v4). |
 
 ### `evidence_register_seed.json` entry shape
 
@@ -485,8 +500,34 @@ regression baselines — which share `schemas.py` but predate the field — stil
 validate cleanly. The v4 chokepoint (`_validate_evidence()`) always populates
 a real value before the register is written, so **every v4-generated register
 carries `semantic_type`** (the only kind the Analyst GPT consumes). The GPT
-preserves it like `evidence_id`. Lookup order: keyword-override (first regex
-match in `text`) → insight-type map → fallback `Claim`.
+preserves it like `evidence_id`.
+
+**Lookup order (5 layers):**
+
+1. **Risk keyword-override** (first regex match in `text`) → `Risk`, regardless
+   of `insight_type`. Extend with `--semantic-type-keywords` / YAML
+   `semantic_type_keywords`.
+2. **Quote detection** (prose-scoped, `--semantic-detection`) → `Quote`.
+   Attribution-gated quoted spans (a `"…"` of ≥8 chars followed by a speech
+   verb / title / Person Name, OR colon-then-quote, OR a long ≥60-char quoted
+   block). Scare quotes and short quoted words stay `Claim`.
+3. **Metric detection** (prose-scoped, `--semantic-detection`) → `Metric`.
+   Magnitude-gated: currency + magnitude (`$232M`, `€1.2 billion`), grouped
+   thousands (`$700,000,000`), percentages (`23%`), or bare magnitude words
+   (`28 million`). Plain small integers (`3 options`) and bare ranges
+   (`10 to 99`) stay `Claim`.
+4. **insight-type map** (the table above).
+5. fallback `Claim`.
+
+Layers 2 & 3 are **prose-scoped**: they only run on `bullet_insight`,
+`pdf_page_insight`, `pdf_ocr_page_insight`, `docx_insight` (so an
+`insight_type` already mapped to `Metric` like `numeric_range` is never
+re-classified). `--semantic-detection {off,loose,default,strict}` controls
+both: `default` (shipped ON, pptx excluded), `strict` (tighter regexes —
+require attribution for quotes, KPI context for percentages), `loose` (adds
+`pptx_slide_insight` + relaxed regexes), `off` (escape hatch — disables both,
+Risk-override still applies). Precedence: a quoted risk statement → `Risk`
+(layer 1 wins); a quoted number → `Quote` (layer 2 before 3).
 
 ---
 
@@ -508,7 +549,10 @@ Run with no `--input`/`--output` to execute the built-in smoke test.
 | `--focus-areas` | int | `5` | v4 #26: number of ranked Suggested Focus Areas to surface in the Analyst Briefing (`analyst_briefing.md`/`.json`). |
 | `--max-text-length` | int | `800` | Maximum characters of the `text` field on every evidence entry (the `schemas.MAX_TEXT_LENGTH` ceiling). Applied uniformly at validation time so the register stays compact and the Analyst GPT token budget is predictable. Lower this (e.g. `500`) for a tighter budget; cannot exceed the schema ceiling (`800`). |
 | `--semantic-type-keywords` | list | `[]` | v4: extra keywords (plain substrings, case-insensitive, word-boundary match) that reclassify matching evidence to `semantic_type="Risk"`. Extends the built-in risk-language set (`risk`/`exposure`/`volatility`/`headwind`/`vulnerable`/`downside`/`uncertain…`). Example: `--semantic-type-keywords churn breach compliance`. |
-| `--boost-keywords` | list | `[]` | Keywords that bump an evidence entry's priority by +0.15 (capped at 0.98), case-insensitive. Example: `--boost-keywords recommend critical growth`. |
+| `--semantic-detection` | choice | `default` | v4: controls two content-aware `semantic_type` layers (Quote then Metric) that run after the Risk keyword-override and before the insight-type map. `default` = prose-scoped (bullet/pdf/docx, excludes pptx); `strict` = same scope, tighter regexes; `loose` = adds `pptx_slide_insight` + relaxed regexes; `off` = disable both (escape hatch, Risk-override still applies). |
+| `--downweight-keywords` | list | `[]` | v4: extra keywords that **downweight** matching evidence (lowers `priority_score` by 0.20, floored at 0.05). Plain substrings, case-insensitive, word-boundary match. **Extends** the built-in legal-boilerplate regex set (does not replace it) — use for non-legal boilerplate you want sunk in your corpus. Example: `--downweight-keywords hereby notwithstanding`. |
+| `--no-downweight-boilerplate` | flag | off | v4: escape hatch — disable the built-in legal-boilerplate downweight patterns entirely (user `--downweight-keywords` still apply). Use for non-legal corpora where the built-in legal patterns (e.g. `"X" means`, `Section N.N`, `Indemnification`, `Group Companies`) would cause false-positive downweighting. |
+| `--boost-keywords` | list | `[]` | Keywords that bump an evidence entry's priority by +0.15 (capped at 0.98), case-insensitive. Example: `--boost-keywords recommend critical growth`. **Mirror:** `--downweight-keywords` is the inverse (lowers by 0.20, floored at 0.05) for boilerplate suppression — see v4 legal-corpus scoring below. |
 | `--verbose` | flag | off | Detailed console logging (boost keywords, export options, per-file timing, OCR errors). |
 
 ### OCR arguments

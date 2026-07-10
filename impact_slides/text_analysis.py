@@ -99,6 +99,33 @@ def insight_priority_boost(text: str, base: float, low: float = 0.0,
     return round(min(cap, base + boost), 3)
 
 
+# v4: legal-boilerplate detection patterns. Built-in regex set that
+# matches definition/indemnity/reps-and-warranties phrasing common in M&A
+# agreements and contracts, so such pages can be downweighted instead of
+# dominating the register via the domain-blind `contains_insight_language()`
+# heuristic (which fires on words like "risk"/"key"/"important" in legal
+# context). The patterns are narrow by design (require the "X means" form,
+# a Section reference, or canonical legal clauses) to avoid false-positives on
+# ordinary business prose. Shipped ON by default; disabled via the CLI
+# `--no-downweight-boilerplate` escape hatch. User substrings added via
+# `--downweight-keywords` / YAML extend this set (compiled as word-boundary
+# regexes) — mirror of the boost_keywords up-channel.
+DEFAULT_LEGAL_BOILERPLATE_PATTERNS = [
+    re.compile(r'"[^"]{1,60}"\s+(?:has\s+the\s+meaning|means)\b', re.IGNORECASE),
+    re.compile(r'\bhas\s+the\s+meaning\s+set\s+forth\s+in\s+Section\b', re.IGNORECASE),
+    re.compile(r'"[^"]{1,60}"\s+shall\s+have\s+the\s+meaning\b', re.IGNORECASE),
+    re.compile(r'\bSection\s+\d+(?:\.\d+)+\b'),
+    re.compile(r'\b(?:Indemnif\w*|indemnitee|indemnitor)\b', re.IGNORECASE),
+    re.compile(r'\bGroup\s+Companies\b', re.IGNORECASE),
+    re.compile(r'\bReps\s+and\s+Warranties\b', re.IGNORECASE),
+    re.compile(r'\bSurvival\s+of\s+(?:the\s+)?Representations\b', re.IGNORECASE),
+    re.compile(r'\bhereby\s+(?:\w+\s+){0,2}(?:sells|assigns|transfers|conveys)\b', re.IGNORECASE),
+    re.compile(r'\bgiving\s+effect\s+to\s+the\s+Closing\b', re.IGNORECASE),
+    re.compile(r'\bDispute\s+Notice\b', re.IGNORECASE),
+    re.compile(r'\bClosing\s+Date\b', re.IGNORECASE),
+]
+
+
 def calculate_evidence_priority_score(
     column_name: str,
     column_type: str,

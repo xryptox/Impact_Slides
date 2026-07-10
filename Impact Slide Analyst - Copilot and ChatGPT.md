@@ -104,7 +104,7 @@ Each entry is an `EvidenceEntry`:
 | `sheet_name` | string \| null | Excel sheet, else null. |
 | `column_name` | string \| null | Excel column, else null. |
 | `insight_type` | string | One of 25 known types (see below). |
-| `semantic_type` | `Metric`\|`Claim`\|`Quote`\|`Risk`\|null | v4 GPT-friendly bucket assigned by the preprocessor (insight_type map + risk-keyword override). **Read this for your Evidence Register "Type" column** instead of inferring from `insight_type`. `null` only on legacy v2/v3 registers. |
+| `semantic_type` | `Metric`\|`Claim`\|`Quote`\|`Risk`\|null | v4 GPT-friendly bucket assigned by the preprocessor (5-layer: risk-keyword override → Quote detection → Metric detection → insight_type map → fallback Claim). **Read this for your Evidence Register "Type" column** instead of inferring from `insight_type`. `null` only on legacy v2/v3 registers. |
 | `extraction_method` | string \| null | `computed`/`chart_data`/`numeric_range`/`categorical`/`table_cell`/`text_layer`/`ocr`/`bullet`/`paragraph`/`cross_file`/`classifier`/`unknown`. Use to weight reliability. |
 | `text` | string (≤800 chars) | The human-readable insight. The preprocessor truncates to the schema ceiling. |
 | `priority_score` | float 0.0–1.0 | Register is sorted descending by this. |
