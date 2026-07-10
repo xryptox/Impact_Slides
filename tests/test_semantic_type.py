@@ -471,6 +471,94 @@ class TestQuoteDetection:
         assert out[0]["semantic_type"] == "Quote"
 
 
+class TestLegalDefinitionFalsePositives:
+    """Regression guard: contract defined terms (EX-10.1 / 8-K filings) must NOT
+    be tagged Quote. The preprocessor runs on legal corpora; the quote-detection
+    layers must distinguish speech attribution from legal definition verbs."""
+    def _p(self, preprocessor):
+        preprocessor.semantic_detection = "default"
+        preprocessor.semantic_type_rules = preprocessor._build_semantic_type_rules()
+        return preprocessor
+
+    def test_means_definition_stays_claim(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='\u201cBusiness Day\u201d means any day other than a Saturday, Sunday.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_has_the_meaning_definition_stays_claim(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='\u201cReplacement Marks\u201d has the meaning set forth in Section 6.13(f).')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_shall_mean_definition_stays_claim(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='\u201cAgreement\u201d shall mean this Equity Purchase Agreement.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_as_defined_definition_stays_claim(self, preprocessor):
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='\u201cSeller\u201d as defined in Section 1.1 above.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_section_reference_colon_quote_stays_claim(self, preprocessor):
+        # `Section 6.21: \u201cReport\u201d has the meaning...` — colon+quote
+        # must not fire the colon-then-quote heuristic.
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='Section 6.21: \u201cReport\u201d has the meaning set forth in Section 6.21(a)(i).')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_legal_definition_body_span_stays_claim(self, preprocessor):
+        # The long-block heuristic used to fire on the text BETWEEN two
+        # consecutive defined terms (a close->open quote span of definition
+        # body). Must stay Claim.
+        p = self._p(preprocessor)
+        text = ('\u201cRestricted Cash\u201d means any cash or cash equivalent that is '
+                'subject to restrictions or limitations on use or distribution '
+                'by Law, contract or otherwise, and that constitutes \u201crestricted '
+                'cash\u201d in accordance with applicable accounting standards.')
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight", text=text)])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_person_name_does_not_match_lowercase_words(self, preprocessor):
+        # The core bug: [A-Z][a-z]+\s+[A-Z][a-z]+ compiled with IGNORECASE
+        # matched any two words (e.g. "has the"), turning every legal defined
+        # term into a Quote. Now case-sensitive, so lowercase "has the" after
+        # a quoted term stays Claim.
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='\u201cCompany Products\u201d has the meaning set forth in this Agreement.')])
+        assert out[0]["semantic_type"] == "Claim"
+
+    def test_real_speech_quote_still_works_in_legal_corpus_context(self, preprocessor):
+        # Positive control: a real attributed quote MUST still be Quote even on
+        # a pdf_page_insight (the same insight_type as the legal defs above).
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='\u201cThis acquisition creates real value for shareholders,\u201d said Stephen Squeri, Chairman and CEO.')])
+        assert out[0]["semantic_type"] == "Quote"
+
+    def test_real_colon_quote_still_works(self, preprocessor):
+        # Positive control: colon-then-real-speech-quote still fires.
+        p = self._p(preprocessor)
+        out = p._validate_evidence([_ev(
+            insight_type="pdf_page_insight",
+            text='Marquez said: \u201cDining is core to how we live, work, and travel.\u201d')])
+        assert out[0]["semantic_type"] == "Quote"
+
+
 class TestMetricDetection:
     """Layer 3: magnitude-gated Metric detection on prose insight_types."""
     def _p(self, preprocessor):

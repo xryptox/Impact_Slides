@@ -59,7 +59,7 @@ or `step4_builder_validator.py`) exactly:
 
 1. **Build only from an approved Analyst handoff.** Do not re-analyze the source files or re-derive the narrative. If the handoff is missing or unapproved, stop and ask.
 2. **Preserve Evidence IDs.** Reuse the `E####` IDs the Analyst cited. Never invent new IDs. If you cannot use an ID the Analyst cited, say why — do not silently drop it.
-3. **Consume `semantic_type` to pick visuals.** Metric → chart / `metric_dashboard` / `key_stat_callout`; Claim → `split_text_visual` / `icon_grid`; Quote → `quote_card`; Risk → `comparison_grid` / conflict callout. Carry `semantic_type` into each `evidence_sources` entry.
+3. **Consume `semantic_type` to pick visuals.** Metric → chart / `metric_dashboard` / `key_stat_callout`; Claim → `split_text_visual` / `icon_grid`; Quote → `quote_card`; Risk → `comparison_grid` / conflict callout. Carry `semantic_type` into each `evidence_sources` entry. **Do not place a `quote_card` (or any semantic_type-driven layout) at slide 1** — Step 4 always forces `slide_number == 1` to `title_or_opening` regardless of `layout_type`, so a quote placed there renders as a title slide and the quoted body is dropped. Put executive pull-quotes at slide 2+ and reserve slide 1 for a `title_or_opening` deck cover.
 4. **Carry the Analyst's readiness signals through.** Copy `readiness_score`, `readiness_components`, and `quality_flags` from the Analyst handoff's `presentation_plan` into your JSON `presentation` block verbatim — never retype them. Step 4 must see the same gap signals the Analyst acted on.
 5. **Do not invent data, quotes, or claims.** Numbers, quotes, timelines, ROI, market claims, and internal commitments must come from an Evidence ID. If evidence is missing, write `Evidence needed: [specific item]`. If the plan conflicts with evidence, write `Plan conflict detected: [issue]. Recommended fix: [fix].`
 6. **Keep slides compact.** One big idea per slide. 3–5 bullets, ideally under 12 words. No paragraph-heavy slides. No vague consulting filler.
@@ -219,6 +219,13 @@ Use these `layout_type` values whenever possible:
 - `comparison_grid`
 - `full_process_flow`
 - `timeline`
+
+> **Slide 1 is always `title_or_opening`.** Step 4's renderer hard-codes
+> `slide_number == 1` to `title_or_opening` (it checks `slide_number == 1 OR
+> 'title' in title`). Any `layout_type` you set on slide 1 is ignored at render
+> time. So build slide 1 as a deck cover (title, subtitle, audience, primary
+> goal) and place your first semantic_type-driven layout (`quote_card`,
+> `metric_dashboard`, …) at slide 2 or later.
 - `roadmap`
 - `data_table`
 - `quote_card`

@@ -171,42 +171,64 @@ SEMANTIC_DETECTION_PROSE_TYPES: Dict[str, frozenset] = {
     }),
 }
 
-# Quote character class (bare chars, no brackets): straight + typographic
-# curly quotes (real DOCX/PDF prose frequently uses U+201C / U+201D, not ASCII
-# "). Patterns build [{_Q}] (any quote) / [^{_Q}] (not a quote) from this.
+# Quote character classes: straight or typographic curly quotes (real DOCX/PDF
+# prose frequently uses U+201C / U+201D, not ASCII ").
+# _Q = all quote chars (used in [^{_Q}] middle to forbid internal quotes).
+# _Q_OPEN / _Q_CLOSE split curly quotes by direction so the long-block
+# heuristic only matches a real open->close span, NOT a close->open legal-
+# definition body (the text between two consecutive defined terms).
 _Q = '"\u201c\u201d'
+_Q_OPEN = '"\u201c'    # opening straight or left-curly
+_Q_CLOSE = '"\u201d'   # closing straight or right-curly
+# Legal-definition negative lookahead (applied after the closing quote):
+# excludes `"Defined Term" means...`, `"Term" has the meaning set forth in...`,
+# etc. Catches the EX-10.1 / contract-definitions false positive where a short
+# quoted capitalized term is followed by a definition verb, not speech.
+_LEGAL_DEF_NLA = (r'(?!\s*(?:means|has\s+the\s+meaning|shall\s+mean|'
+                  r'shall\s+have\s+the\s+meaning|as\s+defined|is\s+defined|'
+                  r'as\s+used\s+herein|given\s+to\s+such\s+term))')
 
 #: Quote-detection regexes per level (first match in `text` -> "Quote").
-#: Attribution-gated so scare quotes / marketing superlatives don't fire.
+#: Attribution-gated so scare quotes / marketing superlatives don't fire, AND
+#: legal-definition-gated so contract defined terms (`"Term" means...`) don't
+#: fire. IMPORTANT: patterns are compiled CASE-SENSITIVE (not re.IGNORECASE) so
+#: the `[A-Z][a-z]+\s+[A-Z][a-z]+` Person-Name alternation only matches real
+#: capitalized names, not any two lowercase words; speech verbs/titles use an
+#: inline `(?i:...)` group so they still match case-insensitively.
 DEFAULT_SEMANTIC_QUOTE_PATTERNS: Dict[str, List] = {
     # default: quoted span (>=8 chars) + a speech verb / title / Person Name
-    # nearby, OR colon-then-quote, OR a long (>=60 char) quoted block.
+    # nearby, OR colon-then-quote, OR a long (>=60 char) open->close quoted
+    # block. All three carry the legal-definition negative lookahead.
     "default": [
-        (rf'[{_Q}][^{_Q}]{{8,200}}[{_Q}]\s*(?:[,\u2014-]\s*)?'
-         r'(?:said|stated|noted|added|explained|commented|remarked|told|CEO|CFO|'
-         r'COO|CTO|Chairman|president|founder|director|Chief\s+\w+\s+Officer|'
-         r'[A-Z][a-z]+\s+[A-Z][a-z]+)', "Quote"),
-        (rf':\s*[{_Q}][^{_Q}]{{8,200}}[{_Q}]', "Quote"),
-        (rf'[{_Q}][^{_Q}]{{60,800}}[{_Q}]', "Quote"),
+        (rf'[{_Q_OPEN}][^{_Q}]{{8,200}}[{_Q_CLOSE}]\s*(?:[,\u2014-]\s*)?'
+         r'(?:(?i:said|stated|noted|added|explained|commented|remarked|told|'
+         r'CEO|CFO|COO|CTO|Chairman|president|founder|director|'
+         r'Chief\s+\w+\s+Officer)|[A-Z][a-z]+\s+[A-Z][a-z]+)'
+         + _LEGAL_DEF_NLA, "Quote"),
+        (rf':\s*[{_Q_OPEN}][^{_Q}]{{8,200}}[{_Q_CLOSE}]' + _LEGAL_DEF_NLA, "Quote"),
+        (rf'[{_Q_OPEN}][^{_Q}]{{60,800}}[{_Q_CLOSE}]' + _LEGAL_DEF_NLA, "Quote"),
     ],
     # strict: require an attribution cue (drop the long-block heuristic that
     # can false-positive on long non-speech quoted spans); raise min to 15.
     "strict": [
-        (rf'[{_Q}][^{_Q}]{{15,200}}[{_Q}]\s*(?:[,\u2014-]\s*)?'
-         r'(?:said|stated|noted|added|explained|commented|remarked|told|CEO|CFO|'
-         r'COO|CTO|Chairman|president|founder|director|Chief\s+\w+\s+Officer|'
-         r'[A-Z][a-z]+\s+[A-Z][a-z]+)', "Quote"),
-        (rf':\s*[{_Q}][^{_Q}]{{15,200}}[{_Q}]', "Quote"),
+        (rf'[{_Q_OPEN}][^{_Q}]{{15,200}}[{_Q_CLOSE}]\s*(?:[,\u2014-]\s*)?'
+         r'(?:(?i:said|stated|noted|added|explained|commented|remarked|told|'
+         r'CEO|CFO|COO|CTO|Chairman|president|founder|director|'
+         r'Chief\s+\w+\s+Officer)|[A-Z][a-z]+\s+[A-Z][a-z]+)'
+         + _LEGAL_DEF_NLA, "Quote"),
+        (rf':\s*[{_Q_OPEN}][^{_Q}]{{15,200}}[{_Q_CLOSE}]' + _LEGAL_DEF_NLA, "Quote"),
     ],
-    # loose: lower min to 5 chars and add any quoted span >=20 chars (catches
-    # marketing pull-quotes on slides when pptx_slide_insight is in scope).
+    # loose: lower min to 5 chars and add any open->close quoted span >=20
+    # chars (catches marketing pull-quotes on slides when pptx_slide_insight
+    # is in scope).
     "loose": [
-        (rf'[{_Q}][^{_Q}]{{5,200}}[{_Q}]\s*(?:[,\u2014-]\s*)?'
-         r'(?:said|stated|noted|added|explained|commented|remarked|told|CEO|CFO|'
-         r'COO|CTO|Chairman|president|founder|director|Chief\s+\w+\s+Officer|'
-         r'[A-Z][a-z]+\s+[A-Z][a-z]+)', "Quote"),
-        (rf':\s*[{_Q}][^{_Q}]{{5,200}}[{_Q}]', "Quote"),
-        (rf'[{_Q}][^{_Q}]{{20,800}}[{_Q}]', "Quote"),
+        (rf'[{_Q_OPEN}][^{_Q}]{{5,200}}[{_Q_CLOSE}]\s*(?:[,\u2014-]\s*)?'
+         r'(?:(?i:said|stated|noted|added|explained|commented|remarked|told|'
+         r'CEO|CFO|COO|CTO|Chairman|president|founder|director|'
+         r'Chief\s+\w+\s+Officer)|[A-Z][a-z]+\s+[A-Z][a-z]+)'
+         + _LEGAL_DEF_NLA, "Quote"),
+        (rf':\s*[{_Q_OPEN}][^{_Q}]{{5,200}}[{_Q_CLOSE}]' + _LEGAL_DEF_NLA, "Quote"),
+        (rf'[{_Q_OPEN}][^{_Q}]{{20,800}}[{_Q_CLOSE}]' + _LEGAL_DEF_NLA, "Quote"),
     ],
 }
 

@@ -510,7 +510,15 @@ preserves it like `evidence_id`.
 2. **Quote detection** (prose-scoped, `--semantic-detection`) → `Quote`.
    Attribution-gated quoted spans (a `"…"` of ≥8 chars followed by a speech
    verb / title / Person Name, OR colon-then-quote, OR a long ≥60-char quoted
-   block). Scare quotes and short quoted words stay `Claim`.
+   block). Scare quotes and short quoted words stay `Claim`. **Legal-definition
+   guard**: the negative lookahead `"Term" means…` / `has the meaning set
+   forth…` / `shall mean…` / `as defined…` excludes contract defined terms
+   (EX-10.1 / 8-K filings) so they stay `Claim`, not `Quote`; the long-block
+   heuristic also requires open→close curly-quote direction so the definition
+   body between two consecutive defined terms doesn't match. Speech-verb /
+   title alternations match case-insensitively; the Person-Name alternation
+   `[A-Z][a-z]+\s+[A-Z][a-z]+` is case-sensitive so lowercase word pairs
+   ("has the") don't masquerade as attribution.
 3. **Metric detection** (prose-scoped, `--semantic-detection`) → `Metric`.
    Magnitude-gated: currency + magnitude (`$232M`, `€1.2 billion`), grouped
    thousands (`$700,000,000`), percentages (`23%`), or bare magnitude words

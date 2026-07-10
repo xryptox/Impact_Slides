@@ -577,7 +577,12 @@ class ImpactSlidePreprocessorV4:
             quote_pats, metric_pats = [], []
             for pat, stype in DEFAULT_SEMANTIC_QUOTE_PATTERNS.get(level, []):
                 try:
-                    quote_pats.append((re.compile(pat, re.IGNORECASE), stype))
+                    # CASE-SENSITIVE compile: the `[A-Z][a-z]+\s+[A-Z][a-z]+`
+                    # Person-Name alternation must NOT match lowercase words
+                    # (compiling with IGNORECASE made it match "has the" etc.,
+                    # turning every legal defined term into a Quote). Speech
+                    # verbs/titles use an inline (?i:...) group instead.
+                    quote_pats.append((re.compile(pat), stype))
                 except re.error as e:  # pragma: no cover - built-ins are static
                     raise ValueError(
                         f"semantic_type quote pattern: invalid regex {pat!r}: {e}"
