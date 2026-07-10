@@ -1,0 +1,156 @@
+{
+  "additionalProperties": true,
+  "description": "A single source-backed insight in the Evidence Register.\n\nThe Analyst GPT treats a list of these as its 'source of truth' and must\npreserve `evidence_id` values. Every field that has a constrained value\nset is validated; extra fields the preprocessor may attach\n(boosted_by_rule, related_files, pptx_classification, group_by,\nmetric_value, metric_type, table_cell) are allowed through unchanged.",
+  "properties": {
+    "evidence_id": {
+      "description": "Unique ID preserved by the Analyst GPT.",
+      "pattern": "^E\\d{4}$",
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "source_file": {
+      "description": "Real input file this insight came from.",
+      "title": "Source File",
+      "type": "string"
+    },
+    "insight_type": {
+      "description": "One of the known insight types.",
+      "title": "Insight Type",
+      "type": "string"
+    },
+    "semantic_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "GPT-friendly category: one of ['Claim', 'Metric', 'Quote', 'Risk']. Assigned by the v4 preprocessor (insight_type map + risk-keyword override); preserved by the Analyst GPT. None on legacy v2/v3 registers.",
+      "title": "Semantic Type"
+    },
+    "text": {
+      "description": "Human-readable insight text (truncated to 800 chars by the preprocessor).",
+      "maxLength": 800,
+      "title": "Text",
+      "type": "string"
+    },
+    "priority_score": {
+      "description": "Priority 0\u20131; register is sorted descending.",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Priority Score",
+      "type": "number"
+    },
+    "confidence": {
+      "description": "Reliability level (high | medium | low).",
+      "title": "Confidence",
+      "type": "string"
+    },
+    "suggested_narrative_use": {
+      "description": "Subset of the Why/What/How/Now framework stages.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Suggested Narrative Use",
+      "type": "array"
+    },
+    "source_location": {
+      "description": "Sheet / Slide N / Page N / Cross-file.",
+      "title": "Source Location",
+      "type": "string"
+    },
+    "sheet_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sheet Name"
+    },
+    "column_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Column Name"
+    },
+    "extraction_method": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extraction Method"
+    },
+    "ocr_used": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ocr Used"
+    },
+    "dedup_merged_sources": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dedup Merged Sources"
+    },
+    "dedup_merged_ids": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dedup Merged Ids"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "source_file",
+    "insight_type",
+    "text",
+    "priority_score",
+    "confidence",
+    "suggested_narrative_use",
+    "source_location"
+  ],
+  "title": "EvidenceEntry",
+  "type": "object"
+}

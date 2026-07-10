@@ -1,0 +1,131 @@
+{
+  "run_id": "20260710T013326",
+  "source_folder": "C:\\Users\\Ag1Le\\Documents\\realworld_test\\amex_thefork_acquisition\\input",
+  "total_evidence": 124,
+  "average_priority": 0.694,
+  "narrative_readiness": {
+    "overall_score": 23,
+    "components": {
+      "coverage_balance": 0.0,
+      "priority_quality": 50.7,
+      "cross_file_connectivity": 0.0,
+      "recommendation_strength": 0.0,
+      "signal_ratio": 100.0
+    },
+    "stage_scores": {
+      "Why": {
+        "stage": "Why",
+        "score": 0,
+        "evidence_count": 0,
+        "avg_priority": 0.0,
+        "note": "no evidence in this stage"
+      },
+      "What": {
+        "stage": "What",
+        "score": 91,
+        "evidence_count": 124,
+        "avg_priority": 0.694,
+        "note": null
+      },
+      "How": {
+        "stage": "How",
+        "score": 0,
+        "evidence_count": 0,
+        "avg_priority": 0.0,
+        "note": "no evidence in this stage"
+      },
+      "Now": {
+        "stage": "Now",
+        "score": 0,
+        "evidence_count": 0,
+        "avg_priority": 0.0,
+        "note": "no evidence in this stage"
+      }
+    },
+    "explanation": "Low narrative readiness; weakest component is 'coverage_balance' (0/100); stages with no evidence: Why, How, Now."
+  },
+  "top_cross_file_relationships": [],
+  "suggested_focus_areas": [
+    {
+      "area": "our differentiated Membership Model by offering Card Members more ways to discov",
+      "score": 37.9,
+      "reason": "avg priority 0.89; strong business-keyword signal.",
+      "evidence_count": 1,
+      "dominant_stages": [
+        "What"
+      ],
+      "top_evidence_ids": [
+        "E0135"
+      ],
+      "rank": 1
+    },
+    {
+      "area": "has\ndisrupted the restaurant industry by supporting the digitalization of the rest",
+      "score": 37.4,
+      "reason": "avg priority 0.83; spans 2 source files; strong business-keyword signal.",
+      "evidence_count": 2,
+      "dominant_stages": [
+        "What"
+      ],
+      "top_evidence_ids": [
+        "E0111",
+        "E0090"
+      ],
+      "rank": 2
+    },
+    {
+      "area": "EBITDA is a key\nperformance measure used by our CODM and Board of Directors to evalua",
+      "score": 36.1,
+      "reason": "avg priority 0.83; strong business-keyword signal.",
+      "evidence_count": 1,
+      "dominant_stages": [
+        "What"
+      ],
+      "top_evidence_ids": [
+        "E0088"
+      ],
+      "rank": 3
+    },
+    {
+      "area": "The past few years have been ones marked by societal changes due to the impact of the",
+      "score": 36.1,
+      "reason": "avg priority 0.83; strong business-keyword signal.",
+      "evidence_count": 1,
+      "dominant_stages": [
+        "What"
+      ],
+      "top_evidence_ids": [
+        "E0114"
+      ],
+      "rank": 4
+    },
+    {
+      "area": "it has to lead to a new way of consuming by people getting wild to have\nwhat they are",
+      "score": 36.1,
+      "reason": "avg priority 0.83; strong business-keyword signal.",
+      "evidence_count": 1,
+      "dominant_stages": [
+        "What"
+      ],
+      "top_evidence_ids": [
+        "E0118"
+      ],
+      "rank": 5
+    }
+  ],
+  "quality_flags": [
+    "missing_why_stage",
+    "missing_how_stage",
+    "missing_now_stage",
+    "low_coverage_overall",
+    "no_cross_file_links"
+  ],
+  "recommendations": [
+    "Add a 'Now' slide with recommendations / next steps \u2014 current evidence has no 'Now' stage content.",
+    "Add context for the 'Why' \u2014 current evidence lacks the 'Why' stage (mission/problem framing).",
+    "Add 'How' detail (method/process) \u2014 current evidence lacks the 'How' stage.",
+    "Lead with 'our differentiated Membership Model by offering Card Members more ways to discov' \u2014 it has the strongest multi-signal evidence (score 38/100, 1 items).",
+    "No cross-file links found \u2014 if multiple source files are present, align entity names so relationships surface.",
+    "Narrative readiness is low (23/100). Add source material covering Why, How, Now."
+  ]
+}

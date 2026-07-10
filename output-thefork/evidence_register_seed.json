@@ -1,0 +1,1851 @@
+[
+  {
+    "evidence_id": "E0135",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "\u201cDining is one of the most important ways people engage with our brand,\u201d said Rafa Marquez, President of International Card Services at American Express. \u201cOver time, the proposed acquisition would help us enrich our differentiated Membership Model by offering Card Members more ways to discover, book and access great restaurants, while helping our partners reach more diners and grow their businesses. TheFork has built a successful platform across Europe with strong relationships throughout the restaurant industry that would complement our existing capabilities. We look forward to supporting TheFork\u2019s continued growth and building on its success as we strengthen our dining presence across Europe.\u201d",
+    "priority_score": 0.887,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0162",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "For American Express, buying TheFork looks less like a standalone deal and more like another step in building a closed-loop dining and experiences ecosystem around its cards. By controlling reservation platforms such as Resy, Tock and now TheFork, the company gains more direct access to where and how cardmembers spend, while also offering restaurants tools that can tie payments, loyalty and customer data together. That fits with its recent focus on premium travel benefits, co-branded products such as the refreshed Delta SkyMiles cards, and partnerships like Fanatics, all of which push toward higher engagement and card-on-file usage. The all-cash price of US$700 million is meaningful but sits alongside a recent \u20ac750 million eurobond issue and an affirmed US$0.95 quarterly dividend, suggest\u2026",
+    "priority_score": 0.887,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0054",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 54: until the Closing, or the earlier termination of this Agreement in accordance with Article VIII, the Company shall (and shall cause each of its\nSubsidiaries to) conduct its business only in the Ordinary Course of Business and use commercially reasonable efforts to (i)\u00a0preserve its current\nrelationships with customers, employees, suppliers and others having material business dealings with it, (ii)\u00a0maintain its books and records in the usual,\nregular and ordinary manner, on a basis consistent with past practice, (iii)\u00a0preserve the goodwill and ongoing operations of its business and (iv)\u00a0preserve\nthe confidentiality of any material Trade Secrets included in the Company-Owned Intellectual Property (except those contained in any materials filed\nwith the United States Patent and Tradem\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 54",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0087",
+    "source_file": "EX-99.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 1: EX-99.1 3 d156418dex991.htm EX-99.1\nExhibit 99.1\nTripadvisor Enters into Agreement to Sell TheFork to American Express for $700 Million\nTransaction highlights the value of Tripadvisor\u2019s portfolio and enables greater focus on experiences\nNEEDHAM, Mass.,\u00a0June 15, 2026\u00a0(PRNewswire) \u2014\u00a0Tripadvisor, Inc.\u00a0(NASDAQ: TRIP) (the \u201cCompany\u201d) today announced it has entered into a put\noption agreement to sell TheFork, its online restaurant reservation and management platform in Europe, to American Express for $700\u00a0million in an\nall-cash transaction.\nThe agreement follows Tripadvisor\u2019s February 2026 announcement that it would explore strategic alternatives for TheFork. It recognizes the value\ncreated in the business over more than a decade, and allows Tripadvisor to focus even more fully on its E\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0088",
+    "source_file": "EX-99.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 2: Note on Segment Adjusted EBITDA\nWe refer to segment adjusted EBITDA as a measure of segment profitability because it is the measure of profit or loss for our reportable segments\nprovided to our Chief Operating Decision Maker (CODM) in accordance with U.S. GAAP for segment reporting. Segment adjusted EBITDA is a key\nperformance measure used by our CODM and Board of Directors to evaluate our individual operating segments. We define adjusted EBITDA as net\nincome (loss) plus: (1) (provision) benefit for income taxes; (2)\u00a0other income (expense), net; (3)\u00a0depreciation and amortization; (4)\u00a0stock-based\ncompensation; (5)\u00a0goodwill, long-lived asset, and intangible asset impairments; (6)\u00a0legal reserves, settlements and other (including indirect tax reserves\nrelated to audit settlements and \u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0089",
+    "source_file": "EX-99.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 3: Key factors that could cause such differences include: whether or when the required employee works council consultation processes are completed; the\nability of the parties to successfully execute a definitive purchase agreement following exercise of the put option; the satisfaction of closing conditions,\nincluding obtaining regulatory and antitrust approvals; difficulties or unexpected costs relating to segregating the integrated technology data and\nplatform of TheFork from our retained operations and anticipated benefits for Tripadvisor as a result of the proposed transaction do not fully materialize;\nrisks related to disruption of management time; the operational risk of running our core business without the integrated data platform of TheFork; and\nthe potential for material adj\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Risk"
+  },
+  {
+    "evidence_id": "E0090",
+    "source_file": "Final 15 YEARS PRESS RELEASE  (1).pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 1: TheFork celebrates its 15th anniversary, marked by the digitalization of\nrestaurant industry and revolution in consumption habits\nWith more than 420 million guests sent to restaurants in 15 years, TheFork has disrupted the\nrestaurant industry by driving and supporting the digitalization of the sector, and has\nestablished itself in the daily lives of Europeans as their favorite application for dining out.\nOn the occasion of this anniversary, TheFork takes stock of the evolution of the industry\nthrough a study in partnership with EuroMonitor, and presents the next trends and innovations\nto come\nCreated from a strong ambition in 2007, that of offering a new way to foster relationships between\nrestaurants and diners, TheFork has revolutionized the industry by offering a new model, uni\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0091",
+    "source_file": "Final 15 YEARS PRESS RELEASE  (1).pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 2: Value Add of Europe in 2019.\n\u25cf\nIn 2020, COVID-19 induced lockdowns and restrictions. With prohibitions for eating out at\nrestaurants, consumer foodservice in Europe declined by approximately 38% in value sales in\n2019-20. However, over the 2020-2021 period, as countries across Europe ease\nrestrictions and consumers return to food outlets, consumer foodservice grew by\napproximately 23% to \u20ac250 billion in sales in 2021 and employed over 6.4 million\npeople.\nCategory overview (Euromonitor data**)\n\u25cf\nFull-service restaurants continue to be the dominant foodservice format across\nEurope, contributing in 2021 \u20ac97 Billion in value sales (approximately 39% of value\nshare) , with more than 326,000 outlets.\n\u25cf\nLimited-service restaurants (fast food and 100% home delivery/takeaway outlet), the s\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0092",
+    "source_file": "Final 15 YEARS PRESS RELEASE  (1).pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 3: In addition to the innovations on TheFork Pay, the company is also accelerating the development of\nits Gift Card, the first gift card that allows users to enjoy a restaurant experience in more than 25,000\npartner restaurants including MICHELIN ones. This product has been designed from the beginning to\nsupport the industry. Launched during the epidemic, 100% of the amount of the Gift Card is for the\nRestaurant. The ambition is to inject cash into the industry and generate additional sources of income\nfor restaurateurs, as well as reach new customers and retain them. As the amount generated by the\ngift card is valuable to support small local entities, TheFork, to boost its positive effects, also offered\nthis product to companies. The Gift Card allows them to thank their customers or\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0096",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 4: TheFork\u2019's growth skyrockets\nThe opportunity to join TripAdvisor in 2014 on this adventure\nhas enabled TheFork to leverage the global reach of the\nworld\u2019s largest travel platform and to develop in new\nmarkets. This acquisition brings together two companies that\nshare the same entrepreneurial culture and vision, where\ncustomers come first.\n2006 - 2014\nRoots and foundations\n2006 Origin of LaFourchette & Alain Ducasse idea\n2007 Launch of official business & website in France & Spain\n2011 Launch of TheFork app\n2012 TheFork hits 10 million bookings & launch of Switzerland\n2014 \u00abTripAdvisor acquires LaFourchette & launch of Belgium\n2014 - 2015\ninternationalisation, launches and\nacquisitions\nitaly, Sweden, Portugal, Australia, Netherlands.\n2016 - 2018\nConsolidation & Diversification\nFran\u2026",
+    "priority_score": 0.83,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 4",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0100",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 8: TheFork @) Pay\nTheFork's innovative in-app\ncontactless payment solution.\nGoing to a restaurant is a quest for a quality experience and moment.\nBut a sticking point exists in most cases, the final payment. Indeed, for\nrestaurateurs, there is a risk of error on the bills and payment requires the\nprovision of a server, For consumers, the payment experience is experienced\nas a waiting time, often considered too long and therefore painful.\nIn order to reduce these irritants and offer the smoothest possible restaurant\nexperience, TheFork has Launched in 2020 TheFork Pay, This new feature,\nalready used by 30 O00 restaurants in France, Italy and Spain, allows users to\npay the bill directly from the TheFork application at the partner restaurants.\nDiscover its benefits for Restaurants and d\u2026",
+    "priority_score": 0.83,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 8",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Risk"
+  },
+  {
+    "evidence_id": "E0101",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 9: TheFork and restaurateurs:\na win-win model!\nAt TheFork, as pioneers in offering digital solutions for\nmanagement booking for restaurants, we are\nsupporting restaurants in their digitalisation so that\nthey get the most out of the digital technology, and\noptimise the management of their activity and their\nresults, thus allowing us to contribute to the growth of\nthe restaurant industry.\nindeed, a PwC study carried out on behalf of TheFork\nand TripAdvisor reveals that the two leaders contributed\nto the global growth of the restaurant industry, to the\ntune of 7.2 billion euros, including 1.6 billion in France,\nand that they also helped to create nearly 12,000 jobs in\nFrance in 2018.\nThe world is constantly changing... so is the landscape\nrestaurants work in!\nDigital tools bring a whole\u2026",
+    "priority_score": 0.83,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 9",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0102",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 10: Tech at the heart of growth Benefits\nTheFork is a pure player that creates a model which ve rresTaurant\ndisrupted the restaurant industry with the idea of\nputting technology at the service of restaurateurs. Since\nits inception in 2007, the company has continued to N*1 in online bookings\ninvest and innovate to offer restaurants an even more App available in 12 countries\nefficient solution and allow them to optimize the\nmanagement of bookings, streamline operations and\nultimately Improve service and revenues thanks to the Increased online visibility\nexposure they benefit from millions of monthly visitors.\n20 million visits per month\nHigher seat occupancy rate\nAs a unique connection service between restaurants Be Mes more bookings thanks to specia\nand their diners through technology\u2026",
+    "priority_score": 0.83,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 10",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Risk"
+  },
+  {
+    "evidence_id": "E0103",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 11: The fight against the\nno-shows\nThis client behaviour is becoming increasingly\nwidespread in many different industries and services\ninvolving bookings. It describes a person or customer\nwho fails to show up for their reservation or\nappointment and did not give prior notice to the\nprofessional. This phenomenon is impacting not only\nthe restaurant industry, but it also becoming an issue\nacross society as it has repercussions when it happens\nto hotels, to healthcare professionals as well as small\ntraders such as hairdressers!\nBooking a table online for lunch or dinner ina\nrestaurant does give greater freedom to customers,\nhowever not honouring this booking is rather a\nreflection of current attitudes in our society. With the\nfast-paced lives that we all lead, consumerism going\nout of \u2026",
+    "priority_score": 0.83,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 11",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0111",
+    "source_file": "the fork press release new brand (1)_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 1: PRESS RELEASE\nTheFork innovates and unveils two major\nprojects to drive the restaurant industry\ntowards a 100% digital transition of bookings.\nTheFork is embracing a fully digital future for restaurants with the launch of revenue\nmanagement, the data analysis tool serving business performance.\nThe company unveils its new brand identity, to increase its impact and connect more\ndiners with restaurants.\n22/06/2023\nCreated in 2007, TheFork, the leading online restaurant booking platform in Europe, has\ndisrupted the restaurant industry by supporting the digitalization of the restaurant sector with\nthe ambition of putting the best of technology at the service of industry growth. Driven by this\nstrong will, the company is launching two major projects, which will offer restaurants a more\n\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0112",
+    "source_file": "the fork press release new brand (1)_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 2: \"We are thrilled to unveil our latest breakthrough Revenue Management feature, which we\nbelieve marks a significant milestone in the digitalization of the industry. We believe this feature\nis ushering in a new era of maximizing revenue for restaurants, putting the power of data\nanalytics at their fingertips. Our cutting-edge data analysis enables an evolution in yield\nmanagement, shifting the focus from driving more customers to generating the highest\nrevenues at the best return on investment. We're proud to observe that, on average, for every\neuro restaurants spend, they multiply it by 5(d). This accomplishment reinforces our position as a\ntrusted leader which provides the most effective marketing solutions, not only within the\nindustry but also more globally. As we pursue this t\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0113",
+    "source_file": "the fork press release new brand (1)_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 3: \u25cf\nBring people together\n\u25cf\nFeed the human spirit\n\u25cf\nChampion restaurant culture\nA reinvigorated hero green and extended palette of supporting greens retains brand equity and\nis supported by a rich and enticing complementary palette inspired by fresh food that\nrestaurants refine to delight diners, to add impact, flex and variety. The art direction captures the\nexcitement and energy of TheFork starring diverse, global food experiences, real food and real\npeople.\nThe new logo and visual identity will debut globally from June 22, supported by a media\ncampaign including a TV spot starring the new brand, and followed by a full rollout by the end of\n2023.\nAbout TheFork\nTheFork, a Tripadvisor\u00ae company, is the leading online restaurant booking platform in Europe &\nAustralia. At the forefront\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0114",
+    "source_file": "TheFork Press Release Trends_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 1: PRESS RELEASE\nFood trends 2023: TheFork and NellyRodi\nunveil the upcoming evolutions\nTheFork, leading platform for restaurants booking in Europe, presents the 2023\nFood trends study in partnership with NellyRodi, international innovation and\ncreativity agency.\nJanuary 2023\nThe past few years have been ones marked by societal changes due to the impact of the\npandemic\nthat\nhave\nprofoundly\ntransformed\npeople's\nbehavior.\nHowever, after a\nlong-awaited return to normality, society has kept confronting a number of geopolitical,\neconomic, environmental, and identity-led challenges. These challenges, along with the\nuncertainty of which path is the right one to take, have been translated into a\nbi-polarization between those who wish to take back the old know-how seeking reality\nand those wh\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Risk"
+  },
+  {
+    "evidence_id": "E0117",
+    "source_file": "TheFork Press Release Trends_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 4: implementation of a holistic vision of food, social and united, rich in taste as well as\nresponsible and sustainable.\n\u25cf\nCrave of reality: On social networks, the analysis is the same: sincerity, realism,\ngenuineness and legitimacy. Having all the filters available on social media\nplatforms, people don\u2019t want to see pictures with filters on them anymore, they are\nlooking for raw and pure content. For instance, content producers who tell their\nstories and how they feel doing that are becoming the most appealing ones. This is\nthe case of Eugenia Diaz who shares her daily farm life explaining the work of a\nyear growing her vegetable garden, recreating a farm, and building her tiny house.\nEnlightening sharing\nNowadays people are not only expecting chefs to serve them sustainable and et\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 4",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0118",
+    "source_file": "TheFork Press Release Trends_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 5: Voracious wishes\nThis digitalization of society increased the need for speed. Nowadays, consumers are\nlooking to have what they want the fastest possible. This came with new ways of\ndiscovering and consuming goods.\n\u25cf\nTik Tok: Food industry is taking over social media. 5 in 10 of millennials have\nordered food or visited a restaurant after seeing it on TikTok, 38% of people are\ntraveling a long distance from their homes to try TikTokrecommended food, and\n28%, on the other hand, are spending half of their pay on trying new foods*.\nBesides, it has to lead to a new way of consuming by people getting wild to have\nwhat they are seeing: recommendations from influencers or random people or just\ncrave of what is broadcasted on the app. Among the tens of thousands of videos\nposted on TikTok \u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 5",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0119",
+    "source_file": "TheFork Press Release Trends_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 6: experience for a culinary trip around the world, prepared by Michelin-starred chefs\nas part of the Great Feast festival at the Old Selfridges Hotel.\nLOOKING TO PERFORM\nMore aware than ever of the repercussions of climate change, people are looking for\neffective solutions for their health and for the environment: food is not just food, they want\nto seek the origin of the ingredients. If in 2022 people were using alternative medicines\nand new ingredients to solve their issues; today, technology is coming to the front stage.\nOpposite direction\nSome people like to go against the tide. By ideological beliefs, because of reason\u2026 they are\nseeing how far the world went and decide to go the opposite way.\n\u25cf\nReal aesthetics: On Instagram is emerging a new trend of sharing raw daily dishes..\n\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 6",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0120",
+    "source_file": "TheFork Press Release Trends_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 7: the food industry's environmental impact. Californian startup Air Protein has\ncreated a meat alternative titled Air Meat, made from microbes that turn recycled\ncarbon dioxide into protein. The product aims to replicate the flavour and texture\nof real meat products.\n\u25cf\nInnovations: Some scientists and searchers are already looking for solutions to\nproduce food, once no more lands will be cultivable. Central Saint Martins graduate\nArina Shokouhi invented an avocado alternative named Ecovado, designed to\nbreak people away from purchasing resource-intensive imported food.\nAbout TheFork\nTheFork, a Tripadvisor\u00ae company, is the leading online restaurant booking platform in\nEurope & Australia. At the forefront of championing restaurant culture, TheFork harnesses\ntechnology to foster real l\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 7",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0121",
+    "source_file": "thefork-leadership-management-transition.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 1: For Immediate Release\nTripadvisor and TheFork Announce Leadership Management Transition as Bertrand\nJelensperger Moves into Advisory Board Leadership Role and Almir Ambeskovic is\nAppointed as CEO for TheFork\n\u25cf\nJelensperger to Join Tripadvisor CEO and Cofounder, Stephen Kaufer, on a Newly\nCreated Advisory Board for TheFork, Overseeing Strategy and Growth\n\u25cf\nAmbeskovic to Assume CEO Role starting March 1, 2021, Leading Global Strategy\nDevelopment and Operations for TheFork\nNeedham, MA, and Paris, France, February 23, 2021,\u200b \u200bTripadvisor\u200b\u00ae\u200b, the world\u2019s largest travel\nguidance platform, and \u200bTheFork\u200b, a leading global platform for booking restaurants, today\nannounced a key management transition at La Fourchette SaS (known commercially as\nTheFork.com).\nThe Fork\u2019s co-founder and CEO, Be\u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0122",
+    "source_file": "thefork-leadership-management-transition.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 2: again dine out. We will be alongside restaurateurs to support them as they reopen and navigate\nthis post-pandemic era\u200b,\u201d added Ambeskovic.\nPrior to being appointed as CEO, Almir was Vice President Sales and Marketing for TheFork, a\nrole in which he was responsible for the growth of the business in all the countries within\ntwenty-two markets where TheFork operates. Almir has directly led several countries as general\nmanager at TheFork since 2015. He began his career with TheFork in 2014 as Italy Country\nManager following the acquisition by Tripadvisor of RestOpolis, an online restaurants\nreservation startup he founded and led since 2011.\nBorn in Sarajevo in 1977, Almir began his career as a consultant and entrepreneur in the IT\nsector. First as start-up entrepreneur founding three \u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0123",
+    "source_file": "thefork-leadership-management-transition.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 3: TheFork, a Tripadvisor company, is the leading online restaurant reservation platform.\nTheFork\u2019s mission is to connect diners with a network of nearly 80,000 partner restaurants\nworldwide. With 22 million reviews and 28 million downloads of its app, TheFork has become\nthe smart move to make to get a table. Through TheFork (website and app), as well as through\nTripadvisor, users can easily select a restaurant according to their preferences, consult  user\nreviews, check real-time availability and instantly book online 24/7. From the restaurant side,\nTheFork provides them with a software  solution, TheFork Manager, to optimise reservation\nmanagement, streamline operations and ultimately improve service and revenue. The platform\noperates in 22 countries as \u201cTheFork\" in France, Italy, \u2026",
+    "priority_score": 0.83,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0133",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "The proposed acquisition builds on American Express\u2019 broader dining strategy and its successful acquisitions of digital dining platforms Resy and Tock. Together, these platforms are expected to expand American Express\u2019 dining network to 75,000 bookable venues1.",
+    "priority_score": 0.825,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0134",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "With the proposed acquisition of TheFork, American Express would grow its dining offerings in Europe and strengthen its ability to provide access for Card Members and diners to sought-after restaurants, while supporting the continued growth of its international business, a major driver of the company\u2019s overall growth.",
+    "priority_score": 0.825,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0153",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "\"This agreement reflects two things we believe deeply: the tangible value across Tripadvisor Group's portfolio and our ongoing focus on the opportunity we see ahead in Experiences,\" said\u00a0 Matt Goldberg, CEO, Tripadvisor Group. \"We're proud of what we've built with TheFork and grateful for the team's work to secure a leading position in European dining. I'm confident that we've found an ideal home for them and look forward to expanding our relationship with American Express in the future.\"",
+    "priority_score": 0.825,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0136",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "\"TheFork was created to help restaurants thrive and to make it easier for diners to discover and enjoy great restaurants,\u201d said Almir Ambeskovic, Chief Executive Officer of TheFork. \u201cWith Tripadvisor's support, we've built one of Europe's leading dining platforms. American Express shares our commitment to innovation, service and hospitality. Together, we have a unique opportunity to accelerate our mission, bringing even more value to restaurants while creating richer and more seamless experiences for millions of diners across Europe.\"",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0139",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "The proposed transaction is expected to close before the end of 2026, subject to labor consultation and customary conditions, including regulatory approvals. Under the terms of the proposal, American Express will acquire TheFork from Tripadvisor for $700 million in cash, subject to customary adjustments.\n\n1\u00a0Venue figures are based on American Express and TheFork internal company records as of June 2026. Methodologies may differ across platforms, and combined figures reflect company estimates at the time of announcement.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0158",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "American Express Expands Dining Ecosystem With TheFork Acquisition From Tripadvisor",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0159",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "American Express (NYSE:AXP) is increasing its focus on dining and experiences, adding TheFork's more than 50,000 European restaurants to its existing network. Once completed, the acquisition is expected to expand American Express's global dining ecosystem to around 75,000 bookable venues, reinforcing its position in premium travel and lifestyle services.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0160",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "For investors, this move ties into ongoing themes around card issuers seeking more engagement, higher spend per customer, and differentiated rewards. As the deal progresses toward an expected late 2026 close, attention is likely to center on integration, regulatory review, and how effectively American Express converts this larger dining footprint into cardmember activity and merchant relationships.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0166",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "The specific impact of owning a large European dining platform on American Express's reliance on the US market is not fully reflected in the narrative, yet it may contribute to the goal of more diversified international earnings.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0154",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "The transaction is expected to provide Tripadvisor with significant flexibility to accelerate its capital return policy, maintain a well-capitalized balance sheet, and continue investing in its Experiences business to drive shareholder value. The companies also see opportunities to build on their existing relationship and deliver additional value to travelers over time.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0155",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "\"In addition to welcoming TheFork to the American Express family, we're excited about the opportunity to deepen our relationship with Tripadvisor going forward,\" said Stephen Squeri, Chairman and CEO, American Express. \"By building on our shared strengths across dining, travel, and experiences, we have opportunities to create even greater value for customers and partners.\"",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0142",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "The deal will \u2060allow Tripadvisor to focus more on its experiences-led strategy as part of a major overhaul, the \u200bcompany said.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0143",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "For American Express, buying TheFork will expand its dining network to 75,000 bookable \u200bvenues and bolster its international business, which has been its fastest-growing segment for many years. It also builds on its acquisitions of dining platforms Resy and\u00a0Tock.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0144",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "\"Dining is one of the most important ways \u200bpeople engage with our brand,\" said Rafa Marquez, president of international card services \u200bat American Express.",
+    "priority_score": 0.762,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0106",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_table_insight",
+    "text": "PDF Table on page 6 (1 rows \u00d7 2 cols):  | ",
+    "priority_score": 0.72,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 6",
+    "dedup_merged_sources": [
+      "thefork-leadership-management-transition.pdf"
+    ],
+    "dedup_merged_ids": [
+      "E0107",
+      "E0108",
+      "E0109",
+      "E0110",
+      "E0126",
+      "E0128"
+    ],
+    "extraction_method": "text_layer",
+    "semantic_type": "Metric"
+  },
+  {
+    "evidence_id": "E0124",
+    "source_file": "thefork-leadership-management-transition.pdf",
+    "insight_type": "pdf_table_insight",
+    "text": "PDF Table on page 1 (3 rows \u00d7 1 cols): For Immediate Release\nTripadvisor and TheFork Announce Leadership Management Transition as Bertrand\nJelensperger Moves into Advisory Board Leadership Role and Almir Ambeskovic is\nAppointed as CEO for TheFork\n\u25cf Jelensperger to Join Tripadvisor CEO and Cofounder, Stephen Kaufer, on a Newly\nCreated Advisory Board for TheFork, Overseeing Strategy and Growth\n\u25cf Ambeskovic to Assume CEO Role starting March 1, 2021, Leading Global Strategy\nDevelopment and Operations for TheFork\nNeedham, MA, and Paris, France, February 23, 2021, Tripadvisor\u00ae \u200b, the world\u2019s largest travel\n\u200b\u200b \u200b\nguidance platform, and TheFork, a leading global platform for booking restaurants, today\n\u200b \u200b\nannounced a key management transition at La Fourchette SaS (known commercially as\nTheFork.com\u2026",
+    "priority_score": 0.72,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "extraction_method": "text_layer",
+    "semantic_type": "Metric"
+  },
+  {
+    "evidence_id": "E0130",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "American Express \u2013 link https://www.americanexpress.com/en-us/newsroom/articles/travel-and-dining/american-express-announces-proposed-acquisition-of-thefork--a-le.html",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0131",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "NEW YORK\u00a0\u2014 American Express (NYSE: AXP) today announced a proposed acquisition of TheFork, a leading online restaurant reservation and management platform in Europe, from Tripadvisor, Inc. (NASDAQ: TRIP), growing its dining offering in the region.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0132",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "TheFork connects millions of diners with more than 50,000 restaurants across 11 European countries through its restaurant management, booking and customer engagement platform, alongside a consumer-facing restaurant discovery and reservation app and website.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0137",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "Founded in 2007, TheFork provides restaurants with reservation management, guest engagement and operational tools designed to help restaurants optimize their businesses while delivering a seamless discovery and booking experience for diners.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0138",
+    "source_file": "amex_the_fork.docx",
+    "insight_type": "docx_insight",
+    "text": "Following the closing of the potential transaction, TheFork would continue to operate under its existing leadership team while benefiting from the global reach and powerful backing of American Express.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0161",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "3 things going right for American Express that this headline doesn't cover.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0163",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "How This Fits Into The American Express Narrative",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0164",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "TheFork builds on the narrative focus on premium cardmembers and experience-led rewards by adding thousands of European venues where American Express can link payments with dining benefits.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0165",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "Integrating multiple reservation platforms across regions could test the narrative assumption that customer engagement expenses and product investment remain well controlled over time.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0167",
+    "source_file": "yahoo_finance_2.docx",
+    "insight_type": "docx_insight",
+    "text": "Knowing what a company is worth starts with understanding its story.\u00a0Check out one of the top narratives in the Simply Wall St Community for American Express\u00a0to help decide what it's worth to you.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0149",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "Tripadvisor Enters into Agreement to Sell TheFork to American Express for $700 Million",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0150",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "Transaction highlights the value of Tripadvisor's portfolio and enables greater focus on experiences",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0151",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "NEEDHAM, Mass.,\u00a0June 15, 2026\u00a0/PRNewswire/ -- Tripadvisor, Inc.\u00a0(NASDAQ: TRIP) (the \"Company\") today announced it has entered into a put option agreement to sell TheFork, its online restaurant reservation and management platform in Europe, to American Express for $700 million in an all-cash transaction.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0152",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "The agreement follows Tripadvisor's February 2026 announcement that it would explore strategic alternatives for TheFork. It recognizes the value created in the business over more than a decade, and allows Tripadvisor to focus even more fully on its Experiences strategy.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0156",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "The proposed transaction is expected to close before the end of 2026, subject to labor consultation and customary closing conditions, including regulatory approvals. The Company anticipates minimal tax cost from the sale of TheFork, with net proceeds expected to closely approximate the gross proceeds.\u00a0 Potential uses of proceeds include share repurchases, debt paydown, or inorganic investment within the experiences category.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0157",
+    "source_file": "Trip Advisor.docx",
+    "insight_type": "docx_insight",
+    "text": "As of the first quarter of 2026, the Company's last reported period, the last twelve-month revenue for TheFork was $232 million and adjusted EBITDA for TheFork segment for the same period was $28 million.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0140",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "June 15 (Reuters) - American Express\u00a0(AXP.N)\u00a0will buy restaurant booking platform TheFork from \u200cTripadvisor\u00a0(TRIP.O)\u00a0in an all-cash deal worth $700 million, the companies said on Monday, sending shares of the online travel platform up 7% in morning trading.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0141",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "Activist investor Starboard Value had in October last year\u00a0pressed \u200bfor TheFork's\u00a0sale, as Tripadvisor struggled to recover from pandemic-era disruptions and contend \u200bwith heavy competition from rivals including Booking Holdings\u00a0(BKNG.O)\u00a0and Airbnb\u00a0(ABNB.O).",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0145",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "TheFork generated $232 million in revenue for the year ended March 31, a 25% jump \u200cfrom a \u2060year earlier, showed Tripadvisor's earnings report. The platform connects millions of diners with more than 50,000 restaurants across 11 European countries, according to the companies.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0146",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "\"We see the deal as a plus (for Tripadvisor), but talk of using proceeds to fund ongoing investment in the \u200bexperiences business could \u200bbe an area of \u2060investor pushback as it suggests no plans to explore options at this point for Viator,\" said BTIG analyst Jake Fuller. Viator is \u200ba Tripadvisor-owned online marketplace for tours, activities and attractions.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0147",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "Meanwhile, analysts \u200bat William \u2060Blair said the deal was consistent with American Express\u2019 focus on providing premium experiences and driving more customer engagement.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0148",
+    "source_file": "Reuters.docx",
+    "insight_type": "docx_insight",
+    "text": "TheFork will continue to operate under its existing leadership and the \u2060transaction is \u200bexpected to close before the end of 2026.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0125",
+    "source_file": "thefork-leadership-management-transition.pdf",
+    "insight_type": "pdf_table_cell",
+    "text": "PDF table cell (p1 r0 c0): For Immediate Release\nTripadvisor and TheFork Announce Leadership Management Transition as Bertrand\nJelensperger Moves into Advisory Board Leadership Role and Almir Ambeskovic is\nAppointed as CEO for TheFork\n\u25cf Jelensperger to Join Tripadvisor CEO and Cofounder, Stephen Kaufer, on a Newly\nCreated Advisory Board for TheFork, Overseeing Strategy and Growth\n\u25cf Ambeskovic to Assume CEO Role starting March 1, 2021, Leading Global Strategy\nDevelopment and Operations for TheFork\nNeedham, MA, and Paris, France, February 23, 2021, Tripadvisor\u00ae \u200b, the world\u2019s largest travel\n\u200b\u200b \u200b\nguidance platform, and TheFork, a leading global platform for booking restaurants, today\n\u200b \u200b\nannounced a key management transition at La Fourchette SaS (known commercially as\nTheFork.com).\nThe Fork\u2019\u2026",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "extraction_method": "table_cell",
+    "semantic_type": "Metric"
+  },
+  {
+    "evidence_id": "E0127",
+    "source_file": "thefork-leadership-management-transition.pdf",
+    "insight_type": "pdf_table_cell",
+    "text": "PDF table cell (p2 r1 c0): again dine out. We will be alongside restaurateurs to support them as they reopen and navigate\nthis post-pandemic era,\u201d added Ambeskovic.\n\u200b\nPrior to being appointed as CEO, Almir was Vice President Sales and Marketing for TheFork, a\nrole in which he was responsible for the growth of the business in all the countries within\ntwenty-two markets where TheFork operates. Almir has directly led several countries as general\nmanager at TheFork since 2015. He began his career with TheFork in 2014 as Italy Country\nManager following the acquisition by Tripadvisor of RestOpolis, an online restaurants\nreservation startup he founded and led since 2011.\nBorn in Sarajevo in 1977, Almir began his career as a consultant and entrepreneur in the IT\nsector. First as start-up entrepre\u2026",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "extraction_method": "table_cell",
+    "semantic_type": "Metric"
+  },
+  {
+    "evidence_id": "E0129",
+    "source_file": "thefork-leadership-management-transition.pdf",
+    "insight_type": "pdf_table_cell",
+    "text": "PDF table cell (p3 r1 c0): TheFork, a Tripadvisor company, is the leading online restaurant reservation platform.\nTheFork\u2019s mission is to connect diners with a network of nearly 80,000 partner restaurants\nworldwide. With 22 million reviews and 28 million downloads of its app, TheFork has become\nthe smart move to make to get a table. Through TheFork (website and app), as well as through\nTripadvisor, users can easily select a restaurant according to their preferences, consult user\nreviews, check real-time availability and instantly book online 24/7. From the restaurant side,\nTheFork provides them with a software solution, TheFork Manager, to optimise reservation\nmanagement, streamline operations and ultimately improve service and revenue. The platform\noperates in 22 countries as \u201cTheFork\" i\u2026",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "extraction_method": "table_cell",
+    "semantic_type": "Metric"
+  },
+  {
+    "evidence_id": "E0168",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "American Express buys TheFork from Tripadvisor for $700M",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0169",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "American Express\u00a0agreed to acquire TheFork, Tripadvisor's European restaurant booking platform, for $700 million in an all-cash transaction, the companies said on Monday.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0170",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "The platform operates in 11 European countries, giving diners access to a network of more than 50,000 restaurants. With the purchase, American Express would bring its total bookable dining venues to 75,000, adding to a portfolio that already includes the Resy and Tock platforms, according to\u00a0Reuters. Tripadvisor stock rose 7% in morning trading following the announcement.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0171",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "For Tripadvisor, the sale follows a Feb. 2026 announcement that the company would explore strategic alternatives for TheFork. The transaction allows Tripadvisor to concentrate on its experiences-focused strategy, the company said. Potential uses of the proceeds include share repurchases, debt reduction, or investment in the experiences business.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0172",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "TheFork generated $232 million in revenue and $28 million in adjusted EBITDA for the twelve months ended March 31, 2026, the company said.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0174",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "American Express Chairman and CEO Stephen Squeri said the deal also opens opportunities to deepen the company's relationship with Tripadvisor. \"By building on our shared strengths across dining, travel, and experiences, we have opportunities to create even greater value for customers and partners,\" Squeri said in a statement.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0175",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "Rafa Marquez, president of international card services at American Express, said dining was\u00a0central to how customers engage\u00a0with the brand.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0176",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "The current leadership team at TheFork is expected to remain in place once the acquisition is complete. The transaction is expected to close before the end of 2026, subject to labor consultation and regulatory approvals, the company said. Tripadvisor said it expects minimal tax costs from the sale, with net proceeds expected to closely approximate gross proceeds.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0177",
+    "source_file": "yahoo_quartz.docx",
+    "insight_type": "docx_insight",
+    "text": "Goldman Sachs served as financial advisor to Tripadvisor and TheFork, with Goodwin Procter LLP and Reed Smith LLP serving as legal advisors, the company said.",
+    "priority_score": 0.7,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "DOCX",
+    "extraction_method": "paragraph",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0001",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 1: EX-10.1 2 d156418dex101.htm EX-10.1\nExhibit 10.1\nPRIVATE\u00a0& CONFIDENTIAL\nFROM:\nAMERICAN EXPRESS TRAVEL RELATED SERVICES COMPANY, INC.\n200 Vesey Street\nNew York, NY 10285\n(\u201cBuyer\u201d)\nTO:\nTRIPADVISOR, INC.\n400 1st Avenue\nNeedham, MA 02494\n(\u201cParent\u201d)\nTRIPADVISOR UK HOLDCO LIMITED\n10 Norton Folgate, London, United Kingdom, E1 6DB\n(\u201cSeller\u201d)\nLF HOLDINGS (FRANCE) SAS\n70 rue Saint-Lazare\n75009 Paris, France\n(\u201cCompany\u201d)\nJune\u00a014, 2026\nDear Sirs,\nWe refer to our recent discussions relating to the contemplated acquisition of the Shares representing all of the issued and outstanding Equity Interests of\nLF Holdings (France) SAS, a French simplified joint stock company (soci\u00e9t\u00e9 par actions simplifi\u00e9e), registered with the Trade and Companies Registry\nof Paris under number 803\u00a0696 509, whose regist\u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 1",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0002",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 2: 1.\nPUT OPTION\n1.1\nThe Buyer hereby irrevocably undertakes to purchase the Shares at the price and under the other terms and subject to the conditions set forth in\nthe EPA and in this Put Option Agreement, subject only to the delivery by the Seller Parties of a notice to sell the Shares to the Buyer in\naccordance with the terms of this Put Option Agreement, the form of which is set out in Schedule B (the \u201cPut Option\u201d and the notice of such\ndecision being referred to as the \u201cExercise Notice\u201d). Upon the delivery of the Exercise Notice to the Buyer, each of the Buyer and Seller Parties\nshall be bound to execute and deliver the EPA on a date (the \u201cExecution Date\u201d) to be agreed among the Seller Parties and the Buyer; provided\nthat such Execution Date shall in any event be no later than \u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0007",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 7: We look forward to working together towards the completion of this Contemplated Transaction.\n/s/ Howard Cheng\nAMERICAN EXPRESS TRAVEL RELATED SERVICES COMPANY, INC.\nRepresented by:\nHoward Cheng (Executive Vice President, Head of Corporate\nDevelopment)\nBuyer\nSignature Page to Put Option Agreement\n7/10/26, 12:17 AM\nEX-10.1\n7/86",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 7",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0008",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 8: The Put Option Agreement is countersigned by the Seller Parties exclusively to acknowledge the agreement of the Seller Parties on its provisions and, in\nparticular on undertakings, covenants and obligations of the Seller Parties provided therein (which shall be binding on them as from the date hereof). In\nno event shall such signature be construed as an exercise of the Put Option by the Seller Parties, which shall only result from the delivery by the Seller\nParties of an Exercise Notice to the Buyer in accordance with the Put Option Agreement.\n/s/ Michael Noonan\nTRIPADVISOR, INC.\nRepresented by Michael Noonan, Chief\u00a0Financial Officer\nParent\n/s/ Linda C. Frazier\nTRIPADVISOR UK HOLDCO LIMITED\nRepresented by Linda C. Frazier, Director\nSeller\n/s/ Linda C. Frazier\nLF HOLDINGS (FRANCE) \u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 8",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0010",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 10: FINAL FORM\nEQUITY PURCHASE AGREEMENT\nBY AND AMONG\nAMERICAN EXPRESS TRAVEL RELATED SERVICES COMPANY, INC.\nTRIPADVISOR UK HOLDCO LIMITED\nLF HOLDINGS (FRANCE) SAS\nand\nTRIPADVISOR, INC.\n[\u2022], 2026\n7/10/26, 12:17 AM\nEX-10.1\n10/86",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 10",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0044",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 44: (x) none of the Company-Owned Intellectual Property or Assigned Intellectual Property is involved in any opposition, cancellation,\ninterference, reissue, review or reexamination proceeding, other than standard prosecution actions issued by the relevant Governmental Body in\nthe ordinary course, and no such Intellectual Property Rights are the subject of any judicial, administrative or arbitral order, award, decree,\ninjunction, action or stipulation;\n(xi) no material Software owned or purported to be owned by any Group Company is held in escrow, and no Group Company has\ndisclosed, delivered or licensed to any Person or agreed or obligated itself to disclose, deliver or license to any Person, or permitted the disclosure\nor delivery to any escrow agent or other Person of, any such So\u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 44",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0085",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 85: IN WITNESS WHEREOF, the parties hereto have caused this Equity Purchase Agreement to be executed and delivered by their respective\nofficers thereunto duly authorized, all as of the date first above written.\nPARENT:\nTRIPADVISOR, INC.\nBy:\nName:\nTitle:\nSELLER:\nTRIPADVISOR UK HOLDCO LIMITED\nBy:\nName:\nTitle:\nCOMPANY:\nLF HOLDINGS (FRANCE) SAS\nBy:\nName:\nTitle:\nSignature Page to Equity Purchase Agreement\n7/10/26, 12:17 AM\nEX-10.1\n85/86",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 85",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0086",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 86: IN WITNESS WHEREOF, the parties hereto have caused this Equity Purchase Agreement to be executed and delivered by their respective\nofficers thereunto duly authorized, all as of the date first above written.\nBUYER:\nAMERICAN EXPRESS TRAVEL RELATED\nSERVICES\u00a0COMPANY, INC.\nBy:\nName:\nTitle:\nSignature Page to Equity Purchase Agreement\n7/10/26, 12:17 AM\nEX-10.1\n86/86",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 86",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0093",
+    "source_file": "Final 15 YEARS PRESS RELEASE  (1).pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 4: experiences, reserve tables at delicious restaurants and discover great places nearby. As a travel\nguidance company available in 43 markets and 22 languages, Tripadvisor makes planning easy no\nmatter the trip type. The subsidiaries of Tripadvisor, Inc. (Nasdaq: TRIP), own and operate a portfolio\nof travel media branAds and businesses, operating under various websites and apps.\n* Source: SimilarWeb, unique users de-duplicated monthly, March 2023\n** Source: Tripadvisor internal log files\n*Internal datas TheFork\n**Euromonitor datas on European countries (FR, IT, ES, CH, UK, PT, NL)\n*** Euromonitor study on 5024 respondents (FR, IT, ES, CH, UK, PT, NL)\n****Food and Agriculture Organization of the United Nations (FAO), 2013",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 4",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0094",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 2: TheFork is the leader in online restaurant\nbookings in Europe and Australia.\nFounded in 2007, the platform\nrevolutionised the restaurant market by\noffering a new way to foster\nrelationships between restaurants and\ndiners, and by providing the first online\nbooking diary for professionals.\nTheFork,\na digital success story.\nIn the early 2000s, Bertrand Jelensperger and his associates noticed that there\nwere almost no online guides, while in print Michelin had done some\nspectacular work in establishing itself as THE reference in gastronomic guides,\nhowever on the Internet, everything remained to be done. It was around the\nsame time that he has become familiar to the Yield Management mechanism\n(i.e. pricing policy and demand driven seat optimisation). At that point, the idea\nof a resta\u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0097",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 5: The essential\npartner of foodies\neer secnerusr #. nk ae Heeet z ~ | bas Saat ~~ A>\neve WwW Tease 2 =i FEF ; \u00ab eri liels\n4 A= Ewe CF el .% \"iI 4 a we)\nAt TheFork, we believe that every occasion, big\nor small, planned or unexpected, deserves the\nright restaurant! With nearly 60 partner\nrestaurants in France, and nearly 55,000\nworldwide, we offer a wide choice of restaurants\nto meet all preferences, with discounts of up to\n50%, all bookable in one click on the mobile app,\n24 hours a day! Much more than a restaurant\nbooking website, TheFork has become a true\nurban, gastronomic guide with a strong\ncommunity.\nIn order to choose the best option, diners can\nread the reviews posted by our active\ncommunity comprising several million foodies:\nreviews are a way to guide customers, to inform\nt\u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 5",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0098",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 6: TheFork@) Yums\nTheFork rewards the appetite and lo\ncustome\nThe more you t out In re\nopportunities TheFork wi\naurants, the m\noffer for spending extra\nor with friends\nthey can be converted into 10 \u20ac\nin partner aurants that are\nam",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 6",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0099",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 7: TheFork gift card\nTheFork Gift Card, the first gift card that allows users to enjoy a\nrestaurant experience in more than 30,000 partner restaurants\nThe moments shared at restaurants are part of those pleasures that it is now\npossible to offer thanks to the TheFork Gift Card, which can be used in more\nthan 30,000 partner restaurants across France, Italy and Spain through\nTheFork Pay payment solution, including high end restaurants, local\ngastronomy or cuisines from around theworld, bookable 24/24 with immediate\nconfirmation.\nThis is the broadest offer to gift a restaurant experience ever and hence quite\nnews for the market. TheFork Gift Card is suitable for any occasion and for\neveryone! With its wide choice in France, but also in Italy and Spain with more\nthan 25,000 partner resta\u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 7",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0104",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 12: Biography Almir Ambeskovic,\nCEO TheFork\nPrior to being appointed as CEO, Almir was Vice\nPresident Sales and Marketing for TheFork, a role in\nwhich he was responsible for the growth of the\nbusiness in all the countries within twenty-two\nmarkets where TheFork operates. Almir has directly\nled several countries as general manager at TheFork\nsince 2015. He began his career with TheFork in 2014\nas Italy Country Manager following the acquisition by\nTripadvisor of RestOpolis, an online restaurants\nreservation startup he founded and led since 2011.\nBorn in Sarajevo in 1977, Almir began his career as a\nconsultant and entrepreneur in the IT sector. First as\nstart-up entrepreneur founding three companies,\nthen as top manager of a digital scale-up as TheFork,\nAlmir has always been active as a\u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 12",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0115",
+    "source_file": "TheFork Press Release Trends_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 2: restaurants implementing this technique. Besides, the valorization of indigenous\ncuisine also underscores this trend of preserving traditions. Braise in Paris, or Brat\nin London are taking back primal-fire cooking techniques to offer their diners a\ndifferent experience based on the most primitive traditions.\n\u25cf\nIndigenous cuisine: The return and valorization of indigenous cuisine also\nunderscores this trend of preserving traditions. North American Traditional\nIndigenous Food Systems like Food Lab or Wahpepah\u2019s Kitchen in Oakland are\nsome of the examples that are taking back the glorification of indigenous food\ntraditions in the US.\n\u25cf\nBack to spirits: After the trend of natural wines, and mixology, it is the spirits that\nare put at the front of the stage. Consumers are now taking a \u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 2",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0116",
+    "source_file": "TheFork Press Release Trends_0.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 3: knowledgeable people of traditions and know-how, grandmas become the best\nguides and are put in the spotlight in books like Merci Mamie pour les recettes by\nJean Imbert, and social media accounts like Nonna Dora and Pasta Grannies.\n\u25cf\nSupportive cuisine: The restaurant & associations involved the new migrant\ncommunities to understand and highlight their culture. The kitchen is a great way\nto support and integrate other cultures and people into our lives. Imad\u2019s Syrian\nKitchen in London is a perfect example of this trend. Also, new migrants and\nrefugees from places like Hong Kong, Ukraine, Russia and Poland may bring more\naccess to these cuisines in 2023.\nLOOKING TO SHARE\nAfter some years of imposed social distancing, people are more willing than ever to retake\nhuman contact, willin\u2026",
+    "priority_score": 0.67,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0022",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 22: \u201cReplacement Marks\u201d has the meaning set forth in Section\u00a06.13(f).\n\u201cReport\u201d has the meaning set forth in Section\u00a06.21(a)(i).\n\u201cReservation Service Data\u201d has the meaning set forth in Schedule A.\n\u201cRestricted Cash\u201d means any cash or cash equivalent that is subject to restrictions or limitations on use or distribution by Law, contract or\notherwise, and that constitutes \u201crestricted cash\u201d in accordance with the Accounting Principles, including: (i)\u00a0deposits in escrow with third parties and\n(ii)\u00a0cash, cash equivalents, marketable securities or short-term investments, in each case to the extent securing letters of credit or other payment\nobligations.\n\u201cRestricted Party\u201d means any Person that (i)\u00a0is listed on any sanctions-related list, restricted party list, or blocked persons list administ\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 22",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0023",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 23: \u201cSeller Technology\u201d means all works of authorship, computer programs, source code and executable code (whether embodied in Software,\nfirmware or otherwise), user interfaces, application programming interfaces, protocols, architectures, documentation, designs, files, records, data, data\nstructures, databases, inventions (whether or not patentable), inventions, discoveries, improvements, technology, trade secrets, proprietary and\nconfidential information, know-how and information maintained as trade secrets, tools, concepts, techniques, methods, processes, formulae, algorithms\nand specifications, in each case owned by, or licensed to, the Seller or any of its Affiliates (other than any Group Company), but excluding any\ncommercial products or services of the Seller or its Affiliates\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 23",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0026",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 26: respectively, and (vi)\u00a0references to any Person include the predecessors, successors and permitted assigns of that Person. The Schedules and Exhibits\nreferred to herein shall be construed with and as an integral part of this Agreement to the same extent as if they were set forth verbatim herein. Titles to\nArticles and headings of Sections are inserted for convenience of reference only and shall not be deemed a part of or to affect the meaning or\ninterpretation of this Agreement. This Agreement shall be construed without regard to any presumption or rule requiring construction or interpretation\nagainst the party drafting an instrument or causing any instrument to be drafted. Any action otherwise required to be taken on a day that is not a Business\nDay shall instead be required to \u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 26",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0027",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 27: (iii) a duly completed, executed and dated (i)\u00a0share transfer form (ordre de mouvement) and (ii)\u00a0reiterative deed (acte r\u00e9it\u00e9ratif),\nrelating to the sale of the Shares in favor of the Buyer and specifying that the transfer of ownership of the Shares shall occur on the Closing Date;\n(iv) the updated share transfer registers (registres des mouvements de titres) and shareholders\u2019 accounts (comptes d\u2019actionnaires) of\nthe Company;\n(v) a counterpart of each Ancillary Agreement to which Parent, Seller or any of their respective Affiliates is a party, duly executed on\nbehalf of Seller or such Affiliates;\n(vi) the certificate contemplated by Section\u00a07.2(e); and\n(vii) all books, records, files, documents, correspondence and other materials (whether in physical or electronic form) to the ex\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 27",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0030",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 30: (30) days after delivery of the Dispute Notice. If Buyer and the Seller so resolve any Disputed Items, the calculation set forth in the Purchase Price\nStatement, in each case as adjusted for any Disputed Items that are so resolved by Buyer and the Seller, shall be final and binding as the Final Purchase\nPrice for purposes of this Agreement and shall be non-appealable by the parties hereto. If Buyer and the Seller are unable to resolve any Disputed Items\nwithin such thirty (30)\u00a0day period, Buyer and the Seller shall mutually engage and submit such Disputed Item(s) (and only the Disputed Item(s)) to, and\nthe same shall be finally resolved in accordance with the provisions of this Agreement by an independent, nationally recognized accounting or\nconsulting firm or other arbitrator wi\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 30",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0032",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 32: (c) The Company has not issued any Equity Interest other than the Shares, all of which are issued and outstanding and are legally and\nbeneficially owned by the Seller, free and clear of all Liens other than restrictions on transfer arising under applicable securities Laws. The Shares have\nbeen properly allotted and issued, are fully paid or credited as fully paid and were not issued in violation of any Law, contract, pre-emption rights or\nother rights of any Person or the Organizational Documents of the Company. There are no outstanding subscriptions, options, warrants, commitments,\npre-emption rights, agreements, arrangements or commitments of any kind (including long term incentive plans such as stock-options or actions\ngratuites) to which the Company is a party relating to the\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 32",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0033",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 33: Section\u00a03.3 No Conflict; Consents.\n(a) Except as set forth in Section\u00a03.3(a) of the Disclosure Schedule, the execution and delivery by the Company of this Agreement and the\nAncillary Agreements and the performance by the Company of the transactions contemplated hereby and thereby in accordance with the terms hereof\nand thereof, do not and will not (i)\u00a0violate, conflict with, result in a default under (whether after the giving of notice, lapse of time or both), accelerate\nany obligation under, require the consent, approval, or authorization of any Person under, or give rise to a right of termination of, or require any notice\nunder, any material contract, agreement, permit, license, authorization or obligation to which any Group Company is a party or by which any Group\nCompany\u2019s as\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 33",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0034",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 34: (e) All accounts receivable of the Group Companies shown in the Financial Statements or arising after the Put Option Date (a)\u00a0are bona\nfide and valid receivables arising from sales actually made or services actually performed and arose in the Ordinary Course of Business and (b)\u00a0are not\nsubject to any material setoffs, counterclaims, credits or other offsets. No Person has any Lien (other than Permitted Liens) on any accounts receivable\nor any part thereof, and no agreement for deduction, free goods or services, discount or other deferred price or quantity adjustment has been made by\nany Group Company with respect to any accounts receivable.\nSection\u00a03.5 Absence of Undisclosed Liabilities. No Group Company has any material liabilities, obligations or commitments (individually or in\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 34",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0042",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 42: (xi) any Contract relating to the incurrence or assumption of any Indebtedness for borrowed money by any Group Company, or any\nContract relating to the surety or guarantee of any Indebtedness of another Person by any Group Company;\n(xii) any Contract under which any Group Company has made advances or loans to any other Person (which shall not include trade\nreceivables or advances made to an employee of any Group Company in the Ordinary Course of Business).\n(xiii) any Contract required to be disclosed in order for the representations and warranties contained in Section\u00a03.18 (Related Party\nTransactions) to be true and correct;\n(xiv) any settlement agreement with respect to any Legal Proceeding;\n(xv) any confidentiality, secrecy or non-disclosure Contract other than any such Contrac\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 42",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0047",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 47: (d) The Group Companies have developed and maintained comprehensive and appropriate technical, physical and organizational controls,\npolicies, procedures, safeguards, measures and security systems, plans and technologies in accordance with all Company Privacy Commitments that\n(A)\u00a0identify internal and external risks to the confidentiality, integrity, and availability of Personal Information, (B)\u00a0implement, monitor and improve\nadequate and effective administrative, technical and physical safeguards to control those risks and (C)\u00a0include backup, business continuity and disaster\nrecovery plans, procedures, technology and facilities for the business of the Group Companies.\n(e) Neither the execution, delivery and performance of this Agreement nor the consummation of the transactions c\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 47",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Risk"
+  },
+  {
+    "evidence_id": "E0053",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 53: Section\u00a05.7 Solvency. Immediately after giving effect to the transactions contemplated by this Agreement (including the payment of the Base\nPurchase Price and all related amounts), and assuming satisfaction of the conditions to Buyer\u2019s obligation to consummate the purchase and sale of the\nShares as set forth herein, the accuracy of the representations and warranties of the Parent and the Seller, and the performance by the Group Companies,\nthe Parent and the Seller of their respective obligations hereunder in all material respects, Buyer and its Subsidiaries (including the Company), on a\nconsolidated basis, will be solvent. Buyer is not entering into the transactions contemplated hereby with the intent to hinder, delay or defraud creditors.\nNo transfer of property is being made, a\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 53",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0063",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 63: clauses (i)\u00a0or (ii), to the extent permitted under applicable Law, such other Party shall make available such information in connection with any filing on\nan outside counsel-to-counsel basis. Subject to Buyer allowing Seller to have reasonable consultation rights, including the Seller and its counsel having\nadvance notice of, and the opportunity to review and comment on, any correspondence or submission to a Governmental Body, Buyer acting in good\nfaith shall have, except where prohibited by applicable Law, responsibility for determining the strategy for dealing with any Governmental Body\nregarding the application of any Antitrust Laws to the transactions contemplated by this Agreement.\n(c) Buyer shall use its reasonable best efforts to take promptly, or cause to be taken, any an\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 63",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0066",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 66: hereby irrevocably sells, assigns, transfers, conveys and delivers (effective as of the Closing), and shall cause its applicable Affiliates to irrevocably sell,\nassign, transfer, convey and deliver, to the Company, all right, title and interest of the Seller and such Affiliates in and to such Assigned Intellectual\nProperty, including:\n(i) all goodwill associated therewith;\n(ii) all rights to collect royalties, damages and profits for past, present and future infringement, misappropriation or other\nviolation thereof; and\n(iii) all other statutory protections and rights relating thereto.\n(c) The Seller shall, and shall cause its applicable Affiliates to, execute such further instruments of assignment, transfer and conveyance\nand take such further actions as may be reasonably necess\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 66",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0072",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 72: readily accessible to any member of the Seller Group (including any Group Company) and access to any relevant Software (including its source\ncode), systems, personnel, reporting and documentation that is readily accessible to any member of the Seller Group (including any Group\nCompany), in each case as reasonably requested by Buyer to complete such assessment and generate report(s) setting out such assessment and the\nassociated risks (each, a \u201cReport\u201d); and\n(ii) use commercially reasonable efforts to remediate promptly (and in any event, no later than ten (10)\u00a0Business Days before\nthe anticipated Closing Date), in a manner approved in advance by Buyer (and not by taking any actions to which Buyer reasonably objects), any\ninformation security vulnerabilities, risks, Open Source So\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 72",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Risk"
+  },
+  {
+    "evidence_id": "E0081",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 81: arbitrator, or if one has not been appointed, to a court of competent jurisdiction, for prejudgment remedies and emergency relief pending final\ndetermination of a claim pursuant to this Section\u00a010.8. Subject to Section\u00a010.8(a), each of the Company, Buyer and the Seller hereby irrevocably and\nunconditionally consents to submit to the sole and exclusive jurisdiction of the Court of Chancery of the State of Delaware and any state appellate court\ntherefrom sitting in New Castle County in the State of Delaware (or, if the Court of Chancery of the State of Delaware declines to accept jurisdiction\nover a particular matter, any state or federal court within the State of Delaware) (the \u201cChosen Courts\u201d) solely for purposes of (i)\u00a0any application for\nprejudgment remedies or emergency relief\u2026",
+    "priority_score": 0.63,
+    "confidence": "high",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 81",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0009",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 9: Schedule A\nEquity Purchase Agreement\n7/10/26, 12:17 AM\nEX-10.1\n9/86",
+    "priority_score": 0.62,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 9",
+    "ocr_used": false,
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0095",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 3: reviews\nrestaurants app downloads\nmonthly visits\ncountries",
+    "priority_score": 0.62,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0105",
+    "source_file": "the fork press kit 2023 new brand.pdf",
+    "insight_type": "pdf_ocr_page_insight",
+    "text": "Page 13: Contacts\nPresse@Thefork.com",
+    "priority_score": 0.62,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 13",
+    "ocr_used": true,
+    "extraction_method": "ocr",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0003",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 3: 2.2\nFor the purpose of this Put Option Agreement, the date of completion of the Consultation Process shall be the earlier of: (i)\u00a0the date of the\nmeeting of the Works\u2019 Council during which the Works\u2019 Council issued its opinion in connection with the Contemplated Transaction and; (ii)\u00a0if\nthe Works\u2019 Council has not issued an opinion in connection with the Contemplated Transaction, upon the expiration of the applicable period\nprovided under Article R. 2312-6 of the French Labor Code or any longer period as may be ordered by the competent court in accordance with\nthe second-last paragraph of Article L. 2312-15 of the French Labor Code, the date upon which such applicable period or longer period ordered\nby the competent court expires.\n2.3\nThe Seller Parties shall use reasonable best ef\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 3",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0004",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 4: 2.5\nThe Buyer undertakes to use reasonable best efforts to co-operate with the Seller Parties with respect to the Consultation Process by:\n2.5.1\nproviding the Seller with any available document or information which the Works\u2019 Council would reasonably request in connection\nwith the Consultation Process, including, but not limited to, information relating to the Buyer\u2019s background, history and presence in\nFrance, and the Buyer\u2019s perspectives on business conducted by the Group Companies, and potential headcount evolution, subject only,\nin each case, to legal or customary confidentiality requirements;\n2.5.2\ndesignating a representative to attend any of the Works\u2019 Council meetings, upon written request made by the Seller, and meeting with\nmembers of the Works\u2019 Council where and when re\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 4",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0005",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 5: 4.\nREGULATORY COMPLIANCE\n4.1\nExcept to the extent prohibited by applicable Law, the parties hereto shall comply with the provisions set forth in Section\u00a06.8 (Regulatory\nCompliance) of the EPA, as from the Put Option Date, as if such provisions were set out in this Put Option Agreement and any reference therein\nto \u201cthis Agreement\u201d or to \u201cthe date hereof\u201d (or a similar expression) shall be deemed to be a reference to this Put Option Agreement and the Put\nOption Date, respectively.\n5.\nCOVENANTS; REPRESENTATIONS AND WARRANTIES\nThe Seller Parties hereby agrees to comply with the following provisions of the EPA: Section\u00a06.1 (Interim Operating Covenants), Section\u00a06.9\n(Access to Information), Section\u00a06.12 (Transition Services Agreement), Section\u00a06.17 (Sanctions Screening Cooperation), Sec\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 5",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0006",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 6: 7.3\nIf no Exercise Notice has been delivered by the Seller Parties prior to 6:00 pm (ET) on the Expiry Date, then the Seller Parties shall be jointly\nand severally liable to pay to Buyer a cash amount equal to $35,000,000 (the \u201cTermination Fee\u201d) no later than the fifth (5th) Business Day after\nthe Expiry Date by wire transfer of immediately available funds. The parties hereto acknowledge and agree that: (i)\u00a0this Termination Fee is an\nintegral part of the transactions contemplated by this Put Option Agreement and is included herein in order to induce Buyer to enter into this Put\nOption Agreement; (ii)\u00a0the Termination Fee does not constitute a penalty; and (iii)\u00a0in light of the difficulty of accurately determining actual\ndamages with respect to the foregoing, the right to payment of\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 6",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0011",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 11: TABLE OF CONTENTS\nPage\nARTICLE I DEFINITIONS\n1\nSection\u00a01.1\nDefinitions\n1\nSection\u00a01.2\nInterpretation\n12\nARTICLE II PURCHASE AND SALE OF THE SHARES\n13\nSection\u00a02.1\nAgreement to Sell and Purchase\n13\nSection\u00a02.2\nClosing; Closing Deliveries\n13\nSection\u00a02.3\nPurchase Price\n14\nSection\u00a02.4\nPayment of Base Purchase Price\n15\nSection\u00a02.5\nPost-Closing Adjustment to Base Purchase Price\n15\nSection\u00a02.6\nWithholding\n18\nARTICLE III REPRESENTATIONS AND WARRANTIES REGARDING THE GROUP COMPANIES\n18\nSection\u00a03.1\nOrganization; Power and Authority; Capital Structure\n18\nSection\u00a03.2\nSubsidiaries\n19\nSection\u00a03.3\nNo Conflict; Consents\n20\nSection\u00a03.4\nFinancial Statements\n20\nSection\u00a03.5\nAbsence of Undisclosed Liabilities\n21\nSection\u00a03.6\nOperating in Ordinary Course of Business\n21\nSection\u00a03.7\nLitigation\n21\nSection\u00a03.\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 11",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0012",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 12: TABLE OF CONTENTS\n(continued)\nPage\nARTICLE V REPRESENTATIONS AND WARRANTIES OF BUYER\n38\nSection\u00a05.1\nOrganization; Power and Authority\n38\nSection\u00a05.2\nAuthority and Non-Contravention\n38\nSection\u00a05.3\nInvestment Status\n39\nSection\u00a05.4\nBrokers\n39\nSection\u00a05.5\nLitigation\n39\nSection\u00a05.6\nSufficiency of Funds\n39\nSection\u00a05.7\nSolvency\n40\nSection\u00a05.8\nGovernmental Orders\n40\nSection\u00a05.9\nDue Diligence Review\n40\nARTICLE VI COVENANTS\n40\nSection\u00a06.1\nInterim Operating Covenants\n40\nSection\u00a06.2\nConfidentiality; Publicity\n43\nSection\u00a06.3\nEmployees and Employee Benefit Arrangements\n44\nSection\u00a06.4\nTax Matters\n45\nSection\u00a06.5\nBooks and Records\n47\nSection\u00a06.6\nExclusivity\n48\nSection\u00a06.7\nD&O Indemnification\n48\nSection\u00a06.8\nRegulatory Compliance\n49\nSection\u00a06.9\nAccess to Information\n50\nSection\u00a06.10\nEfforts to Consu\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 12",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0013",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 13: TABLE OF CONTENTS\n(continued)\nPage\nARTICLE VIII TERMINATION\n61\nSection\u00a08.1\nTermination\n61\nSection 8.2\nEffect of Termination\n62\nSection 8.3\nTermination Fee\n62\nARTICLE IX NON-SURVIVAL OF REPRESENTATIONS AND WARRANTIES; WAIVER\n63\nSection 9.1\nNon-Survival of Representations and Warranties\n63\nSection 9.2\nWaiver\n63\nSection 9.3\nExclusive Remedy\n64\nARTICLE X GENERAL PROVISIONS\n64\nSection 10.1\nNotices\n64\nSection 10.2\nDisclosure Schedules\n65\nSection 10.3\nBinding Effect\n65\nSection 10.4\nWaiver of Conflicts; Deal Communications\n65\nSection 10.5\nAssignment\n67\nSection 10.6\nSeverability\n67\nSection 10.7\nExpenses\n67\nSection 10.8\nArbitration; Choice of Law; Consent to Jurisdiction\n67\nSection 10.9\nWAIVER OF JURY TRIAL\n68\nSection 10.10\nAmendment\n68\nSection 10.11\nNo Agreement Until Executed\n68\nSection \u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 13",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0014",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 14: EQUITY PURCHASE AGREEMENT\nThis EQUITY PURCHASE AGREEMENT (the \u201cAgreement\u201d) is dated as of [\u2022], 2026 (the \u201cAgreement Date\u201d), by and among Tripadvisor, Inc.,\na Nevada corporation (\u201cParent\u201d), TRIPADVISOR UK HOLDCO LIMITED, a private limited company incorporated in England and Wales with\nregistered number 08279085 and registered address at 10 Norton Folgate, London E1 6DB (the \u201cSeller\u201d), LF HOLDINGS (FRANCE) SAS, a French\nsimplified joint stock company (soci\u00e9t\u00e9 par actions simplifi\u00e9e), registered with the Trade and Companies Registry of Paris under number 803 696 509\nand with registered address at 70 rue Saint-Lazare \u2013 75009 Paris, France (the \u201cCompany\u201d), and American Express Travel Related Services Company,\nInc., a New York corporation (\u201cBuyer\u201d). For purposes of this Agreement, capi\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 14",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0015",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 15: \u201cAncillary Agreements\u201d means the Transition Services Agreement and Content Licensing Amendment Agreement.\n\u201cAnti-Corruption Laws\u201d means, with respect to any Person, any applicable Law relating to anti-bribery and anti-corruption (governmental or\ncommercial) in any jurisdiction in which any Group Company is registered or conducts its business, including (i)\u00a0anti-corruption provisions under\nFrench criminal law (including, if applicable, the provisions of French law No.\u00a02016-1691 of December\u00a09, 2016 relating to transparency, fight against\ncorruption and modernization of economic life known as \u201cLoi Sapin 2\u201d), (ii)\u00a0anti-corruption directives and regulations of the European Union, as\nimplemented into the domestic law of its member states, (iii)\u00a0the U.S. Foreign Corrupt Practices Act of \u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 15",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0016",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 16: \u201cBusiness Day\u201d means any day other than a Saturday, Sunday or other day on which banks in New York, New York, London, England or Paris,\nFrance are authorized or required by Law to remain closed.\n\u201cCash\u201d means, in each case as calculated in accordance with the Accounting Principles, the sum of all cash and cash equivalents of the Group\nCompanies (other than any Group Company that is undergoing or subject to any dissolution, liquidation or winding-up proceeding), as of a particular\ndate, net of the aggregate amount of outstanding checks issued by the Group Companies as of the particular date of determination and inclusive of the\naggregate amount of checks received by the Company that have not been deposited or cleared. Notwithstanding the foregoing, (i)\u00a0Cash shall include\n(A)\u00a0an amo\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 16",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0017",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 17: \u201cCompany Products\u201d means all products, functionalities, services, platforms, applications and websites produced, marketed, licensed, sold,\ndistributed, offered or performed by or on behalf of any Group Company, including the TheFork and TheForkPay applications and platforms, and all\nproducts currently or expected to be under development by any Group Company, and any underlying Software source code of any such products,\nfunctionality, services, platforms, applications and websites.\n\u201cCompany Registered Intellectual Property\u201d means all Company-Owned Intellectual Property and all Assigned Intellectual Property, in each\ncase, issued by, registered with, renewed by or the subject of a pending application before any Governmental Body or domain name registrar.\n\u201cCompany Software\u201d has the \u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 17",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0018",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 18: \u201cERISA Affiliate\u201d means any entity, trade or business that is, or at any applicable time was, a member of a group described in Section\u00a0414(b), (c),\n(m)\u00a0or (o)\u00a0of the Code or Section\u00a04001(b)(1) of ERISA that includes the Company.\n\u201cEquity Interests\u201d means, with respect to any Person, (i)\u00a0any capital stock, share, partnership interest, joint venture interest, membership interest,\nunit or other equity interest, voting security or other ownership interest in such Person, (ii)\u00a0any security, warrant, option, call right, commitment,\nconversion privilege, indebtedness, right of exchange, repurchase or redemption or other right convertible into or exercisable or exchangeable for any\nsuch equity interest, and (iii)\u00a0any other right to acquire any such equity interest, in each case of the for\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 18",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0019",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 19: \u201cGroup Companies\u201d means, collectively, the Company and its Subsidiaries.\n\u201cIndebtedness\u201d means, without duplication, as to the Group Companies, all indebtedness, whether current or funded, short-term or long-term,\nsecured or unsecured, direct or indirect, including any accrued and unpaid interest, fees, premiums, costs of unwinding, and prepayment or termination\npenalties, if any, and all other liabilities with respect thereto, including: (i)\u00a0any indebtedness for borrowed money and accrued but unpaid interest,\npremiums and penalties relating thereto, (ii)\u00a0any indebtedness evidenced by a note, bond, debenture, mortgages, or other similar instrument, (iii)\u00a0any\nletter of credit, surety bond, performance bonds, bankers acceptances or similar obligations or instruments, in each case on\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 19",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0020",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 20: disclosures (whether or not patented), know-how, formulae, patterns, compilations, programs, devices, methods, strategies, techniques, or processes), in\neach case that derives independent economic value, actual or potential, from not being generally known or readily ascertainable by others who can\nobtain economic value from its disclosure or use (collectively, \u201cTrade Secrets\u201d); and (v)\u00a0all other similar or equivalent intellectual property or\nproprietary rights anywhere in the world.\n\u201cIRS\u201d means the United States Internal Revenue Service.\n\u201cIT Systems\u201d means the computer, information technology and data processing systems, facilities and services, including all Software, hardware,\nnetworks, communications facilities, platforms and related systems and services, used by, or in the cu\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 20",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  },
+  {
+    "evidence_id": "E0021",
+    "source_file": "EX-10.1.pdf",
+    "insight_type": "pdf_page_insight",
+    "text": "Page 21: \u201cOrdinary Course of Business\u201d means, with respect to the Group Companies, the ordinary course of its business consistent with past practice.\n\u201cOpen Source Software\u201d means any Software that is distributed, licensed or conveyed as free, copyleft, open source, or under similar licensing or\ndistribution models, including Software licensed under the GNU General Public License (GPL), GNU Lesser General Public License (LGPL), Mozilla\nPublic License, BSD licenses, the Apache License, or any license meeting the Open Source Definition (as promulgated by the Open Source Initiative) or\nthe Free Software Definition (as promulgated by the Free Software Foundation).\n\u201cOrganizational Documents\u201d means with respect to any Person other than a natural person, its certificate or articles of incorporati\u2026",
+    "priority_score": 0.47,
+    "confidence": "medium",
+    "suggested_narrative_use": [
+      "What"
+    ],
+    "source_location": "Page 21",
+    "ocr_used": false,
+    "downweighted_by_rule": "built-in-legal-boilerplate",
+    "extraction_method": "text_layer",
+    "semantic_type": "Claim"
+  }
+]

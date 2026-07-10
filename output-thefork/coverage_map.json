@@ -1,0 +1,36 @@
+{
+  "total_evidence": 124,
+  "by_narrative_stage": {
+    "How": 0,
+    "Now": 0,
+    "What": 124,
+    "Why": 0
+  },
+  "stages_with_no_evidence": [
+    "How",
+    "Now",
+    "Why"
+  ],
+  "by_source_file": {
+    "EX-10.1.pdf": 40,
+    "the fork press kit 2023 new brand.pdf": 13,
+    "amex_the_fork.docx": 10,
+    "yahoo_finance_2.docx": 10,
+    "Trip Advisor.docx": 9,
+    "Reuters.docx": 9,
+    "yahoo_quartz.docx": 9,
+    "TheFork Press Release Trends_0.pdf": 7,
+    "thefork-leadership-management-transition.pdf": 7,
+    "Final 15 YEARS PRESS RELEASE  (1).pdf": 4,
+    "EX-99.1.pdf": 3,
+    "the fork press release new brand (1)_0.pdf": 3
+  },
+  "by_insight_type": {
+    "pdf_page_insight": 60,
+    "docx_insight": 47,
+    "pdf_ocr_page_insight": 12,
+    "pdf_table_cell": 3,
+    "pdf_table_insight": 2
+  },
+  "avg_priority": 0.694
+}

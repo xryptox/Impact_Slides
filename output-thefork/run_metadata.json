@@ -1,0 +1,192 @@
+{
+  "preprocessor_version": "4.0.0",
+  "git": {
+    "commit": "aeffbce",
+    "dirty": true
+  },
+  "run_id": "20260710T013326",
+  "started_at": "2026-07-10T01:33:26",
+  "finished_at": "2026-07-10T01:34:04",
+  "total_seconds": 37.972,
+  "timing": {
+    "files": [
+      {
+        "file": "amex_the_fork.docx",
+        "category": "docx",
+        "duration_s": 0.003,
+        "status": "ok"
+      },
+      {
+        "file": "EX-10.1.pdf",
+        "category": "pdf",
+        "duration_s": 10.745,
+        "status": "ok"
+      },
+      {
+        "file": "EX-99.1.pdf",
+        "category": "pdf",
+        "duration_s": 0.244,
+        "status": "ok"
+      },
+      {
+        "file": "Final 15 YEARS PRESS RELEASE  (1).pdf",
+        "category": "pdf",
+        "duration_s": 0.491,
+        "status": "ok"
+      },
+      {
+        "file": "Reuters.docx",
+        "category": "docx",
+        "duration_s": 0.002,
+        "status": "ok"
+      },
+      {
+        "file": "the fork press kit 2023 new brand.pdf",
+        "category": "pdf",
+        "duration_s": 24.932,
+        "status": "ok"
+      },
+      {
+        "file": "the fork press release new brand (1)_0.pdf",
+        "category": "pdf",
+        "duration_s": 0.369,
+        "status": "ok"
+      },
+      {
+        "file": "TheFork Press Release Trends_0.pdf",
+        "category": "pdf",
+        "duration_s": 0.775,
+        "status": "ok"
+      },
+      {
+        "file": "thefork-leadership-management-transition.pdf",
+        "category": "pdf",
+        "duration_s": 0.325,
+        "status": "ok"
+      },
+      {
+        "file": "Trip Advisor.docx",
+        "category": "docx",
+        "duration_s": 0.003,
+        "status": "ok"
+      },
+      {
+        "file": "yahoo_finance_2.docx",
+        "category": "docx",
+        "duration_s": 0.003,
+        "status": "ok"
+      },
+      {
+        "file": "yahoo_quartz.docx",
+        "category": "docx",
+        "duration_s": 0.002,
+        "status": "ok"
+      }
+    ],
+    "stages": {
+      "discovery": 0.003,
+      "extraction": 37.894,
+      "evidence_build": 0.047,
+      "briefing": 0.017,
+      "output": 0.009
+    },
+    "total_seconds": 37.972
+  },
+  "config": {
+    "input": "C:/Users/Ag1Le/Documents/realworld_test/amex_thefork_acquisition/input",
+    "output": "C:/Users/Ag1Le/Documents/realworld_test/amex_thefork_acquisition/output",
+    "filter_level": "permissive",
+    "boost_keywords": [],
+    "verbose": false,
+    "export_md": true,
+    "export_csv": true,
+    "enable_ocr": true,
+    "tesseract_cmd": "C:/Program Files/Tesseract-OCR/tesseract.exe",
+    "pdf_table_engine": "auto",
+    "dedup_engine": "auto",
+    "inspect": false,
+    "inspect_top": 15,
+    "emit_schema": false,
+    "stage_rules": null,
+    "focus_areas": 5,
+    "briefing": null,
+    "max_text_length": 800,
+    "semantic_type_keywords": [],
+    "downweight_keywords": [],
+    "no_downweight_boilerplate": false
+  },
+  "environment": {
+    "python_version": "3.14.4",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "optional_deps": {
+      "fitz_pymupdf": true,
+      "pdfplumber": true,
+      "docx": true,
+      "pytesseract": true,
+      "pydantic": true,
+      "numpy": true,
+      "rapidfuzz": true,
+      "sentence_transformers": false,
+      "yaml": true,
+      "structlog": false
+    }
+  },
+  "counts": {
+    "files_discovered": 16,
+    "files_processed": 12,
+    "evidence_entries": 124,
+    "errors": 0,
+    "filtered": 0
+  },
+  "briefing": {
+    "overall_readiness_score": 23,
+    "stage_scores": {
+      "Why": 0,
+      "What": 91,
+      "How": 0,
+      "Now": 0
+    },
+    "components": {
+      "coverage_balance": 0.0,
+      "priority_quality": 50.7,
+      "cross_file_connectivity": 0.0,
+      "recommendation_strength": 0.0,
+      "signal_ratio": 100.0
+    },
+    "focus_areas": [
+      {
+        "area": "our differentiated Membership Model by offering Card Members more ways to discov",
+        "score": 37.9,
+        "evidence_count": 1
+      },
+      {
+        "area": "has\ndisrupted the restaurant industry by supporting the digitalization of the rest",
+        "score": 37.4,
+        "evidence_count": 2
+      },
+      {
+        "area": "EBITDA is a key\nperformance measure used by our CODM and Board of Directors to evalua",
+        "score": 36.1,
+        "evidence_count": 1
+      },
+      {
+        "area": "The past few years have been ones marked by societal changes due to the impact of the",
+        "score": 36.1,
+        "evidence_count": 1
+      },
+      {
+        "area": "it has to lead to a new way of consuming by people getting wild to have\nwhat they are",
+        "score": 36.1,
+        "evidence_count": 1
+      }
+    ],
+    "quality_flags": [
+      "missing_why_stage",
+      "missing_how_stage",
+      "missing_now_stage",
+      "low_coverage_overall",
+      "no_cross_file_links"
+    ],
+    "cross_file_links": 0
+  }
+}
