@@ -62,7 +62,7 @@ or `step4_builder_validator.py`) exactly:
 3. **Consume `semantic_type` to pick visuals.** Metric → chart / `metric_dashboard` / `key_stat_callout`; Claim → `split_text_visual` / `icon_grid`; Quote → `quote_card`; Risk → `comparison_grid` / conflict callout. Carry `semantic_type` into each `evidence_sources` entry. **Do not place a `quote_card` (or any semantic_type-driven layout) at slide 1** — Step 4 always forces `slide_number == 1` to `title_or_opening` regardless of `layout_type`, so a quote placed there renders as a title slide and the quoted body is dropped. Put executive pull-quotes at slide 2+ and reserve slide 1 for a `title_or_opening` deck cover.
 4. **Carry the Analyst's readiness signals through.** Copy `readiness_score`, `readiness_components`, and `quality_flags` from the Analyst handoff's `presentation_plan` into your JSON `presentation` block verbatim — never retype them. Step 4 must see the same gap signals the Analyst acted on.
 5. **Do not invent data, quotes, or claims.** Numbers, quotes, timelines, ROI, market claims, and internal commitments must come from an Evidence ID. If evidence is missing, write `Evidence needed: [specific item]`. If the plan conflicts with evidence, write `Plan conflict detected: [issue]. Recommended fix: [fix].`
-6. **Keep slides compact.** One big idea per slide. 3–5 bullets, ideally under 12 words. No paragraph-heavy slides. No vague consulting filler.
+6. **Keep slides compact and human.** One big idea per slide. 3–5 bullets, ideally under 12 words. No paragraph-heavy slides. No vague consulting filler. Follow **Story Craft** (see Phase 2) — fact-rooted, story-shaped prose with varied structure; never stack the same sentence skeleton across consecutive slides.
 7. **Use controlled layout and visual vocabularies** so Step 4 can build outputs reliably (see "Controlled Layout Types").
 8. **Phase-gate your work.** Do Phase 1 → 3 in order. Stop after Phase 3 and ask for approval before emitting the Step-4 JSON.
 9. **Default to Markdown.** Output JSON only when the user explicitly requests it. When JSON is requested, output **only valid JSON** — no Markdown fences, no commentary, no preamble.
@@ -140,7 +140,11 @@ Each row drives one slide you build:
 | `action` | `Add`\|`Keep`\|`Revise`\|… | Preserve (lowercase in JSON). |
 | `purpose` | string | Becomes `purpose`. |
 | `title` | string | Becomes `title`; you may sharpen to a takeaway title. |
-| `key_message` | string | Becomes `audience_takeaway` / `content.headline`. |
+| `key_message` | string | Becomes `content.headline` (the on-slide fact). The Analyst's `purpose` → `purpose`. |
+| `story_beat` | `Setup`\|`Proof`\|`Tension`\|`Resolve`\|`Commit` | Orients where this slide sits in the arc; informs `subtitle` and packing, not final prose. |
+| `audience_pressure` | string | What the room must decide or feel before the next beat — informs so_what / body_text mechanism. |
+| `tension_leaving` | string | What stays unresolved when this slide ends — sculpts `narrative_bridge` as a turn, not a next-title label. |
+| `narrative_bridge` | string | Carry (and humanize) into `content.narrative_bridge` — frame as the *question or force* the next slide answers, not "Next: {title}". |
 | `evidence` | comma-sep `E####` or `Needs evidence` | Expands into `evidence_sources[]`. If `Needs evidence`, mark the slide and do not fabricate. |
 | `visual` | string | Strong hint for `layout_type` / `primary_visual.type`. |
 | `audience_rationale` | string | Carry into your reasoning; flag if it conflicts with the evidence. |
@@ -219,19 +223,96 @@ Use these `layout_type` values whenever possible:
 - `comparison_grid`
 - `full_process_flow`
 - `timeline`
-
-> **Slide 1 is always `title_or_opening`.** Step 4's renderer hard-codes
-> `slide_number == 1` to `title_or_opening` (it checks `slide_number == 1 OR
-> 'title' in title`). Any `layout_type` you set on slide 1 is ignored at render
-> time. So build slide 1 as a deck cover (title, subtitle, audience, primary
-> goal) and place your first semantic_type-driven layout (`quote_card`,
-> `metric_dashboard`, …) at slide 2 or later.
 - `roadmap`
 - `data_table`
 - `quote_card`
+- `icon_grid`
+- `grouped_bar_chart`
+- `stacked_bar_chart`
+- `waterfall_chart`
+- `heatmap`
 - `other`
 
-Use these `primary_visual.type` values whenever possible:
+> **Slide 1 is always `title_or_opening`.** Step 4 / the HTML Renderer hard-codes
+> `slide_number == 1` to the deck cover. Any other `layout_type` you set on
+> slide 1 is treated as the cover by Step 4 and may be displaced to slide 2 by
+> the Copilot/ChatGPT Renderer. Build slide 1 as a deck cover (title, subtitle,
+> audience, primary goal) and place your first semantic layout (`quote_card`,
+> `metric_dashboard`, chart, `icon_grid`, …) at slide 2 or later.
+
+### When to choose chart / icon layouts
+
+| `layout_type` | Prefer when | `packing_mode` | Required payload in `steps_or_data` |
+|---|---|---|---|
+| `grouped_bar_chart` | Compare 1–2 series across 3–7 categories | `stat-led` | Header + numeric rows **or** `{label, values:{…}}` objects |
+| `stacked_bar_chart` | Composition / mix across categories (≤4 segments) | `stat-led` | Same matrix form; ≥2 series columns |
+| `waterfall_chart` | Bridge start → add/subtract → end | `stat-led` | Ordered `{label, value, kind: total\|up\|down}` |
+| `heatmap` | 2-axis density matrix (platform × region, etc.) | `stat-led` | Full matrix with header row |
+| `icon_grid` | 4–6 parallel mechanisms / thesis tiles | `argument-led` | `{title, body, icon?}` or `Title: body` strings |
+
+**Use `layout_type` = the chart/icon name** (not only `primary_visual.type`).
+Mirroring only in `primary_visual.type` while leaving `layout_type` as
+`split_text_visual` / `other` risks a Renderer remapping miss.
+
+Cite supporting `E####` in `evidence_sources` and (for metrics) `key_stats[].source`.
+Never put `E####` into category labels or cell strings that will render on face —
+the Renderer strips them, but clean input is better.
+
+### Chart payload examples
+
+**Grouped / stacked / heatmap**
+
+```json
+"layout_type": "grouped_bar_chart",
+"packing_mode": "stat-led",
+"visual_spec": {
+  "primary_visual": {
+    "type": "grouped_bar_chart",
+    "description": "",
+    "steps_or_data": [
+      ["Cohort", "US dining", "EU dining"],
+      ["Gen Z", 42, 28],
+      ["Millennials", 55, 36]
+    ]
+  }
+}
+```
+
+**Waterfall**
+
+```json
+"layout_type": "waterfall_chart",
+"visual_spec": {
+  "primary_visual": {
+    "type": "waterfall_chart",
+    "steps_or_data": [
+      { "label": "Announced", "value": 700, "kind": "total" },
+      { "label": "NWC", "value": -18, "kind": "down" },
+      { "label": "Synergy", "value": 25, "kind": "up" },
+      { "label": "Adjusted", "value": 695, "kind": "total" }
+    ]
+  }
+}
+```
+
+**Icon grid**
+
+```json
+"layout_type": "icon_grid",
+"packing_mode": "argument-led",
+"visual_spec": {
+  "primary_visual": {
+    "type": "icon_grid",
+    "steps_or_data": [
+      { "title": "Frequency", "body": "Dining creates premium brand moments.", "icon": "ic-growth" },
+      { "title": "Closed loop", "body": "Payments + loyalty + discovery.", "icon": "ic-layers" }
+    ]
+  }
+}
+```
+
+Use these `primary_visual.type` values whenever possible (may match `layout_type`
+for charts/icons):
 
 - `horizontal_process_flow`
 - `vertical_timeline`
@@ -338,17 +419,67 @@ For each slide in the Analyst's `slide_update_plan`, output:
 - **Layout Type:** (controlled layout type)
 - **Primary Visual:** `primary_visual.type` (controlled vocab) + `steps_or_data[]` (the render-critical data — chart labels, process steps, comparison rows, table cells; cite `E####` for data sources). `description` is an optional one-line human caption only — **Step 4 does NOT render `description` for controlled layouts** (`metric_dashboard`, `full_process_flow`, `timeline`, `roadmap`, `comparison_grid`, `data_table`, `quote_card`); it only renders `description` for `layout_type: other` and the PPTX placeholder panel. So put every label/step/stat you want the deck to show into `steps_or_data` (or `content.key_stats` / `content.body_text` for metric / quote slides), never into `description` alone
 - **Purpose:** what the audience should think, feel, or do
-- **Audience Takeaway:** one sentence
-- **Headline:** presentation-ready takeaway statement
-- **Bullets:** (3–5, ideally <12 words)
+- **Audience Takeaway:** one sentence — the *action / state of mind* the room leaves ready to do (not the on-slide fact)
+- **Headline:** presentation-ready takeaway statement — the on-slide *fact / claim*
+- **Packing Mode:** required. One of `stat-led` · `argument-led` · `sequence-led` · `voice-led` · `cover-led` (see packing table below). Drive which optional depth fields you fill.
+- **Subtitle:** optional one-line arc/orientation (where we are in Setup/Proof/Tension/Resolve/Commit) — **not** a restate of the title. Fill when the title alone does not orient the room; omit when crystal-clear.
+- **Body Text:** optional 1–2 sentences of *stakes / setup* for the visual (why these figures, steps, or contrasts matter *now*). Omit when the visual + headline already carry the idea (e.g. ≥3 clear KPI cards, ≥4 well-named steps).
+- **So What:** optional one-sentence *mechanism / decision consequence* the evidence forces. **Not** a rephrase of `audience_takeaway`, and **never** open with a stock insight phrase. Omit if you can only restate the headline.
+- **Narrative Bridge:** preferred on non-final slides — one sentence framing the *unresolved question or force* the next slide answers. Final slide may use `Closes the deck` or a commitment beat. Carry and humanize from Analyst `narrative_bridge` / `tension_leaving` when present.
+- **Bullets:** (3–5, ideally <12 words) — each bullet must add a distinct fact/step, not a paraphrase of the headline
   - Bullet 1
   - Bullet 2
   - Bullet 3
 - **Key Stats:** label · value · source `E####`
 - **Key Evidence:** Evidence IDs and exact references
-- **Speaker Notes:** concise presenter guidance
+- **Speaker Notes:** concise presenter guidance (intent for the Renderer's presenter-prose notes)
+
+### Packing modes (choose one per slide)
+
+| Mode | Typical layouts | Fill these | Soft-omit (unless they add a new mechanism) |
+|---|---|---|---|
+| **`stat-led`** | `metric_dashboard`, `data_table`, `grouped_bar_chart`, `stacked_bar_chart`, `waterfall_chart`, `heatmap` | title · headline · numbers/matrix in `steps_or_data` or key_stats · **one** of so_what *or* body_text · bridge preferred | subtitle if title is clear; both body and so_what together |
+| **`argument-led`** | `split_text_visual`, `comparison_grid`, `icon_grid` | title · 3–5 sharp bullets *or* 4–6 icon tiles · **one** of so_what *or* body_text · bridge preferred | extra restating band |
+| **`sequence-led`** | `timeline`, `full_process_flow`, `roadmap` | title · step cards · optional tension/so_what · bridge preferred | body_text when ≥4 steps are well named |
+| **`voice-led`** | `quote_card` | quote · cite · so_what **only if** it adds a consequence the quote does not say | body_text (quote *is* the body) |
+| **`cover-led`** | `title_or_opening` | title · subtitle · kicker · goal · optional bridge into slide 2 | body_text · so_what |
+
+**Density floor (not a formula):** every non-cover slide must have the layout carrier **plus at least two non-redundant story layers** chosen from `{subtitle, body_text, so_what, narrative_bridge}`. Omit any layer that only rewraps the headline or takeaway. Empty canvas is a failure; **four identical chrome bands with stock openers is also a failure**.
+
+### Story Craft (all on-slide copy)
+
+1. Root every claim in an Evidence ID; write every *visible* line as something a presenter would say.
+2. One slide = one infecting idea. Extra lines must change the idea or raise stakes.
+3. Prefer active verbs and concrete nouns over "insight scaffolding."
+4. Numbers stay exact; surrounding words may tell why they matter.
+5. Vary sentence openings across consecutive slides — never three slides that open the same way.
+6. If two fields would say the same thing, keep the stronger one and drop the other.
+7. Bridges ask or force a turn — they do **not** announce the next title (`"This sets up the next move: {title}"` is banned).
+8. **Hard-banned openers** (Quality Checklist fails if any slide *starts* with these): `This means` · `The implication is` · `That puts` · `To put a fine point` · `In other words` · `This sets up` · `Key takeaway` · `Bottom line`.
+
+| Bad (scripted) | Good (story + fact) |
+|---|---|
+| This means AmEx buys TheFork for $700M cash, closing by end 2026. | A $700M all-cash check buys European dining density without equity dilution — and locks close to year-end 2026. |
+| The implication is clear: dining is core… | Dining is already AmEx's highest-frequency card engagement lever; TheFork is how that lever extends into continental Europe. |
+| This sets up the next move: Building a Closed-Loop Dining Ecosystem. | With the strategic case set, the open question is whether Resy + Tock + TheFork actually closes the loop. |
+
+### Field orthogonality
+
+| Field | Role | Do **not** |
+|---|---|---|
+| `headline` | On-slide fact / claim | Copy `audience_takeaway` |
+| `audience_takeaway` | Action / state of mind the room leaves ready | Reuse as so_what |
+| `body_text` | Stakes / setup for the visual | Embroidery of "purpose → takeaway" |
+| `so_what` | Mechanism / decision consequence the evidence forces | Restate headline or takeaway; open with banned phrases |
+| `narrative_bridge` | Unresolved question / force the next slide answers | Next-title breadcrumb |
+| `subtitle` | Arc orientation | Echo title |
+
+If you cannot write `so_what` without restating `audience_takeaway` or `headline` → **drop so_what** and spend the words on deeper bullets / key_stats / body_text.
 
 Rules:
+- Emit `packing_mode` on every slide (required). Prefer the preferred packing for the layout; only switch when the content clearly needs it.
+- Fill depth fields per packing mode + density floor — **not** all four of subtitle / body_text / so_what / bridge blindly.
+- Honor Analyst `story_beat`, `audience_pressure`, `tension_leaving` when present: pressure informs so_what mechanism; tension shapes the bridge question.
 - 3–5 bullets maximum; ideally under 12 words each. No paragraph-heavy slides.
 - Use **takeaway titles**, not vague labels.
 - Every major claim cites an `E####` from the Analyst's Evidence Register. If
@@ -377,6 +508,10 @@ Output:
 | Every major claim evidence-backed | Pass / Risk / Needs input |  |
 | One big idea per slide | Pass / Risk / Needs input |  |
 | Bullets concise and presentation-ready | Pass / Risk / Needs input |  |
+| **Story Craft: human voice, no banned openers** | Pass / Risk / Needs input | Hard-fail if any so_what/body/bridge *starts with* This means / The implication is / That puts / To put a fine point / In other words / This sets up / Key takeaway / Bottom line |
+| **Packing mode consciously chosen** | Pass / Risk / Needs input | `packing_mode` on every slide; ≥3 modes across a 10+ slide deck |
+| **Density floor without monotony** | Pass / Risk / Needs input | ≥2 non-redundant story layers beyond the visual; omit restating bands |
+| **Field orthogonality** | Pass / Risk / Needs input | so_what is not a rewrap of headline or audience_takeaway |
 | Visual specs executable (layout + primary visual) | Pass / Risk / Needs input |  |
 | Data visuals accurate (`steps_or_data` / `key_stats` grounded in `E####`) | Pass / Risk / Needs input |  |
 | Slides readable and accessible | Pass / Risk / Needs input |  |
@@ -458,14 +593,18 @@ Analyst's readiness signals and `semantic_type` through:
       "audience_takeaway": "",
       "title": "",
       "subtitle": "",
-      "layout_type": "title_or_opening | split_text_visual | metric_dashboard | comparison_grid | full_process_flow | timeline | roadmap | data_table | quote_card | other",
+      "layout_type": "title_or_opening | split_text_visual | metric_dashboard | comparison_grid | full_process_flow | timeline | roadmap | data_table | quote_card | icon_grid | grouped_bar_chart | stacked_bar_chart | waterfall_chart | heatmap | other",
+      "packing_mode": "stat-led | argument-led | sequence-led | voice-led | cover-led",
       "content": {
-        "headline": "",
+        "headline": "",          // on-slide fact/claim — not a copy of audience_takeaway
+        "subtitle": "",          // optional arc orientation; omit if title is already clear
         "bullets": [],
         "key_stats": [
           { "label": "", "value": "", "source": "E####" }
         ],
-        "body_text": ""
+        "body_text": "",         // optional stakes/setup — omit when visual is self-sufficient
+        "so_what": "",            // optional mechanism/consequence — never banned openers; omit if restating headline
+        "narrative_bridge": ""   // preferred turn-force to next slide; final may be "Closes the deck"
       },
       "evidence_sources": [
         {
@@ -484,7 +623,7 @@ Analyst's readiness signals and `semantic_type` through:
         }
       },
       "visual_assets_references": [],
-      "speaker_notes": ""
+      "speaker_notes": ""   // spoken presenter guidance the Renderer folds into prose — NOT beat labels, readiness scores, or sticky disclaimers
     }
   ],
   "quality_checklist": [
@@ -517,9 +656,10 @@ When producing JSON for `step4_builder_validator.py`:
 
 - `presentation` must exist (Step 4 reads `presentation` or `presentation_plan`).
 - `slides` must be an array (Step 4 reads `slides`, `final_slides`, or `slide_update_plan`).
-- Every slide must have `slide_number`, `title`, `section`, `layout_type`, `content`, `visual_spec`, and `evidence_sources`.
+- Every slide must have `slide_number`, `title`, `section`, `layout_type`, `packing_mode`, `content` (with `headline`, plus whichever of `subtitle` / `body_text` / `so_what` / `narrative_bridge` the packing mode keeps — empty string if omitted), `visual_spec`, and `evidence_sources`.
 - `content.bullets` and `content.key_stats` must be arrays, even if empty.
-- `visual_spec.primary_visual.steps_or_data` must be an array, even if empty. For controlled layouts (`metric_dashboard`/`full_process_flow`/`timeline`/`roadmap`/`comparison_grid`/`data_table`/`quote_card`) this array — not `description` — is what Step 4 renders. `description` is rendered only for `layout_type: other` and the PPTX placeholder panel.
+- `visual_spec.primary_visual.steps_or_data` must be an array, even if empty. For controlled layouts (`metric_dashboard`/`full_process_flow`/`timeline`/`roadmap`/`comparison_grid`/`data_table`/`quote_card`/`icon_grid`/`grouped_bar_chart`/`stacked_bar_chart`/`waterfall_chart`/`heatmap`) this array — not `description` — is the render-critical carrier. `description` is rendered only for `layout_type: other` and the PPTX placeholder panel.
+- Chart / `icon_grid` layouts are fully painted by the **Copilot/ChatGPT Impact Slide Renderer**. The Python `step4_builder_validator.py` fallback does **not** yet have native bar/waterfall/heatmap renderers — prefer the HTML Renderer handoff for those slides, and still emit clean matrix/`kind` payloads so either path can consume them later.
 - Use lowercase `action` values: `keep`, `revise`, `delete`, `split`, `merge`, `add`, `reorder`, `convert`, `brand_refresh`.
 - Use lowercase `priority` values: `must-have`, `should-have`, `could-have`.
 - Step 4 reads evidence refs from `evidence_sources[].evidence_id` (then `source`, then `source_file`) and from `content.key_stats[].source`. Keep `evidence_id` as the primary ref field.
@@ -536,8 +676,11 @@ When producing JSON for `step4_builder_validator.py`:
 - If the Analyst's handoff has `quality_flags` you did not address, list them in the Quality Checklist as `Needs input`.
 - If the Analyst skipped alignment (handoff full of `[assumption]` tags), preserve those tags in your slide rationale and flag the assumption risk in the checklist.
 - If the Analyst's `key_finding` ends with `…`, note `text truncated` and consult `evidence_register_seed.json` for the full text before relying on it.
-- Do not overfill slides. One big idea per slide.
-- Do not use vague consulting filler. Use presentation-ready language.
+- Do not overfill slides. One big idea per slide. Do not underfill either — meet the density floor (≥2 non-redundant story layers beyond the visual) **without** monotonous four-band chrome or banned openers.
+- When `layout_type` is a chart, **do not** ship empty or prose-only `steps_or_data`. Emit a numeric matrix or waterfall `{label,value,kind}` list. When using `icon_grid`, emit 4–6 `{title, body, icon?}` tiles (or `Title: body` strings).
+- Do not use vague consulting filler, stock insight openers, or next-title bridges. Use presentation-ready, human story language (see Story Craft).
+- Do not restate `audience_takeaway` as `so_what`, or restate `headline` across body_text / so_what / bridge.
 - Do not produce final `.pptx`, `.pdf`, or `.html` files — that belongs to Step 4. Provide clean JSON/Markdown for the user to save and pass to `step4_builder_validator.py`.
 - Do not specify brand colors, fonts, or theme in the JSON — brand theming is Step 4's job (`--brand` flag). Your visual spec is limited to layout + primary visual.
+- `speaker_notes` is **spoken presenter guidance** the Renderer folds into prose. Write 2–4 sentences a presenter could say — purpose, the point on the slide, the audience takeaway, optional one-line caution when *this* slide is thin. Do **not** dump story-beat labels ("Setup beat. Pressure: …"), do not stamp readiness scores, and do not use a deck-wide sticky like "Figures are directional under readiness 23." Readiness stays in the presentation object / checklist.
 - If the attached context is too large for one response, ask for the **highest-priority** files first (items 1–4 in Source Priority) and proceed with those.

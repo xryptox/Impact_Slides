@@ -49,8 +49,10 @@ as HTML. If the handoff is missing or unapproved, stop and ask.
 Turn the Builder's approved slide plan into a single self-contained
 `presentation.html` using:
 
-- the **slide order, titles, sections, layouts, bullets, key stats, quotes,
+- the **slide order, titles, sections, layouts, packing modes, bullets, key stats, quotes,
   tables, and evidence IDs** the Builder approved
+- **human story packing** — paint non-redundant depth bands only; never force a
+  formula "This means…" / four-band chrome on every slide
 - a **fixed 1920×1080 stage** that scales as a whole to the viewport (never
   reflows for phones)
 - **distinctive fonts** chosen from one of three curated pairs (no generic
@@ -108,6 +110,16 @@ Turn the Builder's approved slide plan into a single self-contained
     `speaker_notes` or a `SYNTHESIZED` tag), record that flag in
     `evidence_manifest.json` and fold candor about thin evidence into the notes
     prose naturally — never on the slide face, never as a badge or label.
+11. **Human story, not template chrome.** Honor `packing_mode` (infer from
+    layout if missing). Paint only non-empty, non-redundant depth bands. Never
+    force all four of subtitle / context-band / so-what / bridge. Never open
+    synthesized depth with banned insight phrases (see Layout Renderers). Prefer
+    omit over formula filler.
+12. **Speaker notes are spoken prose, not a readiness watermark.** Never append
+    a deck-wide sticky like “Figures are directional under readiness 23.” Never
+    chant the readiness score on every slide. Candor is optional, rare, and
+    natural (see Speaker Notes Block). Readiness belongs in `DECK_META` /
+    `evidence_manifest.json`, not as a repeated spoken disclaimer.
 
 ---
 
@@ -158,12 +170,15 @@ authority first):
 |---|---|---|
 | `slide_number` | int | Slide order; drives slide-1 title override. |
 | `section` | string `Why\|What\|How\|Now\|Appendix` | The section kicker label on the slide. |
-| `title`, `subtitle` | string | Slide H1 / subtitle. |
+| `title`, `subtitle` | string | Slide H1 / optional subtitle. Render `subtitle` only when non-empty. |
 | `layout_type` | controlled vocab | **Picks the renderer.** See "Layout Renderers". |
+| `packing_mode` | `stat-led`\|`argument-led`\|`sequence-led`\|`voice-led`\|`cover-led` | **Required when Builder emits it.** Controls which optional depth bands you paint. If missing, infer from `layout_type` (see packing defaults). |
 | `content.headline` | string | The takeaway statement under the title. |
 | `content.bullets[]` | string[] | Bulleted list (split_text_visual). |
 | `content.key_stats[]` | `{label,value,source}`[] | KPI cards (metric_dashboard). |
-| `content.body_text` | string | Quote body (quote_card). |
+| `content.body_text` | string | Optional stakes/setup — renders as `context-band` **only when non-empty and packing allows**. For `quote_card` the quote body comes from steps_or_data / body_text as the blockquote, not a separate context-band. |
+| `content.so_what` | string | Optional mechanism/consequence — renders as `so-what-callout` **only when non-empty and packing allows**. Never invent banned openers if synthesizing. |
+| `content.narrative_bridge` | string | Optional turn-force to the next slide — render as `narrative-bridge` when non-empty. Prefer Builder's wording; do not rewrite into "Next: {title}". |
 | `visual_spec.primary_visual.type` | string | Sub-layout / visual hint. |
 | `visual_spec.primary_visual.description` | string | Human caption only — **do not rely on it for controlled layouts**; put render-critical data in `steps_or_data`. |
 | `visual_spec.primary_visual.steps_or_data` | array | The render-critical carrier: process steps, table rows (row arrays), comparison items, icon-name+label pairs, quote objects. |
@@ -193,9 +208,12 @@ not re-derive them:
    when the Builder did — carry through any speaker-note bridges the Builder
    wrote; do not invent new ones.
 4. **If `readiness_score < 60`, be more cautious** — emphasize evidence
-   limitations in the Quality Checklist and fold candor about thin evidence
-   into the notes prose. The AmEx/TheFork corpus scores 23; expect synthesized
-   Now-stage content and flag it honestly.
+   limitations in the Quality Checklist, and fold candor into the notes prose
+   **only where uncertainty is the point** (risk slides, thin-data metrics,
+   OCR-heavy appendix). Do **not** stamp every speaker-notes block with a fixed
+   readiness disclaimer or the numeric score. The AmEx/TheFork corpus scores 23;
+   expect synthesized Now-stage content — flag that honestly in the checklist and
+   on the few slides that carry the thin spot, not as a deck-wide watermark.
 
 ---
 
@@ -256,6 +274,33 @@ img, video, canvas, svg { max-width: 100%; max-height: 100%; }
 <style>
   :root { /* font + color tokens (see Font-Pair Presets) */ }
   /* viewport-base.css (above) */
+  /* --- icon system --- */
+  .icon { width: 28px; height: 28px; stroke: currentColor; fill: none;
+          stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+          flex-shrink: 0; }
+  .icon-lg { width: 96px; height: 96px; }
+  .icon-sm { width: 20px; height: 20px; }
+  /* --- density elements (fill the 1920x1080 canvas with story) --- */
+  .subtitle { font-family: var(--font-display); font-size: 22px; font-weight: 400;
+               opacity: .72; margin: 6px 0 0; line-height: 1.35; }
+  .context-band { font-family: var(--font-body); font-size: 19px; line-height: 1.5;
+                   max-width: 1500px; opacity: .88; margin: 18px 0 0; }
+  .so-what-callout { display: flex; align-items: flex-start; gap: 14px;
+                     max-width: 1500px; margin: 26px 0 0; padding: 18px 22px;
+                     border-left: 4px solid var(--accent, #2a6cf9);
+                     background: var(--callout-bg, rgba(42,108,249,.06));
+                     border-radius: 8px; font-family: var(--font-display);
+                     font-size: 24px; font-weight: 500; line-height: 1.4; }
+  .so-what-callout .icon { width: 28px; height: 28px; color: var(--accent, #2a6cf9);
+                           flex-shrink: 0; margin-top: 2px; }
+  .narrative-bridge { display: flex; align-items: center; gap: 10px;
+                      position: absolute; left: 90px; right: 90px; bottom: 54px;
+                      font-family: var(--font-body); font-style: italic;
+                      font-size: 17px; opacity: .62; line-height: 1.4; }
+  .narrative-bridge .icon { width: 18px; height: 18px; flex-shrink: 0; }
+  .source-strip { position: absolute; left: 90px; bottom: 28px;
+                  font-family: var(--font-body); font-size: 14px;
+                  opacity: .45; letter-spacing: .02em; }
   /* component CSS (see Layout Renderers) */
   .speaker-notes { display: none; }
   body.show-notes .slide.active .speaker-notes {
@@ -412,60 +457,150 @@ Each preset defines `--font-display`, `--font-body`, and a 3-color accent set.
 
 ---
 
-## Icon Library (inline SVG sprite — curate from this set)
+## Icon Library (inline SVG sprite — Lucide paths, curate from this set)
 
-Inline this `<svg style="display:none">` sprite at the top of `<body>`. Each
-icon is a `<symbol id="ic-<name>" viewBox="0 0 24 24">`. Reference with
+The 30 icons below use **[Lucide](https://lucide.dev)** (MIT-licensed) path
+data — professional, optical-weight-correct, 24×24 viewBox, stroke-based,
+`currentColor`-themeable. Inline this `<svg style="display:none">` sprite at the
+top of `<body>`. Each icon is a
+`<symbol id="ic-<name>" viewBox="0 0 24 24">`. Reference with
 `<svg class="icon"><use href="#ic-<name>"/></svg>`. Themeable via `currentColor`.
 
-Curated set (~20) — pick the closest semantic match per slide:
+**Do not hand-author or guess SVG paths** — the paths below are the verbatim
+Lucide source. If you need an icon not in this set, prefer the closest semantic
+match from this set; only hand-author a new path as a last resort and keep it
+stroke-based at `stroke-width="2"` to match.
+
+Curated set (30) — pick the closest semantic match
 
 ```html
 <svg style="display:none" aria-hidden="true">
-  <symbol id="ic-growth" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 8v0M21 8h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="ic-decline" viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="ic-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
-  <symbol id="ic-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c0-3.5 3-6 6-6s6 2.5 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 20c0-2.5 2-4.5 4-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="ic-dollar" viewBox="0 0 24 24"><path d="M12 3v18M16 7c0-2-2-3-4-3s-4 1-4 3 2 3 4 3 4 1 4 3-2 3-4 3-4-1-4-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="ic-percent" viewBox="0 0 24 24"><path d="M5 19L19 5M8 7a2 2 0 11-4 0 2 2 0 014 0zM20 17a2 2 0 11-4 0 2 2 0 014 0z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
-  <symbol id="ic-warning" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 18v0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="ic-flow" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="9" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 12h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="ic-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M9 7l-3 6h6l-3-6zM15 7l-3 6h6l-3-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="ic-building" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 7h0M12 7h0M15 7h0M9 11h0M12 11h0M15 11h0M9 15h0M12 15h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="ic-restaurant" viewBox="0 0 24 24"><path d="M7 3v8M7 3c-2 0-3 2-3 4s1 4 3 4M7 11v10M16 3c-2 0-2 4-2 6s0 4 2 4v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="ic-travel" viewBox="0 0 24 24"><path d="M3 13l18-6-3 8-3-2-3 4-3-2-3 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
-  <symbol id="ic-data" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 4v16" stroke="currentColor" stroke-width="2"/></symbol>
-  <symbol id="ic-quote" viewBox="0 0 24 24"><path d="M7 7c-2 1-3 3-3 6v4h6v-6H6c0-2 1-3 3-4zM18 7c-2 1-3 3-3 6v4h6v-6h-4c0-2 1-3 3-4z" fill="currentColor"/></symbol>
-  <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></symbol>
-  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
-  <symbol id="ic-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 18l9 5 9-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
-  <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6l8-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-growth" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6" /> <path d="m22 7-8.5 8.5-5-5L2 17" /></symbol>
+  <symbol id="ic-decline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17h6v-6" /> <path d="m22 17-8.5-8.5-5 5L2 7" /></symbol>
+  <symbol id="ic-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /> <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /> <path d="M2 12h20" /></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <path d="M16 3.128a4 4 0 0 1 0 7.744" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <circle cx="9" cy="7" r="4" /></symbol>
+  <symbol id="ic-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22" /> <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></symbol>
+  <symbol id="ic-percent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" x2="5" y1="5" y2="19" /> <circle cx="6.5" cy="6.5" r="2.5" /> <circle cx="17.5" cy="17.5" r="2.5" /></symbol>
+  <symbol id="ic-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></symbol>
+  <symbol id="ic-flow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2" /> <path d="M7 11v4a2 2 0 0 0 2 2h4" /> <rect width="8" height="8" x="13" y="13" rx="2" /></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" /></symbol>
+  <symbol id="ic-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /> <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /> <path d="M7 21h10" /> <path d="M12 3v18" /> <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" /></symbol>
+  <symbol id="ic-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /> <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" /> <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" /> <path d="M10 6h4" /> <path d="M10 10h4" /> <path d="M10 14h4" /> <path d="M10 18h4" /></symbol>
+  <symbol id="ic-restaurant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /> <path d="M7 2v20" /> <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></symbol>
+  <symbol id="ic-travel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></symbol>
+  <symbol id="ic-data" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M7 16h8" /> <path d="M7 11h12" /> <path d="M7 6h3" /></symbol>
+  <symbol id="ic-quote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /> <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /></symbol>
+  <symbol id="ic-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" /></symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /> <rect width="7" height="7" x="14" y="3" rx="1" /> <rect width="7" height="7" x="14" y="14" rx="1" /> <rect width="7" height="7" x="3" y="14" rx="1" /></symbol>
+  <symbol id="ic-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /> <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /> <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2" /> <circle cx="12" cy="12" r="10" /></symbol>
+  <symbol id="ic-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /> <line x1="2" x2="22" y1="10" y2="10" /></symbol>
+  <symbol id="ic-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /> <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></symbol>
+  <symbol id="ic-bank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 18v-7" /> <path d="M11.12 2.198a2 2 0 0 1 1.76.006l7.866 3.847c.476.233.31.949-.22.949H3.474c-.53 0-.695-.716-.22-.949z" /> <path d="M14 18v-7" /> <path d="M18 18v-7" /> <path d="M3 22h18" /> <path d="M6 18v-7" /></symbol>
+  <symbol id="ic-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" /> <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" /> <path d="M12 17.5v-11" /></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /> <path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></symbol>
+  <symbol id="ic-handshake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3" /> <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" /> <path d="m21 3 1 11h-2" /> <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" /> <path d="M3 4h8" /></symbol>
+  <symbol id="ic-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+  <symbol id="ic-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /> <rect width="20" height="14" x="2" y="6" rx="2" /></symbol>
+  <symbol id="ic-coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6" /> <path d="M18.09 10.37A6 6 0 1 1 10.34 18" /> <path d="M7 6h1v4" /> <path d="m16.71 13.88.7.71-2.82 2.82" /></symbol>
 </svg>
 ```
 
 **Icon mapping guidance by `semantic_type` / layout:**
-- Metric → `ic-growth`/`ic-decline`/`ic-dollar`/`ic-percent`/`ic-data`/`ic-target`
-- Claim → `ic-check`/`ic-grid`/`ic-layers`/`ic-flow`/`ic-calendar`
+- Metric → `ic-growth`/`ic-decline`/`ic-dollar`/`ic-percent`/`ic-data`/`ic-target`/`ic-coins`
+- Claim → `ic-check`/`ic-grid`/`ic-layers`/`ic-flow`/`ic-calendar`/`ic-briefcase`/`ic-file`
 - Quote → `ic-quote`
-- Risk → `ic-warning`/`ic-shield`/`ic-scale`
-- Domain hints (TheFork/AmEx corpus): `ic-restaurant`, `ic-travel`, `ic-globe`, `ic-building`, `ic-users`.
+- Risk → `ic-warning`/`ic-shield`/`ic-scale`/`ic-lock`
+- **Financial services** → `ic-card` (payments/card business), `ic-wallet` (digital
+  payments), `ic-bank` (banking institution), `ic-receipt` (transactions), `ic-coins`
+  (cash/reserves), `ic-file` (contracts/10-K filings), `ic-handshake` (deals/M&A),
+  `ic-lock` (security/compliance), `ic-percent` (margins/rates), `ic-dollar` (revenue).
+- **General business** → `ic-briefcase` (corporate/professional services),
+  `ic-building` (company entity), `ic-users` (team/customers), `ic-globe`
+  (international), `ic-target` (goals), `ic-flow` (processes), `ic-calendar`
+  (schedule), `ic-clock` (deadlines/duration), `ic-scale` (legal/comparison).
+- **Domain hints** (swap per corpus): dining/travel → `ic-restaurant`, `ic-travel`;
+  tech/SaaS → `ic-lock`, `ic-data`; healthcare → swap in `ic-heart`/`ic-flask` (not
+  in set — hand-author per the rule below if needed).
 
-If no icon matches, emit `<svg class="icon"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>` (a neutral dot) — never an empty `<aside>` panel.
+**Icons appear in every layout that has a slot** — `metric_dashboard` KPI
+cards, `data_table` is tables (no per-cell icon; the title area may carry one),
+`full_process_flow`/`timeline`/`roadmap` step cards, `comparison_grid` cards,
+`quote_card` quote mark, `split_text_visual` visual panel, and `icon_grid` cards.
+Pick the closest semantic match per slot from the table above; do not repeat the
+same icon across every card when content varies.
+
+If no icon matches, emit `<svg class="icon"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>` (a neutral dot) — never an empty visual panel, never a text-only card.
 
 ---
 
 ## Layout Renderers (per `layout_type`)
 
-Render exactly one body per slide based on `layout_type`. **Slide 1 is always
-`title_or_opening`** — Step 4 hard-codes `slide_number == 1` to title; honor
-that even if the Builder set a different layout on slide 1. Build slide 1 as the
-deck cover. If the Builder set a semantic layout (e.g. `quote_card`) on slide 1,
-**insert that layout as a new slide 2** so its content still renders visibly —
+Render exactly one body per slide based on `layout_type`. Fill the 1920×1080
+canvas with **story + facts**, not dead space — and not four obligatory chrome
+bands either. Depth elements are **optional per packing mode**:
+
+| Element | Source | When to paint |
+|---|---|---|
+| `<p class="subtitle">` | `content.subtitle` | Non-empty and packing allows |
+| `<p class="headline">` | `content.headline` | Always when non-empty |
+| `<p class="context-band">` | `content.body_text` | Non-empty and packing allows (never force on cover / quote body slot) |
+| `<div class="so-what-callout">` | `content.so_what` | Non-empty and packing allows; **omit** if it only restates the headline |
+| `<div class="narrative-bridge">` | `content.narrative_bridge` | Non-empty; prefer Builder's turn-force wording |
+| `<div class="source-strip">` | source_file names | Always on `metric_dashboard` + `data_table` |
+
+### Packing defaults (if `packing_mode` missing)
+
+| layout_type | default packing | Prefer |
+|---|---|---|
+| `title_or_opening` | `cover-led` | title · subtitle · goal · optional bridge; **no** context/so_what |
+| `metric_dashboard`, `data_table`, `grouped_bar_chart`, `stacked_bar_chart`, `waterfall_chart`, `heatmap` | `stat-led` | numbers/chart dominate; **one** of so_what or body_text; omit body_text when the visual self-reads |
+| `timeline`, `full_process_flow`, `roadmap` | `sequence-led` | steps dominate; body_text optional if steps are well named |
+| `quote_card` | `voice-led` | quote + cite; so_what only if it adds a consequence the quote does not say |
+| `split_text_visual`, `comparison_grid`, `icon_grid`, `other` | `argument-led` | bullets/cards + **one** of so_what or body_text |
+
+**Density floor:** every non-cover slide must leave the layout carrier **plus ≥2 non-redundant story layers** painted (from subtitle / body_text / so_what / bridge). Prefer **omit a redundant band** over inventing a restating sentence.
+
+**Hard-banned openers** (never synthesize these; strip if the Builder used them as the *first words* and rewrite): `This means` · `The implication is` · `That puts` · `To put a fine point` · `In other words` · `This sets up` · `Key takeaway` · `Bottom line`.
+
+### When Builder leaves depth fields empty — synthesize **or omit**
+
+```
+If a depth field is empty:
+  1. Prefer omit the HTML element over template filler.
+  2. Only synthesize if (a) the canvas would otherwise fail the density
+     floor AND (b) you can invent a sentence that adds a *new mechanism*
+     from purpose / audience_pressure / next tension — not a rewrap of headline.
+  3. Never start with banned openers.
+  4. Never bridge as "Next: {title}" or "This sets up the next move: {title}".
+     Prefer an unresolved question the next slide answers.
+  5. Mirror packing_mode (or layout default) — do not force all four bands.
+```
+
+Synthesis targets (when you *must* invent):
+- **`subtitle`** — arc orientation (Setup/Proof/Tension…), not a title echo.
+- **`body_text`** — stakes for the visual, one concrete fact allowed.
+- **`so_what`** — mechanism / decision consequence (object-first sentence).
+- **`narrative_bridge`** — turn question/force; last slide may be `Closes the deck`.
+
+An empty visual panel on `split_text_visual` remains a delivery failure (use a large semantic_type-matched icon fallback).
+
+**Slide 1 is always `title_or_opening`** — Step 4 hard-codes `slide_number == 1`
+to title; honor that even if the Builder set a different layout on slide 1.
+Build slide 1 as the deck cover. If the Builder set a semantic layout (e.g.
+`quote_card`) on slide 1, **insert that layout as a new slide 2** so its content
+still renders visibly —
 do not relegate it to the notes pane only (see Final Guardrails). Renumber the
 subsequent slides and flag the insertion in the Quality Checklist.
+
+**Narrative-bridge renumbering under slide-1 displacement:** after inserting the
+displaced layout as slide 2, renumber original Builder slides 2→3, 3→4, …, N→N+1.
+Compute each slide's `narrative_bridge` against the **renumbered** next slide:
+- Inserted slide 2 (the displaced layout) → bridges to renumbered slide 3 (original Builder slide 2).
+- Slide 1 (title) → bridges to inserted slide 2.
+- Last slide → "Closes the deck".
 
 ### `title_or_opening` (slide 1, or any deck-cover slide)
 ```html
@@ -474,9 +609,11 @@ subsequent slides and flag the insertion in the Quality Checklist.
   <div class="title-stack">
     <div class="kicker reveal-left delay-1"><!-- presentation.audience (NOT the Why/What/How/Now framework — that is internal-only) --></div>
     <h1 class="reveal-left delay-2"><!-- title --></h1>
-    <p class="subtitle reveal-left delay-3"><!-- subtitle or audience_takeaway --></p>
+    <p class="subtitle reveal-left delay-3"><!-- subtitle if non-empty; else omit the p.subtitle element --></p>
+    <p class="headline reveal-left delay-4"><!-- presentation.primary_goal — one line --></p>
   </div>
   <div class="hero-orb reveal-scale delay-3" aria-hidden="true"></div>
+  <div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
   <!-- speaker notes aside (see Speaker Notes Block) -->
 </section>
 ```
@@ -486,39 +623,62 @@ Two-column: text + visual panel. Bullets from `content.bullets[]` (cap 6 for
 reading-first density). Visual panel: an inline-SVG icon or a compact graphic
 matching `primary_visual.type`; if `primary_visual.type` names an icon
 (`ic-*`), render `<svg class="icon icon-lg"><use href="#ic-..."/></svg>`,
-otherwise a labeled panel with the `description` as a caption.
+otherwise a labeled panel with the `description` as a caption. **The visual
+panel must never be empty** — if `primary_visual.type` is absent or isn't an
+`ic-*` name, render a large icon from the curated set matching the slide's
+`semantic_type`/`_dominant_semantic_type` (Metric → `ic-data`, Quote → `ic-quote`,
+Risk → `ic-warning`, Claim → `ic-check`). A dead visual panel wastes 50% of the
+canvas.
 ```html
+<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
+<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
+<p class="headline reveal-left delay-4"><!-- content.headline --></p>
 <div class="split-layout">
   <div class="text-column">
-    <h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
-    <p class="headline reveal-left delay-3"><!-- content.headline --></p>
     <ul class="bullet-list">
       <li class="reveal-left delay-4"><!-- bullet 1 --></li>
       <!-- ... up to 6 -->
     </ul>
   </div>
   <aside class="visual-panel reveal-scale delay-3">
-    <!-- inline SVG icon or captioned panel -->
+    <!-- inline SVG icon (icon-lg) or labeled panel — NEVER empty -->
   </aside>
 </div>
+<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
+<div class="so-what-callout reveal-left delay-6">
+  <svg class="icon"><use href="#ic-target"/></svg>
+  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
+</div>
+<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
 
 ### `metric_dashboard` (Metric; KPI cards)
 Render **up to 6** KPI cards (do not cap at 4 — the Python fallback's 4-cap was
 a bug). Source from `content.key_stats[]`; if absent, fall back to
 `steps_or_data[]`. Auto-grid via `--col-count` (2, 3, or up to 6). Each card:
-`{value}` large + `{label}` small. **No `E####` on the card** — the source goes
-to `evidence_manifest.json` only.
+an inline-SVG icon (pick per card from the Icon mapping guidance based on the
+`label`/`value` content — e.g. revenue → `ic-dollar`, growth → `ic-growth`,
+percentage → `ic-percent`), `{value}` large + `{label}` small. **No `E####`**
+on the card — the source goes to `evidence_manifest.json` only.
 ```html
 <h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
-<p class="headline reveal-left delay-3"><!-- content.headline --></p>
+<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
+<p class="headline reveal-left delay-4"><!-- content.headline --></p>
 <div class="kpi-grid" style="--col-count:4">
   <article class="kpi-card reveal-scale delay-2">
+    <svg class="icon kpi-icon"><use href="#ic-dollar"/></svg>
     <div class="kpi-value"><!-- value --></div>
     <div class="kpi-label"><!-- label --></div>
   </article>
-  <!-- ... up to 6 -->
+  <!-- ... up to 6; pick a different icon per card when content warrants -->
 </div>
+<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
+<div class="so-what-callout reveal-left delay-6">
+  <svg class="icon"><use href="#ic-target"/></svg>
+  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
+</div>
+<div class="source-strip"><!-- Sources: source_file names from evidence_sources (no E####) --></div>
+<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
 
 ### `data_table` (Metric/tabular — fixes the broken Python fallback)
@@ -530,6 +690,9 @@ rendering. If `steps_or_data` is missing, build a 2-column `[label, value]`
 table from `key_stats[]` (drop the `source` field). The `E####` for each row
 goes to `evidence_manifest.json` only — never the table, never the notes.
 ```html
+<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
+<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
+<p class="headline reveal-left delay-4"><!-- content.headline --></p>
 <table class="data-table">
   <thead><tr><th>Metric</th><th>Value</th></tr></thead>
   <tbody>
@@ -538,6 +701,13 @@ goes to `evidence_manifest.json` only — never the table, never the notes.
     <!-- ... -->
   </tbody>
 </table>
+<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
+<div class="so-what-callout reveal-left delay-6">
+  <svg class="icon"><use href="#ic-target"/></svg>
+  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
+</div>
+<div class="source-strip"><!-- Sources: source_file names from evidence_sources (no E####) --></div>
+<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
 Wrap with title + headline (no section-label — section is internal-only). Never
 stringify a row array as `[&#x27;...&#x27;]` — that was the Python fallback bug;
@@ -546,15 +716,27 @@ each row becomes `<tr><td>…</td></tr>`.
 ### `full_process_flow` / `timeline` / `roadmap`
 Horizontal/vertical step cards. Read `steps_or_data[]` (strings or
 `{label, ...}` objects) — these are the render-critical steps. Numbered cards
-with `--step-count`. Up to 6 steps.
+with `--step-count`. Up to 6 steps. Add an inline-SVG icon per step (pick
+from the Icon mapping guidance based on the step text — e.g. a date →
+`ic-calendar`, a milestone → `ic-check`, a phase → `ic-layers`).
 ```html
+<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
+<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
+<p class="headline reveal-left delay-4"><!-- content.headline --></p>
 <div class="process-flow" style="--step-count:4">
   <article class="step-card reveal-scale delay-2">
     <div class="step-number">1</div>
+    <svg class="icon step-icon"><use href="#ic-calendar"/></svg>
     <div class="step-text"><!-- step 1 --></div>
   </article>
   <!-- ... -->
 </div>
+<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
+<div class="so-what-callout reveal-left delay-6">
+  <svg class="icon"><use href="#ic-target"/></svg>
+  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
+</div>
+<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
 For `timeline` add a connecting line + date markers if the steps contain dates.
 For `roadmap` add phase grouping.
@@ -563,48 +745,244 @@ For `roadmap` add phase grouping.
 Read `steps_or_data[]`; if an item contains `:`, split into heading/body,
 else `heading = "Point N"`, `body = item`.
 ```html
+<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
+<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
+<p class="headline reveal-left delay-4"><!-- content.headline --></p>
 <div class="comparison-grid">
   <article class="comparison-card reveal-scale delay-2">
+    <svg class="icon card-icon"><use href="#ic-warning"/></svg>
     <h3><!-- heading --></h3>
     <p><!-- body --></p>
   </article>
   <!-- ... up to 6 -->
 </div>
+<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
+<div class="so-what-callout reveal-left delay-6">
+  <svg class="icon"><use href="#ic-target"/></svg>
+  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
+</div>
+<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
-For Risk content, use `--accent-warn` and the `ic-warning`/`ic-shield` icon.
+For Risk content, use `--accent-warn` and the `ic-warning`/`ic-shield` icon in
+each card. For non-Risk comparison content, pick a contextually relevant icon
+per card (e.g. `ic-users`, `ic-building`, `ic-globe`).
 
 ### `quote_card` (Quote — never at slide 1)
 Body from `content.body_text` (preferred) or `steps_or_data[]` quote objects
 (`{quote, attribution, semantic_type}`). Cite from
 `evidence_sources[0].source_file` (person/role), **not** a raw `E####` on the
 slide face. The `E####` goes to `evidence_manifest.json` only.
+
+**Extracting the `<cite>` speaker/role** (in priority order — use the first that
+yields a clean attribution):
+1. If `steps_or_data[]` quote objects have an `attribution` field, use it verbatim.
+2. If the quote text itself names the speaker, parse the attribution phrase — look for patterns like `…said <Name>, <Role>` / `…<Name>, <Role>, said` / `"…," said <Name>, <Role>`. Extract `<Name>, <Role>` as the cite.
+3. If the quote text has no speaker but the source file is a named person
+   (e.g. `Rafa Marquez.docx`), derive the name from the filename (strip
+   extension, title-case).
+4. Fallback: cite the `source_file` name without extension as the speaker.
+Format as `<Name> — <Role>` or just `<Name>` if no role is recoverable. Never
+invent a name not present in the evidence.
 ```html
+<h2 class="slide-title reveal-left delay-2"><!-- title — frames why this voice matters --></h2>
+<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty --></p>
 <div class="quote-card">
-  <blockquote class="reveal-scale delay-2">“<!-- quote -->”</blockquote>
+  <svg class="icon quote-mark" aria-hidden="true"><use href="#ic-quote"/></svg>
+  <blockquote class="reveal-scale delay-2">“<!-- content.body_text — only if non-empty + packing allows -->”</blockquote>
   <cite class="reveal delay-3"><!-- speaker, role — from source_file or attribution --></cite>
 </div>
+<div class="so-what-callout reveal-left delay-6">
+  <svg class="icon"><use href="#ic-target"/></svg>
+  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
+</div>
+<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
 
-### `icon_grid` (Claim — the layout the Python fallback could not render)
-Read `steps_or_data[]` as `[{icon, label, value}]` or `[{icon, text}]`. Render a
-responsive grid of cards each with an inline-SVG icon (from the curated set) +
-a headline + caption. Auto-grid via `--col-count` (2 or 3).
+### Chart layouts (`grouped_bar_chart` · `stacked_bar_chart` · `waterfall_chart` · `heatmap`)
+
+These are **first-class `layout_type` values**, not `other` fallbacks. When the
+Builder set `layout_type` to one of them — or set `layout_type: other` /
+`split_text_visual` but `visual_spec.primary_visual.type` is one of the four —
+**dispatch to the matching chart renderer**. Do **not** fall through to split
+text + lone icon.
+
+#### Palette + paint rules (Boardroom-safe)
+
+- Series 1 = navy `#00175A`; series 2 = signal blue `#006FCF`.
+- Optional third/fourth stack segments: ink `#63666A`, soft `#9BB5D1` only.
+- **No Chart.js / D3 / CDN charts.** Hand-built **inline SVG** (bars /
+  waterfall) or a **CSS grid/table** (heatmap). Zero external plot libs.
+- Max **2 series** on grouped bars. Stacked: ≤4 segments, prefer 2–3.
+- Reading-first: 3–7 categories; tabular numerals; axis/value labels ≥14–16px
+  at 1920×1080 scale inside the SVG `viewBox`.
+- Pack-from-top; soft gray chart frame; **no drop shadows / gradients**.
+- **Zero on-slide `E####`.** Source names may sit in `source-strip` only.
+- **One label per value — never double-stamp.** Put the number **outside**
+  the bar tip (grouped) or **above** the column (waterfall). Do **not** also
+  draw a callout pill on the same tip that repeats the same number (that
+  produced a stacked "55 over 55" bug on max-series bars).
+- Optional insight: `content.so_what` as `insight-strip` / `so-what-callout`
+  **under** the chart, not on top of it.
+
+#### Data contracts (`visual_spec.primary_visual.steps_or_data`)
+
+**Grouped / stacked / heatmap (matrix form preferred):**
+
+```json
+[
+  ["Category", "Series A", "Series B"],
+  ["Gen Z", 42, 28],
+  ["Millennials", 55, 36]
+]
+```
+
+Or object form: `{ "label": "Gen Z", "values": { "US": 42, "EU": 28 } }`.
+
+**Waterfall:**
+
+```json
+[
+  { "label": "Announced", "value": 700, "kind": "total" },
+  { "label": "NWC", "value": -18, "kind": "down" },
+  { "label": "Synergy", "value": 25, "kind": "up" },
+  { "label": "Adjusted", "value": 695, "kind": "total" }
+]
+```
+
+`kind` ∈ `total | up | down`. Totals are navy columns; up = blue; down = ink.
+**Empty data** → short empty-state line (`No chart data provided.`) + optional
+insight — never a silent split panel.
+
+#### `grouped_bar_chart`
+
+Horizontal grouped SVG bars (long labels read cleanly). Cap 2 series.
+
 ```html
-<div class="icon-grid" style="--col-count:3">
-  <article class="icon-card reveal-scale delay-2">
-    <svg class="icon"><use href="#ic-restaurant"/></svg>
-    <h3>50,000+</h3><p>Restaurants</p>
-  </article>
-  <!-- ... -->
+<h2 class="slide-title"><!-- title --></h2>
+<p class="subtitle"><!-- optional --></p>
+<div class="chart-frame layout-chart">
+  <svg class="chart-svg" viewBox="0 0 1200 400" role="img" aria-label="Grouped bar chart">
+    <!-- gridlines + category labels left; navy/blue rects; ONE end-of-bar value text each -->
+  </svg>
+  <div class="chart-legend"><!-- Series A (navy) · Series B (blue) --></div>
+</div>
+<div class="so-what-callout"><!-- optional content.so_what --></div>
+<div class="source-strip"><!-- source_file names only --></div>
+```
+
+#### `stacked_bar_chart`
+
+Horizontal stacked SVG. Segments share one bar per category; total at bar end.
+In-segment white labels only when the segment is wide enough; do not double with
+external pills.
+
+#### `waterfall_chart`
+
+Vertical bridge columns: total → bridges → total. Labels above each column
+(`+25`, `-18`, `700`). **No** second highlight pill that repeats the bridge number.
+
+#### `heatmap`
+
+Not SVG-heavy — CSS matrix (soft blue intensity). Header row = column names;
+first cell of each body row = row label. Cap ~4×5 cells for board readability.
+Values drawn in each cell; `—` for nulls. No E####.
+
+```html
+<div class="chart-frame heatmap-wrap">
+  <table class="heatmap-table">
+    <thead><tr><th></th><th>US</th><th>EU</th></tr></thead>
+    <tbody>
+      <tr><th class="row-head">Resy</th>
+          <td class="heatmap-cell" style="background: rgba(0,111,207,0.8)">90</td>
+          <td class="heatmap-cell" style="background: rgba(0,111,207,0.2)">15</td></tr>
+    </tbody>
+  </table>
 </div>
 ```
-If `steps_or_data` lacks an `icon` field, infer from `semantic_type`/content
-using the Icon mapping guidance. **Never** fall through to a text-only label —
-this is the layout that was broken in the Python fallback; render the grid.
+
+#### Shared CSS classes (add to `<style>` when any chart slide exists)
+
+```css
+.layout-chart .slide-main { display:flex; flex-direction:column; gap:18px; }
+.chart-frame { background:#EFF0F0; border:1px solid #D8DCE3; border-radius:16px; padding:22px 28px 18px; }
+.chart-svg { width:100%; height:auto; display:block; }
+.chart-legend { display:flex; flex-wrap:wrap; gap:18px 28px; margin-top:14px; font-weight:600; }
+.chart-legend .swatch { display:inline-block; width:14px; height:14px; border-radius:3px; margin-right:8px; }
+.chart-bar-navy { fill:#00175A; } .chart-bar-blue { fill:#006FCF; }
+.chart-bar-ink  { fill:#63666A; } .chart-bar-soft { fill:#9BB5D1; }
+.heatmap-table { border-collapse:separate; border-spacing:6px; width:100%; }
+.heatmap-cell { min-width:88px; height:64px; border-radius:10px; text-align:center;
+  font-weight:700; font-variant-numeric:tabular-nums; color:#00175A; }
+```
+
+Set inline `fill="#00175A"` / `fill="#006FCF"` on SVG `<rect>`s as well as CSS
+classes so fills survive partial style cascades.
+
+### `icon_grid` (Claim — first-class grid, never a split fallback)
+
+Dedicated layout: soft gray tiles with Lucide sprite icon + title + one body
+line. **Never** fall through to `split_text_visual` with a lone SVG — that was
+the Python Step-4 bug.
+
+**Data** (`steps_or_data`), prefer:
+
+```json
+[
+  { "title": "Frequency", "body": "Premium dining moments…", "icon": "ic-growth" },
+  { "title": "Closed loop", "body": "Payments + loyalty + discovery.", "icon": "ic-layers" }
+]
+```
+
+Also accept `"Title: body"` strings or 2-cell arrays `[title, body]`. Cap **4–6**
+tiles (9 max). Grid: 2×2 for 4; 3-up for 3 or 5–6; 2-col for 2.
+
+If `icon` missing, pick from the curated sprite via Icon mapping guidance
+(financial → `ic-credit-card` / `ic-dollar`; growth → `ic-growth`; risk →
+`ic-warning`; quote → `ic-quote`; default cycle is fine).
+
+```html
+<h2 class="slide-title"><!-- title --></h2>
+<p class="subtitle"><!-- optional --></p>
+<div class="icon-grid cols-2"><!-- or cols-3 / cols-4 -->
+  <article class="icon-tile">
+    <svg class="icon tile-icon icon-lg" aria-hidden="true"><use href="#ic-growth"/></svg>
+    <h3><!-- title --></h3>
+    <p><!-- body — one line; no E#### --></p>
+  </article>
+</div>
+<div class="so-what-callout"><!-- optional --></div>
+```
+
+Pack-from-top; content-height tiles — **do not** flex-stretch 2–3 tiles to fill
+the full column just to kill whitespace.
+
+```css
+.icon-grid { display:grid; gap:22px; width:100%; align-content:start; }
+.icon-grid.cols-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.icon-grid.cols-3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.icon-tile { background:#EFF0F0; border:1px solid #D8DCE3; border-radius:16px;
+  padding:22px 24px 20px; display:flex; flex-direction:column; gap:10px; }
+.icon-tile h3 { margin:0; font-size:24px; font-weight:700; color:#00175A; }
+.icon-tile p  { margin:0; font-size:18px; color:#53565A; line-height:1.35; }
+```
+
+### Chart / icon dispatch (must honor)
+
+| `layout_type` | Renderer |
+|---|---|
+| `grouped_bar_chart` | Chart — grouped horizontal SVG |
+| `stacked_bar_chart` | Chart — stacked horizontal SVG |
+| `waterfall_chart` | Chart — bridge columns |
+| `heatmap` | Chart — CSS matrix |
+| `icon_grid` | Dedicated icon tile grid |
+| `metric_dashboard` · `data_table` · process · comparison · quote · split · title | Existing layouts |
+| `other` | Split shell **unless** `primary_visual.type` is a chart/icon type above — then remap |
+
+If both `layout_type` and `primary_visual.type` name a chart, prefer `layout_type`.
+
 
 ### `other` (fallback)
-Use the `split_text_visual` shell; put `primary_visual.description` as the
-visual-panel caption (this is the only layout where `description` renders).
+Use the `split_text_visual` shell (with its subtitle, context-band, so-what-callout, and narrative-bridge); put `primary_visual.description` as the visual-panel caption (this is the only layout where `description` renders).
 
 ---
 
@@ -630,11 +1008,16 @@ should:
    believe or do after this slide.
 4. **Bridge naturally** to the next slide where it helps the flow ("That scale
    sets up the question of how AmEx will integrate it — which is next.").
-5. **Be candid about evidence limits** when the Builder marked the slide
-   synthesized or `readiness_score < 60` — fold this into the prose ("I want to
-   be upfront that the international-diversification benefit here is
-   directional rather than quantified in the source material.") rather than
-   tagging it with a label or badge.
+5. **Be candid only when it earns the airtime** — not on every slide just
+   because `readiness_score < 60`. Fold limits into the prose when *this* slide
+   is risk, thin-data, OCR, or Builder-flagged synthesis whose claim would
+   mislead if over-claimed. Example: "I want to be upfront that the
+   international-diversification benefit here is directional rather than
+   quantified in the source material." Never a label, badge, or deck-wide
+   sticky. Prefer a **candor quota**: typically cover/open once (if readiness
+   is low), risk once, plus any OCR-heavy slide — not 15 identical disclaimers.
+   **Never speak the numeric readiness score** in notes unless the user
+   explicitly asked for a readiness review.
 
 **Draw from the Builder handoff fields — synthesize, do not list:**
 - `audience_takeaway` — the intended listener takeaway; your anchor.
@@ -660,11 +1043,23 @@ should:
   aside — zero exceptions. `evidence_manifest.json` is the only place IDs live.
 - **Do not read the slide.** The audience can see the bullets; say the point,
   the context, and the takeaway.
+- **Do not glue formula notes.** Forbidden pattern: `headline + audience_takeaway +
+  "Figures are directional under readiness N."` Write spoken prose each time.
+- **Hard-ban sticky / score chant (notes only):** never start or end notes with a
+  fixed readiness phrase; never close every slide with the same confidence line;
+  never say "readiness 23" (or any score number) aloud unless the user asked for
+  a readiness review. Score lives in `DECK_META` / manifest only.
+- **Candor quota (low readiness decks):** at most cover/open + risk + OCR slides
+  normally get an explicit limit line; other slides stay clean presenter's voice.
 - **Pull exact numbers/quotes** from `evidence_register_seed.json` when a
   figure appears in the prose — never invent a number.
-- **Title slide (slide 1):** 2–3 sentences opening the deck.
+- **Title slide (slide 1):** 2–3 sentences opening the deck; one low-readiness
+  frame sentence is allowed here, not_repeated later.
 - **Quote slides:** 1–2 sentences framing why this voice matters; let the
-  on-slide quote land.
+  on-slide quote land — no readiness disclaimer under a quote.
+- **OCR-flagged evidence:** one natural clause on *that* slide only ("a couple of
+  supporting details sit on scanned pages — lean on the headline fact"),
+  never a formal "OCR-extracted" dump and never deck-wide.
 
 ### `evidence_manifest.json` (emit alongside the HTML)
 
@@ -710,6 +1105,11 @@ idea per slide still applies — if a slide exceeds the density, split **only if
 the Builder's plan allows**; otherwise flag it. Never shrink text below
 comfortable reading size to cram content; instead emit the overflow into the
 speaker notes and flag the slide in the Quality Checklist.
+
+**Dense ≠ four identical chrome bands.** Density means *relevant facts +
+story layers that add stakes or mechanism*, varied by `packing_mode`. Stacking
+the same subtitle / context / so-what / bridge skeleton on every slide is a
+delivery failure even when the canvas looks "full."
 
 ---
 
@@ -871,15 +1271,22 @@ Output:
 | Check | Status | Notes |
 |---|---|---|
 | Rendered every approved slide in order | Pass / Risk / Needs input |  |
-| Correct layout renderer per `layout_type` | Pass / Risk / Needs input | (note any `icon_grid`/`data_table` rendered) |
-| No on-slide `E####` / source-files / `Evidence:` (zero exceptions) | Pass / Risk / Needs input |  |
+| Correct layout renderer per `layout_type` | Pass / Risk / Needs input | note chart / `icon_grid` / `data_table` |
+| **Chart labels not double-stamped** (no pill + end-label same number) | Pass / Risk | hard-fail if max series shows stacked values |
+| **Charts are SVG/CSS, no external plot lib** | Pass / Risk | grouped/stacked/waterfall/heatmap when layout_type requires |
+| **`icon_grid` is a real tile grid** (never text-only / split fallback) | Pass / Risk |  |
+| **Density floor without monotony** (≥2 non-redundant story layers beyond the visual; omit restating bands) | Pass / Risk / Needs input | Note packing modes used; flag if ≥3 consecutive slides share the same skeleton |
+| **No banned openers** (This means / The implication is / That puts / To put a fine point / In other words / This sets up / Key takeaway / Bottom line) | Pass / Risk | Hard-fail if any so_what/body/bridge *starts* with these |
+| **Bridges are turn-forces, not next-title breadcrumbs** | Pass / Risk |  |
+| **No empty visual panel** (split_text_visual / other) | Pass / Risk |  |
+| No on-slide `E####` / `Evidence:` (zero exceptions; source-strip shows file names only) | Pass / Risk / Needs input |  |
 | No internal section tags (`Why`/`What`/`How`/`Now`) on slides | Pass / Risk / Needs input |  |
 | Keyboard nav + button nav + Notes toggle all functional | Pass / Risk |  |
-| Speaker notes on every slide (hidden `<aside>`, no E####/labels/badges) | Pass / Risk / Needs input |  |
+| Speaker notes on every slide (hidden `<aside>`, no E####/labels/badges; no sticky readiness watermark; no score chant) | Pass / Risk / Needs input |  |
 | `evidence_manifest.json` slide→evidence map complete | Pass / Risk / Needs input |  |
 | Every cited `E####` verified in `evidence_register_seed.json` | Pass / Risk / Needs input | (0 invented) |
 | Readiness signals carried into `DECK_META` | Pass / Risk / Needs input | readiness_score = … |
-| Synthesized content recorded in manifest; evidence candor folded into notes prose | Pass / Risk / Needs input | (which slides) |
+| Synthesized content recorded in manifest; evidence candor in notes only where it earns airtime (quota, not every slide) | Pass / Risk / Needs input | (which slides carry candor) |
 | Distinctive fonts (no Inter/Roboto/Arial/system) | Pass / Risk |  |
 | Fixed 1920×1080 stage + `.active` switching + print rules | Pass / Risk |  |
 | Accessibility (contrast, readable sizes, alt-text-ready) | Pass / Risk / Needs input |  |
@@ -918,15 +1325,22 @@ All rendered slides must have:
   to an `E####` in `evidence_register_seed.json`. Pull exact quotes verbatim
   from the seed register; if truncated (`…`), note `text truncated` in the
   notes.
-- **Never show `E####`, source-file names, or `Evidence:` on the visible slide**
-  — zero exceptions (the `data_table` Source column is dropped at render time).
-  All IDs live in `evidence_manifest.json` only — never in the speaker-notes
-  aside. Also strip any `(E####)` / `(E####, E####)` ID lists the Builder
-  embedded inside bullets, `steps_or_data`, or headlines before rendering the text.
+- **Never show `E####` or `Evidence:` on the visible slide** — zero exceptions
+  (the `data_table` Source column is dropped at render time). All IDs live in
+  `evidence_manifest.json` only — never in the speaker-notes aside. The
+  `source-strip` on data-heavy slides shows **source-file names only** (e.g.
+  "Reuters, Yahoo Finance, Tripadvisor 10-K"), never `E####`. Also strip any
+  `(E####)` / `(E####, E####)` ID lists the Builder embedded inside bullets,
+  `steps_or_data`, or headlines before rendering the text.
 - **Never show internal section tags** (`Why`/`What`/`How`/`Now`/`Appendix`)
   on a slide — they are internal representation only; they appear in
   `evidence_manifest.json`, never as a visible kicker/label and never in the
   notes prose.
+- **Honor chart / `icon_grid` layouts.** When `layout_type` is
+  `grouped_bar_chart` / `stacked_bar_chart` / `waterfall_chart` / `heatmap`
+  / `icon_grid` (or `primary_visual.type` names them under `other`), paint
+  the dedicated Boardroom chart/icon renderer — never a loner icon on a
+  split panel. One on-chart label per value; no duplicate callout pills.
 - **Slide 1 is always `title_or_opening`** — the render hard-codes it. If the
   Builder put `quote_card` (or any semantic layout) on slide 1, **do not orphan
   that content**: render slide 1 as the deck cover, and **insert the displaced
@@ -939,7 +1353,19 @@ All rendered slides must have:
   Quality Checklist.
 - **Never contradict the Builder's `slides[]`** without flagging:
   `Plan conflict detected: [issue]. Recommended fix: [fix].`
-- **Do not overfill slides.** One big idea per slide; overflow goes to notes.
+- **Do not overfill slides, but do not underfill either.** One big idea per
+  slide; overflow goes to notes. Fill the canvas with **story + facts**, not
+  four obligatory chrome bands. Honor `packing_mode` (or layout defaults).
+- **Do not watermark speaker notes with readiness.** Never append “Figures are
+  directional under readiness N” (or any fixed deck-wide disclaimer) to every
+  notes block. Never speak the numeric readiness score in notes unless the user
+  asked for a readiness review. Candor is rare, natural, and slide-specific;
+  score + flags live in `DECK_META` / `evidence_manifest.json` only.
+  Meet the density floor (≥2 non-redundant story layers beyond the visual).
+  Prefer **omit a redundant band** over inventing a restating sentence. If you
+  must synthesize empty depth fields, add a *new mechanism* — never banned
+  openers, never "Next: {title}" bridges. An empty visual panel on
+  `split_text_visual` is still a delivery failure.
 - **Do not use generic fonts** (Inter, Roboto, Arial, `system-ui`) as primary.
 - **Do not use emoji as primary iconography.** Use the inline-SVG set.
 - **Do not use external JS or build tools.** Only Google Fonts/Fontshare
