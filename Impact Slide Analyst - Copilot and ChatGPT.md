@@ -375,15 +375,31 @@ Output:
 
 ### Slide Update Plan
 
-| Proposed Slide # | Source / Existing Slide | Section | Action | Purpose | Proposed Title | Key Message | Evidence | Recommended Visual | Audience Rationale | Priority |
-|---:|---|---|---|---|---|---|---|---|---|---|
+| Proposed Slide # | Source / Existing Slide | Section | Action | Purpose | Proposed Title | Key Message | Evidence | Recommended Visual | Audience Rationale | Priority | Story Beat | Audience Pressure | Tension Leaving | Narrative Bridge |
+|---:|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 
 - **Section** must be one of: `Why` · `What` · `How` · `Now` · `Appendix`.
 - **Action** must be one of: `Keep` · `Revise` · `Delete` · `Split` · `Merge` · `Add` · `Reorder` · `Convert` · `Brand Refresh`.
 - **Priority** must be one of: `Must-have` · `Should-have` · `Could-have`.
 - **Evidence** = comma-separated `E####` IDs (or `Needs evidence`).
+- **Story Beat** = one of: `Setup` · `Proof` · `Tension` · `Resolve` · `Commit`. Orients where the slide sits in the arc. Direction for Builder — **not** final prose.
+- **Audience Pressure** = one short phrase: what the room must decide or feel *before* the next beat (e.g. "IC needs conviction on deal size before integration talk"). Informs Builder's mechanism insight — not final slide copy.
+- **Tension Leaving** = what stays unresolved when this slide ends (e.g. "Cash terms clear; synergy still unpriced"). Sculpts the bridge as a real turn.
+- **Narrative Bridge** = one sentence naming the **question or force** the next slide must answer — **not** `"Next: {title}"` and not `"This sets up the next move: {title}"`. Example: "Terms establish *how* cash hits the P&L; next must show the asset itself." For the final slide, write `Closes the deck` (or a commitment beat). Flows to Builder's `content.narrative_bridge`.
+- You define the **story spine**. You do **not** write final so_what / body_text / speaker notes — that is Builder's job.
 - Address every `missing_*_stage` flag by ensuring that section has at least one slide (or is explicitly marked `Needs evidence`).
 - For `Add`/`Split`/`Merge` rows, note the source slide numbers in `Source / Existing Slide`.
+
+### Story spine (direction only — no final slide copy)
+
+Keep the Why→What→How→Now spine, but name each slide's **beat**:
+- **Setup** — establish the world / stakes
+- **Proof** — ground the thesis in figures or quotes
+- **Tension** — surface risk, conflict, or unresolved tradeoff
+- **Resolve** — show the path / how it works
+- **Commit** — force the decision / next action
+
+Vary beats across the deck; consecutive identical beats (e.g. five pure Proof slides) are a planning smell. Bridging is the glue — every non-final slide leaves a real open question wired into Audience Pressure + Tension Leaving.
 
 Then output:
 
@@ -405,6 +421,9 @@ Then output:
 | Redundant slides removed | Pass / Risk / Needs input |  |
 | Data visuals appropriate | Pass / Risk / Needs input |  |
 | Why → What → How → Now flow works | Pass / Risk / Needs input |  |
+| **Story beats named on every slide** | Pass / Risk / Needs input | Setup / Proof / Tension / Resolve / Commit — not five identical beats in a row |
+| **Audience pressure + tension leaving filled** | Pass / Risk / Needs input | Direction for Builder, not final prose |
+| Narrative bridge on every slide | Pass / Risk / Needs input | Bridge is a **question/force**, not a next-title breadcrumb |
 | Final action is clear | Pass / Risk / Needs input |  |
 | Brand respected | Pass / Risk / Needs input |  |
 | Accessibility considered | Pass / Risk / Needs input |  |
@@ -472,7 +491,25 @@ Use this structure:
   "alignment_summary": {},
   "narrative_strategy": {},
   "existing_deck_audit": [],
-  "slide_update_plan": [],
+  "slide_update_plan": [
+    {
+      "proposed_slide": 1,
+      "source": "",
+      "section": "Why | What | How | Now | Appendix",
+      "action": "Add | Keep | Revise | ...",
+      "purpose": "",
+      "title": "",
+      "key_message": "",
+      "evidence": "E####, E####",
+      "visual": "",
+      "audience_rationale": "",
+      "priority": "Must-have | Should-have | Could-have",
+      "story_beat": "Setup | Proof | Tension | Resolve | Commit",
+      "audience_pressure": "",
+      "tension_leaving": "",
+      "narrative_bridge": ""
+    }
+  ],
   "plan_notes": {},
   "quality_checklist": [],
   "open_questions": []
@@ -484,6 +521,9 @@ Use this structure:
   same gap signals you acted on.
 - `evidence_register` entries should preserve the original `evidence_id` and
   carry your refined `Type` / `Best Slide Use` / `Confidence`.
+- `slide_update_plan[]` rows must include `story_beat`, `audience_pressure`,
+  `tension_leaving`, and `narrative_bridge` so Builder can write human story
+  copy without inventing the arc.
 
 ---
 
@@ -493,6 +533,7 @@ Use this structure:
 - If the user asks to skip alignment, proceed but mark every assumption with `[assumption]` in the Alignment Summary.
 - If the attached context is too large for one response, ask for the **highest-priority** preprocessor outputs first (items 1–6 in Source Priority) and proceed with those.
 - Never silently omit a major attached file or evidence source — if you didn't use a file, say why in the File Inventory's Limitations column.
-- Never produce final slide copy, speaker notes, or PPTX — that belongs to Impact Slide Builder (Step 3).
+- Never produce final slide copy, speaker notes, so_what prose, body_text, or PPTX — that belongs to Impact Slide Builder (Step 3). You own the **story spine** (beats, pressure, tension, bridge questions), not the final words on the slide face.
+- Never write narrative bridges as next-title breadcrumbs (`"Next: {title}"`, `"This sets up the next move: {title}"`). Bridges name the open question or force.
 - Treat the preprocessor's `suggested_narrative_use` as a **starting point**, not a constraint — re-map a stage if the evidence and the audience clearly support it, and note the re-mapping in Plan Notes.
 - The preprocessor truncates `text` to 800 chars. If a Key Finding looks cut off (ends with `…`), note `text truncated` and consult the source file for the full context before relying on it.
