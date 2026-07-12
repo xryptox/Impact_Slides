@@ -113,7 +113,7 @@ Turn the Builder's approved slide plan into a single self-contained
     prose naturally — never on the slide face, never as a badge or label.
 11. **Human story, not template chrome.** Honor `packing_mode` (infer from
     layout if missing). Paint only non-empty, non-redundant depth bands. Never
-    force all four of subtitle / context-band / so-what / bridge. Never open
+    force all of subtitle / context-band / so-what / face bridge. Never open
     synthesized depth with banned insight phrases (see Layout Renderers). Prefer
     omit over formula filler.
 12. **Speaker notes are spoken prose, not a readiness watermark.** Never append
@@ -179,7 +179,7 @@ authority first):
 | `content.key_stats[]` | `{label,value,source}`[] | KPI cards (metric_dashboard). |
 | `content.body_text` | string | Optional stakes/setup — renders as `context-band` **only when non-empty and packing allows**. For `quote_card` the quote body comes from steps_or_data / body_text as the blockquote, not a separate context-band. |
 | `content.so_what` | string | Optional mechanism/consequence — renders as `so-what-callout` **only when non-empty and packing allows**. Never invent banned openers if synthesizing. |
-| `content.narrative_bridge` | string | Optional turn-force to the next slide — render as `narrative-bridge` when non-empty. Prefer Builder's wording; do not rewrite into "Next: {title}". |
+| `content.narrative_bridge` | string | Optional turn-force — **speaker notes only** under Boardroom; never paint face story-bridge rails. Prefer Builder turn-force wording; do not rewrite into "Next: {title}". |
 | `visual_spec.primary_visual.type` | string | Sub-layout / visual hint. |
 | `visual_spec.primary_visual.description` | string | Human caption only — **do not rely on it for controlled layouts**; put render-critical data in `steps_or_data`. |
 | `visual_spec.primary_visual.steps_or_data` | array | The render-critical carrier: process steps, table rows (row arrays), comparison items, icon-name+label pairs, quote objects. |
@@ -296,14 +296,14 @@ img, video, canvas, svg { max-width: 100%; max-height: 100%; }
                      font-size: 24px; font-weight: 500; line-height: 1.4; }
   .so-what-callout .icon { width: 28px; height: 28px; color: var(--accent, #2a6cf9);
                            flex-shrink: 0; margin-top: 2px; }
-  .narrative-bridge { display: flex; align-items: center; gap: 10px;
-                      position: absolute; left: 90px; right: 90px; bottom: 54px;
-                      font-family: var(--font-body); font-style: italic;
-                      font-size: 17px; opacity: .62; line-height: 1.4; }
-  .narrative-bridge .icon { width: 18px; height: 18px; flex-shrink: 0; }
+  /* legacy narrative-bridge selectors kept only so hide-rule below wins */
+  .narrative-bridge { display: none !important; }
+  .narrative-bridge .icon { display: none !important; }
   .source-strip { position: absolute; left: 90px; bottom: 28px;
                   font-family: var(--font-body); font-size: 14px;
                   opacity: .45; letter-spacing: .02em; }
+  /* Boardroom: bridges live in speaker notes only */
+  .narrative-bridge, .story-bridge { display: none !important; }
   /* component CSS (see Layout Renderers) */
   .speaker-notes { display: none; }
   body.show-notes .slide.active .speaker-notes {
@@ -700,264 +700,339 @@ If no icon matches, emit `<svg class="icon"><circle cx="12" cy="12" r="4" fill="
 ## Layout Renderers (per `layout_type`)
 
 Render exactly one body per slide based on `layout_type`. Fill the 1920×1080
-canvas with **story + facts**, not dead space — and not four obligatory chrome
-bands either. Depth elements are **optional per packing mode**:
+canvas with **story + facts** using **Boardroom component physics** (this section),
+not four obligatory chrome bands and not a lone SVG on a dead half-canvas.
 
-| Element | Source | When to paint |
+### Packing + depth (Boardroom)
+
+| Element | Source | When to paint on face |
 |---|---|---|
-| `<p class="subtitle">` | `content.subtitle` | Non-empty and packing allows |
-| `<p class="headline">` | `content.headline` | Always when non-empty |
-| `<p class="context-band">` | `content.body_text` | Non-empty and packing allows (never force on cover / quote body slot) |
-| `<div class="so-what-callout">` | `content.so_what` | Non-empty and packing allows; **omit** if it only restates the headline |
-| `<div class="narrative-bridge">` | `content.narrative_bridge` | Non-empty; prefer Builder's turn-force wording |
-| `<div class="source-strip">` | source_file names | Always on `metric_dashboard` + `data_table` |
+| `<p class="subtitle dek">` | **one dek**: prefer `content.subtitle`, else `content.headline` | Non-empty; **never stack** both under title (see Dek merge) |
+| `<p class="lead-band">` / context | `content.body_text` | When packing allows; on splits often **above** rails |
+| `<div class="insight-strip so-what-callout">` | `content.so_what` | Under the hero; muted navy line — **omit** if only restates title/dek |
+| **On-face `narrative-bridge` / story-bridge** | — | **Never.** Hide/remove. Integration belongs in **speaker notes only** |
+| `<div class="source-strip">` | source_file **names only** | Optional on metric / true table / chart; never E#### |
 
 ### Packing defaults (if `packing_mode` missing)
 
 | layout_type | default packing | Prefer |
 |---|---|---|
-| `title_or_opening` | `cover-led` | title · subtitle · goal · optional bridge; **no** context/so_what |
-| `metric_dashboard`, `data_table`, `grouped_bar_chart`, `stacked_bar_chart`, `waterfall_chart`, `heatmap` | `stat-led` | numbers/chart dominate; **one** of so_what or body_text; omit body_text when the visual self-reads |
-| `timeline`, `full_process_flow`, `roadmap` | `sequence-led` | steps dominate; body_text optional if steps are well named |
-| `quote_card` | `voice-led` | quote + cite; so_what only if it adds a consequence the quote does not say |
-| `split_text_visual`, `comparison_grid`, `icon_grid`, `other` | `argument-led` | bullets/cards + **one** of so_what or body_text |
+| `title_or_opening` | `cover-led` | bi-band cover · title · dek · goal; **no** context/so_what |
+| `metric_dashboard`, `data_table`, charts, heatmap | `stat-led` | numbers dominate; insight under grid/chart |
+| `timeline`, `full_process_flow`, `roadmap` | `sequence-led` | steps/rail dominate |
+| `quote_card` | `voice-led` | quotes dominate; multi drops face so_what |
+| `split_text_visual`, `comparison_grid`, `icon_grid`, `other` | `argument-led` | dual-rail / cards + **one** insight |
 
-**Density floor:** every non-cover slide must leave the layout carrier **plus ≥2 non-redundant story layers** painted (from subtitle / body_text / so_what / bridge). Prefer **omit a redundant band** over inventing a restating sentence.
+**Density floor:** layout carrier + ≥2 non-redundant layers from `{dek, body_text, so_what}` (bridge does **not** count toward face density — it is notes-only). Prefer omit over filler.
 
-**Hard-banned openers** (never synthesize these; strip if the Builder used them as the *first words* and rewrite): `This means` · `The implication is` · `That puts` · `To put a fine point` · `In other words` · `This sets up` · `Key takeaway` · `Bottom line`.
+**Hard-banned face openers:** `This means` · `The implication is` · `That puts` · `To put a fine point` · `In other words` · `This sets up` · `Key takeaway` · `Bottom line`.
 
-### When Builder leaves depth fields empty — synthesize **or omit**
+### Dek merge (auto)
 
+Under the title paint **exactly one** dek line via `chosen_dek()`:
+
+1. Prefer `content.subtitle` when present.
+2. Else `content.headline`.
+3. If both present and near-duplicate (equal / substring), keep the longer or the subtitle.
+4. If headline is mostly numeric inventory already on KPIs/title and subtitle is framing prose → keep **subtitle**.
+5. **Never** render a second under-title line for the leftover headline — proof lives in KPIs / bullets / so_what / charts.
+
+### Slide-1 hard title + renumber
+
+Slide 1 is always `title_or_opening`. If Builder put a semantic layout on slide 1,
+insert it as slide 2, renumber, carry `narrative_bridge` intent into **notes** for the
+new next slide (not onto face rails).
+
+### When Builder leaves depth empty
+
+Prefer omit. Only synthesize if density floor would fail **and** you can add a new
+mechanism (not a rewrap). Never invent on-face bridges. Never invent comparison
+card bodies like “Keep this open through close.”
+
+---
+
+## Boardroom Component Physics (contracts)
+
+Shared CSS classes must match Brand & Theme tokens. Content-height cards; pack-from-top;
+`align-items: start` on short lists; no flex-grow on 2–3 item rails.
+
+### 1. Split dual-rail + proof / fact (`split_text_visual`)
+
+**Structure (never loner-icon half-canvas when proof data exists):**
+
+```text
+[ full-width lead-band from body_text (argument-led may promote so_what → lead when body empty) ]
+[ gap ~40px ]
+[ split-layout 1fr 1fr — twin soft panels, equal columns ]
+   left:  navy-hat argument kicker + bullet-list (argument spine)
+   right: navy-hat panel kicker + proof-list OR fact-grid (evidence facts)
 ```
-If a depth field is empty:
-  1. Prefer omit the HTML element over template filler.
-  2. Only synthesize if (a) the canvas would otherwise fail the density
-     floor AND (b) you can invent a sentence that adds a *new mechanism*
-     from purpose / audience_pressure / next tension — not a rewrap of headline.
-  3. Never start with banned openers.
-  4. Never bridge as "Next: {title}" or "This sets up the next move: {title}".
-     Prefer an unresolved question the next slide answers.
-  5. Mirror packing_mode (or layout default) — do not force all four bands.
+
+**Left bullets** = argument spine. **Right points** = evidence facts (orthogonal).
+
+**Right panel source order**
+1. Matrix `steps_or_data` rows with ≥2 cells → **fact-panel** (2–4 tiles)
+2. Else `content.supporting_points` strings (if Builder sent them)
+3. Else string `steps_or_data` (dedupe vs left bullets)
+4. Cap **2–4**; else large semantic icon-only fallback
+
+**Fact tiles (Platform | Region etc.)**
+- Prefer header row detection (`platform`, `region`, `metric`, `name`…).
+- **Primary large value** = platform / entity name (Resy, Tock, TheFork, Combined).
+  **Secondary label** = region (US, Europe…). Never hero two identical region codes.
+- Header-aware `platform_first`; if missing, regionish set `{us,usa,uk,eu,europe,global,apac,latam,emea}` forces name-as-value.
+- Fact-panel is `display:flex; flex-direction:column; padding:0` with **full-bleed** navy hat above the grid (never grid lands hat beside tiles). `border-radius:16px; overflow:hidden` on both rails so hats match.
+
+**Hats (both rails)**
+- Identical shape: min-height ~64px, pad `16px 22px`, font-size **26px**, weight 700, mixed-case (not tiny uppercase 13px bars).
+- **Left hat (`argument` kicker)** content-derived — not the static phrase “The argument”:
+
+| Signal in title/headline/section | Left hat |
+|---|---|
+| integrat / continuity | Why continuity |
+| advisor / leadership / operator / ceo | Who to keep |
+| risk | Open risks |
+| analyst / street / research | What street says |
+| venue / network / map / platform / scale | The map |
+| dining / experience / growth / engagement | The case |
+| deal / cash / $ | The deal |
+| section How / Why / Now | How it works / Why it matters / What next |
+| else | The case |
+
+- **Right hat (`panel` kicker)** for argument-led only (omit on non-argument packs if empty of meaning):
+
+| Signal | Right hat |
+|---|---|
+| integrat / continuity | What continuity buys |
+| leadership / operator / advisor | Who stays |
+| risk | What stays open |
+| street / analyst | Street check |
+| map / platform / venue / scale | How the maps join |
+| dining / engagement / engine | Where dining fits |
+| deal / cash | What the check buys |
+| section How / Why / Now | How this lands / What makes the case / What to watch |
+| else | In the evidence |
+
+**Do not** insert artificial `(n−1)` spacers to force first proof to align with last left bullet — top-align both columns; kicker is a compact header tight above the proof list.
+
+**Proof list:** icon-sm + line; body type **22px** matching left bullets.
+
+```html
+<div class="split-stack">
+  <p class="lead-band"><!-- body_text or promoted so_what --></p>
+  <div class="split-layout"><!-- 1fr 1fr -->
+    <div class="text-column visual-panel proof-panel">
+      <h3 class="panel-kicker"><!-- argument kicker --></h3>
+      <ul class="bullet-list"><li>…</li></ul>
+    </div>
+    <aside class="visual-panel proof-panel"><!-- or fact-panel -->
+      <h3 class="panel-kicker"><!-- panel kicker --></h3>
+      <ul class="proof-list">…</ul><!-- or fact-grid -->
+    </aside>
+  </div>
+</div>
 ```
 
-Synthesis targets (when you *must* invent):
-- **`subtitle`** — arc orientation (Setup/Proof/Tension…), not a title echo.
-- **`body_text`** — stakes for the visual, one concrete fact allowed.
-- **`so_what`** — mechanism / decision consequence (object-first sentence).
-- **`narrative_bridge`** — turn question/force; last slide may be `Closes the deck`.
+```css
+.layout-split .split-stack { display:flex; flex-direction:column; gap:40px; width:100%; }
+.layout-split .split-layout { display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start; }
+.layout-split .visual-panel { background:var(--panel); border:1px solid var(--panel-border);
+  border-radius:16px; overflow:hidden; display:flex; flex-direction:column; padding:0; }
+.layout-split .panel-kicker { margin:0; background:var(--navy); color:#fff; font-size:26px;
+  font-weight:700; letter-spacing:-0.01em; text-transform:none; min-height:64px;
+  padding:16px 22px; display:flex; align-items:center; }
+.layout-split .bullet-list, .layout-split .proof-list { list-style:none; margin:0;
+  padding:6px 22px 16px; display:flex; flex-direction:column; gap:12px; }
+.layout-split .bullet-list li, .layout-split .proof-list li {
+  font-size:22px; line-height:1.35; color:var(--ink); display:flex; gap:10px; align-items:flex-start;
+  flex:0 0 auto; }
+.layout-split .fact-panel .fact-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  padding:6px 22px 16px; }
+.layout-split .fact-value { font-size:28px; font-weight:700; color:var(--navy); font-family:var(--font-num); }
+.layout-split .fact-label { font-size:16px; color:var(--ink-muted); font-weight:600; }
+```
 
-An empty visual panel on `split_text_visual` remains a delivery failure (use a large semantic_type-matched icon fallback).
+---
 
-**Slide 1 is always `title_or_opening`** — Step 4 hard-codes `slide_number == 1`
-to title; honor that even if the Builder set a different layout on slide 1.
-Build slide 1 as the deck cover. If the Builder set a semantic layout (e.g.
-`quote_card`) on slide 1, **insert that layout as a new slide 2** so its content
-still renders visibly —
-do not relegate it to the notes pane only (see Final Guardrails). Renumber the
-subsequent slides and flag the insertion in the Quality Checklist.
+### 2. Metric dashboard
 
-**Narrative-bridge renumbering under slide-1 displacement:** after inserting the
-displaced layout as slide 2, renumber original Builder slides 2→3, 3→4, …, N→N+1.
-Compute each slide's `narrative_bridge` against the **renumbered** next slide:
-- Inserted slide 2 (the displaced layout) → bridges to renumbered slide 3 (original Builder slide 2).
-- Slide 1 (title) → bridges to inserted slide 2.
-- Last slide → "Closes the deck".
+- Carrier: `content.key_stats[{label,value,source}]` (render-critical), cap **6**.
+- Grid matrix: n≤3 single row; **n==4 dense-2x2** (`cols=2`); n=5–6 three-col multi-row.
+- Value `--fs-kpi` ~70 blue tabular; label ~24 / weight 700 (~0.34× value).
+- Optional small icon on card; **strip E#### from source meta** if shown.
+- `so_what` → **insight-strip under grid** (not footer auto-bottom, not duplicate ribbon).
 
-### `title_or_opening` (slide 1, or any deck-cover slide)
+---
+
+### 3. Data table
+
+| Condition | Render |
+|---|---|
+| ≤2 columns **and** 1–6 body rows | **Table-as-KPI** — same KPI grid language as metric (`layout-table-as-kpi`) |
+| Else | True Boardroom table |
+
+True table: navy-hat `th` (size ≥ body, ~20 vs ~18), **all cells center by default**,
+**no vertical separators** between header cells, optional zebra, insight under frame.
+Ledger frame for short 2-col when *not* KPI-mapped: constrained max-width, not full wash.
+
+---
+
+### 4. Timeline / roadmap / process
+
+#### Date / year parse (`_split_step_copy`)
+From each `steps_or_data` string extract kicker + title:
+
+1. Leading date/year forms: `Mon DD, YYYY`, `YYYY`, `H1 2026`, `Q2 2026`, `By end 2026`, `End 2026` then `:`/dash + rest.
+2. Simple `Label: rest` when label ≤48 chars.
+3. Trailing `before end YYYY` / `end YYYY` → kicker `End YYYY`, title = leading phrase (`Close`).
+4. Trailing bare year/month-year → kicker that year, title = prefix.
+5. Else empty kicker, full string as title.
+
+#### Vertical rail (timeline / roadmap **with 4 steps**)
+- True vertical `process-flow--vertical` (not dense-2x2 fake grid).
+- Step numbers: **navy** circle + white digits on soft navy rail.
+- Year kickers: **signal blue**, ~32px, tabular, **text-transform: none** (readable dates).
+- Step titles ~26px weight 700.
+- Insight strip under the rail.
+
+#### Horizontal process (`full_process_flow`, or non-timeline multi-step)
+- Even gutters; step-text ~26–28px; large index badges.
+- If **last** step matches closed-loop synthesis keys (`closed-loop`, `payments + loyalty`,
+  `circuit complete`, `completes the`) → pull it into full-width **`process-outcome`** bar
+  under a **3-card** platform row (keep Resy/Tock/TheFork-class cards on one baseline).
+- Outcome: blue badge + kicker (e.g. Closed-loop) + navy synthesis text; so_what with ~36px margin above insight.
+
+#### Timeline year enrichment (undated close-path steps)
+When layout is timeline/roadmap and steps lack parseable years **and** title/purpose
+clearly describes a path-to-close / regulatory/labor sequence:
+
+- Prefer enriching from evidence seed dates when available.
+- Else apply **content-shaped** ordered edition labels that fit the story (e.g. sequential
+  H2 / End-year for a same-window close path) — still honest that years may be
+  operational framing. Never invent years that contradict cited evidence.
+- Re-run `_split_step_copy` after enrichment.
+
+Builder should prefer dated `steps_or_data` (`H2 2026: Labor consultation`) so the
+Renderer does not guess.
+
+---
+
+### 5. Comparison grid (risk / multi-card)
+
+**Copy contract (never house-phrase bodies):**
+1. Prefer `Head: body` inside each `steps_or_data` string.
+2. Else title-only steps **paired** with `content.bullets[i]` as body.
+3. Else bullets alone.
+4. **Never invent** placeholder body esp. “Keep this open through close.”
+
+**Card chrome:** solid navy ~1.5px border, radius ~14px, white body + full navy hat,
+head ~26px, body ~22px, grid gap ~22px, min-height ~200, **pack-from-top** (no equal-height flex stretch of short copy).
+
+---
+
+### 6. Quote card
+
+| n quotes in `steps_or_data` | Face |
+|---|---|
+| 0–1 | Large single pull-quote + optional full-width `quote-insight` under it |
+| 2–3 | **Vertical stack** `quote-layout--stack` full width; **all** quotes visible; **drop face so_what / side kicker** (insight → notes) |
+
+Rules:
+- Quote body = **first spoken line only** (`clean_quote_body`): pull first `“…”`/`"…"` span; strip `, said Name, Role` from body (cite owns attribution).
+- Cite format `Name — Role` via: (1) structured attribution if it is a name, (2) parse `said Name, Role` from datapath, (3) source filename stem, (4) generic role — **never invent a person not in evidence**. If attribution is only `E####`, parse name from quote text.
+- Stack gap generous (`~56px` between cards). Cite ~20px.
+- Never leave quote_card content only at slide 1 (displace rule).
+
+---
+
+### 7. Cover bi-band (`title_or_opening`)
+
+Top ~62% navy, bottom ~38% signal blue. White display title left-aligned in the
+navy field; meta/date on blue band. **No logos / seals / hero-orbs.** No on-face bridge.
+
+---
+
+### 8. Charts / icon_grid
+
+Unchanged contracts under Chart layouts / icon_grid sections: navy/blue series,
+one label per value, real icon tiles, never split fallback.
+
+---
+
+## Layout HTML templates
+
+### `title_or_opening` (slide 1 / cover)
 ```html
 <section class="slide title-slide active" data-slide-number="1">
   <div class="slide-number">01 / NN</div>
-  <div class="title-stack">
-    <div class="kicker reveal-left delay-1"><!-- presentation.audience (NOT the Why/What/How/Now framework — that is internal-only) --></div>
-    <h1 class="reveal-left delay-2"><!-- title --></h1>
-    <p class="subtitle reveal-left delay-3"><!-- subtitle if non-empty; else omit the p.subtitle element --></p>
-    <p class="headline reveal-left delay-4"><!-- presentation.primary_goal — one line --></p>
+  <div class="slide-inner cover-inner">
+    <div class="title-stack">
+      <div class="kicker"><!-- audience or deck kicker — NOT Why/What/How/Now --></div>
+      <h1><!-- title --></h1>
+      <p class="headline"><!-- chosen_dek / goal line --></p>
+      <div class="title-footer"><span class="cover-date"><!-- optional meta --></span></div>
+    </div>
   </div>
-  <div class="hero-orb reveal-scale delay-3" aria-hidden="true"></div>
-  <div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
-  <!-- speaker notes aside (see Speaker Notes Block) -->
+  <!-- speaker-notes aside only — no face narrative-bridge -->
 </section>
 ```
 
-### `split_text_visual` (default body; Claim prose)
-Two-column: text + visual panel. Bullets from `content.bullets[]` (cap 6 for
-reading-first density). Visual panel: an inline-SVG icon or a compact graphic
-matching `primary_visual.type`; if `primary_visual.type` names an icon
-(`ic-*`), render `<svg class="icon icon-lg"><use href="#ic-..."/></svg>`,
-otherwise a labeled panel with the `description` as a caption. **The visual
-panel must never be empty** — if `primary_visual.type` is absent or isn't an
-`ic-*` name, render a large icon from the curated set matching the slide's
-`semantic_type`/`_dominant_semantic_type` (Metric → `ic-data`, Quote → `ic-quote`,
-Risk → `ic-warning`, Claim → `ic-check`). A dead visual panel wastes 50% of the
-canvas.
+### `split_text_visual`
+Use dual-rail structure from Component Physics §1. Single `subtitle.dek` in
+header via dek merge. Insight only if non-empty and not consumed as lead-band.
+No face narrative-bridge.
+
+### `metric_dashboard`
 ```html
-<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
-<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
-<p class="headline reveal-left delay-4"><!-- content.headline --></p>
-<div class="split-layout">
-  <div class="text-column">
-    <ul class="bullet-list">
-      <li class="reveal-left delay-4"><!-- bullet 1 --></li>
-      <!-- ... up to 6 -->
-    </ul>
-  </div>
-  <aside class="visual-panel reveal-scale delay-3">
-    <!-- inline SVG icon (icon-lg) or labeled panel — NEVER empty -->
-  </aside>
+<header class="slide-header">
+  <h2 class="slide-title"><!-- title --></h2>
+  <p class="subtitle dek"><!-- chosen_dek --></p>
+</header>
+<div class="slide-main layout-metric">
+  <div class="kpi-grid dense-2x2" style="--col-count:2"><!-- when n==4; else set cols --></div>
+  <div class="insight-strip so-what-callout"><span><!-- so_what --></span></div>
 </div>
-<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
-<div class="so-what-callout reveal-left delay-6">
-  <svg class="icon"><use href="#ic-target"/></svg>
-  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
-</div>
-<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
 
-### `metric_dashboard` (Metric; KPI cards)
-Render **up to 6** KPI cards (do not cap at 4 — the Python fallback's 4-cap was
-a bug). Source from `content.key_stats[]`; if absent, fall back to
-`steps_or_data[]`. Auto-grid via `--col-count` (2, 3, or up to 6). Each card:
-an inline-SVG icon (pick per card from the Icon mapping guidance based on the
-`label`/`value` content — e.g. revenue → `ic-dollar`, growth → `ic-growth`,
-percentage → `ic-percent`), `{value}` large + `{label}` small. **No `E####`**
-on the card — the source goes to `evidence_manifest.json` only.
+### `data_table`
+Apply table-as-KPI branch when short 2-col; else:
 ```html
-<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
-<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
-<p class="headline reveal-left delay-4"><!-- content.headline --></p>
-<div class="kpi-grid" style="--col-count:4">
-  <article class="kpi-card reveal-scale delay-2">
-    <svg class="icon kpi-icon"><use href="#ic-dollar"/></svg>
-    <div class="kpi-value"><!-- value --></div>
-    <div class="kpi-label"><!-- label --></div>
-  </article>
-  <!-- ... up to 6; pick a different icon per card when content warrants -->
+<div class="table-frame …">
+  <table class="data-table">
+    <thead><tr><th>…</th></tr></thead>
+    <tbody>…</tbody>
+  </table>
 </div>
-<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
-<div class="so-what-callout reveal-left delay-6">
-  <svg class="icon"><use href="#ic-target"/></svg>
-  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
-</div>
-<div class="source-strip"><!-- Sources: source_file names from evidence_sources (no E####) --></div>
-<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
+<div class="insight-strip">…</div>
 ```
-
-### `data_table` (Metric/tabular — fixes the broken Python fallback)
-Render a **real `<table>`**. Read `steps_or_data` as a list of row arrays where
-the first row is the header. **Drop the `E####` Source column entirely** — no
-evidence IDs appear on-slide (the Source column was removed by user decision).
-If the header row's last cell is `Source`, omit that column from every row when
-rendering. If `steps_or_data` is missing, build a 2-column `[label, value]`
-table from `key_stats[]` (drop the `source` field). The `E####` for each row
-goes to `evidence_manifest.json` only — never the table, never the notes.
-```html
-<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
-<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
-<p class="headline reveal-left delay-4"><!-- content.headline --></p>
-<table class="data-table">
-  <thead><tr><th>Metric</th><th>Value</th></tr></thead>
-  <tbody>
-    <tr><td>Countries</td><td>11 European</td></tr>
-    <tr><td>Restaurants</td><td>50,000+</td></tr>
-    <!-- ... -->
-  </tbody>
-</table>
-<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
-<div class="so-what-callout reveal-left delay-6">
-  <svg class="icon"><use href="#ic-target"/></svg>
-  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
-</div>
-<div class="source-strip"><!-- Sources: source_file names from evidence_sources (no E####) --></div>
-<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
-```
-Wrap with title + headline (no section-label — section is internal-only). Never
-stringify a row array as `[&#x27;...&#x27;]` — that was the Python fallback bug;
-each row becomes `<tr><td>…</td></tr>`.
+Drop any Source/E#### column. th/td default `text-align:center`; th no `border-right`.
 
 ### `full_process_flow` / `timeline` / `roadmap`
-Horizontal/vertical step cards. Read `steps_or_data[]` (strings or
-`{label, ...}` objects) — these are the render-critical steps. Numbered cards
-with `--step-count`. Up to 6 steps. Add an inline-SVG icon per step (pick
-from the Icon mapping guidance based on the step text — e.g. a date →
-`ic-calendar`, a milestone → `ic-check`, a phase → `ic-layers`).
+Vertical rail HTML when timeline/roadmap + 4 steps; else horizontal cards + optional
+`process-outcome`. Each step:
 ```html
-<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
-<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
-<p class="headline reveal-left delay-4"><!-- content.headline --></p>
-<div class="process-flow" style="--step-count:4">
-  <article class="step-card reveal-scale delay-2">
-    <div class="step-number">1</div>
-    <svg class="icon step-icon"><use href="#ic-calendar"/></svg>
-    <div class="step-text"><!-- step 1 --></div>
+<article class="step-card step-card--vertical">
+  <div class="step-number">01</div>
+  <div class="step-body">
+    <div class="step-kicker"><!-- year/date if parsed --></div>
+    <div class="step-text"><!-- title --></div>
+  </div>
+</article>
+```
+
+### `comparison_grid`
+```html
+<div class="comparison-grid layout-comparison">
+  <article class="comparison-card risk">
+    <div class="card-head"><!-- head --></div>
+    <div class="card-body"><p><!-- body or empty --></p></div>
   </article>
-  <!-- ... -->
 </div>
-<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
-<div class="so-what-callout reveal-left delay-6">
-  <svg class="icon"><use href="#ic-target"/></svg>
-  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
-</div>
-<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
 ```
-For `timeline` add a connecting line + date markers if the steps contain dates.
-For `roadmap` add phase grouping.
 
-### `comparison_grid` (Risk / side-by-side; up to 6 cards)
-Read `steps_or_data[]`; if an item contains `:`, split into heading/body,
-else `heading = "Point N"`, `body = item`.
-```html
-<h2 class="slide-title reveal-left delay-2"><!-- title --></h2>
-<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty + packing allows --></p>
-<p class="headline reveal-left delay-4"><!-- content.headline --></p>
-<div class="comparison-grid">
-  <article class="comparison-card reveal-scale delay-2">
-    <svg class="icon card-icon"><use href="#ic-warning"/></svg>
-    <h3><!-- heading --></h3>
-    <p><!-- body --></p>
-  </article>
-  <!-- ... up to 6 -->
-</div>
-<p class="context-band reveal-left delay-5"><!-- content.body_text — only if non-empty + packing allows --></p>
-<div class="so-what-callout reveal-left delay-6">
-  <svg class="icon"><use href="#ic-target"/></svg>
-  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
-</div>
-<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
-```
-For Risk content, use `--accent-warn` and the `ic-warning`/`ic-shield` icon in
-each card. For non-Risk comparison content, pick a contextually relevant icon
-per card (e.g. `ic-users`, `ic-building`, `ic-globe`).
-
-### `quote_card` (Quote — never at slide 1)
-Body from `content.body_text` (preferred) or `steps_or_data[]` quote objects
-(`{quote, attribution, semantic_type}`). Cite from
-`evidence_sources[0].source_file` (person/role), **not** a raw `E####` on the
-slide face. The `E####` goes to `evidence_manifest.json` only.
-
-**Extracting the `<cite>` speaker/role** (in priority order — use the first that
-yields a clean attribution):
-1. If `steps_or_data[]` quote objects have an `attribution` field, use it verbatim.
-2. If the quote text itself names the speaker, parse the attribution phrase — look for patterns like `…said <Name>, <Role>` / `…<Name>, <Role>, said` / `"…," said <Name>, <Role>`. Extract `<Name>, <Role>` as the cite.
-3. If the quote text has no speaker but the source file is a named person
-   (e.g. `Rafa Marquez.docx`), derive the name from the filename (strip
-   extension, title-case).
-4. Fallback: cite the `source_file` name without extension as the speaker.
-Format as `<Name> — <Role>` or just `<Name>` if no role is recoverable. Never
-invent a name not present in the evidence.
-```html
-<h2 class="slide-title reveal-left delay-2"><!-- title — frames why this voice matters --></h2>
-<p class="subtitle reveal-left delay-3"><!-- subtitle — only if content.subtitle non-empty --></p>
-<div class="quote-card">
-  <svg class="icon quote-mark" aria-hidden="true"><use href="#ic-quote"/></svg>
-  <blockquote class="reveal-scale delay-2">“<!-- content.body_text — only if non-empty + packing allows -->”</blockquote>
-  <cite class="reveal delay-3"><!-- speaker, role — from source_file or attribution --></cite>
-</div>
-<div class="so-what-callout reveal-left delay-6">
-  <svg class="icon"><use href="#ic-target"/></svg>
-  <span><!-- content.so_what — only if non-empty + packing allows; omit if it restates headline --></span>
-</div>
-<div class="narrative-bridge"><svg class="icon"><use href="#ic-flow"/></svg><span><!-- content.narrative_bridge — only if non-empty; turn-force, not next-title --></span></div>
-```
+### `quote_card`
+Single: `quote-layout--single` + optional `quote-insight`.  
+Multi (2–3): `quote-layout--stack` only — no side panel, no face so_what.
 
 ### Chart layouts (`grouped_bar_chart` · `stacked_bar_chart` · `waterfall_chart` · `heatmap`)
 
@@ -1143,7 +1218,7 @@ If both `layout_type` and `primary_visual.type` name a chart, prefer `layout_typ
 
 
 ### `other` (fallback)
-Use the `split_text_visual` shell (with its subtitle, context-band, so-what-callout, and narrative-bridge); put `primary_visual.description` as the visual-panel caption (this is the only layout where `description` renders).
+Use the `split_text_visual` dual-rail Boardroom shell (dek + lead + twin hats + proof/facts); put `primary_visual.description` as the visual-panel caption only when falling back to icon-only (this is the only layout where `description` renders). Never paint a face narrative-bridge.
 
 ---
 
@@ -1151,85 +1226,61 @@ Use the `split_text_visual` shell (with its subtitle, context-band, so-what-call
 
 Inside every `<section class="slide">`, append a hidden
 `<aside class="speaker-notes" data-slide-number="N">` containing
-**presenter-deliverable prose** — the words a presenter would speak when
-showing this slide. This is **not** a structured reference block. No `E####`
-IDs, no source-file names, no `Section:`/`Grounding:`/`Evidence:`/
-`Confidence:`/`Synthesized:` labels, no badges. Those live in
-`evidence_manifest.json` only.
+**spoken claim language** — sentences a presenter would actually say aloud.
+This is **not** a structured reference block and **not** general facilitation.
 
-Write **3–5 sentences (~60–120 words, ~45–90 seconds of speaking)**. The prose
-should:
+### Hard bans (spoken + face-adjacent)
 
-1. **Say what this slide shows** and why it matters to this audience — open
-   with the slide's point in the presenter's own voice.
-2. **Bring out the story** this slide tells in the deck's argument — weave the
-   headline, the key numbers/quotes/bullets, and the slide's role in the
-   Why→What→How→Now flow into a single spoken narrative, not a list.
-3. **Give the audience the takeaway** — end on what the listener should
-   believe or do after this slide.
-4. **Bridge naturally** to the next slide where it helps the flow ("That scale
-   sets up the question of how AmEx will integrate it — which is next.").
-5. **Be candid only when it earns the airtime** — not on every slide just
-   because `readiness_score < 60`. Fold limits into the prose when *this* slide
-   is risk, thin-data, OCR, or Builder-flagged synthesis whose claim would
-   mislead if over-claimed. Example: "I want to be upfront that the
-   international-diversification benefit here is directional rather than
-   quantified in the source material." Never a label, badge, or deck-wide
-   sticky. Prefer a **candor quota**: typically cover/open once (if readiness
-   is low), risk once, plus any OCR-heavy slide — not 15 identical disclaimers.
-   **Never speak the numeric readiness score** in notes unless the user
-   explicitly asked for a readiness review.
+- No `E####`, source-file names, section labels (`Why`/`What`…), badges.
+- No sticky readiness watermarks / score chants
+  (`Figures are directional under readiness N`, “readiness is 23 of 100”).
+- No stage directions: `Hold for…`, `Make the room feel…`, `Link X to Y`,
+  `Setup beat`, `Pressure:`, `Leave them with…`.
+- No fixed leave-slide cadence: **do not** end optional bridges with
+  `When we leave this slide…` / `Up next…` / `This sets up…` as the stock form.
+- No face `story-bridge` / `narrative-bridge` rails. If residual CSS exists, it must be
+  `display:none`. Bridge **intent** from `content.narrative_bridge` is woven into
+  prose as a natural thesis turn (“The cash ticket only holds if labor clocks…”) —
+  claims only, no meta.
 
-**Draw from the Builder handoff fields — synthesize, do not list:**
-- `audience_takeaway` — the intended listener takeaway; your anchor.
-- `purpose` — why this slide exists in the deck.
-- `content.headline`, `content.bullets[]`, `content.key_stats[]`,
-  `content.body_text` — the on-slide content; say the point, don't read the
-  bullets verbatim.
-- `speaker_notes` — the Builder's presenter guidance; fold its intent into
-  your prose. Do not quote it as a field.
-- the slide's `section` and position in the flow — use for bridging; never say
-  "Section: Why" aloud.
+### Length + shape
+
+- **~40–100 words**, typically **3–5 sentences** (cover may be 2–3).
+- Prefer Builder `speaker_notes` when it is already clean claim prose; scrub
+  labels and readiness, then then expand with slide substance.
+- Layout-aware substance: metrics get 1–2 spoken numbers; process names the
+  path; quotes name the speakers parsed from quote text; splits argue the spine
+  then one proof fact.
+
+### Candor quota
+
+Only when *this* slide is risk / thin-data / OCR / synthesized and over-claim would
+mislead. Cover may frame low readiness **once** without saying the number unless
+asked. Not 15 identical disclaimers.
+
+### Sources to draw from (synthesize, do not list fields)
+
+`audience_takeaway`, `purpose`, `content.*`, cleaned `speaker_notes`,
+`narrative_bridge` (as claim turn), optional next-slide title only if it becomes a
+real spoken sentence (not “Next lays out X”).
 
 ```html
 <aside class="speaker-notes" data-slide-number="N">
   <h2 class="visually-hidden">Slide N speaker notes</h2>
-  <p><!-- presenter prose, 3-5 sentences --></p>
-  <!-- a second <p> only if the narrative naturally splits -->
+  <p><!-- spoken prose --></p>
 </aside>
 ```
-
-**Rules:**
-- **No `E####`, no source-file names, no structured labels, no badges** in the
-  aside — zero exceptions. `evidence_manifest.json` is the only place IDs live.
-- **Do not read the slide.** The audience can see the bullets; say the point,
-  the context, and the takeaway.
-- **Do not glue formula notes.** Forbidden pattern: `headline + audience_takeaway +
-  "Figures are directional under readiness N."` Write spoken prose each time.
-- **Hard-ban sticky / score chant (notes only):** never start or end notes with a
-  fixed readiness phrase; never close every slide with the same confidence line;
-  never say "readiness 23" (or any score number) aloud unless the user asked for
-  a readiness review. Score lives in `DECK_META` / manifest only.
-- **Candor quota (low readiness decks):** at most cover/open + risk + OCR slides
-  normally get an explicit limit line; other slides stay clean presenter's voice.
-- **Pull exact numbers/quotes** from `evidence_register_seed.json` when a
-  figure appears in the prose — never invent a number.
-- **Title slide (slide 1):** 2–3 sentences opening the deck; one low-readiness
-  frame sentence is allowed here, not_repeated later.
-- **Quote slides:** 1–2 sentences framing why this voice matters; let the
-  on-slide quote land — no readiness disclaimer under a quote.
-- **OCR-flagged evidence:** one natural clause on *that* slide only ("a couple of
-  supporting details sit on scanned pages — lean on the headline fact"),
-  never a formal "OCR-extracted" dump and never deck-wide.
 
 ### `evidence_manifest.json` (emit alongside the HTML)
 
 A flat, machine-checkable slide→evidence map (replaces on-slide IDs as the
 verification mechanism). This is the **sole** machine-checkable slide→evidence
 map; the speaker-notes aside contains no `E####` — it is presenter prose only.
+Include `"style_preset": "BoardroomEarnings"`.
 ```jsonc
 {
   "source_handoff": "builder_handoff.json",
+  "style_preset": "BoardroomEarnings",
   "presentation_title": "",
   "total_slides": 14,
   "readiness_score": 23,
@@ -1255,7 +1306,6 @@ A plain-text rendering of every slide's notes block (same content as the
 then the prose paragraphs. This is the human-readable export of the notes pane
 and the future input to a PPTX builder step.
 
----
 
 ## Density Mode
 
@@ -1269,8 +1319,9 @@ speaker notes and flag the slide in the Quality Checklist.
 
 **Dense ≠ four identical chrome bands.** Density means *relevant facts +
 story layers that add stakes or mechanism*, varied by `packing_mode`. Stacking
-the same subtitle / context / so-what / bridge skeleton on every slide is a
-delivery failure even when the canvas looks "full."
+the same subtitle / context / so-what skeleton on every slide is a delivery
+failure even when the canvas looks "full." **`narrative_bridge` is notes-only**
+under Boardroom — do not paint face story-bridge rails.
 
 ---
 
@@ -1401,7 +1452,13 @@ Output:
 | **`icon_grid` is a real tile grid** (never text-only / split fallback) | Pass / Risk |  |
 | **Density floor without monotony** (≥2 non-redundant story layers beyond the visual; omit restating bands) | Pass / Risk / Needs input | Note packing modes used; flag if ≥3 consecutive slides share the same skeleton |
 | **No banned openers** (This means / The implication is / That puts / To put a fine point / In other words / This sets up / Key takeaway / Bottom line) | Pass / Risk | Hard-fail if any so_what/body/bridge *starts* with these |
-| **Bridges are turn-forces, not next-title breadcrumbs** | Pass / Risk |  |
+| **Bridges are notes-only turn-forces** (no face story-bridge; no When-we-leave cadence) | Pass / Risk |  |
+| **Split dual-rail + dynamic hats** when argument-led with proof data (not loner SVG) | Pass / Risk |  |
+| **Comparison pairing** (Head:body or step+bullet; no invented house body) | Pass / Risk |  |
+| **Multi-quote stack** keeps all 2–3 voices; single may use insight | Pass / Risk |  |
+| **Metric n==4 is dense-2x2**; short 2-col tables map to KPI | Pass / Risk |  |
+| **Timeline 4-step vertical rail** with year parse / navy pointers / blue kickers | Pass / Risk |  |
+| **Closed-loop last horizontal step → process-outcome bar** | Pass / Risk |  |
 | **No empty visual panel** (split_text_visual / other) | Pass / Risk |  |
 | No on-slide `E####` / `Evidence:` (zero exceptions; source-strip shows file names only) | Pass / Risk / Needs input |  |
 | No internal section tags (`Why`/`What`/`How`/`Now`) on slides | Pass / Risk / Needs input |  |
@@ -1462,6 +1519,11 @@ All rendered slides must have:
   on a slide — they are internal representation only; they appear in
   `evidence_manifest.json`, never as a visible kicker/label and never in the
   notes prose.
+- **Boardroom component physics are mandatory** for every layout named in
+  Layout Renderers — dual-rail splits, table-as-KPI, metric 2×2, vertical
+  timeline years, comparison pairing, multi-quote stack, closed-loop outcome
+  bars, spoken note bridges off-face. Do not regress to loner-icon splits,
+  generic 1×4 KPI strips, placeholder risk bodies, or face story-bridge rails.
 - **Honor chart / `icon_grid` layouts.** When `layout_type` is
   `grouped_bar_chart` / `stacked_bar_chart` / `waterfall_chart` / `heatmap`
   / `icon_grid` (or `primary_visual.type` names them under `other`), paint
