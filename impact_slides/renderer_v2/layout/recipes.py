@@ -1583,3 +1583,118 @@ def render_ecosystem_map(slide, total, notes, active=False):
         item_count=4,
     )
 
+
+# ---------------------------------------------------------------------------
+# Wave 4b — Process, Deep Dive & Circular layouts
+# ---------------------------------------------------------------------------
+
+def render_process_with_decisions(slide, total, notes, active=False):
+    """Linear process with diamond decision nodes inserted between steps."""
+    c = _content(slide)
+    steps = [strip_eids(b) for b in (c.get("steps") or c.get("bullets") or []) if strip_eids(b)][:6]
+    decisions = [strip_eids(b) for b in (c.get("decisions") or []) if strip_eids(b)][:3]
+    items = []
+    for i, s in enumerate(steps, 1):
+        items.append(
+            f'<div class="process-step card">'
+            f'<div class="step-num">{i}</div>'
+            f'<div class="step-text">{esc(s)}</div></div>'
+        )
+        if i <= len(decisions):
+            items.append(
+                f'<div class="decision-node card">'
+                f'<div class="decision-diamond">◊</div>'
+                f'<div class="decision-label">{esc(decisions[i - 1])}</div></div>'
+            )
+    n = len(steps)
+    main = (
+        f'<div class="gl-grid gl-grid-auto layout-process-decisions">'
+        f'{"".join(items)}'
+        f'</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="process_with_decisions",
+        active=active,
+        item_count=n + len(decisions),
+    )
+
+
+def render_source_deep_dive(slide, total, notes, active=False):
+    """Dense appendix grid for evidence sources."""
+    c = _content(slide)
+    sources = []
+    for item in (slide.get("evidence_sources") or []):
+        if isinstance(item, dict):
+            label = strip_eids(item.get("source_file") or item.get("file") or item.get("id") or "")
+            summary = strip_eids(item.get("summary") or item.get("body") or "")
+            eid = strip_eids(item.get("evidence_id") or "")
+        elif isinstance(item, str):
+            label = strip_eids(item)
+            summary, eid = "", ""
+        else:
+            continue
+        if label:
+            sources.append({"label": label, "summary": summary, "eid": eid})
+    if not sources:
+        bullets = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)]
+        sources = [{"label": b, "summary": "", "eid": ""} for b in bullets]
+    cards = []
+    for s in sources[:8]:
+        eid_html = f'<div class="source-eid">{esc(s["eid"])}</div>' if s["eid"] else ""
+        sum_html = f'<p>{esc(s["summary"])}</p>' if s["summary"] else ""
+        cards.append(
+            f'<div class="source-card card">'
+            f'<h4 class="source-label">{esc(s["label"])}</h4>'
+            f'{sum_html}{eid_html}</div>'
+        )
+    n = len(cards)
+    cols = "gl-grid-4" if n >= 4 else f"gl-grid-{max(n, 1)}"
+    if n == 1:
+        cols = "gl-grid"
+    main = (
+        f'<div class="gl-grid {cols} layout-source-deep-dive">'
+        f'{"".join(cards)}'
+        f'</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="source_deep_dive",
+        active=active,
+        item_count=n,
+    )
+
+
+def render_circular_process(slide, total, notes, active=False):
+    """Circular improvement loop with curved arrows between nodes."""
+    from ..diagram.builder import causal_loop_scene
+
+    main = f'<div class="gl-areas-diagram layout-circular-process">{causal_loop_scene(slide)}</div>'
+    main += insight_strip(_so_what(slide))
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="circular_process",
+        active=active,
+        item_count=4,
+    )
+

@@ -109,6 +109,12 @@ def render_slide(
         return recipes.render_hierarchy_tree(slide, total, notes, active=active)
     if lt == "ecosystem_map":
         return recipes.render_ecosystem_map(slide, total, notes, active=active)
+    if lt == "process_with_decisions":
+        return recipes.render_process_with_decisions(slide, total, notes, active=active)
+    if lt == "source_deep_dive":
+        return recipes.render_source_deep_dive(slide, total, notes, active=active)
+    if lt == "circular_process":
+        return recipes.render_circular_process(slide, total, notes, active=active)
 
     pvt = _primary_visual_type(slide)
     if is_chart_layout(pvt):

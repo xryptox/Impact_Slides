@@ -173,6 +173,18 @@ class EcosystemMapSlide(_BaseSlide):
     layout_type: Literal["ecosystem_map"] = "ecosystem_map"
 
 
+class ProcessWithDecisionsSlide(_BaseSlide):
+    layout_type: Literal["process_with_decisions"] = "process_with_decisions"
+
+
+class SourceDeepDiveSlide(_BaseSlide):
+    layout_type: Literal["source_deep_dive"] = "source_deep_dive"
+
+
+class CircularProcessSlide(_BaseSlide):
+    layout_type: Literal["circular_process"] = "circular_process"
+
+
 class FreeformGridSlide(_BaseSlide):
     layout_type: Literal["freeform_grid"] = "freeform_grid"
 
@@ -211,6 +223,12 @@ ValidatedSlide = Union[
     KpiTrendCardsSlide,
     ThreeColumnComparisonSlide,
     HorizontalProcessSlide,
+    DecisionTreeSlide,
+    HierarchyTreeSlide,
+    EcosystemMapSlide,
+    ProcessWithDecisionsSlide,
+    SourceDeepDiveSlide,
+    CircularProcessSlide,
     DataTableSlide,
     ProcessFlowSlide,
     ComparisonGridSlide,
@@ -260,6 +278,9 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "decision_tree": DecisionTreeSlide,
         "hierarchy_tree": HierarchyTreeSlide,
         "ecosystem_map": EcosystemMapSlide,
+        "process_with_decisions": ProcessWithDecisionsSlide,
+        "source_deep_dive": SourceDeepDiveSlide,
+        "circular_process": CircularProcessSlide,
         "data_table": DataTableSlide,
         "table": DataTableSlide,
         "full_process_flow": ProcessFlowSlide,
