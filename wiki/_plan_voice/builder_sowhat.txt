@@ -1,0 +1,21 @@
+rd`. For metric slides, this is the "why these numbers matter" sentence. For timeline/process slides, this is the "what's happening in this sequence" sentence. For comparison slides, this is the "what the contrast reveals" sentence. Do not leave empty.
+- **So What:** one-sentence insight callout — the single most important takeaway the audience should leave this slide with, phrased as an implication ("This means…", "The implication is…", "That puts AmEx…"). **Required on every slide.** Distinct from the headline (which states the fact) and the audience_takeaway (which states the action) — the so_what states the *insight*.
+- **Narrative Bridge:** one sentence connecting this slide to the next ("This scale sets up the integration question — which is next."). "Closes the deck" for the final slide. **Required on every slide** — carry from the Analyst's `narrative_bridge` if present; if the Analyst didn't emit one, write it.
+- **Bullets:** (3–5, ideally <12 words)
+  - Bullet 1
+  - Bullet 2
+  - Bullet 3
+- **Key Stats:** label · value · source `E####`
+- **Key Evidence:** Evidence IDs and exact references
+- **Speaker Notes:** concise presenter guidance
+
+Rules:
+- **Fill `subtitle`, `body_text`, `so_what`, and `narrative_bridge` on every slide** — not just `quote_card` or `split_text_visual`. The Renderer renders these as a subtitle line, a context paragraph, a so-what callout strip, and a narrative-bridge strip; leaving them empty produces sparse slides with 50%+ dead canvas. For metric/timeline/data_table/comparison layouts, `body_text` is the "why these numbers/steps matter" sentence and `so_what` is the single insight callout.
+- 3–5 bullets maximum; ideally under 12 words each. No paragraph-heavy slides.
+- Use **takeaway titles**, not vague labels.
+- **Do not duplicate `audience_takeaway` into `content.headline`** — they have distinct roles: `headline` is the on-slide fact/statement, `audience_takeaway` is the action/implication, `so_what` is the insight callout, `body_text` is the context paragraph, `narrative_bridge` is the link to the next slide.
+- Every major claim cites an `E####` from the Analyst's Evidence Register. If
+  the Analyst marked `Needs evidence`, mark the slide and write
+  `Evidence needed: [specific item]` — do not fabricate.
+- Use `semantic_type` to inform the visual (see mapping above).
+- If a slide needs too much content, recommend splitting 

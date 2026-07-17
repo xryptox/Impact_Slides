@@ -697,6 +697,51 @@ If no icon matches, emit `<svg class="icon"><circle cx="12" cy="12" r="4" fill="
 
 ---
 
+## Grid Design System (renderer_v2 source of truth)
+
+**Composable layout foundation.** Layout recipes compose from a shared Grid Design
+System — CSS tokens + `gl-*` primitives — rather than ad-hoc per-layout grids.
+The **deterministic** paint path that ships this CSS is:
+
+```bash
+python -m impact_slides.renderer_v2 --handoff builder_handoff.json --out out_dir
+# or: python step4_renderer_v2.py --handoff ... --out ...
+```
+
+Source CSS (do not re-invent):
+
+| File | Role |
+|---|---|
+| `impact_slides/renderer_v2/css/tokens.css` | Boardroom `:root` only |
+| `impact_slides/renderer_v2/css/viewport.css` | fixed 1920×1080 stage + fitStage |
+| `impact_slides/renderer_v2/css/gridlines.css` | ★ `gl-slide`, `gl-grid-*`, named areas, `gl-card` |
+| `impact_slides/renderer_v2/css/components.css` | KPI / process / quote / table / chart chrome |
+
+### Core primitives (use these classes)
+
+| Class | Purpose |
+|---|---|
+| `.gl-slide` | header / main / footer named areas on every content slide |
+| `.gl-grid` + `.gl-grid-2` / `-3` / `-4` / `-dense-2x2` | composition grids |
+| `.gl-areas-split` | lead + arg + proof dual-rail |
+| `.gl-areas-cover` | navy/blue bi-band cover |
+| `.gl-areas-metric` | stats + insight |
+| `.gl-areas-process-v` / `-h` | vertical timeline rail / horizontal process |
+| `.gl-areas-quote-stack` | multi-voice vertical quotes |
+| `.gl-areas-freeform` | optional `visual_spec.grid` named slots (Phase 7) |
+| `.gl-card` + `.gl-card-hat` | panel + full-bleed navy hat |
+
+**Rule:** when hand-authoring HTML (Copilot path), beauty recipes below still
+apply, but **prefer** these primitives over bare `display:grid` orphans. The
+Python v2 path is the regression orb — if prompt HTML and v2 diverge on physics,
+**v2 + this Grid section win** for maintainability; then update the hand-authored
+example blocks.
+
+**Outputs of the Python path:** `presentation.html` · `slide_notes.md` ·
+`evidence_manifest.json` (`style_preset: BoardroomEarnings`) · `run_meta.json`.
+
+---
+
 ## Layout Renderers (per `layout_type`)
 
 Render exactly one body per slide based on `layout_type`. Fill the 1920×1080
@@ -1469,6 +1514,8 @@ Output:
 | Readiness signals carried into `DECK_META` | Pass / Risk / Needs input | readiness_score = … |
 | Synthesized content recorded in manifest; evidence candor in notes only where it earns airtime (quota, not every slide) | Pass / Risk / Needs input | (which slides carry candor) |
 | **Boardroom theme only** (Source Sans 3 + IBM Plex; navy `#00175A` + blue `#006FCF`; no second preset / Phase 0 artifacts) | Pass / Risk | Hard-fail if Corporate/Editorial/Modern or other skins |
+| **Grid primitives (`gl-*`)** used for composition (not orphan bare grids) | Pass / Risk | Prefer renderer_v2 CSS |
+| **Freeform `visual_spec.grid`** (if present) paints named slots; otherwise ignored | Pass / Risk |  |
 | Pack-from-top (no flex-stretch short lists for whitespace) | Pass / Risk |  |
 | Fixed 1920×1080 stage + `.active` switching + print rules | Pass / Risk |  |
 | Accessibility (contrast, readable sizes, alt-text-ready) | Pass / Risk / Needs input |  |
@@ -1524,6 +1571,13 @@ All rendered slides must have:
   timeline years, comparison pairing, multi-quote stack, closed-loop outcome
   bars, spoken note bridges off-face. Do not regress to loner-icon splits,
   generic 1×4 KPI strips, placeholder risk bodies, or face story-bridge rails.
+- **Compose layouts from the Grid Design System** (`gl-slide`, `gl-grid-*`,
+  `gl-areas-*`, `gl-card`). Full CSS ships in `impact_slides/renderer_v2/css/`.
+  Prefer `python -m impact_slides.renderer_v2` for deterministic IC decks;
+  when hand-authoring, still honor the same primitives + Boardroom physics.
+- **Optional freeform:** if `visual_spec.grid` has `template_areas` + `slots`,
+  paint that named-area frame (`.gl-areas-freeform`); otherwise use the
+  `layout_type` recipe. Do not invent freeform grids when the field is absent.
 - **Honor chart / `icon_grid` layouts.** When `layout_type` is
   `grouped_bar_chart` / `stacked_bar_chart` / `waterfall_chart` / `heatmap`
   / `icon_grid` (or `primary_visual.type` names them under `other`), paint

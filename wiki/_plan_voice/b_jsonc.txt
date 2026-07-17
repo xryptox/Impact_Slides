@@ -1,0 +1,22 @@
+"content": {
+        "headline": "",
+        "subtitle": "",          // required on every slide — one-line secondary framing
+        "bullets": [],
+        "key_stats": [
+          { "label": "", "value": "", "source": "E####" }
+        ],
+        "body_text": "",         // required on every slide — 1-2 sentence context paragraph (not just quote_card)
+        "so_what": "",            // required on every slide — one-sentence insight callout (distinct from headline)
+        "narrative_bridge": ""   // required on every slide — one sentence connecting to the next slide ("Closes the deck" for the final slide)
+      },
+      "evidence_sources": [
+        {
+          "evidence_id": "E####",
+          "semantic_type": "Metric | Claim | Quote | Risk",
+          "source_file": "",
+          "exact_location": "",
+          "usage": ""
+        }
+      ],
+      "visual_spec": {
+        "primary_

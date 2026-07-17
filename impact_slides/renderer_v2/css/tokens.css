@@ -1,0 +1,70 @@
+/* Boardroom Earnings tokens — sole theme (no alternate presets). */
+:root {
+  --font-display: "Source Sans 3", sans-serif;
+  --font-body: "Source Sans 3", sans-serif;
+  --font-sans: "Source Sans 3", "IBM Plex Sans", sans-serif;
+  --font-num: "IBM Plex Sans", "Source Sans 3", sans-serif;
+
+  --stage-bg: #0b0f1a;
+  --slide-bg: #ffffff;
+  --bg: #ffffff;
+  --bg-soft: #f8f8f8;
+  --panel: #eff0f0;
+  --panel-border: #d8dce3;
+
+  --navy: #00175a;
+  --navy-deep: #001058;
+  --navy-mid: #002060;
+  --blue: #006fcf;
+  --blue-sky: #80c9ff;
+  --ink: #53565a;
+  --ink-muted: #63666a;
+  --ink-faint: #929292;
+  --ink-on-navy: #ffffff;
+  --grid: #e0e4ea;
+  --rule: #00175a;
+  --negative: #53565a;
+
+  --accent: var(--blue);
+  --accent-2: var(--navy);
+  --callout-bg: rgba(0, 23, 90, 0.05);
+
+  --fs-display: 72px;
+  --fs-title: 56px;
+  --fs-h1: var(--fs-title);
+  --fs-cover: var(--fs-display);
+  --fs-insight: 26px;
+  --fs-sub: 22px;
+  --fs-lead: 22px;
+  --fs-body: 22px;
+  --fs-kpi: 70px;
+  --fs-kpi-label: 24px;
+  --fs-meta: 14px;
+  --fs-foot: 14px;
+  --fs-bridge: 18px;
+
+  --pad-x: 96px;
+  --pad-top: 56px;
+  --pad-bottom: 48px;
+  --gap-lg: 32px;
+  --gap-md: 18px;
+  --gap-sm: 12px;
+  --gap-section: 32px;
+  --gap-content: 20px;
+  --gap-row: 14px;
+  --gap-tight: 10px;
+  /* Breathing room under the title/dek block before body content starts.
+     Per-layout overrides set --gap-header-main on .layout-* (option C). */
+  --gap-header-main: 45px;
+  /* Vertical rhythm for multi-item carriers (quote stack, process rail).
+     Pack-from-top still wins for short 1–2 item lists — do NOT space-between those. */
+  --gap-stack: 48px;
+  --gap-stack-loose: 64px;
+  /* Option B: min-height on multi-item (>=3) hero carriers only */
+  --hero-band-min: 560px;
+
+  --card-radius: 16px;
+  --radius-panel: 20px;
+  --radius-header: 14px;
+  --radius-card: 14px;
+}

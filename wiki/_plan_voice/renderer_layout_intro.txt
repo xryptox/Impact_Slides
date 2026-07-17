@@ -1,0 +1,18 @@
+## Layout Renderers (per `layout_type`)
+
+Render exactly one body per slide based on `layout_type`. **Every layout
+includes these density elements** to fill the 1920×1080 canvas with story,
+not dead space:
+- **`<p class="subtitle">`** — one-line secondary framing (from `content.subtitle`) between title and headline on every layout.
+- **`<p class="headline">`** — the takeaway statement (from `content.headline`).
+- **`<p class="context-band">`** — 1–2 sentence context paragraph (from `content.body_text`) below the main visual. **Omitted on `title_or_opening`** (a cover slide needs no context paragraph), **`quote_card`** (the quote body IS the context — render it in the `<blockquote>`), and **`icon_grid`** (the cards are the content). On all other layouts (`split_text_visual`, `metric_dashboard`, `data_table`, `full_process_flow`/`timeline`/`roadmap`, `comparison_grid`, `other`), the context-band is required.
+- **`<div class="so-what-callout">`** — single-sentence insight callout with an `ic-target` icon (from `content.so_what`) — the "why this matters" strip. **Omitted on `title_or_opening`** (a cover slide states the goal, not an insight). On all other layouts the so-what-callout is required.
+- **`<div class="narrative-bridge">`** — one sentence connecting to the next slide with an `ic-flow` arrow (from `content.narrative_bridge`); "Closes the deck" on the final slide.
+- **`<div class="source-strip">`** — source-file names (NOT `E####`) on data-heavy layouts (`metric_dashboard`, `data_table`).
+
+If the Builder left any of `subtitle`/`body_text`/`so_what`/`narrative_bridge`
+empty, **synthesize them** rather than leaving the element empty — a blank
+callout or bridge is a delivery failure. Synthesis rules:
+- **`subtitle`** ← from `purpose` (one-line framing of the headline).
+- **`body_text` / context-band** ← 1–2 sentences weaving `purpose` + `audience_takeaway` into a context paragraph (why these numbers/steps/contrast matter).
+- **`so_what`** ← rephrase `audience_takeaway` as an **insight**, not the action. If `audience_takeaway` is "Evaluate integration risk before close," the `so_what` is "The integration timeline is the gating risk to the deal thesis." (the impli

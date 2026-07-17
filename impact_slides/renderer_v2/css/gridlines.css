@@ -1,0 +1,309 @@
+/* ============================================================
+   Grid Design System — gl-* primitives
+   All layout recipes compose from these; do not invent orphan grids.
+   ============================================================ */
+
+/* Slide frame: header / main / footer named areas */
+.gl-slide {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "header"
+    "main"
+    "footer";
+  height: 100%;
+  width: 100%;
+  padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
+  box-sizing: border-box;
+  align-content: start;
+}
+.gl-header {
+  grid-area: header;
+  min-width: 0;
+  /* Title+dek cluster: separate from body without stretching the body */
+  margin-bottom: var(--gap-header-main);
+  padding-bottom: 0;
+}
+.gl-main   {
+  grid-area: main;
+  min-width: 0;
+  min-height: 0;
+  /* pack-from-top: free canvas stays BELOW content, not between sparse list rows */
+  align-content: start;
+  align-self: stretch;
+}
+.gl-footer { grid-area: footer; min-width: 0; margin-top: var(--gap-md); }
+
+/* ============================================================
+   Option C — per-layout header→main gap
+   Default --gap-header-main is 45px; denser content layouts use less,
+   quote/voice and comparison use more air under the dek.
+   ============================================================ */
+.layout-quote_card            { --gap-header-main: 52px; }
+.layout-comparison_grid       { --gap-header-main: 48px; }
+.layout-metric_dashboard,
+.layout-metric.dense-2x2,
+.gl-slide.layout-metric_dashboard { --gap-header-main: 40px; }
+.layout-data_table            { --gap-header-main: 40px; }
+.layout-timeline,
+.layout-roadmap,
+.layout-full_process_flow     { --gap-header-main: 42px; }
+.layout-split_text_visual     { --gap-header-main: 36px; }
+.layout-grouped_bar_chart,
+.layout-stacked_bar_chart,
+.layout-waterfall_chart,
+.layout-heatmap,
+.layout-icon_grid             { --gap-header-main: 40px; }
+.layout-freeform_grid         { --gap-header-main: 40px; }
+
+/* ============================================================
+   Option B — hero band only when multi-item (>=3)
+   section.gl-density-hero is set by slide_shell(item_count>=3).
+   Claims mid-canvas via min-height on the carrier — NOT flex-grow
+   on short 1–2 item lists (those have no gl-density-hero).
+   ============================================================ */
+/* Hero min-height applies to tall multi-item carriers that FILL their own box
+   (quote stack, KPI 2x2, VERTICAL timeline, comparison, split, chart).
+
+   DO NOT apply to process-flow--horizontal: the 3 platform cards are a short
+   single row, and the closed-loop outcome bar is a SIBLING after that row.
+   Forcing min-height on the row alone opens a dead band between cards and
+   the outcome (S3 closed-loop screenshot bug). Horizontal process packs from
+   the top; vertical timelines still get the hero band. */
+.slide.gl-density-hero .gl-main > .gl-areas-quote-stack,
+.slide.gl-density-hero .gl-main > .quote-layout--stack,
+.slide.gl-density-hero .gl-main > .gl-areas-metric,
+.slide.gl-density-hero .gl-main > .process-flow--vertical,
+.slide.gl-density-hero .gl-main > .comparison-grid,
+.slide.gl-density-hero .gl-main > .gl-areas-split,
+.slide.gl-density-hero .gl-main > .chart-frame {
+  min-height: var(--hero-band-min);
+}
+/* horizontal process: never hero min-height — keep content-height */
+.slide.gl-density-hero .gl-main > .process-flow--horizontal,
+.slide.gl-density-hero .gl-main > .gl-areas-process-h {
+  min-height: 0 !important;
+  align-content: start;
+  align-items: start;
+}
+/* outcome bar sits right under the platform row (tight, not mid-canvas) */
+.gl-main > .process-flow--horizontal + .process-outcome,
+.gl-main > .process-flow--horizontal + .gl-process-outcome,
+.gl-main > .gl-areas-process-h + .process-outcome,
+.gl-main > .gl-areas-process-h + .gl-process-outcome {
+  margin-top: var(--gap-md);
+}
+.gl-main > .process-outcome + .insight-strip,
+.gl-main > .gl-process-outcome + .insight-strip,
+.gl-main > .process-outcome + .so-what-callout,
+.gl-main > .gl-process-outcome + .so-what-callout {
+  margin-top: var(--gap-section);
+}
+/* distribute multi-item carriers inside the hero band without
+   stretching individual short rows — use even track packing */
+.slide.gl-density-hero .gl-main > .gl-areas-quote-stack,
+.slide.gl-density-hero .gl-main > .quote-layout--stack {
+  align-content: space-between;
+  gap: var(--gap-stack);
+}
+.slide.gl-density-hero .gl-main > .process-flow--vertical {
+  align-content: space-between;
+  min-height: var(--hero-band-min);
+}
+.slide.gl-density-hero .gl-main > .comparison-grid {
+  align-content: stretch;
+}
+.slide.gl-density-hero .gl-main > .gl-areas-metric .gl-stats.gl-grid-dense-2x2,
+.slide.gl-density-hero .gl-main > .gl-areas-metric .gl-grid-dense-2x2 {
+  min-height: calc(var(--hero-band-min) - 80px);
+  align-content: stretch;
+}
+/* 1–2 item slides: never force min-height / space-between */
+.slide:not(.gl-density-hero) .gl-main > .gl-areas-quote-stack,
+.slide:not(.gl-density-hero) .gl-main > .quote-layout--stack,
+.slide:not(.gl-density-hero) .gl-main > .process-flow--vertical,
+.slide:not(.gl-density-hero) .gl-main > .comparison-grid {
+  min-height: 0;
+  align-content: start;
+}
+
+/* Universal composition grids */
+.gl-grid {
+  display: grid;
+  gap: var(--gap-md);
+  align-content: start;
+  width: 100%;
+}
+.gl-grid-2 { grid-template-columns: 1fr 1fr; }
+.gl-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gl-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gl-grid-dense-2x2 {
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: auto;
+  /* multi-item KPI board: roomier cell gap so the 2×2 claims mid-canvas */
+  gap: var(--gap-section);
+  min-height: 0;
+}
+
+/* Cover bi-band named areas */
+.gl-areas-cover {
+  display: grid;
+  grid-template-rows: 62% 38%;
+  grid-template-areas:
+    "band-navy"
+    "band-blue";
+  height: 100%;
+  width: 100%;
+  padding: 0;
+}
+.gl-band-navy { grid-area: band-navy; background: var(--navy); color: var(--ink-on-navy); }
+.gl-band-blue { grid-area: band-blue; background: var(--blue); color: var(--ink-on-navy); }
+
+/* Split dual-rail: lead full-width + arg | proof */
+.gl-areas-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "lead lead"
+    "arg  proof";
+  gap: 40px 22px;
+  align-items: start;
+  width: 100%;
+}
+.gl-areas-split .gl-lead  { grid-area: lead;  min-width: 0; }
+.gl-areas-split .gl-arg   { grid-area: arg;   min-width: 0; }
+.gl-areas-split .gl-proof { grid-area: proof; min-width: 0; }
+
+/* Metric / table KPI region */
+.gl-areas-metric {
+  display: grid;
+  grid-template-areas:
+    "stats"
+    "insight";
+  gap: var(--gap-section);
+  align-content: start;
+  width: 100%;
+}
+.gl-areas-metric .gl-stats   { grid-area: stats; }
+.gl-areas-metric .gl-insight { grid-area: insight; }
+
+/* Process vertical rail (timeline) */
+.gl-areas-process-v {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap-md);
+  align-content: start;
+  width: 100%;
+  position: relative;
+}
+
+/* Process horizontal + full-width outcome */
+.gl-areas-process-h {
+  display: grid;
+  grid-template-columns: repeat(var(--step-count, 3), minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+}
+.gl-process-outcome {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
+/* Quote stack (vertical full-width)
+   2–3 voice cards: loose gap fills mid-canvas without flex-stretch on each card. */
+.gl-areas-quote-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap-stack-loose);
+  align-content: start;
+  width: 100%;
+  /* When main has spare height, keep items top-aligned (no space-between):
+     short 1-quote single path does not use this class. */
+}
+
+/* Card primitive */
+.gl-card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  flex: 0 0 auto; /* pack-from-top; never stretch short lists */
+  min-width: 0;
+}
+.gl-card-hat {
+  background: var(--navy);
+  color: var(--ink-on-navy);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  min-height: 64px;
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+.gl-card-body {
+  padding: 6px 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Freeform named-area frame (visual_spec.grid)
+   template-areas / columns / rows are set inline with SINGLE-quoted area names
+   so the HTML style="..." attribute does not terminate early. */
+.gl-areas-freeform {
+  display: grid;
+  grid-template-columns: var(--gl-ff-cols, 1fr 1fr);
+  grid-template-rows: var(--gl-ff-rows, auto);
+  gap: var(--gl-ff-gap, 22px);
+  align-content: start;
+  align-items: start;
+  justify-items: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.gl-areas-freeform .gl-slot {
+  min-width: 0;
+  min-height: 0;
+  align-content: start;
+  box-sizing: border-box;
+}
+.gl-areas-freeform .gl-slot .bullet-list {
+  margin: 0;
+  width: 100%;
+}
+.gl-areas-freeform .gl-slot .gl-grid,
+.gl-areas-freeform .gl-slot .gl-grid-2 {
+  display: grid;
+  width: 100%;
+  gap: 16px;
+}
+.gl-areas-freeform .gl-slot .kpi-card {
+  width: 100%;
+  min-width: 0;
+}
+.gl-empty {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-meta);
+}
+
+/* Debug outlines (enabled via body.gl-debug) */
+body.gl-debug .gl-header,
+body.gl-debug .gl-main,
+body.gl-debug .gl-footer,
+body.gl-debug .gl-lead,
+body.gl-debug .gl-arg,
+body.gl-debug .gl-proof,
+body.gl-debug .gl-card,
+body.gl-debug .gl-areas-freeform .gl-slot {
+  outline: 1px dashed rgba(0, 111, 207, 0.45);
+}

@@ -1,0 +1,82 @@
+{
+  "sizes": {
+    "A": 26830,
+    "B": 36193,
+    "R": 69979
+  },
+  "results": [
+    [
+      "OK",
+      "A: three story spine fields"
+    ],
+    [
+      "OK",
+      "A: plan table columns"
+    ],
+    [
+      "OK",
+      "A: bridge is question/force"
+    ],
+    [
+      "OK",
+      "B: packing + Story Craft"
+    ],
+    [
+      "OK",
+      "B: hard-banned openers"
+    ],
+    [
+      "OK",
+      "B: density floor"
+    ],
+    [
+      "OK",
+      "B: so_what no longer always required"
+    ],
+    [
+      "OK",
+      "R: packing + prefer omit"
+    ],
+    [
+      "OK",
+      "R: ban list present, no \"prefix with This means\""
+    ],
+    [
+      "OK",
+      "R: anti four-band monotony"
+    ],
+    [
+      "OK",
+      "R: perf rule 11"
+    ],
+    [
+      "OK",
+      "B: ban list"
+    ],
+    [
+      "OK",
+      "A: no \"required on every slide\""
+    ],
+    [
+      "OK",
+      "B: no \"required on every slide\""
+    ],
+    [
+      "OK",
+      "R: no \"required on every slide\""
+    ],
+    [
+      "OK",
+      "A: fences balanced (2)"
+    ],
+    [
+      "OK",
+      "B: fences balanced (2)"
+    ],
+    [
+      "OK",
+      "R: fences balanced (44)"
+    ]
+  ],
+  "fail_count": 0
+}

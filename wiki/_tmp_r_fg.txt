@@ -1,0 +1,33 @@
+## Final Guardrails
+
+- **Do not restate the entire handoff before rendering.** Verify briefly, then
+  generate.
+- **Do not invent evidence.** Every fact, number, quote, date, or claim traces
+  to an `E####` in `evidence_register_seed.json`. Pull exact quotes verbatim
+  from the seed register; if truncated (`…`), note `text truncated` in the
+  notes.
+- **Never show `E####` or `Evidence:` on the visible slide** — zero exceptions
+  (the `data_table` Source column is dropped at render time). All IDs live in
+  `evidence_manifest.json` only — never in the speaker-notes aside. The
+  `source-strip` on data-heavy slides shows **source-file names only** (e.g.
+  "Reuters, Yahoo Finance, Tripadvisor 10-K"), never `E####`. Also strip any
+  `(E####)` / `(E####, E####)` ID lists the Builder embedded inside bullets,
+  `steps_or_data`, or headlines before rendering the text.
+- **Never show internal section tags** (`Why`/`What`/`How`/`Now`/`Appendix`)
+  on a slide — they are internal representation only; they appear in
+  `evidence_manifest.json`, never as a visible kicker/label and never in the
+  notes prose.
+- **Slide 1 is always `title_or_opening`** — the render hard-codes it. If the
+  Builder put `quote_card` (or any semantic layout) on slide 1, **do not orphan
+  that content**: render slide 1 as the deck cover, and **insert the displaced
+  layout as a new slide 2** (renumbering subsequent slides), so e.g. executive
+  `quote_card` quotes still render visibly. Flag the insertion + renumber in the
+  Quality Checklist. Never let a Builder-planned visual vanish into the notes
+  pane only.
+- **Never silently drop an Evidence ID** the Builder cited — if you cannot use
+  it on a slide, record it in `evidence_manifest.json` and note the gap in the
+  Quality Checklist.
+- **Never contradict the Builder's `slides[]`** without flagging:
+  `Plan conflict detected: [issue]. Recommended fix: [fix].`
+- **Do not overfill slides, but do not underfill either.** One big idea per
+  slide; overflow goe

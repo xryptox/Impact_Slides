@@ -1,0 +1,37 @@
+"why this matters" strip. **Omitted on `title_or_opening`** (a cover slide states the goal, not an insight). On all other layouts the so-what-callout is required.
+- **`<div class="narrative-bridge">`** — one sentence connecting to the next slide with an `ic-flow` arrow (from `content.narrative_bridge`); "Closes the deck" on the final slide.
+- **`<div class="source-strip">`** — source-file names (NOT `E####`) on data-heavy layouts (`metric_dashboard`, `data_table`).
+
+If the Builder left any of `subtitle`/`body_text`/`so_what`/`narrative_bridge`
+empty, **synthesize them** rather than leaving the element empty — a blank
+callout or bridge is a delivery failure. Synthesis rules:
+- **`subtitle`** ← from `purpose` (one-line framing of the headline).
+- **`body_text` / context-band** ← 1–2 sentences weaving `purpose` + `audience_takeaway` into a context paragraph (why these numbers/steps/contrast matter).
+- **`so_what`** ← rephrase `audience_takeaway` as an **insight**, not the action. If `audience_takeaway` is "Evaluate integration risk before close," the `so_what` is "The integration timeline is the gating risk to the deal thesis." (the implication), not the action verbatim. Prefix with "This means…", "The implication is…", or "That puts…" when natural.
+- **`narrative_bridge`** ← one sentence pointing forward to the **next slide's title or topic** (e.g. "This scale sets up the integration question — which is next."). "Closes the deck" for the final slide.
+An empty visual panel is also a delivery failure (see `split_text_visual`).
+
+**Slide 1 is always `title_or_opening`** — Step 4 hard-codes `slide_number == 1`
+to title; honor that even if the Builder set a different layout on slide 1.
+Build slide 1 as the deck cover. If the Builder set a semantic layout (e.g.
+`quote_card`) on slide 1, **insert that layout as a new slide 2** so its content
+still renders visibly —
+do not relegate it to the notes pane only (see Final Guardrails). Renumber the
+subsequent slides and flag the insertion in the Quality Checklist.
+
+**Narrative-bridge renumbering under slide-1 displacement:** after inserting the
+displaced layout as slide 2, renumber original Builder slides 2→3, 3→4, …, N→N+1.
+Compute each slide's `narrative_bridge` against the **renumbered** next slide:
+- Inserted slide 2 (the displaced layout) → bridges to renumbered slide 3 (original Builder slide 2).
+- Slide 1 (title) → bridges to inserted slide 2.
+- Last slide → "Closes the deck".
+
+### `title_or_opening` (slide 1, or any deck-cover slide)
+```html
+<section class="slide title-slide active" data-slide-number="1">
+  <div class="slide-number">01 / NN</div>
+  <div class="title-stack">
+    <div class="kicker reveal-left delay-1"><!-- presentation.audience (NOT the Why/What/How/Now framework — that is internal-only) --></div>
+    <h1 class="reveal-left delay-2"><!-- title --></h1>
+    <p class="subtitle reveal-left delay-3"><!-- subtitle or audience_takeaway --></p>
+    <p class="headline reveal-left delay-4"><!-- pr

@@ -1,0 +1,33 @@
+## Speaker Notes Block (every slide, hidden — presenter-deliverable prose)
+
+Inside every `<section class="slide">`, append a hidden
+`<aside class="speaker-notes" data-slide-number="N">` containing
+**presenter-deliverable prose** — the words a presenter would speak when
+showing this slide. This is **not** a structured reference block. No `E####`
+IDs, no source-file names, no `Section:`/`Grounding:`/`Evidence:`/
+`Confidence:`/`Synthesized:` labels, no badges. Those live in
+`evidence_manifest.json` only.
+
+Write **3–5 sentences (~60–120 words, ~45–90 seconds of speaking)**. The prose
+should:
+
+1. **Say what this slide shows** and why it matters to this audience — open
+   with the slide's point in the presenter's own voice.
+2. **Bring out the story** this slide tells in the deck's argument — weave the
+   headline, the key numbers/quotes/bullets, and the slide's role in the
+   Why→What→How→Now flow into a single spoken narrative, not a list.
+3. **Give the audience the takeaway** — end on what the listener should
+   believe or do after this slide.
+4. **Bridge naturally** to the next slide where it helps the flow ("That scale
+   sets up the question of how AmEx will integrate it — which is next.").
+5. **Be candid about evidence limits** when the Builder marked the slide
+   synthesized or `readiness_score < 60` — fold this into the prose ("I want to
+   be upfront that the international-diversification benefit here is
+   directional rather than quantified in the source material.") rather than
+   tagging it with a label or badge.
+
+**Draw from the Builder handoff fields — synthesize, do not list:**
+- `audience_takeaway` — the intended listener takeaway; your anchor.
+- `purpose` — why this slide exists in the deck.
+- `content.headline`, `content.bullets[]`, `content.key_stats[]`,
+  `

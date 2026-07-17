@@ -1,0 +1,197 @@
+{
+  "presentation": {
+    "title": "Gridlines Mini Deck",
+    "subtitle": "Boardroom v2 smoke",
+    "audience": "IC",
+    "primary_goal": "Validate renderer v2 primitives",
+    "readiness_score": 40,
+    "quality_flags": []
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "title_or_opening",
+      "packing_mode": "cover-led",
+      "title": "Gridlines Mini Deck",
+      "section": "Cover",
+      "content": {
+        "headline": "Validate renderer v2 primitives",
+        "subtitle": "Boardroom v2 smoke",
+        "bullets": [],
+        "key_stats": [],
+        "body_text": "",
+        "so_what": "",
+        "narrative_bridge": "Proof lands next"
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Open with the thesis, not a readiness score."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "metric_dashboard",
+      "packing_mode": "stat-led",
+      "title": "Deal markers",
+      "content": {
+        "subtitle": "Four signals",
+        "headline": "$700M all-cash",
+        "key_stats": [
+          {"label": "Deal value", "value": "$700M"},
+          {"label": "Structure", "value": "All-cash"},
+          {"label": "Close", "value": "End 2026"},
+          {"label": "Form", "value": "Put-option"}
+        ],
+        "so_what": "Cash removes equity dilution risk.",
+        "narrative_bridge": "Scale still has to pencil."
+      },
+      "evidence_sources": [
+        {"id": "E0001", "source_file": "deal.pdf"}
+      ],
+      "visual_spec": {
+        "primary_visual": {"type": "dashboard", "steps_or_data": []}
+      }
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Where dining fits",
+      "content": {
+        "subtitle": "Engagement engine",
+        "bullets": [
+          "Dining is high frequency",
+          "Europe was the gap",
+          "TheFork closes the map"
+        ],
+        "body_text": "TheFork extends the closed loop into Europe.",
+        "so_what": "",
+        "supporting_points": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "icon_grid",
+          "steps_or_data": [
+            "Dining = high-frequency engagement",
+            "50,000+ restaurants already live",
+            "Card spend follows discovery"
+          ]
+        }
+      },
+      "evidence_sources": []
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "comparison_grid",
+      "packing_mode": "argument-led",
+      "title": "Open risks",
+      "content": {
+        "bullets": [
+          "Works council path is live",
+          "Antitrust clocks are open",
+          "Integration depth is still thin",
+          "Tripadvisor rails still run ops"
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "comparison_grid",
+          "steps_or_data": [
+            "Consultation",
+            "Regulatory",
+            "Integration",
+            "Closing"
+          ]
+        }
+      }
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "timeline",
+      "packing_mode": "sequence-led",
+      "title": "Path to Close",
+      "content": {
+        "so_what": "Four gates separate announcement from close."
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "vertical_timeline",
+          "steps_or_data": [
+            "Put-option exercised",
+            "Labor consultation",
+            "Regulatory/antitrust approvals",
+            "Close before end 2026"
+          ]
+        }
+      }
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "quote_card",
+      "packing_mode": "voice-led",
+      "title": "Voices on the deal",
+      "content": {
+        "subtitle": "Three decision-makers",
+        "so_what": "Shared thesis on dining."
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "quote_card",
+          "steps_or_data": [
+            {
+              "text": "\"Dining is central,\" said Rafa Marquez, President of International Card Services",
+              "attribution": "E0135"
+            },
+            {
+              "text": "\"We are deepening Tripadvisor,\" said Stephen Squeri, Chairman and CEO",
+              "attribution": "E0155"
+            },
+            {
+              "text": "\"Restaurants thrive here,\" said Almir Ambeskovic, CEO of TheFork",
+              "attribution": "E0136"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slide_number": 7,
+      "layout_type": "data_table",
+      "packing_mode": "stat-led",
+      "title": "European scale",
+      "content": {
+        "subtitle": "Fingerprint of the network"
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            ["Metric", "Value"],
+            ["Countries", "11"],
+            ["Restaurants", "50,000+"],
+            ["Venues post-deal", "75,000"],
+            ["Announced", "June 15 2026"]
+          ]
+        }
+      }
+    },
+    {
+      "slide_number": 8,
+      "layout_type": "grouped_bar_chart",
+      "packing_mode": "stat-led",
+      "title": "Engagement by cohort",
+      "content": {
+        "so_what": "Gen-Z density is the growth wedge."
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "grouped_bar_chart",
+          "steps_or_data": [
+            ["Cohort", "Index"],
+            ["Gen-Z", "55"],
+            ["Millennial", "42"],
+            ["Gen-X", "28"]
+          ]
+        }
+      }
+    }
+  ]
+}

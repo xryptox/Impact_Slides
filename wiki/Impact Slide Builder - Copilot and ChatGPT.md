@@ -642,11 +642,46 @@ Analyst's readiness signals and `semantic_type` through:
 - `slides[].priority` (must/should/could-have) comes from the Analyst's
   `slide_update_plan`.
 - `open_questions` carries through from the Analyst handoff.
-- `visual_spec` is intentionally minimal — only `primary_visual.type`,
-  `description`, and `steps_or_data` are read by Step 4's renderer
-  (`infer_layout_type`, `add_visual_placeholder`, `extract_visual_steps`).
-  Brand colors, fonts, and supporting visuals are Step 4's responsibility
-  (its `--brand` flag), so they are omitted here.
+
+### Optional freeform grid (`visual_spec.grid`) — Renderer v2 only
+
+For rare density layouts that no controlled `layout_type` fits, you **may**
+emit a named-area grid. The Copilot/ChatGPT Impact Slide Renderer and
+`python -m impact_slides.renderer_v2` both honor this when present;
+`step4_builder_validator.py` ignores it (falls back to `layout_type`).
+
+```jsonc
+"visual_spec": {
+  "primary_visual": {
+    "type": "other",
+    "description": "",
+    "steps_or_data": []
+  },
+  "grid": {
+    "template_areas": ["lead lead", "main aside"],
+    "columns": "1.2fr 0.8fr",
+    "rows": "auto 1fr",
+    "gap": "22px",
+    "slots": {
+      "lead":  { "kind": "text", "field": "body_text" },
+      "main":  { "kind": "bullets" },
+      "aside": { "kind": "metric_stack", "hat": "Markers" }
+    }
+  }
+}
+```
+
+**Slot kinds:** `bullets` · `metric_stack` / `key_stats` · `proof` · `text`
+(with optional `field`) · `so_what` / `insight` · `steps`.
+**Default:** omit `grid` entirely and use controlled `layout_type` recipes —
+freeform is an escape hatch, not the everyday path.
+
+
+- `visual_spec` is intentionally minimal — `primary_visual.type`,
+  `description`, and `steps_or_data` are the everyday carriers.
+  Optional `visual_spec.grid` is for freeform named slots (Renderer v2).
+  Brand colors, fonts, and supporting visuals remain Step 4 / Renderer
+  theme responsibility (Boardroom tokens), so they are omitted here.
 
 ---
 

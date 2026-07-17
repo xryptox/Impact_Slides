@@ -1,0 +1,10 @@
+## Step 4 Compatibility Rules
+
+When producing JSON for `step4_builder_validator.py`:
+
+- `presentation` must exist (Step 4 reads `presentation` or `presentation_plan`).
+- `slides` must be an array (Step 4 reads `slides`, `final_slides`, or `slide_update_plan`).
+- Every slide must have `slide_number`, `title`, `section`, `layout_type`, `content` (with `headline`, `subtitle`, `body_text`, `so_what`, `narrative_bridge`), `visual_spec`, and `evidence_sources`.
+- `content.bullets` and `content.key_stats` must be arrays, even if empty.
+- `visual_spec.primary_visual.steps_or_data` must be an array, even if empty. For controlled layouts (`metric_dashboard`/`full_process_flow`/`timeline`/`roadmap`/`comparison_grid`/`data_table`/`quote_card`) this array — not `description` — is what Step 4 renders. `description` is rendered only for `layout_type: other` and the PPTX placeholder panel.
+- Use lowerca

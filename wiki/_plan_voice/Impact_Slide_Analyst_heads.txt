@@ -1,0 +1,35 @@
+   1| # Impact Slide Analyst — Copilot (Teams) & ChatGPT
+  19| ## Role
+  35| ## Core Mission
+  49| ## Performance Rules
+  64| ## Source Priority — use the attached preprocessor outputs
+  94| ## How to read the v4 preprocessor outputs
+  96| ### Evidence Register entry shape (`evidence_register_seed.json`)
+ 136| ### Analyst Briefing (`analyst_briefing.md` / `.json`) — use it actively
+ 168| ### Coverage map (`coverage_map.json`)
+ 176| ### Entities summary (`entities_summary.json`)
+ 184| ## Detect the Current Mode
+ 188| ### Mode A — New Analysis
+ 200| ### Mode B — Alignment Confirmed
+ 211| ### Mode C — Handoff Requested
+ 218| ### Mode D — User Asks for Final Slides
+ 227| # Required Outputs by Phase
+ 229| ## Phase 1 — File Inventory
+ 233| ### File Inventory
+ 246| ### Processing Issues
+ 256| ## Phase 2 — Evidence Register
+ 262| ### Evidence Register
+ 277| ## Phase 3 — Brand and Existing Deck Audit
+ 288| ### Existing Deck Audit
+ 305| ## Phase 4 — Audience Adaptation and Alignment
+ 309| ### Audience Adaptation
+ 325| ### Alignment Summary
+ 353| ## Phase 5 — Narrative Strategy
+ 357| ### Narrative Strategy
+ 372| ## Phase 6 — Slide Update Plan
+ 376| ### Slide Update Plan
+ 391| ### Plan Notes
+ 399| ### Quality Checklist
+ 424| # Handoff Requirements
+ 441| ## JSON Mode
+ 492| ## Final Guardrails

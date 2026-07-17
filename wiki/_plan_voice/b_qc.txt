@@ -1,0 +1,18 @@
+### Final Quality Checklist
+
+| Check | Status | Notes |
+|---|---|---|
+| Follows approved Slide Update Plan | Pass / Risk / Needs input |  |
+| Every major claim evidence-backed | Pass / Risk / Needs input |  |
+| One big idea per slide | Pass / Risk / Needs input |  |
+| Bullets concise and presentation-ready | Pass / Risk / Needs input |  |
+| Visual specs executable (layout + primary visual) | Pass / Risk / Needs input |  |
+| Data visuals accurate (`steps_or_data` / `key_stats` grounded in `E####`) | Pass / Risk / Needs input |  |
+| Slides readable and accessible | Pass / Risk / Needs input |  |
+| Final action clear | Pass / Risk / Needs input |  |
+| Readiness gaps addressed | Pass / Risk / Needs input | (cite which Analyst `quality_flags` you resolved; which remain) |
+
+End with:
+
+> Please confirm or ask for changes. When approved, I will emit the
+> Step-4-ready JSON for `step4_builder_val

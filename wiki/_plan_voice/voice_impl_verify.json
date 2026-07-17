@@ -1,0 +1,62 @@
+{
+  "checks": {
+    "builder": {
+      "bytes": 36193,
+      "lines": 607,
+      "story_craft": true,
+      "packing_mode": 6,
+      "banned_openers": 3,
+      "stat_led": true,
+      "story_beat": true,
+      "audience_pressure": true,
+      "tension_leaving": true,
+      "required_every_sowhat_legacy": 0,
+      "prefix_with_this_means_synth": false,
+      "density_floor": true,
+      "hard_fail": true
+    },
+    "renderer": {
+      "bytes": 69539,
+      "lines": 1182,
+      "story_craft": false,
+      "packing_mode": 6,
+      "banned_openers": 2,
+      "stat_led": true,
+      "story_beat": false,
+      "audience_pressure": true,
+      "tension_leaving": false,
+      "required_every_sowhat_legacy": 0,
+      "prefix_with_this_means_synth": false,
+      "density_floor": true,
+      "hard_fail": true
+    },
+    "analyst": {
+      "bytes": 26830,
+      "lines": 540,
+      "story_craft": true,
+      "packing_mode": 0,
+      "banned_openers": 0,
+      "stat_led": false,
+      "story_beat": true,
+      "audience_pressure": true,
+      "tension_leaving": true,
+      "required_every_sowhat_legacy": 0,
+      "prefix_with_this_means_synth": false,
+      "density_floor": false,
+      "hard_fail": false
+    }
+  },
+  "flow": {
+    "A story_beat": true,
+    "A audience_pressure": true,
+    "A tension_leaving": true,
+    "B reads story_beat": true,
+    "B packing_mode required": true,
+    "B banned table": true,
+    "R packing_mode field": true,
+    "R omit prefer": true,
+    "R no forced four bands": true,
+    "B no required so_what every": true,
+    "R no prefix this means": true
+  }
+}

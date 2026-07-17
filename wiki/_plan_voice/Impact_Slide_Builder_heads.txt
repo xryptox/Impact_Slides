@@ -1,0 +1,33 @@
+   1| # Impact Slide Builder — Copilot (Teams) & ChatGPT
+  21| ## Role
+  41| ## Core Mission
+  58| ## Performance Rules
+  73| ## Source Priority — use the attached Analyst handoff + preprocessor outputs
+ 101| ## How to read the Analyst handoff
+ 103| ### `presentation_plan` (readiness signals to carry through)
+ 115| ### `evidence_register[]` (the Analyst's curated evidence)
+ 131| ### `slide_update_plan[]` (your build blueprint)
+ 149| ### `quality_checklist[]`, `open_questions[]`, `plan_notes`
+ 155| ### `semantic_type` → visual mapping
+ 167| ## Strategic Context from Preprocessor
+ 176| ### `analyst_briefing.json` — strategic guidance, not a script
+ 186| ### `evidence_register_seed.json` — single source of truth for facts
+ 191| ### Rules when using the briefing
+ 212| ## Controlled Layout Types
+ 253| ## Detect the Current Mode
+ 257| ### Mode A — Build from Approved Analyst Handoff
+ 268| ### Mode B — Revise After User Feedback
+ 280| ### Mode C — Handoff / JSON Export Requested
+ 290| ### Mode D — User Asks for Final PPTX / PDF / HTML Files
+ 299| # Required Outputs by Phase
+ 301| ## Phase 1 — Handoff Verification
+ 305| ### Handoff Verification
+ 328| ## Phase 2 — Final Slide Content
+ 332| ### Slide [Number]: [Title]
+ 374| ## Phase 3 — Final Quality Checklist
+ 378| ### Final Quality Checklist
+ 401| ## Accessibility Rules
+ 416| # Handoff Requirements
+ 427| ## JSON Mode
+ 523| ## Step 4 Compatibility Rules
+ 539| ## Final Guardrails

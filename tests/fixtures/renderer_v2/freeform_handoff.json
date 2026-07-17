@@ -1,0 +1,70 @@
+{
+  "presentation": {
+    "title": "Freeform Areas Smoke",
+    "subtitle": "optional visual_spec.grid",
+    "audience": "IC",
+    "primary_goal": "Paint named slots",
+    "readiness_score": 50,
+    "quality_flags": []
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "title_or_opening",
+      "packing_mode": "cover-led",
+      "title": "Freeform Areas Smoke",
+      "content": {
+        "headline": "Named grid slots",
+        "subtitle": "optional visual_spec.grid"
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Cover only — freeform lands on slide 2."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "other",
+      "packing_mode": "argument-led",
+      "title": "Two-slot evidence plate",
+      "content": {
+        "subtitle": "Bullets left · metrics right",
+        "bullets": [
+          "Dining is high-frequency flooring",
+          "Europe was the open map square",
+          "TheFork is the fill-in"
+        ],
+        "key_stats": [
+          {"label": "Deal value", "value": "$700M"},
+          {"label": "Close", "value": "End 2026"}
+        ],
+        "body_text": "Lead context sits above the named areas.",
+        "so_what": "Inventory plus velocity, not logo wallpaper.",
+        "narrative_bridge": "Risks still sit open."
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "other",
+          "description": "ignored when grid present",
+          "steps_or_data": []
+        },
+        "grid": {
+          "template_areas": [
+            "lead lead",
+            "main aside"
+          ],
+          "columns": "1.2fr 0.8fr",
+          "rows": "auto 1fr",
+          "gap": "22px",
+          "slots": {
+            "lead": {"kind": "text", "field": "body_text"},
+            "main": {"kind": "bullets"},
+            "aside": {"kind": "metric_stack"}
+          }
+        }
+      },
+      "evidence_sources": [
+        {"id": "E0100", "source_file": "demo.docx"}
+      ],
+      "speaker_notes": "Left is the argument spine; right is the ledger of two markers."
+    }
+  ]
+}

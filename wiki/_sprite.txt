@@ -1,0 +1,4 @@
+<svg style="display:none">` sprite at the
+top of `<body>`. Each icon is a
+`<symbol id="ic-<name>" viewBox="0 0 24 24">`. Reference with
+`<svg class="icon"><use href="#ic-<name>"/></svg>

@@ -1,0 +1,49 @@
+   1| # Impact Slide Renderer ? Copilot (Teams) & ChatGPT
+  31| ## Role
+  47| ## Core Mission
+  67| ## Performance Rules
+ 114| ## Source Priority ? use the attached Builder handoff + preprocessor outputs
+ 142| ## How to read the Builder handoff
+ 144| ### `presentation` (readiness signals to carry through)
+ 155| ### `slides[]` (your render blueprint)
+ 176| ### `quality_checklist[]`, `open_questions[]`
+ 183| ## Strategic Context from Preprocessor (carry the Builder's discipline)
+ 204| ## The Stage (include `viewport-base.css` verbatim)
+ 246| ### Required deck shell (HTML skeleton)
+ 391| ## Font-Pair Presets (pick one; never generic fonts)
+ 396| ### Preset 1 ? Corporate (trustworthy, financial)
+ 410| ### Preset 2 ? Editorial (warm, narrative, report-style)
+ 424| ### Preset 3 ? Modern (high-contrast, dark, keynote)
+ 444| ## Icon Library (inline SVG sprite ? Lucide paths, curate from this set)
+ 523| ## Layout Renderers (per `layout_type`)
+ 559| ### `title_or_opening` (slide 1, or any deck-cover slide)
+ 575| ### `split_text_visual` (default body; Claim prose)
+ 609| ### `metric_dashboard` (Metric; KPI cards)
+ 638| ### `data_table` (Metric/tabular ? fixes the broken Python fallback)
+ 670| ### `full_process_flow` / `timeline` / `roadmap`
+ 698| ### `comparison_grid` (Risk / side-by-side; up to 6 cards)
+ 724| ### `quote_card` (Quote ? never at slide 1)
+ 755| ### `icon_grid` (Claim ? the layout the Python fallback could not render)
+ 780| ### `other` (fallback)
+ 785| ## Speaker Notes Block (every slide, hidden ? presenter-deliverable prose)
+ 843| ### `evidence_manifest.json` (emit alongside the HTML)
+ 869| ### `slide_notes.md` (emit alongside the HTML)
+ 878| ## Density Mode
+ 890| ## Detect the Current Mode
+ 894| ### Mode A ? Render from Approved Builder Handoff
+ 908| ### Mode B ? Revise After User Feedback
+ 920| ### Mode C ? Re-emit / Export
+ 929| ### Mode D ? User Asks for PPTX / PDF
+ 941| # Required Outputs by Phase
+ 943| ## Phase 1 ? Handoff Verification
+ 947| ### Handoff Verification
+ 968| ## Phase 0 ? Style Discovery (3 previews)
+ 987| ### Style Preview 1 ? [preset name]
+1004| ## Phase 2 ? Full Deck Generation
+1008| ### 2a. `presentation.html`
+1027| ### 2b. `slide_notes.md`
+1031| ### 2c. `evidence_manifest.json`
+1039| ## Phase 3 ? Quality Checklist
+1043| ### Final Quality Checklist
+1074| ## Accessibility Rules
+1089| ## Final Guardrails

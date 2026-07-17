@@ -1,0 +1,49 @@
+/* Semantic design tokens — theme-agnostic layer mapping to boardroom tokens.
+   Override these at :root to inject a new brand without touching layout CSS. */
+:root {
+  /* Typography */
+  --font-display: var(--font-body, "Source Sans 3", sans-serif);
+  --font-body: "Source Sans 3", "IBM Plex Sans", sans-serif;
+  --font-sans: var(--font-body);
+  --font-num: "IBM Plex Sans", "Source Sans 3", sans-serif;
+
+  /* Color palette — semantic names */
+  --color-primary: var(--navy, #00175a);
+  --color-primary-deep: var(--navy-deep, #001058);
+  --color-primary-mid: var(--navy-mid, #002060);
+  --color-accent: var(--blue, #006fcf);
+  --color-accent-light: var(--blue-sky, #80c9ff);
+  --color-ink: var(--ink, #53565a);
+  --color-ink-muted: var(--ink-muted, #63666a);
+  --color-ink-faint: var(--ink-faint, #929292);
+  --color-ink-on-primary: var(--ink-on-navy, #ffffff);
+  --color-surface: var(--slide-bg, #ffffff);
+  --color-surface-soft: var(--bg-soft, #f8f8f8);
+  --color-panel: var(--panel, #eff0f0);
+  --color-panel-border: var(--panel-border, #d8dce3);
+  --color-grid: var(--grid, #e0e4ea);
+  --color-rule: var(--rule, #00175a);
+  --color-negative: var(--negative, #53565a);
+
+  /* Spacing scale */
+  --space-xs: var(--gap-tight, 10px);
+  --space-sm: var(--gap-sm, 12px);
+  --space-md: var(--gap-md, 18px);
+  --space-lg: var(--gap-lg, 32px);
+  --space-xl: var(--gap-section, 32px);
+
+  /* Border radius */
+  --radius-sm: var(--radius-card, 14px);
+  --radius-md: var(--radius-panel, 20px);
+  --radius-lg: var(--card-radius, 16px);
+
+  /* Typography scale */
+  --text-xs: var(--fs-meta, 14px);
+  --text-sm: var(--fs-foot, 14px);
+  --text-base: var(--fs-body, 22px);
+  --text-lg: var(--fs-lead, 22px);
+  --text-xl: var(--fs-insight, 26px);
+  --text-2xl: var(--fs-sub, 22px);
+  --text-display: var(--fs-display, 72px);
+  --text-title: var(--fs-title, 56px);
+}

@@ -35,7 +35,8 @@ v3/v2 remain as frozen regression baselines.
 10. [Quick Start](#quick-start)
 11. [Inspecting Insight Quality](#inspecting-insight-quality)
 12. [Testing](#testing)
-12. [Schema Contract (Pydantic)](#schema-contract-pydantic)
+12. [Step 4 — Renderer v2](#step-4--renderer-v2-boardroom--grid-design-system)
+13. [Schema Contract (Pydantic)](#schema-contract-pydantic)
 13. [Design Notes & Quality Guardrails](#design-notes--quality-guardrails)
 
 ---
@@ -986,6 +987,36 @@ New module-level helpers: `sheet_time_rank()`, `insight_priority_boost()`,
 `aggregate_insight`. New output files: `coverage_map.json`, `entities_summary.json`.
 
 ---
+
+
+## Step 4 — Renderer v2 (Boardroom + Grid Design System)
+
+After Builder JSON is approved, paint a deterministic 1920×1080 HTML deck:
+
+```bash
+python -m impact_slides.renderer_v2   --handoff path/to/builder_handoff.json   --seed path/to/evidence_register_seed.json   --out path/to/out_dir
+
+# thin shim
+python step4_renderer_v2.py --handoff ... --out ...
+```
+
+| Output | Description |
+|--------|-------------|
+| `presentation.html` | Self-contained Boardroom deck (`gl-*` Grid primitives) |
+| `slide_notes.md` | Presenter-deliverable prose notes |
+| `evidence_manifest.json` | Slide→evidence map (`style_preset: BoardroomEarnings`) |
+| `run_meta.json` | Generator version + layout inventory |
+
+**Layout mapping** uses shared CSS under `impact_slides/renderer_v2/css/`
+(`tokens`, `viewport`, `gridlines`, `components`) rather than ad-hoc per-layout
+grids. Optional freeform: `visual_spec.grid` named slots (see Builder prompt).
+
+**Relation to other Step 4 paths:**
+- **Copilot/ChatGPT** Impact Slide Renderer prompt — LLM hand-author path for the same Boardroom contracts.
+- **`step4_builder_validator.py`** — older PPTX/HTML fallback; does not yet paint charts/freeform boardroom physics fully.
+
+Flags: `--debug` outlines `gl-*` regions; default validation rejects face `E####`, missing Boardroom tokens, or broken stage JS (`--no-strict` to warn only).
+
 
 ## Schema Contract (Pydantic)
 
