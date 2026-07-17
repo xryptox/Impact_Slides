@@ -66,8 +66,44 @@ def _slide_for_layout(lt: str, n: int) -> dict:
         base["content"] = {"so_what": "Key insight"}
     elif lt == "split_text_visual":
         base["content"] = {"bullets": ["Point A"], "body_text": "Lead"}
+    elif lt == "comparison_with_metrics":
+        base["content"] = {
+            "bullets": [
+                "Option Alpha: Full migration to cloud-native stack",
+                "Option Beta: Hybrid on-prem with gradual cutover",
+            ],
+            "key_stats": [
+                {"label": "Cost / Month", "value": "$42K"},
+                {"label": "Migration Time", "value": "6 mo"},
+                {"label": "Risk Score", "value": "Low"},
+                {"label": "Team Size", "value": "8 FTE"},
+            ],
+            "so_what": "Hybrid approach minimizes downtime",
+        }
+    elif lt == "insight_with_evidence":
+        base["content"] = {
+            "headline": "Revenue diversification reduced churn by 40%",
+            "bullets": [
+                "Enterprise tier: 3 new logos",
+                "Mid-market: 45% expansion",
+                "Self-serve: 2x signups",
+            ],
+            "so_what": "Multi-segment strategy is working",
+        }
     elif lt == "comparison_grid":
         base["content"] = {"bullets": ["A: one", "B: two"]}
+    elif lt == "recommendation_with_rationale":
+        base["content"] = {
+            "recommendation": "Accelerate cloud migration to achieve 40% infrastructure savings",
+            "supporting_points": [
+                "ROI: $2.4M annual savings vs $800K migration cost",
+                "Timeline: 6-month phased rollout with zero downtime",
+                "Risk mitigation: Hybrid fallback for legacy systems",
+                "Team readiness: 85% of engineers already cloud-certified",
+                "Vendor lock-in: Multi-cloud strategy prevents dependency",
+            ],
+            "so_what": "Strong financial and operational case for immediate action",
+        }
     elif lt in ("full_process_flow", "timeline", "roadmap"):
         base["visual_spec"] = {"primary_visual": {"steps_or_data": ["Step 1", "Step 2", "Step 3"]}}
     elif lt in ("system_architecture", "data_flow_diagram"):
@@ -75,35 +111,115 @@ def _slide_for_layout(lt: str, n: int) -> dict:
     elif lt == "causal_loop":
         base["visual_spec"] = {"primary_visual": {"steps_or_data": ["Var A", "Var B", "Var C"]}}
     elif lt == "before_after":
-        base["content"] = {"bullets": ["Before A", "Before B", "After A", "After B"]}
+        base["content"] = {
+            "bullets": [
+                "Manual spreadsheet reconciliation",
+                "2-day close cycle",
+                "Siloed department budgets",
+                "Automated real-time dashboards",
+                "4-hour close cycle",
+                "Unified FP&A platform",
+            ],
+            "so_what": "75% faster close with zero manual errors",
+        }
     elif lt == "icon_grid":
         base["visual_spec"] = {"primary_visual": {"steps_or_data": ["A", "B", "C"]}}
     elif lt == "quote_card":
         base["content"] = {"body_text": "A famous quote."}
-    elif lt in ("evidence_cards", "recommendation_with_rationale"):
-        base["content"] = {"bullets": ["Evidence 1", "Evidence 2"]}
+    elif lt == "evidence_cards":
+        base["content"] = {
+            "bullets": [
+                "Revenue Growth: +18% QoQ",
+                "Customer Retention: 94% annual",
+                "Market Share: 23% in segment",
+                "Cost Reduction: -12% YoY",
+                "Employee NPS: 72",
+                "Product Uptime: 99.97%",
+            ],
+            "so_what": "Strong operational and financial momentum",
+        }
     elif lt == "priority_matrix":
         base["content"] = {"bullets": ["Item A", "Item B", "Item C", "Item D"]}
     elif lt == "risk_opportunity":
-        base["content"] = {"risks": ["Risk 1"], "opportunities": ["Opp 1"]}
+        base["content"] = {
+            "risks": [
+                "Regulatory compliance: New ESG disclosure rules take effect Q2",
+                "Talent attrition: Engineering turnover up 15% YoY",
+                "Supply chain: Single-source dependency on APAC components",
+            ],
+            "opportunities": [
+                "Market expansion: LATAM segment growing 28% annually",
+                "Product launch: AI-powered analytics ready for beta",
+                "Cost optimization: Cloud migration saving $2.4M annually",
+            ],
+            "so_what": "Balanced risk-reward profile favors aggressive growth",
+        }
     elif lt == "section_divider":
-        base["content"] = {"headline": "Section Title", "subtitle": "Subtitle"}
+        base["content"] = {
+            "headline": "Financial Performance Review",
+            "subtitle": "Q3 2024 Earnings Analysis & Forward Guidance",
+        }
     elif lt == "before_after_detailed":
-        base["content"] = {"before": "Old", "after": "New", "steps": ["Step 1", "Step 2"]}
+        base["content"] = {
+            "before": "Manual spreadsheet-based financial close",
+            "after": "Automated real-time consolidation platform",
+            "steps": [
+                "Data ingestion from 12 ERP instances",
+                "Automated reconciliation & variance detection",
+                "Real-time dashboard for CFO review",
+                "One-click regulatory reporting",
+            ],
+            "so_what": "75% faster close with zero manual errors",
+        }
     elif lt == "kpi_trend_cards":
         base["content"] = {"key_stats": [{"label": "A", "value": "1", "trend": "up"}]}
     elif lt == "three_column_comparison":
-        base["content"] = {"bullets": ["Opt A", "Opt B", "Opt C"]}
+        base["content"] = {
+            "bullets": [
+                "Option A: 50% margin but requires 12-month payback period",
+                "Option B: 35% margin with 6-month payback and lower churn risk",
+                "Option C: 25% margin but fastest to market at 3 months",
+            ],
+            "so_what": "Option B balances speed and profitability",
+        }
     elif lt == "horizontal_process":
-        base["content"] = {"bullets": ["S1", "S2", "S3"]}
+        base["content"] = {
+            "bullets": [
+                "Discovery: Stakeholder interviews & data audit",
+                "Design: Target operating model & roadmap",
+                "Build: Platform configuration & integration",
+                "Deploy: Phased rollout & change management",
+                "Optimize: Continuous improvement & scale",
+            ],
+            "so_what": "Proven 5-phase methodology reduces implementation risk",
+        }
     elif lt in ("decision_tree", "hierarchy_tree"):
         base["visual_spec"] = {"primary_visual": {"steps_or_data": [["Root", "Child"]]}}
     elif lt == "ecosystem_map":
         base["visual_spec"] = {"primary_visual": {"steps_or_data": [["A", "→", "B"]]}}
     elif lt == "process_with_decisions":
-        base["content"] = {"steps": ["S1", "S2"], "decisions": ["D1"]}
+        base["content"] = {
+            "steps": [
+                "Gather requirements from all business units",
+                "Evaluate vendor proposals against scoring matrix",
+                "Negotiate contract terms and SLAs",
+            ],
+            "decisions": [
+                "Budget approval required?",
+                "Legal review needed?",
+            ],
+            "so_what": "Structured procurement process ensures compliance",
+        }
     elif lt == "source_deep_dive":
-        base["content"] = {"bullets": ["Source 1", "Source 2"]}
+        base["content"] = {
+            "bullets": [
+                "Q3 Financial Report: Revenue up 18% QoQ driven by enterprise deals",
+                "Customer Survey 2024: NPS jumped from 42 to 58 after UI overhaul",
+                "Market Analysis: TAM expanded from $2.1B to $3.4B with new regulations",
+                "Internal Audit: Zero compliance findings for third consecutive quarter",
+            ],
+            "so_what": "All sources validate growth thesis",
+        }
     elif lt == "circular_process":
         base["visual_spec"] = {"primary_visual": {"steps_or_data": ["Plan", "Do", "Check", "Act"]}}
     return base

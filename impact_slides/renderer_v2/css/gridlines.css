@@ -88,8 +88,9 @@
 }
 /* Card grids stretch their rows to fill the hero band so cards become
    tall panels (not thin strips). Only auto-row grids: the metric 2x2 and
-   process flows have their own packing rules elsewhere. */
-.slide.gl-density-hero .gl-main > .gl-grid {
+   process flows have their own packing rules elsewhere.
+   EXCLUDE gl-grid-auto (horizontal process) — that packs from top. */
+.slide.gl-density-hero .gl-main > .gl-grid:not(.gl-grid-auto) {
   align-content: stretch;
   grid-auto-rows: 1fr;
 }
@@ -151,6 +152,12 @@
 .gl-grid-2 { grid-template-columns: 1fr 1fr; }
 .gl-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .gl-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* gl-grid-auto: dynamic column count via --step-count (horizontal process,
+   process_with_decisions). Renders steps left-to-right; falls back to 3. */
+.gl-grid-auto {
+  grid-template-columns: repeat(var(--step-count, 3), minmax(0, 1fr));
+  align-items: start;
+}
 .gl-grid-dense-2x2 {
   grid-template-columns: 1fr 1fr;
   grid-auto-rows: auto;

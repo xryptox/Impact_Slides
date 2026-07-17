@@ -738,3 +738,198 @@
 .slide.gl-density-hero .opportunity-card {
   min-height: 180px;
 }
+
+/* ============================================================
+   Layout-specific chrome for problem slides (21–24, 27, 31)
+   ============================================================ */
+
+/* ---- Risk / Opportunity column headers (21) ---- */
+.column-head {
+  margin: 0 0 18px;
+  font-size: var(--fs-insight);
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+.risk-column .gl-grid,
+.opportunity-column .gl-grid {
+  gap: var(--gap-md);
+  align-content: start;
+}
+
+/* ---- Recommendation with rationale (22) ---- */
+.layout-recommendation {
+  width: 100%;
+}
+.recommendation-head {
+  margin-bottom: var(--gap-section);
+  font-size: var(--fs-insight);
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.25;
+  max-width: 1200px;
+}
+
+/* ---- Section divider (23) — centered, large, minimal ---- */
+.layout-section-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  min-height: 400px;
+  gap: var(--gap-md);
+}
+.layout-section-divider .accent-line {
+  width: 120px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin-bottom: var(--gap-md);
+}
+.layout-section-divider .section-message {
+  margin: 0;
+  font-size: var(--fs-display);
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.layout-section-divider .section-subtitle {
+  margin: 0;
+  font-size: var(--fs-sub);
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+/* ---- Before / After detailed panels (24) ---- */
+.before-panel,
+.after-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-panel);
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.before-panel .panel-label,
+.after-panel .panel-label {
+  margin: 0;
+  font-size: var(--fs-kpi-label);
+  font-weight: 700;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.before-panel p,
+.after-panel p {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--ink);
+  line-height: 1.4;
+}
+.before-panel { border-left: 4px solid var(--ink-muted); }
+.after-panel  { border-left: 4px solid var(--accent); }
+
+/* Transformation steps (24) — horizontal connector flow */
+.transformation-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--gap-md);
+  margin-top: var(--gap-section);
+  align-content: start;
+}
+.transformation-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 24px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-panel);
+  font-size: var(--fs-body);
+  color: var(--ink);
+  line-height: 1.35;
+}
+.transformation-step .step-num {
+  font-size: var(--fs-insight);
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+/* ---- Horizontal process (27) & process_with_decisions (31) ----
+   Steps + interleaved arrows/decision nodes flow left-to-right in ONE row.
+   Flexbox (not gl-grid-auto columns) so step/arrow/step/arrow/step stays
+   on a single line regardless of count; steps share space, arrows fixed. */
+.layout-horizontal-process.gl-grid-auto,
+.layout-process-decisions.gl-grid-auto {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--gap-md);
+}
+.layout-horizontal-process .process-step,
+.layout-process-decisions .process-step,
+.layout-process-decisions .decision-node {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.layout-horizontal-process .process-arrow {
+  flex: 0 0 auto;
+}
+.layout-horizontal-process {
+  align-items: start;
+}
+.process-step {
+  text-align: center;
+  padding: 24px 20px;
+}
+.process-step .step-num {
+  display: block;
+  margin-bottom: 10px;
+  font-size: var(--fs-insight);
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.process-step .step-text {
+  font-size: var(--fs-body);
+  color: var(--ink);
+  line-height: 1.3;
+}
+.process-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  min-width: 40px;
+  align-self: center;
+}
+.process-arrow svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* ---- Process with decisions (31) ---- */
+.layout-process-decisions {
+  align-items: start;
+}
+.decision-node {
+  text-align: center;
+  padding: 24px 20px;
+}
+.decision-node .decision-diamond {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 32px;
+  color: var(--accent);
+  line-height: 1;
+}
+.decision-node .decision-label {
+  font-size: var(--fs-body);
+  color: var(--ink);
+  line-height: 1.3;
+}
