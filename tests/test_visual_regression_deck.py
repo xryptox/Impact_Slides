@@ -215,7 +215,15 @@ def _slide_for_layout(lt: str, n: int) -> dict:
             ["Product", "Research", ""],
         ]}}
     elif lt == "ecosystem_map":
-        base["visual_spec"] = {"primary_visual": {"steps_or_data": [["A", "→", "B"]]}}
+        base["visual_spec"] = {"primary_visual": {"steps_or_data": [
+            ["Platform", "powers", "Analytics"],
+            ["Platform", "integrates", "CRM"],
+            ["Platform", "feeds", "Data Lake"],
+            ["Analytics", "informs", "Strategy"],
+            ["CRM", "tracks", "Customers"],
+            ["Data Lake", "trains", "ML Models"],
+            ["Strategy", "guides", "Operations"],
+        ]}}
     elif lt == "process_with_decisions":
         base["content"] = {
             "steps": [

@@ -285,18 +285,37 @@ def decision_tree_scene(slide: Mapping[str, Any]) -> str:
         positions.append((x, y))
 
         if node["type"] == "decision":
-            # Diamond shape
+            # Diamond shape — size grows with label length so text fits
+            label = node["label"]
+            # Wrap long labels into two lines at a word boundary near the middle
+            words = label.split()
+            if len(label) > 16 and len(words) >= 2:
+                mid = len(words) // 2
+                line1, line2 = " ".join(words[:mid]), " ".join(words[mid:])
+            else:
+                line1, line2 = label, ""
+            d_size = max(diamond_size, 10 + max(len(line1), len(line2)) * 4)
             dx = x + node_w / 2
             dy = y + node_h / 2
             svg_parts.append(
-                f'<polygon points="{dx},{dy - diamond_size} {dx + diamond_size},{dy} '
-                f'{dx},{dy + diamond_size} {dx - diamond_size},{dy}" '
+                f'<polygon points="{dx},{dy - d_size} {dx + d_size},{dy} '
+                f'{dx},{dy + d_size} {dx - d_size},{dy}" '
                 f'fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="2"/>'
             )
-            svg_parts.append(
-                f'<text x="{dx}" y="{dy}" text-anchor="middle" dominant-baseline="middle" '
-                f'font-size="12" fill="var(--color-ink)">{esc(node["label"])}</text>'
-            )
+            if line2:
+                svg_parts.append(
+                    f'<text x="{dx}" y="{dy - 8}" text-anchor="middle" dominant-baseline="middle" '
+                    f'font-size="11" fill="var(--color-ink)">{esc(line1)}</text>'
+                )
+                svg_parts.append(
+                    f'<text x="{dx}" y="{dy + 8}" text-anchor="middle" dominant-baseline="middle" '
+                    f'font-size="11" fill="var(--color-ink)">{esc(line2)}</text>'
+                )
+            else:
+                svg_parts.append(
+                    f'<text x="{dx}" y="{dy}" text-anchor="middle" dominant-baseline="middle" '
+                    f'font-size="11" fill="var(--color-ink)">{esc(line1)}</text>'
+                )
         else:
             svg_parts.append(f'<g transform="translate({x}, {y})">')
             svg_parts.append(node_box(node["label"], width=node_w, height=node_h))
@@ -308,7 +327,20 @@ def decision_tree_scene(slide: Mapping[str, Any]) -> str:
         if parent_idx >= len(positions):
             continue
         px = positions[parent_idx][0] + node_w / 2
-        py = positions[parent_idx][1] + (diamond_size if nodes[parent_idx]["type"] == "decision" else node_h)
+        # Use actual diamond size for decision nodes so connectors start at the edge
+        parent = nodes[parent_idx]
+        if parent["type"] == "decision":
+            plabel = parent["label"]
+            pwords = plabel.split()
+            if len(plabel) > 16 and len(pwords) >= 2:
+                pline1 = " ".join(pwords[: len(pwords) // 2])
+                pline2 = " ".join(pwords[len(pwords) // 2 :])
+            else:
+                pline1, pline2 = plabel, ""
+            p_d_size = max(diamond_size, 10 + max(len(pline1), len(pline2)) * 4)
+            py = positions[parent_idx][1] + p_d_size
+        else:
+            py = positions[parent_idx][1] + node_h
         cx_pos = positions[i + 1][0] + node_w / 2
         cy_pos = positions[i + 1][1]
         # Elbow: down then across

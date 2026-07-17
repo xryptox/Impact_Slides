@@ -927,11 +927,12 @@
 }
 .process-arrow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   color: var(--accent);
   min-width: 48px;
   align-self: stretch;
+  padding-top: 28px;  /* aligns arrow with the step-number row */
 }
 .process-arrow svg {
   width: 28px;
