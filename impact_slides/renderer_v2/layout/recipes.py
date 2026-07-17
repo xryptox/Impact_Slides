@@ -1385,3 +1385,137 @@ def render_before_after_detailed(slide, total, notes, active=False):
         item_count=len(steps) + 2,
     )
 
+
+# ---------------------------------------------------------------------------
+# Wave 3b — Data, Comparison & Process layouts
+# ---------------------------------------------------------------------------
+
+def render_kpi_trend_cards(slide, total, notes, active=False):
+    """KPI grid with mini trend indicators (arrow up/down)."""
+    c = _content(slide)
+    stats = c.get("key_stats") or []
+    if not stats:
+        rows = _table_matrix(slide)
+        body = rows[1:] if rows and rows[0][0].lower() in ("metric", "label") else rows
+        stats = [{"label": r[0], "value": r[1] if len(r) > 1 else ""} for r in body if r]
+    cards = []
+    for s in stats[:6]:
+        if isinstance(s, dict):
+            lab = strip_eids(s.get("label") or "")
+            val = strip_eids(s.get("value") or "")
+            trend = s.get("trend", "")
+            trend_icon = "▲" if trend == "up" else ("▼" if trend == "down" else "—")
+        elif isinstance(s, (list, tuple)) and len(s) >= 2:
+            lab, val = strip_eids(s[0]), strip_eids(s[1])
+            trend_icon = "—"
+        else:
+            continue
+        cards.append(
+            f'<div class="kpi-trend-card card">'
+            f'<div class="kpi-label">{esc(lab)}</div>'
+            f'<div class="kpi-value">{esc(val)} <span class="trend">{trend_icon}</span></div>'
+            f'</div>'
+        )
+    n = len(cards)
+    cols = "gl-grid-3" if n >= 3 else f"gl-grid-{max(n, 1)}"
+    if n == 1:
+        cols = "gl-grid"
+    main = (
+        f'<div class="gl-grid {cols} layout-kpi-trend">'
+        f'{"".join(cards)}'
+        f'</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="kpi_trend_cards",
+        active=active,
+        item_count=n,
+    )
+
+
+def render_three_column_comparison(slide, total, notes, active=False):
+    """Three-way comparison cards in a .grid-3 layout."""
+    c = _content(slide)
+    items = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)][:3]
+    cards = []
+    for i, it in enumerate(items, 1):
+        cards.append(
+            f'<div class="comparison-col card">'
+            f'<h3 class="col-label">Option {i}</h3>'
+            f'<p>{esc(it)}</p></div>'
+        )
+    while len(cards) < 3:
+        cards.append(f'<div class="comparison-col card"><p>_(empty)_</p></div>')
+    main = (
+        f'<div class="gl-grid gl-grid-3 layout-three-col">'
+        f'{"".join(cards)}'
+        f'</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="three_column_comparison",
+        active=active,
+        item_count=len(items),
+    )
+
+
+def render_horizontal_process(slide, total, notes, active=False):
+    """Horizontal process flow with SVG arrow connectors between grid steps."""
+    c = _content(slide)
+    steps = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)][:5]
+    items = []
+    arrows = []
+    n = len(steps)
+    for i, s in enumerate(steps, 1):
+        items.append(
+            f'<div class="process-step card">'
+            f'<div class="step-num">{i}</div>'
+            f'<div class="step-text">{esc(s)}</div></div>'
+        )
+        if i < n:
+            arrows.append(
+                f'<div class="process-arrow">'
+                f'<svg viewBox="0 0 24 24" width="24" height="24">'
+                f'<path d="M5 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2"/>'
+                f'</svg></div>'
+            )
+    # Interleave steps and arrows
+    interleaved = []
+    for i, item in enumerate(items):
+        interleaved.append(item)
+        if i < len(arrows):
+            interleaved.append(arrows[i])
+    main = (
+        f'<div class="gl-grid gl-grid-auto layout-horizontal-process" '
+        f'style="--step-count:{n}">'
+        f'{"".join(interleaved)}'
+        f'</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="horizontal_process",
+        active=active,
+        item_count=n,
+    )
+

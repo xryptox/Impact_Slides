@@ -97,6 +97,12 @@ def render_slide(
         return recipes.render_section_divider(slide, total, notes, active=active)
     if lt == "before_after_detailed":
         return recipes.render_before_after_detailed(slide, total, notes, active=active)
+    if lt == "kpi_trend_cards":
+        return recipes.render_kpi_trend_cards(slide, total, notes, active=active)
+    if lt == "three_column_comparison":
+        return recipes.render_three_column_comparison(slide, total, notes, active=active)
+    if lt == "horizontal_process":
+        return recipes.render_horizontal_process(slide, total, notes, active=active)
 
     pvt = _primary_visual_type(slide)
     if is_chart_layout(pvt):

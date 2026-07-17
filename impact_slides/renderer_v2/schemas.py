@@ -149,6 +149,18 @@ class BeforeAfterDetailedSlide(_BaseSlide):
     layout_type: Literal["before_after_detailed"] = "before_after_detailed"
 
 
+class KpiTrendCardsSlide(_BaseSlide):
+    layout_type: Literal["kpi_trend_cards"] = "kpi_trend_cards"
+
+
+class ThreeColumnComparisonSlide(_BaseSlide):
+    layout_type: Literal["three_column_comparison"] = "three_column_comparison"
+
+
+class HorizontalProcessSlide(_BaseSlide):
+    layout_type: Literal["horizontal_process"] = "horizontal_process"
+
+
 class FreeformGridSlide(_BaseSlide):
     layout_type: Literal["freeform_grid"] = "freeform_grid"
 
@@ -184,6 +196,9 @@ ValidatedSlide = Union[
     RecommendationWithRationaleSlide,
     SectionDividerSlide,
     BeforeAfterDetailedSlide,
+    KpiTrendCardsSlide,
+    ThreeColumnComparisonSlide,
+    HorizontalProcessSlide,
     DataTableSlide,
     ProcessFlowSlide,
     ComparisonGridSlide,
@@ -227,6 +242,9 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "recommendation_with_rationale": RecommendationWithRationaleSlide,
         "section_divider": SectionDividerSlide,
         "before_after_detailed": BeforeAfterDetailedSlide,
+        "kpi_trend_cards": KpiTrendCardsSlide,
+        "three_column_comparison": ThreeColumnComparisonSlide,
+        "horizontal_process": HorizontalProcessSlide,
         "data_table": DataTableSlide,
         "table": DataTableSlide,
         "full_process_flow": ProcessFlowSlide,
