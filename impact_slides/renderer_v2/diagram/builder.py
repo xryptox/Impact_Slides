@@ -338,7 +338,8 @@ def decision_tree_scene(slide: Mapping[str, Any]) -> str:
             else:
                 pline1, pline2 = plabel, ""
             p_d_size = max(diamond_size, 10 + max(len(pline1), len(pline2)) * 4)
-            py = positions[parent_idx][1] + p_d_size
+            # Bottom vertex of the diamond: center_y + d_size
+            py = positions[parent_idx][1] + node_h / 2 + p_d_size
         else:
             py = positions[parent_idx][1] + node_h
         cx_pos = positions[i + 1][0] + node_w / 2
