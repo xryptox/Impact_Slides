@@ -462,6 +462,7 @@ def ecosystem_map_scene(slide: Mapping[str, Any]) -> str:
         svg_parts.append("</g>")
 
     # Connections — shrink endpoints to node borders
+    _conn_idx = 0
     for src, label, tgt in connections:
         if src not in positions or tgt not in positions:
             continue
@@ -472,25 +473,18 @@ def ecosystem_map_scene(slide: Mapping[str, Any]) -> str:
         sx, sy = _edge_point(scx, scy, node_w, node_h, tcx, tcy)
         tx, ty = _edge_point(tcx, tcy, node_w, node_h, scx, scy)
         svg_parts.append(arrow_connector(sx, sy, tx, ty))
-        # Label offset perpendicular to the arrow so it doesn't overlap the line
-        mx = (sx + tx) / 2
-        my = (sy + ty) / 2
-        dx_a, dy_a = tx - sx, ty - sy
-        length = math.sqrt(dx_a**2 + dy_a**2) or 1
-        # Perpendicular unit vector, offset ~16px
-        px_off = (-dy_a / length) * 16
-        py_off = (dx_a / length) * 16
-        lx = mx + px_off
-        ly = my + py_off
-        label_w = len(label) * 6.5 + 8
+        # Label ON the arrow midpoint, staggered to avoid clustering
+        # Alternate positions along the line: 0.35, 0.5, 0.65
+        t = [0.35, 0.5, 0.65][_conn_idx % 3]
+        lx = sx + (tx - sx) * t
+        ly = sy + (ty - sy) * t
         svg_parts.append(
-            f'<rect x="{lx - label_w/2:.0f}" y="{ly - 8:.0f}" width="{label_w:.0f}" height="16"'
-            f' rx="3" fill="white" opacity="0.85"/>'
+            f'<text x="{lx:.0f}" y="{ly + 4:.0f}" text-anchor="middle" font-size="11" '
+            f'fill="var(--color-ink-muted)" '
+            f'paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" '
+            f'stroke-linejoin="round">{esc(label)}</text>'
         )
-        svg_parts.append(
-            f'<text x="{lx}" y="{ly + 4}" text-anchor="middle" font-size="11" '
-            f'fill="var(--color-ink-muted)">{esc(label)}</text>'
-        )
+        _conn_idx += 1
 
     svg_parts.append(_svg_close())
     return "".join(svg_parts)
