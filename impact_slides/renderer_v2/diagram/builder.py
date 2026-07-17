@@ -462,7 +462,30 @@ def ecosystem_map_scene(slide: Mapping[str, Any]) -> str:
         svg_parts.append("</g>")
 
     # Connections — shrink endpoints to node borders
-    _conn_idx = 0
+    # Collect node bounding boxes for collision detection
+    _node_rects = [
+        (px, py, px + node_w, py + node_h)
+        for px, py in positions.values()
+    ]
+    _placed_labels: list[tuple[float, float, float, float]] = []  # (x1,y1,x2,y2)
+
+    def _label_collides(lx: float, ly: float, lw: float) -> bool:
+        """Check if label at (lx,ly) with width lw collides with nodes or other labels."""
+        pad = 6
+        lx1, ly1 = lx - lw / 2 - pad, ly - 14 - pad
+        lx2, ly2 = lx + lw / 2 + pad, ly + 4 + pad
+        # Check node boxes
+        for nx1, ny1, nx2, ny2 in _node_rects:
+            if lx1 < nx2 and lx2 > nx1 and ly1 < ny2 and ly2 > ny1:
+                return True
+        # Check previously placed labels
+        for px1, py1, px2, py2 in _placed_labels:
+            if lx1 < px2 and lx2 > px1 and ly1 < py2 and ly2 > py1:
+                return True
+        return False
+
+    # First pass: draw all arrows, compute label anchor points
+    _label_queue: list[tuple[float, float, float, float, str]] = []  # (sx,sy,tx,ty, label)
     for src, label, tgt in connections:
         if src not in positions or tgt not in positions:
             continue
@@ -473,26 +496,40 @@ def ecosystem_map_scene(slide: Mapping[str, Any]) -> str:
         sx, sy = _edge_point(scx, scy, node_w, node_h, tcx, tcy)
         tx, ty = _edge_point(tcx, tcy, node_w, node_h, scx, scy)
         svg_parts.append(arrow_connector(sx, sy, tx, ty))
-        # Label beside the arrow, staggered along the line + alternating side
-        _t_positions = [0.25, 0.38, 0.50, 0.62, 0.75]
-        t = _t_positions[_conn_idx % len(_t_positions)]
-        mx = sx + (tx - sx) * t
-        my = sy + (ty - sy) * t
-        # Perpendicular offset ~10px, alternating left/right
+        _label_queue.append((sx, sy, tx, ty, label))
+
+    # Second pass: place labels with collision avoidance
+    for sx, sy, tx, ty, label in _label_queue:
+        label_w = len(label) * 6.5 + 8
         dx_a, dy_a = tx - sx, ty - sy
         length = math.sqrt(dx_a**2 + dy_a**2) or 1
-        side = 1 if _conn_idx % 2 == 0 else -1
-        px_off = (-dy_a / length) * 10 * side
-        py_off = (dx_a / length) * 10 * side
-        lx = mx + px_off
-        ly = my + py_off
+        # Candidate positions: (t, side, offset)
+        best_lx, best_ly = (sx + tx) / 2, (sy + ty) / 2  # fallback
+        placed = False
+        for t in [0.5, 0.4, 0.6, 0.3, 0.7, 0.25, 0.75]:
+            mx = sx + (tx - sx) * t
+            my = sy + (ty - sy) * t
+            for side in [1, -1]:
+                for off in [10, 16, 24, 32]:
+                    lx = mx + (-dy_a / length) * off * side
+                    ly = my + (dx_a / length) * off * side
+                    if not _label_collides(lx, ly, label_w):
+                        best_lx, best_ly = lx, ly
+                        placed = True
+                        break
+                if placed:
+                    break
+            if placed:
+                break
+        _placed_labels.append(
+            (best_lx - label_w / 2 - 6, best_ly - 20, best_lx + label_w / 2 + 6, best_ly + 10)
+        )
         svg_parts.append(
-            f'<text x="{lx:.0f}" y="{ly + 4:.0f}" text-anchor="middle" font-size="11" '
+            f'<text x="{best_lx:.0f}" y="{best_ly + 4:.0f}" text-anchor="middle" font-size="11" '
             f'fill="var(--color-ink-muted)" '
             f'paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" '
             f'stroke-linejoin="round">{esc(label)}</text>'
         )
-        _conn_idx += 1
 
     svg_parts.append(_svg_close())
     return "".join(svg_parts)
