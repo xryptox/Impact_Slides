@@ -76,8 +76,22 @@
 .slide.gl-density-hero .gl-main > .process-flow--vertical,
 .slide.gl-density-hero .gl-main > .comparison-grid,
 .slide.gl-density-hero .gl-main > .gl-areas-split,
-.slide.gl-density-hero .gl-main > .chart-frame {
+.slide.gl-density-hero .gl-main > .chart-frame,
+/* Wave-layout carriers: plain .gl-grid / diagram scenes direct in gl-main.
+   Enrolled in the hero band so evidence/source/comparison/priority/trend
+   card grids and SVG diagram scenes claim mid-canvas instead of packing
+   into a thin top strip. */
+.slide.gl-density-hero .gl-main > .gl-grid,
+.slide.gl-density-hero .gl-main > .gl-areas-diagram,
+.slide.gl-density-hero .gl-main > .layout-insight-evidence {
   min-height: var(--hero-band-min);
+}
+/* Card grids stretch their rows to fill the hero band so cards become
+   tall panels (not thin strips). Only auto-row grids: the metric 2x2 and
+   process flows have their own packing rules elsewhere. */
+.slide.gl-density-hero .gl-main > .gl-grid {
+  align-content: stretch;
+  grid-auto-rows: 1fr;
 }
 /* horizontal process: never hero min-height — keep content-height */
 .slide.gl-density-hero .gl-main > .process-flow--horizontal,
