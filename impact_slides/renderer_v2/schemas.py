@@ -117,6 +117,22 @@ class ComparisonWithMetricsSlide(_BaseSlide):
     layout_type: Literal["comparison_with_metrics"] = "comparison_with_metrics"
 
 
+class SystemArchitectureSlide(_BaseSlide):
+    layout_type: Literal["system_architecture"] = "system_architecture"
+
+
+class DataFlowDiagramSlide(_BaseSlide):
+    layout_type: Literal["data_flow_diagram"] = "data_flow_diagram"
+
+
+class CausalLoopSlide(_BaseSlide):
+    layout_type: Literal["causal_loop"] = "causal_loop"
+
+
+class BeforeAfterSlide(_BaseSlide):
+    layout_type: Literal["before_after"] = "before_after"
+
+
 class FreeformGridSlide(_BaseSlide):
     layout_type: Literal["freeform_grid"] = "freeform_grid"
 
@@ -144,6 +160,10 @@ ValidatedSlide = Union[
     EvidenceCardsSlide,
     DataTableWithInsightSlide,
     ComparisonWithMetricsSlide,
+    SystemArchitectureSlide,
+    DataFlowDiagramSlide,
+    CausalLoopSlide,
+    BeforeAfterSlide,
     DataTableSlide,
     ProcessFlowSlide,
     ComparisonGridSlide,
@@ -179,6 +199,10 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "evidence_cards": EvidenceCardsSlide,
         "data_table_with_insight": DataTableWithInsightSlide,
         "comparison_with_metrics": ComparisonWithMetricsSlide,
+        "system_architecture": SystemArchitectureSlide,
+        "data_flow_diagram": DataFlowDiagramSlide,
+        "causal_loop": CausalLoopSlide,
+        "before_after": BeforeAfterSlide,
         "data_table": DataTableSlide,
         "table": DataTableSlide,
         "full_process_flow": ProcessFlowSlide,

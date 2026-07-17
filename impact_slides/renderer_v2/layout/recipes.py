@@ -1124,6 +1124,106 @@ def render_priority_matrix(slide, total, notes, active=False):
     )
 
 
+def render_system_architecture(slide, total, notes, active=False):
+    """Layered node graph using diagram primitives."""
+    from ..diagram.builder import system_architecture_scene
+
+    diagram = system_architecture_scene(slide)
+    main = (
+        f'<div class="gl-areas-diagram layout-system-architecture">'
+        f'<div class="diagram-wrap">{diagram}</div>'
+        f"{insight_strip(_so_what(slide))}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="system_architecture",
+        active=active,
+        item_count=3,
+    )
+
+
+def render_data_flow_diagram(slide, total, notes, active=False):
+    """Horizontal data pipeline using diagram primitives."""
+    from ..diagram.builder import data_flow_scene
+
+    diagram = data_flow_scene(slide)
+    main = (
+        f'<div class="gl-areas-diagram layout-data-flow">'
+        f'<div class="diagram-wrap">{diagram}</div>'
+        f"{insight_strip(_so_what(slide))}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="data_flow_diagram",
+        active=active,
+        item_count=4,
+    )
+
+
+def render_causal_loop(slide, total, notes, active=False):
+    """Circular feedback loop using diagram primitives."""
+    from ..diagram.builder import causal_loop_scene
+
+    diagram = causal_loop_scene(slide)
+    main = (
+        f'<div class="gl-areas-diagram layout-causal-loop">'
+        f'<div class="diagram-wrap">{diagram}</div>'
+        f"{insight_strip(_so_what(slide))}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="causal_loop",
+        active=active,
+        item_count=4,
+    )
+
+
+def render_before_after(slide, total, notes, active=False):
+    """Side-by-side before/after comparison using diagram primitives."""
+    from ..diagram.builder import before_after_scene
+
+    diagram = before_after_scene(slide)
+    main = (
+        f'<div class="gl-areas-diagram layout-before-after">'
+        f'<div class="diagram-wrap">{diagram}</div>'
+        f"{insight_strip(_so_what(slide))}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="before_after",
+        active=active,
+        item_count=2,
+    )
+
+
 def render_freeform(slide, total, notes, active=False):
     """Phase 7: named-area visual_spec.grid body inside standard gl-slide shell."""
     from .freeform import render_freeform_main

@@ -79,6 +79,14 @@ def render_slide(
         return recipes.render_data_table_with_insight(slide, total, notes, active=active)
     if lt == "comparison_with_metrics":
         return recipes.render_comparison_with_metrics(slide, total, notes, active=active)
+    if lt == "system_architecture":
+        return recipes.render_system_architecture(slide, total, notes, active=active)
+    if lt == "data_flow_diagram":
+        return recipes.render_data_flow_diagram(slide, total, notes, active=active)
+    if lt == "causal_loop":
+        return recipes.render_causal_loop(slide, total, notes, active=active)
+    if lt == "before_after":
+        return recipes.render_before_after(slide, total, notes, active=active)
     if lt == "quote_card":
         return recipes.render_quote(slide, total, notes, active=active)
 
