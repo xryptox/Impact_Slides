@@ -330,7 +330,7 @@ def _kpi_cards(stats: Sequence[Any], *, cols_class: str) -> str:
             continue
         src_html = f'<div class="kpi-source">{esc(src)}</div>' if src else ""
         cards.append(
-            f'<div class="kpi-card">'
+            f'<div class="kpi-card card">'
             f'<div class="kpi-label">{esc(lab)}</div>'
             f'<div class="kpi-value">{esc(val)}</div>'
             f"{src_html}</div>"
@@ -613,6 +613,186 @@ def render_process(slide, total, notes, active=False, vertical: bool | None = No
         layout_class=layout or "full_process_flow",
         active=active,
         item_count=len(items) + (1 if outcome else 0),
+    )
+
+
+def render_evidence_cards(slide, total, notes, active=False):
+    """Adaptive evidence card grid (2/3/4 columns by item count)."""
+    c = _content(slide)
+
+    # Gather evidence items: evidence_sources, then supporting_points, then bullets
+    items: list[dict[str, str]] = []
+    for item in (slide.get("evidence_sources") or []):
+        if isinstance(item, dict):
+            label = strip_eids(
+                item.get("source_file") or item.get("file") or item.get("id") or ""
+            )
+            eid = strip_eids(item.get("id") or item.get("evidence_id") or "")
+            if label:
+                items.append({"label": label, "value": eid})
+        elif isinstance(item, str):
+            if "." in item:
+                items.append({"label": item, "value": ""})
+
+    if not items:
+        for line in (
+            c.get("supporting_points") or c.get("bullets") or []
+        ):
+            line = strip_eids(line)
+            if not line:
+                continue
+            if ":" in line:
+                k, _, v = line.partition(":")
+                items.append({"label": k.strip(), "value": v.strip()})
+            else:
+                items.append({"label": line, "value": ""})
+
+    n = min(len(items), 8)
+    if n == 4:
+        cols_class = "gl-grid-dense-2x2"
+    elif n >= 5:
+        cols_class = "gl-grid-3"
+    elif n == 3:
+        cols_class = "gl-grid-3"
+    else:
+        cols_class = f"gl-grid-{max(n, 1)}"
+
+    cards = []
+    for it in items[:8]:
+        val_html = f'<div class="evidence-value">{esc(it["value"])}</div>' if it["value"] else ""
+        cards.append(
+            f'<div class="gl-card evidence-card">'
+            f'<div class="evidence-label">{esc(it["label"])}</div>'
+            f"{val_html}</div>"
+        )
+
+    if not cards:
+        cards = [
+            '<div class="gl-card evidence-card">'
+            '<div class="evidence-label">No evidence</div></div>'
+        ]
+
+    main = (
+        f'<div class="gl-grid {cols_class} evidence-grid layout-evidence-cards">'
+        f'{"".join(cards)}'
+        f"</div>"
+        f"{insight_strip(_so_what(slide))}"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="evidence_cards",
+        active=active,
+        item_count=n,
+    )
+
+
+def render_data_table_with_insight(slide, total, notes, active=False):
+    """Data table with an insight strip below it."""
+    rows = _table_matrix(slide)
+    if not rows:
+        return render_table(slide, total, notes, active=active)
+
+    if table_as_kpi(rows):
+        # Table is KPI-like; render as metric_row_with_breakdown instead
+        body = rows[1:] if rows[0] and rows[0][0].lower() in ("metric", "name", "label", "item") else rows
+        stats = [{"label": r[0], "value": r[1] if len(r) > 1 else ""} for r in body]
+        n = len(stats)
+        cols_class = "gl-grid-dense-2x2" if n == 4 else ("gl-grid-3" if n >= 3 else f"gl-grid-{max(n,1)}")
+        main = (
+            f'<div class="gl-areas-metric layout-data-table-insight">'
+            f'<div class="gl-grid {cols_class} gl-stats">{_kpi_cards(stats, cols_class="gl-grid")}</div>'
+            f'<div class="gl-insight">{insight_strip(_so_what(slide))}</div>'
+            f"</div>"
+        )
+    else:
+        # True table with insight strip
+        head = rows[0]
+        body = rows[1:] if len(rows) > 1 else []
+        th = "".join(f"<th>{esc(h)}</th>" for h in head)
+        trs = []
+        for r in body:
+            tds = []
+            for i, cell in enumerate(r):
+                cls = ' class="num"' if i == len(r) - 1 and re.search(r"[\d$%]", cell or "") else ""
+                tds.append(f"<td{cls}>{esc(cell)}</td>")
+            while len(tds) < len(head):
+                tds.append("<td></td>")
+            trs.append("<tr>" + "".join(tds) + "</tr>")
+        table_html = (
+            f'<div class="table-frame gl-card" style="padding:0">'
+            f'<table class="data-table"><thead><tr>{th}</tr></thead>'
+            f'<tbody>{"".join(trs)}</tbody></table></div>'
+        )
+        main = table_html + insight_strip(_so_what(slide))
+
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="data_table_with_insight",
+        active=active,
+        item_count=len(body) if not table_as_kpi(rows) else len(body) - 1,
+    )
+
+
+def render_comparison_with_metrics(slide, total, notes, active=False):
+    """Comparison cards with a metric strip below."""
+    pairs = pair_comparison(slide)
+    cards = []
+    for head, body in pairs:
+        if not head and not body:
+            continue
+        cards.append(
+            f'<article class="comparison-card risk">'
+            f'<div class="card-head">{esc(head)}</div>'
+            f'<div class="card-body"><p>{esc(body)}</p></div>'
+            f"</article>"
+        )
+
+    # Metric strip from key_stats
+    c = _content(slide)
+    stats = c.get("key_stats") or []
+    metric_strip = ""
+    if stats:
+        tiles = ""
+        for s in stats[:4]:
+            if isinstance(s, dict):
+                tiles += (
+                    f'<div class="metric-tile">'
+                    f'<div class="metric-value">{esc(s.get("value", ""))}</div>'
+                    f'<div class="metric-label">{esc(s.get("label", ""))}</div></div>'
+                )
+        if tiles:
+            metric_strip = f'<div class="metric-strip gl-grid gl-grid-4">{tiles}</div>'
+
+    main = (
+        f'<div class="comparison-grid gl-grid gl-grid-2 layout-comparison-with-metrics">'
+        f'{"".join(cards)}'
+        f'</div>'
+        f"{metric_strip}"
+        f"{insight_strip(_so_what(slide))}"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="comparison_with_metrics",
+        active=active,
+        item_count=len(cards),
     )
 
 
