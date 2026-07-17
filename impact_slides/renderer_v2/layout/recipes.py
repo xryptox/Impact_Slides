@@ -553,6 +553,36 @@ def render_table(slide, total, notes, active=False):
     )
 
 
+def _sequential_grid(
+    items: list[str],
+    *,
+    vertical: bool = False,
+    connector_style: str = "line",
+) -> str:
+    """Render a sequential grid of numbered step cards.
+
+    Uses .grid primitives and .card for each step item.
+    connector_style is 'line', 'arrow', or 'milestone' — currently only
+    affects class naming, SVG connectors are handled by the caller.
+    """
+    cards = []
+    for i, raw in enumerate(items[:6], 1):
+        kicker, title = split_step_copy(raw)
+        kicker_html = f'<div class="step-kicker">{esc(kicker)}</div>' if kicker else ""
+        cards.append(
+            f'<article class="step-card card{" step-card--vertical" if vertical else ""}">'
+            f'<div class="step-number">{i:02d}</div>'
+            f'<div class="step-body">{kicker_html}<div class="step-text">{esc(title)}</div></div>'
+            f"</article>"
+        )
+    if vertical:
+        return f'<div class="process-flow--vertical gl-areas-process-v">{"".join(cards)}</div>'
+    return (
+        f'<div class="process-flow--horizontal gl-areas-process-h" '
+        f'style="--step-count:{max(len(cards),1)}">{"".join(cards)}</div>'
+    )
+
+
 def render_process(slide, total, notes, active=False, vertical: bool | None = None):
     layout = (slide.get("layout_type") or "").lower()
     steps_raw = []
@@ -575,32 +605,15 @@ def render_process(slide, total, notes, active=False, vertical: bool | None = No
         outcome = cards_src[-1]
         cards_src = cards_src[:-1]
 
-    items = []
-    for i, raw in enumerate(cards_src[:6], 1):
-        kicker, title = split_step_copy(raw)
-        kicker_html = f'<div class="step-kicker">{esc(kicker)}</div>' if kicker else ""
-        items.append(
-            f'<article class="step-card{" step-card--vertical" if vertical else ""}">'
-            f'<div class="step-number">{i:02d}</div>'
-            f'<div class="step-body">{kicker_html}<div class="step-text">{esc(title)}</div></div>'
-            f"</article>"
+    flow = _sequential_grid(cards_src, vertical=vertical)
+    if outcome:
+        ok, ot = split_step_copy(outcome)
+        flow += (
+            f'<div class="process-outcome gl-process-outcome">'
+            f'<div class="badge">{len(cards_src)+1:02d}</div>'
+            f'<div class="kicker">{esc(ok or "Closed-loop")}</div>'
+            f'<div class="text">{esc(ot or outcome)}</div></div>'
         )
-
-    if vertical:
-        flow = f'<div class="process-flow--vertical gl-areas-process-v">{"".join(items)}</div>'
-    else:
-        flow = (
-            f'<div class="process-flow--horizontal gl-areas-process-h" '
-            f'style="--step-count:{max(len(items),1)}">{"".join(items)}</div>'
-        )
-        if outcome:
-            ok, ot = split_step_copy(outcome)
-            flow += (
-                f'<div class="process-outcome gl-process-outcome">'
-                f'<div class="badge">{len(items)+1:02d}</div>'
-                f'<div class="kicker">{esc(ok or "Closed-loop")}</div>'
-                f'<div class="text">{esc(ot or outcome)}</div></div>'
-            )
     main = flow + insight_strip(_so_what(slide))
     return slide_shell(
         number=int(slide["slide_number"]),
@@ -612,7 +625,7 @@ def render_process(slide, total, notes, active=False, vertical: bool | None = No
         footer_html=source_strip(_source_names(slide)),
         layout_class=layout or "full_process_flow",
         active=active,
-        item_count=len(items) + (1 if outcome else 0),
+        item_count=len(cards_src) + (1 if outcome else 0),
     )
 
 

@@ -73,6 +73,34 @@ class TestIconGridRefactor:
         assert "gl-card" in html
 
 
+class TestProcessLayoutsRefactor:
+    def _process_slide(self, layout_type: str, steps: list):
+        return _make_slide(
+            layout_type,
+            visual_spec={"primary_visual": {"steps_or_data": steps}},
+        )
+
+    def test_process_flow_uses_gl_areas_process_h(self):
+        slide = self._process_slide("full_process_flow", ["Step 1", "Step 2", "Step 3"])
+        html = render_slide(slide, total=1, notes="")
+        assert "gl-areas-process-h" in html
+
+    def test_timeline_uses_gl_areas_process_v(self):
+        slide = self._process_slide("timeline", ["2024 Q1", "2024 Q2", "2024 Q3", "2024 Q4"])
+        html = render_slide(slide, total=1, notes="")
+        assert "gl-areas-process-v" in html
+
+    def test_roadmap_uses_gl_areas_process_v(self):
+        slide = self._process_slide("roadmap", ["Phase 1", "Phase 2", "Phase 3", "Phase 4"])
+        html = render_slide(slide, total=1, notes="")
+        assert "gl-areas-process-v" in html
+
+    def test_step_cards_have_card(self):
+        slide = self._process_slide("full_process_flow", ["A", "B", "C"])
+        html = render_slide(slide, total=1, notes="")
+        assert _count(html, "card") >= 2
+
+
 class TestQuoteCardRefactor:
     def test_quote_cards_have_card(self):
         slide = _make_slide("quote_card", content={"body_text": "A famous quote."})
