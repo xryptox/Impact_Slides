@@ -101,6 +101,24 @@ class TestProcessLayoutsRefactor:
         assert _count(html, "card") >= 2
 
 
+class TestSplitTextVisualRefactor:
+    def test_panels_have_card(self):
+        slide = _make_slide(
+            "split_text_visual",
+            content={"bullets": ["Point A"], "body_text": "Lead insight"},
+        )
+        html = render_slide(slide, total=1, notes="")
+        assert _count(html, "card") >= 2  # left + right panels
+
+    def test_uses_gl_areas_split(self):
+        slide = _make_slide(
+            "split_text_visual",
+            content={"bullets": ["Point A"]},
+        )
+        html = render_slide(slide, total=1, notes="")
+        assert "gl-areas-split" in html
+
+
 class TestQuoteCardRefactor:
     def test_quote_cards_have_card(self):
         slide = _make_slide("quote_card", content={"body_text": "A famous quote."})

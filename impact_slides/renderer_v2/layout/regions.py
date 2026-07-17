@@ -5,7 +5,7 @@ from ..strip import esc
 
 
 def gl_card(hat: str, body_html: str, extra_class: str = "") -> str:
-    cls = "gl-card" + (f" {extra_class}" if extra_class else "")
+    cls = "gl-card card" + (f" {extra_class}" if extra_class else "")
     hat_html = f'<h3 class="gl-card-hat">{esc(hat)}</h3>' if hat else ""
     return f'<div class="{cls}">{hat_html}<div class="gl-card-body">{body_html}</div></div>'
 
