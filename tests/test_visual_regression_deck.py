@@ -123,7 +123,12 @@ def _slide_for_layout(lt: str, n: int) -> dict:
             "so_what": "75% faster close with zero manual errors",
         }
     elif lt == "icon_grid":
-        base["visual_spec"] = {"primary_visual": {"steps_or_data": ["A", "B", "C"]}}
+        base["visual_spec"] = {"primary_visual": {"steps_or_data": [
+            "Revenue Growth: 23% YoY",
+            "Customer Retention: 94%",
+            "Market Share: 18%",
+            "Employee NPS: 72",
+        ]}}
     elif lt == "quote_card":
         base["content"] = {"body_text": "A famous quote."}
     elif lt == "evidence_cards":
@@ -193,8 +198,22 @@ def _slide_for_layout(lt: str, n: int) -> dict:
             ],
             "so_what": "Proven 5-phase methodology reduces implementation risk",
         }
-    elif lt in ("decision_tree", "hierarchy_tree"):
-        base["visual_spec"] = {"primary_visual": {"steps_or_data": [["Root", "Child"]]}}
+    elif lt == "decision_tree":
+        base["visual_spec"] = {"primary_visual": {"steps_or_data": [
+            ["Expand into LATAM?", "decision"],
+            ["Yes — Launch Pilot", "node"],
+            ["No — Focus Domestic", "node"],
+            ["Pilot succeeds: Scale", "node"],
+            ["Pilot fails: Pivot", "node"],
+            ["Optimize home market", "node"],
+        ]}}
+    elif lt == "hierarchy_tree":
+        base["visual_spec"] = {"primary_visual": {"steps_or_data": [
+            ["Engineering", "Backend", ""],
+            ["Engineering", "Frontend", ""],
+            ["Product", "Design", ""],
+            ["Product", "Research", ""],
+        ]}}
     elif lt == "ecosystem_map":
         base["visual_spec"] = {"primary_visual": {"steps_or_data": [["A", "→", "B"]]}}
     elif lt == "process_with_decisions":

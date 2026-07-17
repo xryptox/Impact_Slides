@@ -154,14 +154,27 @@ def build_icon_grid_html(slide: Mapping[str, Any]) -> str:
     mod = _load_pack()
     s = dict(slide)
     s["layout_type"] = "icon_grid"
+    # External pack reads steps_or_data / bullets at the TOP level of the
+    # slide dict; our renderer nests them under visual_spec / content.
+    # Bridge the two shapes so the external pack can find the data.
+    if not s.get("steps_or_data"):
+        vs = s.get("visual_spec") or {}
+        pv = vs.get("primary_visual") or {}
+        s["steps_or_data"] = pv.get("steps_or_data") or []
+    if not s.get("bullets"):
+        s["bullets"] = (s.get("content") or {}).get("bullets") or []
     if mod and hasattr(mod, "build_icon_grid_main"):
         try:
-            return mod.build_icon_grid_main(s, esc=esc, icon=_icon_svg)
+            result = mod.build_icon_grid_main(s, esc=esc, icon=_icon_svg)
+            if "No icon-grid items" not in result:
+                return result
         except Exception:
             pass
     if mod and hasattr(mod, "build_main"):
         try:
-            return mod.build_main(s, esc=esc, icon=_icon_svg)
+            result = mod.build_main(s, esc=esc, icon=_icon_svg)
+            if "No icon-grid items" not in result:
+                return result
         except Exception:
             pass
     return _fallback_icon_grid(slide)

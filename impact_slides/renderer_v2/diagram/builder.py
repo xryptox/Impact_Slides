@@ -258,20 +258,29 @@ def decision_tree_scene(slide: Mapping[str, Any]) -> str:
     nodes = nodes[:7]
 
     svg_parts = [_svg_open()]
-    node_w, node_h = 140, 50
-    diamond_size = 40
-    level_h = 100
-    start_y = 40
+    node_w, node_h = 160, 56
+    diamond_size = 44
+    level_h = 120
+    start_y = 50
     cx = 450
 
-    # Simple top-down placement: root at top, children below
+    # Proper binary tree placement: root alone on level 0, two children on
+    # level 1, up to four grandchildren on level 2, etc.
     positions: list[tuple[float, float]] = []
     n = len(nodes)
     for i, node in enumerate(nodes):
-        level = i // 2
-        pos_in_level = i % 2
-        span = 800
-        x = cx - span / 2 + pos_in_level * span + span / 4
+        if i == 0:
+            level, pos_in_level, nodes_in_level = 0, 0, 1
+        else:
+            level = int(math.floor(math.log2(i + 1)))
+            pos_in_level = i - (2 ** level - 1)
+            nodes_in_level = 2 ** level
+        # Spread nodes evenly across the level, centred on cx
+        span = min(700, 200 * nodes_in_level)
+        if nodes_in_level == 1:
+            x = cx - node_w / 2
+        else:
+            x = cx - span / 2 + pos_in_level * (span / (nodes_in_level - 1)) - node_w / 2
         y = start_y + level * level_h
         positions.append((x, y))
 

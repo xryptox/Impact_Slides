@@ -743,7 +743,7 @@
    Layout-specific chrome for problem slides (21–24, 27, 31)
    ============================================================ */
 
-/* ---- Risk / Opportunity column headers (21) ---- */
+/* ---- Risk / Opportunity (21) — vertical spread + larger type ---- */
 .column-head {
   margin: 0 0 18px;
   font-size: var(--fs-insight);
@@ -751,10 +751,28 @@
   color: var(--navy);
   letter-spacing: -0.01em;
 }
+/* Nested grids inside risk/opp columns must fill the hero band so cards
+   spread vertically instead of packing at the top. */
+.slide.gl-density-hero .risk-column .gl-grid,
+.slide.gl-density-hero .opportunity-column .gl-grid {
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+  height: 100%;
+}
 .risk-column .gl-grid,
 .opportunity-column .gl-grid {
   gap: var(--gap-md);
   align-content: start;
+}
+/* Plain-text risk/opp cards: explicit font-size (they have no label/value
+   spans, so text would inherit the browser default 16px). */
+.risk-card,
+.opportunity-card {
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  color: var(--ink);
+  display: flex;
+  align-items: flex-start;
 }
 
 /* ---- Recommendation with rationale (22) ---- */
@@ -768,6 +786,13 @@
   color: var(--navy);
   line-height: 1.25;
   max-width: 1200px;
+}
+/* Plain-text evidence cards in recommendation layout need explicit font
+   size (no label/value spans). */
+.layout-recommendation .evidence-card {
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  color: var(--ink);
 }
 
 /* ---- Section divider (23) — centered, large, minimal ---- */
@@ -905,8 +930,8 @@
   align-items: center;
   justify-content: center;
   color: var(--accent);
-  min-width: 40px;
-  align-self: center;
+  min-width: 48px;
+  align-self: stretch;
 }
 .process-arrow svg {
   width: 28px;
