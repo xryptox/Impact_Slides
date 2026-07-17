@@ -61,6 +61,12 @@ def render_slide(
         return recipes.render_split(slide, total, notes, active=active)
     if lt == "metric_dashboard":
         return recipes.render_metric(slide, total, notes, active=active)
+    if lt == "metric_row_with_breakdown":
+        return recipes.render_metric_row_with_breakdown(slide, total, notes, active=active)
+    if lt == "insight_with_evidence":
+        return recipes.render_insight_with_evidence(slide, total, notes, active=active)
+    if lt == "priority_matrix":
+        return recipes.render_priority_matrix(slide, total, notes, active=active)
     if lt == "data_table":
         return recipes.render_table(slide, total, notes, active=active)
     if lt in ("full_process_flow", "timeline", "roadmap"):

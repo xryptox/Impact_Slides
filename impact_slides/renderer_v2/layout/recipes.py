@@ -740,6 +740,210 @@ def render_chart(slide, total, notes, active=False):
     )
 
 
+def render_metric_row_with_breakdown(slide, total, notes, active=False):
+    """KPI row with a breakdown/detail band below each metric."""
+    c = _content(slide)
+    stats = c.get("key_stats") or []
+    if not stats:
+        rows = _table_matrix(slide)
+        body = rows[1:] if rows and rows[0][0].lower() in ("metric", "label") else rows
+        stats = [{"label": r[0], "value": r[1] if len(r) > 1 else "", "source": r[2] if len(r) > 2 else ""} for r in body if r]
+
+    n = min(len(stats), 6)
+    cols_class = "gl-grid-dense-2x2" if n == 4 else ("gl-grid-3" if n >= 3 else f"gl-grid-{max(n,1)}")
+
+    cards = []
+    for st in stats[:6]:
+        if isinstance(st, dict):
+            lab = strip_eids(st.get("label") or "")
+            val = strip_eids(st.get("value") or "")
+            src = strip_eids(st.get("source") or "")
+        elif isinstance(st, (list, tuple)) and len(st) >= 2:
+            lab, val, src = strip_eids(st[0]), strip_eids(st[1]), strip_eids(st[2] if len(st) > 2 else "")
+        else:
+            continue
+        if not lab and not val:
+            continue
+
+        src_html = f'<div class="kpi-source">{esc(src)}</div>' if src else ""
+        cards.append(
+            f'<div class="kpi-card">'
+            f'<div class="kpi-label">{esc(lab)}</div>'
+            f'<div class="kpi-value">{esc(val)}</div>'
+            f"{src_html}</div>"
+        )
+
+    if not cards:
+        return render_metric(slide, total, notes, active=active)
+
+    # Breakdown band: supporting_points as a compact table strip
+    supporting = [strip_eids(b) for b in (c.get("supporting_points") or []) if strip_eids(b)]
+    bullets = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)]
+    breakdown_rows = supporting or bullets
+
+    breakdown_html = ""
+    if breakdown_rows:
+        rows_html = []
+        for row in breakdown_rows[:8]:
+            if ":" in row:
+                k, _, v = row.partition(":")
+                rows_html.append(
+                    f'<div class="breakdown-row">'
+                    f'<span class="breakdown-key">{esc(k.strip())}</span>'
+                    f'<span class="breakdown-val">{esc(v.strip())}</span></div>'
+                )
+            else:
+                rows_html.append(f'<div class="breakdown-row breakdown-plain">{esc(row)}</div>')
+        breakdown_html = (
+            f'<div class="gl-card breakdown-card">'
+            f'<h3 class="gl-card-hat">Breakdown</h3>'
+            f'<div class="breakdown-list">{"".join(rows_html)}</div></div>'
+        )
+
+    main = (
+        f'<div class="gl-areas-metric layout-metric-row">'
+        f'<div class="gl-grid {cols_class} gl-stats">{"".join(cards)}</div>'
+        f"{breakdown_html}"
+        f"{insight_strip(_so_what(slide))}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="metric_row_with_breakdown",
+        active=active,
+        item_count=n,
+    )
+
+
+def render_insight_with_evidence(slide, total, notes, active=False):
+    """Hero insight statement with supporting evidence cards in a grid below."""
+    c = _content(slide)
+    insight = strip_eids(c.get("so_what") or c.get("headline") or "")
+    if not insight or banned_face_opener(insight):
+        insight = ""
+
+    # Evidence sources or supporting_points as cards
+    evidence: list[dict] = []
+    for item in (slide.get("evidence_sources") or []):
+        if isinstance(item, dict):
+            src = strip_eids(item.get("source_file") or item.get("file") or item.get("id") or "")
+            eid = strip_eids(item.get("id") or item.get("evidence_id") or "")
+            if src:
+                evidence.append({"label": src, "value": eid})
+        elif isinstance(item, str):
+            if "." in item:
+                evidence.append({"label": item, "value": ""})
+
+    supporting = [strip_eids(b) for b in (c.get("supporting_points") or []) if strip_eids(b)]
+    bullets = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)]
+
+    if not evidence and (supporting or bullets):
+        for item in (supporting or bullets)[:6]:
+            if ":" in item:
+                k, _, v = item.partition(":")
+                evidence.append({"label": k.strip(), "value": v.strip()})
+            else:
+                evidence.append({"label": item, "value": ""})
+
+    n = len(evidence)
+    cols_class = "gl-grid-dense-2x2" if n == 4 else ("gl-grid-3" if n >= 3 else "gl-grid-2")
+
+    insight_html = (
+        f'<div class="gl-card insight-hero">'
+        f'<div class="insight-hero-text">{esc(insight)}</div></div>'
+        if insight
+        else ""
+    )
+
+    evidence_cards = []
+    for ev in evidence[:6]:
+        val_html = f'<div class="evidence-value">{esc(ev["value"])}</div>' if ev.get("value") else ""
+        evidence_cards.append(
+            f'<div class="gl-card evidence-card">'
+            f'<div class="evidence-label">{esc(ev["label"])}</div>'
+            f"{val_html}</div>"
+        )
+
+    evidence_html = ""
+    if evidence_cards:
+        evidence_html = f'<div class="gl-grid {cols_class} evidence-grid">{"".join(evidence_cards)}</div>'
+
+    main = (
+        f'<div class="layout-insight-evidence">'
+        f"{insight_html}"
+        f"{evidence_html}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="insight_with_evidence",
+        active=active,
+        item_count=n,
+    )
+
+
+def render_priority_matrix(slide, total, notes, active=False):
+    """2×2 priority/impact matrix as a grid of quadrant cards."""
+    steps = _vs_steps(slide)
+    c = _content(slide)
+    bullets = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)]
+
+    # Parse steps into quadrant items: expected [high_p_high_i, high_p_low_i, low_p_high_i, low_p_low_i]
+    quadrant_data: list[list[str]] = [[], [], [], []]
+    quadrant_labels = ["High Priority / High Impact", "High Priority / Lower Impact", "Lower Priority / High Impact", "Lower Priority / Lower Impact"]
+
+    if len(steps) >= 4 and all(isinstance(s, (list, tuple)) and len(s) >= 2 for s in steps[:4]):
+        for i, row in enumerate(steps[:4]):
+            quadrant_data[i] = [strip_eids(x) for x in row[1:] if strip_eids(x)]
+            label_raw = strip_eids(row[0]) if row else ""
+            if label_raw:
+                quadrant_labels[i] = label_raw
+    else:
+        # Fallback: distribute bullets into 4 quadrants
+        for i, b in enumerate(bullets[:4]):
+            quadrant_data[i % 4].append(b)
+
+    quadrant_cards = []
+    for i, (label, items) in enumerate(zip(quadrant_labels, quadrant_data)):
+        items_html = "".join(f'<li>{esc(x)}</li>' for x in items) if items else "<li>—</li>"
+        quadrant_cards.append(
+            f'<div class="gl-card priority-quadrant quadrant-{i}">'
+            f'<h3 class="gl-card-hat">{esc(label)}</h3>'
+            f'<ul class="priority-list">{items_html}</ul></div>'
+        )
+
+    main = (
+        f'<div class="gl-grid gl-grid-dense-2x2 layout-priority-matrix">'
+        f'{"".join(quadrant_cards)}'
+        f"</div>"
+        f"{insight_strip(_so_what(slide))}"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="priority_matrix",
+        active=active,
+        item_count=len(quadrant_cards),
+    )
+
+
 def render_freeform(slide, total, notes, active=False):
     """Phase 7: named-area visual_spec.grid body inside standard gl-slide shell."""
     from .freeform import render_freeform_main

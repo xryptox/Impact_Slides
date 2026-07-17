@@ -93,6 +93,18 @@ class IconGridSlide(_BaseSlide):
     layout_type: Literal["icon_grid"] = "icon_grid"
 
 
+class MetricRowWithBreakdownSlide(_BaseSlide):
+    layout_type: Literal["metric_row_with_breakdown"] = "metric_row_with_breakdown"
+
+
+class InsightWithEvidenceSlide(_BaseSlide):
+    layout_type: Literal["insight_with_evidence"] = "insight_with_evidence"
+
+
+class PriorityMatrixSlide(_BaseSlide):
+    layout_type: Literal["priority_matrix"] = "priority_matrix"
+
+
 class FreeformGridSlide(_BaseSlide):
     layout_type: Literal["freeform_grid"] = "freeform_grid"
 
@@ -114,6 +126,9 @@ ValidatedSlide = Union[
     TitleSlide,
     SplitTextVisualSlide,
     MetricDashboardSlide,
+    MetricRowWithBreakdownSlide,
+    InsightWithEvidenceSlide,
+    PriorityMatrixSlide,
     DataTableSlide,
     ProcessFlowSlide,
     ComparisonGridSlide,
@@ -143,6 +158,9 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "split_text_visual": SplitTextVisualSlide,
         "metric_dashboard": MetricDashboardSlide,
         "metric": MetricDashboardSlide,
+        "metric_row_with_breakdown": MetricRowWithBreakdownSlide,
+        "insight_with_evidence": InsightWithEvidenceSlide,
+        "priority_matrix": PriorityMatrixSlide,
         "data_table": DataTableSlide,
         "table": DataTableSlide,
         "full_process_flow": ProcessFlowSlide,
