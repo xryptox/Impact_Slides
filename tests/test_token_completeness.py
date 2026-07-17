@@ -141,6 +141,50 @@ def test_core_token_scales_present():
     assert not missing, f"Missing core tokens in tokens.css: {sorted(missing)}"
 
 
+def test_components_css_no_hardcoded_hex():
+    """components.css must have zero raw hex values."""
+    base = Path(__file__).parent.parent / "impact_slides" / "renderer_v2" / "css"
+    css = (base / "components.css").read_text(encoding="utf-8")
+    hex_pattern = re.compile(r"#[0-9a-fA-F]{3,8}")
+    in_comment = False
+    offenders = []
+    for i, line in enumerate(css.splitlines(), 1):
+        s = line.strip()
+        if "/*" in s:
+            in_comment = True
+        if "*/" in s:
+            in_comment = False
+            continue
+        if in_comment:
+            continue
+        cleaned = re.sub(r"var\([^)]*\)", "", s)
+        matches = hex_pattern.findall(cleaned)
+        if matches:
+            offenders.append((i, s, matches))
+    assert not offenders, f"Hard-coded hex in components.css: {offenders}"
+
+
+def test_components_css_no_hardcoded_border_radius():
+    """components.css border-radius must use var(--radius-*) tokens."""
+    base = Path(__file__).parent.parent / "impact_slides" / "renderer_v2" / "css"
+    css = (base / "components.css").read_text(encoding="utf-8")
+    pattern = re.compile(r"border-radius:\s*\d+px")
+    offenders = []
+    in_comment = False
+    for i, line in enumerate(css.splitlines(), 1):
+        s = line.strip()
+        if "/*" in s:
+            in_comment = True
+        if "*/" in s:
+            in_comment = False
+            continue
+        if in_comment:
+            continue
+        if pattern.search(s):
+            offenders.append((i, s))
+    assert not offenders, f"Hard-coded border-radius px in components.css: {offenders}"
+
+
 def test_semantic_tokens_load_through_shell():
     """shell.py load_css() should include semantic-tokens.css in the bundle."""
     from impact_slides.renderer_v2.shell import load_css
