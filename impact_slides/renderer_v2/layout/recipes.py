@@ -1519,3 +1519,67 @@ def render_horizontal_process(slide, total, notes, active=False):
         item_count=n,
     )
 
+
+# ---------------------------------------------------------------------------
+# Wave 4a — Diagram layouts (Tree, Hierarchy, Ecosystem)
+# ---------------------------------------------------------------------------
+
+def render_decision_tree(slide, total, notes, active=False):
+    """Decision tree with diamond decision nodes and elbow connectors."""
+    from ..diagram.builder import decision_tree_scene
+
+    main = f'<div class="gl-areas-diagram layout-decision-tree">{decision_tree_scene(slide)}</div>'
+    main += insight_strip(_so_what(slide))
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="decision_tree",
+        active=active,
+        item_count=3,
+    )
+
+
+def render_hierarchy_tree(slide, total, notes, active=False):
+    """Parent-child hierarchy using nested group boundaries."""
+    from ..diagram.builder import hierarchy_tree_scene
+
+    main = f'<div class="gl-areas-diagram layout-hierarchy-tree">{hierarchy_tree_scene(slide)}</div>'
+    main += insight_strip(_so_what(slide))
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="hierarchy_tree",
+        active=active,
+        item_count=3,
+    )
+
+
+def render_ecosystem_map(slide, total, notes, active=False):
+    """Stakeholder web with nodes and labeled connections."""
+    from ..diagram.builder import ecosystem_map_scene
+
+    main = f'<div class="gl-areas-diagram layout-ecosystem-map">{ecosystem_map_scene(slide)}</div>'
+    main += insight_strip(_so_what(slide))
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="ecosystem_map",
+        active=active,
+        item_count=4,
+    )
+

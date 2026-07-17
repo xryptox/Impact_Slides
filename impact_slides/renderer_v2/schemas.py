@@ -161,6 +161,18 @@ class HorizontalProcessSlide(_BaseSlide):
     layout_type: Literal["horizontal_process"] = "horizontal_process"
 
 
+class DecisionTreeSlide(_BaseSlide):
+    layout_type: Literal["decision_tree"] = "decision_tree"
+
+
+class HierarchyTreeSlide(_BaseSlide):
+    layout_type: Literal["hierarchy_tree"] = "hierarchy_tree"
+
+
+class EcosystemMapSlide(_BaseSlide):
+    layout_type: Literal["ecosystem_map"] = "ecosystem_map"
+
+
 class FreeformGridSlide(_BaseSlide):
     layout_type: Literal["freeform_grid"] = "freeform_grid"
 
@@ -245,6 +257,9 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "kpi_trend_cards": KpiTrendCardsSlide,
         "three_column_comparison": ThreeColumnComparisonSlide,
         "horizontal_process": HorizontalProcessSlide,
+        "decision_tree": DecisionTreeSlide,
+        "hierarchy_tree": HierarchyTreeSlide,
+        "ecosystem_map": EcosystemMapSlide,
         "data_table": DataTableSlide,
         "table": DataTableSlide,
         "full_process_flow": ProcessFlowSlide,

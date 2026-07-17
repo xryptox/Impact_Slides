@@ -103,6 +103,12 @@ def render_slide(
         return recipes.render_three_column_comparison(slide, total, notes, active=active)
     if lt == "horizontal_process":
         return recipes.render_horizontal_process(slide, total, notes, active=active)
+    if lt == "decision_tree":
+        return recipes.render_decision_tree(slide, total, notes, active=active)
+    if lt == "hierarchy_tree":
+        return recipes.render_hierarchy_tree(slide, total, notes, active=active)
+    if lt == "ecosystem_map":
+        return recipes.render_ecosystem_map(slide, total, notes, active=active)
 
     pvt = _primary_visual_type(slide)
     if is_chart_layout(pvt):

@@ -8,6 +8,7 @@ import math
 from typing import Any, Mapping
 
 from . import annotation_callout, arrow_connector, group_boundary, node_box
+from ..strip import esc
 
 
 def _rows(slide: Mapping[str, Any]) -> list[list[str]]:
@@ -234,6 +235,191 @@ def before_after_scene(slide: Mapping[str, Any]) -> str:
         svg_parts.append(f'<g transform="translate(550, {y})">')
         svg_parts.append(node_box(item, width=300, height=50, fill="color-surface"))
         svg_parts.append("</g>")
+
+    svg_parts.append(_svg_close())
+    return "".join(svg_parts)
+
+
+# ---------------------------------------------------------------------------
+# 5. Decision Tree
+# ---------------------------------------------------------------------------
+
+def decision_tree_scene(slide: Mapping[str, Any]) -> str:
+    """Render a binary/ternary branching tree with diamond decision nodes."""
+    rows = _rows(slide)
+    if not rows:
+        return '<div class="diagram-empty gl-card">No tree data</div>'
+
+    nodes = []
+    for row in rows:
+        label = row[0]
+        node_type = row[1] if len(row) > 1 else "node"
+        nodes.append({"label": label, "type": node_type})
+    nodes = nodes[:7]
+
+    svg_parts = [_svg_open()]
+    node_w, node_h = 140, 50
+    diamond_size = 40
+    level_h = 100
+    start_y = 40
+    cx = 450
+
+    # Simple top-down placement: root at top, children below
+    positions: list[tuple[float, float]] = []
+    n = len(nodes)
+    for i, node in enumerate(nodes):
+        level = i // 2
+        pos_in_level = i % 2
+        span = 800
+        x = cx - span / 2 + pos_in_level * span + span / 4
+        y = start_y + level * level_h
+        positions.append((x, y))
+
+        if node["type"] == "decision":
+            # Diamond shape
+            dx = x + node_w / 2
+            dy = y + node_h / 2
+            svg_parts.append(
+                f'<polygon points="{dx},{dy - diamond_size} {dx + diamond_size},{dy} '
+                f'{dx},{dy + diamond_size} {dx - diamond_size},{dy}" '
+                f'fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="2"/>'
+            )
+            svg_parts.append(
+                f'<text x="{dx}" y="{dy}" text-anchor="middle" dominant-baseline="middle" '
+                f'font-size="12" fill="var(--color-ink)">{esc(node["label"])}</text>'
+            )
+        else:
+            svg_parts.append(f'<g transform="translate({x}, {y})">')
+            svg_parts.append(node_box(node["label"], width=node_w, height=node_h))
+            svg_parts.append("</g>")
+
+    # Elbow connectors from parent to children
+    for i in range(n - 1):
+        parent_idx = i // 2
+        if parent_idx >= len(positions):
+            continue
+        px = positions[parent_idx][0] + node_w / 2
+        py = positions[parent_idx][1] + (diamond_size if nodes[parent_idx]["type"] == "decision" else node_h)
+        cx_pos = positions[i + 1][0] + node_w / 2
+        cy_pos = positions[i + 1][1]
+        # Elbow: down then across
+        mid_y = (py + cy_pos) / 2
+        svg_parts.append(
+            f'<polyline points="{px},{py} {px},{mid_y} {cx_pos},{mid_y} {cx_pos},{cy_pos}" '
+            f'fill="none" stroke="var(--color-accent)" stroke-width="2" marker-end="url(#arrowhead)"/>'
+        )
+
+    svg_parts.append(_svg_close())
+    return "".join(svg_parts)
+
+
+# ---------------------------------------------------------------------------
+# 6. Hierarchy Tree
+# ---------------------------------------------------------------------------
+
+def hierarchy_tree_scene(slide: Mapping[str, Any]) -> str:
+    """Render a parent-child hierarchy using nested group boundaries."""
+    rows = _rows(slide)
+    if not rows:
+        return '<div class="diagram-empty gl-card">No hierarchy data</div>'
+
+    # Rows: [parent, child, sublabel]
+    groups: dict[str, list[dict]] = {}
+    for row in rows:
+        parent = row[0] if len(row) > 1 else "Root"
+        label = row[1] if len(row) > 1 else row[0]
+        sub = row[2] if len(row) > 2 else ""
+        groups.setdefault(parent, []).append({"label": label, "sublabel": sub})
+
+    group_names = list(groups.keys())[:4]
+    node_w, node_h = 130, 44
+    group_w = 200
+    group_h = 160
+    start_x = 30
+    start_y = 60
+    gap_x = 40
+    svg_parts = [_svg_open()]
+
+    arrows: list[str] = []
+    for gi, name in enumerate(group_names):
+        x = start_x + gi * (group_w + gap_x)
+        nodes = groups[name][:3]
+        svg_parts.append(group_boundary(x, start_y, group_w, group_h, label=name))
+        for ni, n in enumerate(nodes):
+            ny = start_y + 40 + ni * 50
+            nx = x + 35
+            svg_parts.append(f'<g transform="translate({nx}, {ny})">')
+            svg_parts.append(node_box(n["label"], sublabel=n["sublabel"], width=node_w, height=node_h))
+            svg_parts.append("</g>")
+
+        # Horizontal arrow to next group
+        if gi < len(group_names) - 1:
+            from_x = x + group_w
+            from_y = start_y + group_h / 2
+            to_x = start_x + (gi + 1) * (group_w + gap_x)
+            to_y = from_y
+            arrows.append(arrow_connector(from_x, from_y, to_x, to_y))
+
+    svg_parts.extend(arrows)
+    svg_parts.append(_svg_close())
+    return "".join(svg_parts)
+
+
+# ---------------------------------------------------------------------------
+# 7. Ecosystem Map
+# ---------------------------------------------------------------------------
+
+def ecosystem_map_scene(slide: Mapping[str, Any]) -> str:
+    """Render a stakeholder web with nodes and labeled connections."""
+    rows = _rows(slide)
+    if not rows:
+        return '<div class="diagram-empty gl-card">No ecosystem data</div>'
+
+    # Rows: [node_label, connection_label, target_node]
+    nodes: dict[str, dict] = {}
+    connections: list[tuple[str, str, str]] = []
+    for row in rows:
+        label = row[0]
+        conn = row[1] if len(row) > 1 else ""
+        target = row[2] if len(row) > 2 else ""
+        nodes.setdefault(label, {"label": label})
+        if target:
+            nodes.setdefault(target, {"label": target})
+            connections.append((label, conn, target))
+
+    node_list = list(nodes.keys())[:8]
+    cx, cy = 450, 240
+    radius = 180
+    node_w, node_h = 120, 40
+    svg_parts = [_svg_open()]
+
+    positions: dict[str, tuple[float, float]] = {}
+    n = len(node_list)
+    for i, label in enumerate(node_list):
+        angle = -math.pi / 2 + (2 * math.pi * i / n)
+        nx = cx + radius * math.cos(angle) - node_w / 2
+        ny = cy + radius * math.sin(angle) - node_h / 2
+        positions[label] = (nx, ny)
+        svg_parts.append(f'<g transform="translate({nx:.0f}, {ny:.0f})">')
+        svg_parts.append(node_box(label, width=node_w, height=node_h))
+        svg_parts.append("</g>")
+
+    # Connections
+    for src, label, tgt in connections:
+        if src not in positions or tgt not in positions:
+            continue
+        sx = positions[src][0] + node_w / 2
+        sy = positions[src][1] + node_h / 2
+        tx = positions[tgt][0] + node_w / 2
+        ty = positions[tgt][1] + node_h / 2
+        svg_parts.append(arrow_connector(sx, sy, tx, ty))
+        # Label at midpoint
+        mx = (sx + tx) / 2
+        my = (sy + ty) / 2
+        svg_parts.append(
+            f'<text x="{mx}" y="{my}" text-anchor="middle" font-size="11" '
+            f'fill="var(--color-ink-muted)">{esc(label)}</text>'
+        )
 
     svg_parts.append(_svg_close())
     return "".join(svg_parts)
