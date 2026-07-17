@@ -239,7 +239,7 @@ def before_after_scene(slide: Mapping[str, Any]) -> str:
 
     # Transition arrow in the middle
     arrow_y = 240
-    svg_parts.append(arrow_connector(440, arrow_y, 480, arrow_y, color="color-accent"))
+    svg_parts.append(arrow_connector(430, arrow_y, 500, arrow_y, color="color-accent"))
 
     # After group
     svg_parts.append(
