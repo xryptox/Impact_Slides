@@ -54,9 +54,10 @@
 
 /* ---- KPI cards ---- */
 .kpi-card {
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-2);
   padding: var(--size-7) var(--size-8);
   display: flex;
   flex-direction: column;
@@ -374,8 +375,9 @@
   grid-template-columns: auto auto 1fr;
   gap: var(--size-4);
   align-items: center;
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-3);
   padding: 18px var(--size-6);
   /* tight under horizontal platform row — do not inherit hero mid-canvas gap */
   margin-top: var(--gap-md);
@@ -397,8 +399,9 @@
 
 /* ---- Quotes ---- */
 .quote-card {
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-2);
   padding: var(--size-7) var(--size-9);
   border-left: 4px solid var(--navy);
   flex: 0 0 auto;
@@ -448,8 +451,9 @@
 .icon-sm { width: 20px; height: 20px; }
 .icon-tile {
   display: flex; flex-direction: column; gap: var(--size-3);
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-2);
   padding: 22px;
   min-height: 140px;
   flex: 0 0 auto;
@@ -496,8 +500,9 @@
 /* ---- Chart frame ---- */
 .chart-frame {
   width: 100%;
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-3);
   padding: 18px 22px;
   overflow: hidden;
 }
@@ -535,9 +540,10 @@
 .breakdown-card,
 .transformation-step,
 .decision-node {
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-2);
   padding: var(--size-6) var(--size-7);
   display: flex;
   flex-direction: column;
@@ -629,9 +635,10 @@
 /* Metric strip tiles (comparison_with_metrics) */
 .metric-strip { margin-top: var(--gap-section); }
 .metric-tile {
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-2);
   padding: var(--size-5) var(--size-6);
   text-align: center;
 }
@@ -823,9 +830,10 @@
 /* ---- Before / After detailed panels (24) ---- */
 .before-panel,
 .after-panel {
-  background: var(--panel);
+  background: var(--gradient-panel), var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-2);
   padding: var(--size-7) var(--size-8);
   display: flex;
   flex-direction: column;
