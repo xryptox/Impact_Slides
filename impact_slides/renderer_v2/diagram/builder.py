@@ -473,11 +473,19 @@ def ecosystem_map_scene(slide: Mapping[str, Any]) -> str:
         sx, sy = _edge_point(scx, scy, node_w, node_h, tcx, tcy)
         tx, ty = _edge_point(tcx, tcy, node_w, node_h, scx, scy)
         svg_parts.append(arrow_connector(sx, sy, tx, ty))
-        # Label ON the arrow midpoint, staggered to avoid clustering
-        # Alternate positions along the line: 0.35, 0.5, 0.65
-        t = [0.35, 0.5, 0.65][_conn_idx % 3]
-        lx = sx + (tx - sx) * t
-        ly = sy + (ty - sy) * t
+        # Label beside the arrow, staggered along the line + alternating side
+        _t_positions = [0.25, 0.38, 0.50, 0.62, 0.75]
+        t = _t_positions[_conn_idx % len(_t_positions)]
+        mx = sx + (tx - sx) * t
+        my = sy + (ty - sy) * t
+        # Perpendicular offset ~10px, alternating left/right
+        dx_a, dy_a = tx - sx, ty - sy
+        length = math.sqrt(dx_a**2 + dy_a**2) or 1
+        side = 1 if _conn_idx % 2 == 0 else -1
+        px_off = (-dy_a / length) * 10 * side
+        py_off = (dx_a / length) * 10 * side
+        lx = mx + px_off
+        ly = my + py_off
         svg_parts.append(
             f'<text x="{lx:.0f}" y="{ly + 4:.0f}" text-anchor="middle" font-size="11" '
             f'fill="var(--color-ink-muted)" '
