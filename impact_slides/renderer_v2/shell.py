@@ -76,11 +76,24 @@ _JS = r"""
 """
 
 
+def _theme_style(theme: dict[str, str] | None) -> str:
+    if not theme:
+        return ""
+    rules = "\n  ".join(f"{k}: {v};" for k, v in theme.items())
+    return f"""<style>
+:root {{
+  {rules}
+}}
+</style>
+"""
+
+
 def wrap_deck(
     slide_html: Sequence[str],
     *,
     meta: Mapping[str, Any],
     debug: bool = False,
+    theme: dict[str, str] | None = None,
 ) -> str:
     title = esc(meta.get("title") or "Impact Slides")
     body_cls = "gl-debug" if debug else ""
@@ -93,6 +106,7 @@ def wrap_deck(
         "generator": "impact_slides.renderer_v2",
     }
     css = load_css(debug=debug)
+    theme_block = _theme_style(theme)
     slides = "\n".join(slide_html)
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -104,6 +118,7 @@ def wrap_deck(
 <style>
 {css}
 </style>
+{theme_block}
 </head>
 <body class="{body_cls}">
 {sprite_svg()}

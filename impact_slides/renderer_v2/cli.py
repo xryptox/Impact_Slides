@@ -28,6 +28,7 @@ def render_deck(
     seed_path: str | Path | None = None,
     debug: bool = False,
     strict: bool = True,
+    theme: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Render a Builder handoff to presentation.html + notes + manifest.
 
@@ -64,7 +65,7 @@ def render_deck(
             render_slide(slide, total=total, notes=prose, active=(i == 0))
         )
 
-    html = wrap_deck(bodies, meta=meta, debug=debug)
+    html = wrap_deck(bodies, meta=meta, debug=debug, theme=theme)
     html_path = out / "presentation.html"
     html_path.write_text(html, encoding="utf-8")
 
