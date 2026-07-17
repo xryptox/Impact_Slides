@@ -89,6 +89,14 @@ def render_slide(
         return recipes.render_before_after(slide, total, notes, active=active)
     if lt == "quote_card":
         return recipes.render_quote(slide, total, notes, active=active)
+    if lt == "risk_opportunity":
+        return recipes.render_risk_opportunity(slide, total, notes, active=active)
+    if lt == "recommendation_with_rationale":
+        return recipes.render_recommendation_with_rationale(slide, total, notes, active=active)
+    if lt == "section_divider":
+        return recipes.render_section_divider(slide, total, notes, active=active)
+    if lt == "before_after_detailed":
+        return recipes.render_before_after_detailed(slide, total, notes, active=active)
 
     pvt = _primary_visual_type(slide)
     if is_chart_layout(pvt):

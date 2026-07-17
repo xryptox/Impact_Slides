@@ -1255,3 +1255,133 @@ def render_freeform(slide, total, notes, active=False):
         item_count=3,
     )
 
+
+# ---------------------------------------------------------------------------
+# Wave 3a — Strategic & Structural layouts
+# ---------------------------------------------------------------------------
+
+def render_risk_opportunity(slide, total, notes, active=False):
+    """Two-column risks vs. opportunities with color-coded cards."""
+    c = _content(slide)
+    risks = [strip_eids(b) for b in (c.get("risks") or c.get("bullets") or []) if strip_eids(b)][:4]
+    opportunities = [strip_eids(b) for b in (c.get("opportunities") or c.get("supporting_points") or []) if strip_eids(b)][:4]
+    risk_cards = ""
+    for r in risks:
+        risk_cards += f'<div class="risk-card card">{esc(r)}</div>'
+    opp_cards = ""
+    for o in opportunities:
+        opp_cards += f'<div class="opportunity-card card">{esc(o)}</div>'
+    main = (
+        f'<div class="gl-grid gl-grid-2 layout-risk-opportunity">'
+        f'<div class="risk-column">'
+        f'<h3 class="column-head">Risks</h3>'
+        f'<div class="gl-grid">{risk_cards}</div></div>'
+        f'<div class="opportunity-column">'
+        f'<h3 class="column-head">Opportunities</h3>'
+        f'<div class="gl-grid">{opp_cards}</div></div>'
+        f'</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="risk_opportunity",
+        active=active,
+        item_count=len(risks) + len(opportunities),
+    )
+
+
+def render_recommendation_with_rationale(slide, total, notes, active=False):
+    """Strong recommendation header + evidence card grid."""
+    c = _content(slide)
+    recommendation = strip_eids(c.get("recommendation") or c.get("headline") or "")
+    evidence = [strip_eids(b) for b in (c.get("supporting_points") or c.get("bullets") or []) if strip_eids(b)][:6]
+    cards = ""
+    for e in evidence:
+        cards += f'<div class="evidence-card card">{esc(e)}</div>'
+    cols = "gl-grid-3" if len(evidence) >= 3 else f"gl-grid-{max(len(evidence), 1)}"
+    main = (
+        f'<div class="layout-recommendation">'
+        f'<div class="recommendation-head">{esc(recommendation)}</div>'
+        f'<div class="gl-grid {cols}">{cards}</div>'
+        f'</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="recommendation_with_rationale",
+        active=active,
+        item_count=len(evidence),
+    )
+
+
+def render_section_divider(slide, total, notes, active=False):
+    """Low-density section break with message and accent line."""
+    c = _content(slide)
+    message = strip_eids(c.get("headline") or c.get("body_text") or slide.get("title") or "")
+    subtitle = strip_eids(c.get("subtitle") or "")
+    sub_html = f'<p class="section-subtitle">{esc(subtitle)}</p>' if subtitle else ""
+    main = (
+        f'<div class="layout-section-divider">'
+        f'<div class="accent-line"></div>'
+        f'<h2 class="section-message">{esc(message)}</h2>'
+        f'{sub_html}'
+        f'</div>'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="section_divider",
+        active=active,
+        item_count=1,
+    )
+
+
+def render_before_after_detailed(slide, total, notes, active=False):
+    """Extended before/after with numbered narrative steps."""
+    c = _content(slide)
+    before = strip_eids(c.get("before") or "")
+    after = strip_eids(c.get("after") or "")
+    steps = [strip_eids(b) for b in (c.get("steps") or c.get("bullets") or []) if strip_eids(b)][:4]
+    step_html = ""
+    for i, s in enumerate(steps, 1):
+        step_html += f'<div class="transformation-step"><span class="step-num">{i}</span>{esc(s)}</div>'
+    main = (
+        f'<div class="gl-grid gl-grid-2 layout-before-after-detailed">'
+        f'<div class="before-panel card">'
+        f'<h3 class="panel-label">Before</h3><p>{esc(before)}</p></div>'
+        f'<div class="after-panel card">'
+        f'<h3 class="panel-label">After</h3><p>{esc(after)}</p></div>'
+        f'</div>'
+        f'<div class="transformation-steps">{step_html}</div>'
+        f'{insight_strip(_so_what(slide))}'
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="before_after_detailed",
+        active=active,
+        item_count=len(steps) + 2,
+    )
+

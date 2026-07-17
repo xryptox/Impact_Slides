@@ -133,6 +133,22 @@ class BeforeAfterSlide(_BaseSlide):
     layout_type: Literal["before_after"] = "before_after"
 
 
+class RiskOpportunitySlide(_BaseSlide):
+    layout_type: Literal["risk_opportunity"] = "risk_opportunity"
+
+
+class RecommendationWithRationaleSlide(_BaseSlide):
+    layout_type: Literal["recommendation_with_rationale"] = "recommendation_with_rationale"
+
+
+class SectionDividerSlide(_BaseSlide):
+    layout_type: Literal["section_divider"] = "section_divider"
+
+
+class BeforeAfterDetailedSlide(_BaseSlide):
+    layout_type: Literal["before_after_detailed"] = "before_after_detailed"
+
+
 class FreeformGridSlide(_BaseSlide):
     layout_type: Literal["freeform_grid"] = "freeform_grid"
 
@@ -164,6 +180,10 @@ ValidatedSlide = Union[
     DataFlowDiagramSlide,
     CausalLoopSlide,
     BeforeAfterSlide,
+    RiskOpportunitySlide,
+    RecommendationWithRationaleSlide,
+    SectionDividerSlide,
+    BeforeAfterDetailedSlide,
     DataTableSlide,
     ProcessFlowSlide,
     ComparisonGridSlide,
@@ -203,6 +223,10 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "data_flow_diagram": DataFlowDiagramSlide,
         "causal_loop": CausalLoopSlide,
         "before_after": BeforeAfterSlide,
+        "risk_opportunity": RiskOpportunitySlide,
+        "recommendation_with_rationale": RecommendationWithRationaleSlide,
+        "section_divider": SectionDividerSlide,
+        "before_after_detailed": BeforeAfterDetailedSlide,
         "data_table": DataTableSlide,
         "table": DataTableSlide,
         "full_process_flow": ProcessFlowSlide,
