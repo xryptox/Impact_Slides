@@ -806,7 +806,7 @@ def render_comparison(slide, total, notes, active=False):
         if body.lower().startswith("keep this open through close"):
             body = ""
         cards.append(
-            f'<article class="comparison-card risk">'
+            f'<article class="comparison-card card risk">'
             f'<div class="card-head">{esc(head)}</div>'
             f'<div class="card-body"><p>{esc(body)}</p></div>'
             f"</article>"
@@ -855,7 +855,7 @@ def render_quote(slide, total, notes, active=False):
         for body, cite in quotes[:3]:
             cite_html = f"<cite>{esc(cite)}</cite>" if cite else ""
             cards.append(
-                f'<article class="quote-card">'
+                f'<article class="quote-card card">'
                 f"<blockquote>{esc(body)}</blockquote>{cite_html}</article>"
             )
         main = f'<div class="gl-areas-quote-stack quote-layout--stack">{"".join(cards)}</div>'
@@ -865,7 +865,7 @@ def render_quote(slide, total, notes, active=False):
         insight = f'<div class="quote-insight">{esc(sow)}</div>' if sow else ""
         main = (
             f'<div class="quote-layout--single">'
-            f'<article class="quote-card"><blockquote>{esc(body)}</blockquote>{cite_html}</article>'
+            f'<article class="quote-card card"><blockquote>{esc(body)}</blockquote>{cite_html}</article>'
             f"{insight}"
             f"</div>"
         )
