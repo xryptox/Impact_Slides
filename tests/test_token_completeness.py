@@ -56,6 +56,7 @@ EXPECTED_TOKENS = {
     "--space-lg",
     "--space-xl",
     "--space-2xl",
+    "--space-3xl",
     # Grid gaps
     "--grid-gap-sm",
     "--grid-gap-md",
@@ -64,6 +65,7 @@ EXPECTED_TOKENS = {
     "--radius-sm",
     "--radius-md",
     "--radius-lg",
+    "--radius-card",
     # Shadows
     "--shadow-sm",
     "--shadow-md",
@@ -79,6 +81,22 @@ EXPECTED_TOKENS = {
     "--text-2xl",
     "--text-display",
     "--text-title",
+}
+
+EXPECTED_CORE_TOKENS = {
+    # Size scale
+    *(f"--size-{i}" for i in range(1, 16)),
+    # Radius scale
+    *(f"--radius-{i}" for i in range(1, 7)),
+    "--radius-round",
+    # Shadow system
+    "--shadow-color",
+    "--shadow-strength",
+    *(f"--shadow-{i}" for i in range(1, 7)),
+    # Gradients
+    "--gradient-surface",
+    "--gradient-panel",
+    "--gradient-accent-soft",
 }
 
 
@@ -114,6 +132,15 @@ def test_no_hardcoded_hex_in_semantic_layer():
     assert not offenders, f"Hard-coded hex values found in semantic tokens: {offenders}"
 
 
+def test_core_token_scales_present():
+    """tokens.css should contain the full Open Props-style scales."""
+    base = Path(__file__).parent.parent / "impact_slides" / "renderer_v2" / "css"
+    css = (base / "tokens.css").read_text(encoding="utf-8")
+    found = _extract_token_names(css)
+    missing = EXPECTED_CORE_TOKENS - found
+    assert not missing, f"Missing core tokens in tokens.css: {sorted(missing)}"
+
+
 def test_semantic_tokens_load_through_shell():
     """shell.py load_css() should include semantic-tokens.css in the bundle."""
     from impact_slides.renderer_v2.shell import load_css
@@ -125,3 +152,7 @@ def test_semantic_tokens_load_through_shell():
     assert "--shadow-sm:" in css
     assert "--grid-gap-md:" in css
     assert "--slide-padding:" in css
+    assert "--size-1:" in css
+    assert "--shadow-1:" in css
+    assert "--gradient-surface:" in css
+    assert "--radius-round:" in css
