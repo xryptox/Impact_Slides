@@ -11,6 +11,19 @@ from . import annotation_callout, arrow_connector, group_boundary, node_box
 from ..strip import esc
 
 
+def _edge_point(
+    cx: float, cy: float, w: float, h: float, tx: float, ty: float,
+) -> tuple[float, float]:
+    """Where the line from centre (cx,cy) toward (tx,ty) exits the rect w×h."""
+    dx, dy = tx - cx, ty - cy
+    if dx == 0 and dy == 0:
+        return cx, cy
+    sx = (w / 2) / abs(dx) if dx != 0 else float("inf")
+    sy = (h / 2) / abs(dy) if dy != 0 else float("inf")
+    s = min(sx, sy)
+    return cx + dx * s, cy + dy * s
+
+
 def _rows(slide: Mapping[str, Any]) -> list[list[str]]:
     """Extract 2-D string rows from visual_spec.primary_visual.steps_or_data."""
     vs = slide.get("visual_spec") or {}
@@ -181,12 +194,14 @@ def causal_loop_scene(slide: Mapping[str, Any]) -> str:
         svg_parts.append(node_box(node["label"], width=node_w, height=node_h))
         svg_parts.append("</g>")
 
-    # Curved arrows between consecutive nodes
+    # Curved arrows between consecutive nodes — shrink to node borders
     for i in range(n):
-        x1 = positions[i][0] + node_w / 2
-        y1 = positions[i][1] + node_h / 2
-        x2 = positions[(i + 1) % n][0] + node_w / 2
-        y2 = positions[(i + 1) % n][1] + node_h / 2
+        c1x = positions[i][0] + node_w / 2
+        c1y = positions[i][1] + node_h / 2
+        c2x = positions[(i + 1) % n][0] + node_w / 2
+        c2y = positions[(i + 1) % n][1] + node_h / 2
+        x1, y1 = _edge_point(c1x, c1y, node_w, node_h, c2x, c2y)
+        x2, y2 = _edge_point(c2x, c2y, node_w, node_h, c1x, c1y)
         svg_parts.append(arrow_connector(x1, y1, x2, y2, curved=True))
 
     svg_parts.append(_svg_close())
@@ -446,14 +461,16 @@ def ecosystem_map_scene(slide: Mapping[str, Any]) -> str:
         svg_parts.append(node_box(label, width=node_w, height=node_h))
         svg_parts.append("</g>")
 
-    # Connections
+    # Connections — shrink endpoints to node borders
     for src, label, tgt in connections:
         if src not in positions or tgt not in positions:
             continue
-        sx = positions[src][0] + node_w / 2
-        sy = positions[src][1] + node_h / 2
-        tx = positions[tgt][0] + node_w / 2
-        ty = positions[tgt][1] + node_h / 2
+        scx = positions[src][0] + node_w / 2
+        scy = positions[src][1] + node_h / 2
+        tcx = positions[tgt][0] + node_w / 2
+        tcy = positions[tgt][1] + node_h / 2
+        sx, sy = _edge_point(scx, scy, node_w, node_h, tcx, tcy)
+        tx, ty = _edge_point(tcx, tcy, node_w, node_h, scx, scy)
         svg_parts.append(arrow_connector(sx, sy, tx, ty))
         # Label at midpoint
         mx = (sx + tx) / 2

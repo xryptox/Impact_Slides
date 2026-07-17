@@ -49,9 +49,9 @@ def node_box(
     """Generate a rounded-rect node with optional icon and label."""
     icon_html = _svg_icon(icon) if icon else ""
     icon_x = 12
-    label_x = 48 if icon else 16
+    text_cx = width / 2
     sublabel_y = 38
-    label_y = 26 if sublabel else 34
+    label_y = 26 if sublabel else (height / 2 + font_size * 0.35)
 
     parts = [
         f'<g class="diagram-node">',
@@ -62,14 +62,14 @@ def node_box(
     if icon_html:
         parts.append(f'<g transform="translate({icon_x}, {(height - 24) // 2})">{icon_html}</g>')
     parts.append(
-        f'<text x="{label_x}" y="{label_y}"'
+        f'<text x="{text_cx}" y="{label_y}" text-anchor="middle"'
         f' fill="{_style_token("color-ink")}" font-size="{font_size}px"'
         f' font-weight="600" font-family="{_style_token("font-body")}">'
         f'{esc(label)}</text>'
     )
     if sublabel:
         parts.append(
-            f'<text x="{label_x}" y="{sublabel_y}"'
+            f'<text x="{text_cx}" y="{sublabel_y}" text-anchor="middle"'
             f' fill="{_style_token("color-ink-muted")}" font-size="{font_size - 2}px"'
             f' font-family="{_style_token("font-body")}">'
             f'{esc(sublabel)}</text>'
