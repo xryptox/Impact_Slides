@@ -16,6 +16,7 @@ _CHART_LAYOUTS = frozenset(
         "heatmap",
         "icon_grid",
         "line_chart",
+        "combo_chart",
     }
 )
 
@@ -134,6 +135,9 @@ def build_chart_html(slide: Mapping[str, Any], layout: str) -> str:
     # Line charts are built internally (external pack has no line chart)
     if lt == "line_chart":
         return _build_line_chart_svg(slide)
+    # Combo charts (bar + line overlay) are built internally
+    if lt == "combo_chart":
+        return _build_combo_chart_svg(slide)
     mod = _load_pack()
     s = dict(slide)
     s["layout_type"] = lt
@@ -549,6 +553,246 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
                 f'<text x="{ax:.0f}" y="{ay + (li - len(lines)/2 + 0.5) * 18 + 5:.0f}" '
                 f'text-anchor="middle" fill="var(--ink, #53565a)" font-size="13" '
                 f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+            )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Combo chart (bar + line overlay, internal SVG)
+# ---------------------------------------------------------------------------
+
+
+def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float]]:
+    """Parse bar chart labels and values from steps_or_data."""
+    raw = _steps(slide)
+    labels: list[str] = []
+    values: list[float] = []
+    for item in raw:
+        if isinstance(item, dict):
+            label = str(item.get("label") or item.get("x") or "")
+            try:
+                v = float(str(item.get("value") or item.get("y") or 0).replace("%", "").replace(",", "").replace("$", ""))
+            except (ValueError, TypeError):
+                continue
+            labels.append(label)
+            values.append(v)
+        elif isinstance(item, (list, tuple)) and len(item) >= 2:
+            try:
+                v = float(str(item[1]).replace("%", "").replace(",", "").replace("$", ""))
+            except (ValueError, TypeError):
+                continue
+            labels.append(str(item[0]))
+            values.append(v)
+        elif isinstance(item, str) and ":" in item:
+            a, _, b = item.partition(":")
+            try:
+                v = float(b.replace("%", "").replace(",", "").replace("$", "").strip())
+            except ValueError:
+                continue
+            labels.append(a.strip())
+            values.append(v)
+    return labels, values
+
+
+def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Parse line overlay data from visual_spec.line_overlay."""
+    vs = slide.get("visual_spec") or {}
+    if not isinstance(vs, dict):
+        return []
+    overlay = vs.get("line_overlay") or {}
+    if not isinstance(overlay, dict):
+        return []
+    raw = overlay.get("data") or []
+    points: list[dict[str, Any]] = []
+    for item in raw:
+        if isinstance(item, dict):
+            label = str(item.get("label") or "")
+            try:
+                v = float(str(item.get("value") or 0).replace("%", "").replace(",", "").replace("$", ""))
+            except (ValueError, TypeError):
+                continue
+            points.append({"label": label, "value": v})
+        elif isinstance(item, (list, tuple)) and len(item) >= 2:
+            try:
+                v = float(str(item[1]).replace("%", "").replace(",", "").replace("$", ""))
+            except (ValueError, TypeError):
+                continue
+            points.append({"label": str(item[0]), "value": v})
+    return points
+
+
+def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
+    """Build a combo chart: bars + line overlay in a single SVG."""
+    bar_labels, bar_values = _combo_bar_data(slide)
+    line_points = _combo_line_data(slide)
+    if not bar_values:
+        return '<p class="chart-empty">No combo chart data</p>'
+
+    vs = slide.get("visual_spec") or {}
+    overlay_cfg = vs.get("line_overlay") or {}
+    overlay_color = overlay_cfg.get("color", "var(--ink-muted, #63666a)")
+    overlay_label = overlay_cfg.get("label", "")
+    overlay_style = overlay_cfg.get("style", "solid")
+
+    cfg = _chart_config(slide)
+    W, H = 900, 480
+    pad_l, pad_r, pad_t, pad_b = 80, 80 if line_points else 40, 40, 60
+
+    bar_max = float(cfg.get("y_axis_max", max(bar_values) * 1.15 if bar_values else 10))
+    bar_min = 0.0
+
+    line_values = [p["value"] for p in line_points] if line_points else []
+    line_max = float(overlay_cfg.get("y_axis_max", max(line_values) * 1.15 if line_values else 10))
+    line_min = float(overlay_cfg.get("y_axis_min", 0))
+    use_dual_axis = bool(line_points) and overlay_cfg.get("dual_axis", True)
+
+    plot_w = W - pad_l - pad_r
+    plot_h = H - pad_t - pad_b
+    n_bars = len(bar_values)
+
+    def bar_y(v: float) -> float:
+        rng = bar_max - bar_min
+        if rng == 0:
+            return pad_t + plot_h / 2
+        return pad_t + plot_h - ((v - bar_min) / rng) * plot_h
+
+    def line_y(v: float) -> float:
+        if use_dual_axis:
+            rng = line_max - line_min
+            if rng == 0:
+                return pad_t + plot_h / 2
+            return pad_t + plot_h - ((v - line_min) / rng) * plot_h
+        return bar_y(v)
+
+    bar_slot = plot_w / max(n_bars, 1)
+    bar_w = bar_slot * 0.6
+    bar_unit = cfg.get("y_axis_unit", "")
+
+    parts: list[str] = [
+        f'<svg class="chart-svg combo-chart" viewBox="0 0 {W} {H}" '
+        f'xmlns="http://www.w3.org/2000/svg" '
+        f'style="width:100%;height:auto">',
+    ]
+
+    # Y-axis gridlines (based on bar axis)
+    bar_ticks = cfg.get("y_axis_ticks")
+    if bar_ticks is None:
+        step = bar_max / 4
+        if step >= 5:
+            step = int(step)
+        bar_ticks = [bar_min + i * step for i in range(5)]
+    for tick in bar_ticks:
+        ty = bar_y(float(tick))
+        parts.append(
+            f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
+            f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
+        )
+        tick_label = f"{tick:g}{bar_unit}" if bar_unit else f"{tick:g}"
+        parts.append(
+            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+            f'fill="var(--ink-muted, #63666a)" font-size="14" '
+            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+        )
+
+    # Left Y-axis
+    parts.append(
+        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+    )
+
+    # Right Y-axis (dual axis)
+    if use_dual_axis and line_points:
+        parts.append(
+            f'<line x1="{W - pad_r}" y1="{pad_t}" x2="{W - pad_r}" y2="{H - pad_b}" '
+            f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+        )
+        line_ticks = overlay_cfg.get("y_axis_ticks")
+        if line_ticks is None:
+            step = (line_max - line_min) / 4
+            if step >= 5:
+                step = int(step)
+            line_ticks = [line_min + i * step for i in range(5)]
+        line_unit = overlay_cfg.get("y_axis_unit", "")
+        for tick in line_ticks:
+            ty = line_y(float(tick))
+            tick_label = f"{tick:g}{line_unit}" if line_unit else f"{tick:g}"
+            parts.append(
+                f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
+                f'fill="var(--ink-muted, #63666a)" font-size="14" '
+                f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+            )
+
+    # X-axis line
+    parts.append(
+        f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
+        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+    )
+
+    # Bars
+    for i, (lab, val) in enumerate(zip(bar_labels, bar_values)):
+        x = pad_l + i * bar_slot + (bar_slot - bar_w) / 2
+        y = bar_y(val)
+        bh = H - pad_b - y
+        parts.append(
+            f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
+            f'fill="var(--blue, #006fcf)" rx="2"/>'
+        )
+        val_text = f"{val:g}{bar_unit}" if bar_unit else f"{val:g}"
+        parts.append(
+            f'<text x="{x + bar_w/2:.1f}" y="{y - 8:.1f}" text-anchor="middle" '
+            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'font-family="var(--font-body, sans-serif)">{esc(val_text)}</text>'
+        )
+        parts.append(
+            f'<text x="{x + bar_w/2:.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
+            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
+        )
+
+    # Line overlay
+    if line_points:
+        line_coords: list[tuple[float, float]] = []
+        for lp in line_points:
+            try:
+                idx = bar_labels.index(lp["label"])
+            except ValueError:
+                idx = len(line_coords)
+            if idx < n_bars:
+                lx = pad_l + idx * bar_slot + bar_slot / 2
+            else:
+                lx = pad_l + (len(line_coords) / max(len(line_points) - 1, 1)) * plot_w
+            ly = line_y(lp["value"])
+            line_coords.append((lx, ly))
+
+        if line_coords:
+            dash = 'stroke-dasharray="8,4"' if overlay_style == "dashed" else ""
+            pts_str = " ".join(f"{x:.1f},{y:.1f}" for x, y in line_coords)
+            parts.append(
+                f'<polyline points="{pts_str}" fill="none" '
+                f'stroke="{overlay_color}" stroke-width="2" '
+                f'{dash} stroke-linejoin="round" stroke-linecap="round"/>'
+            )
+            for lx, ly in line_coords:
+                parts.append(
+                    f'<circle cx="{lx:.1f}" cy="{ly:.1f}" r="4" '
+                    f'fill="{overlay_color}"/>'
+                )
+            line_unit = overlay_cfg.get("y_axis_unit", "")
+            for (lx, ly), lp in zip(line_coords, line_points):
+                label_text = f"{lp['value']:g}{line_unit}" if line_unit else f"{lp['value']:g}"
+                parts.append(
+                    f'<text x="{lx:.1f}" y="{ly - 12:.1f}" text-anchor="middle" '
+                    f'fill="var(--ink-muted, #63666a)" font-size="12" '
+                    f'font-family="var(--font-body, sans-serif)">{esc(label_text)}</text>'
+                )
+
+        if overlay_label:
+            parts.append(
+                f'<text x="{W - pad_r - 10}" y="{pad_t + 10}" text-anchor="end" '
+                f'fill="{overlay_color}" font-size="13" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(overlay_label)}</text>'
             )
 
     parts.append("</svg>")
