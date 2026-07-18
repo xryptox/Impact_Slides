@@ -141,6 +141,17 @@ def build_chart_html(slide: Mapping[str, Any], layout: str) -> str:
     mod = _load_pack()
     s = dict(slide)
     s["layout_type"] = lt
+    # External pack reads steps_or_data / key_stats / so_what at the TOP level
+    # of the slide dict; our handoff nests them under visual_spec / content.
+    # Bridge the two shapes so the pack can find the data.
+    if not s.get("steps_or_data"):
+        vs = s.get("visual_spec") or {}
+        pv = vs.get("primary_visual") or {}
+        s["steps_or_data"] = pv.get("steps_or_data") or []
+    if not s.get("key_stats"):
+        s["key_stats"] = (s.get("content") or {}).get("key_stats") or []
+    if not s.get("so_what"):
+        s["so_what"] = (s.get("content") or {}).get("so_what") or ""
     if mod and hasattr(mod, "build_main"):
         try:
             html = mod.build_main(s, esc=esc, icon=_icon_svg)
