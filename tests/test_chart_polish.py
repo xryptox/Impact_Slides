@@ -207,3 +207,58 @@ def test_annotation_newlines_survive_normalize_handoff():
     n = normalize_handoff(h)
     s = [x for x in n["slides"] if x.get("layout_type") == "line_chart"][0]
     assert "\n" in s["visual_spec"]["chart_config"]["annotation"]["text"]
+
+
+# ------------------------------------------------------- gridlines toggle (T10/#38)
+
+from impact_slides.renderer_v2.charts import _build_stacked_bar_svg
+
+GRID = 'stroke="var(--panel-border, #d8dce3)"'
+
+
+def _grid_slide(layout, data, **cfg):
+    slide = {
+        "slide_number": 1,
+        "title": "Test",
+        "layout_type": layout,
+        "content": {},
+        "visual_spec": {
+            "primary_visual": {"type": layout, "steps_or_data": data},
+            "chart_config": cfg,
+        },
+        "evidence_sources": [],
+    }
+    return slide
+
+
+def test_line_chart_gridlines_default_on():
+    slide = _grid_slide("line_chart", [{"label": "Q1", "value": 9}, {"label": "Q2", "value": 10}])
+    assert GRID in _build_line_chart_svg(slide)
+
+
+def test_line_chart_gridlines_off():
+    slide = _grid_slide("line_chart", [{"label": "Q1", "value": 9}, {"label": "Q2", "value": 10}], gridlines=False)
+    svg = _build_line_chart_svg(slide)
+    assert GRID not in svg
+    assert "<polyline" in svg            # chart intact
+    assert "text-anchor=\"end\"" in svg  # tick labels still render
+
+
+def test_bar_chart_gridlines_off():
+    slide = _grid_slide("grouped_bar_chart", [{"label": "Q1", "value": 7}], gridlines=False)
+    assert GRID not in _build_grouped_bar_svg(slide)
+
+
+def test_stacked_bar_gridlines_off():
+    slide = _grid_slide("stacked_bar_chart", [{"label": "Q1", "values": {"A": 100, "B": -20}}], gridlines=False)
+    assert GRID not in _build_stacked_bar_svg(slide)
+
+
+def test_combo_gridlines_off():
+    slide = _grid_slide("combo_chart", [{"label": "Q1", "value": 1.6}], gridlines=False)
+    assert GRID not in _build_combo_chart_svg(slide)
+
+
+def test_bar_chart_gridlines_default_on():
+    slide = _grid_slide("grouped_bar_chart", [{"label": "Q1", "value": 7}])
+    assert GRID in _build_grouped_bar_svg(slide)

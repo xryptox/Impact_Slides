@@ -400,6 +400,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No line chart data</p>'
 
     cfg = _chart_config(slide)
+    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("line_chart")
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 40, 60
@@ -472,10 +473,11 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     # Y-axis gridlines and tick labels
     for tick in y_ticks:
         ty = y_pos(tick)
-        parts.append(
-            f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
-            f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
-        )
+        if show_grid:
+            parts.append(
+                f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
+                f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
+            )
         tick_label = _fmtu(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
@@ -759,6 +761,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     overlay_style = overlay_cfg.get("style", "solid")
 
     cfg = _chart_config(slide)
+    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("combo_chart", has_overlay=bool(line_points))
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 56 if stacked else 40, 60
@@ -812,10 +815,11 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         bar_ticks = [bar_min + i * step for i in range(5)]
     for tick in bar_ticks:
         ty = bar_y(float(tick))
-        parts.append(
-            f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
-            f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
-        )
+        if show_grid:
+            parts.append(
+                f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
+                f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
+            )
         tick_label = _fmtb(float(tick))
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
@@ -1208,6 +1212,7 @@ def _vbar_frame(
     series: list[str],
 ) -> list[str]:
     """Emit SVG open + gridlines + axes + legend."""
+    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
@@ -1227,10 +1232,11 @@ def _vbar_frame(
     ]
     for tick in y_ticks:
         ty = y_pos(tick)
-        parts.append(
-            f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
-            f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
-        )
+        if show_grid:
+            parts.append(
+                f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
+                f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
+            )
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
@@ -1273,6 +1279,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No bar chart data</p>'
 
     cfg = _chart_config(slide)
+    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
@@ -1345,6 +1352,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No stacked bar data</p>'
 
     cfg = _chart_config(slide)
+    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
