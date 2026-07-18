@@ -605,12 +605,32 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float], list[str | None]]:
-    """Parse bar chart labels, values and per-point colors from steps_or_data."""
+def _combo_bar_data(
+    slide: Mapping[str, Any],
+) -> tuple[list[str], list[str], list[list[float | None]], list[str | None]]:
+    """Parse combo bar data into (labels, series, rows, point_colors).
+
+    Multi-series: ``{label, values:{s: v}}`` dicts render as stacked bars.
+    Single-series: ``{label, value}`` dicts, ``[label, value]`` pairs, or
+    ``"label: value"`` strings yield one ``["Value"]`` series.
+    """
     raw = _steps(slide)
     labels: list[str] = []
-    values: list[float] = []
+    series: list[str] = []
+    rows: list[list[float | None]] = []
     colors: list[str | None] = []
+
+    # Multi-series path: dicts carrying a values mapping
+    if raw and all(isinstance(it, dict) and isinstance(it.get("values"), dict) for it in raw):
+        for it in raw:
+            vals = it["values"]
+            if not series:
+                series = [str(k) for k in vals.keys()][:4]
+            labels.append(str(it.get("label") or it.get("x") or ""))
+            rows.append([_bar_num(vals.get(k)) for k in series])
+            colors.append(str(it["color"]) if it.get("color") else None)
+        return labels, series, rows, colors
+
     for item in raw:
         if isinstance(item, dict):
             label = str(item.get("label") or item.get("x") or "")
@@ -619,7 +639,7 @@ def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float], l
             except (ValueError, TypeError):
                 continue
             labels.append(label)
-            values.append(v)
+            rows.append([v])
             colors.append(str(item["color"]) if item.get("color") else None)
         elif isinstance(item, (list, tuple)) and len(item) >= 2:
             try:
@@ -627,7 +647,7 @@ def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float], l
             except (ValueError, TypeError):
                 continue
             labels.append(str(item[0]))
-            values.append(v)
+            rows.append([v])
             colors.append(None)
         elif isinstance(item, str) and ":" in item:
             a, _, b = item.partition(":")
@@ -636,9 +656,11 @@ def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float], l
             except ValueError:
                 continue
             labels.append(a.strip())
-            values.append(v)
+            rows.append([v])
             colors.append(None)
-    return labels, values, colors
+    if rows and not series:
+        series = ["Value"]
+    return labels, series, rows, colors
 
 
 def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -670,10 +692,13 @@ def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     """Build a combo chart: bars + line overlay in a single SVG."""
-    bar_labels, bar_values, bar_colors = _combo_bar_data(slide)
+    bar_labels, bar_series, bar_rows, bar_colors = _combo_bar_data(slide)
     line_points = _combo_line_data(slide)
-    if not bar_values:
+    if not bar_rows:
         return '<p class="chart-empty">No combo chart data</p>'
+    stacked = len(bar_series) > 1
+    # Per-category totals drive the bar axis (single-series rows have 1 cell)
+    bar_totals = [sum(v for v in row if v is not None and v > 0) for row in bar_rows]
 
     vs = slide.get("visual_spec") or {}
     overlay_cfg = vs.get("line_overlay") or {}
@@ -683,9 +708,9 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
 
     cfg = _chart_config(slide)
     W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 80, 80 if line_points else 40, 40, 60
+    pad_l, pad_r, pad_t, pad_b = 80, 80 if line_points else 40, 56 if stacked else 40, 60
 
-    bar_max = float(cfg.get("y_axis_max", max(bar_values) * 1.15 if bar_values else 10))
+    bar_max = float(cfg.get("y_axis_max", max(bar_totals) * 1.15 if bar_totals else 10))
     bar_min = 0.0
 
     line_values = [p["value"] for p in line_points] if line_points else []
@@ -695,7 +720,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
 
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
-    n_bars = len(bar_values)
+    n_bars = len(bar_rows)
 
     def bar_y(v: float) -> float:
         rng = bar_max - bar_min
@@ -779,24 +804,67 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
     )
 
+    # Bar legend (multi-series stacked mode only)
+    if stacked:
+        combo_palette = _series_colors(cfg)
+        lx = pad_l + 4
+        for si, name in enumerate(bar_series):
+            color = combo_palette[si % len(combo_palette)]
+            parts.append(
+                f'<g class="combo-bar-legend-item">'
+                f'<rect x="{lx}" y="18" width="12" height="12" rx="2" fill="{color}"/>'
+                f'<text x="{lx + 18}" y="28" fill="var(--ink, #53565a)" font-size="13" '
+                f'font-family="var(--font-body, sans-serif)">{esc(name)}</text></g>'
+            )
+            lx += 18 + len(name) * 7 + 28
+        parts.append("<!-- combo-bar-legend -->")
+
     # Bars
     combo_palette = _series_colors(cfg)
     default_bar_color = combo_palette[0] if cfg.get("series_colors") else "var(--blue, #006fcf)"
-    for i, (lab, val) in enumerate(zip(bar_labels, bar_values)):
+    for i, lab in enumerate(bar_labels):
         x = pad_l + i * bar_slot + (bar_slot - bar_w) / 2
-        y = bar_y(val)
-        bh = H - pad_b - y
-        bar_color = bar_colors[i] or default_bar_color
-        parts.append(
-            f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
-            f'fill="{bar_color}" rx="2"/>'
-        )
-        val_text = _fmtb(val)
-        parts.append(
-            f'<text x="{x + bar_w/2:.1f}" y="{y - 8:.1f}" text-anchor="middle" '
-            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
-            f'font-family="var(--font-body, sans-serif)">{esc(val_text)}</text>'
-        )
+        if stacked:
+            cursor = 0.0
+            for si in range(len(bar_series)):
+                v = bar_rows[i][si] if si < len(bar_rows[i]) else None
+                if v is None or v <= 0:
+                    continue
+                y_bottom = bar_y(cursor)
+                cursor += v
+                y_top = bar_y(cursor)
+                seg_color = bar_colors[i] or combo_palette[si % len(combo_palette)]
+                parts.append(
+                    f'<rect class="combo-seg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
+                    f'height="{max(y_bottom - y_top, 0):.1f}" fill="{seg_color}"/>'
+                )
+                if y_bottom - y_top > 20:
+                    parts.append(
+                        f'<text x="{x + bar_w / 2:.1f}" y="{(y_top + y_bottom) / 2 + 5:.1f}" '
+                        f'text-anchor="middle" fill="#fff" font-size="13" font-weight="600" '
+                        f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(v))}</text>'
+                    )
+            total = bar_totals[i]
+            parts.append(
+                f'<text x="{x + bar_w / 2:.1f}" y="{bar_y(total) - 8:.1f}" text-anchor="middle" '
+                f'fill="var(--ink, #53565a)" font-size="14" font-weight="700" '
+                f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(total))}</text>'
+            )
+        else:
+            val = bar_rows[i][0] or 0.0
+            y = bar_y(val)
+            bh = H - pad_b - y
+            bar_color = bar_colors[i] or default_bar_color
+            parts.append(
+                f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
+                f'fill="{bar_color}" rx="2"/>'
+            )
+            val_text = _fmtb(val)
+            parts.append(
+                f'<text x="{x + bar_w/2:.1f}" y="{y - 8:.1f}" text-anchor="middle" '
+                f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(val_text)}</text>'
+            )
         parts.append(
             f'<text x="{x + bar_w/2:.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
             f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
