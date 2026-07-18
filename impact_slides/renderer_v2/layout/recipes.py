@@ -1070,16 +1070,15 @@ def render_chart(slide, total, notes, active=False):
             for row in body:
                 tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
             tbl += "</tbody></table>"
-            if aligned:
-                # nest table inside the chart column so the colgroup
-                # percentages share the SVG's width context
-                cls = " ".join(wrap_classes + ["chart-align-table"])
-                main = (
-                    f'<div class="chart-svg-wrap {cls}">'
-                    f'<div class="chart-col">{chart_html}{tbl}</div></div>'
-                )
-            else:
-                main += tbl
+            # Width sharing is UNCONDITIONAL (#40): every support table lives
+            # inside the chart's width context (.chart-col), whether or not
+            # its columns align with chart categories. Column alignment
+            # (colgroup) remains conditional on the header/category match.
+            cls = " ".join(wrap_classes + (["chart-align-table"] if aligned else []))
+            main = (
+                f'<div class="chart-svg-wrap {cls}">'
+                f'<div class="chart-col">{chart_html}{tbl}</div></div>'
+            )
     # Metric strip from key_stats (PDF pattern: chart + KPI row below)
     if has_stats:
         tiles = ""

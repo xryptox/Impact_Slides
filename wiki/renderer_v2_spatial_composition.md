@@ -51,11 +51,15 @@ hold?"*
    hides this difference. Don't assume one alignment formula fits all
    compositions.
 
-5. **Conditional application via relationship detection.** Alignment applies
-   only when the relationship actually exists: the recipe checks the table's
-   header row matches the chart's category labels 1:1 (and all rows have n+1
-   cells). A table breaking down something else keeps the full-width default.
-   Detect the relationship; don't hardcode either behavior.
+5. **Layer the relationships: some are unconditional, some conditional.**
+   WIDTH sharing is unconditional — every support table renders inside the
+   chart's width context, even a segment-breakdown table with no column
+   relationship to the x-axis (a full-card-width table under a 55%-wide chart
+   reads as disconnected, defect #40). COLUMN alignment is conditional — it
+   applies only when the recipe detects the table's header row matches the
+   chart's category labels 1:1. Ask "which relationships ALWAYS hold in this
+   composition?" separately from "which hold only for specific data shapes?"
+   — and test both paths.
 
 6. **Test geometry, not presence.** `assert "chart-support-table" in html`
    cannot catch misalignment. The core test

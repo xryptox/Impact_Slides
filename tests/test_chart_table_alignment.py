@@ -186,3 +186,35 @@ def test_aligned_table_spans_to_svg_right_edge():
         r'chart-table-aligned" style="width:([\d.]+)%"', html,
     ).group(1))
     assert abs(table_w - 100.0) < 0.5  # right edge == SVG right edge (900/900)
+
+
+# ------------------------------------------- unconditional width sharing (#40)
+
+def test_non_matching_table_shares_chart_width_context():
+    """Segment-breakdown tables (no category relationship) must still render
+    INSIDE the chart's width context — not at full card width."""
+    secondary = {
+        "type": "data_table",
+        "steps_or_data": [
+            ["Q1'26", "U.S. SME", "U.S. Large & Global Corp.", "Total"],
+            ["YoY", "4%", "4%", "4%"],
+            ["% of Total", "81%", "19%", "100%"],
+        ],
+    }
+    html = _render(_slide(secondary=secondary))
+    assert "chart-support-table" in html
+    assert "chart-table-aligned" not in html        # no column relationship
+    assert "<colgroup>" not in html
+    # ...but the table is nested in the shared chart column
+    assert '<div class="chart-col">' in html
+    col = html.split('<div class="chart-col">', 1)[1]
+    assert "chart-support-table" in col.split("</div>", 1)[0]
+    assert "chart-svg-wrap chart-split" in html     # width-constrained wrap
+
+
+def test_aligned_table_still_nested_after_40():
+    """p4 case unchanged: aligned tables keep colgroup + nesting."""
+    html = _render(_slide(secondary=_MATCHING_SECONDARY))
+    assert "chart-table-aligned" in html
+    assert '<div class="chart-col">' in html
+    assert "chart-align-table" in html
