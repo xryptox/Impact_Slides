@@ -436,27 +436,120 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
             f'font-family="var(--font-body, sans-serif)">{esc(y_label)}</text>'
         )
 
-    # Primary line (solid blue)
-    line_pts = " ".join(f"{x_pos(i):.1f},{y_pos(p['value']):.1f}" for i, p in enumerate(points))
-    parts.append(
-        f'<polyline points="{line_pts}" fill="none" '
-        f'stroke="var(--blue, #006fcf)" stroke-width="3" '
-        f'stroke-linejoin="round" stroke-linecap="round"/>'
-    )
+    # -- Series definitions -----------------------------------------------
+    # series_keys was collected above; build full series list
+    all_series: list[dict[str, Any]] = [
+        {"key": "value", "color": "var(--blue, #006fcf)", "dash": "", "width": 3},
+    ]
+    series_names = cfg.get("series_names", [])
+    series_styles = cfg.get("series_styles", [])
+    for si, sk in enumerate(series_keys):
+        idx = si + 1  # series_2 is index 1 in all_series
+        if idx == 1:
+            color = "var(--ink-muted, #63666a)"
+            dash = 'stroke-dasharray="8,4"'
+            width = 2
+        else:
+            color = "var(--navy, #00175a)"
+            dash = ""
+            width = 2
+        # Allow override from config (series_styles[0] is primary, [1] is series_2, ...)
+        if idx < len(series_styles) and series_styles[idx] == "solid":
+            dash = ""
+        all_series.append({"key": sk, "color": color, "dash": dash, "width": width})
 
-    # Data points and labels for primary series
+    # -- Draw each series --------------------------------------------------
+    for s_entry in all_series:
+        sk = s_entry["key"]
+        pts_for_series = [
+            (i, p[sk]) for i, p in enumerate(points) if sk in p
+        ]
+        if not pts_for_series:
+            continue
+        line_pts = " ".join(
+            f"{x_pos(i):.1f},{y_pos(v):.1f}" for i, v in pts_for_series
+        )
+        dash_attr = f' {s_entry["dash"]}' if s_entry["dash"] else ""
+        parts.append(
+            f'<polyline points="{line_pts}" fill="none" '
+            f'stroke="{s_entry["color"]}" stroke-width="{s_entry["width"]}"'
+            f'{dash_attr} stroke-linejoin="round" stroke-linecap="round"/>'
+        )
+        # Data points
+        for i, v in pts_for_series:
+            cx, cy = x_pos(i), y_pos(v)
+            parts.append(
+                f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" '
+                f'fill="{s_entry["color"]}"/>'
+            )
+
+    # Data labels for primary series only (avoid clutter)
     for i, p in enumerate(points):
         cx, cy = x_pos(i), y_pos(p["value"])
-        parts.append(
-            f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" '
-            f'fill="var(--blue, #006fcf)"/>'
-        )
         label_text = f"{p['value']:g}{y_unit}" if y_unit else f"{p['value']:g}"
         parts.append(
             f'<text x="{cx:.1f}" y="{cy - 12:.1f}" text-anchor="middle" '
             f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(label_text)}</text>'
         )
+
+    # Data labels for secondary series (below the line, muted)
+    if len(all_series) > 1:
+        for sk_entry in all_series[1:]:
+            sk = sk_entry["key"]
+            for i, p in enumerate(points):
+                if sk not in p:
+                    continue
+                cx, cy = x_pos(i), y_pos(p[sk])
+                label_text = f"{p[sk]:g}{y_unit}" if y_unit else f"{p[sk]:g}"
+                parts.append(
+                    f'<text x="{cx:.1f}" y="{cy + 18:.1f}" text-anchor="middle" '
+                    f'fill="var(--ink-muted, #63666a)" font-size="12" '
+                    f'font-family="var(--font-body, sans-serif)">{esc(label_text)}</text>'
+                )
+
+    # -- Legend -------------------------------------------------------------
+    if len(all_series) > 1 and series_names:
+        legend_x = W - pad_r - 10
+        legend_y = pad_t + 10
+        for li, s_entry in enumerate(all_series):
+            name = series_names[li] if li < len(series_names) else f"Series {li + 1}"
+            ly = legend_y + li * 22
+            dash_attr = f' {s_entry["dash"]}' if s_entry["dash"] else ""
+            parts.append(
+                f'<line x1="{legend_x - 60}" y1="{ly}" x2="{legend_x - 30}" y2="{ly}" '
+                f'stroke="{s_entry["color"]}" stroke-width="{s_entry["width"]}"'
+                f'{dash_attr}/>'
+            )
+            parts.append(
+                f'<text x="{legend_x - 20}" y="{ly + 4}" text-anchor="start" '
+                f'fill="var(--ink, #53565a)" font-size="12" '
+                f'font-family="var(--font-body, sans-serif)">{esc(name)}</text>'
+            )
+
+    # -- Annotation callout --------------------------------------------------
+    annotation = cfg.get("annotation") or (slide.get("visual_spec") or {}).get("annotation")
+    if isinstance(annotation, dict) and annotation.get("text"):
+        ax = float(annotation.get("x", W * 0.25))
+        ay = float(annotation.get("y", H * 0.2))
+        a_text = str(annotation["text"])
+        # Estimate box size from text length
+        lines = a_text.split("\\n")
+        box_w = max(len(l) for l in lines) * 7.5 + 20
+        box_h = len(lines) * 18 + 16
+        parts.append(
+            f'<rect x="{ax - box_w/2:.0f}" y="{ay - box_h/2:.0f}" '
+            f'width="{box_w:.0f}" height="{box_h:.0f}" rx="4" '
+            f'fill="var(--panel, #eef0f0)" '
+            f'stroke="var(--ink-muted, #63666a)" stroke-width="1" '
+            f'stroke-dasharray="4,3"/>'
+        )
+        for li, line in enumerate(lines):
+            parts.append(
+                f'<text x="{ax:.0f}" y="{ay + (li - len(lines)/2 + 0.5) * 18 + 5:.0f}" '
+                f'text-anchor="middle" fill="var(--ink, #53565a)" font-size="13" '
+                f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+            )
 
     parts.append("</svg>")
     return "".join(parts)

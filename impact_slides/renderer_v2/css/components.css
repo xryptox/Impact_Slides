@@ -959,3 +959,27 @@
   color: var(--ink);
   line-height: 1.3;
 }
+
+/* Chart support table (below line charts) */
+.chart-support-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--size-3);
+  font-size: var(--fs-meta);
+}
+.chart-support-table th {
+  background: var(--navy);
+  color: var(--ink-on-navy);
+  padding: var(--size-2) var(--size-3);
+  text-align: center;
+  font-weight: 700;
+}
+.chart-support-table td {
+  padding: var(--size-2) var(--size-3);
+  text-align: center;
+  border-bottom: 1px solid var(--panel-border);
+  color: var(--ink);
+}
+.chart-support-table tr:nth-child(even) td {
+  background: var(--panel);
+}

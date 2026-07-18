@@ -918,6 +918,27 @@ def render_chart(slide, total, notes, active=False):
 
     layout = (slide.get("layout_type") or "grouped_bar_chart").lower()
     main = build_chart_html(slide, layout)
+    # Supporting data table below chart (e.g., line chart + table)
+    vs = slide.get("visual_spec") or {}
+    secondary = vs.get("secondary_visual") or {}
+    if secondary and layout == "line_chart":
+        sec_steps = secondary.get("steps_or_data") or []
+        table_rows: list[list[str]] = []
+        for st in sec_steps:
+            if isinstance(st, (list, tuple)):
+                table_rows.append([strip_eids(str(x)) for x in st])
+            elif isinstance(st, str) and "|" in st:
+                table_rows.append([strip_eids(x) for x in st.split("|")])
+        if table_rows:
+            header = table_rows[0]
+            body = table_rows[1:]
+            tbl = '<table class="chart-support-table"><thead><tr>'
+            tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
+            tbl += "</tr></thead><tbody>"
+            for row in body:
+                tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
+            tbl += "</tbody></table>"
+            main += tbl
     main += insight_strip(_so_what(slide))
     return slide_shell(
         number=int(slide["slide_number"]),

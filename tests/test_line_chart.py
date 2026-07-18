@@ -188,6 +188,122 @@ class TestBuildChartHtml:
         assert is_chart_layout("Line_Chart")
 
 
+# ── Multi-series ──────────────────────────────────────────────────────
+
+
+def _multi_slide(**overrides):
+    s = _slide()
+    s["visual_spec"]["primary_visual"]["steps_or_data"] = [
+        {"label": "Q1'25", "value": 8, "series_2": 7},
+        {"label": "Q2'25", "value": 9, "series_2": 9},
+        {"label": "Q3'25", "value": 10, "series_2": 11},
+        {"label": "Q4'25", "value": 9, "series_2": 10},
+        {"label": "Q1'26", "value": 11, "series_2": 11},
+    ]
+    s["visual_spec"]["chart_config"] = {
+        "series_names": ["FX Adjusted", "Reported"],
+        "series_styles": ["solid", "dashed"],
+    }
+    s.update(overrides)
+    return s
+
+
+class TestMultiSeries:
+    def test_two_polylines(self):
+        svg = _build_line_chart_svg(_multi_slide())
+        polylines = re.findall(r"<polyline", svg)
+        assert len(polylines) == 2
+
+    def test_dashed_second_series(self):
+        svg = _build_line_chart_svg(_multi_slide())
+        assert 'stroke-dasharray="8,4"' in svg
+
+    def test_second_series_color(self):
+        svg = _build_line_chart_svg(_multi_slide())
+        assert "var(--ink-muted, #63666a)" in svg
+
+    def test_legend_rendered(self):
+        svg = _build_line_chart_svg(_multi_slide())
+        assert "FX Adjusted" in svg
+        assert "Reported" in svg
+
+    def test_second_series_data_labels(self):
+        svg = _build_line_chart_svg(_multi_slide())
+        # series_2 labels should appear below the line
+        assert "7%" in svg
+        assert "11%" in svg
+
+    def test_three_series(self):
+        s = _multi_slide()
+        for pt in s["visual_spec"]["primary_visual"]["steps_or_data"]:
+            pt["series_3"] = pt["value"] - 2
+        s["visual_spec"]["chart_config"]["series_names"] = [
+            "Baseline", "Upside", "Downside",
+        ]
+        svg = _build_line_chart_svg(s)
+        polylines = re.findall(r"<polyline", svg)
+        assert len(polylines) == 3
+        assert "Downside" in svg
+
+    def test_single_series_no_legend(self):
+        svg = _build_line_chart_svg(_slide())
+        assert "Series" not in svg
+
+
+# ── Annotation ────────────────────────────────────────────────────────
+
+
+class TestAnnotation:
+    def test_annotation_rendered(self):
+        s = _slide()
+        s["visual_spec"]["chart_config"] = {
+            "annotation": {"text": "Leap Year\\nApprox. (1%)", "x": 200, "y": 120},
+        }
+        svg = _build_line_chart_svg(s)
+        assert "Leap Year" in svg
+        assert "Approx. (1%)" in svg
+        assert 'stroke-dasharray="4,3"' in svg
+
+    def test_no_annotation_by_default(self):
+        svg = _build_line_chart_svg(_slide())
+        assert "Leap Year" not in svg
+
+
+# ── Supporting table ─────────────────────────────────────────────────
+
+
+class TestSupportingTable:
+    def test_table_below_chart(self, tmp_path):
+        s = _slide()
+        s["visual_spec"]["secondary_visual"] = {
+            "type": "data_table",
+            "steps_or_data": [
+                ["Q1'25", "Q2'25", "Q3'25"],
+                ["$17.0", "$17.9", "$18.4"],
+            ],
+        }
+        handoff = {
+            "version": 1,
+            "deck_title": "Test",
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "layout_type": "title_or_opening",
+                    "title": "Test",
+                    "content": {"bullets": []},
+                },
+                s,
+            ],
+        }
+        hpath = tmp_path / "handoff.json"
+        hpath.write_text(json.dumps(handoff), encoding="utf-8")
+        out = tmp_path / "out"
+        render_deck(hpath, out)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chart-support-table" in html
+        assert "$17.0" in html
+
+
 # ── Full deck render ─────────────────────────────────────────────────
 
 
