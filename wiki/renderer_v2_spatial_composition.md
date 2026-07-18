@@ -90,3 +90,28 @@ collisions, unit formatting, legend placement. All passed while the table
 floated unaligned. The rubric now has a **cross-element alignment** section
 (see `pdf_fidelity_test_results.md` Round 4 checklist): column alignment, edge
 alignment, relative sizing, label proximity. Run it on every composed slide.
+
+## Addendum: a geometric test is only as good as its invariant (T11 / #39)
+
+The Round-4 alignment shipped with a real geometric test — and the columns
+were STILL visibly offset by half a slot. The test mapped SVG point positions
+and colgroup centers through the same assumed interval and asserted the two
+were consistent with each other. Both were computed from the same wrong
+assumption, so the test verified *internal consistency*, not the *visual
+relationship*.
+
+The correct invariant anchors to something independent of the implementation:
+the table and the SVG share a width container, therefore
+**absolute column center (% of shared width) must equal cx / svg_width** —
+a fact about the rendered output, not about either side's math.
+
+Follow-on lessons:
+
+- Geometric tests must relate two quantities through an invariant that does
+  not depend on the code path being tested (ideally: pixel/percentage
+  positions in the shared coordinate space).
+- When alignment is geometrically impossible with current constants (equal
+  columns centered on edge-placed points needed a negative label column),
+  fix the CONSTANTS (n-dependent insets), don't approximate the layout.
+- Edge-placed points need edge-aware label anchoring: the first data label
+  straddles the y-axis if centered on its point.
