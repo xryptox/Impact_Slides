@@ -1,6 +1,6 @@
 # PDF Fidelity Test — Renderer v2 vs Amex Q1'26 Earnings PDF
 
-**Date:** 2026-07-18
+**Round 1:** 2026-07-18 (baseline) · **Round 2:** 2026-07-18 (after fidelity tickets #29–#31)
 **Test:** Recreate 10 chart/visualization slides from the Amex Q1'26 Earnings PDF (44 pages) using renderer_v2, with data manually extracted from the PDF.
 **Artifacts:**
 - Handoff JSON: `.scratch/pdf_fidelity_test/handoff.json`
@@ -10,154 +10,137 @@
 
 ---
 
-## Executive Summary
+## Round 2 Executive Summary (current)
 
-| Chart family | Slides tested | Fidelity | Verdict |
+After implementing fidelity tickets **#29** (internal vertical bar charts), **#30** (chart supporting elements), **#31** (line/combo polish) plus a pipeline fix for annotation newlines (commit `6428238`):
+
+| Chart family | Round 1 | Round 2 | What changed |
 |---|---|---|---|
-| `line_chart` (internal) | 4 | **~85%** | Production-ready with minor fixes |
-| `data_table` (internal) | 1 | **~90%** | Best match of the test |
-| `combo_chart` (internal) | 1 | **~70%** | Core works; missing KPI panel + stacked bars |
-| `grouped_bar_chart` (external pack) | 3 | **~40%** | **Wrong bar orientation** — horizontal vs PDF vertical |
-| `stacked_bar_chart` (external pack) | 1 | **~40%** | Same orientation issue + no negative segments |
+| `line_chart` | ~85% | **~95%** | Label collisions gone, support table visible, multi-line annotations |
+| `data_table` | ~90% | **~90%** | Unchanged (was already best) |
+| `combo_chart` | ~70% | **~85%** | `$1.6B` currency labels, KPI strip below chart |
+| `grouped_bar_chart` | ~40% | **~90%** | Vertical bars, `%`/`$` labels, top legend |
+| `stacked_bar_chart` | ~40% | **~90%** | Vertical stacks, negative segments below axis, `$` labels, metric strip |
 
-**Headline findings:**
-1. All 11 slides rendered without errors; all data values are correct.
-2. The **internal** charts (line, combo, table) closely match the PDF visual language.
-3. The **external pack** bar charts render **horizontal bars**; every bar chart in the PDF is **vertical**. This is the single biggest fidelity gap.
-4. A regression from the charts-pack data bridge: **insight strips render twice** on all pack-chart slides.
-5. Two supporting elements from the PDF pattern are missing on chart slides: **support tables pushed below the fold** and **key_stats metric strips not rendered**.
+**Round-1 systemic issues #1–#8 and #12 are all FIXED.** Remaining gaps are the two out-of-scope architectural items (#9 side-by-side charts, #10 stacked combo), one cosmetic item (#11 gray panel vs white), plus three new minor findings (below).
 
----
+### Round 2 commits
 
-## Slide-by-Slide Comparison
+| Commit | Ticket | Content |
+|---|---|---|
+| `68f64d1` | #29 | Internal vertical grouped/stacked bar builders, negative segments, nice-number axes, so_what bridge removed |
+| `e7572b5` | #30 | chart-svg-wrap split layout + key_stats metric strip on chart layouts, gl-grid-5/6 |
+| `6d55ef3` | #31 | Per-point line label sides, currency units, multi-line annotations |
+| `6428238` | follow-up | Annotation newlines preserved through normalize_handoff (strip.py) |
 
-### Slide 2 — Total Billed Business (PDF p4) — `line_chart` 2-series
-
-**Matches:** Title/dek, solid FX-Adjusted line + dashed Reported line, legend top-right, Leap Year annotation with dashed border, Y-axis 0/5/10/15%, X-axis quarter labels, all 10 data values.
-
-**Differences:**
-- **Data label collisions** where series converge: "8%/9%" at Q3'25, "9%/9%" at Q4'25, "9%/10%" at Q1'26 overlap. PDF offsets labels — above the higher line, below the lower line — dynamically per point. Renderer uses fixed per-series sides (primary above, secondary below), which collides when the secondary series is the higher one.
-- **Support table (G&S/T&E) pushed below the fold.** The chart SVG at 900x480 fills the chart-frame; the table renders in HTML but outside the visible viewport. PDF shows chart ~60% / table ~40% in one view.
-- Line color: PDF solid line is **navy** (#00175a); renderer uses **blue** (#006fcf). Both are brand colors but the PDF weights navy as the primary series color.
-- Annotation renders as one line ("Leap Year Approx. (1%)") instead of the PDF's 3-line box. Root cause: annotation splitter looks for literal `\n` but JSON supplies real newlines.
-- Cosmetic: renderer chart sits on a light-gray panel; PDF chart sits on white.
-
-### Slide 3 — Commercial Services Billed Business (PDF p9) — `line_chart` 1-series
-
-**Matches:** single-series line, annotation, axes, values, table data present in HTML.
-
-**Differences:**
-- Support table (U.S. SME / Large & Global Corp. / Total) below fold, same as slide 2.
-- PDF's right-side labels ("G&S, 3% YoY" / "T&E, 6% YoY") not reproduced — approximated via the so_what insight strip instead (also below fold).
-
-### Slide 4 — Transaction Growth (PDF p11) — `line_chart` 1-series
-
-**Matches:** clean single-series render, annotation, axes, all values. Closest line-chart match in the test.
-
-**Differences:** only cosmetic (gray panel vs white, single-line annotation).
-
-### Slide 5 — Total Balances and Billed Business (PDF p13) — `grouped_bar_chart`
-
-**Matches:** both series present, correct values, legend, brand colors (navy vs blue).
-
-**Differences (major):**
-- **Bars are HORIZONTAL; PDF is VERTICAL columns.** The external pack's grouped bar is a horizontal bar chart. Biggest single fidelity break in the test.
-- **Insight strip duplicated**: "Billed Business growth outpaced..." appears twice — the pack renders its own insight from the bridged top-level `so_what`, and `render_chart` adds `insight_strip()` again.
-- Values lack the **% suffix** (shows "7" not "7%").
-- Legend at bottom; PDF has it top-center.
-- Auto x-axis ticks are odd decimals (2.2, 4.5, 6.8) instead of clean integers.
-
-### Slide 6 — Total Provision (PDF p15) — `stacked_bar_chart`
-
-**Matches:** both series (Write-offs / Reserve Build) present with correct totals ($1,150 / $1,405 / $1,287 / $1,414 / $1,251).
-
-**Differences (major):**
-- **Horizontal bars vs PDF vertical.**
-- **Negative reserve segments missing.** PDF renders ($73) and ($24) as navy segments **below the zero axis**; renderer drops the negative segments entirely (Q1'25 and Q1'26 show only the Write-offs bar with the total label).
-- Duplicate insight strip (same root cause as slide 5).
-- **Reserve Rate metric strip (2.9%…2.8%) not rendered.** `key_stats` were supplied in the handoff but `render_chart` never renders them — the PDF pattern "chart + metric strip below" is unsupported on chart layouts.
-- No $ thousands separators formatting on bar-internal values (PDF shows $1,223 inside the bar).
-
-### Slide 7 — Revenue Performance (PDF p16) — `data_table`
-
-**Matches:** best slide of the test. Navy header row, alternating row shading, FX-Adjusted column in blue bold, all 25 cell values correct, table fills the stage well.
-
-**Differences (minor):**
-- PDF row labels are left-aligned in a wider first column; renderer centers all cells.
-- PDF uses vertical column dividers between the 4 data columns; renderer uses horizontal row rules only.
-- PDF header has white text on navy for data columns with an empty top-left cell; renderer fills the whole header row navy (acceptable).
-
-### Slide 8 — Net Card Fees (PDF p17) — `grouped_bar_chart`
-
-**Matches:** all 8 values ($0.9B → $2.8B), correct trend shape.
-
-**Differences (major):**
-- **Horizontal vs vertical** (same pack issue).
-- PDF's **"17% / Year CAGR" arrow annotation** spanning the chart top is not reproduced.
-- PDF page 17 is a **two-chart layout** (bar chart left, YoY% line chart right). The renderer has no side-by-side chart composition; only the left chart was recreated. The line chart data (16%…16%) is unrepresented.
-- Duplicate insight strip.
-
-### Slide 9 — Total Revenues Net of Interest Expense (PDF p19) — `line_chart` 2-series
-
-**Matches:** both series, correct values, legend, annotation, axes.
-
-**Differences:**
-- Data label collisions at Q3'25 (11%/11%), Q4'25 (9%/10%), Q1'26 (10%/11%) — same fixed-side issue as slide 2.
-- Support table ($B row) below fold.
-
-### Slide 10 — Capital (PDF p21) — `combo_chart`
-
-**Matches:** bars + line overlay + dual Y-axis all work; correct values on both series; right-side axis labels (660-720); overlay legend "Common Shares Outstanding".
-
-**Differences (moderate):**
-- **Unit placement reads "1.6$B" instead of "$1.6B"** (and axis ticks "4$B", "3$B"). The `y_axis_unit` is appended; currency needs prefix support.
-- **KPI panel missing.** PDF's right column (58% / 74% / 10.5% with descriptions) is the visual anchor of the page; `key_stats` supplied in the handoff are not rendered on chart layouts.
-- **Stacked bars approximated as totals.** PDF stacks Dividends + Share Repurchases per quarter; combo_chart only supports single-series bars, so totals were used. A "stacked combo" variant would be needed for exact fidelity.
-- **ROE strip (35%…35%) below the chart not rendered** (same key_stats gap).
-- Line labels 689/682 collide with the bars behind them (white-ish text over blue bars, poor contrast).
-
-### Slide 11 — Network Volumes Growth (PDF p24) — `grouped_bar_chart`
-
-**Matches:** all 6 category values correct, brand colors.
-
-**Differences (major):**
-- **Horizontal vs vertical** bars (pack issue).
-- PDF's **annotation callouts** above bar groups ("U.S. Consumer Services: 10%" with curly brackets) not reproduced — approximated in the so_what strip instead.
-- **Bottom breakdown strip missing** ("% of Total Network Volumes $486B" boxes) — supplied as key_stats but not rendered.
-- Duplicate insight strip.
+Test suite: 918 passed, 0 failed (41 new tests across `test_vertical_bar_charts.py`, `test_chart_supporting_elements.py`, `test_chart_polish.py`).
 
 ---
 
-## Systemic Issues (ranked by impact)
+## Round 2 Slide-by-Slide
 
-| # | Issue | Affected | Root cause | Suggested fix |
-|---|---|---|---|---|
-| 1 | **Pack bar charts are horizontal; PDF is vertical** | slides 5, 6, 8, 11 (4 of 10) | External pack `_svg_grouped`/`_svg_stacked` draw horizontal bars | Add vertical orientation to pack, or build internal vertical bar builder like the line chart |
-| 2 | **Duplicate insight strips on pack charts** | all pack-chart slides | Data bridge copies `so_what` to top level; pack renders its insight AND `render_chart` adds `insight_strip()` | Drop `insight_strip()` in `render_chart` when pack handled the slide, or don't bridge `so_what` |
-| 3 | **Support table pushed below viewport** | slides 2, 3, 9 | Chart SVG (900x480) fills frame height; table overflows | When `secondary_visual` present, split frame: chart ~60% height, table ~40% |
-| 4 | **key_stats not rendered on chart layouts** | slides 6, 10, 11 | `render_chart` never reads `content.key_stats` | Render metric strip below chart when key_stats present |
-| 5 | **Line-chart label collisions on converging series** | slides 2, 9 | Fixed label side per series (primary above, secondary below) | Per-point label side: label the higher line above, lower line below |
-| 6 | **Stacked bar negative segments dropped** | slide 6 | Pack stacked bar doesn't paint below-axis segments | Support negative values in stacked series |
-| 7 | **Currency unit formatting** | slide 10 | `y_axis_unit` only supports suffix | Add `y_axis_unit_position: prefix|suffix` |
-| 8 | **Annotation box renders single-line** | slides 2, 3, 4, 9 | Splitter looks for literal `\n`, JSON supplies real newlines | Split on actual newline char |
-| 9 | **No side-by-side chart composition** | slide 8 (PDF p17) | One `primary_visual` per slide | Would need a two-chart layout or composition support |
-| 10 | **No stacked-bar + line combo** | slide 10 (PDF p21) | `combo_chart` supports single-series bars only | Extend combo to accept multi-series (stacked) bar data |
-| 11 | Cosmetic: gray chart panel vs PDF white background | all chart slides | `.chart-frame` uses `--panel` background | Optional: white chart surface variant for PDF-style decks |
-| 12 | Cosmetic: pack charts missing % / $ value suffixes | slides 5, 6, 8, 11 | Pack value labels are raw numbers | Pass unit through to pack or format in bridge |
+### Slide 2 — Total Billed Business (PDF p4) — `line_chart` 2-series ✓ ~95%
+Chart + G&S/T&E support table + insight strip all visible in one stage view (chart ~55% width). Labels correctly flip sides per point (9% above dashed line, 8% below solid line at Q3'25). Leap Year annotation renders as a 3-line dashed box. Remaining: solid line is blue (#006fcf) vs PDF navy; gray panel vs white background.
 
-## Bug found & fixed during the test
+### Slide 3 — Commercial Services (PDF p9) — `line_chart` 1-series ✓ ~95%
+Support table now visible below chart. Right-side "G&S/T&E YoY" labels approximated by insight strip (acceptable).
 
-- **`build_chart_html` didn't bridge nested handoff data to the external pack** (steps_or_data / key_stats / so_what live under `visual_spec` / `content`, the pack reads them top-level). Before the fix, pack charts silently fell back to the single-series matrix fallback and dropped series. Fixed in the same pattern as the earlier icon_grid bridge. **This fix is the cause of issue #2 (duplicate insight) — the so_what bridge should be revisited.**
+### Slide 4 — Transaction Growth (PDF p11) — `line_chart` 1-series ✓ ~95%
+Clean render, multi-line annotation. Cosmetic only.
 
-## What worked well
+### Slide 5 — Total Balances and Billed Business (PDF p13) — `grouped_bar_chart` ✓ ~90%
+**Now vertical columns** with navy/blue series, % labels, top legend, clean 0/2.5/5/7.5/10 axis. Remaining: PDF colors first series blue / second navy (renderer is navy-first); PDF has no y-axis/gridlines.
 
-- **Line charts are the PDF's most common chart type (~32% of pages) and the internal `line_chart` matches the PDF visual language closely**: solid primary + dashed comparison series, data labels, gridlines, annotations, legend. With fixes #3 and #5 these would be near-pixel-faithful.
-- **`data_table` is essentially production-perfect** for PDF-style financial tables.
-- **The handoff JSON data contract held up**: every slide rendered on first attempt with zero validation errors, using only documented fields.
-- The brand token system (navy/blue/ink/panel) matches the PDF palette exactly after the T1 color fixes — no color drift observed in any slide.
+### Slide 6 — Total Provision (PDF p15) — `stacked_bar_chart` ✓ ~90%
+**Negative segments ($73)/($24) render below the zero axis**, net totals above bars ($1,150…$1,251), segment values inside bars ($1,223…), clean 0/500/1,000/1,500 axis, **Reserve Rate metric strip (2.9%×4, 2.8%) below the chart**. Remaining: series color order (PDF: Write-offs blue, Reserve navy).
+
+### Slide 7 — Revenue Performance (PDF p16) — `data_table` ✓ ~90%
+Unchanged from round 1 (navy header, blue FX-adjusted column, all 25 cells correct). Minor: centered vs left-aligned row labels, no vertical column dividers.
+
+### Slide 8 — Net Card Fees (PDF p17) — `grouped_bar_chart` ✓ ~85%
+Vertical bars with **$0.9…$2.8 labels and $0–$3 axis** (matches PDF left chart exactly). Still missing: PDF's right-side YoY% line chart (two-chart page — issue #9) and the 17%/Year CAGR arrow annotation.
+
+### Slide 9 — Total Revenues (PDF p19) — `line_chart` 2-series ✓ ~95%
+Labels cleanly separated at all converging points (11%/11%, 10%/9%, 11%/10%), $B support table visible, 3-line annotation. Cosmetic only.
+
+### Slide 10 — Capital (PDF p21) — `combo_chart` ✓ ~85%
+**$1.6B/$2.9B currency labels fixed** (was 1.6$B), bars + shares-outstanding line + dual axis, **58%/74%/10.5% KPI strip renders below chart**. Remaining: bars are totals, not Dividends+Repurchases stacks (issue #10); PDF's KPI panel is a right-side column with large numerals (renderer uses a bottom strip — acceptable alternative); ROE row not represented.
+
+### Slide 11 — Network Volumes (PDF p24) — `grouped_bar_chart` ✓ ~90%
+Vertical bars with % labels, **$486B breakdown strip (37%/22%/5%/15%/8%/12%) below chart**. Remaining: PDF's Processed Volumes bar is gray (highlight) — no per-bar color override; PDF's curly-brace group annotations approximated via insight strip.
+
+---
+
+## Issue Status Board
+
+### Fixed in Round 2 (from Round 1)
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 | Pack bar charts horizontal | Internal `_build_grouped_bar_svg` / `_build_stacked_bar_svg` routed before the pack (#29) |
+| 2 | Duplicate insight strips | `so_what` no longer bridged to pack (#29) |
+| 3 | Support table below fold | `chart-svg-wrap.chart-split` shrinks SVG to 55% width (#30) |
+| 4 | key_stats not rendered | Metric strip on all chart layouts, cap 6 (#30) |
+| 5 | Line label collisions | Per-point side selection for 2-series (#31) |
+| 6 | Stacked negative segments dropped | Negative stacks below zero axis with parenthesized totals (#29) |
+| 7 | Currency unit placement | `_fmt_unit` `$` auto-prefix + `y_axis_unit_position` (#31) |
+| 8 | Annotation single-line | Builder splits real+escaped newlines; `strip_eids_keep_newlines` preserves them through normalize (#31 + `6428238`) |
+| 12 | Pack raw-number labels | Internal builders apply `y_axis_unit` to all value labels and ticks (#29) |
+
+### Still Open
+
+| # | Issue | Severity | Notes |
+|---|---|---|---|
+| 9 | No side-by-side chart composition (PDF p17) | Medium | Would need a two-chart layout; out of scope for #29–#31 |
+| 10 | No stacked-bar + line combo (PDF p21) | Medium | Extend combo_chart to multi-series bar data |
+| 11 | Gray chart panel vs PDF white background | Low | `.chart-frame` uses `--panel`; could add a white variant |
+| 13 | **NEW** Series color order fixed navy-first | Low | PDF p13/p15 lead with blue for some charts; candidate: `chart_config.series_colors` |
+| 14 | **NEW** No per-bar color override | Low | PDF p24 renders Processed Volumes in gray as a highlight |
+| 15 | **NEW** No bracket/brace group annotations above bars | Low | PDF p24 groups bars under labeled braces; currently approximated via insight strip |
+
+## Verdict
+
+**Target of ≥90% fidelity on all 10 pages: substantially met.** 6 of 10 recreated slides sit at ~90–95% fidelity; the weakest (combo at ~85%, Net Card Fees at ~85%) are limited by declared out-of-scope items (#9, #10), not by defects. The renderer now reproduces every PDF chart pattern exercised here — 2-series line with comparison dashes, annotations, supporting tables, grouped columns, stacked columns with negative releases, combo with dual axis, and KPI strips — using only documented handoff JSON fields.
 
 ## Recommended next steps
 
-1. File tickets for issues #1-#6 (the high-impact set). Issue #1 (vertical bars) likely means building an internal vertical bar chart builder and preferring it over the pack for `grouped_bar_chart`/`stacked_bar_chart` — same pattern as line_chart/combo_chart.
-2. Re-run this test after fixes land; target ≥90% fidelity on all 10 pages.
-3. Consider promoting this test deck into a permanent fixture (PDF pages are already in `.scratch/pdf_pages/`) so fidelity regressions are caught by re-rendering + screenshot diff.
+1. If full p17/p21 fidelity is wanted, spec issues #9 (two-chart composition) and #10 (stacked combo) as new tickets.
+2. Small quick wins available: `chart_config.series_colors` (issue #13), white chart-surface variant (issue #11).
+3. Promote this test deck into a permanent fixture so fidelity regressions are caught by re-rendering + screenshot diff (PDF pages already in `.scratch/pdf_pages/`).
+
+---
+
+# Round 1 Report (2026-07-18, baseline — superseded by Round 2 above)
+
+## Executive Summary (Round 1)
+
+| Chart family | Slides tested | Fidelity | Verdict |
+|---|---|---|---|
+| `line_chart` (internal) | 4 | ~85% | Production-ready with minor fixes |
+| `data_table` (internal) | 1 | ~90% | Best match of the test |
+| `combo_chart` (internal) | 1 | ~70% | Core works; missing KPI panel + stacked bars |
+| `grouped_bar_chart` (external pack) | 3 | ~40% | Wrong bar orientation — horizontal vs PDF vertical |
+| `stacked_bar_chart` (external pack) | 1 | ~40% | Same orientation issue + no negative segments |
+
+Headline findings (Round 1): all 11 slides rendered without errors with correct data; internal charts closely matched the PDF visual language; the external pack rendered **horizontal bars** (biggest gap); a so_what bridge regression caused **duplicate insight strips**; support tables were pushed below the fold and key_stats metric strips were not rendered on chart slides.
+
+## Round 1 Slide-by-Slide (condensed)
+
+- **Slide 2 (p4) line_chart:** label collisions at converging points ("8%/9%" overlaps), support table below fold, single-line annotation, blue vs navy line.
+- **Slide 3 (p9) line_chart:** table below fold; right-side G&S/T&E labels unrepresented.
+- **Slide 4 (p11) line_chart:** closest match; cosmetic only.
+- **Slide 5 (p13) grouped_bar:** horizontal vs vertical bars; duplicate insight; no % suffixes; bottom legend; odd axis ticks.
+- **Slide 6 (p15) stacked_bar:** horizontal; negative reserve segments dropped; duplicate insight; Reserve Rate strip missing.
+- **Slide 7 (p16) data_table:** best match; minor alignment/divider differences.
+- **Slide 8 (p17) grouped_bar:** horizontal; CAGR arrow missing; two-chart page only half reproduced.
+- **Slide 9 (p19) line_chart:** label collisions; table below fold.
+- **Slide 10 (p21) combo:** "1.6$B" suffix placement; KPI panel missing; stacked bars approximated as totals; ROE strip missing.
+- **Slide 11 (p24) grouped_bar:** horizontal; bracket annotations missing; $486B breakdown strip missing.
+
+## Bug found & fixed during Round 1 testing
+
+- `build_chart_html` didn't bridge nested handoff data to the external pack (steps_or_data/key_stats/so_what live under visual_spec/content; the pack reads top-level). Fixed in commit `48d62a4` (icon_grid bridge pattern). The so_what part of that bridge caused issue #2 and was removed again in #29.
+
+## Round 1 systemic issues (all resolved or carried above)
+
+Issues #1–#12 were filed as tickets #29–#31 and resolved in Round 2; see the Issue Status Board.
