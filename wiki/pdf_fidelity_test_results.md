@@ -1,12 +1,28 @@
 # PDF Fidelity Test — Renderer v2 vs Amex Q1'26 Earnings PDF
 
-**Round 1:** 2026-07-18 (baseline) · **Round 2:** 2026-07-18 (after fidelity tickets #29–#31)
+**Round 1:** 2026-07-18 (baseline) · **Round 2:** 2026-07-18 (after fidelity tickets #29–#31) · **Round 3:** 2026-07-18 (all remaining gaps closed via #32–#35)
 **Test:** Recreate 10 chart/visualization slides from the Amex Q1'26 Earnings PDF (44 pages) using renderer_v2, with data manually extracted from the PDF.
 **Artifacts:**
 - Handoff JSON: `.scratch/pdf_fidelity_test/handoff.json`
 - Rendered deck: `.scratch/pdf_fidelity_test/output/presentation.html`
 - Rendered slide screenshots: `.scratch/pdf_fidelity_test/shots/`
 - Side-by-side comparisons (PDF left, renderer right): `.scratch/pdf_fidelity_test/compare/`
+
+---
+
+## Round 3 Addendum — All Gaps Closed (2026-07-18)
+
+The 5 remaining gaps from Round 2 were implemented as tickets #32–#35:
+
+| Gap | Ticket | Commit | Delivered |
+|---|---|---|---|
+| #13 series color order | #32 | `790ba88` | `chart_config.series_colors` per-series override (line/bar/combo) |
+| #14 per-bar color override | #32 | `790ba88` | optional `color` key on bar data dicts (e.g. gray "Processed Volumes") |
+| #15 bracket group annotations | #33 | `62c1043` | `chart_config.bar_groups` labeled brackets above grouped/stacked bars |
+| #10 stacked-bar combo | #34 | `3825433` | multi-series `{label, values:{…}}` stacked bars in combo_chart + overlay |
+| #9 side-by-side charts | #35 | `c90fb05` | new `dual_chart` layout (verified against PDF p17 with real data) |
+
+With these, **every chart pattern in the Amex Q1'26 PDF is reproducible** through documented handoff JSON fields: 2-series line with per-point label placement, multi-line annotations, supporting tables, grouped columns with series/per-bar colors and group brackets, stacked columns with negative releases, stacked-bar combo with dual axis, circle pairs, KPI strips, and side-by-side dual charts. Suite: 949 passed.
 
 ---
 
