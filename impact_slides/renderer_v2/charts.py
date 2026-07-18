@@ -391,6 +391,9 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     y_unit = cfg.get("y_axis_unit", "%")
     y_label = cfg.get("y_axis_label", "")
 
+    def _fmtu(v: float) -> str:
+        return _fmt_unit(v, y_unit, cfg.get("y_axis_unit_position", "suffix"))
+
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     n = len(points)
@@ -421,7 +424,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
             f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
             f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
         )
-        tick_label = f"{tick:g}{y_unit}" if y_unit else f"{tick:g}"
+        tick_label = _fmtu(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--ink-muted, #63666a)" font-size="14" '
@@ -504,17 +507,27 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
                 f'fill="{s_entry["color"]}"/>'
             )
 
-    # Data labels for primary series only (avoid clutter)
+    # -- Data labels ------------------------------------------------------
+    # 2-series: per-point side selection — the higher line's label goes
+    # above its point, the lower line's below — so labels never collide
+    # when series converge or cross (PDF earnings-deck convention).
+    # 3+ series keeps fixed sides (primary above, others below).
+    two_series = len(all_series) == 2
     for i, p in enumerate(points):
         cx, cy = x_pos(i), y_pos(p["value"])
-        label_text = f"{p['value']:g}{y_unit}" if y_unit else f"{p['value']:g}"
+        above = True
+        if two_series:
+            sk2 = all_series[1]["key"]
+            if sk2 in p:
+                above = p["value"] >= p[sk2]
+        ly = cy - 12 if above else cy + 18
         parts.append(
-            f'<text x="{cx:.1f}" y="{cy - 12:.1f}" text-anchor="middle" '
+            f'<text x="{cx:.1f}" y="{ly:.1f}" text-anchor="middle" '
             f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
-            f'font-family="var(--font-body, sans-serif)">{esc(label_text)}</text>'
+            f'font-family="var(--font-body, sans-serif)">{esc(_fmtu(p["value"]))}</text>'
         )
 
-    # Data labels for secondary series (below the line, muted)
+    # Data labels for secondary series
     if len(all_series) > 1:
         for sk_entry in all_series[1:]:
             sk = sk_entry["key"]
@@ -522,11 +535,14 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
                 if sk not in p:
                     continue
                 cx, cy = x_pos(i), y_pos(p[sk])
-                label_text = f"{p[sk]:g}{y_unit}" if y_unit else f"{p[sk]:g}"
+                above = False
+                if two_series:
+                    above = p[sk] > p["value"]
+                ly = cy - 12 if above else cy + 18
                 parts.append(
-                    f'<text x="{cx:.1f}" y="{cy + 18:.1f}" text-anchor="middle" '
+                    f'<text x="{cx:.1f}" y="{ly:.1f}" text-anchor="middle" '
                     f'fill="var(--ink-muted, #63666a)" font-size="12" '
-                    f'font-family="var(--font-body, sans-serif)">{esc(label_text)}</text>'
+                    f'font-family="var(--font-body, sans-serif)">{esc(_fmtu(p[sk]))}</text>'
                 )
 
     # -- Legend -------------------------------------------------------------
@@ -554,8 +570,8 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         ax = float(annotation.get("x", W * 0.25))
         ay = float(annotation.get("y", H * 0.2))
         a_text = str(annotation["text"])
-        # Estimate box size from text length
-        lines = a_text.split("\\n")
+        # Accept both real newlines and escaped \n sequences
+        lines = a_text.replace("\\n", "\n").split("\n")
         box_w = max(len(l) for l in lines) * 7.5 + 20
         box_h = len(lines) * 18 + 16
         parts.append(
@@ -686,6 +702,10 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     bar_slot = plot_w / max(n_bars, 1)
     bar_w = bar_slot * 0.6
     bar_unit = cfg.get("y_axis_unit", "")
+    bar_unit_pos = cfg.get("y_axis_unit_position", "suffix")
+
+    def _fmtb(v: float) -> str:
+        return _fmt_unit(v, bar_unit, bar_unit_pos)
 
     parts: list[str] = [
         f'<svg class="chart-svg combo-chart" viewBox="0 0 {W} {H}" '
@@ -706,7 +726,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
             f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
         )
-        tick_label = f"{tick:g}{bar_unit}" if bar_unit else f"{tick:g}"
+        tick_label = _fmtb(float(tick))
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--ink-muted, #63666a)" font-size="14" '
@@ -756,7 +776,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
             f'fill="var(--blue, #006fcf)" rx="2"/>'
         )
-        val_text = f"{val:g}{bar_unit}" if bar_unit else f"{val:g}"
+        val_text = _fmtb(val)
         parts.append(
             f'<text x="{x + bar_w/2:.1f}" y="{y - 8:.1f}" text-anchor="middle" '
             f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
@@ -828,6 +848,21 @@ _BAR_SERIES_COLORS = [
 ]
 
 
+def _fmt_unit(v: float, unit: str, pos: str = "suffix") -> str:
+    """Format a value with its unit.
+
+    Currency shorthand: a unit starting with ``$`` renders as a prefix
+    (``$`` -> ``$1.6``, ``$B`` -> ``$1.6B``) regardless of ``pos``.
+    """
+    if not unit:
+        return f"{v:g}"
+    if pos == "prefix":
+        return f"{unit}{v:g}"
+    if unit.startswith("$"):
+        return f"${v:g}{unit[1:]}"
+    return f"{v:g}{unit}"
+
+
 def _bar_num(v: Any) -> float | None:
     try:
         return float(str(v).replace("%", "").replace(",", "").replace("$", "").strip())
@@ -837,7 +872,11 @@ def _bar_num(v: Any) -> float | None:
 
 def _fmt_bar(v: float, unit: str = "") -> str:
     s = f"{v:,.0f}" if abs(v) >= 1000 else f"{v:g}"
-    return f"{s}{unit}" if unit else s
+    if not unit:
+        return s
+    if unit.startswith("$"):
+        return f"${s}{unit[1:]}"
+    return f"{s}{unit}"
 
 
 def _nice_max(raw: float) -> float:
