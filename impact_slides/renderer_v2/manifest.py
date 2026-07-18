@@ -6,7 +6,30 @@ import re
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from .lib_inliner import DeliveryMode, coerce_delivery
+
 _FACE_EID = re.compile(r"\bE\d{4}\b")
+
+# Network-fetching URL constructs (SC-OFFLINE-2). Non-fetching URL-like strings
+# such as SVG/XML namespaces and data: URLs must not match.
+_REMOTE_FETCH_PATTERNS = (
+    re.compile(r'<link\b[^>]*?\bhref\s*=\s*["\'](https?://[^"\']+|//[^"\']+)["\']', re.I),
+    re.compile(r'<script\b[^>]*?\bsrc\s*=\s*["\'](https?://[^"\']+|//[^"\']+)["\']', re.I),
+    re.compile(r'@import\s+(?:url\(\s*)?["\']?(https?://[^\s"\')>]+|//[^\s"\')>]+)', re.I),
+    re.compile(r'url\(\s*["\']?(https?://[^\s"\')]+|//[^\s"\')]+)\s*["\']?\)', re.I),
+)
+
+
+def remote_fetch_urls(html: str) -> list[str]:
+    """URLs the browser would fetch over the network to render this HTML.
+
+    Ignores XML namespaces (``xmlns=...``), ``data:`` URLs, and anything not
+    tied to a fetching construct (link/script src, @import, CSS url()).
+    """
+    found: set[str] = set()
+    for pattern in _REMOTE_FETCH_PATTERNS:
+        found.update(pattern.findall(html))
+    return sorted(found)
 
 
 def build_manifest(
@@ -84,7 +107,12 @@ def face_eid_violations(html: str) -> list[str]:
     return sorted(set(_FACE_EID.findall(cleaned)))
 
 
-def validate_html(html: str) -> list[str]:
+def validate_html(
+    html: str,
+    *,
+    delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
+) -> list[str]:
+    delivery = coerce_delivery(delivery)
     errs: list[str] = []
     for token in ("#00175a", "#006fcf", "BoardroomEarnings", "gl-slide", "deck-stage"):
         if token.lower() not in html.lower() and token not in html:
@@ -101,4 +129,7 @@ def validate_html(html: str) -> list[str]:
             errs.append("face narrative/story-bridge element present")
     if "fitStage" not in html:
         errs.append("missing fitStage JS")
+    if delivery is DeliveryMode.SELF_CONTAINED:
+        for url in remote_fetch_urls(html):
+            errs.append(f"remote fetch in self-contained deck: {url}")
     return errs

@@ -95,7 +95,7 @@ def render_deck(
         json.dumps(run_meta, indent=2) + "\n", encoding="utf-8"
     )
 
-    errors = validate_html(html)
+    errors = validate_html(html, delivery=delivery)
     result = {
         "out_dir": str(out),
         "presentation": str(html_path),
