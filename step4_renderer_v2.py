@@ -3,7 +3,11 @@
 
 Usage:
   python step4_renderer_v2.py --handoff builder_handoff.json --out out_dir
+  python step4_renderer_v2.py --handoff ... --out ... --use-cdn   # dev only
   python -m impact_slides.renderer_v2 --handoff ... --out ...
+
+Default output is self-contained (offline-safe). --use-cdn references
+third-party assets via CDN and is for development only.
 """
 from __future__ import annotations
 

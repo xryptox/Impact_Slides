@@ -115,7 +115,10 @@ def render_deck(
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         prog="python -m impact_slides.renderer_v2",
-        description="Boardroom Gridlines Renderer v2 — deterministic HTML deck paint",
+        description=(
+            "Boardroom Gridlines Renderer v2 — deterministic HTML deck paint. "
+            "Default output is self-contained (offline-safe); --use-cdn is dev-only."
+        ),
     )
     p.add_argument("--handoff", required=True, help="builder_handoff.json path")
     p.add_argument("--out", required=True, help="output directory")

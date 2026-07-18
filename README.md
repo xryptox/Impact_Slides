@@ -1000,12 +1000,23 @@ python -m impact_slides.renderer_v2   --handoff path/to/builder_handoff.json   -
 python step4_renderer_v2.py --handoff ... --out ...
 ```
 
+**Delivery modes.** Default is **self-contained**: Boardroom webfonts
+(Source Sans 3, IBM Plex Sans) are embedded as `@font-face` data URLs from
+vendored WOFF2 files (`impact_slides/renderer_v2/assets/fonts/`), and the deck
+opens fully offline / VPN-safe. `--use-cdn` is a **development-only** escape
+hatch that references Google Fonts via CDN — never ship CDN-mode decks to
+customers. The two flags are mutually exclusive; strict validation fails any
+remote fetch URL in self-contained output. Third-party inventory lives in
+`impact_slides/renderer_v2/assets/THIRD_PARTY.md`; engineering detail in
+`wiki/SPEC_renderer_v2_p0_self_contained.md` (MVP cut:
+`wiki/SCOPE_renderer_v2_mvp1.md`).
+
 | Output | Description |
 |--------|-------------|
 | `presentation.html` | Self-contained Boardroom deck (`gl-*` Grid primitives) |
 | `slide_notes.md` | Presenter-deliverable prose notes |
 | `evidence_manifest.json` | Slide→evidence map (`style_preset: BoardroomEarnings`) |
-| `run_meta.json` | Generator version + layout inventory |
+| `run_meta.json` | Generator version + layout inventory + `delivery` mode |
 
 **Layout mapping** uses shared CSS under `impact_slides/renderer_v2/css/`
 (`tokens`, `viewport`, `gridlines`, `components`) rather than ad-hoc per-layout
@@ -1015,7 +1026,7 @@ grids. Optional freeform: `visual_spec.grid` named slots (see Builder prompt).
 - **Copilot/ChatGPT** Impact Slide Renderer prompt — LLM hand-author path for the same Boardroom contracts.
 - **`step4_builder_validator.py`** — older PPTX/HTML fallback; does not yet paint charts/freeform boardroom physics fully.
 
-Flags: `--debug` outlines `gl-*` regions; default validation rejects face `E####`, missing Boardroom tokens, or broken stage JS (`--no-strict` to warn only).
+Flags: `--self-contained` (default) embeds required assets; `--use-cdn` references them via CDN (dev only); `--debug` outlines `gl-*` regions; default validation rejects face `E####`, missing Boardroom tokens, remote fetches in self-contained decks, or broken stage JS (`--no-strict` to warn only).
 
 
 ## Schema Contract (Pydantic)
