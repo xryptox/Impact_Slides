@@ -340,6 +340,59 @@ def _kpi_cards(stats: Sequence[Any], *, cols_class: str) -> str:
     return f'<div class="gl-grid {cols_class}">{"".join(cards)}</div>'
 
 
+def _circle_pair_svg(
+    value_before: float,
+    value_after: float,
+    max_value: float,
+    unit: str = "%",
+    label: str = "",
+) -> str:
+    """Render paired proportional circles (before/after) as SVG.
+
+    Outer circle = before (outlined), inner circle = after (filled).
+    Radii proportional to values relative to max_value.
+    """
+    import math
+
+    W, H = 140, 140
+    cx, cy = W / 2, H / 2
+    max_r = 55
+    r_before = max(8, math.sqrt(value_before / max(max_value, 1)) * max_r)
+    r_after = max(6, math.sqrt(value_after / max(max_value, 1)) * max_r)
+
+    parts = [
+        f'<svg class="circle-pair" viewBox="0 0 {W} {H}" '
+        f'xmlns="http://www.w3.org/2000/svg" '
+        f'style="width:100%;max-width:{W}px;height:auto">',
+        # Outer circle (before) — outlined
+        f'<circle cx="{cx}" cy="{cy}" r="{r_before:.1f}" '
+        f'fill="none" stroke="var(--panel-border, #d8dce3)" stroke-width="2"/>',
+        # Inner circle (after) — filled
+        f'<circle cx="{cx}" cy="{cy}" r="{r_after:.1f}" '
+        f'fill="var(--blue, #006fcf)" opacity="0.85"/>',
+        # After value label
+        f'<text x="{cx}" y="{cy + 5:.0f}" text-anchor="middle" '
+        f'fill="#fff" font-size="16" font-weight="700" '
+        f'font-family="var(--font-body, sans-serif)">'
+        f"{value_after:g}{esc(unit)}</text>",
+    ]
+    # Before value label (above the outer circle)
+    parts.append(
+        f'<text x="{cx}" y="{cy - r_before - 8:.0f}" text-anchor="middle" '
+        f'fill="var(--ink-muted, #63666a)" font-size="12" '
+        f'font-family="var(--font-body, sans-serif)">'
+        f"{value_before:g}{esc(unit)}</text>"
+    )
+    if label:
+        parts.append(
+            f'<text x="{cx}" y="{H - 4}" text-anchor="middle" '
+            f'fill="var(--ink, #53565a)" font-size="13" font-weight="600" '
+            f'font-family="var(--font-body, sans-serif)">{esc(label)}</text>'
+        )
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def _table_matrix(slide: Mapping[str, Any]) -> list[list[str]]:
     steps = _vs_steps(slide)
     rows: list[list[str]] = []
@@ -811,16 +864,29 @@ def render_comparison_with_metrics(slide, total, notes, active=False):
 
 def render_comparison(slide, total, notes, active=False):
     pairs = pair_comparison(slide)
+    vs = slide.get("visual_spec") or {}
+    circle_data = vs.get("circle_data") or []
     cards = []
-    for head, body in pairs:
+    for ci, (head, body) in enumerate(pairs):
         if not head and not body:
             continue
         # never invent house closer
         if body.lower().startswith("keep this open through close"):
             body = ""
+        circle_html = ""
+        if ci < len(circle_data) and isinstance(circle_data[ci], dict):
+            cd = circle_data[ci]
+            circle_html = _circle_pair_svg(
+                value_before=float(cd.get("value_before", 0)),
+                value_after=float(cd.get("value_after", 0)),
+                max_value=float(cd.get("max_value", 100)),
+                unit=cd.get("unit", "%"),
+                label="",
+            )
         cards.append(
             f'<article class="comparison-card card risk">'
             f'<div class="card-head">{esc(head)}</div>'
+            f'{circle_html}'
             f'<div class="card-body"><p>{esc(body)}</p></div>'
             f"</article>"
         )
@@ -1465,11 +1531,27 @@ def render_three_column_comparison(slide, total, notes, active=False):
     """Three-way comparison cards in a .grid-3 layout."""
     c = _content(slide)
     items = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)][:3]
+    # Check for circle pair data
+    vs = slide.get("visual_spec") or {}
+    circle_data = vs.get("circle_data") or []
     cards = []
     for i, it in enumerate(items, 1):
+        circle_html = ""
+        col_label = f"Option {i}"
+        if i <= len(circle_data) and isinstance(circle_data[i - 1], dict):
+            cd = circle_data[i - 1]
+            col_label = cd.get("label", col_label)
+            circle_html = _circle_pair_svg(
+                value_before=float(cd.get("value_before", 0)),
+                value_after=float(cd.get("value_after", 0)),
+                max_value=float(cd.get("max_value", 100)),
+                unit=cd.get("unit", "%"),
+                label="",
+            )
         cards.append(
             f'<div class="comparison-col card">'
-            f'<h3 class="col-label">Option {i}</h3>'
+            f'<h3 class="col-label">{esc(col_label)}</h3>'
+            f'{circle_html}'
             f'<p>{esc(it)}</p></div>'
         )
     while len(cards) < 3:
