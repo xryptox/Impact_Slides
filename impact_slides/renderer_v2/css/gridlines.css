@@ -152,6 +152,8 @@
 .gl-grid-2 { grid-template-columns: 1fr 1fr; }
 .gl-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .gl-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gl-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.gl-grid-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 /* gl-grid-auto: dynamic column count via --step-count (horizontal process,
    process_with_decisions). Renders steps left-to-right; falls back to 3. */
 .gl-grid-auto {

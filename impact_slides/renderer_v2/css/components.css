@@ -509,6 +509,17 @@
 .chart-frame svg, .chart-svg {
   width: 100%; height: auto; display: block;
 }
+/* Chart supporting elements (Fidelity T2): when a support table or metric
+   strip shares the slide, shrink the SVG so everything fits the stage. */
+.chart-frame .chart-svg-wrap { margin: 0 auto; }
+.chart-frame .chart-svg-wrap.chart-split { width: 55%; }
+.chart-frame .chart-svg-wrap.chart-with-stats { width: 60%; }
+.chart-frame .chart-svg-wrap.chart-split.chart-with-stats { width: 44%; }
+.chart-frame .chart-metric-strip { margin-top: var(--size-3); }
+.slide .chart-frame .chart-metric-strip .metric-tile {
+  min-height: 0;
+  padding: var(--size-3) var(--size-4);
+}
 .chart-empty {
   padding: var(--size-11); text-align: center;
   color: var(--ink-muted); font-size: 20px;

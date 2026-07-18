@@ -983,11 +983,30 @@ def render_chart(slide, total, notes, active=False):
     from ..charts import build_chart_html
 
     layout = (slide.get("layout_type") or "grouped_bar_chart").lower()
-    main = build_chart_html(slide, layout)
-    # Supporting data table below chart (e.g., line chart + table)
+    chart_html = build_chart_html(slide, layout)
     vs = slide.get("visual_spec") or {}
     secondary = vs.get("secondary_visual") or {}
-    if secondary and layout == "line_chart":
+    key_stats = (slide.get("content") or {}).get("key_stats") or []
+
+    has_table = bool(secondary) and layout == "line_chart"
+    has_stats = bool(key_stats)
+
+    # When supporting elements share the slide, shrink the chart SVG so the
+    # table / metric strip stay inside the 1920x1080 stage (PDF pattern:
+    # chart ~60%, supporting element ~40%).
+    wrap_classes: list[str] = []
+    if has_table:
+        wrap_classes.append("chart-split")
+    if has_stats:
+        wrap_classes.append("chart-with-stats")
+    if wrap_classes:
+        cls = " ".join(wrap_classes)
+        main = f'<div class="chart-svg-wrap {cls}">{chart_html}</div>'
+    else:
+        main = chart_html
+
+    # Supporting data table below chart (e.g., line chart + table)
+    if has_table:
         sec_steps = secondary.get("steps_or_data") or []
         table_rows: list[list[str]] = []
         for st in sec_steps:
@@ -1005,6 +1024,19 @@ def render_chart(slide, total, notes, active=False):
                 tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
             tbl += "</tbody></table>"
             main += tbl
+    # Metric strip from key_stats (PDF pattern: chart + KPI row below)
+    if has_stats:
+        tiles = ""
+        for s in key_stats[:6]:
+            if isinstance(s, dict):
+                tiles += (
+                    f'<div class="metric-tile">'
+                    f'<div class="metric-value">{esc(str(s.get("value", "")))}</div>'
+                    f'<div class="metric-label">{esc(str(s.get("label", "")))}</div></div>'
+                )
+        if tiles:
+            n = min(len(key_stats), 6)
+            main += f'<div class="metric-strip chart-metric-strip gl-grid gl-grid-{n}">{tiles}</div>'
     main += insight_strip(_so_what(slide))
     return slide_shell(
         number=int(slide["slide_number"]),
