@@ -15,6 +15,7 @@ _CHART_LAYOUTS = frozenset(
         "waterfall_chart",
         "heatmap",
         "icon_grid",
+        "line_chart",
     }
 )
 
@@ -129,8 +130,11 @@ def _steps(slide: Mapping[str, Any]) -> list[Any]:
 
 
 def build_chart_html(slide: Mapping[str, Any], layout: str) -> str:
-    mod = _load_pack()
     lt = (layout or slide.get("layout_type") or "").lower()
+    # Line charts are built internally (external pack has no line chart)
+    if lt == "line_chart":
+        return _build_line_chart_svg(slide)
+    mod = _load_pack()
     s = dict(slide)
     s["layout_type"] = lt
     if mod and hasattr(mod, "build_main"):
@@ -255,5 +259,204 @@ def _fallback_matrix_chart(slide: Mapping[str, Any], lt: str) -> str:
             f'<text class="chart-axis-label" x="{x + bw/2:.1f}" y="{h - 20}" '
             f'text-anchor="middle" fill="#63666A" font-size="16">{esc(lab)}</text>'
         )
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Line chart (internal SVG, zero external dependency)
+# ---------------------------------------------------------------------------
+
+
+def _chart_config(slide: Mapping[str, Any]) -> dict[str, Any]:
+    """Extract optional chart configuration from visual_spec."""
+    vs = slide.get("visual_spec") or {}
+    if not isinstance(vs, dict):
+        return {}
+    cfg = vs.get("chart_config")
+    return dict(cfg) if isinstance(cfg, dict) else {}
+
+
+def _line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Parse line chart data from steps_or_data.
+
+    Accepts list of dicts: [{"label": "Q1'25", "value": 8}, ...]
+    Also tolerates [label, value] pairs and "label: value" strings.
+    """
+    raw = _steps(slide)
+    points: list[dict[str, Any]] = []
+    for item in raw:
+        if isinstance(item, dict):
+            label = str(item.get("label") or item.get("x") or "")
+            try:
+                value = float(str(item.get("value") or item.get("y") or 0).replace("%", "").replace(",", "").replace("$", ""))
+            except (ValueError, TypeError):
+                continue
+            pt: dict[str, Any] = {"label": label, "value": value}
+            # Multi-series keys
+            for k, v in item.items():
+                if k.startswith("series_") and k != "series_1":
+                    try:
+                        pt[k] = float(str(v).replace("%", "").replace(",", "").replace("$", ""))
+                    except (ValueError, TypeError):
+                        pass
+            points.append(pt)
+        elif isinstance(item, (list, tuple)) and len(item) >= 2:
+            try:
+                value = float(str(item[1]).replace("%", "").replace(",", "").replace("$", ""))
+            except (ValueError, TypeError):
+                continue
+            points.append({"label": str(item[0]), "value": value})
+        elif isinstance(item, str) and ":" in item:
+            a, _, b = item.partition(":")
+            try:
+                value = float(b.replace("%", "").replace(",", "").replace("$", "").strip())
+            except ValueError:
+                continue
+            points.append({"label": a.strip(), "value": value})
+    return points
+
+
+def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
+    """Build an SVG line chart for the given slide.
+
+    Single-series: solid blue line with circle data points and data labels.
+    Uses viewBox 0 0 900 480 for stage containment.
+    """
+    points = _line_data(slide)
+    if not points:
+        return '<p class="chart-empty">No line chart data</p>'
+
+    cfg = _chart_config(slide)
+    W, H = 900, 480
+    pad_l, pad_r, pad_t, pad_b = 80, 40, 40, 60
+
+    values = [p["value"] for p in points]
+    # Collect multi-series values for Y scale
+    series_keys: list[str] = []
+    for p in points:
+        for k in p:
+            if k.startswith("series_") and k not in series_keys:
+                series_keys.append(k)
+    for k in series_keys:
+        values.extend(p[k] for p in points if k in p)
+
+    y_max = cfg.get("y_axis_max")
+    if y_max is None:
+        raw_max = max(values) if values else 10
+        # Round up to next nice number
+        if raw_max <= 5:
+            y_max = 5
+        elif raw_max <= 10:
+            y_max = int(raw_max) + 2
+        elif raw_max <= 20:
+            y_max = 20
+        elif raw_max <= 50:
+            y_max = int(raw_max) + 5
+        else:
+            y_max = int(raw_max * 1.15)
+    y_max = float(y_max)
+    y_min = float(cfg.get("y_axis_min", 0))
+
+    y_ticks = cfg.get("y_axis_ticks")
+    if y_ticks is None:
+        # Auto-generate ~5 ticks
+        step = (y_max - y_min) / 4
+        if step >= 5:
+            step = int(step)
+        y_ticks = [y_min + i * step for i in range(5)]
+    y_ticks = [float(t) for t in y_ticks]
+
+    y_unit = cfg.get("y_axis_unit", "%")
+    y_label = cfg.get("y_axis_label", "")
+
+    plot_w = W - pad_l - pad_r
+    plot_h = H - pad_t - pad_b
+    n = len(points)
+
+    def x_pos(i: int) -> float:
+        if n <= 1:
+            return pad_l + plot_w / 2
+        return pad_l + (i / (n - 1)) * plot_w
+
+    def y_pos(v: float) -> float:
+        rng = y_max - y_min
+        if rng == 0:
+            return pad_t + plot_h / 2
+        return pad_t + plot_h - ((v - y_min) / rng) * plot_h
+
+    parts: list[str] = [
+        f'<svg class="chart-svg line-chart" viewBox="0 0 {W} {H}" '
+        f'xmlns="http://www.w3.org/2000/svg" '
+        f'style="width:100%;height:auto">',
+        # Marker def for potential future use
+        '<defs></defs>',
+    ]
+
+    # Y-axis gridlines and tick labels
+    for tick in y_ticks:
+        ty = y_pos(tick)
+        parts.append(
+            f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
+            f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
+        )
+        tick_label = f"{tick:g}{y_unit}" if y_unit else f"{tick:g}"
+        parts.append(
+            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+            f'fill="var(--ink-muted, #63666a)" font-size="14" '
+            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+        )
+
+    # Y-axis line
+    parts.append(
+        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+    )
+
+    # X-axis line
+    parts.append(
+        f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
+        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+    )
+
+    # X-axis labels
+    for i, p in enumerate(points):
+        parts.append(
+            f'<text x="{x_pos(i):.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
+            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'font-family="var(--font-body, sans-serif)">{esc(p["label"])}</text>'
+        )
+
+    # Y-axis label (rotated)
+    if y_label:
+        parts.append(
+            f'<text x="20" y="{pad_t + plot_h / 2:.0f}" text-anchor="middle" '
+            f'transform="rotate(-90 20 {pad_t + plot_h / 2:.0f})" '
+            f'fill="var(--ink-muted, #63666a)" font-size="13" '
+            f'font-family="var(--font-body, sans-serif)">{esc(y_label)}</text>'
+        )
+
+    # Primary line (solid blue)
+    line_pts = " ".join(f"{x_pos(i):.1f},{y_pos(p['value']):.1f}" for i, p in enumerate(points))
+    parts.append(
+        f'<polyline points="{line_pts}" fill="none" '
+        f'stroke="var(--blue, #006fcf)" stroke-width="3" '
+        f'stroke-linejoin="round" stroke-linecap="round"/>'
+    )
+
+    # Data points and labels for primary series
+    for i, p in enumerate(points):
+        cx, cy = x_pos(i), y_pos(p["value"])
+        parts.append(
+            f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" '
+            f'fill="var(--blue, #006fcf)"/>'
+        )
+        label_text = f"{p['value']:g}{y_unit}" if y_unit else f"{p['value']:g}"
+        parts.append(
+            f'<text x="{cx:.1f}" y="{cy - 12:.1f}" text-anchor="middle" '
+            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'font-family="var(--font-body, sans-serif)">{esc(label_text)}</text>'
+        )
+
     parts.append("</svg>")
     return "".join(parts)
