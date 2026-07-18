@@ -482,6 +482,14 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
             dash = ""
         all_series.append({"key": sk, "color": color, "dash": dash, "width": width})
 
+    # Per-series color override from chart_config.series_colors (indexed by
+    # series position: 0 = primary, 1 = series_2, ...)
+    custom_colors = cfg.get("series_colors")
+    if isinstance(custom_colors, (list, tuple)):
+        for ci, entry in enumerate(all_series):
+            if ci < len(custom_colors) and custom_colors[ci]:
+                entry["color"] = str(custom_colors[ci])
+
     # -- Draw each series --------------------------------------------------
     for s_entry in all_series:
         sk = s_entry["key"]
@@ -597,11 +605,12 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float]]:
-    """Parse bar chart labels and values from steps_or_data."""
+def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float], list[str | None]]:
+    """Parse bar chart labels, values and per-point colors from steps_or_data."""
     raw = _steps(slide)
     labels: list[str] = []
     values: list[float] = []
+    colors: list[str | None] = []
     for item in raw:
         if isinstance(item, dict):
             label = str(item.get("label") or item.get("x") or "")
@@ -611,6 +620,7 @@ def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float]]:
                 continue
             labels.append(label)
             values.append(v)
+            colors.append(str(item["color"]) if item.get("color") else None)
         elif isinstance(item, (list, tuple)) and len(item) >= 2:
             try:
                 v = float(str(item[1]).replace("%", "").replace(",", "").replace("$", ""))
@@ -618,6 +628,7 @@ def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float]]:
                 continue
             labels.append(str(item[0]))
             values.append(v)
+            colors.append(None)
         elif isinstance(item, str) and ":" in item:
             a, _, b = item.partition(":")
             try:
@@ -626,7 +637,8 @@ def _combo_bar_data(slide: Mapping[str, Any]) -> tuple[list[str], list[float]]:
                 continue
             labels.append(a.strip())
             values.append(v)
-    return labels, values
+            colors.append(None)
+    return labels, values, colors
 
 
 def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -658,7 +670,7 @@ def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     """Build a combo chart: bars + line overlay in a single SVG."""
-    bar_labels, bar_values = _combo_bar_data(slide)
+    bar_labels, bar_values, bar_colors = _combo_bar_data(slide)
     line_points = _combo_line_data(slide)
     if not bar_values:
         return '<p class="chart-empty">No combo chart data</p>'
@@ -768,13 +780,16 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     )
 
     # Bars
+    combo_palette = _series_colors(cfg)
+    default_bar_color = combo_palette[0] if cfg.get("series_colors") else "var(--blue, #006fcf)"
     for i, (lab, val) in enumerate(zip(bar_labels, bar_values)):
         x = pad_l + i * bar_slot + (bar_slot - bar_w) / 2
         y = bar_y(val)
         bh = H - pad_b - y
+        bar_color = bar_colors[i] or default_bar_color
         parts.append(
             f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
-            f'fill="var(--blue, #006fcf)" rx="2"/>'
+            f'fill="{bar_color}" rx="2"/>'
         )
         val_text = _fmtb(val)
         parts.append(
@@ -848,6 +863,14 @@ _BAR_SERIES_COLORS = [
 ]
 
 
+def _series_colors(cfg: Mapping[str, Any]) -> list[str]:
+    """Series color palette: chart_config.series_colors or the defaults."""
+    custom = cfg.get("series_colors")
+    if isinstance(custom, (list, tuple)) and custom:
+        return [str(c) for c in custom if c] or list(_BAR_SERIES_COLORS)
+    return list(_BAR_SERIES_COLORS)
+
+
 def _fmt_unit(v: float, unit: str, pos: str = "suffix") -> str:
     """Format a value with its unit.
 
@@ -902,23 +925,29 @@ def _nice_step(raw: float) -> float:
     return float(10 * base)
 
 
-def _bar_matrix(slide: Mapping[str, Any]) -> tuple[list[str], list[str], list[list[float | None]]]:
-    """Parse steps_or_data into (labels, series_names, matrix[row][series]).
+def _bar_matrix(
+    slide: Mapping[str, Any],
+) -> tuple[list[str], list[str], list[list[float | None]], list[str | None]]:
+    """Parse steps_or_data into (labels, series_names, matrix, point_colors).
 
     Accepts ``{label, values:{s:v}}`` dicts, ``{label, k: v}`` positional
     dicts, ``{label, value}`` single-series dicts, or list-of-lists with an
-    optional header row. Series capped at 4.
+    optional header row. Series capped at 4. Dict points may carry an
+    optional ``color`` key — a per-category color override (primary use:
+    highlighting/muting one bar in a single-series chart).
     """
     raw = _steps(slide)
     if not raw:
-        return [], [], []
+        return [], [], [], []
     labels: list[str] = []
     series: list[str] = []
     rows: list[list[float | None]] = []
+    point_colors: list[str | None] = []
 
     if all(isinstance(x, dict) for x in raw):
         for x in raw:
             labels.append(str(x.get("label") or x.get("category") or x.get("name") or "\u2014"))
+            point_colors.append(str(x["color"]) if x.get("color") else None)
             vals = x.get("values")
             if isinstance(vals, dict) and vals:
                 if not series:
@@ -938,7 +967,7 @@ def _bar_matrix(slide: Mapping[str, Any]) -> tuple[list[str], list[str], list[li
                 if not series:
                     series = list(nums.keys())[:4]
                 rows.append([nums.get(k) for k in series])
-        return labels, series, rows
+        return labels, series, rows, point_colors
 
     if all(isinstance(x, (list, tuple)) for x in raw):
         rows_raw = [list(x) for x in raw]
@@ -959,9 +988,9 @@ def _bar_matrix(slide: Mapping[str, Any]) -> tuple[list[str], list[str], list[li
         for r in body:
             labels.append(str(r[0]))
             rows.append([_bar_num(v) for v in r[1 : len(series) + 1]])
-        return labels, series, rows
+        return labels, series, rows, [None] * len(labels)
 
-    return [], [], []
+    return [], [], [], []
 
 
 def _bar_axes(
@@ -1044,9 +1073,10 @@ def _vbar_frame(
     )
     # Legend (multi-series only)
     if len(series) > 1:
+        palette = _series_colors(cfg)
         lx = pad_l + 4
         for i, name in enumerate(series):
-            color = _BAR_SERIES_COLORS[i % len(_BAR_SERIES_COLORS)]
+            color = palette[i % len(palette)]
             parts.append(
                 f'<g class="vbar-legend-item">'
                 f'<rect x="{lx}" y="18" width="12" height="12" rx="2" fill="{color}"/>'
@@ -1060,7 +1090,7 @@ def _vbar_frame(
 
 def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
     """Build a vertical grouped bar chart (internal replacement for the pack)."""
-    labels, series, matrix = _bar_matrix(slide)
+    labels, series, matrix, point_colors = _bar_matrix(slide)
     if not labels or not series:
         return '<p class="chart-empty">No bar chart data</p>'
     all_vals = [v for row in matrix for v in row if v is not None]
@@ -1089,6 +1119,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
     slot = plot_w / n
     group_w = slot * 0.65
     bar_w = group_w / len(series)
+    palette = _series_colors(cfg)
 
     for i, lab in enumerate(labels):
         gx = pad_l + i * slot + (slot - group_w) / 2
@@ -1097,7 +1128,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
             if v is None:
                 continue
             x = gx + j * bar_w
-            color = _BAR_SERIES_COLORS[j % len(_BAR_SERIES_COLORS)]
+            color = point_colors[i] or palette[j % len(palette)]
             if v >= 0:
                 y = y_pos(v)
                 bh = zero_y - y
@@ -1127,7 +1158,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
 
 def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     """Build a vertical stacked bar chart with negative-segment support."""
-    labels, series, matrix = _bar_matrix(slide)
+    labels, series, matrix, point_colors = _bar_matrix(slide)
     if not labels or not series:
         return '<p class="chart-empty">No stacked bar data</p>'
     pos_sums = [sum(v for v in row if v is not None and v > 0) for row in matrix]
@@ -1156,6 +1187,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     n = len(labels)
     slot = plot_w / n
     bar_w = slot * 0.5
+    palette = _series_colors(cfg)
 
     for i, lab in enumerate(labels):
         x = pad_l + i * slot + (slot - bar_w) / 2
@@ -1168,7 +1200,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
             y_bottom = y_pos(cursor)
             cursor += v
             y_top = y_pos(cursor)
-            color = _BAR_SERIES_COLORS[j % len(_BAR_SERIES_COLORS)]
+            color = point_colors[i] or palette[j % len(palette)]
             parts.append(
                 f'<rect class="vbar-seg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
                 f'height="{max(y_bottom - y_top, 0):.1f}" fill="{color}"/>'
@@ -1189,7 +1221,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
             y_top = y_pos(cursor)
             cursor += v
             y_bottom = y_pos(cursor)
-            color = _BAR_SERIES_COLORS[j % len(_BAR_SERIES_COLORS)]
+            color = point_colors[i] or palette[j % len(palette)]
             parts.append(
                 f'<rect class="vbar-seg vbar-neg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
                 f'height="{max(y_bottom - y_top, 0):.1f}" fill="{color}"/>'

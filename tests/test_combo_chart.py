@@ -67,7 +67,7 @@ class TestComboSchema:
 
 class TestComboBarData:
     def test_parses_bars(self):
-        labels, values = _combo_bar_data(_slide())
+        labels, values, _colors = _combo_bar_data(_slide())
         assert len(labels) == 6
         assert labels[0] == "Q4'24"
         assert values[0] == 1.6
