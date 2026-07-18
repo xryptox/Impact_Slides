@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
-from .lib_inliner import DeliveryMode, coerce_delivery
+from .lib_inliner import DeliveryMode, build_head_assets, coerce_delivery
 from .load import load_json, load_seed, normalize_handoff, present_meta
 from .schemas import validate_handoff
 from .layout.dispatch import render_slide
@@ -40,6 +40,7 @@ def render_deck(
     Returns a result dict with paths and validation errors.
     """
     delivery = coerce_delivery(delivery)
+    bundle = build_head_assets(delivery)
     handoff_path = Path(handoff_path)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -71,7 +72,14 @@ def render_deck(
             render_slide(slide, total=total, notes=prose, active=(i == 0))
         )
 
-    html = wrap_deck(bodies, meta=meta, debug=debug, theme=theme, delivery=delivery)
+    html = wrap_deck(
+        bodies,
+        meta=meta,
+        debug=debug,
+        theme=theme,
+        delivery=delivery,
+        bundle=bundle,
+    )
     html_path = out / "presentation.html"
     html_path.write_text(html, encoding="utf-8")
 
@@ -89,6 +97,7 @@ def render_deck(
         "handoff": str(handoff_path),
         "total_slides": total,
         "delivery": delivery.value,
+        "assets_inlined": list(bundle.meta.get("assets") or []),
         "layouts": [s.get("layout_type") for s in slides],
     }
     (out / "run_meta.json").write_text(

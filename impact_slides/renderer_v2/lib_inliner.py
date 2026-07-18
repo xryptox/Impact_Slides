@@ -149,7 +149,7 @@ def _font_face_css(face: FontFace, path: Path) -> tuple[str, int]:
     return css, len(raw)
 
 
-def _self_contained_head() -> tuple[str, int, list[str]]:
+def _self_contained_font_css() -> tuple[str, int, list[str]]:
     faces: list[str] = []
     total = 0
     for face in FONT_MANIFEST:
@@ -184,7 +184,7 @@ def build_head_assets(
             meta={"mode": mode.value, "assets": [], "bytes_inlined": 0},
         )
 
-    font_css, total, inlined = _self_contained_head()
+    font_css, total, inlined = _self_contained_font_css()
     return InlineBundle(
         head_html="",
         font_css=font_css,
