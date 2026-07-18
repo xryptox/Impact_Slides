@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .charts import chart_css
-from .lib_inliner import DeliveryMode, coerce_delivery
+from .lib_inliner import DeliveryMode, build_head_assets, coerce_delivery
 from .sprite import sprite_svg
 from .strip import esc
 
@@ -98,6 +98,7 @@ def wrap_deck(
     delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
 ) -> str:
     delivery = coerce_delivery(delivery)
+    bundle = build_head_assets(delivery)
     title = esc(meta.get("title") or "Impact Slides")
     body_cls = "gl-debug" if debug else ""
     deck_meta = {
@@ -108,18 +109,19 @@ def wrap_deck(
         "quality_flags": meta.get("quality_flags") or [],
         "generator": "impact_slides.renderer_v2",
         "delivery": delivery.value,
-        "assets_inlined": [],
+        "assets_inlined": list(bundle.meta.get("assets") or []),
     }
     css = load_css(debug=debug)
     theme_block = _theme_style(theme)
     slides = "\n".join(slide_html)
+    head_assets = bundle.head_html
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>{title}</title>
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+{head_assets}
 <style>
 {css}
 </style>

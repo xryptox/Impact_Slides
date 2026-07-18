@@ -93,3 +93,95 @@ class TestDeliveryPlumbing:
         assert rc == 0
         run_meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
         assert run_meta["delivery"] == "self-contained"
+
+
+# ---------------------------------------------------------------------------
+# P0.2 — lib_inliner + assets layout
+# ---------------------------------------------------------------------------
+
+class TestLibInliner:
+    def test_core_assets_resolve(self):
+        from impact_slides.renderer_v2.lib_inliner import iter_core_assets
+
+        assets = iter_core_assets()
+        assert assets, "expected at least one core asset"
+        for asset in assets:
+            assert asset.asset_id
+            assert asset.kind in {"font", "css", "js"}
+
+    def test_self_contained_head_has_no_remote_fetch(self):
+        from impact_slides.renderer_v2.lib_inliner import (
+            DeliveryMode,
+            build_head_assets,
+        )
+
+        bundle = build_head_assets(DeliveryMode.SELF_CONTAINED)
+        assert "https://" not in bundle.head_html
+        assert "http://" not in bundle.head_html
+
+    def test_cdn_head_includes_google_fonts(self):
+        from impact_slides.renderer_v2.lib_inliner import (
+            DeliveryMode,
+            build_head_assets,
+        )
+
+        bundle = build_head_assets(DeliveryMode.CDN)
+        assert "fonts.googleapis.com" in bundle.head_html
+
+    def test_bundle_meta_records_mode_and_bytes(self):
+        from impact_slides.renderer_v2.lib_inliner import (
+            DeliveryMode,
+            build_head_assets,
+        )
+
+        bundle = build_head_assets(DeliveryMode.SELF_CONTAINED)
+        assert bundle.meta["mode"] == "self-contained"
+        assert "bytes_inlined" in bundle.meta
+        assert isinstance(bundle.meta["assets"], list)
+
+    def test_unknown_feature_id_warns(self, capsys):
+        from impact_slides.renderer_v2.lib_inliner import (
+            DeliveryMode,
+            build_head_assets,
+        )
+
+        build_head_assets(DeliveryMode.SELF_CONTAINED, feature_ids=["bogus-lib"])
+        assert "bogus-lib" in capsys.readouterr().err
+
+    def test_reserved_feature_ids_do_not_warn_unknown(self, capsys):
+        from impact_slides.renderer_v2.lib_inliner import (
+            DeliveryMode,
+            build_head_assets,
+        )
+
+        build_head_assets(
+            DeliveryMode.SELF_CONTAINED,
+            feature_ids=["charts", "mermaid", "alpine", "swiper", "icons"],
+        )
+        assert "unknown" not in capsys.readouterr().err.lower()
+
+
+class TestShellAssets:
+    def test_default_render_has_no_google_fonts(self, tmp_path):
+        from impact_slides.renderer_v2 import render_deck
+
+        out = tmp_path / "out"
+        render_deck(MINI, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "fonts.googleapis.com" not in html
+
+    def test_cdn_render_keeps_google_fonts(self, tmp_path):
+        from impact_slides.renderer_v2 import render_deck
+
+        out = tmp_path / "out"
+        render_deck(MINI, out, strict=False, delivery="cdn")
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "fonts.googleapis.com" in html
+
+    def test_assets_inlined_recorded_in_deck_meta(self, tmp_path):
+        from impact_slides.renderer_v2 import render_deck
+
+        out = tmp_path / "out"
+        render_deck(MINI, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert isinstance(_deck_meta(html)["assets_inlined"], list)
