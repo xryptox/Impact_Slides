@@ -530,6 +530,11 @@
 }
 .chart-table-aligned th:first-child,
 .chart-table-aligned td:first-child { text-align: left; }
+/* White chart surface (Fidelity T9/#37): the PDF draws charts on white;
+   opt in per slide via visual_spec.chart_config.surface = "white". */
+.chart-frame.chart-surface-white {
+  background: var(--color-surface, #ffffff);
+}
 .chart-frame .chart-metric-strip { margin-top: var(--size-3); }
 .slide .chart-frame .chart-metric-strip .metric-tile {
   min-height: 0;

@@ -1088,12 +1088,16 @@ def render_chart(slide, total, notes, active=False):
             n = min(len(key_stats), 6)
             main += f'<div class="metric-strip chart-metric-strip gl-grid gl-grid-{n}">{tiles}</div>'
     main += insight_strip(_so_what(slide))
+    cfg = vs.get("chart_config") or {}
+    frame_cls = "chart-frame gl-card"
+    if cfg.get("surface") == "white":
+        frame_cls += " chart-surface-white"
     return slide_shell(
         number=int(slide["slide_number"]),
         total=total,
         title=strip_eids(slide.get("title") or ""),
         dek=chosen_dek(slide),
-        main_html=f'<div class="chart-frame gl-card" style="padding:18px 22px">{main}</div>',
+        main_html=f'<div class="{frame_cls}" style="padding:18px 22px">{main}</div>',
         notes_html=notes_aside(int(slide["slide_number"]), notes),
         footer_html=source_strip(_source_names(slide)),
         layout_class=layout,

@@ -116,3 +116,24 @@ def test_both_table_and_stats_get_split_and_stats_classes():
     assert "chart-with-stats" in html
     assert "chart-support-table" in html
     assert "metric-strip" in html
+
+
+# ------------------------------------------------------- white surface (T9/#37)
+
+def test_white_surface_class_when_configured():
+    slide = _with_table(_line_slide())
+    slide["visual_spec"]["chart_config"]["surface"] = "white"
+    html = render_slide(slide, total=1, notes="", active=True)
+    assert "chart-frame gl-card chart-surface-white" in html
+
+
+def test_no_white_surface_by_default():
+    slide = _with_table(_line_slide())
+    html = render_slide(slide, total=1, notes="", active=True)
+    assert "chart-surface-white" not in html
+
+
+def test_white_surface_css_rule_exists():
+    from pathlib import Path
+    css = (Path(__file__).parent.parent / "impact_slides" / "renderer_v2" / "css" / "components.css").read_text(encoding="utf-8")
+    assert ".chart-frame.chart-surface-white" in css
