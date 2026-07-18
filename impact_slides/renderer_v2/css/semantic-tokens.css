@@ -13,7 +13,7 @@
   --color-primary-deep: var(--navy-deep, #001058);
   --color-primary-mid: var(--navy-mid, #002060);
   --color-accent: var(--blue, #006fcf);
-  --color-accent-light: var(--blue-sky, #80c9ff);
+  --color-accent-light: var(--blue-sky, #80c8ff);
   --color-accent-2: #0a7d55;          /* success / positive — new semantic */
   --color-warn: #b35900;             /* warning — new semantic */
   --color-ink: var(--ink, #53565a);
@@ -24,7 +24,7 @@
   --color-surface: var(--slide-bg, #ffffff);
   --color-surface-soft: var(--bg-soft, #f8f8f8);
   --color-surface-alt: var(--bg-soft, #f8fafc);
-  --color-panel: var(--panel, #eff0f0);
+  --color-panel: var(--panel, #eef0f0);
   --color-panel-border: var(--panel-border, #d8dce3);
   --color-border: var(--panel-border, #e5e7eb);
   --color-grid: var(--grid, #e0e4ea);

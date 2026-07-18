@@ -200,3 +200,14 @@ def test_semantic_tokens_load_through_shell():
     assert "--shadow-1:" in css
     assert "--gradient-surface:" in css
     assert "--radius-round:" in css
+
+
+def test_brand_colors_match_pdf():
+    """Boardroom tokens must match the Amex Q1'26 PDF exactly."""
+    base = Path(__file__).parent.parent / "impact_slides" / "renderer_v2" / "css"
+    css = (base / "tokens.css").read_text(encoding="utf-8")
+    assert "--panel: #eef0f0" in css
+    assert "--blue-sky: #80c8ff" in css
+    # Ensure the old wrong values are gone
+    assert "#eff0f0" not in css
+    assert "#80c9ff" not in css
