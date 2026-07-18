@@ -357,12 +357,27 @@ _CHART_GEOMETRY: dict[str, dict[str, int]] = {
 }
 
 
-def chart_geometry(layout_type: str, *, has_overlay: bool = False) -> dict[str, int]:
+def chart_geometry(
+    layout_type: str, *, n: int | None = None, has_overlay: bool = False
+) -> dict[str, float]:
     """Plot insets (SVG units) for ``layout_type`` — the geometry contract
     between chart builders and elements composed around them."""
-    geom = dict(_CHART_GEOMETRY.get(layout_type, _CHART_GEOMETRY["_vertical_bar"]))
+    geom: dict[str, float] = dict(
+        _CHART_GEOMETRY.get(layout_type, _CHART_GEOMETRY["_vertical_bar"])
+    )
     if layout_type == "combo_chart" and has_overlay:
         geom["pad_r"] = 80
+    if layout_type == "line_chart":
+        # n-dependent insets (Fidelity T11 / #39): with points placed at the
+        # plot edges (pad_l + i*slot), equal table columns centered on those
+        # points require pad_l - slot/2 >= 0 on the left and plot_r + slot/2
+        # <= 900 on the right. Solving both exactly gives pad_l = 72 + 414/n
+        # and pad_r = 414/n: the aligned table then spans [0, 900] with an
+        # 8% label column and value columns centered EXACTLY under each
+        # category point (and the plot gains the PDF's generous margins).
+        count = n if n and n > 1 else 5
+        geom["pad_l"] = 72 + 414 / count
+        geom["pad_r"] = 414 / count
     return geom
 
 
@@ -379,7 +394,7 @@ def chart_column_interval(
     returned interval linearly onto the table's value region makes every
     column center exact for any margins.
     """
-    geom = chart_geometry(layout_type, has_overlay=has_overlay)
+    geom = chart_geometry(layout_type, n=n, has_overlay=has_overlay)
     w = geom["width"]
     plot_l = float(geom["pad_l"])
     plot_r = float(w - geom["pad_r"])
@@ -401,7 +416,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
 
     cfg = _chart_config(slide)
     show_grid = bool(cfg.get("gridlines", True))
-    geom = chart_geometry("line_chart")
+    geom = chart_geometry("line_chart", n=len(points))
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 40, 60
 
@@ -583,8 +598,11 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
             if sk2 in p:
                 above = p["value"] >= p[sk2]
         ly = cy - 12 if above else cy + 18
+        # First point sits ON the y-axis line — anchor its label start-side
+        # so the text clears the axis instead of straddling it (#39).
+        l_anchor, l_x = ("start", cx + 4) if i == 0 else ("middle", cx)
         parts.append(
-            f'<text x="{cx:.1f}" y="{ly:.1f}" text-anchor="middle" '
+            f'<text x="{l_x:.1f}" y="{ly:.1f}" text-anchor="{l_anchor}" '
             f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(_fmtu(p["value"]))}</text>'
         )
@@ -601,8 +619,9 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
                 if two_series:
                     above = p[sk] > p["value"]
                 ly = cy - 12 if above else cy + 18
+                l_anchor, l_x = ("start", cx + 4) if i == 0 else ("middle", cx)
                 parts.append(
-                    f'<text x="{cx:.1f}" y="{ly:.1f}" text-anchor="middle" '
+                    f'<text x="{l_x:.1f}" y="{ly:.1f}" text-anchor="{l_anchor}" '
                     f'fill="var(--ink-muted, #63666a)" font-size="12" '
                     f'font-family="var(--font-body, sans-serif)">{esc(_fmtu(p[sk]))}</text>'
                 )

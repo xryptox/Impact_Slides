@@ -1040,8 +1040,13 @@ def render_chart(slide, total, notes, active=False):
             )
             if aligned:
                 left, right, width = chart_column_interval(layout, n)
-                label_w = 10.0  # row-label column (y-axis margin zone)
-                col_w = (100.0 - label_w) / n
+                # colgroup percentages of the table's own width; the table
+                # spans [0, right] of the shared SVG width context, so an
+                # absolute column center (pct * table_w) must equal the
+                # category point's cx / width — the alignment invariant.
+                table_w = right / width * 100
+                label_w = left / right * 100  # label col as % of table width
+                col_w = (right - left) / n / right * 100
                 colgroup = (
                     "<colgroup>"
                     f'<col style="width:{label_w:.2f}%">'
@@ -1058,7 +1063,8 @@ def render_chart(slide, total, notes, active=False):
                 align_attrs = ""
 
             tbl_cls = "chart-support-table" + (" chart-table-aligned" if aligned else "")
-            tbl = f'<table class="{tbl_cls}"{align_attrs}>{colgroup}<thead><tr>'
+            tbl_style = f' style="width:{table_w:.2f}%"' if aligned else ""
+            tbl = f'<table class="{tbl_cls}"{tbl_style}{align_attrs}>{colgroup}<thead><tr>'
             tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
             tbl += "</tr></thead><tbody>"
             for row in body:

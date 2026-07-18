@@ -61,23 +61,23 @@ def _render(slide):
 
 
 def test_chart_geometry_single_source():
-    geom = chart_geometry("line_chart")
+    # line-chart insets are n-dependent (#39): pad_l = 72 + 414/n, pad_r = 414/n
+    geom = chart_geometry("line_chart", n=5)
     assert geom["width"] == 900
-    assert geom["pad_l"] == 80 and geom["pad_r"] == 40
+    assert abs(geom["pad_l"] - 154.8) < 0.01
+    assert abs(geom["pad_r"] - 82.8) < 0.01
     # builder actually reads the contract: first point sits at pad_l
     svg = _build_line_chart_svg(_slide())
     first_cx = float(re.search(r'<circle cx="([\d.]+)"', svg).group(1))
     assert abs(first_cx - geom["pad_l"]) < 0.5
 
 
-def test_column_interval_line_chart_has_half_slot_overhang():
-    # line points sit at plot EDGES, so edge columns overhang by half a slot
+def test_column_interval_line_chart_exact_bounds():
+    # with the n-dependent insets, the aligned interval spans [72, 900]
+    # exactly: 8% label zone + equal columns, no overflow either side
     left, right, w = chart_column_interval("line_chart", 5)
-    geom = chart_geometry("line_chart")
-    plot_w = (geom["width"] - geom["pad_r"]) - geom["pad_l"]
-    slot = plot_w / 4
-    assert abs(left - (geom["pad_l"] - slot / 2)) < 0.01
-    assert abs(right - (geom["width"] - geom["pad_r"] + slot / 2)) < 0.01
+    assert abs(left - 72.0) < 0.01
+    assert abs(right - 900.0) < 0.01
     assert w == 900.0
 
 
@@ -121,10 +121,19 @@ def test_table_columns_center_on_chart_categories():
         col_centers.append(edge + w_ / 2)
         edge += w_
 
-    # SVG point cx mapped into the table's value region must equal col center
+    # THE alignment invariant: the table shares the SVG's width context, so
+    # a column's ABSOLUTE center (colgroup pct scaled by table width) must
+    # equal the category point's position in the SVG (cx / 900).
+    table_w = float(re.search(
+        r'<table class="chart-support-table chart-table-aligned" style="width:([\d.]+)%"',
+        html,
+    ).group(1))
     for cx, center in zip(cxs, col_centers):
-        mapped = label_w + (cx - left) / (right - left) * (100.0 - label_w)
-        assert abs(mapped - center) < 0.2, f"column off by {abs(mapped - center):.2f}%"
+        absolute_center = center * table_w / 100.0
+        point_pct = cx / 900.0 * 100.0
+        assert abs(absolute_center - point_pct) < 0.2, (
+            f"column off by {abs(absolute_center - point_pct):.2f}% of slide width"
+        )
 
 
 def test_non_matching_table_stays_full_width_unaligned():
@@ -153,3 +162,27 @@ def test_label_column_present_and_narrow():
     html = _render(_slide(secondary=_MATCHING_SECONDARY))
     first_col = float(re.search(r'<col style="width:([\d.]+)%"', html).group(1))
     assert 5.0 <= first_col <= 15.0               # y-axis margin zone, not a data column
+
+
+def test_first_point_label_clears_y_axis():
+    """The i==0 data label must not straddle the y-axis line (#39)."""
+    svg = _build_line_chart_svg(_slide())
+    first_label = re.search(
+        r'<text x="([\d.]+)" y="[\d.]+" text-anchor="(start|middle)"[^>]*>6%</text>',
+        svg,
+    )
+    assert first_label is not None
+    geom = chart_geometry("line_chart", n=5)
+    if first_label.group(2) == "middle":
+        # a centered label must sit fully right of the axis
+        assert float(first_label.group(1)) - 14 > geom["pad_l"]
+    else:
+        assert float(first_label.group(1)) >= geom["pad_l"]
+
+
+def test_aligned_table_spans_to_svg_right_edge():
+    html = _render(_slide(secondary=_MATCHING_SECONDARY))
+    table_w = float(re.search(
+        r'chart-table-aligned" style="width:([\d.]+)%"', html,
+    ).group(1))
+    assert abs(table_w - 100.0) < 0.5  # right edge == SVG right edge (900/900)
