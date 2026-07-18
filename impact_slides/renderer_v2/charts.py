@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import math
 import sys
 from pathlib import Path
 from typing import Any, Mapping
@@ -138,6 +139,11 @@ def build_chart_html(slide: Mapping[str, Any], layout: str) -> str:
     # Combo charts (bar + line overlay) are built internally
     if lt == "combo_chart":
         return _build_combo_chart_svg(slide)
+    # Vertical bar charts are built internally (pack renders horizontal bars)
+    if lt == "grouped_bar_chart":
+        return _build_grouped_bar_svg(slide)
+    if lt == "stacked_bar_chart":
+        return _build_stacked_bar_svg(slide)
     mod = _load_pack()
     s = dict(slide)
     s["layout_type"] = lt
@@ -150,8 +156,8 @@ def build_chart_html(slide: Mapping[str, Any], layout: str) -> str:
         s["steps_or_data"] = pv.get("steps_or_data") or []
     if not s.get("key_stats"):
         s["key_stats"] = (s.get("content") or {}).get("key_stats") or []
-    if not s.get("so_what"):
-        s["so_what"] = (s.get("content") or {}).get("so_what") or ""
+    # NOTE: so_what is deliberately NOT bridged — render_chart appends
+    # insight_strip() itself; bridging would make the pack render a duplicate.
     if mod and hasattr(mod, "build_main"):
         try:
             html = mod.build_main(s, esc=esc, icon=_icon_svg)
@@ -805,6 +811,375 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                 f'fill="{overlay_color}" font-size="13" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(overlay_label)}</text>'
             )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+# ----------------------------------------------------------------------
+# Internal vertical bar charts (grouped + stacked)
+# ----------------------------------------------------------------------
+
+_BAR_SERIES_COLORS = [
+    "var(--navy, #00175a)",
+    "var(--blue, #006fcf)",
+    "var(--blue-sky, #80c8ff)",
+    "var(--ink-muted, #63666a)",
+]
+
+
+def _bar_num(v: Any) -> float | None:
+    try:
+        return float(str(v).replace("%", "").replace(",", "").replace("$", "").strip())
+    except (ValueError, TypeError):
+        return None
+
+
+def _fmt_bar(v: float, unit: str = "") -> str:
+    s = f"{v:,.0f}" if abs(v) >= 1000 else f"{v:g}"
+    return f"{s}{unit}" if unit else s
+
+
+def _nice_max(raw: float) -> float:
+    if raw <= 0:
+        return 1.0
+    exp = math.floor(math.log10(raw))
+    base = 10**exp
+    for m in (1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10):
+        if raw <= m * base:
+            return float(m * base)
+    return float(10 * base)
+
+
+def _nice_step(raw: float) -> float:
+    """Round a tick step to a clean 1/2/2.5/5 number."""
+    if raw <= 0:
+        return 1.0
+    exp = math.floor(math.log10(raw))
+    base = 10**exp
+    for m in (1, 2, 2.5, 5, 10):
+        if raw <= m * base:
+            return float(m * base)
+    return float(10 * base)
+
+
+def _bar_matrix(slide: Mapping[str, Any]) -> tuple[list[str], list[str], list[list[float | None]]]:
+    """Parse steps_or_data into (labels, series_names, matrix[row][series]).
+
+    Accepts ``{label, values:{s:v}}`` dicts, ``{label, k: v}`` positional
+    dicts, ``{label, value}`` single-series dicts, or list-of-lists with an
+    optional header row. Series capped at 4.
+    """
+    raw = _steps(slide)
+    if not raw:
+        return [], [], []
+    labels: list[str] = []
+    series: list[str] = []
+    rows: list[list[float | None]] = []
+
+    if all(isinstance(x, dict) for x in raw):
+        for x in raw:
+            labels.append(str(x.get("label") or x.get("category") or x.get("name") or "\u2014"))
+            vals = x.get("values")
+            if isinstance(vals, dict) and vals:
+                if not series:
+                    series = [str(k) for k in vals.keys()][:4]
+                rows.append([_bar_num(vals.get(k)) for k in series])
+            elif _bar_num(x.get("value")) is not None:
+                if not series:
+                    series = ["Value"]
+                rows.append([_bar_num(x.get("value"))])
+            else:
+                nums = {
+                    str(k): _bar_num(v)
+                    for k, v in x.items()
+                    if k not in ("label", "category", "name", "kind", "icon")
+                    and _bar_num(v) is not None
+                }
+                if not series:
+                    series = list(nums.keys())[:4]
+                rows.append([nums.get(k) for k in series])
+        return labels, series, rows
+
+    if all(isinstance(x, (list, tuple)) for x in raw):
+        rows_raw = [list(x) for x in raw]
+        first = rows_raw[0]
+        second = rows_raw[1] if len(rows_raw) > 1 else []
+        has_header = (
+            len(rows_raw) > 1
+            and all(isinstance(c, str) for c in first[1:])
+            and any(_bar_num(c) is not None for c in second[1:])
+        )
+        if has_header:
+            series = [str(c) for c in first[1:5]]
+            body = rows_raw[1:]
+        else:
+            width = max(len(r) for r in rows_raw) - 1
+            series = [f"S{i + 1}" for i in range(min(width, 4))]
+            body = rows_raw
+        for r in body:
+            labels.append(str(r[0]))
+            rows.append([_bar_num(v) for v in r[1 : len(series) + 1]])
+        return labels, series, rows
+
+    return [], [], []
+
+
+def _bar_axes(
+    cfg: dict[str, Any],
+    data_max: float,
+    data_min: float,
+) -> tuple[float, float, list[float]]:
+    """Compute (y_max, y_min, ticks) with nice-number rounding."""
+    y_max = cfg.get("y_axis_max")
+    if y_max is None:
+        y_max = _nice_max(data_max * 1.05)
+    y_max = float(y_max)
+    y_min = cfg.get("y_axis_min")
+    if y_min is None:
+        y_min = -_nice_max(abs(data_min) * 1.05) if data_min < 0 else 0.0
+    y_min = float(y_min)
+    ticks = cfg.get("y_axis_ticks")
+    if ticks is None:
+        if y_min < 0 and abs(y_min) > 0.15 * y_max:
+            step = _nice_step((y_max - y_min) / 4)
+            lo = math.floor(y_min / step) * step
+        else:
+            # Small negative tail (e.g. reserve releases): tick from zero up
+            step = _nice_step(y_max / 4)
+            lo = 0.0
+        hi = math.ceil(y_max / step) * step
+        ticks = []
+        t = lo
+        while t <= hi + 1e-9:
+            ticks.append(round(t, 6))
+            t += step
+    return y_max, y_min, [float(t) for t in ticks]
+
+
+def _vbar_frame(
+    cls: str,
+    cfg: dict[str, Any],
+    y_max: float,
+    y_min: float,
+    y_ticks: list[float],
+    series: list[str],
+) -> list[str]:
+    """Emit SVG open + gridlines + axes + legend."""
+    W, H = 900, 480
+    pad_l, pad_r, pad_t, pad_b = 70, 30, 56 if len(series) > 1 else 40, 56
+    plot_h = H - pad_t - pad_b
+    unit = cfg.get("y_axis_unit", "")
+
+    def y_pos(v: float) -> float:
+        rng = y_max - y_min
+        if rng == 0:
+            return pad_t + plot_h / 2
+        return pad_t + plot_h - ((v - y_min) / rng) * plot_h
+
+    parts: list[str] = [
+        f'<svg class="chart-svg vbar-chart {cls}" viewBox="0 0 {W} {H}" '
+        f'xmlns="http://www.w3.org/2000/svg" '
+        f'style="width:100%;height:auto">'
+    ]
+    for tick in y_ticks:
+        ty = y_pos(tick)
+        parts.append(
+            f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
+            f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
+        )
+        parts.append(
+            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+            f'fill="var(--ink-muted, #63666a)" font-size="14" '
+            f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(tick, unit))}</text>'
+        )
+    parts.append(
+        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+    )
+    # X-axis at zero (or plot bottom when all values positive)
+    zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
+    parts.append(
+        f'<line x1="{pad_l}" y1="{zero_y:.1f}" x2="{W - pad_r}" y2="{zero_y:.1f}" '
+        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+    )
+    # Legend (multi-series only)
+    if len(series) > 1:
+        lx = pad_l + 4
+        for i, name in enumerate(series):
+            color = _BAR_SERIES_COLORS[i % len(_BAR_SERIES_COLORS)]
+            parts.append(
+                f'<g class="vbar-legend-item">'
+                f'<rect x="{lx}" y="18" width="12" height="12" rx="2" fill="{color}"/>'
+                f'<text x="{lx + 18}" y="28" fill="var(--ink, #53565a)" font-size="13" '
+                f'font-family="var(--font-body, sans-serif)">{esc(name)}</text></g>'
+            )
+            lx += 18 + len(name) * 7 + 28
+        parts.append('<!-- vbar-legend -->')
+    return parts
+
+
+def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
+    """Build a vertical grouped bar chart (internal replacement for the pack)."""
+    labels, series, matrix = _bar_matrix(slide)
+    if not labels or not series:
+        return '<p class="chart-empty">No bar chart data</p>'
+    all_vals = [v for row in matrix for v in row if v is not None]
+    if not all_vals:
+        return '<p class="chart-empty">No bar chart data</p>'
+
+    cfg = _chart_config(slide)
+    W, H = 900, 480
+    pad_l, pad_r, pad_t, pad_b = 70, 30, 56 if len(series) > 1 else 40, 56
+    plot_w = W - pad_l - pad_r
+    plot_h = H - pad_t - pad_b
+    unit = cfg.get("y_axis_unit", "")
+
+    y_max, y_min, y_ticks = _bar_axes(cfg, max(all_vals), min(all_vals))
+
+    def y_pos(v: float) -> float:
+        rng = y_max - y_min
+        if rng == 0:
+            return pad_t + plot_h / 2
+        return pad_t + plot_h - ((v - y_min) / rng) * plot_h
+
+    parts = _vbar_frame("vbar-grouped", cfg, y_max, y_min, y_ticks, series)
+    zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
+
+    n = len(labels)
+    slot = plot_w / n
+    group_w = slot * 0.65
+    bar_w = group_w / len(series)
+
+    for i, lab in enumerate(labels):
+        gx = pad_l + i * slot + (slot - group_w) / 2
+        for j in range(len(series)):
+            v = matrix[i][j] if j < len(matrix[i]) else None
+            if v is None:
+                continue
+            x = gx + j * bar_w
+            color = _BAR_SERIES_COLORS[j % len(_BAR_SERIES_COLORS)]
+            if v >= 0:
+                y = y_pos(v)
+                bh = zero_y - y
+                label_y = y - 8
+            else:
+                y = zero_y
+                bh = y_pos(v) - zero_y
+                label_y = y_pos(v) + 18
+            parts.append(
+                f'<rect class="vbar" x="{x:.1f}" y="{y:.1f}" width="{bar_w - 4:.1f}" '
+                f'height="{max(bh, 0):.1f}" fill="{color}" rx="2"/>'
+            )
+            parts.append(
+                f'<text x="{x + (bar_w - 4) / 2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
+                f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(v, unit))}</text>'
+            )
+        parts.append(
+            f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
+            f'text-anchor="middle" fill="var(--ink, #53565a)" font-size="14" '
+            f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
+        )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
+    """Build a vertical stacked bar chart with negative-segment support."""
+    labels, series, matrix = _bar_matrix(slide)
+    if not labels or not series:
+        return '<p class="chart-empty">No stacked bar data</p>'
+    pos_sums = [sum(v for v in row if v is not None and v > 0) for row in matrix]
+    neg_sums = [sum(v for v in row if v is not None and v < 0) for row in matrix]
+    if not any(pos_sums) and not any(neg_sums):
+        return '<p class="chart-empty">No stacked bar data</p>'
+
+    cfg = _chart_config(slide)
+    W, H = 900, 480
+    pad_l, pad_r, pad_t, pad_b = 70, 30, 56 if len(series) > 1 else 40, 56
+    plot_w = W - pad_l - pad_r
+    plot_h = H - pad_t - pad_b
+    unit = cfg.get("y_axis_unit", "")
+
+    y_max, y_min, y_ticks = _bar_axes(cfg, max(pos_sums), min(neg_sums))
+
+    def y_pos(v: float) -> float:
+        rng = y_max - y_min
+        if rng == 0:
+            return pad_t + plot_h / 2
+        return pad_t + plot_h - ((v - y_min) / rng) * plot_h
+
+    parts = _vbar_frame("vbar-stacked", cfg, y_max, y_min, y_ticks, series)
+    zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
+
+    n = len(labels)
+    slot = plot_w / n
+    bar_w = slot * 0.5
+
+    for i, lab in enumerate(labels):
+        x = pad_l + i * slot + (slot - bar_w) / 2
+        # Positive stack grows upward from zero
+        cursor = 0.0
+        for j in range(len(series)):
+            v = matrix[i][j] if j < len(matrix[i]) else None
+            if v is None or v <= 0:
+                continue
+            y_bottom = y_pos(cursor)
+            cursor += v
+            y_top = y_pos(cursor)
+            color = _BAR_SERIES_COLORS[j % len(_BAR_SERIES_COLORS)]
+            parts.append(
+                f'<rect class="vbar-seg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
+                f'height="{max(y_bottom - y_top, 0):.1f}" fill="{color}"/>'
+            )
+            # Segment value label inside (if tall enough)
+            if y_bottom - y_top > 20:
+                parts.append(
+                    f'<text x="{x + bar_w / 2:.1f}" y="{(y_top + y_bottom) / 2 + 5:.1f}" '
+                    f'text-anchor="middle" fill="#fff" font-size="13" font-weight="600" '
+                    f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(v, unit))}</text>'
+                )
+        # Negative stack grows downward from zero
+        cursor = 0.0
+        for j in range(len(series)):
+            v = matrix[i][j] if j < len(matrix[i]) else None
+            if v is None or v >= 0:
+                continue
+            y_top = y_pos(cursor)
+            cursor += v
+            y_bottom = y_pos(cursor)
+            color = _BAR_SERIES_COLORS[j % len(_BAR_SERIES_COLORS)]
+            parts.append(
+                f'<rect class="vbar-seg vbar-neg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
+                f'height="{max(y_bottom - y_top, 0):.1f}" fill="{color}"/>'
+            )
+        # Net total above the positive stack (or above zero)
+        net = pos_sums[i] + neg_sums[i]
+        total_y = y_pos(pos_sums[i]) - 8 if pos_sums[i] > 0 else zero_y - 8
+        parts.append(
+            f'<text x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" text-anchor="middle" '
+            f'fill="var(--ink, #53565a)" font-size="14" font-weight="700" '
+            f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(net, unit))}</text>'
+        )
+        # Negative total below the negative stack, in parentheses; clamped
+        # so it never collides with the category label row.
+        if neg_sums[i] < 0:
+            neg_label_y = min(y_pos(neg_sums[i]) + 16, H - pad_b + 18)
+            parts.append(
+                f'<text x="{x + bar_w / 2:.1f}" y="{neg_label_y:.1f}" '
+                f'text-anchor="middle" fill="var(--ink-muted, #63666a)" font-size="13" '
+                f'font-family="var(--font-body, sans-serif)">'
+                f'({esc(_fmt_bar(abs(neg_sums[i]), unit))})</text>'
+            )
+        # Category labels sit lower when negative totals occupy the usual row
+        cat_y = H - 12 if any(neg_sums) else H - pad_b + 25
+        parts.append(
+            f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{cat_y}" '
+            f'text-anchor="middle" fill="var(--ink, #53565a)" font-size="14" '
+            f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
+        )
 
     parts.append("</svg>")
     return "".join(parts)
