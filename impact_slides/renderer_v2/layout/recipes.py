@@ -1052,6 +1052,58 @@ def render_chart(slide, total, notes, active=False):
     )
 
 
+def render_dual_chart(slide, total, notes, active=False):
+    """Two charts side by side (PDF p17: bar chart left, line chart right).
+
+    visual_spec.primary_visual and visual_spec.secondary_visual each carry
+    their own ``type`` + ``steps_or_data`` + optional per-pane
+    ``chart_config`` / ``line_overlay``. Each pane is built through the
+    standard chart pipeline (internal builders, pack fallback).
+    """
+    from ..charts import build_chart_html
+
+    vs = slide.get("visual_spec") or {}
+    panes: list[str] = []
+    for key in ("primary_visual", "secondary_visual"):
+        visual = vs.get(key)
+        if not isinstance(visual, dict) or not visual:
+            continue
+        vt = str(visual.get("type") or "grouped_bar_chart").lower()
+        sub_vs: dict[str, Any] = {
+            "primary_visual": visual,
+            "chart_config": visual.get("chart_config") or {},
+        }
+        if visual.get("line_overlay"):
+            sub_vs["line_overlay"] = visual["line_overlay"]
+        if visual.get("annotation"):
+            sub_vs["annotation"] = visual["annotation"]
+        sub_slide = {
+            "slide_number": slide.get("slide_number", 1),
+            "title": slide.get("title", ""),
+            "layout_type": vt,
+            "content": {},
+            "visual_spec": sub_vs,
+            "evidence_sources": slide.get("evidence_sources") or [],
+        }
+        panes.append(
+            f'<div class="dual-chart-pane">{build_chart_html(sub_slide, vt)}</div>'
+        )
+    main = f'<div class="gl-grid gl-grid-2 dual-chart">{"".join(panes)}</div>'
+    main += insight_strip(_so_what(slide))
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=f'<div class="chart-frame gl-card" style="padding:18px 22px">{main}</div>',
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="dual_chart",
+        active=active,
+        item_count=3,
+    )
+
+
 def render_metric_row_with_breakdown(slide, total, notes, active=False):
     """KPI row with a breakdown/detail band below each metric."""
     c = _content(slide)

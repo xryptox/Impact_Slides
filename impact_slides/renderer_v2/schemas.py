@@ -206,6 +206,10 @@ class ComboChartSlide(_BaseSlide):
     layout_type: Literal["combo_chart"] = "combo_chart"
 
 
+class DualChartSlide(_BaseSlide):
+    layout_type: Literal["dual_chart"] = "dual_chart"
+
+
 # ---------------------------------------------------------------------------
 # Discriminated union
 # ---------------------------------------------------------------------------
@@ -246,6 +250,7 @@ ValidatedSlide = Union[
     ChartSlide,
     LineChartSlide,
     ComboChartSlide,
+    DualChartSlide,
 ]
 
 # Layout types that map to the fallback when validation fails.
@@ -306,6 +311,7 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "heatmap": ChartSlide,
         "line_chart": LineChartSlide,
         "combo_chart": ComboChartSlide,
+        "dual_chart": DualChartSlide,
     }
 
     model_cls = model_map.get(lt)

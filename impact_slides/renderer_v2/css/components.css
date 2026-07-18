@@ -994,3 +994,18 @@
 .chart-support-table tr:nth-child(even) td {
   background: var(--panel);
 }
+
+/* Dual chart layout: two charts side by side (Fidelity T7/#35) */
+.dual-chart {
+    align-items: stretch;
+}
+.dual-chart-pane {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.dual-chart-pane .chart-svg {
+    width: 100%;
+    height: auto;
+}

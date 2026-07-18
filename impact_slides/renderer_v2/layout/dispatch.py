@@ -53,6 +53,9 @@ def render_slide(
         s["layout_type"] = lt
         return recipes.render_chart(s, total, notes, active=active)
 
+    if lt == "dual_chart":
+        return recipes.render_dual_chart(slide, total, notes, active=active)
+
     if lt == "icon_grid":
         return recipes.render_icon_grid(slide, total, notes, active=active)
     if lt in ("title_or_opening", "cover"):
