@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
+from .lib_inliner import DeliveryMode, coerce_delivery
 from .load import load_json, load_seed, normalize_handoff, present_meta
 from .schemas import validate_handoff
 from .layout.dispatch import render_slide
@@ -29,11 +30,16 @@ def render_deck(
     debug: bool = False,
     strict: bool = True,
     theme: dict[str, str] | None = None,
+    delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
 ) -> dict[str, Any]:
     """Render a Builder handoff to presentation.html + notes + manifest.
 
+    ``delivery`` selects how third-party assets reach the deck:
+    ``"self-contained"`` (default, offline-safe) or ``"cdn"`` (dev-only).
+
     Returns a result dict with paths and validation errors.
     """
+    delivery = coerce_delivery(delivery)
     handoff_path = Path(handoff_path)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -65,7 +71,7 @@ def render_deck(
             render_slide(slide, total=total, notes=prose, active=(i == 0))
         )
 
-    html = wrap_deck(bodies, meta=meta, debug=debug, theme=theme)
+    html = wrap_deck(bodies, meta=meta, debug=debug, theme=theme, delivery=delivery)
     html_path = out / "presentation.html"
     html_path.write_text(html, encoding="utf-8")
 
@@ -82,6 +88,7 @@ def render_deck(
         "style_preset": "BoardroomEarnings",
         "handoff": str(handoff_path),
         "total_slides": total,
+        "delivery": delivery.value,
         "layouts": [s.get("layout_type") for s in slides],
     }
     (out / "run_meta.json").write_text(
@@ -114,6 +121,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", required=True, help="output directory")
     p.add_argument("--seed", default=None, help="evidence_register_seed.json (optional)")
     p.add_argument("--debug", action="store_true", help="outline gl-* regions")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--self-contained",
+        dest="delivery",
+        action="store_const",
+        const=DeliveryMode.SELF_CONTAINED,
+        help="embed all required assets (default; offline-safe)",
+    )
+    mode.add_argument(
+        "--use-cdn",
+        dest="delivery",
+        action="store_const",
+        const=DeliveryMode.CDN,
+        help="reference third-party assets via CDN (dev only; not for customer/VPN decks)",
+    )
+    p.set_defaults(delivery=DeliveryMode.SELF_CONTAINED)
     p.add_argument(
         "--no-strict",
         action="store_true",
@@ -129,6 +152,7 @@ def main(argv: list[str] | None = None) -> int:
             seed_path=args.seed,
             debug=args.debug,
             strict=not args.no_strict,
+            delivery=args.delivery,
         )
     except SystemExit as e:
         if isinstance(e.code, str):

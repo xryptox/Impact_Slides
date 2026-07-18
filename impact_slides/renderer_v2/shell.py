@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .charts import chart_css
+from .lib_inliner import DeliveryMode, coerce_delivery
 from .sprite import sprite_svg
 from .strip import esc
 
@@ -94,7 +95,9 @@ def wrap_deck(
     meta: Mapping[str, Any],
     debug: bool = False,
     theme: dict[str, str] | None = None,
+    delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
 ) -> str:
+    delivery = coerce_delivery(delivery)
     title = esc(meta.get("title") or "Impact Slides")
     body_cls = "gl-debug" if debug else ""
     deck_meta = {
@@ -104,6 +107,8 @@ def wrap_deck(
         "readiness_score": meta.get("readiness_score"),
         "quality_flags": meta.get("quality_flags") or [],
         "generator": "impact_slides.renderer_v2",
+        "delivery": delivery.value,
+        "assets_inlined": [],
     }
     css = load_css(debug=debug)
     theme_block = _theme_style(theme)
