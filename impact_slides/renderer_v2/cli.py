@@ -163,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 2
 
-    print(f"OK → {result['presentation']} ({result['total_slides']} slides)")
+    print(f"OK -> {result['presentation']} ({result['total_slides']} slides)")
     if result["errors"]:
         for err in result["errors"]:
             print(f"  warn: {err}")

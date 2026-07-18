@@ -5,7 +5,8 @@ vendored artifact; update whenever a file under `assets/` changes.
 
 | Asset | Version | License | Source | Obtained via | Notes |
 |-------|---------|---------|--------|--------------|-------|
-| _(fonts land in P0.3 — see `fonts/`)_ | | | | | |
+| Source Sans 3 (variable WOFF2, latin) | Google Fonts v19 (2026-07) | SIL OFL 1.1 (`fonts/SOURCE_SANS_3_LICENSE.txt`) | https://fonts.google.com/specimen/Source+Sans+3 · upstream: https://github.com/adobe-fonts/source-sans | Google Fonts css2 API, latin subset | `fonts/source-sans-3-latin.woff2` (28.7 KB); weights 400–700 |
+| IBM Plex Sans (variable WOFF2, latin) | Google Fonts v23 (2026-07) | SIL OFL 1.1 (`fonts/IBM_PLEX_SANS_LICENSE.txt`) | https://fonts.google.com/specimen/IBM+Plex+Sans · upstream: https://github.com/IBM/plex | Google Fonts css2 API, latin subset | `fonts/ibm-plex-sans-latin.woff2` (45.7 KB); weights 400–700 |
 
 Process (per `wiki/SPEC_renderer_v2_p0_self_contained.md`):
 

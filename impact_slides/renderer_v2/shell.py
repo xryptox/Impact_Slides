@@ -111,7 +111,7 @@ def wrap_deck(
         "delivery": delivery.value,
         "assets_inlined": list(bundle.meta.get("assets") or []),
     }
-    css = load_css(debug=debug)
+    css = "\n\n".join(p for p in (bundle.font_css, load_css(debug=debug)) if p)
     theme_block = _theme_style(theme)
     slides = "\n".join(slide_html)
     head_assets = bundle.head_html

@@ -67,20 +67,40 @@ class FontFace:
     """One vendored @font-face source."""
 
     family: str            # e.g. "Source Sans 3"
-    weight: int            # e.g. 400
+    weight: str            # e.g. "400" or variable range "400 700"
     style: str             # "normal" | "italic"
     filename: str          # file under assets/fonts/
 
 
-# Vendored Boardroom faces (populated when WOFF2 files are committed — P0.3).
-FONT_MANIFEST: tuple[FontFace, ...] = ()
+# Vendored Boardroom faces (variable WOFF2, latin subset; see assets/THIRD_PARTY.md).
+FONT_MANIFEST: tuple[FontFace, ...] = (
+    FontFace(
+        family="Source Sans 3",
+        weight="400 700",
+        style="normal",
+        filename="source-sans-3-latin.woff2",
+    ),
+    FontFace(
+        family="IBM Plex Sans",
+        weight="400 700",
+        style="normal",
+        filename="ibm-plex-sans-latin.woff2",
+    ),
+)
 
 
 @dataclass(frozen=True)
 class InlineBundle:
-    """Head fragments + metadata for one render."""
+    """Asset fragments + metadata for one render.
+
+    ``head_html`` is injected into <head> (CDN tags, later JS).
+    ``font_css`` is prepended into the base Boardroom <style> block so
+    @font-face declarations come before component CSS without adding a
+    separate <style> tag.
+    """
 
     head_html: str
+    font_css: str = ""
     meta: dict = field(default_factory=dict)
 
 
@@ -136,10 +156,9 @@ def _self_contained_head() -> tuple[str, int, list[str]]:
         css, size = _font_face_css(face, FONTS_DIR / face.filename)
         faces.append(css)
         total += size
-    if not faces:
-        return "", 0, []
-    head = "<style>\n" + "\n".join(faces) + "\n</style>"
-    return head, total, ["font-boardroom"]
+    font_css = "\n".join(faces)
+    inlined = ["font-boardroom"] if faces else []
+    return font_css, total, inlined
 
 
 def build_head_assets(
@@ -165,8 +184,9 @@ def build_head_assets(
             meta={"mode": mode.value, "assets": [], "bytes_inlined": 0},
         )
 
-    head, total, inlined = _self_contained_head()
+    font_css, total, inlined = _self_contained_head()
     return InlineBundle(
-        head_html=head,
+        head_html="",
+        font_css=font_css,
         meta={"mode": mode.value, "assets": inlined, "bytes_inlined": total},
     )
