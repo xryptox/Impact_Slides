@@ -45,6 +45,21 @@ def strip_eids(text: Any) -> str:
     return _WS.sub(" ", s).strip(" ,;|-")
 
 
+def strip_eids_keep_newlines(text: Any) -> str:
+    """Like strip_eids but preserves intentional newlines.
+
+    Used for multi-line chart annotation text, where newlines are
+    meaningful layout (one text line per rendered SVG line).
+    """
+    if text is None:
+        return ""
+    s = str(text)
+    s = _EID_PARENS.sub("", s)
+    s = _EID_BARE.sub("", s)
+    s = re.sub(r"[^\S\n]+", " ", s)
+    return s.strip(" ,;|-")
+
+
 def scrub_tree(obj: Any, *, _key: str | None = None) -> Any:
     """Recursively scrub E#### from face-facing strings.
 
@@ -65,6 +80,11 @@ def scrub_tree(obj: Any, *, _key: str | None = None) -> Any:
             # do not strip inside evidence_sources id fields
             if k in ("evidence_sources", "evidence_ids"):
                 out[k] = scrub_tree(v, _key=k)
+            elif k == "annotation" and isinstance(v, dict):
+                vv = dict(v)
+                if isinstance(vv.get("text"), str):
+                    vv["text"] = strip_eids_keep_newlines(vv["text"])
+                out[k] = vv
             else:
                 out[k] = scrub_tree(v, _key=k if k in ("id", "evidence_id", "source") else _key)
         return out

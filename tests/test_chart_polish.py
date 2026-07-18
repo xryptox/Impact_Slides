@@ -178,3 +178,32 @@ def test_annotation_splits_on_escaped_newlines():
     html = _build_line_chart_svg(_annotation_slide("Line A\\nLine B"))
     assert ">Line A</text>" in html
     assert ">Line B</text>" in html
+
+
+def test_annotation_newlines_survive_normalize_handoff():
+    """normalize_handoff's E#### scrub must not flatten annotation newlines."""
+    from impact_slides.renderer_v2.load import normalize_handoff
+
+    h = {
+        "slides": [
+            {
+                "slide_number": 1,
+                "title": "T",
+                "layout_type": "line_chart",
+                "content": {},
+                "visual_spec": {
+                    "primary_visual": {
+                        "type": "line_chart",
+                        "steps_or_data": [{"label": "Q1", "value": 5}],
+                    },
+                    "chart_config": {
+                        "annotation": {"text": "Line A\nLine B", "x": 100, "y": 100}
+                    },
+                },
+                "evidence_sources": [],
+            }
+        ]
+    }
+    n = normalize_handoff(h)
+    s = [x for x in n["slides"] if x.get("layout_type") == "line_chart"][0]
+    assert "\n" in s["visual_spec"]["chart_config"]["annotation"]["text"]
