@@ -22,6 +22,9 @@ The 5 remaining gaps from Round 2 were implemented as tickets #32–#35:
 | #10 stacked-bar combo | #34 | `3825433` | multi-series `{label, values:{…}}` stacked bars in combo_chart + overlay |
 | #9 side-by-side charts | #35 | `c90fb05` | new `dual_chart` layout (verified against PDF p17 with real data) |
 
+
+**Round 3b (same day): navy chart-ink pass** — axes, tick labels, category labels, data labels, annotation callouts and the primary trend line now default to navy (`--navy`) with bold tick labels across all internal chart builders, matching the PDF house style (secondary series stays gray-dashed). Verified via regenerated p4/p11 comparisons.
+
 With these, **every chart pattern in the Amex Q1'26 PDF is reproducible** through documented handoff JSON fields: 2-series line with per-point label placement, multi-line annotations, supporting tables, grouped columns with series/per-bar colors and group brackets, stacked columns with negative releases, stacked-bar combo with dual axis, circle pairs, KPI strips, and side-by-side dual charts. Suite: 949 passed.
 
 ---

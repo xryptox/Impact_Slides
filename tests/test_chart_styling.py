@@ -42,7 +42,11 @@ def test_series_colors_grouped_bar():
     html = _build_grouped_bar_svg(slide)
     assert 'fill="#111111"' in html
     assert 'fill="#222222"' in html
-    assert "var(--navy" not in html
+    # bar rects and legend swatches use the custom palette (axes/ticks are
+    # navy by design — the PDF chart-ink house style)
+    import re
+    bar_fills = re.findall(r'<rect class="vbar"[^>]*fill="([^"]+)"', html)
+    assert bar_fills and set(bar_fills) <= {"#111111", "#222222"}
 
 
 def test_series_colors_line_chart():
@@ -139,3 +143,64 @@ def test_per_bar_color_combo():
     )
     html = _build_combo_chart_svg(slide)
     assert 'fill="#898a89"' in html
+
+
+# ------------------------------------------------------- PDF navy house style
+
+NAVY = "var(--navy, #00175a)"
+
+
+def test_line_chart_navy_house_style():
+    slide = _slide(
+        "line_chart",
+        [{"label": "Q1", "value": 9}, {"label": "Q2", "value": 10}],
+    )
+    html = _build_line_chart_svg(slide)
+    assert f'stroke="{NAVY}"' in html            # primary trend line + axes
+    assert f'fill="{NAVY}"' in html              # data/tick/category labels
+    assert 'font-weight="600"' in html           # bold tick labels like the PDF
+
+
+def test_line_chart_annotation_navy():
+    slide = _slide(
+        "line_chart",
+        [{"label": "Q1", "value": 9}],
+        annotation={"text": "Leap Year\nApprox.", "x": 300, "y": 150},
+    )
+    html = _build_line_chart_svg(slide)
+    assert f'stroke="{NAVY}" stroke-width="1" \n' in html or f'stroke="{NAVY}" stroke-width="1"' in html
+    assert html.count(f'fill="{NAVY}"') >= 3     # border text + labels
+
+
+def test_bar_chart_navy_axes_and_labels():
+    slide = _slide(
+        "grouped_bar_chart",
+        [{"label": "Q1", "value": 7}],
+    )
+    html = _build_grouped_bar_svg(slide)
+    assert f'stroke="{NAVY}"' in html            # axes
+    assert f'fill="{NAVY}"' in html              # value/category/tick labels
+
+
+def test_combo_overlay_default_navy():
+    slide = _slide(
+        "combo_chart",
+        [{"label": "Q1", "value": 1.6}],
+    )
+    slide["visual_spec"]["line_overlay"] = {
+        "data": [{"label": "Q1", "value": 702}],
+        "dual_axis": False,
+    }
+    html = _build_combo_chart_svg(slide)
+    assert f'stroke="{NAVY}"' in html            # overlay trend line
+
+
+def test_series_2_stays_muted_dashed():
+    """Two-series convention preserved: secondary = gray dashed (PDF p4)."""
+    slide = _slide(
+        "line_chart",
+        [{"label": "Q1", "value": 8, "series_2": 9}],
+    )
+    html = _build_line_chart_svg(slide)
+    assert 'stroke-dasharray="8,4"' in html
+    assert 'stroke="var(--ink-muted, #63666a)"' in html

@@ -427,27 +427,27 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         tick_label = _fmtu(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--ink-muted, #63666a)" font-size="14" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
 
     # Y-axis line
     parts.append(
         f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
     )
 
     # X-axis line
     parts.append(
         f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
-        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
     )
 
     # X-axis labels
     for i, p in enumerate(points):
         parts.append(
             f'<text x="{x_pos(i):.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(p["label"])}</text>'
         )
 
@@ -456,14 +456,14 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         parts.append(
             f'<text x="20" y="{pad_t + plot_h / 2:.0f}" text-anchor="middle" '
             f'transform="rotate(-90 20 {pad_t + plot_h / 2:.0f})" '
-            f'fill="var(--ink-muted, #63666a)" font-size="13" '
+            f'fill="var(--navy, #00175a)" font-size="13" '
             f'font-family="var(--font-body, sans-serif)">{esc(y_label)}</text>'
         )
 
     # -- Series definitions -----------------------------------------------
     # series_keys was collected above; build full series list
     all_series: list[dict[str, Any]] = [
-        {"key": "value", "color": "var(--blue, #006fcf)", "dash": "", "width": 3},
+        {"key": "value", "color": "var(--navy, #00175a)", "dash": "", "width": 3},
     ]
     series_names = cfg.get("series_names", [])
     series_styles = cfg.get("series_styles", [])
@@ -531,7 +531,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         ly = cy - 12 if above else cy + 18
         parts.append(
             f'<text x="{cx:.1f}" y="{ly:.1f}" text-anchor="middle" '
-            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(_fmtu(p["value"]))}</text>'
         )
 
@@ -586,13 +586,13 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
             f'<rect x="{ax - box_w/2:.0f}" y="{ay - box_h/2:.0f}" '
             f'width="{box_w:.0f}" height="{box_h:.0f}" rx="4" '
             f'fill="var(--panel, #eef0f0)" '
-            f'stroke="var(--ink-muted, #63666a)" stroke-width="1" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1" '
             f'stroke-dasharray="4,3"/>'
         )
         for li, line in enumerate(lines):
             parts.append(
                 f'<text x="{ax:.0f}" y="{ay + (li - len(lines)/2 + 0.5) * 18 + 5:.0f}" '
-                f'text-anchor="middle" fill="var(--ink, #53565a)" font-size="13" '
+                f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="13" '
                 f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
             )
 
@@ -702,7 +702,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
 
     vs = slide.get("visual_spec") or {}
     overlay_cfg = vs.get("line_overlay") or {}
-    overlay_color = overlay_cfg.get("color", "var(--ink-muted, #63666a)")
+    overlay_color = overlay_cfg.get("color", "var(--navy, #00175a)")
     overlay_label = overlay_cfg.get("label", "")
     overlay_style = overlay_cfg.get("style", "solid")
 
@@ -766,21 +766,21 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         tick_label = _fmtb(float(tick))
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--ink-muted, #63666a)" font-size="14" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
 
     # Left Y-axis
     parts.append(
         f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
     )
 
     # Right Y-axis (dual axis)
     if use_dual_axis and line_points:
         parts.append(
             f'<line x1="{W - pad_r}" y1="{pad_t}" x2="{W - pad_r}" y2="{H - pad_b}" '
-            f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
         )
         line_ticks = overlay_cfg.get("y_axis_ticks")
         if line_ticks is None:
@@ -794,14 +794,14 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             tick_label = f"{tick:g}{line_unit}" if line_unit else f"{tick:g}"
             parts.append(
                 f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
-                f'fill="var(--ink-muted, #63666a)" font-size="14" '
+                f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
             )
 
     # X-axis line
     parts.append(
         f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
-        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
     )
 
     # Bar legend (multi-series stacked mode only)
@@ -847,7 +847,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             total = bar_totals[i]
             parts.append(
                 f'<text x="{x + bar_w / 2:.1f}" y="{bar_y(total) - 8:.1f}" text-anchor="middle" '
-                f'fill="var(--ink, #53565a)" font-size="14" font-weight="700" '
+                f'fill="var(--navy, #00175a)" font-size="14" font-weight="700" '
                 f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(total))}</text>'
             )
         else:
@@ -862,12 +862,12 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             val_text = _fmtb(val)
             parts.append(
                 f'<text x="{x + bar_w/2:.1f}" y="{y - 8:.1f}" text-anchor="middle" '
-                f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+                f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(val_text)}</text>'
             )
         parts.append(
             f'<text x="{x + bar_w/2:.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
 
@@ -904,7 +904,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                 label_text = f"{lp['value']:g}{line_unit}" if line_unit else f"{lp['value']:g}"
                 parts.append(
                     f'<text x="{lx:.1f}" y="{ly - 12:.1f}" text-anchor="middle" '
-                    f'fill="var(--ink-muted, #63666a)" font-size="12" '
+                    f'fill="var(--navy, #00175a)" font-size="12" '
                     f'font-family="var(--font-body, sans-serif)">{esc(label_text)}</text>'
                 )
 
@@ -1140,7 +1140,7 @@ def _bar_group_brackets(
             f'<line x1="{x2:.1f}" y1="{bracket_y:.1f}" x2="{x2:.1f}" y2="{bracket_y + 6:.1f}" '
             f'stroke="var(--ink-muted, #63666a)" stroke-width="1.5"/>'
             f'<text x="{(x1 + x2) / 2:.1f}" y="{bracket_y - 8:.1f}" text-anchor="middle" '
-            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(label)}</text></g>'
         )
     return parts
@@ -1179,18 +1179,18 @@ def _vbar_frame(
         )
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--ink-muted, #63666a)" font-size="14" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(tick, unit))}</text>'
         )
     parts.append(
         f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
     )
     # X-axis at zero (or plot bottom when all values positive)
     zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
     parts.append(
         f'<line x1="{pad_l}" y1="{zero_y:.1f}" x2="{W - pad_r}" y2="{zero_y:.1f}" '
-        f'stroke="var(--ink-muted, #63666a)" stroke-width="1"/>'
+        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
     )
     # Legend (multi-series only)
     if len(series) > 1:
@@ -1266,12 +1266,12 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
             )
             parts.append(
                 f'<text x="{x + (bar_w - 4) / 2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
-                f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+                f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(v, unit))}</text>'
             )
         parts.append(
             f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
-            f'text-anchor="middle" fill="var(--ink, #53565a)" font-size="14" '
+            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="14" '
             f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
 
@@ -1356,7 +1356,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         total_y = y_pos(pos_sums[i]) - 8 if pos_sums[i] > 0 else zero_y - 8
         parts.append(
             f'<text x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" text-anchor="middle" '
-            f'fill="var(--ink, #53565a)" font-size="14" font-weight="700" '
+            f'fill="var(--navy, #00175a)" font-size="14" font-weight="700" '
             f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(net, unit))}</text>'
         )
         # Negative total below the negative stack, in parentheses; clamped
@@ -1365,7 +1365,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
             neg_label_y = min(y_pos(neg_sums[i]) + 16, H - pad_b + 18)
             parts.append(
                 f'<text x="{x + bar_w / 2:.1f}" y="{neg_label_y:.1f}" '
-                f'text-anchor="middle" fill="var(--ink-muted, #63666a)" font-size="13" '
+                f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="13" '
                 f'font-family="var(--font-body, sans-serif)">'
                 f'({esc(_fmt_bar(abs(neg_sums[i]), unit))})</text>'
             )
@@ -1373,7 +1373,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         cat_y = H - 12 if any(neg_sums) else H - pad_b + 25
         parts.append(
             f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{cat_y}" '
-            f'text-anchor="middle" fill="var(--ink, #53565a)" font-size="14" '
+            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="14" '
             f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
 

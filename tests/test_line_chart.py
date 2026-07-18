@@ -123,7 +123,7 @@ class TestLineChartSvg:
     def test_has_polyline(self):
         svg = _build_line_chart_svg(_slide())
         assert "<polyline" in svg
-        assert 'stroke="var(--blue, #006fcf)"' in svg
+        assert 'stroke="var(--navy, #00175a)"' in svg
 
     def test_has_data_points(self):
         svg = _build_line_chart_svg(_slide())
