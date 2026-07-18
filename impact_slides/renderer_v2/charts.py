@@ -1025,6 +1025,59 @@ def _bar_axes(
     return y_max, y_min, [float(t) for t in ticks]
 
 
+def _vbar_pad_t(cfg: Mapping[str, Any], series: list[str]) -> int:
+    """Top padding for internal bar charts: room for legend + bar_groups."""
+    base = 56 if len(series) > 1 else 40
+    if cfg.get("bar_groups"):
+        base += 28
+    return base
+
+
+def _bar_group_brackets(
+    cfg: Mapping[str, Any],
+    labels: list[str],
+    pad_l: float,
+    slot: float,
+    bracket_y: float,
+) -> list[str]:
+    """Emit labeled bracket annotations spanning category ranges.
+
+    chart_config.bar_groups: [{"label": str, "start": int, "end": int}]
+    (inclusive category indices). Each bracket is a horizontal line with
+    vertical end ticks and a centered label above it.
+    """
+    groups = cfg.get("bar_groups")
+    if not isinstance(groups, (list, tuple)) or not groups or not labels:
+        return []
+    parts: list[str] = []
+    for g in groups:
+        if not isinstance(g, Mapping):
+            continue
+        try:
+            start = int(g.get("start", 0))
+            end = int(g.get("end", start))
+        except (TypeError, ValueError):
+            continue
+        start = max(0, min(start, len(labels) - 1))
+        end = max(start, min(end, len(labels) - 1))
+        x1 = pad_l + start * slot + 6
+        x2 = pad_l + (end + 1) * slot - 6
+        label = str(g.get("label") or "")
+        parts.append(
+            f'<g class="bar-group-bracket">'
+            f'<line x1="{x1:.1f}" y1="{bracket_y:.1f}" x2="{x2:.1f}" y2="{bracket_y:.1f}" '
+            f'stroke="var(--ink-muted, #63666a)" stroke-width="1.5"/>'
+            f'<line x1="{x1:.1f}" y1="{bracket_y:.1f}" x2="{x1:.1f}" y2="{bracket_y + 6:.1f}" '
+            f'stroke="var(--ink-muted, #63666a)" stroke-width="1.5"/>'
+            f'<line x1="{x2:.1f}" y1="{bracket_y:.1f}" x2="{x2:.1f}" y2="{bracket_y + 6:.1f}" '
+            f'stroke="var(--ink-muted, #63666a)" stroke-width="1.5"/>'
+            f'<text x="{(x1 + x2) / 2:.1f}" y="{bracket_y - 8:.1f}" text-anchor="middle" '
+            f'fill="var(--ink, #53565a)" font-size="14" font-weight="600" '
+            f'font-family="var(--font-body, sans-serif)">{esc(label)}</text></g>'
+        )
+    return parts
+
+
 def _vbar_frame(
     cls: str,
     cfg: dict[str, Any],
@@ -1035,7 +1088,7 @@ def _vbar_frame(
 ) -> list[str]:
     """Emit SVG open + gridlines + axes + legend."""
     W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 70, 30, 56 if len(series) > 1 else 40, 56
+    pad_l, pad_r, pad_t, pad_b = 70, 30, _vbar_pad_t(cfg, series), 56
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
 
@@ -1099,7 +1152,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
 
     cfg = _chart_config(slide)
     W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 70, 30, 56 if len(series) > 1 else 40, 56
+    pad_l, pad_r, pad_t, pad_b = 70, 30, _vbar_pad_t(cfg, series), 56
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
@@ -1120,6 +1173,8 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
     group_w = slot * 0.65
     bar_w = group_w / len(series)
     palette = _series_colors(cfg)
+
+    parts.extend(_bar_group_brackets(cfg, labels, pad_l, slot, pad_t - 22))
 
     for i, lab in enumerate(labels):
         gx = pad_l + i * slot + (slot - group_w) / 2
@@ -1168,7 +1223,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
 
     cfg = _chart_config(slide)
     W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 70, 30, 56 if len(series) > 1 else 40, 56
+    pad_l, pad_r, pad_t, pad_b = 70, 30, _vbar_pad_t(cfg, series), 56
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
@@ -1188,6 +1243,8 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     slot = plot_w / n
     bar_w = slot * 0.5
     palette = _series_colors(cfg)
+
+    parts.extend(_bar_group_brackets(cfg, labels, pad_l, slot, pad_t - 22))
 
     for i, lab in enumerate(labels):
         x = pad_l + i * slot + (slot - bar_w) / 2
