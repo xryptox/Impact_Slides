@@ -338,10 +338,61 @@ def _line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
     return points
 
 
+# ---------------------------------------------------------------------------
+# Chart geometry contract (Fidelity T8 / #36)
+#
+# Single source of truth for plot insets. Chart builders read their insets
+# from chart_geometry(), and any co-located element that must align with the
+# plot (e.g. a plot-aligned support table) derives its own geometry from the
+# same values via chart_column_interval() — so spatial relationships between
+# composed elements hold by construction, not by accident.
+_CHART_GEOMETRY: dict[str, dict[str, int]] = {
+    "line_chart": {"width": 900, "height": 480, "pad_l": 80, "pad_r": 40},
+    "grouped_bar_chart": {"width": 900, "height": 480, "pad_l": 70, "pad_r": 30},
+    "stacked_bar_chart": {"width": 900, "height": 480, "pad_l": 70, "pad_r": 30},
+    # pad_r widens to 80 when a dual right-side axis is active (has_overlay)
+    "combo_chart": {"width": 900, "height": 480, "pad_l": 80, "pad_r": 40},
+    # shared insets used by the common vertical-bar frame
+    "_vertical_bar": {"width": 900, "height": 480, "pad_l": 70, "pad_r": 30},
+}
+
+
+def chart_geometry(layout_type: str, *, has_overlay: bool = False) -> dict[str, int]:
+    """Plot insets (SVG units) for ``layout_type`` — the geometry contract
+    between chart builders and elements composed around them."""
+    geom = dict(_CHART_GEOMETRY.get(layout_type, _CHART_GEOMETRY["_vertical_bar"]))
+    if layout_type == "combo_chart" and has_overlay:
+        geom["pad_r"] = 80
+    return geom
+
+
+def chart_column_interval(
+    layout_type: str, n: int, *, has_overlay: bool = False
+) -> tuple[float, float, float]:
+    """SVG x-interval ``(left, right, width)`` that ``n`` equal table columns
+    should span so that column ``i`` is centered exactly under the chart's
+    category ``i`` position.
+
+    Line charts place points at the plot edges (pad_l + i*plot_w/(n-1)), so
+    edge columns need a half-slot overhang beyond the plot; bar charts place
+    categories at slot centers, so columns span the plot exactly. Mapping the
+    returned interval linearly onto the table's value region makes every
+    column center exact for any margins.
+    """
+    geom = chart_geometry(layout_type, has_overlay=has_overlay)
+    w = geom["width"]
+    plot_l = float(geom["pad_l"])
+    plot_r = float(w - geom["pad_r"])
+    if layout_type == "line_chart" and n > 1:
+        slot = (plot_r - plot_l) / (n - 1)
+        return plot_l - slot / 2, plot_r + slot / 2, float(w)
+    return plot_l, plot_r, float(w)
+
+
 def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     """Build an SVG line chart for the given slide.
 
-    Single-series: solid blue line with circle data points and data labels.
+    Single-series: solid navy line with circle data points and data labels.
     Uses viewBox 0 0 900 480 for stage containment.
     """
     points = _line_data(slide)
@@ -349,8 +400,9 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No line chart data</p>'
 
     cfg = _chart_config(slide)
-    W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 80, 40, 40, 60
+    geom = chart_geometry("line_chart")
+    W, H = geom["width"], geom["height"]
+    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 40, 60
 
     values = [p["value"] for p in points]
     # Collect multi-series values for Y scale
@@ -707,8 +759,9 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     overlay_style = overlay_cfg.get("style", "solid")
 
     cfg = _chart_config(slide)
-    W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 80, 80 if line_points else 40, 56 if stacked else 40, 60
+    geom = chart_geometry("combo_chart", has_overlay=bool(line_points))
+    W, H = geom["width"], geom["height"]
+    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 56 if stacked else 40, 60
 
     bar_max = float(cfg.get("y_axis_max", max(bar_totals) * 1.15 if bar_totals else 10))
     bar_min = 0.0
@@ -1155,8 +1208,9 @@ def _vbar_frame(
     series: list[str],
 ) -> list[str]:
     """Emit SVG open + gridlines + axes + legend."""
-    W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 70, 30, _vbar_pad_t(cfg, series), 56
+    geom = chart_geometry("_vertical_bar")
+    W, H = geom["width"], geom["height"]
+    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
 
@@ -1219,8 +1273,9 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No bar chart data</p>'
 
     cfg = _chart_config(slide)
-    W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 70, 30, _vbar_pad_t(cfg, series), 56
+    geom = chart_geometry("_vertical_bar")
+    W, H = geom["width"], geom["height"]
+    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
@@ -1290,8 +1345,9 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No stacked bar data</p>'
 
     cfg = _chart_config(slide)
-    W, H = 900, 480
-    pad_l, pad_r, pad_t, pad_b = 70, 30, _vbar_pad_t(cfg, series), 56
+    geom = chart_geometry("_vertical_bar")
+    W, H = geom["width"], geom["height"]
+    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")

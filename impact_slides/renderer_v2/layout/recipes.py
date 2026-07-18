@@ -1007,6 +1007,8 @@ def render_chart(slide, total, notes, active=False):
 
     # Supporting data table below chart (e.g., line chart + table)
     if has_table:
+        from ..charts import chart_column_interval
+
         sec_steps = secondary.get("steps_or_data") or []
         table_rows: list[list[str]] = []
         for st in sec_steps:
@@ -1017,13 +1019,61 @@ def render_chart(slide, total, notes, active=False):
         if table_rows:
             header = table_rows[0]
             body = table_rows[1:]
-            tbl = '<table class="chart-support-table"><thead><tr>'
+
+            # --- Plot alignment (spatial composition contract, #36) --------
+            # When the table's header cells match the chart's category labels
+            # 1:1, each value column is centered under its chart category and
+            # the table shares the SVG's width context (PDF house style).
+            primary = vs.get("primary_visual") or {}
+            raw_steps = primary.get("steps_or_data") or []
+            labels = [
+                str(p.get("label") or p.get("x") or "").strip()
+                for p in raw_steps
+                if isinstance(p, Mapping)
+            ]
+            n = len(labels)
+            aligned = (
+                n > 0
+                and len(raw_steps) == n
+                and all(len(r) == n + 1 for r in table_rows)
+                and [c.strip() for c in header[1:]] == labels
+            )
+            if aligned:
+                left, right, width = chart_column_interval(layout, n)
+                label_w = 10.0  # row-label column (y-axis margin zone)
+                col_w = (100.0 - label_w) / n
+                colgroup = (
+                    "<colgroup>"
+                    f'<col style="width:{label_w:.2f}%">'
+                    + f'<col style="width:{col_w:.2f}%">' * n
+                    + "</colgroup>"
+                )
+                # expose the mapped SVG interval for geometric verification
+                align_attrs = (
+                    f' data-align-left="{left:.1f}" data-align-right="{right:.1f}"'
+                    f' data-align-width="{width:.1f}"'
+                )
+            else:
+                colgroup = ""
+                align_attrs = ""
+
+            tbl_cls = "chart-support-table" + (" chart-table-aligned" if aligned else "")
+            tbl = f'<table class="{tbl_cls}"{align_attrs}>{colgroup}<thead><tr>'
             tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
             tbl += "</tr></thead><tbody>"
             for row in body:
                 tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
             tbl += "</tbody></table>"
-            main += tbl
+            if aligned:
+                # nest table inside the chart column so the colgroup
+                # percentages share the SVG's width context
+                cls = " ".join(wrap_classes + ["chart-align-table"])
+                main = (
+                    f'<div class="chart-svg-wrap {cls}">'
+                    f'<div class="chart-col">{chart_html}{tbl}</div></div>'
+                )
+            else:
+                main += tbl
     # Metric strip from key_stats (PDF pattern: chart + KPI row below)
     if has_stats:
         tiles = ""

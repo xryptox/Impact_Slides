@@ -515,6 +515,21 @@
 .chart-frame .chart-svg-wrap.chart-split { width: 55%; }
 .chart-frame .chart-svg-wrap.chart-with-stats { width: 60%; }
 .chart-frame .chart-svg-wrap.chart-split.chart-with-stats { width: 44%; }
+/* Plot-aligned support table (Fidelity T8/#36): the table sits inside
+   .chart-col within the same width-constrained wrap as the SVG, so colgroup
+   percentages share the SVG's width context and value columns center under
+   the chart's category positions (spatial composition contract). */
+.chart-svg-wrap .chart-col { width: 100%; }
+.chart-table-aligned { table-layout: fixed; }
+.chart-table-aligned th,
+.chart-table-aligned td {
+  padding-left: var(--size-1);
+  padding-right: var(--size-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chart-table-aligned th:first-child,
+.chart-table-aligned td:first-child { text-align: left; }
 .chart-frame .chart-metric-strip { margin-top: var(--size-3); }
 .slide .chart-frame .chart-metric-strip .metric-tile {
   min-height: 0;

@@ -163,3 +163,26 @@ Headline findings (Round 1): all 11 slides rendered without errors with correct 
 ## Round 1 systemic issues (all resolved or carried above)
 
 Issues #1–#12 were filed as tickets #29–#31 and resolved in Round 2; see the Issue Status Board.
+
+---
+
+## Round 4 — Plot-Aligned Support Tables (issue #36)
+
+**Fix:** support tables whose header row matches the chart's category labels
+now align each value column under its chart category and share the SVG's width
+context (geometry contract: `chart_geometry` / `chart_column_interval` in
+charts.py). Verified on p4: table bounded to chart width, columns centered
+under quarters. Learnings recorded in `wiki/renderer_v2_spatial_composition.md`.
+
+### New rubric section — cross-element alignment (use on every composed slide)
+
+- [ ] Column alignment: do table/strip columns line up with the chart's
+      category positions above them?
+- [ ] Edge alignment: do related elements start/end at matching boundaries
+      (plot edges, card edges)?
+- [ ] Relative sizing: are composed elements proportioned like the original
+      (chart vs table vs strip)?
+- [ ] Label proximity: do labels sit with the element they describe (not
+      floating, not colliding)?
+- [ ] Shared context: do percentage/CSS relationships resolve against the
+      intended container?
