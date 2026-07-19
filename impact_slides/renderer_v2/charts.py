@@ -309,12 +309,25 @@ def _fallback_matrix_chart(slide: Mapping[str, Any], lt: str) -> str:
 
 
 def _chart_config(slide: Mapping[str, Any]) -> dict[str, Any]:
-    """Extract optional chart configuration from visual_spec."""
+    """Extract optional chart configuration from visual_spec.
+
+    Chart_config may live at visual_spec.chart_config (legacy) or, as real
+    handoffs author it, visual_spec.primary_visual.chart_config (#71/F15).
+    The primary_visual block is the normative location; a top-level block
+    overrides it key-by-key. This unblocks the path split where both painters
+    silently ignored nested config.
+    """
     vs = slide.get("visual_spec") or {}
     if not isinstance(vs, dict):
         return {}
-    cfg = vs.get("chart_config")
-    return dict(cfg) if isinstance(cfg, dict) else {}
+    merged: dict[str, Any] = {}
+    pv = vs.get("primary_visual")
+    if isinstance(pv, dict) and isinstance(pv.get("chart_config"), dict):
+        merged.update(pv["chart_config"])
+    top = vs.get("chart_config")
+    if isinstance(top, dict):
+        merged.update(top)
+    return merged
 
 
 def _next_chart_id() -> str:
@@ -405,40 +418,98 @@ def _chartjs_bar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
 
 
 def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Chart.js line config honoring the IR chart_config contract (#71).
+
+    Chart.js is canonical for IR house style; honors the same fields the SVG
+    painter reads (y_axis_*, series_names/styles/colors, annotation, point_labels)
+    plus minimal additions force_ticks / point_labels. SVG stays static fallback.
+    """
     points = _line_data(slide)
     if not points:
         return None
+    cfg = _chart_config(slide)
     labels = [str(p.get("label") or "") for p in points]
+    series_names = cfg.get("series_names") or []
+    series_styles = cfg.get("series_styles") or []
+    series_colors = cfg.get("series_colors")
+    if not isinstance(series_colors, (list, tuple)):
+        series_colors = None
     # primary series
     series_keys = ["value"]
     for p in points:
         for k in p:
             if k.startswith("series_") and k not in series_keys:
                 series_keys.append(k)
+    y_unit = cfg.get("y_axis_unit", "%")
+    unit_pos = cfg.get("y_axis_unit_position", "suffix")
+    point_labels = bool(cfg.get("point_labels"))
+
+    def _style_for(si: int) -> str:
+        """IR default: secondary series (si>=1) dashed unless 'solid'."""
+        if si == 0:
+            return "solid"
+        if si < len(series_styles) and series_styles[si] == "solid":
+            return "solid"
+        return "dashed"
+
     datasets = []
     for si, key in enumerate(series_keys):
-        color = _series_color(si)
+        color = (
+            str(series_colors[si])
+            if series_colors and si < len(series_colors) and series_colors[si]
+            else _series_color(si)
+        )
         data = []
         for p in points:
             if key == "value":
                 data.append(p.get("value"))
             else:
                 data.append(p.get(key))
-        datasets.append(
-            {
-                "label": "Value" if key == "value" else key.replace("series_", "S"),
-                "data": data,
-                "borderColor": color,
-                "backgroundColor": color,
-                "tension": 0.15,
-                "pointRadius": 4,
-                "fill": False,
-            }
+        name = (
+            str(series_names[si])
+            if si < len(series_names) and series_names[si]
+            else ("Value" if key == "value" else key.replace("series_", "S"))
         )
+        ds: dict[str, Any] = {
+            "label": name,
+            "data": data,
+            "borderColor": color,
+            "backgroundColor": color,
+            "tension": 0.15,
+            "pointRadius": 4,
+            "fill": False,
+        }
+        if _style_for(si) == "dashed":
+            ds["borderDash"] = [8, 4]
+        if point_labels:
+            ds["pointLabels"] = [
+                _fmt_unit(v, y_unit, unit_pos) if isinstance(v, (int, float)) else ""
+                for v in data
+            ]
+        datasets.append(ds)
+
+    options = _chartjs_common_options()
+    y_scale = options["scales"]["y"]
+    # Axis domain: explicit min/max, or forced ticks (0/5/10/15 rails).
+    if cfg.get("force_ticks") and isinstance(cfg.get("y_axis_ticks"), list):
+        ticks = [float(t) for t in cfg["y_axis_ticks"]]
+        if len(ticks) >= 2:
+            y_scale["ticks"]["min"] = ticks[0]
+            y_scale["ticks"]["max"] = ticks[-1]
+            y_scale["ticks"]["stepSize"] = ticks[1] - ticks[0]
+    else:
+        if cfg.get("y_axis_min") is not None:
+            y_scale["ticks"]["min"] = float(cfg["y_axis_min"])
+        if cfg.get("y_axis_max") is not None:
+            y_scale["ticks"]["max"] = float(cfg["y_axis_max"])
+    if cfg.get("y_axis_label"):
+        y_scale["title"] = {"display": True, "text": str(cfg["y_axis_label"])}
+    if point_labels:
+        options["plugins"]["datalabels"] = {"display": True}
     return {
         "type": "line",
         "data": {"labels": labels, "datasets": datasets},
-        "options": _chartjs_common_options(),
+        "options": options,
     }
 
 
@@ -523,11 +594,22 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     payload = _json.dumps(cfg, ensure_ascii=False)
     svg_fb = _svg_fallback_for_layout(slide, layout)
     noscript = f"<noscript>{svg_fb}</noscript>" if svg_fb else ""
+    # Annotation callout marker (#71/F2): painted as a positioned div so the
+    # text is present even if Chart.js annotation plugin is absent.
+    ann_html = ""
+    ann = _chart_config(slide).get("annotation")
+    if isinstance(ann, dict) and ann.get("text"):
+        a_text = str(ann["text"]).replace("\\n", "\n").replace("\n", " ")
+        ann_html = (
+            f'<div class="chartjs-annotation" data-for="{esc(cid)}">'
+            f"{esc(a_text)}</div>"
+        )
     return (
         f'<div class="chartjs-wrap" data-chartjs="1" data-chart-layout="{esc(layout)}">'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
+        f"{ann_html}"
         f"{noscript}"
         f"</div>"
     )
