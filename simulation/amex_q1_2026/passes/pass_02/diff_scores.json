@@ -1,0 +1,360 @@
+{
+  "pass": 2,
+  "n_slides": 44,
+  "mean_similarity_pct": 86.24,
+  "mean_ssim_approx_pct": 86.14,
+  "per_slide": [
+    {
+      "index": 0,
+      "similarity_pct": 89.65,
+      "ssim_approx_pct": 89.39,
+      "html_shot": "html_slide_00.png",
+      "compare": "compare_00.png",
+      "pdf": "pdf_page_00.png"
+    },
+    {
+      "index": 1,
+      "similarity_pct": 93.33,
+      "ssim_approx_pct": 93.36,
+      "html_shot": "html_slide_01.png",
+      "compare": "compare_01.png",
+      "pdf": "pdf_page_01.png"
+    },
+    {
+      "index": 2,
+      "similarity_pct": 88.77,
+      "ssim_approx_pct": 88.42,
+      "html_shot": "html_slide_02.png",
+      "compare": "compare_02.png",
+      "pdf": "pdf_page_02.png"
+    },
+    {
+      "index": 3,
+      "similarity_pct": 90.39,
+      "ssim_approx_pct": 90.37,
+      "html_shot": "html_slide_03.png",
+      "compare": "compare_03.png",
+      "pdf": "pdf_page_03.png"
+    },
+    {
+      "index": 4,
+      "similarity_pct": 90.41,
+      "ssim_approx_pct": 90.34,
+      "html_shot": "html_slide_04.png",
+      "compare": "compare_04.png",
+      "pdf": "pdf_page_04.png"
+    },
+    {
+      "index": 5,
+      "similarity_pct": 76.69,
+      "ssim_approx_pct": 75.34,
+      "html_shot": "html_slide_05.png",
+      "compare": "compare_05.png",
+      "pdf": "pdf_page_05.png"
+    },
+    {
+      "index": 6,
+      "similarity_pct": 90.59,
+      "ssim_approx_pct": 90.48,
+      "html_shot": "html_slide_06.png",
+      "compare": "compare_06.png",
+      "pdf": "pdf_page_06.png"
+    },
+    {
+      "index": 7,
+      "similarity_pct": 89.17,
+      "ssim_approx_pct": 89.16,
+      "html_shot": "html_slide_07.png",
+      "compare": "compare_07.png",
+      "pdf": "pdf_page_07.png"
+    },
+    {
+      "index": 8,
+      "similarity_pct": 90.25,
+      "ssim_approx_pct": 90.19,
+      "html_shot": "html_slide_08.png",
+      "compare": "compare_08.png",
+      "pdf": "pdf_page_08.png"
+    },
+    {
+      "index": 9,
+      "similarity_pct": 89.95,
+      "ssim_approx_pct": 90.0,
+      "html_shot": "html_slide_09.png",
+      "compare": "compare_09.png",
+      "pdf": "pdf_page_09.png"
+    },
+    {
+      "index": 10,
+      "similarity_pct": 95.28,
+      "ssim_approx_pct": 95.28,
+      "html_shot": "html_slide_10.png",
+      "compare": "compare_10.png",
+      "pdf": "pdf_page_10.png"
+    },
+    {
+      "index": 11,
+      "similarity_pct": 88.16,
+      "ssim_approx_pct": 87.63,
+      "html_shot": "html_slide_11.png",
+      "compare": "compare_11.png",
+      "pdf": "pdf_page_11.png"
+    },
+    {
+      "index": 12,
+      "similarity_pct": 84.29,
+      "ssim_approx_pct": 83.48,
+      "html_shot": "html_slide_12.png",
+      "compare": "compare_12.png",
+      "pdf": "pdf_page_12.png"
+    },
+    {
+      "index": 13,
+      "similarity_pct": 87.23,
+      "ssim_approx_pct": 86.21,
+      "html_shot": "html_slide_13.png",
+      "compare": "compare_13.png",
+      "pdf": "pdf_page_13.png"
+    },
+    {
+      "index": 14,
+      "similarity_pct": 85.05,
+      "ssim_approx_pct": 84.44,
+      "html_shot": "html_slide_14.png",
+      "compare": "compare_14.png",
+      "pdf": "pdf_page_14.png"
+    },
+    {
+      "index": 15,
+      "similarity_pct": 88.29,
+      "ssim_approx_pct": 87.83,
+      "html_shot": "html_slide_15.png",
+      "compare": "compare_15.png",
+      "pdf": "pdf_page_15.png"
+    },
+    {
+      "index": 16,
+      "similarity_pct": 88.05,
+      "ssim_approx_pct": 87.47,
+      "html_shot": "html_slide_16.png",
+      "compare": "compare_16.png",
+      "pdf": "pdf_page_16.png"
+    },
+    {
+      "index": 17,
+      "similarity_pct": 85.51,
+      "ssim_approx_pct": 84.91,
+      "html_shot": "html_slide_17.png",
+      "compare": "compare_17.png",
+      "pdf": "pdf_page_17.png"
+    },
+    {
+      "index": 18,
+      "similarity_pct": 80.45,
+      "ssim_approx_pct": 79.16,
+      "html_shot": "html_slide_18.png",
+      "compare": "compare_18.png",
+      "pdf": "pdf_page_18.png"
+    },
+    {
+      "index": 19,
+      "similarity_pct": 90.55,
+      "ssim_approx_pct": 90.28,
+      "html_shot": "html_slide_19.png",
+      "compare": "compare_19.png",
+      "pdf": "pdf_page_19.png"
+    },
+    {
+      "index": 20,
+      "similarity_pct": 89.29,
+      "ssim_approx_pct": 88.86,
+      "html_shot": "html_slide_20.png",
+      "compare": "compare_20.png",
+      "pdf": "pdf_page_20.png"
+    },
+    {
+      "index": 21,
+      "similarity_pct": 94.25,
+      "ssim_approx_pct": 94.0,
+      "html_shot": "html_slide_21.png",
+      "compare": "compare_21.png",
+      "pdf": "pdf_page_21.png"
+    },
+    {
+      "index": 22,
+      "similarity_pct": 23.57,
+      "ssim_approx_pct": 18.3,
+      "html_shot": "html_slide_22.png",
+      "compare": "compare_22.png",
+      "pdf": "pdf_page_22.png"
+    },
+    {
+      "index": 23,
+      "similarity_pct": 87.18,
+      "ssim_approx_pct": 86.88,
+      "html_shot": "html_slide_23.png",
+      "compare": "compare_23.png",
+      "pdf": "pdf_page_23.png"
+    },
+    {
+      "index": 24,
+      "similarity_pct": 91.39,
+      "ssim_approx_pct": 91.2,
+      "html_shot": "html_slide_24.png",
+      "compare": "compare_24.png",
+      "pdf": "pdf_page_24.png"
+    },
+    {
+      "index": 25,
+      "similarity_pct": 89.63,
+      "ssim_approx_pct": 89.21,
+      "html_shot": "html_slide_25.png",
+      "compare": "compare_25.png",
+      "pdf": "pdf_page_25.png"
+    },
+    {
+      "index": 26,
+      "similarity_pct": 94.37,
+      "ssim_approx_pct": 94.43,
+      "html_shot": "html_slide_26.png",
+      "compare": "compare_26.png",
+      "pdf": "pdf_page_26.png"
+    },
+    {
+      "index": 27,
+      "similarity_pct": 81.83,
+      "ssim_approx_pct": 80.89,
+      "html_shot": "html_slide_27.png",
+      "compare": "compare_27.png",
+      "pdf": "pdf_page_27.png"
+    },
+    {
+      "index": 28,
+      "similarity_pct": 95.73,
+      "ssim_approx_pct": 96.25,
+      "html_shot": "html_slide_28.png",
+      "compare": "compare_28.png",
+      "pdf": "pdf_page_28.png"
+    },
+    {
+      "index": 29,
+      "similarity_pct": 95.24,
+      "ssim_approx_pct": 96.09,
+      "html_shot": "html_slide_29.png",
+      "compare": "compare_29.png",
+      "pdf": "pdf_page_29.png"
+    },
+    {
+      "index": 30,
+      "similarity_pct": 91.51,
+      "ssim_approx_pct": 91.5,
+      "html_shot": "html_slide_30.png",
+      "compare": "compare_30.png",
+      "pdf": "pdf_page_30.png"
+    },
+    {
+      "index": 31,
+      "similarity_pct": 90.43,
+      "ssim_approx_pct": 90.29,
+      "html_shot": "html_slide_31.png",
+      "compare": "compare_31.png",
+      "pdf": "pdf_page_31.png"
+    },
+    {
+      "index": 32,
+      "similarity_pct": 90.62,
+      "ssim_approx_pct": 90.36,
+      "html_shot": "html_slide_32.png",
+      "compare": "compare_32.png",
+      "pdf": "pdf_page_32.png"
+    },
+    {
+      "index": 33,
+      "similarity_pct": 90.63,
+      "ssim_approx_pct": 90.52,
+      "html_shot": "html_slide_33.png",
+      "compare": "compare_33.png",
+      "pdf": "pdf_page_33.png"
+    },
+    {
+      "index": 34,
+      "similarity_pct": 88.48,
+      "ssim_approx_pct": 88.51,
+      "html_shot": "html_slide_34.png",
+      "compare": "compare_34.png",
+      "pdf": "pdf_page_34.png"
+    },
+    {
+      "index": 35,
+      "similarity_pct": 88.64,
+      "ssim_approx_pct": 88.5,
+      "html_shot": "html_slide_35.png",
+      "compare": "compare_35.png",
+      "pdf": "pdf_page_35.png"
+    },
+    {
+      "index": 36,
+      "similarity_pct": 88.88,
+      "ssim_approx_pct": 88.73,
+      "html_shot": "html_slide_36.png",
+      "compare": "compare_36.png",
+      "pdf": "pdf_page_36.png"
+    },
+    {
+      "index": 37,
+      "similarity_pct": 89.36,
+      "ssim_approx_pct": 92.28,
+      "html_shot": "html_slide_37.png",
+      "compare": "compare_37.png",
+      "pdf": "pdf_page_37.png"
+    },
+    {
+      "index": 38,
+      "similarity_pct": 90.65,
+      "ssim_approx_pct": 93.04,
+      "html_shot": "html_slide_38.png",
+      "compare": "compare_38.png",
+      "pdf": "pdf_page_38.png"
+    },
+    {
+      "index": 39,
+      "similarity_pct": 89.97,
+      "ssim_approx_pct": 92.52,
+      "html_shot": "html_slide_39.png",
+      "compare": "compare_39.png",
+      "pdf": "pdf_page_39.png"
+    },
+    {
+      "index": 40,
+      "similarity_pct": 90.68,
+      "ssim_approx_pct": 93.37,
+      "html_shot": "html_slide_40.png",
+      "compare": "compare_40.png",
+      "pdf": "pdf_page_40.png"
+    },
+    {
+      "index": 41,
+      "similarity_pct": 89.31,
+      "ssim_approx_pct": 92.51,
+      "html_shot": "html_slide_41.png",
+      "compare": "compare_41.png",
+      "pdf": "pdf_page_41.png"
+    },
+    {
+      "index": 42,
+      "similarity_pct": 90.68,
+      "ssim_approx_pct": 93.17,
+      "html_shot": "html_slide_42.png",
+      "compare": "compare_42.png",
+      "pdf": "pdf_page_42.png"
+    },
+    {
+      "index": 43,
+      "similarity_pct": 20.11,
+      "ssim_approx_pct": 15.22,
+      "html_shot": "html_slide_43.png",
+      "compare": "compare_43.png",
+      "pdf": "pdf_page_43.png"
+    }
+  ]
+}
