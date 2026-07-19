@@ -114,6 +114,7 @@ def wrap_deck(
     meta: Mapping[str, Any],
     debug: bool = False,
     theme: dict[str, str] | None = None,
+    chrome_level: str | None = None,
     delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
     bundle: InlineBundle | None = None,
     features_enabled: Sequence[str] | None = None,
@@ -122,7 +123,9 @@ def wrap_deck(
     if bundle is None:
         bundle = build_head_assets(delivery)
     title = esc(meta.get("title") or "Impact Slides")
-    body_cls = "gl-debug" if debug else ""
+    chrome_level = (chrome_level or "boardroom").strip().lower()
+    chrome_cls = "gl-chrome-minimal" if chrome_level == "minimal" else ""
+    body_cls = " ".join(x for x in (("gl-debug" if debug else ""), chrome_cls) if x)
     features = list(features_enabled if features_enabled is not None else [])
     deck_meta = {
         "style_preset": "BoardroomEarnings",
@@ -132,6 +135,7 @@ def wrap_deck(
         "quality_flags": meta.get("quality_flags") or [],
         "generator": "impact_slides.renderer_v2",
         "delivery": delivery.value,
+        "chrome_level": chrome_level,
         "assets_inlined": list(bundle.meta.get("assets") or []),
         "features_enabled": features,
     }

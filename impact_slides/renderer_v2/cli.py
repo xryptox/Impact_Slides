@@ -127,6 +127,7 @@ def render_deck(
     debug: bool = False,
     strict: bool = True,
     theme: dict[str, str] | None = None,
+    chrome_level: str | None = None,
     delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
     force_features: list[str] | None = None,
     suppress_features: list[str] | None = None,
@@ -148,6 +149,19 @@ def render_deck(
 
     raw = load_json(handoff_path)
     handoff = normalize_handoff(raw)
+    # Handoff-native theme / chrome level (#82/F13, #83/F14): read from the
+    # presentation block on the load path; explicit kwargs win over handoff.
+    pres = handoff.get("presentation") or {}
+    if not isinstance(pres, dict):
+        pres = {}
+    if theme is None:
+        handoff_theme = pres.get("theme")
+        if isinstance(handoff_theme, dict):
+            theme = {str(k): str(v) for k, v in handoff_theme.items()}
+    if chrome_level is None:
+        cl = pres.get("chrome_level")
+        chrome_level = str(cl).strip().lower() if cl else "boardroom"
+    chrome_level = chrome_level if chrome_level in ("boardroom", "minimal") else "boardroom"
     _validated_slides, validation_errors = validate_handoff(handoff)
     if validation_errors:
         for err in validation_errors:
@@ -176,6 +190,7 @@ def render_deck(
         meta=meta,
         debug=debug,
         theme=theme,
+        chrome_level=chrome_level,
         delivery=delivery,
         bundle=bundle,
         features_enabled=features_list,

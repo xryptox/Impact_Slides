@@ -811,6 +811,59 @@ class TestMultiPanel:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert remote_fetch_urls(html) == []
 
+
+# ---------------------------------------------------------------------------
+# #82 — Handoff-native theme/token map through CLI (F13)
+# ---------------------------------------------------------------------------
+
+
+class TestHandoffTheme:
+    def test_presentation_theme_overrides_tokens(self, tmp_path):
+        h = _handoff([_slide("metric_dashboard", [])])
+        h["slides"][0]["content"]["key_stats"] = [{"label": "X", "value": "1"}]
+        h["presentation"] = {"theme": {"--navy": "#123456", "--color-primary": "#654321"}}
+        path = _write(tmp_path, h)
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "--navy: #123456;" in html
+        assert "--color-primary: #654321;" in html
+
+    def test_theme_kwarg_still_works(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("metric_dashboard", [])]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, theme={"--navy": "#abcdef"})
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "--navy: #abcdef;" in html
+
+
+# ---------------------------------------------------------------------------
+# #83 — Presentation chrome level: Boardroom default vs stage-only (F14)
+# ---------------------------------------------------------------------------
+
+
+class TestChromeLevel:
+    def test_minimal_hides_chrome(self, tmp_path):
+        h = _handoff([_slide("metric_dashboard", [])])
+        h["slides"][0]["content"]["key_stats"] = [{"label": "X", "value": "1"}]
+        h["presentation"] = {"chrome_level": "minimal"}
+        path = _write(tmp_path, h)
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-chrome-minimal" in html
+        assert remote_fetch_urls(html) == []
+
+    def test_boardroom_default_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("metric_dashboard", [])]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # default keeps full chrome (no minimal body class; CSS is bundled anyway)
+        assert 'class="gl-chrome-minimal"' not in html
+        assert '<body class="gl-chrome-minimal"' not in html
+        assert "deck-controls" in html
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"
