@@ -849,6 +849,51 @@ def render_guidance_statement_card(slide, total, notes, active=False):
     )
 
 
+def render_brand_cover(slide, total, notes, active=False, *, divider: bool = False):
+    """Full-bleed two-tone brand cover / divider with an inlined brand-mark
+    lockup (#76/F6). Brand-parameterizable via content.brand_mark_svg (an
+    inline SVG string, data-URL'd so self-contained decks need no fetch) and
+    content.brand_tone. Generic — not Amex-hardcoded.
+    """
+    import base64
+
+    c = slide.get("content") or {}
+    mark_svg = c.get("brand_mark_svg")
+    subtitle = strip_eids(c.get("subtitle") or "")
+    tone = strip_eids(c.get("brand_tone") or "two-tone")
+    mark_html = ""
+    if isinstance(mark_svg, str) and mark_svg.strip().startswith("<svg"):
+        # Inline as a data URL so the deck stays self-contained (no remote fetch).
+        b64 = base64.b64encode(mark_svg.encode("utf-8")).decode("ascii")
+        mark_html = (
+            f'<img class="gl-brand-mark" alt="brand mark" '
+            f'src="data:image/svg+xml;base64,{b64}"/>'
+        )
+    role = "divider" if divider else "cover"
+    layout = "brand_divider" if divider else "brand_cover"
+    title = strip_eids(slide.get("title") or "")
+    sub_html = f'<div class="gl-brand-sub">{esc(subtitle)}</div>' if subtitle else ""
+    main = (
+        f'<div class="gl-brand gl-brand-{role} gl-brand-two-tone" data-tone="{esc(tone)}">'
+        f"{mark_html}"
+        f'<div class="gl-brand-title">{esc(title)}</div>'
+        f"{sub_html}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=title,
+        dek="",
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html="",
+        layout_class=layout,
+        active=active,
+        item_count=1,
+    )
+
+
 def _sequential_grid(
     items: list[str],
     *,
