@@ -11,7 +11,13 @@ from . import __version__
 from . import features as features_mod
 from .disclosure import DisclosureError, extract_disclosure, build_disclosure_html
 from .features import resolve_features
-from .lib_inliner import DeliveryMode, build_head_assets, coerce_delivery
+from .lib_inliner import (
+    DeliveryMode,
+    InlineBundle,
+    KNOWN_FEATURES,
+    build_head_assets,
+    coerce_delivery,
+)
 from .load import load_json, load_seed, normalize_handoff, present_meta
 from .schemas import validate_handoff
 from .layout.dispatch import render_slide
@@ -23,6 +29,94 @@ from .manifest import (
 )
 from .notes import build_spoken_notes
 from .shell import wrap_deck
+
+
+def _prevalidate_disclosure(slides: list[Any]) -> dict[int, str]:
+    """Fail closed on unknown disclosure patterns before any paint (P5).
+
+    Returns a map of slide index → prebuilt disclosure HTML so inject does
+    not rebuild the same pure block a second time.
+    """
+    built: dict[int, str] = {}
+    for i, slide in enumerate(slides):
+        if extract_disclosure(slide) is None:
+            continue
+        try:
+            built[i] = build_disclosure_html(slide)
+        except DisclosureError as e:
+            raise ValueError(str(e)) from e
+    return built
+
+
+def _paint_slides(
+    slides: list[Any],
+    *,
+    total: int,
+    use_chartjs: bool,
+) -> tuple[dict[int, str], list[str]]:
+    """Pre-validate disclosure once, then paint each slide body + spoken notes."""
+    disclosure_blocks = _prevalidate_disclosure(slides)
+    notes_by_num: dict[int, str] = {}
+    bodies: list[str] = []
+    for i, slide in enumerate(slides):
+        n = int(slide.get("slide_number") or i + 1)
+        next_title = ""
+        if i + 1 < total:
+            next_title = str(slides[i + 1].get("title") or "")
+        prose = build_spoken_notes(slide, next_title)
+        notes_by_num[n] = prose
+        bodies.append(
+            render_slide(
+                slide,
+                total=total,
+                notes=prose,
+                active=(i == 0),
+                use_chartjs=use_chartjs,
+                disclosure_html=disclosure_blocks.get(i),
+            )
+        )
+    return notes_by_num, bodies
+
+
+def _write_presentation(
+    out: Path, html: str, features_list: list[str]
+) -> tuple[Path, int]:
+    html_path = out / "presentation.html"
+    html_path.write_text(html, encoding="utf-8")
+    html_bytes = html_path.stat().st_size
+    if html_bytes >= features_mod.ADVISORY_HTML_BYTES:
+        print(
+            f"[size] presentation.html is {html_bytes} bytes "
+            f"(advisory threshold {features_mod.ADVISORY_HTML_BYTES}); "
+            f"features={features_list}",
+            file=sys.stderr,
+        )
+    return html_path, html_bytes
+
+
+def _build_run_meta(
+    *,
+    handoff_path: Path,
+    total: int,
+    delivery: DeliveryMode,
+    bundle: InlineBundle,
+    features_list: list[str],
+    html_bytes: int,
+    slides: list[Any],
+) -> dict[str, Any]:
+    return {
+        "generator": "impact_slides.renderer_v2",
+        "version": __version__,
+        "style_preset": "BoardroomEarnings",
+        "handoff": str(handoff_path),
+        "total_slides": total,
+        "delivery": delivery.value,
+        "assets_inlined": list(bundle.meta.get("assets") or []),
+        "features_enabled": features_list,
+        "html_bytes": html_bytes,
+        "bytes_inlined": int(bundle.meta.get("bytes_inlined") or 0),
+        "layouts": [s.get("layout_type") for s in slides],
+    }
 
 
 def render_deck(
@@ -54,7 +148,7 @@ def render_deck(
 
     raw = load_json(handoff_path)
     handoff = normalize_handoff(raw)
-    validated_slides, validation_errors = validate_handoff(handoff)
+    _validated_slides, validation_errors = validate_handoff(handoff)
     if validation_errors:
         for err in validation_errors:
             print(f"[validation] {err}", file=sys.stderr)
@@ -71,35 +165,11 @@ def render_deck(
     features_list = sorted(features)
     bundle = build_head_assets(delivery, feature_ids=features_list)
 
-    # Coerce slides list to contain validated models (fallback already applied)
-    validated_lookup = {s.slide_number: s for s in validated_slides}
-    _ = validated_lookup  # may be used for diagnostics later
-
-    notes_by_num: dict[int, str] = {}
-    bodies: list[str] = []
-    # Fail closed on unknown disclosure patterns before paint (P5).
-    for slide in slides:
-        if extract_disclosure(slide) is not None:
-            try:
-                build_disclosure_html(slide)
-            except DisclosureError as e:
-                raise ValueError(str(e)) from e
-    for i, slide in enumerate(slides):
-        n = int(slide.get("slide_number") or i + 1)
-        next_title = ""
-        if i + 1 < total:
-            next_title = str(slides[i + 1].get("title") or "")
-        prose = build_spoken_notes(slide, next_title)
-        notes_by_num[n] = prose
-        bodies.append(
-            render_slide(
-                slide,
-                total=total,
-                notes=prose,
-                active=(i == 0),
-                use_chartjs=("charts" in features),
-            )
-        )
+    notes_by_num, bodies = _paint_slides(
+        slides,
+        total=total,
+        use_chartjs=("charts" in features),
+    )
 
     html = wrap_deck(
         bodies,
@@ -110,16 +180,7 @@ def render_deck(
         bundle=bundle,
         features_enabled=features_list,
     )
-    html_path = out / "presentation.html"
-    html_path.write_text(html, encoding="utf-8")
-    html_bytes = html_path.stat().st_size
-    if html_bytes >= features_mod.ADVISORY_HTML_BYTES:
-        print(
-            f"[size] presentation.html is {html_bytes} bytes "
-            f"(advisory threshold {features_mod.ADVISORY_HTML_BYTES}); "
-            f"features={features_list}",
-            file=sys.stderr,
-        )
+    html_path, html_bytes = _write_presentation(out, html, features_list)
 
     notes_path = out / "slide_notes.md"
     write_slide_notes_md(notes_path, slides, notes_by_num)
@@ -128,19 +189,15 @@ def render_deck(
     man_path = out / "evidence_manifest.json"
     write_manifest(man_path, manifest)
 
-    run_meta = {
-        "generator": "impact_slides.renderer_v2",
-        "version": __version__,
-        "style_preset": "BoardroomEarnings",
-        "handoff": str(handoff_path),
-        "total_slides": total,
-        "delivery": delivery.value,
-        "assets_inlined": list(bundle.meta.get("assets") or []),
-        "features_enabled": features_list,
-        "html_bytes": html_bytes,
-        "bytes_inlined": int(bundle.meta.get("bytes_inlined") or 0),
-        "layouts": [s.get("layout_type") for s in slides],
-    }
+    run_meta = _build_run_meta(
+        handoff_path=handoff_path,
+        total=total,
+        delivery=delivery,
+        bundle=bundle,
+        features_list=features_list,
+        html_bytes=html_bytes,
+        slides=slides,
+    )
     (out / "run_meta.json").write_text(
         json.dumps(run_meta, indent=2) + "\n", encoding="utf-8"
     )
@@ -192,19 +249,23 @@ def main(argv: list[str] | None = None) -> int:
         help="reference third-party assets via CDN (dev only; not for customer/VPN decks)",
     )
     p.set_defaults(delivery=DeliveryMode.SELF_CONTAINED)
+    _known = ", ".join(sorted(KNOWN_FEATURES))
     p.add_argument(
         "--force-feature",
         action="append",
         default=[],
         metavar="ID",
-        help="force-enable a feature id (repeatable); known: charts, mermaid, alpine, swiper, icons",
+        help=f"force-enable a feature id (repeatable); known: {_known}",
     )
     p.add_argument(
         "--suppress-feature",
         action="append",
         default=[],
         metavar="ID",
-        help="suppress a feature id even if detected (repeatable); beats --force-feature",
+        help=(
+            "suppress a feature id even if detected (repeatable); "
+            f"beats --force-feature; known: {_known}"
+        ),
     )
     p.add_argument(
         "--no-strict",

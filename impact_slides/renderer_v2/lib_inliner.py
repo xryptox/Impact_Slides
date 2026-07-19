@@ -28,7 +28,7 @@ GOOGLE_FONTS_CDN_URL = (
 # Pinned Chart.js (P3). Self-contained embeds the file; CDN mode may use this URI.
 CHART_JS_FILENAME = "chart.umd.min.js"
 CHART_JS_CDN_URL = (
-    "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js"
+    "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"
 )
 
 # Reserved feature ids for P1+.

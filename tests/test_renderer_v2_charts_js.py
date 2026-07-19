@@ -153,6 +153,49 @@ class TestChartJsRender:
         assert "charts" not in run_meta["features_enabled"]
         assert "charts" not in run_meta.get("assets_inlined", [])
 
+    def test_noscript_svg_when_charts_on(self, tmp_path):
+        """P3-US12: charts-on decks still show SVG when JS is disabled."""
+        path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'data-chartjs="1"' in html
+        assert "<noscript>" in html
+        # noscript block should carry the static SVG painter
+        ns = html.split("<noscript>", 1)[1].split("</noscript>", 1)[0]
+        assert "<svg" in ns or "chart-svg" in ns
+
+    def test_cdn_url_matches_min_pin(self):
+        from impact_slides.renderer_v2.lib_inliner import (
+            CHART_JS_CDN_URL,
+            CHART_JS_FILENAME,
+        )
+
+        assert CHART_JS_FILENAME in CHART_JS_CDN_URL
+        assert "chart.umd.min.js" in CHART_JS_CDN_URL
+
+    def test_combo_overlay_label_align_no_silent_pad(self):
+        from impact_slides.renderer_v2.charts import _align_overlay_to_labels
+
+        # Matching labels → by-label map
+        out = _align_overlay_to_labels(
+            ["A", "B"],
+            [{"label": "B", "value": 2}, {"label": "A", "value": 1}],
+        )
+        assert out == [1, 2]
+        # Equal length, no label hits → positional fallback
+        out2 = _align_overlay_to_labels(
+            ["A", "B"],
+            [{"label": "X", "value": 9}, {"label": "Y", "value": 8}],
+        )
+        assert out2 == [9, 8]
+        # Mismatched lengths, no label hits → Nones (no silent pad)
+        out3 = _align_overlay_to_labels(
+            ["A", "B", "C"],
+            [{"label": "X", "value": 1}, {"label": "Y", "value": 2}],
+        )
+        assert out3 == [None, None, None]
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"

@@ -18,6 +18,7 @@ Handoff shapes (additive; any one may be used):
 """
 from __future__ import annotations
 
+import uuid
 from typing import Any, Mapping, Sequence
 
 from .strip import esc
@@ -153,8 +154,8 @@ def _render_accordion(panels: list[tuple[str, str]], *, default_index: int) -> s
 def _render_tabs(panels: list[tuple[str, str]], *, default_index: int) -> str:
     if default_index >= len(panels):
         default_index = 0
-    # Radio-group CSS tabs — no JS. Unique name per instance via id hash of titles.
-    uid = abs(hash(tuple(t for t, _ in panels))) % 10_000_000
+    # Radio-group CSS tabs — no JS. Unique name per instance (stable within doc).
+    uid = uuid.uuid4().hex[:10]
     name = f"gl-tabs-{uid}"
     parts = [
         f'<div class="gl-disclosure gl-disclosure-tabs" data-disclosure="tabs" data-tabs-id="{uid}">'
@@ -182,9 +183,18 @@ def _render_tabs(panels: list[tuple[str, str]], *, default_index: int) -> str:
     return "".join(parts)
 
 
-def inject_disclosure(html: str, slide: Mapping[str, Any]) -> str:
-    """Insert disclosure markup into a painted slide HTML fragment."""
-    block = build_disclosure_html(slide)
+def inject_disclosure(
+    html: str,
+    slide: Mapping[str, Any],
+    *,
+    prebuilt: str | None = None,
+) -> str:
+    """Insert disclosure markup into a painted slide HTML fragment.
+
+    Pass ``prebuilt`` when the block was already validated/built upstream
+    so we don't double-render pure HTML.
+    """
+    block = prebuilt if prebuilt is not None else build_disclosure_html(slide)
     if not block:
         return html
     needle = '<div class="gl-footer">'

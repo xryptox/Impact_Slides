@@ -15,20 +15,38 @@ _FACE_EID = re.compile(r"\bE\d{4}\b")
 _REMOTE_FETCH_PATTERNS = (
     re.compile(r'<link\b[^>]*?\bhref\s*=\s*["\'](https?://[^"\']+|//[^"\']+)["\']', re.I),
     re.compile(r'<script\b[^>]*?\bsrc\s*=\s*["\'](https?://[^"\']+|//[^"\']+)["\']', re.I),
+    # Media hosts that would fetch when painted (P0 review amendment).
+    re.compile(
+        r'<(?:img|iframe|video|audio|source|track|embed)\b[^>]*?\bsrc\s*=\s*["\']'
+        r'(https?://[^"\']+|//[^"\']+)["\']',
+        re.I,
+    ),
+    re.compile(
+        r'<(?:img|source)\b[^>]*?\bsrcset\s*=\s*["\']([^"\']+)["\']',
+        re.I,
+    ),
     re.compile(r'@import\s+(?:url\(\s*)?["\']?(https?://[^\s"\')>]+|//[^\s"\')>]+)', re.I),
     re.compile(r'url\(\s*["\']?(https?://[^\s"\')]+|//[^\s"\')]+)\s*["\']?\)', re.I),
 )
+_SRCSET_REMOTE = re.compile(r'(https?://\S+|//\S+)')
 
 
 def remote_fetch_urls(html: str) -> list[str]:
     """URLs the browser would fetch over the network to render this HTML.
 
-    Ignores XML namespaces (``xmlns=...``), ``data:`` URLs, and anything not
-    tied to a fetching construct (link/script src, @import, CSS url()).
+    Covers link/script, media tags (img/iframe/video/audio/source/track/embed),
+    srcset candidates, @import, and CSS url(). Ignores XML namespaces and
+    ``data:`` URLs.
     """
     found: set[str] = set()
     for pattern in _REMOTE_FETCH_PATTERNS:
-        found.update(pattern.findall(html))
+        for match in pattern.findall(html):
+            # srcset yields the full attribute value — split candidates.
+            if "," in match or " " in match:
+                for cand in _SRCSET_REMOTE.findall(match):
+                    found.add(cand.rstrip(","))
+            else:
+                found.add(match)
     return sorted(found)
 
 
@@ -114,12 +132,12 @@ def validate_html(
 ) -> list[str]:
     delivery = coerce_delivery(delivery)
     errs: list[str] = []
+    html_l = html.lower()
     for token in ("#00175a", "#006fcf", "BoardroomEarnings", "gl-slide", "deck-stage"):
-        if token.lower() not in html.lower() and token not in html:
-            # style_preset is in DECK_META / attributes — check flexible
-            if token == "BoardroomEarnings" and "BoardroomEarnings" not in html:
+        if token.lower() not in html_l:
+            if token == "BoardroomEarnings":
                 errs.append("missing BoardroomEarnings preset marker")
-            elif token != "BoardroomEarnings":
+            else:
                 errs.append(f"missing required token/class: {token}")
     if face_eid_violations(html):
         errs.append(f"face E#### residual: {face_eid_violations(html)[:8]}")

@@ -252,6 +252,34 @@ class TestRemoteFetchUrls:
         )
         assert remote_fetch_urls(html) == ["https://cdn.example.com/a.js"]
 
+    def test_detects_img_src(self):
+        html = '<img src="https://cdn.example.com/x.png" alt="x">'
+        assert remote_fetch_urls(html) == ["https://cdn.example.com/x.png"]
+
+    def test_detects_iframe_src(self):
+        html = '<iframe src="https://example.com/embed"></iframe>'
+        assert remote_fetch_urls(html) == ["https://example.com/embed"]
+
+    def test_detects_video_and_source(self):
+        html = (
+            '<video src="https://cdn.example.com/a.mp4">'
+            '<source src="https://cdn.example.com/b.webm" type="video/webm">'
+            "</video>"
+        )
+        assert remote_fetch_urls(html) == [
+            "https://cdn.example.com/a.mp4",
+            "https://cdn.example.com/b.webm",
+        ]
+
+    def test_detects_srcset_candidates(self):
+        html = (
+            '<img srcset="https://cdn.example.com/a.png 1x, '
+            'https://cdn.example.com/b.png 2x" alt="x">'
+        )
+        urls = remote_fetch_urls(html)
+        assert "https://cdn.example.com/a.png" in urls
+        assert "https://cdn.example.com/b.png" in urls
+
 
 class TestValidateHtmlDelivery:
     _POISONED = (

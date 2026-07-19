@@ -35,11 +35,12 @@ def render_slide(
     notes: str,
     active: bool = False,
     use_chartjs: bool = False,
+    disclosure_html: str | None = None,
 ) -> str:
     html = _render_slide_body(
         slide, total=total, notes=notes, active=active, use_chartjs=use_chartjs
     )
-    return inject_disclosure(html, slide)
+    return inject_disclosure(html, slide, prebuilt=disclosure_html)
 
 
 def _render_slide_body(

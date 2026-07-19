@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib.util
 import math
 import sys
+import uuid
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -156,15 +157,10 @@ def build_chart_html(
         if js_html:
             return js_html
         # Fall through to SVG if config could not be built
-    # Line charts are built internally (external pack has no line chart)
-    if lt == "line_chart":
-        return _build_line_chart_svg(slide)
-    # Combo charts (bar + line overlay) are built internally
-    if lt == "combo_chart":
-        return _build_combo_chart_svg(slide)
-    # Vertical bar charts are built internally (pack renders horizontal bars)
-    if lt == "grouped_bar_chart":
-        return _build_grouped_bar_svg(slide)
+    # Internal SVG painters (also used as Chart.js noscript fallback).
+    svg = _svg_fallback_for_layout(slide, lt)
+    if svg:
+        return svg
     if lt == "stacked_bar_chart":
         return _build_stacked_bar_svg(slide)
     mod = _load_pack()
@@ -321,13 +317,13 @@ def _chart_config(slide: Mapping[str, Any]) -> dict[str, Any]:
     return dict(cfg) if isinstance(cfg, dict) else {}
 
 
-_CHARTJS_SEQ = 0
-
-
 def _next_chart_id() -> str:
-    global _CHARTJS_SEQ
-    _CHARTJS_SEQ += 1
-    return f"rv2-chart-{_CHARTJS_SEQ}"
+    """Stable-enough unique canvas id (no process-global counter)."""
+    return f"rv2-chart-{uuid.uuid4().hex[:12]}"
+
+
+def _series_color(index: int) -> str:
+    return _BOARDROOM_SERIES[index % len(_BOARDROOM_SERIES)]
 
 
 def _chartjs_common_options() -> dict[str, Any]:
@@ -364,6 +360,25 @@ def _chartjs_common_options() -> dict[str, Any]:
     }
 
 
+def _align_overlay_to_labels(
+    bar_labels: list[str],
+    line_points: list[dict[str, Any]],
+) -> list[float | None]:
+    """Map overlay points onto bar categories by label only (no silent index pad).
+
+    When no labels match, fall back to positional values only if lengths match
+    exactly; otherwise leave unmatched categories as None.
+    """
+    by_label = {str(p.get("label") or ""): p.get("value") for p in line_points}
+    line_data = [by_label.get(lbl) for lbl in bar_labels]
+    if any(v is not None for v in line_data):
+        return line_data
+    if len(line_points) == len(bar_labels):
+        return [p.get("value") for p in line_points]
+    # Lengths differ and no label hits — refuse to invent alignment.
+    return [None] * len(bar_labels)
+
+
 def _chartjs_bar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     labels, series, rows, point_colors = _bar_matrix(slide)
     if not labels or not rows:
@@ -371,7 +386,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     datasets = []
     for si, name in enumerate(series):
         data = [row[si] if si < len(row) else None for row in rows]
-        color = _BOARDROOM_SERIES[si % len(_BOARDROOM_SERIES)]
+        color = _series_color(si)
         ds: dict[str, Any] = {
             "label": name,
             "data": data,
@@ -402,7 +417,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 series_keys.append(k)
     datasets = []
     for si, key in enumerate(series_keys):
-        color = _BOARDROOM_SERIES[si % len(_BOARDROOM_SERIES)]
+        color = _series_color(si)
         data = []
         for p in points:
             if key == "value":
@@ -433,7 +448,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         return None
     datasets: list[dict[str, Any]] = []
     for si, name in enumerate(bar_series):
-        color = _BOARDROOM_SERIES[si % len(_BOARDROOM_SERIES)]
+        color = _series_color(si)
         data = [row[si] if si < len(row) else None for row in bar_rows]
         datasets.append(
             {
@@ -447,16 +462,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         )
     line_points = _combo_line_data(slide)
     if line_points:
-        # Align line values to bar labels when possible
-        by_label = {str(p.get("label") or ""): p.get("value") for p in line_points}
-        line_data = [by_label.get(lbl, None) for lbl in bar_labels]
-        if all(v is None for v in line_data):
-            line_data = [p.get("value") for p in line_points]
-            # if lengths mismatch, pad/truncate to bar labels
-            if len(line_data) < len(bar_labels):
-                line_data = line_data + [None] * (len(bar_labels) - len(line_data))
-            else:
-                line_data = line_data[: len(bar_labels)]
+        line_data = _align_overlay_to_labels(bar_labels, line_points)
         vs = slide.get("visual_spec") or {}
         overlay = vs.get("line_overlay") or {}
         line_label = str(overlay.get("label") or "Overlay") if isinstance(overlay, dict) else "Overlay"
@@ -487,8 +493,19 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
+    """Static SVG painter for a Chart.js MVP layout (JS-off / noscript path)."""
+    if layout == "line_chart":
+        return _build_line_chart_svg(slide)
+    if layout == "combo_chart":
+        return _build_combo_chart_svg(slide)
+    if layout == "grouped_bar_chart":
+        return _build_grouped_bar_svg(slide)
+    return ""
+
+
 def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
-    """Canvas + JSON config block for Chart.js init (library loaded in shell)."""
+    """Canvas + JSON config + noscript SVG fallback (library loaded in shell)."""
     import json as _json
 
     builders = {
@@ -504,11 +521,14 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         return ""
     cid = _next_chart_id()
     payload = _json.dumps(cfg, ensure_ascii=False)
+    svg_fb = _svg_fallback_for_layout(slide, layout)
+    noscript = f"<noscript>{svg_fb}</noscript>" if svg_fb else ""
     return (
         f'<div class="chartjs-wrap" data-chartjs="1" data-chart-layout="{esc(layout)}">'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
+        f"{noscript}"
         f"</div>"
     )
 
@@ -898,57 +918,34 @@ def _combo_bar_data(
 ) -> tuple[list[str], list[str], list[list[float | None]], list[str | None]]:
     """Parse combo bar data into (labels, series, rows, point_colors).
 
-    Multi-series: ``{label, values:{s: v}}`` dicts render as stacked bars.
-    Single-series: ``{label, value}`` dicts, ``[label, value]`` pairs, or
-    ``"label: value"`` strings yield one ``["Value"]`` series.
+    Reuses the shared bar matrix parser (dict multi/single-series and
+    list-of-lists). String ``"label: value"`` rows are normalized first.
     """
-    raw = _steps(slide)
-    labels: list[str] = []
-    series: list[str] = []
-    rows: list[list[float | None]] = []
-    colors: list[str | None] = []
-
-    # Multi-series path: dicts carrying a values mapping
-    if raw and all(isinstance(it, dict) and isinstance(it.get("values"), dict) for it in raw):
-        for it in raw:
-            vals = it["values"]
-            if not series:
-                series = [str(k) for k in vals.keys()][:4]
-            labels.append(str(it.get("label") or it.get("x") or ""))
-            rows.append([_bar_num(vals.get(k)) for k in series])
-            colors.append(str(it["color"]) if it.get("color") else None)
-        return labels, series, rows, colors
-
+    raw = list(_steps(slide))
+    # Normalize "label: value" strings so _bar_matrix can consume them.
+    normalized: list[Any] = []
     for item in raw:
-        if isinstance(item, dict):
-            label = str(item.get("label") or item.get("x") or "")
-            try:
-                v = float(str(item.get("value") or item.get("y") or 0).replace("%", "").replace(",", "").replace("$", ""))
-            except (ValueError, TypeError):
-                continue
-            labels.append(label)
-            rows.append([v])
-            colors.append(str(item["color"]) if item.get("color") else None)
-        elif isinstance(item, (list, tuple)) and len(item) >= 2:
-            try:
-                v = float(str(item[1]).replace("%", "").replace(",", "").replace("$", ""))
-            except (ValueError, TypeError):
-                continue
-            labels.append(str(item[0]))
-            rows.append([v])
-            colors.append(None)
-        elif isinstance(item, str) and ":" in item:
+        if isinstance(item, str) and ":" in item:
             a, _, b = item.partition(":")
             try:
                 v = float(b.replace("%", "").replace(",", "").replace("$", "").strip())
             except ValueError:
                 continue
-            labels.append(a.strip())
-            rows.append([v])
-            colors.append(None)
-    if rows and not series:
-        series = ["Value"]
-    return labels, series, rows, colors
+            normalized.append({"label": a.strip(), "value": v})
+        else:
+            normalized.append(item)
+    if not normalized:
+        return [], [], [], []
+    # Temporarily present normalized steps via a shallow slide copy.
+    slide_view = dict(slide)
+    vs = dict(slide.get("visual_spec") or {})
+    pv = dict(vs.get("primary_visual") or {})
+    pv["steps_or_data"] = normalized
+    vs["primary_visual"] = pv
+    slide_view["visual_spec"] = vs
+    if "steps_or_data" in slide_view:
+        slide_view["steps_or_data"] = normalized
+    return _bar_matrix(slide_view)
 
 
 def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
