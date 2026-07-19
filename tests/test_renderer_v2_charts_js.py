@@ -305,6 +305,66 @@ class TestLineChartContract:
         assert "stepSize" not in cc["options"]["scales"]["y"]["ticks"]
         assert "pointLabels" not in cc["data"]["datasets"][0]
 
+
+# ---------------------------------------------------------------------------
+# #72 — Below-axis negative stacked bars (reserve release)
+# ---------------------------------------------------------------------------
+
+PROVISION_STACK = [
+    {"label": "Q4'25", "values": {"NCO": 1251, "RR": -73}},
+    {"label": "Q1'26", "values": {"NCO": 1251, "RR": -24}},
+]
+
+
+class TestNegativeStackedBars:
+    def test_chartjs_stacked_scales_signed(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("stacked_bar_chart", PROVISION_STACK)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'data-chartjs="1"' in html
+        cc = _chartjs_cfg(html)
+        assert cc["options"]["scales"]["x"]["stacked"] is True
+        assert cc["options"]["scales"]["y"]["stacked"] is True
+        # Negative segment values preserved (signed, not absorbed)
+        rr = next(d for d in cc["data"]["datasets"] if d["label"] == "RR")
+        assert rr["data"] == [-73.0, -24.0]
+        # y-domain reaches below zero
+        assert cc["options"]["scales"]["y"]["ticks"]["min"] < 0
+
+    def test_chartjs_respects_explicit_axis_bounds(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {
+            "y_axis_min": -200,
+            "y_axis_max": 1500,
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        assert cc["options"]["scales"]["y"]["ticks"]["min"] == -200.0
+        assert cc["options"]["scales"]["y"]["ticks"]["max"] == 1500.0
+
+    def test_grouped_bar_not_stacked(self, tmp_path):
+        # grouped stays grouped (no stacked scales leak)
+        path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        assert "stacked" not in cc["options"]["scales"]["x"]
+
+    def test_svg_fallback_negative_below_axis(self, tmp_path):
+        # charts suppressed → SVG painter; negative segment painted below zero
+        path = _write(tmp_path, _handoff([_slide("stacked_bar_chart", PROVISION_STACK)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, suppress_features=["charts"])
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "vbar-neg" in html
+        # Net top (1251-73=1178) not absorbed (1324) — net label present
+        assert "1,178" in html or "1178" in html
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"

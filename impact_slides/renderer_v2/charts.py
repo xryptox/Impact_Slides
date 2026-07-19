@@ -133,7 +133,9 @@ def _steps(slide: Mapping[str, Any]) -> list[Any]:
 
 
 # MVP Chart.js interactive set (P3). Other chart layouts stay on SVG/pack.
-_CHARTJS_LAYOUTS = frozenset({"grouped_bar_chart", "line_chart", "combo_chart"})
+_CHARTJS_LAYOUTS = frozenset(
+    {"grouped_bar_chart", "line_chart", "combo_chart", "stacked_bar_chart"}
+)
 
 # Boardroom series palette (semantic/brand — not Chart.js candy defaults).
 _BOARDROOM_SERIES = (
@@ -392,14 +394,21 @@ def _align_overlay_to_labels(
     return [None] * len(bar_labels)
 
 
-def _chartjs_bar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> dict[str, Any] | None:
+    """Grouped or stacked bar Chart.js config.
+
+    Stacked mode (#72) sets scales.stacked so signed segment values stack —
+    negatives render below the zero baseline instead of being absorbed.
+    """
     labels, series, rows, point_colors = _bar_matrix(slide)
     if not labels or not rows:
         return None
+    cfg = _chart_config(slide)
+    palette = _series_colors(cfg)
     datasets = []
     for si, name in enumerate(series):
         data = [row[si] if si < len(row) else None for row in rows]
-        color = _series_color(si)
+        color = palette[si % len(palette)]
         ds: dict[str, Any] = {
             "label": name,
             "data": data,
@@ -413,8 +422,25 @@ def _chartjs_bar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 point_colors[i] or color for i in range(len(labels))
             ]
         datasets.append(ds)
-    cfg = {"type": "bar", "data": {"labels": labels, "datasets": datasets}, "options": _chartjs_common_options()}
-    return cfg
+    options = _chartjs_common_options()
+    if stacked:
+        options["scales"]["x"]["stacked"] = True
+        options["scales"]["y"]["stacked"] = True
+        neg_min = min(
+            (v for row in rows for v in row if isinstance(v, (int, float)) and v < 0),
+            default=None,
+        )
+        if cfg.get("y_axis_min") is not None:
+            options["scales"]["y"]["ticks"]["min"] = float(cfg["y_axis_min"])
+        elif neg_min is not None:
+            options["scales"]["y"]["ticks"]["min"] = float(neg_min) * 1.1
+        if cfg.get("y_axis_max") is not None:
+            options["scales"]["y"]["ticks"]["max"] = float(cfg["y_axis_max"])
+    return {
+        "type": "bar",
+        "data": {"labels": labels, "datasets": datasets},
+        "options": options,
+    }
 
 
 def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -572,6 +598,8 @@ def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
         return _build_combo_chart_svg(slide)
     if layout == "grouped_bar_chart":
         return _build_grouped_bar_svg(slide)
+    if layout == "stacked_bar_chart":
+        return _build_stacked_bar_svg(slide)
     return ""
 
 
@@ -579,15 +607,18 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     """Canvas + JSON config + noscript SVG fallback (library loaded in shell)."""
     import json as _json
 
-    builders = {
-        "grouped_bar_chart": _chartjs_bar_config,
-        "line_chart": _chartjs_line_config,
-        "combo_chart": _chartjs_combo_config,
-    }
-    builder = builders.get(layout)
-    if not builder:
-        return ""
-    cfg = builder(slide)
+    if layout == "stacked_bar_chart":
+        cfg = _chartjs_bar_config(slide, stacked=True)
+    else:
+        builders = {
+            "grouped_bar_chart": _chartjs_bar_config,
+            "line_chart": _chartjs_line_config,
+            "combo_chart": _chartjs_combo_config,
+        }
+        builder = builders.get(layout)
+        if not builder:
+            return ""
+        cfg = builder(slide)
     if not cfg:
         return ""
     cid = _next_chart_id()
