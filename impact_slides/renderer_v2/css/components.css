@@ -315,7 +315,7 @@
 .step-card {
   display: grid;
   grid-template-columns: 72px 1fr;
-  gap: 18px;
+  gap: var(--gap-md, 18px);
   align-items: start;
   flex: 0 0 auto;
 }
@@ -384,7 +384,7 @@
   flex: 0 0 auto;
 }
 .process-outcome .badge {
-  width: 48px; height: 48px; border-radius: var(--radius-round);
+  width: var(--size-11, 48px); height: var(--size-11, 48px); border-radius: var(--radius-round);
   background: var(--blue); color: var(--ink-on-navy);
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-family: var(--font-num);
@@ -476,7 +476,7 @@
   text-transform: uppercase; opacity: 0.85; margin-bottom: 18px;
 }
 .cover-inner h1 {
-  margin: 0 0 18px;
+  margin: 0 0 var(--gap-md, 18px);
   font-family: var(--font-display);
   font-size: var(--fs-display);
   font-weight: 700;
@@ -783,7 +783,7 @@
 
 /* ---- Risk / Opportunity (21) — vertical spread + larger type ---- */
 .column-head {
-  margin: 0 0 18px;
+  margin: 0 0 var(--gap-md, 18px);
   font-size: var(--fs-insight);
   font-weight: 700;
   color: var(--navy);
