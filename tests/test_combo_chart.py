@@ -164,5 +164,10 @@ class TestComboIntegration:
         out = tmp_path / "out"
         render_deck(hpath, out)
         html = (out / "presentation.html").read_text(encoding="utf-8")
-        assert "combo-chart" in html
+        # Chart.js path (default when charts on) or legacy SVG class
+        assert (
+            "combo-chart" in html
+            or 'data-chart-layout="combo_chart"' in html
+            or 'data-chartjs="1"' in html
+        )
         assert 'data-layout="combo_chart"' in html

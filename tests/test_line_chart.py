@@ -327,6 +327,10 @@ class TestLineChartDeck:
         out = tmp_path / "out"
         render_deck(hpath, out)
         html = (out / "presentation.html").read_text(encoding="utf-8")
-        assert "line-chart" in html
-        assert "<polyline" in html
+        # Chart.js path (default when charts on) or legacy SVG polyline
+        assert (
+            ("line-chart" in html and "<polyline" in html)
+            or 'data-chart-layout="line_chart"' in html
+            or 'data-chartjs="1"' in html
+        )
         assert 'data-layout="line_chart"' in html
