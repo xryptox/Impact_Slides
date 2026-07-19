@@ -197,6 +197,14 @@ class ChartHeroDualSlide(_BaseSlide):
     layout_type: Literal["chart_hero_dual"] = "chart_hero_dual"
 
 
+class IrBulletSheetSlide(_BaseSlide):
+    layout_type: Literal["ir_bullet_sheet"] = "ir_bullet_sheet"
+
+
+class GuidanceStatementCardSlide(_BaseSlide):
+    layout_type: Literal["guidance_statement_card"] = "guidance_statement_card"
+
+
 class ChartSlide(_BaseSlide):
     layout_type: Literal[
         "grouped_bar_chart",
@@ -257,6 +265,8 @@ ValidatedSlide = Union[
     FreeformGridSlide,
     PillComparisonSlide,
     ChartHeroDualSlide,
+    IrBulletSheetSlide,
+    GuidanceStatementCardSlide,
     ChartSlide,
     LineChartSlide,
     ComboChartSlide,
@@ -317,6 +327,8 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "freeform_grid": FreeformGridSlide,
         "pill_comparison": PillComparisonSlide,
         "chart_hero_dual": ChartHeroDualSlide,
+        "ir_bullet_sheet": IrBulletSheetSlide,
+        "guidance_statement_card": GuidanceStatementCardSlide,
         "grouped_bar_chart": ChartSlide,
         "stacked_bar_chart": ChartSlide,
         "waterfall_chart": ChartSlide,

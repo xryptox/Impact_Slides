@@ -99,6 +99,10 @@ def _render_slide_body(
         return recipes.render_chart_hero_dual(
             slide, total, notes, active=active, use_chartjs=use_chartjs
         )
+    if lt == "ir_bullet_sheet":
+        return recipes.render_ir_bullet_sheet(slide, total, notes, active=active)
+    if lt == "guidance_statement_card":
+        return recipes.render_guidance_statement_card(slide, total, notes, active=active)
     if lt in ("full_process_flow", "timeline", "roadmap"):
         return recipes.render_process(slide, total, notes, active=active)
     if lt == "comparison_grid":
