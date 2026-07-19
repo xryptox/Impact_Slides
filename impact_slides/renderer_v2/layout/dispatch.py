@@ -107,6 +107,12 @@ def _render_slide_body(
         return recipes.render_brand_cover(slide, total, notes, active=active)
     if lt == "brand_divider":
         return recipes.render_brand_cover(slide, total, notes, active=active, divider=True)
+    if lt == "annex_table":
+        return recipes.render_annex_table(slide, total, notes, active=active)
+    if lt == "multi_panel":
+        return recipes.render_multi_panel(
+            slide, total, notes, active=active, use_chartjs=use_chartjs
+        )
     if lt in ("full_process_flow", "timeline", "roadmap"):
         return recipes.render_process(slide, total, notes, active=active)
     if lt == "comparison_grid":
