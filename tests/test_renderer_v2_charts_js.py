@@ -365,6 +365,56 @@ class TestNegativeStackedBars:
         # Net top (1251-73=1178) not absorbed (1324) — net label present
         assert "1,178" in html or "1178" in html
 
+
+# ---------------------------------------------------------------------------
+# #73 — Floating inset KPI / key_stats on data_table expense layout (F9)
+# ---------------------------------------------------------------------------
+
+
+def _table_slide(key_stats=None) -> dict:
+    s = {
+        "slide_number": 1,
+        "layout_type": "data_table",
+        "title": "Expense Performance",
+        "content": {
+            "so_what": "Expense discipline",
+            "data_table": [
+                ["Expense", "Q1'26", "Q1'25", "YoY"],
+                ["Marketing", "1,234", "1,100", "12%"],
+                ["Card services", "2,345", "2,100", "11%"],
+            ],
+        },
+        "speaker_notes": "Notes.",
+    }
+    if key_stats is not None:
+        s["content"]["key_stats"] = key_stats
+    return s
+
+
+class TestKeyStatsTableInset:
+    def test_inset_renders_on_data_table(self, tmp_path):
+        path = _write(
+            tmp_path,
+            _handoff([_table_slide(key_stats=[{"label": "VCE of Revenue", "value": "44.7%"}])]),
+        )
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-inset" in html
+        assert "VCE of Revenue" in html
+        assert "44.7%" in html
+        # table still renders
+        assert "data-table" in html
+
+    def test_no_inset_without_key_stats(self, tmp_path):
+        path = _write(tmp_path, _handoff([_table_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # CSS class is always bundled; assert no inset *markup* rendered
+        assert 'class="gl-inset ' not in html and 'data-inset="1"' not in html
+        assert "data-table" in html
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"
