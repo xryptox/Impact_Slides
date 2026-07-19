@@ -103,6 +103,10 @@ def _render_slide_body(
         return recipes.render_ir_bullet_sheet(slide, total, notes, active=active)
     if lt == "guidance_statement_card":
         return recipes.render_guidance_statement_card(slide, total, notes, active=active)
+    if lt == "brand_cover":
+        return recipes.render_brand_cover(slide, total, notes, active=active)
+    if lt == "brand_divider":
+        return recipes.render_brand_cover(slide, total, notes, active=active, divider=True)
     if lt in ("full_process_flow", "timeline", "roadmap"):
         return recipes.render_process(slide, total, notes, active=active)
     if lt == "comparison_grid":

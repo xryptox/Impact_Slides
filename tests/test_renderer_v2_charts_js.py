@@ -606,6 +606,74 @@ class TestGuidanceStatementCard:
         assert "gl-guid-footnotes" in html
         assert "As reported, FX-adjusted basis" in html
 
+
+# ---------------------------------------------------------------------------
+# #76 — Brand cover + section/trailing divider assets (F6)
+# ---------------------------------------------------------------------------
+
+_BRAND_MARK_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+    '<circle cx="50" cy="50" r="40" fill="#fff"/></svg>'
+)
+
+
+def _brand_cover_slide() -> dict:
+    return {
+        "slide_number": 1,
+        "layout_type": "brand_cover",
+        "title": "Q1 2026 Results",
+        "content": {
+            "subtitle": "Earnings Presentation",
+            "brand_mark_svg": _BRAND_MARK_SVG,
+            "brand_tone": "two-tone",
+        },
+        "speaker_notes": "Notes.",
+    }
+
+
+class TestBrandCover:
+    def test_brand_mark_inlined_and_two_tone(self, tmp_path):
+        path = _write(tmp_path, _handoff([_brand_cover_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # brand-mark inlined as data URL, two-tone full-bleed region present
+        assert "data:image/svg" in html
+        assert "gl-brand-cover" in html
+        assert "gl-brand-two-tone" in html
+        assert "Earnings Presentation" in html
+        assert remote_fetch_urls(html) == []
+
+    def test_section_divider_unchanged_without_brand_mark(self, tmp_path):
+        # conventional section_divider still renders near-white (no regression)
+        s = {
+            "slide_number": 1,
+            "layout_type": "section_divider",
+            "title": "Appendix",
+            "content": {"so_what": "Appendix"},
+            "speaker_notes": "n",
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-brand-cover" not in html
+
+    def test_brand_divider_two_tone(self, tmp_path):
+        s = {
+            "slide_number": 1,
+            "layout_type": "brand_divider",
+            "title": "Appendix",
+            "content": {"brand_mark_svg": _BRAND_MARK_SVG, "brand_tone": "two-tone"},
+            "speaker_notes": "n",
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-brand-divider" in html
+        assert "data:image/svg" in html
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"
