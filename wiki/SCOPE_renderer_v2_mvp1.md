@@ -121,7 +121,7 @@ Reusable from research `SC-*` where applicable; MVP1 must demonstrate:
 | **SC-IX-1** | At least three **native** disclosure patterns supported in generated markup |
 | **SC-IX-2** | With JS libraries absent/off, static content remains readable |
 | **SC-COMPAT-1** | Existing handoffs that don’t opt into new features still render without required schema break |
-| **SC-GOLDEN-1** | One checked-in (or documented fixture) golden handoff → HTML deck exercises **charts + disclosure** and passes offline open check |
+| **SC-GOLDEN-1** | One checked-in (or documented fixture) golden handoff → HTML deck exercises **charts + disclosure** and passes offline open check. **Fixture:** `tests/fixtures/renderer_v2/golden_mvp1_handoff.json`. **Test:** `tests/test_renderer_v2_golden_mvp1.py`. Human review export: `output/golden_mvp1/presentation.html` (gitignored; regenerate via the export test or `python -m impact_slides.renderer_v2`). |
 
 **Non-failure for MVP1:** perfect PDF twin, Mermaid, Alpine, Swiper, full Lucide, cinematic motion.
 

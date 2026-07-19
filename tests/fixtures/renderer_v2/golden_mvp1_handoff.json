@@ -1,0 +1,221 @@
+{
+  "presentation": {
+    "title": "MVP1 Golden Offline Deck",
+    "subtitle": "Charts + native disclosure · self-contained",
+    "audience": "IC",
+    "primary_goal": "Prove SC-GOLDEN-1 and SC-OFFLINE-1",
+    "readiness_score": 90,
+    "quality_flags": []
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "title_or_opening",
+      "packing_mode": "cover-led",
+      "title": "MVP1 Golden Offline Deck",
+      "section": "Cover",
+      "content": {
+        "headline": "Charts + disclosure, no network",
+        "subtitle": "Self-contained Boardroom HTML",
+        "bullets": [],
+        "key_stats": [],
+        "body_text": "",
+        "so_what": "",
+        "narrative_bridge": "Open with the offline claim."
+      },
+      "evidence_sources": [],
+      "speaker_notes": "This deck is the SC-GOLDEN-1 acceptance fixture: Chart.js paths plus native disclosure, default self-contained delivery."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "grouped_bar_chart",
+      "packing_mode": "chart-led",
+      "title": "Cohort engagement",
+      "section": "Charts",
+      "content": {
+        "subtitle": "Grouped bar (Chart.js)",
+        "so_what": "Gen-Z density is the growth wedge.",
+        "narrative_bridge": "Trend confirms the bar story."
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "grouped_bar_chart",
+          "steps_or_data": [
+            {"label": "Gen-Z", "value": 55},
+            {"label": "Millennial", "value": 42},
+            {"label": "Gen-X", "value": 28},
+            {"label": "Boomer", "value": 18}
+          ]
+        }
+      },
+      "evidence_sources": [
+        {"id": "E0001", "source_file": "engagement.pdf"}
+      ],
+      "speaker_notes": "Bar chart uses Chart.js when charts feature is on."
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "Booking velocity",
+      "section": "Charts",
+      "content": {
+        "subtitle": "Line (Chart.js)",
+        "so_what": "Velocity recovered after Q2 dip.",
+        "narrative_bridge": "Combo ties volume to conversion."
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {"label": "Q1", "value": 12},
+            {"label": "Q2", "value": 9},
+            {"label": "Q3", "value": 14},
+            {"label": "Q4", "value": 17}
+          ]
+        }
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Line path is Chart.js with animation off."
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "combo_chart",
+      "packing_mode": "chart-led",
+      "title": "Volume vs conversion",
+      "section": "Charts",
+      "content": {
+        "subtitle": "Combo bar + line (Chart.js)",
+        "so_what": "Conversion held while volume scaled.",
+        "narrative_bridge": "Secondary detail lives under disclosure."
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "combo_chart",
+          "steps_or_data": [
+            {"label": "Jan", "value": 40},
+            {"label": "Feb", "value": 48},
+            {"label": "Mar", "value": 55},
+            {"label": "Apr", "value": 61}
+          ]
+        },
+        "line_overlay": {
+          "label": "Conversion %",
+          "data": [
+            {"label": "Jan", "value": 22},
+            {"label": "Feb", "value": 23},
+            {"label": "Mar", "value": 24},
+            {"label": "Apr", "value": 25}
+          ]
+        }
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Combo uses bar datasets plus line overlay."
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Methodology on demand",
+      "section": "Disclosure",
+      "content": {
+        "headline": "Keep the claim primary",
+        "subtitle": "Detail pattern",
+        "bullets": [
+          "Primary claim stays above the fold",
+          "Method expands only when challenged",
+          "HTML and CSS only — no extra interaction library"
+        ],
+        "so_what": "Secondary method should not dominate the slide.",
+        "narrative_bridge": "Accordion holds multi-topic risk."
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Methodology",
+            "body": "Sample constructed from public filings and internal booking extracts.\nNot investment advice. Offline-safe fixture for SC-GOLDEN-1."
+          }
+        ]
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Open methodology if the room challenges the claim."
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Risk stack",
+      "section": "Disclosure",
+      "content": {
+        "headline": "Several secondary topics",
+        "subtitle": "Accordion pattern",
+        "bullets": [
+          "One narrative plane",
+          "Expand only the asked section",
+          "Native details elements"
+        ],
+        "so_what": "Accordion keeps secondary topics nested.",
+        "narrative_bridge": "Tabs compare base vs downside."
+      },
+      "disclosure": {
+        "pattern": "accordion",
+        "panels": [
+          {"title": "Risks", "body": "Execution risk remains the primary concern on integration timeline."},
+          {"title": "Assumptions", "body": "Revenue CAGR held at plan case; churn at 2025 exit rate."},
+          {"title": "Sources", "body": "10-K · Investor day deck · Press wire · internal booking extract"}
+        ]
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Expand only the section the room asks about."
+    },
+    {
+      "slide_number": 7,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Scenario cuts",
+      "section": "Disclosure",
+      "content": {
+        "headline": "Base vs downside without Swiper",
+        "subtitle": "Tabs pattern",
+        "bullets": [
+          "Two views, one Boardroom frame",
+          "Radio/CSS tabs only",
+          "Readable with Chart.js absent for the disclosure half"
+        ],
+        "so_what": "Tabs keep alternate cuts in one frame.",
+        "narrative_bridge": "Close on the offline claim."
+      },
+      "disclosure": {
+        "pattern": "tabs",
+        "default_index": 0,
+        "panels": [
+          {"title": "Base case", "body": "Margin expands 120 bps by year three; bookings compound at plan."},
+          {"title": "Downside", "body": "Margin flat if churn stays elevated; delay TheFork synergies one year."}
+        ]
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Toggle base vs downside with the tab labels."
+    },
+    {
+      "slide_number": 8,
+      "layout_type": "recommendation_with_rationale",
+      "packing_mode": "close-led",
+      "title": "Offline ready",
+      "section": "Close",
+      "content": {
+        "headline": "SC-GOLDEN-1 satisfied",
+        "subtitle": "Self-contained · charts · disclosure",
+        "bullets": [
+          "Default delivery embeds fonts + Chart.js when charts on",
+          "Native detail / accordion / tabs need no interaction framework",
+          "Strict validation rejects remote fetches"
+        ],
+        "so_what": "Open this HTML with network disabled and the deck still works.",
+        "narrative_bridge": ""
+      },
+      "evidence_sources": [],
+      "speaker_notes": "Acceptance: open presentation.html offline; bars/lines paint; disclosure expands."
+    }
+  ]
+}
