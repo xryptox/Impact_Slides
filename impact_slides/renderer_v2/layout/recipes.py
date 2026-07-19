@@ -340,6 +340,35 @@ def _kpi_cards(stats: Sequence[Any], *, cols_class: str) -> str:
     return f'<div class="gl-grid {cols_class}">{"".join(cards)}</div>'
 
 
+def _table_inset(stats: Sequence[Any]) -> str:
+    """Floating key_stats inset for table slides (#73/F9).
+
+    Renders each supplied stat as a navy callout card floated beside the
+    table, so VCE-style insets compose into the data_table stage instead of
+    being dropped. Returns empty string when no usable stats are supplied.
+    """
+    cards = []
+    for st in stats[:2]:
+        if isinstance(st, dict):
+            lab = strip_eids(st.get("label") or "")
+            val = strip_eids(st.get("value") or "")
+        elif isinstance(st, (list, tuple)) and len(st) >= 2:
+            lab, val = strip_eids(st[0]), strip_eids(st[1])
+        else:
+            continue
+        if not lab and not val:
+            continue
+        cards.append(
+            f'<div class="gl-inset card" data-inset="1">'
+            f'<div class="gl-inset-label">{esc(lab)}</div>'
+            f'<div class="gl-inset-value">{esc(val)}</div>'
+            f"</div>"
+        )
+    if not cards:
+        return ""
+    return f'<div class="gl-inset-wrap">{"".join(cards)}</div>'
+
+
 def _circle_pair_svg(
     value_before: float,
     value_after: float,
@@ -591,7 +620,16 @@ def render_table(slide, total, notes, active=False):
         f'<table class="data-table"><thead><tr>{th}</tr></thead>'
         f'<tbody>{"".join(trs)}</tbody></table></div>'
     )
-    main = table + insight_strip(_so_what(slide))
+    inset = _table_inset((slide.get("content") or {}).get("key_stats") or [])
+    if inset:
+        main = (
+            f'<div class="gl-areas-table-inset">'
+            f'<div class="gl-inset-stage">{inset}</div>'
+            f'<div class="gl-inset-table">{table}</div>'
+            f"</div>" + insight_strip(_so_what(slide))
+        )
+    else:
+        main = table + insight_strip(_so_what(slide))
     return slide_shell(
         number=int(slide["slide_number"]),
         total=total,

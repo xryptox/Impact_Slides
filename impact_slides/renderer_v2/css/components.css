@@ -1044,6 +1044,36 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* ---------- table inset (floating key_stats on data_table, #73) ---------- */
+.gl-areas-table-inset { position: relative; }
+.gl-inset-wrap { display: flex; flex-direction: column; gap: var(--gap-md, 18px); }
+.gl-inset {
+  position: absolute;
+  top: var(--gap-md, 18px);
+  right: var(--gap-md, 18px);
+  z-index: 5;
+  min-width: 200px;
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  background: var(--navy);
+  color: var(--color-on-navy, var(--panel, #fff));
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-3, 0 8px 20px rgba(0, 23, 90, 0.18));
+  text-align: left;
+}
+.gl-inset-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+.gl-inset-value {
+  font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
 /* Native progressive disclosure (P5) — HTML/CSS only, no JS library  */
 /* ------------------------------------------------------------------ */
 .gl-disclosure {
