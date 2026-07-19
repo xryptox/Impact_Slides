@@ -137,6 +137,10 @@ def render_deck(
     ``delivery`` selects how third-party assets reach the deck:
     ``"self-contained"`` (default, offline-safe) or ``"cdn"`` (dev-only).
 
+    ``theme`` overrides Boardroom semantic tokens; ``chrome_level`` selects
+    ``"boardroom"`` (default, full product chrome) or ``"minimal"`` (stage-only).
+    When not passed, both are read from the handoff ``presentation`` block.
+
     Features are auto-detected from the handoff; ``force_features`` /
     ``suppress_features`` override (suppress beats force beats detect).
 

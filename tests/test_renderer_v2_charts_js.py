@@ -717,7 +717,8 @@ class TestBrokenYAxis:
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
-        assert "chartjs-axis-break" not in html
+        # CSS is always bundled; assert no axis-break *marker markup* rendered
+        assert 'class="chartjs-axis-break"' not in html
 
 
 # ---------------------------------------------------------------------------
@@ -760,6 +761,21 @@ class TestAnnexTable:
         # CSS is always bundled; assert no annex *table markup* rendered
         assert 'class="data-table annex-table"' not in html
         assert 'class="gl-annex ' not in html
+
+    def test_multi_level_headers(self, tmp_path):
+        s = _annex_slide()
+        s["visual_spec"]["primary_visual"]["header_groups"] = [
+            {"label": "FY 2025", "span": 2},
+            {"label": "Q1 2026", "span": 3},
+        ]
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-annex-group" in html
+        assert "FY 2025" in html and "Q1 2026" in html
+        assert "colspan=\"2\"" in html
+        assert 'rowspan="2"' in html
 
 
 # ---------------------------------------------------------------------------
