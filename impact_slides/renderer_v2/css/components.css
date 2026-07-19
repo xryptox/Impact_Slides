@@ -1115,6 +1115,45 @@
   color: var(--navy);
 }
 
+/* ---------- chart | hero-KPI dual card (#75/F5) ---------- */
+.gl-areas-chart-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--gap-md, 18px);
+  align-items: stretch;
+}
+.gl-chart-hero-chart { min-width: 0; }
+.gl-chart-hero-stack { display: flex; }
+.gl-hero-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md, 18px);
+  flex: 1;
+}
+.gl-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  background: var(--color-surface, var(--panel, #fff));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md, 8px);
+}
+.gl-hero-value {
+  font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--navy);
+}
+.gl-hero-label {
+  margin-top: var(--space-2, 6px);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
 /* Native progressive disclosure (P5) — HTML/CSS only, no JS library  */
 /* ------------------------------------------------------------------ */
 .gl-disclosure {
