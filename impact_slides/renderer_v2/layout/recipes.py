@@ -644,6 +644,64 @@ def render_table(slide, total, notes, active=False):
     )
 
 
+def render_pill_comparison(slide, total, notes, active=False):
+    """Pill-column comparison table (#74/F4).
+
+    Exterior row-label stub column + vertical pill/rounded column headers
+    (Q1'26 / Q1'25 / YoY) — the IR statement house style, not a row-striped
+    spreadsheet grid. Composes with the floating key_stats inset (#73).
+    """
+    rows = _table_matrix(slide)
+    if not rows:
+        return render_metric(slide, total, notes, active=active)
+    head = rows[0]
+    body = rows[1:] if len(rows) > 1 else []
+    n_cols = len(head)
+    grid_cols = f"grid-template-columns: 1.6fr repeat({max(n_cols - 1, 1)}, 1fr)"
+    # Header: empty stub cell, then one pill per comparison column
+    head_cells = ['<div class="gl-pill-stub gl-pill-head-empty"></div>']
+    for h in head[1:]:
+        head_cells.append(f'<div class="gl-pill-col gl-pill-head">{esc(h)}</div>')
+    # Body: exterior row label stub, then a cell per column
+    body_rows = []
+    for r in body:
+        cells = [f'<div class="gl-pill-stub">{esc(r[0] if r else "")}</div>']
+        for i in range(1, n_cols):
+            cell = r[i] if i < len(r) else ""
+            cls = "gl-pill-cell gl-pill-cell-yoy" if i == n_cols - 1 else "gl-pill-cell"
+            cells.append(f'<div class="{cls}">{esc(cell)}</div>')
+        body_rows.append(f'<div class="gl-pill-row" style="{grid_cols}">{"".join(cells)}</div>')
+    table = (
+        f'<div class="gl-pill gl-card">'
+        f'<div class="gl-pill-row gl-pill-head-row" style="{grid_cols}">'
+        f'{"".join(head_cells)}</div>'
+        f'{"".join(body_rows)}'
+        f"</div>"
+    )
+    inset = _table_inset((slide.get("content") or {}).get("key_stats") or [])
+    if inset:
+        main = (
+            f'<div class="gl-areas-table-inset">'
+            f'<div class="gl-inset-stage">{inset}</div>'
+            f'<div class="gl-inset-table">{table}</div>'
+            f"</div>" + insight_strip(_so_what(slide))
+        )
+    else:
+        main = table + insight_strip(_so_what(slide))
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="pill_comparison",
+        active=active,
+        item_count=len(body),
+    )
+
+
 def _sequential_grid(
     items: list[str],
     *,

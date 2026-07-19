@@ -1074,6 +1074,47 @@
   line-height: 1.05;
 }
 
+/* ---------- pill-column comparison table (#74/F4) ---------- */
+.gl-pill {
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+}
+.gl-pill-row {
+  display: grid;
+  align-items: stretch;
+  gap: var(--gap-sm, 10px);
+  padding: var(--space-2, 6px) 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+.gl-pill-row:last-child { border-bottom: none; }
+.gl-pill-stub {
+  align-self: center;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+}
+.gl-pill-head-empty { border-bottom: none; }
+.gl-pill-head {
+  align-self: center;
+  justify-self: stretch;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-on-navy, var(--panel, #fff));
+  background: var(--navy);
+  border-radius: var(--radius-round, 999px);
+  padding: var(--space-2, 6px) var(--space-3, 10px);
+}
+.gl-pill-cell {
+  align-self: center;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.gl-pill-cell-yoy {
+  font-weight: 700;
+  color: var(--navy);
+}
+
 /* Native progressive disclosure (P5) — HTML/CSS only, no JS library  */
 /* ------------------------------------------------------------------ */
 .gl-disclosure {

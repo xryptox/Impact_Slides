@@ -189,6 +189,10 @@ class FreeformGridSlide(_BaseSlide):
     layout_type: Literal["freeform_grid"] = "freeform_grid"
 
 
+class PillComparisonSlide(_BaseSlide):
+    layout_type: Literal["pill_comparison"] = "pill_comparison"
+
+
 class ChartSlide(_BaseSlide):
     layout_type: Literal[
         "grouped_bar_chart",
@@ -247,6 +251,7 @@ ValidatedSlide = Union[
     QuoteCardSlide,
     IconGridSlide,
     FreeformGridSlide,
+    PillComparisonSlide,
     ChartSlide,
     LineChartSlide,
     ComboChartSlide,
@@ -305,6 +310,7 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "quote_card": QuoteCardSlide,
         "icon_grid": IconGridSlide,
         "freeform_grid": FreeformGridSlide,
+        "pill_comparison": PillComparisonSlide,
         "grouped_bar_chart": ChartSlide,
         "stacked_bar_chart": ChartSlide,
         "waterfall_chart": ChartSlide,

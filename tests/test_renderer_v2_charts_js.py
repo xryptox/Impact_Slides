@@ -376,13 +376,16 @@ def _table_slide(key_stats=None) -> dict:
         "slide_number": 1,
         "layout_type": "data_table",
         "title": "Expense Performance",
-        "content": {
-            "so_what": "Expense discipline",
-            "data_table": [
-                ["Expense", "Q1'26", "Q1'25", "YoY"],
-                ["Marketing", "1,234", "1,100", "12%"],
-                ["Card services", "2,345", "2,100", "11%"],
-            ],
+        "content": {"so_what": "Expense discipline"},
+        "visual_spec": {
+            "primary_visual": {
+                "type": "data_table",
+                "steps_or_data": [
+                    ["Expense line", "Q1'26", "Q1'25", "YoY"],
+                    ["Marketing", "1,234", "1,100", "12%"],
+                    ["Card services", "2,345", "2,100", "11%"],
+                ],
+            }
         },
         "speaker_notes": "Notes.",
     }
@@ -414,6 +417,54 @@ class TestKeyStatsTableInset:
         # CSS class is always bundled; assert no inset *markup* rendered
         assert 'class="gl-inset ' not in html and 'data-inset="1"' not in html
         assert "data-table" in html
+
+
+# ---------------------------------------------------------------------------
+# #74 — Pill-column comparison table layout (F4)
+# ---------------------------------------------------------------------------
+
+
+def _pill_slide() -> dict:
+    return {
+        "slide_number": 1,
+        "layout_type": "pill_comparison",
+        "title": "Summary Financial Performance",
+        "content": {"so_what": "Strong growth"},
+        "visual_spec": {
+            "primary_visual": {
+                "type": "pill_comparison",
+                "steps_or_data": [
+                    ["Metric", "Q1'26", "Q1'25", "YoY"],
+                    ["Billed business", "$432B", "$395B", "+9%"],
+                    ["Revenue", "$17.9B", "$16.4B", "+9%"],
+                ],
+            }
+        },
+        "speaker_notes": "Notes.",
+    }
+
+
+class TestPillComparison:
+    def test_pill_columns_and_exterior_labels(self, tmp_path):
+        path = _write(tmp_path, _handoff([_pill_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # pill column headers + exterior row labels present
+        assert "gl-pill" in html
+        assert "Q1'26" in html and "YoY" in html
+        assert "Billed business" in html
+        # layout class marker
+        assert "pill_comparison" in html or "layout-pill" in html
+
+    def test_data_table_unchanged(self, tmp_path):
+        # conventional data_table still renders the row-grid form (no regression)
+        path = _write(tmp_path, _handoff([_table_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "data-table" in html
+        assert "gl-pill-col" not in html
 
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))

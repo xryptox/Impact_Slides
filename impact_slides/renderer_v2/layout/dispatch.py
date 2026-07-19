@@ -93,6 +93,8 @@ def _render_slide_body(
         return recipes.render_priority_matrix(slide, total, notes, active=active)
     if lt == "data_table":
         return recipes.render_table(slide, total, notes, active=active)
+    if lt == "pill_comparison":
+        return recipes.render_pill_comparison(slide, total, notes, active=active)
     if lt in ("full_process_flow", "timeline", "roadmap"):
         return recipes.render_process(slide, total, notes, active=active)
     if lt == "comparison_grid":
