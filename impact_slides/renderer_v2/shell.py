@@ -73,6 +73,25 @@ _JS = r"""
   });
 
   show(idx);
+
+  // Chart.js init (P3) — configs are JSON next to each canvas; library inlined when charts on.
+  function initCharts() {
+    if (typeof Chart === 'undefined') return;
+    document.querySelectorAll('script.chartjs-config').forEach(function (el) {
+      var id = el.getAttribute('data-for');
+      var canvas = id ? document.getElementById(id) : null;
+      if (!canvas) return;
+      try {
+        var cfg = JSON.parse(el.textContent || '{}');
+        if (!cfg.options) cfg.options = {};
+        cfg.options.animation = false;
+        new Chart(canvas.getContext('2d'), cfg);
+      } catch (err) {
+        console.warn('chart init failed', id, err);
+      }
+    });
+  }
+  initCharts();
 })();
 """
 

@@ -1,6 +1,6 @@
 # Vendored third-party libraries (renderer_v2)
 
-Minified, **version-pinned** third-party JS/CSS lives here so decks can be
+Minified/UMD, **version-pinned** third-party JS/CSS lives here so decks can be
 generated fully self-contained (offline / corporate VPN safe).
 
 Rules:
@@ -9,10 +9,13 @@ Rules:
   license, source URL, how obtained).
 - **Never fetch at render time** — `render_deck` must not touch the network;
   these files are committed (or vendored by an explicit maintainer step).
-- **Inline via `lib_inliner.py` only** — no `<script src="https://...">` or
-  ad-hoc CDN tags in layout/shell code.
+- **Inline via `lib_inliner.py` only** — no ad-hoc CDN tags in layout code.
 - Include upstream LICENSE text alongside vendored artifacts.
 
-Currently empty: Chart.js / Mermaid / Alpine / Swiper / Lucide land with P1+
-feature work (see `wiki/SPEC_renderer_v2_p0_self_contained.md` and
-`wiki/SCOPE_renderer_v2_mvp1.md`).
+## Current pins
+
+| File | Feature id | Notes |
+|------|------------|--------|
+| `chart.umd.min.js` | `charts` | Chart.js 4.4.8 UMD build (jsDelivr). Inlined only when `charts` is enabled. |
+
+Mermaid / Alpine / Swiper / Lucide remain deferred (MVP1.1+).

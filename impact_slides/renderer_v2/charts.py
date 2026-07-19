@@ -131,8 +131,31 @@ def _steps(slide: Mapping[str, Any]) -> list[Any]:
     return list(steps) if isinstance(steps, list) else []
 
 
-def build_chart_html(slide: Mapping[str, Any], layout: str) -> str:
+# MVP Chart.js interactive set (P3). Other chart layouts stay on SVG/pack.
+_CHARTJS_LAYOUTS = frozenset({"grouped_bar_chart", "line_chart", "combo_chart"})
+
+# Boardroom series palette (semantic/brand — not Chart.js candy defaults).
+_BOARDROOM_SERIES = (
+    "#006fcf",  # blue / accent
+    "#00175a",  # navy
+    "#0a7d55",  # accent-2 success
+    "#53565a",  # ink
+    "#80c8ff",  # blue-sky
+)
+
+
+def build_chart_html(
+    slide: Mapping[str, Any],
+    layout: str,
+    *,
+    use_chartjs: bool = False,
+) -> str:
     lt = (layout or slide.get("layout_type") or "").lower()
+    if use_chartjs and lt in _CHARTJS_LAYOUTS:
+        js_html = _build_chartjs_html(slide, lt)
+        if js_html:
+            return js_html
+        # Fall through to SVG if config could not be built
     # Line charts are built internally (external pack has no line chart)
     if lt == "line_chart":
         return _build_line_chart_svg(slide)
@@ -296,6 +319,198 @@ def _chart_config(slide: Mapping[str, Any]) -> dict[str, Any]:
         return {}
     cfg = vs.get("chart_config")
     return dict(cfg) if isinstance(cfg, dict) else {}
+
+
+_CHARTJS_SEQ = 0
+
+
+def _next_chart_id() -> str:
+    global _CHARTJS_SEQ
+    _CHARTJS_SEQ += 1
+    return f"rv2-chart-{_CHARTJS_SEQ}"
+
+
+def _chartjs_common_options() -> dict[str, Any]:
+    """Calm Boardroom defaults: no animation, readable axes."""
+    return {
+        "responsive": True,
+        "maintainAspectRatio": False,
+        "animation": False,
+        "plugins": {
+            "legend": {
+                "labels": {
+                    "color": "#53565a",
+                    "font": {"family": "'Source Sans 3', sans-serif", "size": 14},
+                }
+            },
+            "tooltip": {"enabled": True},
+        },
+        "scales": {
+            "x": {
+                "ticks": {
+                    "color": "#00175a",
+                    "font": {"family": "'Source Sans 3', sans-serif", "size": 13},
+                },
+                "grid": {"color": "rgba(224, 228, 234, 0.8)"},
+            },
+            "y": {
+                "ticks": {
+                    "color": "#00175a",
+                    "font": {"family": "'IBM Plex Sans', sans-serif", "size": 13},
+                },
+                "grid": {"color": "rgba(224, 228, 234, 0.8)"},
+            },
+        },
+    }
+
+
+def _chartjs_bar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+    labels, series, rows, point_colors = _bar_matrix(slide)
+    if not labels or not rows:
+        return None
+    datasets = []
+    for si, name in enumerate(series):
+        data = [row[si] if si < len(row) else None for row in rows]
+        color = _BOARDROOM_SERIES[si % len(_BOARDROOM_SERIES)]
+        ds: dict[str, Any] = {
+            "label": name,
+            "data": data,
+            "backgroundColor": color,
+            "borderColor": color,
+            "borderWidth": 0,
+        }
+        # Per-category colors for single-series highlight
+        if len(series) == 1 and any(point_colors):
+            ds["backgroundColor"] = [
+                point_colors[i] or color for i in range(len(labels))
+            ]
+        datasets.append(ds)
+    cfg = {"type": "bar", "data": {"labels": labels, "datasets": datasets}, "options": _chartjs_common_options()}
+    return cfg
+
+
+def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+    points = _line_data(slide)
+    if not points:
+        return None
+    labels = [str(p.get("label") or "") for p in points]
+    # primary series
+    series_keys = ["value"]
+    for p in points:
+        for k in p:
+            if k.startswith("series_") and k not in series_keys:
+                series_keys.append(k)
+    datasets = []
+    for si, key in enumerate(series_keys):
+        color = _BOARDROOM_SERIES[si % len(_BOARDROOM_SERIES)]
+        data = []
+        for p in points:
+            if key == "value":
+                data.append(p.get("value"))
+            else:
+                data.append(p.get(key))
+        datasets.append(
+            {
+                "label": "Value" if key == "value" else key.replace("series_", "S"),
+                "data": data,
+                "borderColor": color,
+                "backgroundColor": color,
+                "tension": 0.15,
+                "pointRadius": 4,
+                "fill": False,
+            }
+        )
+    return {
+        "type": "line",
+        "data": {"labels": labels, "datasets": datasets},
+        "options": _chartjs_common_options(),
+    }
+
+
+def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+    bar_labels, bar_series, bar_rows, _bar_colors = _combo_bar_data(slide)
+    if not bar_rows:
+        return None
+    datasets: list[dict[str, Any]] = []
+    for si, name in enumerate(bar_series):
+        color = _BOARDROOM_SERIES[si % len(_BOARDROOM_SERIES)]
+        data = [row[si] if si < len(row) else None for row in bar_rows]
+        datasets.append(
+            {
+                "type": "bar",
+                "label": name,
+                "data": data,
+                "backgroundColor": color,
+                "borderColor": color,
+                "order": 2,
+            }
+        )
+    line_points = _combo_line_data(slide)
+    if line_points:
+        # Align line values to bar labels when possible
+        by_label = {str(p.get("label") or ""): p.get("value") for p in line_points}
+        line_data = [by_label.get(lbl, None) for lbl in bar_labels]
+        if all(v is None for v in line_data):
+            line_data = [p.get("value") for p in line_points]
+            # if lengths mismatch, pad/truncate to bar labels
+            if len(line_data) < len(bar_labels):
+                line_data = line_data + [None] * (len(bar_labels) - len(line_data))
+            else:
+                line_data = line_data[: len(bar_labels)]
+        vs = slide.get("visual_spec") or {}
+        overlay = vs.get("line_overlay") or {}
+        line_label = str(overlay.get("label") or "Overlay") if isinstance(overlay, dict) else "Overlay"
+        line_color = (
+            str(overlay.get("color")) if isinstance(overlay, dict) and overlay.get("color") else "#00175a"
+        )
+        # CSS vars not valid in canvas — coerce common Boardroom vars
+        if line_color.startswith("var("):
+            line_color = "#00175a"
+        datasets.append(
+            {
+                "type": "line",
+                "label": line_label,
+                "data": line_data,
+                "borderColor": line_color,
+                "backgroundColor": line_color,
+                "tension": 0.15,
+                "pointRadius": 4,
+                "order": 1,
+                "yAxisID": "y",
+            }
+        )
+    options = _chartjs_common_options()
+    return {
+        "type": "bar",
+        "data": {"labels": bar_labels, "datasets": datasets},
+        "options": options,
+    }
+
+
+def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
+    """Canvas + JSON config block for Chart.js init (library loaded in shell)."""
+    import json as _json
+
+    builders = {
+        "grouped_bar_chart": _chartjs_bar_config,
+        "line_chart": _chartjs_line_config,
+        "combo_chart": _chartjs_combo_config,
+    }
+    builder = builders.get(layout)
+    if not builder:
+        return ""
+    cfg = builder(slide)
+    if not cfg:
+        return ""
+    cid = _next_chart_id()
+    payload = _json.dumps(cfg, ensure_ascii=False)
+    return (
+        f'<div class="chartjs-wrap" data-chartjs="1" data-chart-layout="{esc(layout)}">'
+        f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
+        f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
+        f"{payload}</script>"
+        f"</div>"
+    )
 
 
 def _line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:

@@ -197,7 +197,12 @@ class TestHardGates:
         vals = re.findall(r">\s*55\s*<", block)
         # allow 1 end-label; fail if obviously double-stamped (>=3)
         assert len(vals) <= 2, vals
-        assert "chart-svg" in block or "<svg" in block
+        assert (
+            "chart-svg" in block
+            or "<svg" in block
+            or 'data-chartjs="1"' in block
+            or "chartjs-canvas" in block
+        )
 
     def test_14_notes_no_sticky_leave(self, mini_out):
         notes = mini_out["notes"]

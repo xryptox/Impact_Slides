@@ -92,7 +92,13 @@ def render_deck(
         prose = build_spoken_notes(slide, next_title)
         notes_by_num[n] = prose
         bodies.append(
-            render_slide(slide, total=total, notes=prose, active=(i == 0))
+            render_slide(
+                slide,
+                total=total,
+                notes=prose,
+                active=(i == 0),
+                use_chartjs=("charts" in features),
+            )
         )
 
     html = wrap_deck(

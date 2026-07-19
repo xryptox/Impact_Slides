@@ -34,8 +34,11 @@ def render_slide(
     total: int,
     notes: str,
     active: bool = False,
+    use_chartjs: bool = False,
 ) -> str:
-    html = _render_slide_body(slide, total=total, notes=notes, active=active)
+    html = _render_slide_body(
+        slide, total=total, notes=notes, active=active, use_chartjs=use_chartjs
+    )
     return inject_disclosure(html, slide)
 
 
@@ -45,6 +48,7 @@ def _render_slide_body(
     total: int,
     notes: str,
     active: bool = False,
+    use_chartjs: bool = False,
 ) -> str:
     # Phase 7: freeform visual_spec.grid wins over layout recipe body
     # (still uses gl-slide shell + gl-* slot chrome).
@@ -63,10 +67,14 @@ def _render_slide_body(
             return recipes.render_icon_grid(slide, total, notes, active=active)
         s = dict(slide)
         s["layout_type"] = lt
-        return recipes.render_chart(s, total, notes, active=active)
+        return recipes.render_chart(
+            s, total, notes, active=active, use_chartjs=use_chartjs
+        )
 
     if lt == "dual_chart":
-        return recipes.render_dual_chart(slide, total, notes, active=active)
+        return recipes.render_dual_chart(
+            slide, total, notes, active=active, use_chartjs=use_chartjs
+        )
 
     if lt == "icon_grid":
         return recipes.render_icon_grid(slide, total, notes, active=active)
@@ -137,6 +145,8 @@ def _render_slide_body(
         s["layout_type"] = pvt
         if pvt == "icon_grid":
             return recipes.render_icon_grid(s, total, notes, active=active)
-        return recipes.render_chart(s, total, notes, active=active)
+        return recipes.render_chart(
+            s, total, notes, active=active, use_chartjs=use_chartjs
+        )
 
     return recipes.render_split(slide, total, notes, active=active)

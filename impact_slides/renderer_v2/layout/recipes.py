@@ -979,11 +979,11 @@ def render_icon_grid(slide, total, notes, active=False):
     )
 
 
-def render_chart(slide, total, notes, active=False):
+def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False):
     from ..charts import build_chart_html
 
     layout = (slide.get("layout_type") or "grouped_bar_chart").lower()
-    chart_html = build_chart_html(slide, layout)
+    chart_html = build_chart_html(slide, layout, use_chartjs=use_chartjs)
     vs = slide.get("visual_spec") or {}
     secondary = vs.get("secondary_visual") or {}
     key_stats = (slide.get("content") or {}).get("key_stats") or []
@@ -1111,7 +1111,7 @@ def render_chart(slide, total, notes, active=False):
     )
 
 
-def render_dual_chart(slide, total, notes, active=False):
+def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = False):
     """Two charts side by side (PDF p17: bar chart left, line chart right).
 
     visual_spec.primary_visual and visual_spec.secondary_visual each carry
@@ -1145,7 +1145,8 @@ def render_dual_chart(slide, total, notes, active=False):
             "evidence_sources": slide.get("evidence_sources") or [],
         }
         panes.append(
-            f'<div class="dual-chart-pane">{build_chart_html(sub_slide, vt)}</div>'
+            f'<div class="dual-chart-pane">'
+            f"{build_chart_html(sub_slide, vt, use_chartjs=use_chartjs)}</div>"
         )
     main = f'<div class="gl-grid gl-grid-2 dual-chart">{"".join(panes)}</div>'
     main += insight_strip(_so_what(slide))

@@ -1027,13 +1027,19 @@ in P3). See `wiki/SPEC_renderer_v2_p1_feature_size_gating.md`.
 
 **Size.** Every run records `html_bytes` on `run_meta.json`. Crossing the
 advisory threshold (~2 MiB) prints a **soft warning** on stderr and does **not**
-fail the run. Baseline mini fixture is ~175 KB self-contained (fonts + Boardroom
-CSS; no Chart.js pin yet).
+fail the run. Baseline mini fixture is ~180 KB with `charts` suppressed; ~385 KB with
+Chart.js inlined (measured self-contained).
 
 **Design tokens.** Boardroom brand + curated Open Props–*inspired* primitive
 scales are **always on** (not feature-gated). Single owner doc:
 `wiki/SPEC_renderer_v2_tokens_owner.md`. Prefer `render_deck(..., theme={})`
 semantic keys for light rebrands — do not fork layout CSS.
+
+**Charts (P3).** When `charts` is auto-enabled (or forced), **Chart.js 4.4.8**
+is inlined for **grouped bar**, **line**, and **combo** layouts. Suppressing
+`charts` falls back to the existing SVG painters. stacked / waterfall /
+heatmap / icon_grid stay on the SVG/pack path. Animation defaults off.
+Spec: `wiki/SPEC_renderer_v2_p3_chartjs.md`. Pin: `assets/libs/chart.umd.min.js`.
 
 **Native disclosure (P5).** Additive handoff field `disclosure` (also under
 `content` / `visual_spec`) expands to HTML/CSS-only patterns — no Alpine:

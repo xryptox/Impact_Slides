@@ -25,7 +25,13 @@ GOOGLE_FONTS_CDN_URL = (
     "&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
 )
 
-# Reserved feature ids for P1+ (no behavior in P0).
+# Pinned Chart.js (P3). Self-contained embeds the file; CDN mode may use this URI.
+CHART_JS_FILENAME = "chart.umd.min.js"
+CHART_JS_CDN_URL = (
+    "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js"
+)
+
+# Reserved feature ids for P1+.
 KNOWN_FEATURES = frozenset({"charts", "mermaid", "alpine", "swiper", "icons"})
 
 
@@ -180,21 +186,48 @@ def build_head_assets(
     known = sorted({f for f in requested if f in KNOWN_FEATURES})
 
     if mode is DeliveryMode.CDN:
-        head = _cdn_head(iter_core_assets())
+        assets = list(iter_core_assets())
+        if "charts" in known:
+            assets.append(
+                AssetRef(
+                    asset_id="charts",
+                    kind="js",
+                    path=LIBS_DIR / CHART_JS_FILENAME,
+                    cdn_url=CHART_JS_CDN_URL,
+                )
+            )
+        head = _cdn_head(assets)
         return InlineBundle(
             head_html=head,
             meta={
                 "mode": mode.value,
-                "assets": [],
+                "assets": ["charts"] if "charts" in known else [],
                 "bytes_inlined": 0,
                 "features": known,
             },
         )
 
     font_css, total, inlined = _self_contained_font_css()
-    # P1: known feature ids are metadata-only (no Chart.js/etc. payload yet).
+    head_parts: list[str] = []
+
+    if "charts" in known:
+        chart_path = LIBS_DIR / CHART_JS_FILENAME
+        if not chart_path.is_file():
+            raise FileNotFoundError(
+                f"self-contained delivery requires vendored Chart.js at "
+                f"{chart_path} when feature 'charts' is enabled. "
+                f"Vendor the pin under assets/libs/ or suppress charts / use --use-cdn."
+            )
+        raw = chart_path.read_bytes()
+        # Inline as a classic script so Chart global is available before deck JS.
+        head_parts.append(
+            "<script>\n" + raw.decode("utf-8") + "\n</script>"
+        )
+        total += len(raw)
+        inlined = list(inlined) + ["charts"]
+
     return InlineBundle(
-        head_html="",
+        head_html="\n".join(head_parts),
         font_css=font_css,
         meta={
             "mode": mode.value,
