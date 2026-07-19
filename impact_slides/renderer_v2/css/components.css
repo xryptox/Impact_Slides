@@ -1246,6 +1246,69 @@
 }
 .gl-brand-divider .gl-brand-title { font-size: 36px; }
 
+/* ---------- dense annex table (#81/F12) ---------- */
+.gl-annex { width: 100%; }
+.gl-annex-micro .data-table,
+.annex-table {
+  font-size: 12px;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.annex-table th,
+.annex-table td {
+  padding: var(--space-1, 4px) var(--space-2, 6px);
+  border-bottom: 1px solid var(--panel-border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.annex-table .gl-annex-stub {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+  width: 18%;
+}
+.annex-table .gl-annex-head {
+  font-weight: 700;
+  color: var(--navy);
+  text-align: right;
+  border-bottom: 2px solid var(--navy);
+}
+.annex-table .gl-annex-cell { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---------- multi-panel board host (#80/F11) ---------- */
+.gl-multi-panel {
+  display: grid;
+  gap: var(--gap-md, 18px);
+  align-items: stretch;
+}
+.gl-multi-panel-2col { grid-template-columns: repeat(2, 1fr); }
+.gl-multi-panel-3col { grid-template-columns: repeat(3, 1fr); }
+.gl-tile {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4, 16px);
+  background: var(--color-surface, var(--panel, #fff));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md, 8px);
+  min-height: 200px;
+}
+.gl-tile-chart .chartjs-wrap { flex: 1; min-height: 0; }
+.gl-tile-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2, 6px);
+}
+.gl-tile-metric { justify-content: center; align-items: flex-start; }
+.gl-tile-metric-value {
+  font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.05;
+}
+
 /* Native progressive disclosure (P5) — HTML/CSS only, no JS library  */
 /* ------------------------------------------------------------------ */
 .gl-disclosure {

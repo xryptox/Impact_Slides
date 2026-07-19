@@ -209,6 +209,14 @@ class BrandCoverSlide(_BaseSlide):
     layout_type: Literal["brand_cover", "brand_divider"] = "brand_cover"
 
 
+class AnnexTableSlide(_BaseSlide):
+    layout_type: Literal["annex_table"] = "annex_table"
+
+
+class MultiPanelSlide(_BaseSlide):
+    layout_type: Literal["multi_panel"] = "multi_panel"
+
+
 class ChartSlide(_BaseSlide):
     layout_type: Literal[
         "grouped_bar_chart",
@@ -272,6 +280,8 @@ ValidatedSlide = Union[
     IrBulletSheetSlide,
     GuidanceStatementCardSlide,
     BrandCoverSlide,
+    AnnexTableSlide,
+    MultiPanelSlide,
     ChartSlide,
     LineChartSlide,
     ComboChartSlide,
@@ -336,6 +346,8 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "guidance_statement_card": GuidanceStatementCardSlide,
         "brand_cover": BrandCoverSlide,
         "brand_divider": BrandCoverSlide,
+        "annex_table": AnnexTableSlide,
+        "multi_panel": MultiPanelSlide,
         "grouped_bar_chart": ChartSlide,
         "stacked_bar_chart": ChartSlide,
         "waterfall_chart": ChartSlide,

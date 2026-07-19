@@ -894,6 +894,119 @@ def render_brand_cover(slide, total, notes, active=False, *, divider: bool = Fal
     )
 
 
+def render_annex_table(slide, total, notes, active=False):
+    """Dense widescreen annex table (#81/F12): stub column + many data
+    columns, multi-level headers, micro type, full-width within the Fixed
+    Stage. Reuses the data_table surface with annex density; not a new
+    table component family.
+    """
+    rows = _table_matrix(slide)
+    if not rows:
+        return render_metric(slide, total, notes, active=active)
+    head = rows[0]
+    body = rows[1:] if len(rows) > 1 else []
+    th = '<th class="gl-annex-stub"></th>' if False else "".join(
+        f'<th class="{"gl-annex-stub" if i == 0 else "gl-annex-head"}">{esc(h)}</th>'
+        for i, h in enumerate(head)
+    )
+    trs = []
+    for r in body:
+        tds = []
+        for i, cell in enumerate(r):
+            cls = "gl-annex-stub" if i == 0 else ("gl-annex-cell num" if re.search(r"[\d$%]", cell or "") else "gl-annex-cell")
+            tds.append(f'<td class="{cls}">{esc(cell)}</td>')
+        while len(tds) < len(head):
+            tds.append('<td class="gl-annex-cell"></td>')
+        trs.append("<tr>" + "".join(tds) + "</tr>")
+    table = (
+        f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
+        f'<table class="data-table annex-table"><thead><tr>{th}</tr></thead>'
+        f'<tbody>{"".join(trs)}</tbody></table></div>'
+    )
+    main = table + insight_strip(_so_what(slide))
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="annex_table",
+        active=active,
+        item_count=len(body),
+    )
+
+
+def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool = False):
+    """Multi-region / multi-chart board host (#80/F11). Renders each tile in
+    visual_spec.primary_visual.tiles as a gl-* region: chart tiles embed a
+    Chart.js chart (canonical path, reusing build_chart_html) beside metric
+    tiles. Builds on the chart-embedding pattern proven by chart_hero_dual.
+    """
+    from ..charts import build_chart_html
+
+    vs = slide.get("visual_spec") or {}
+    pv = vs.get("primary_visual") or {}
+    tiles = pv.get("tiles") if isinstance(pv, dict) else None
+    if not isinstance(tiles, list) or not tiles:
+        return render_metric(slide, total, notes, active=active)
+    parts = []
+    for tile in tiles:
+        if not isinstance(tile, dict):
+            continue
+        kind = str(tile.get("kind") or "metric")
+        label = strip_eids(tile.get("label") or "")
+        if kind == "chart":
+            sub_slide = {
+                **slide,
+                "layout_type": str(tile.get("chart_type") or "grouped_bar_chart"),
+                "visual_spec": {
+                    "primary_visual": {
+                        "type": str(tile.get("chart_type") or "grouped_bar_chart"),
+                        "steps_or_data": tile.get("steps_or_data") or [],
+                        "chart_config": tile.get("chart_config") or {},
+                    }
+                },
+            }
+            chart_html = build_chart_html(
+                sub_slide, sub_slide["layout_type"], use_chartjs=use_chartjs
+            )
+            lbl = f'<div class="gl-tile-label">{esc(label)}</div>' if label else ""
+            parts.append(
+                f'<div class="gl-tile gl-tile-chart">{lbl}{chart_html}</div>'
+            )
+        else:
+            val = strip_eids(tile.get("value") or "")
+            parts.append(
+                f'<div class="gl-tile gl-tile-metric">'
+                f'<div class="gl-tile-metric-value">{esc(val)}</div>'
+                f'<div class="gl-tile-label">{esc(label)}</div>'
+                f"</div>"
+            )
+    if not parts:
+        return render_metric(slide, total, notes, active=active)
+    n = len(parts)
+    cols = 2 if n <= 4 else 3
+    main = (
+        f'<div class="gl-multi-panel gl-multi-panel-{cols}col">'
+        f'{"".join(parts)}'
+        f"</div>" + insight_strip(_so_what(slide))
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="multi_panel",
+        active=active,
+        item_count=n,
+    )
+
+
 def _sequential_grid(
     items: list[str],
     *,

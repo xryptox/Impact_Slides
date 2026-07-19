@@ -517,6 +517,9 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     options = _chartjs_common_options()
     y_scale = options["scales"]["y"]
     # Axis domain: explicit min/max, or forced ticks (0/5/10/15 rails).
+    # A y_axis_break {from, to} (#79/F10) renders a discontinuous axis by
+    # clamping the effective domain to [to, max] — the break band is excluded.
+    y_break = cfg.get("y_axis_break")
     if cfg.get("force_ticks") and isinstance(cfg.get("y_axis_ticks"), list):
         ticks = [float(t) for t in cfg["y_axis_ticks"]]
         if len(ticks) >= 2:
@@ -530,6 +533,12 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             y_scale["ticks"]["max"] = float(cfg["y_axis_max"])
     if cfg.get("y_axis_label"):
         y_scale["title"] = {"display": True, "text": str(cfg["y_axis_label"])}
+    if isinstance(y_break, dict) and y_break.get("to") is not None:
+        # Exclude the break band from the effective domain.
+        y_scale["ticks"]["min"] = float(y_break["to"])
+        if cfg.get("y_axis_max") is not None:
+            y_scale["ticks"]["max"] = float(cfg["y_axis_max"])
+        y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
     if point_labels:
         options["plugins"]["datalabels"] = {"display": True}
     return {
@@ -635,12 +644,18 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
             f'<div class="chartjs-annotation" data-for="{esc(cid)}">'
             f"{esc(a_text)}</div>"
         )
+    # Broken-axis glyph marker (#79/F10): present when y_axis_break is set.
+    break_html = ""
+    yb = _chart_config(slide).get("y_axis_break")
+    if isinstance(yb, dict) and yb.get("to") is not None:
+        break_html = f'<div class="chartjs-axis-break" data-for="{esc(cid)}"></div>'
     return (
         f'<div class="chartjs-wrap" data-chartjs="1" data-chart-layout="{esc(layout)}">'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
         f"{ann_html}"
+        f"{break_html}"
         f"{noscript}"
         f"</div>"
     )

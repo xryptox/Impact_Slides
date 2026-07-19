@@ -37,6 +37,15 @@ def _visual_types(slide: Mapping[str, Any]) -> list[str]:
                 t = str(vis.get("type") or "").lower().strip()
                 if t:
                     found.append(t)
+                # multi_panel tiles may embed charts (chart_type per tile)
+                tiles = vis.get("tiles")
+                if isinstance(tiles, list):
+                    for tile in tiles:
+                        if not isinstance(tile, dict):
+                            continue
+                        ct = str(tile.get("chart_type") or tile.get("type") or "").lower().strip()
+                        if ct:
+                            found.append(ct)
         # Freeform / grid areas may carry chart types
         grid = vs.get("grid")
         if isinstance(grid, dict):

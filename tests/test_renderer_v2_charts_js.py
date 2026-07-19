@@ -674,6 +674,143 @@ class TestBrandCover:
         assert "gl-brand-divider" in html
         assert "data:image/svg" in html
 
+
+# ---------------------------------------------------------------------------
+# #79 — Broken / discontinuous y-axis painter (F10)
+# ---------------------------------------------------------------------------
+
+
+def _broken_axis_slide() -> dict:
+    s = _slide(
+        "line_chart",
+        [
+            {"label": "2021", "value": 92},
+            {"label": "2022", "value": 94},
+            {"label": "2023", "value": 96},
+        ],
+    )
+    s["title"] = "Platinum Retention"
+    s["visual_spec"]["primary_visual"]["chart_config"] = {
+        "y_axis_break": {"from": 0, "to": 90},
+        "y_axis_min": 0,
+        "y_axis_max": 100,
+    }
+    return s
+
+
+class TestBrokenYAxis:
+    def test_break_excludes_range_from_domain(self, tmp_path):
+        path = _write(tmp_path, _handoff([_broken_axis_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        ticks = cc["options"]["scales"]["y"]["ticks"]
+        # effective domain is [to, max] — the break [from, to] is excluded
+        assert ticks["min"] == 90
+        assert ticks["max"] == 100
+        assert "chartjs-axis-break" in html
+
+    def test_no_break_unchanged(self, tmp_path):
+        s = _slide("line_chart", [{"label": "A", "value": 5}, {"label": "B", "value": 8}])
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-axis-break" not in html
+
+
+# ---------------------------------------------------------------------------
+# #81 — Dense widescreen annex table packing (F12)
+# ---------------------------------------------------------------------------
+
+
+def _annex_slide() -> dict:
+    rows = [["Region", "FY25 Total", "FY25 FX", "Q1'26 Total", "Q1'26 FX", "YoY"]]
+    for name in ["US", "EMEA", "APAC", "LAC", "JAPA", "Intl"]:
+        rows.append([name, "$1,234", "$1,210", "$1,300", "$1,280", "+9%"])
+    return {
+        "slide_number": 1,
+        "layout_type": "annex_table",
+        "title": "Billed Business Annex",
+        "content": {"so_what": "Regional detail"},
+        "visual_spec": {"primary_visual": {"type": "annex_table", "steps_or_data": rows}},
+        "speaker_notes": "Notes.",
+    }
+
+
+class TestAnnexTable:
+    def test_annex_density_markers(self, tmp_path):
+        path = _write(tmp_path, _handoff([_annex_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-annex" in html
+        assert "gl-annex-stub" in html
+        assert "gl-annex-micro" in html
+        assert "Billed Business Annex" in html
+        # many columns present
+        assert "Q1'26 FX" in html
+
+    def test_conventional_table_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_table_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # CSS is always bundled; assert no annex *table markup* rendered
+        assert 'class="data-table annex-table"' not in html
+        assert 'class="gl-annex ' not in html
+
+
+# ---------------------------------------------------------------------------
+# #80 — Multi-region / multi-chart freeform host (F11)
+# ---------------------------------------------------------------------------
+
+
+def _multi_panel_slide() -> dict:
+    return {
+        "slide_number": 1,
+        "layout_type": "multi_panel",
+        "title": "Capital Position",
+        "content": {"so_what": "Strong capital"},
+        "visual_spec": {
+            "primary_visual": {
+                "type": "multi_panel",
+                "tiles": [
+                    {"kind": "chart", "chart_type": "line_chart", "label": "ROE trend",
+                     "steps_or_data": [{"label": "A", "value": 8}, {"label": "B", "value": 10}]},
+                    {"kind": "chart", "chart_type": "grouped_bar_chart", "label": "Returns",
+                     "steps_or_data": BAR_STEPS},
+                    {"kind": "metric", "label": "CET1", "value": "10.4%"},
+                    {"kind": "metric", "label": "Share repo", "value": "$2.0B"},
+                ],
+            }
+        },
+        "speaker_notes": "Notes.",
+    }
+
+
+class TestMultiPanel:
+    def test_charts_and_metrics_as_tiles(self, tmp_path):
+        path = _write(tmp_path, _handoff([_multi_panel_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # two Chart.js charts as tiles + metric tiles
+        assert html.count('data-chartjs="1"') >= 2
+        assert "gl-multi-panel" in html
+        assert "gl-tile" in html
+        assert "CET1" in html and "10.4%" in html
+        assert "Share repo" in html and "$2.0B" in html
+        assert remote_fetch_urls(html) == []
+
+    def test_multi_panel_self_contained(self, tmp_path):
+        path = _write(tmp_path, _handoff([_multi_panel_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert remote_fetch_urls(html) == []
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"
