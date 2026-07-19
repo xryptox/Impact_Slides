@@ -466,6 +466,51 @@ class TestPillComparison:
         assert "data-table" in html
         assert "gl-pill-col" not in html
 
+
+# ---------------------------------------------------------------------------
+# #75 — Chart | hero-KPI dual card layout (F5)
+# ---------------------------------------------------------------------------
+
+
+def _chart_hero_slide(chart=True) -> dict:
+    pv = {"type": "grouped_bar_chart", "steps_or_data": BAR_STEPS} if chart else {}
+    return {
+        "slide_number": 1,
+        "layout_type": "chart_hero_dual",
+        "title": "New Acquisitions",
+        "content": {
+            "so_what": "Premium mix",
+            "key_stats": [
+                {"label": "Millennial/Gen-Z", "value": "66%"},
+                {"label": "Fee-Paying", "value": "73%"},
+            ],
+        },
+        "visual_spec": {"primary_visual": pv},
+        "speaker_notes": "Notes.",
+    }
+
+
+class TestChartHeroDual:
+    def test_chart_and_hero_stack_peers(self, tmp_path):
+        path = _write(tmp_path, _handoff([_chart_hero_slide(chart=True)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # left Chart.js chart + right hero-KPI stack as peers
+        assert 'data-chartjs="1"' in html
+        assert "gl-hero-stack" in html
+        assert "Millennial/Gen-Z" in html and "66%" in html
+        assert "Fee-Paying" in html and "73%" in html
+        assert "chart_hero_dual" in html or "layout-chart-hero" in html
+
+    def test_no_chart_still_renders_hero(self, tmp_path):
+        path = _write(tmp_path, _handoff([_chart_hero_slide(chart=False)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-hero-stack" in html
+        assert "66%" in html
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"

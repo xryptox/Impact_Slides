@@ -193,6 +193,10 @@ class PillComparisonSlide(_BaseSlide):
     layout_type: Literal["pill_comparison"] = "pill_comparison"
 
 
+class ChartHeroDualSlide(_BaseSlide):
+    layout_type: Literal["chart_hero_dual"] = "chart_hero_dual"
+
+
 class ChartSlide(_BaseSlide):
     layout_type: Literal[
         "grouped_bar_chart",
@@ -252,6 +256,7 @@ ValidatedSlide = Union[
     IconGridSlide,
     FreeformGridSlide,
     PillComparisonSlide,
+    ChartHeroDualSlide,
     ChartSlide,
     LineChartSlide,
     ComboChartSlide,
@@ -311,6 +316,7 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "icon_grid": IconGridSlide,
         "freeform_grid": FreeformGridSlide,
         "pill_comparison": PillComparisonSlide,
+        "chart_hero_dual": ChartHeroDualSlide,
         "grouped_bar_chart": ChartSlide,
         "stacked_bar_chart": ChartSlide,
         "waterfall_chart": ChartSlide,

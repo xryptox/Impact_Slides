@@ -702,6 +702,67 @@ def render_pill_comparison(slide, total, notes, active=False):
     )
 
 
+def _hero_stack(stats: Sequence[Any]) -> str:
+    """Right-hand giant % callout stack for chart_hero_dual (#75/F5)."""
+    cards = []
+    for st in stats[:4]:
+        if isinstance(st, dict):
+            lab = strip_eids(st.get("label") or "")
+            val = strip_eids(st.get("value") or "")
+        elif isinstance(st, (list, tuple)) and len(st) >= 2:
+            lab, val = strip_eids(st[0]), strip_eids(st[1])
+        else:
+            continue
+        if not lab and not val:
+            continue
+        cards.append(
+            f'<div class="gl-hero card">'
+            f'<div class="gl-hero-value">{esc(val)}</div>'
+            f'<div class="gl-hero-label">{esc(lab)}</div>'
+            f"</div>"
+        )
+    if not cards:
+        return ""
+    return f'<div class="gl-hero-stack">{"".join(cards)}</div>'
+
+
+def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bool = False):
+    """Left chart card + right giant-% hero stack as peer cards (#75/F5).
+
+    Hosts a Chart.js chart (charts feature) on the left and large hero-KPI
+    callouts (from content.key_stats) on the right — the IR acquisitions
+    pattern. Falls back to the SVG painter when charts are suppressed.
+    """
+    from ..charts import build_chart_html
+
+    vs = slide.get("visual_spec") or {}
+    pv = vs.get("primary_visual") or {}
+    chart_html = ""
+    if isinstance(pv, dict) and pv.get("type"):
+        chart_html = build_chart_html(slide, str(pv.get("type")), use_chartjs=use_chartjs)
+    hero = _hero_stack((slide.get("content") or {}).get("key_stats") or [])
+    if not chart_html and not hero:
+        return render_metric(slide, total, notes, active=active)
+    main = (
+        f'<div class="gl-areas-chart-hero">'
+        f'<div class="gl-chart-hero-chart">{chart_html or "<div class=\"chart-empty\">No chart</div>"}</div>'
+        f'<div class="gl-chart-hero-stack">{hero}</div>'
+        f"</div>" + insight_strip(_so_what(slide))
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="chart_hero_dual",
+        active=active,
+        item_count=2,
+    )
+
+
 def _sequential_grid(
     items: list[str],
     *,

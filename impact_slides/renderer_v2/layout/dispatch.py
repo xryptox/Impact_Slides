@@ -95,6 +95,10 @@ def _render_slide_body(
         return recipes.render_table(slide, total, notes, active=active)
     if lt == "pill_comparison":
         return recipes.render_pill_comparison(slide, total, notes, active=active)
+    if lt == "chart_hero_dual":
+        return recipes.render_chart_hero_dual(
+            slide, total, notes, active=active, use_chartjs=use_chartjs
+        )
     if lt in ("full_process_flow", "timeline", "roadmap"):
         return recipes.render_process(slide, total, notes, active=active)
     if lt == "comparison_grid":
