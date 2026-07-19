@@ -173,20 +173,33 @@ def build_head_assets(
     warns on stderr and is ignored.
     """
     mode = coerce_delivery(mode)
-    unknown = [f for f in feature_ids if f not in KNOWN_FEATURES]
+    requested = [str(f).strip() for f in feature_ids if str(f).strip()]
+    unknown = [f for f in requested if f not in KNOWN_FEATURES]
     for fid in unknown:
         print(f"[lib_inliner] unknown feature id ignored: {fid}", file=sys.stderr)
+    known = sorted({f for f in requested if f in KNOWN_FEATURES})
 
     if mode is DeliveryMode.CDN:
         head = _cdn_head(iter_core_assets())
         return InlineBundle(
             head_html=head,
-            meta={"mode": mode.value, "assets": [], "bytes_inlined": 0},
+            meta={
+                "mode": mode.value,
+                "assets": [],
+                "bytes_inlined": 0,
+                "features": known,
+            },
         )
 
     font_css, total, inlined = _self_contained_font_css()
+    # P1: known feature ids are metadata-only (no Chart.js/etc. payload yet).
     return InlineBundle(
         head_html="",
         font_css=font_css,
-        meta={"mode": mode.value, "assets": inlined, "bytes_inlined": total},
+        meta={
+            "mode": mode.value,
+            "assets": inlined,
+            "bytes_inlined": total,
+            "features": known,
+        },
     )

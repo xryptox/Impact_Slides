@@ -13,4 +13,6 @@ Process (per `wiki/SPEC_renderer_v2_p0_self_contained.md`):
 1. Download from the official upstream release/CDN only.
 2. Commit the upstream LICENSE beside the artifact.
 3. Record version + source URL here.
-4. Re-measure inlined byte size when bumping versions (P1 size matrix).
+4. Re-measure inlined byte size when bumping versions — use `run_meta.json`
+   `html_bytes` / `bytes_inlined` and update the size matrix in
+   `wiki/SPEC_renderer_v2_p1_feature_size_gating.md`.

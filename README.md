@@ -1016,7 +1016,19 @@ remote fetch URL in self-contained output. Third-party inventory lives in
 | `presentation.html` | Self-contained Boardroom deck (`gl-*` Grid primitives) |
 | `slide_notes.md` | Presenter-deliverable prose notes |
 | `evidence_manifest.json` | Slide→evidence map (`style_preset: BoardroomEarnings`) |
-| `run_meta.json` | Generator version + layout inventory + `delivery` mode |
+| `run_meta.json` | Generator version + layout inventory + `delivery` + `features_enabled` + `html_bytes` |
+
+**Feature gating.** Optional JS capabilities are **auto-enabled from the handoff**
+(e.g. chart layouts → `charts`). Reserved ids: `charts`, `mermaid`, `alpine`,
+`swiper`, `icons`. Override with `--force-feature ID` / `--suppress-feature ID`
+(suppress beats force beats detect; unknown ids fail closed). Enabling a feature
+in MVP1 may be **metadata-only** until that library is vendored (Chart.js lands
+in P3). See `wiki/SPEC_renderer_v2_p1_feature_size_gating.md`.
+
+**Size.** Every run records `html_bytes` on `run_meta.json`. Crossing the
+advisory threshold (~2 MiB) prints a **soft warning** on stderr and does **not**
+fail the run. Baseline mini fixture is ~175 KB self-contained (fonts + Boardroom
+CSS; no Chart.js pin yet).
 
 **Layout mapping** uses shared CSS under `impact_slides/renderer_v2/css/`
 (`tokens`, `viewport`, `gridlines`, `components`) rather than ad-hoc per-layout
@@ -1026,7 +1038,7 @@ grids. Optional freeform: `visual_spec.grid` named slots (see Builder prompt).
 - **Copilot/ChatGPT** Impact Slide Renderer prompt — LLM hand-author path for the same Boardroom contracts.
 - **`step4_builder_validator.py`** — older PPTX/HTML fallback; does not yet paint charts/freeform boardroom physics fully.
 
-Flags: `--self-contained` (default) embeds required assets; `--use-cdn` references them via CDN (dev only); `--debug` outlines `gl-*` regions; default validation rejects face `E####`, missing Boardroom tokens, remote fetches in self-contained decks, or broken stage JS (`--no-strict` to warn only).
+Flags: `--self-contained` (default) embeds required assets; `--use-cdn` references them via CDN (dev only); `--force-feature` / `--suppress-feature` override auto-detected feature ids; `--debug` outlines `gl-*` regions; default validation rejects face `E####`, missing Boardroom tokens, remote fetches in self-contained decks, or broken stage JS (`--no-strict` to warn only).
 
 
 ## Schema Contract (Pydantic)

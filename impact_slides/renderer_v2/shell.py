@@ -97,12 +97,14 @@ def wrap_deck(
     theme: dict[str, str] | None = None,
     delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
     bundle: InlineBundle | None = None,
+    features_enabled: Sequence[str] | None = None,
 ) -> str:
     delivery = coerce_delivery(delivery)
     if bundle is None:
         bundle = build_head_assets(delivery)
     title = esc(meta.get("title") or "Impact Slides")
     body_cls = "gl-debug" if debug else ""
+    features = list(features_enabled if features_enabled is not None else [])
     deck_meta = {
         "style_preset": "BoardroomEarnings",
         "title": meta.get("title"),
@@ -112,6 +114,7 @@ def wrap_deck(
         "generator": "impact_slides.renderer_v2",
         "delivery": delivery.value,
         "assets_inlined": list(bundle.meta.get("assets") or []),
+        "features_enabled": features,
     }
     css = "\n\n".join(p for p in (bundle.font_css, load_css(debug=debug)) if p)
     theme_block = _theme_style(theme)

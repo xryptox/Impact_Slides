@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
+from . import features as features_mod
+from .features import resolve_features
 from .lib_inliner import DeliveryMode, build_head_assets, coerce_delivery
 from .load import load_json, load_seed, normalize_handoff, present_meta
 from .schemas import validate_handoff
@@ -31,16 +33,20 @@ def render_deck(
     strict: bool = True,
     theme: dict[str, str] | None = None,
     delivery: DeliveryMode | str = DeliveryMode.SELF_CONTAINED,
+    force_features: list[str] | None = None,
+    suppress_features: list[str] | None = None,
 ) -> dict[str, Any]:
     """Render a Builder handoff to presentation.html + notes + manifest.
 
     ``delivery`` selects how third-party assets reach the deck:
     ``"self-contained"`` (default, offline-safe) or ``"cdn"`` (dev-only).
 
+    Features are auto-detected from the handoff; ``force_features`` /
+    ``suppress_features`` override (suppress beats force beats detect).
+
     Returns a result dict with paths and validation errors.
     """
     delivery = coerce_delivery(delivery)
-    bundle = build_head_assets(delivery)
     handoff_path = Path(handoff_path)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -55,6 +61,15 @@ def render_deck(
     meta = present_meta(handoff)
     slides = handoff["slides"]
     total = len(slides)
+
+    features = resolve_features(
+        handoff,
+        force=force_features or (),
+        suppress=suppress_features or (),
+    )
+    features_list = sorted(features)
+    bundle = build_head_assets(delivery, feature_ids=features_list)
+
     # Coerce slides list to contain validated models (fallback already applied)
     validated_lookup = {s.slide_number: s for s in validated_slides}
     _ = validated_lookup  # may be used for diagnostics later
@@ -79,9 +94,18 @@ def render_deck(
         theme=theme,
         delivery=delivery,
         bundle=bundle,
+        features_enabled=features_list,
     )
     html_path = out / "presentation.html"
     html_path.write_text(html, encoding="utf-8")
+    html_bytes = html_path.stat().st_size
+    if html_bytes >= features_mod.ADVISORY_HTML_BYTES:
+        print(
+            f"[size] presentation.html is {html_bytes} bytes "
+            f"(advisory threshold {features_mod.ADVISORY_HTML_BYTES}); "
+            f"features={features_list}",
+            file=sys.stderr,
+        )
 
     notes_path = out / "slide_notes.md"
     write_slide_notes_md(notes_path, slides, notes_by_num)
@@ -98,6 +122,9 @@ def render_deck(
         "total_slides": total,
         "delivery": delivery.value,
         "assets_inlined": list(bundle.meta.get("assets") or []),
+        "features_enabled": features_list,
+        "html_bytes": html_bytes,
+        "bytes_inlined": int(bundle.meta.get("bytes_inlined") or 0),
         "layouts": [s.get("layout_type") for s in slides],
     }
     (out / "run_meta.json").write_text(
@@ -111,6 +138,8 @@ def render_deck(
         "slide_notes": str(notes_path),
         "manifest": str(man_path),
         "total_slides": total,
+        "features_enabled": features_list,
+        "html_bytes": html_bytes,
         "errors": errors,
         "ok": not errors,
     }
@@ -150,6 +179,20 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.set_defaults(delivery=DeliveryMode.SELF_CONTAINED)
     p.add_argument(
+        "--force-feature",
+        action="append",
+        default=[],
+        metavar="ID",
+        help="force-enable a feature id (repeatable); known: charts, mermaid, alpine, swiper, icons",
+    )
+    p.add_argument(
+        "--suppress-feature",
+        action="append",
+        default=[],
+        metavar="ID",
+        help="suppress a feature id even if detected (repeatable); beats --force-feature",
+    )
+    p.add_argument(
         "--no-strict",
         action="store_true",
         help="do not exit non-zero on validation errors",
@@ -165,12 +208,17 @@ def main(argv: list[str] | None = None) -> int:
             debug=args.debug,
             strict=not args.no_strict,
             delivery=args.delivery,
+            force_features=args.force_feature,
+            suppress_features=args.suppress_feature,
         )
     except SystemExit as e:
         if isinstance(e.code, str):
             print(e.code, file=sys.stderr)
             return 1
         raise
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
