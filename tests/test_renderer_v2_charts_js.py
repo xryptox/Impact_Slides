@@ -196,6 +196,115 @@ class TestChartJsRender:
         )
         assert out3 == [None, None, None]
 
+
+# ---------------------------------------------------------------------------
+# #71 — IR line-chart contract (F1+F2+F15): Chart.js honors chart_config
+# ---------------------------------------------------------------------------
+
+def _line_slide_with_cfg(cfg: dict, steps: list) -> dict:
+    s = _slide("line_chart", steps)
+    s["visual_spec"]["primary_visual"]["chart_config"] = cfg
+    return s
+
+
+TWO_SERIES = [
+    {"label": "Q1", "value": 8, "series_2": 4},
+    {"label": "Q2", "value": 10, "series_2": 6},
+    {"label": "Q3", "value": 12, "series_2": 7},
+]
+
+
+def _chartjs_cfg(html: str) -> dict:
+    marker = 'class="chartjs-config"'
+    i = html.index(marker)
+    j = html.index(">", i)
+    k = html.index("</script>", j)
+    return json.loads(html[j + 1 : k])
+
+
+class TestLineChartContract:
+    def test_chartjs_uses_series_names(self, tmp_path):
+        cfg = {"series_names": ["Billed", "Card"]}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        labels = [d["label"] for d in cc["data"]["datasets"]]
+        assert labels == ["Billed", "Card"]
+
+    def test_chartjs_dashed_secondary_series(self, tmp_path):
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg({}, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        # Secondary series (index 1) is dashed by IR default
+        assert cc["data"]["datasets"][1].get("borderDash")
+
+    def test_chartjs_force_ticks(self, tmp_path):
+        cfg = {"force_ticks": True, "y_axis_ticks": [0, 5, 10, 15]}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        ticks = cc["options"]["scales"]["y"]["ticks"]
+        assert ticks.get("min") == 0
+        assert ticks.get("max") == 15
+        assert ticks.get("stepSize") == 5
+
+    def test_chartjs_explicit_min_max(self, tmp_path):
+        cfg = {"y_axis_min": 0, "y_axis_max": 20}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        ticks = cc["options"]["scales"]["y"]["ticks"]
+        assert ticks.get("min") == 0
+        assert ticks.get("max") == 20
+
+    def test_chartjs_series_colors_override(self, tmp_path):
+        cfg = {"series_colors": ["#ff0000", "#00ff00"]}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        assert cc["data"]["datasets"][0]["borderColor"] == "#ff0000"
+        assert cc["data"]["datasets"][1]["borderColor"] == "#00ff00"
+
+    def test_chartjs_point_labels(self, tmp_path):
+        cfg = {"point_labels": True}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        d0 = cc["data"]["datasets"][0]
+        assert d0.get("pointLabels") == ["8%", "10%", "12%"]
+        assert cc["options"]["plugins"]["datalabels"].get("display") is True
+
+    def test_chartjs_annotation_marker(self, tmp_path):
+        cfg = {"annotation": {"text": "Leap Year Approx. (1%)"}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "Leap Year Approx. (1%)" in html
+        assert "chartjs-annotation" in html
+
+    def test_no_config_keeps_defaults(self, tmp_path):
+        # No chart_config → current defaults unchanged (no ticks forced)
+        path = _write(tmp_path, _handoff([_slide("line_chart", TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        assert "stepSize" not in cc["options"]["scales"]["y"]["ticks"]
+        assert "pointLabels" not in cc["data"]["datasets"][0]
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"
