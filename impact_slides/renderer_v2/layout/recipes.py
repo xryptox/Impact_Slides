@@ -763,6 +763,92 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     )
 
 
+def render_ir_bullet_sheet(slide, total, notes, active=False):
+    """Centered title + full-width single-column bullet sheet with selective
+    inline bold (#77/F7). Bullet text passes through rich_text (escape +
+    ``**bold**``); unsafe markup is escaped (semi-trusted, fail closed).
+    """
+    from ..rich_text import rich_bullets
+
+    bullets = rich_bullets((slide.get("content") or {}).get("bullets") or [])
+    if not bullets:
+        return render_metric(slide, total, notes, active=active)
+    items = "".join(f'<li class="gl-ir-bullet">{b}</li>' for b in bullets)
+    main = (
+        f'<div class="gl-areas-ir-bullets">'
+        f'<ul class="gl-ir-bullets">{items}</ul>'
+        f"</div>" + insight_strip(_so_what(slide))
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="ir_bullet_sheet",
+        active=active,
+        item_count=len(bullets),
+    )
+
+
+def render_guidance_statement_card(slide, total, notes, active=False):
+    """Single bordered card, navy title bar, underlined label→value rows,
+    footnote pedestal (#78/F8). IR guidance statement chrome; content comes
+    from content.key_stats (label→value rows) and content.so_what / bullets
+    for footnotes. Reuses Boardroom tokens.
+    """
+    c = slide.get("content") or {}
+    stats = c.get("key_stats") or []
+    rows = []
+    for st in stats[:4]:
+        if isinstance(st, dict):
+            lab = strip_eids(st.get("label") or "")
+            val = strip_eids(st.get("value") or "")
+        elif isinstance(st, (list, tuple)) and len(st) >= 2:
+            lab, val = strip_eids(st[0]), strip_eids(st[1])
+        else:
+            continue
+        if not lab and not val:
+            continue
+        rows.append(
+            f'<div class="gl-guid-row">'
+            f'<span class="gl-guid-label">{esc(lab)}</span>'
+            f'<span class="gl-guid-value">{esc(val)}</span>'
+            f"</div>"
+        )
+    if not rows:
+        return render_metric(slide, total, notes, active=active)
+    footnotes = [strip_eids(b) for b in (c.get("bullets") or []) if strip_eids(b)][:3]
+    foot_html = ""
+    if footnotes:
+        foot_items = "".join(f'<div class="gl-guid-foot">{esc(f)}</div>' for f in footnotes)
+        foot_html = f'<div class="gl-guid-footnotes">{foot_items}</div>'
+    bar_title = strip_eids(c.get("subtitle") or slide.get("title") or "Guidance")
+    main = (
+        f'<div class="gl-areas-guidance">'
+        f'<div class="gl-guidance card">'
+        f'<div class="gl-guid-bar">{esc(bar_title)}</div>'
+        f'<div class="gl-guid-body">{"".join(rows)}</div>'
+        f"</div>"
+        f"{foot_html}"
+        f"</div>"
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="guidance_statement_card",
+        active=active,
+        item_count=len(rows),
+    )
+
+
 def _sequential_grid(
     items: list[str],
     *,

@@ -511,6 +511,101 @@ class TestChartHeroDual:
         assert "gl-hero-stack" in html
         assert "66%" in html
 
+
+# ---------------------------------------------------------------------------
+# #77 — IR bullet sheet + inline rich-text spans (F7)
+# ---------------------------------------------------------------------------
+
+
+def _ir_bullet_slide(bullets) -> dict:
+    return {
+        "slide_number": 1,
+        "layout_type": "ir_bullet_sheet",
+        "title": "Business Highlights",
+        "content": {"bullets": bullets},
+        "speaker_notes": "Notes.",
+    }
+
+
+class TestIrBulletSheet:
+    def test_bold_span_rendered(self, tmp_path):
+        bullets = ["Strong **billed business** growth across segments"]
+        path = _write(tmp_path, _handoff([_ir_bullet_slide(bullets)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "<strong>billed business</strong>" in html
+        # bullets element: markdown markers consumed (speaker-notes prose echoes
+        # raw bullets by design; only the painted bullets are in scope here)
+        bullets_el = html.split('class="gl-ir-bullets"', 1)[1].split("</ul>", 1)[0]
+        assert "**billed" not in bullets_el
+        assert "gl-ir-bullets" in html
+
+    def test_plain_bullet_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_ir_bullet_slide(["Plain bullet text"])]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "Plain bullet text" in html
+        assert "gl-ir-bullets" in html
+
+    def test_unsafe_markup_stripped(self, tmp_path):
+        path = _write(
+            tmp_path,
+            _handoff([_ir_bullet_slide(['Bad <script>alert(1)</script> **bold**'])]),
+        )
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # handoff-injected script escaped (shell's own nav <script> is expected)
+        assert "&lt;script&gt;" in html
+        assert "alert(1)</script>" not in html
+        assert "<strong>bold</strong>" in html
+
+
+# ---------------------------------------------------------------------------
+# #78 — IR guidance / statement card recipe (F8)
+# ---------------------------------------------------------------------------
+
+
+def _guidance_slide() -> dict:
+    return {
+        "slide_number": 1,
+        "layout_type": "guidance_statement_card",
+        "title": "2026 Guidance",
+        "content": {
+            "subtitle": "Full-Year 2026 Guidance",
+            "key_stats": [
+                {"label": "FX-adjusted billings growth", "value": "10-12%"},
+                {"label": "EPS", "value": "≥$18"},
+            ],
+            "bullets": ["As reported, FX-adjusted basis"],
+        },
+        "speaker_notes": "Notes.",
+    }
+
+
+class TestGuidanceStatementCard:
+    def test_card_chrome_and_rows(self, tmp_path):
+        path = _write(tmp_path, _handoff([_guidance_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-guidance" in html
+        assert "gl-guid-bar" in html
+        assert "gl-guid-row" in html
+        assert "FX-adjusted billings growth" in html
+        assert "10-12%" in html
+        assert "≥$18" in html
+
+    def test_footnotes_render(self, tmp_path):
+        path = _write(tmp_path, _handoff([_guidance_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-guid-footnotes" in html
+        assert "As reported, FX-adjusted basis" in html
+
     def test_animation_false_in_config(self, tmp_path):
         path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
         out = tmp_path / "out"
