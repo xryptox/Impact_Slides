@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from ..charts import is_chart_layout
+from ..disclosure import inject_disclosure
 from . import freeform, recipes
 
 
@@ -28,6 +29,17 @@ def resolve_layout(slide: Mapping[str, Any]) -> str:
 
 
 def render_slide(
+    slide: Mapping[str, Any],
+    *,
+    total: int,
+    notes: str,
+    active: bool = False,
+) -> str:
+    html = _render_slide_body(slide, total=total, notes=notes, active=active)
+    return inject_disclosure(html, slide)
+
+
+def _render_slide_body(
     slide: Mapping[str, Any],
     *,
     total: int,

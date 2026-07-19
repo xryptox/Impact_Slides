@@ -1,0 +1,62 @@
+{
+  "title": "Disclosure Patterns Fixture",
+  "readiness_score": 0.9,
+  "quality_flags": [],
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "split_text_visual",
+      "title": "Detail expand",
+      "content": {
+        "headline": "Methodology stays one click away",
+        "so_what": "Secondary detail should not dominate the slide."
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Methodology",
+            "body": "Sample constructed from public filings.\nNot investment advice."
+          }
+        ]
+      },
+      "speaker_notes": "Open the methodology panel if challenged."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "split_text_visual",
+      "title": "Accordion sections",
+      "content": {
+        "headline": "Several secondary topics",
+        "so_what": "Accordion keeps the narrative plane clean."
+      },
+      "disclosure": {
+        "pattern": "accordion",
+        "panels": [
+          {"title": "Risks", "body": "Execution risk remains the primary concern."},
+          {"title": "Assumptions", "body": "Revenue CAGR held at plan case."},
+          {"title": "Sources", "body": "10-K · Investor day deck · Press wire"}
+        ]
+      },
+      "speaker_notes": "Expand only the section the room asks about."
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "split_text_visual",
+      "title": "Simple tabs",
+      "content": {
+        "headline": "Alternate cuts without Swiper",
+        "so_what": "Tabs keep two views in one Boardroom frame."
+      },
+      "disclosure": {
+        "pattern": "tabs",
+        "default_index": 0,
+        "panels": [
+          {"title": "Base case", "body": "Margin expands 120 bps by year three."},
+          {"title": "Downside", "body": "Margin flat if churn stays elevated."}
+        ]
+      },
+      "speaker_notes": "Toggle base vs downside with the tab labels."
+    }
+  ]
+}

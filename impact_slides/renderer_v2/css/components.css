@@ -1029,3 +1029,99 @@
     width: 100%;
     height: auto;
 }
+
+/* ------------------------------------------------------------------ */
+/* Native progressive disclosure (P5) — HTML/CSS only, no JS library  */
+/* ------------------------------------------------------------------ */
+.gl-disclosure {
+  margin: var(--space-md, 20px) 0 var(--space-sm, 12px);
+  font-family: var(--font-body);
+  color: var(--color-ink, var(--ink));
+}
+.gl-disclosure details {
+  border: 1px solid var(--color-panel-border, var(--panel-border));
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-surface-soft, var(--bg-soft));
+  margin-bottom: var(--size-2, 8px);
+  overflow: hidden;
+}
+.gl-disclosure summary {
+  cursor: pointer;
+  list-style: none;
+  padding: var(--size-3, 12px) var(--size-4, 16px);
+  font-weight: 600;
+  font-size: var(--text-sm, 14px);
+  color: var(--color-primary, var(--navy));
+  background: var(--color-panel, var(--panel));
+}
+.gl-disclosure summary::-webkit-details-marker { display: none; }
+.gl-disclosure summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: var(--size-2, 8px);
+  transition: transform 0.12s ease;
+}
+.gl-disclosure details[open] > summary::before { transform: rotate(90deg); }
+.gl-disclosure-body {
+  padding: var(--size-3, 12px) var(--size-4, 16px) var(--size-4, 16px);
+  font-size: var(--fs-body, 22px);
+  line-height: 1.35;
+}
+.gl-disclosure-body p { margin: 0 0 var(--size-2, 8px); }
+.gl-disclosure-body ul { margin: 0; padding-left: var(--size-5, 20px); }
+
+/* Radio CSS tabs */
+.gl-disclosure-tabs { position: relative; }
+.gl-disclosure-tabs > .gl-tab-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.gl-tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-2, 8px);
+  margin-bottom: var(--size-3, 12px);
+  border-bottom: 2px solid var(--color-panel-border, var(--panel-border));
+  padding-bottom: var(--size-2, 8px);
+}
+.gl-tab {
+  cursor: pointer;
+  padding: var(--size-2, 8px) var(--size-4, 16px);
+  border-radius: var(--radius-sm, 8px) var(--radius-sm, 8px) 0 0;
+  font-weight: 600;
+  font-size: var(--text-sm, 14px);
+  color: var(--color-ink-muted, var(--ink-muted));
+  background: transparent;
+  border: 1px solid transparent;
+}
+.gl-tab-panels {
+  border: 1px solid var(--color-panel-border, var(--panel-border));
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-surface, var(--slide-bg));
+  padding: var(--size-4, 16px);
+  min-height: 4em;
+}
+.gl-tab-panel { display: none; }
+/* Show panel N when radio N is checked (up to 6 panels) */
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(1):checked ~ .gl-tab-panels > .gl-tab-panel:nth-child(1),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(2):checked ~ .gl-tab-panels > .gl-tab-panel:nth-child(2),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(3):checked ~ .gl-tab-panels > .gl-tab-panel:nth-child(3),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(4):checked ~ .gl-tab-panels > .gl-tab-panel:nth-child(4),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(5):checked ~ .gl-tab-panels > .gl-tab-panel:nth-child(5),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(6):checked ~ .gl-tab-panels > .gl-tab-panel:nth-child(6) {
+  display: block;
+}
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(1):checked ~ .gl-tab-list > .gl-tab:nth-child(1),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(2):checked ~ .gl-tab-list > .gl-tab:nth-child(2),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(3):checked ~ .gl-tab-list > .gl-tab:nth-child(3),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(4):checked ~ .gl-tab-list > .gl-tab:nth-child(4),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(5):checked ~ .gl-tab-list > .gl-tab:nth-child(5),
+.gl-disclosure-tabs > .gl-tab-input:nth-of-type(6):checked ~ .gl-tab-list > .gl-tab:nth-child(6) {
+  color: var(--color-primary, var(--navy));
+  border-color: var(--color-panel-border, var(--panel-border));
+  border-bottom-color: var(--color-surface, #fff);
+  background: var(--color-surface, #fff);
+}

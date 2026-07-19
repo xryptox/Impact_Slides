@@ -1035,6 +1035,13 @@ scales are **always on** (not feature-gated). Single owner doc:
 `wiki/SPEC_renderer_v2_tokens_owner.md`. Prefer `render_deck(..., theme={})`
 semantic keys for light rebrands — do not fork layout CSS.
 
+**Native disclosure (P5).** Additive handoff field `disclosure` (also under
+`content` / `visual_spec`) expands to HTML/CSS-only patterns — no Alpine:
+`detail` (`<details>`), `accordion` (multi-open details), `tabs` (radio CSS).
+Example: `{"pattern":"detail","panels":[{"title":"Methodology","body":"…"}]}`.
+Unknown patterns fail closed. Spec: `wiki/SPEC_renderer_v2_p5_native_disclosure.md`.
+Fixture: `tests/fixtures/renderer_v2/disclosure_handoff.json`.
+
 **Layout mapping** uses shared CSS under `impact_slides/renderer_v2/css/`
 (`tokens`, `viewport`, `gridlines`, `components`) rather than ad-hoc per-layout
 grids. Optional freeform: `visual_spec.grid` named slots (see Builder prompt).

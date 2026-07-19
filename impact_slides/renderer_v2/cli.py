@@ -9,6 +9,7 @@ from typing import Any
 
 from . import __version__
 from . import features as features_mod
+from .disclosure import DisclosureError, extract_disclosure, build_disclosure_html
 from .features import resolve_features
 from .lib_inliner import DeliveryMode, build_head_assets, coerce_delivery
 from .load import load_json, load_seed, normalize_handoff, present_meta
@@ -76,6 +77,13 @@ def render_deck(
 
     notes_by_num: dict[int, str] = {}
     bodies: list[str] = []
+    # Fail closed on unknown disclosure patterns before paint (P5).
+    for slide in slides:
+        if extract_disclosure(slide) is not None:
+            try:
+                build_disclosure_html(slide)
+            except DisclosureError as e:
+                raise ValueError(str(e)) from e
     for i, slide in enumerate(slides):
         n = int(slide.get("slide_number") or i + 1)
         next_title = ""
