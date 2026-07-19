@@ -26,6 +26,8 @@ Evolve the existing chart paint path so that:
 5. Boardroom brand/semantic colors are preferred for series/chrome where practical (no full redesign).
 6. Layout types outside the MVP Chart.js set (**stacked bar, waterfall, heatmap, icon_grid**, etc.) **keep today’s SVG/pack behavior** in P3; they may still flip the `charts` feature on for “deck needs charts” detection, but do not require Chart.js canvas in this theme unless trivially shared — **normative interactive Chart.js = bar + line + combo only**.
 
+   > **Superseded (Amex fidelity epic, #72):** `stacked_bar_chart` now routes through the Chart.js canonical path with signed stacking (negative reserve-release segments render below zero). Waterfall / heatmap / icon_grid still keep SVG/pack behavior. See `wiki/SPEC_renderer_v2_amex_fidelity.md`.
+
 ## User Stories
 
 1. As a deck operator, I want chart-heavy handoffs to embed Chart.js only when charts are needed, so that non-chart decks stay small.

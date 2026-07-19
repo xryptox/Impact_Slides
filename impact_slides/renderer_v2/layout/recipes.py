@@ -340,6 +340,25 @@ def _kpi_cards(stats: Sequence[Any], *, cols_class: str) -> str:
     return f'<div class="gl-grid {cols_class}">{"".join(cards)}</div>'
 
 
+def _stat_label_value(st: Any) -> tuple[str, str] | None:
+    """Normalize a key_stats / stat-like entry to (label, value).
+
+    Accepts a dict (label/value keys) or a 2-tuple/list; returns None for
+    unusable entries. Single owner for the normalization that many
+    stat-consuming recipes need (prevents shotgun surgery if the shape changes).
+    """
+    if isinstance(st, dict):
+        lab = strip_eids(st.get("label") or "")
+        val = strip_eids(st.get("value") or "")
+    elif isinstance(st, (list, tuple)) and len(st) >= 2:
+        lab, val = strip_eids(st[0]), strip_eids(st[1])
+    else:
+        return None
+    if not lab and not val:
+        return None
+    return lab, val
+
+
 def _table_inset(stats: Sequence[Any]) -> str:
     """Floating key_stats inset for table slides (#73/F9).
 
@@ -349,15 +368,10 @@ def _table_inset(stats: Sequence[Any]) -> str:
     """
     cards = []
     for st in stats[:2]:
-        if isinstance(st, dict):
-            lab = strip_eids(st.get("label") or "")
-            val = strip_eids(st.get("value") or "")
-        elif isinstance(st, (list, tuple)) and len(st) >= 2:
-            lab, val = strip_eids(st[0]), strip_eids(st[1])
-        else:
+        nv = _stat_label_value(st)
+        if not nv:
             continue
-        if not lab and not val:
-            continue
+        lab, val = nv
         cards.append(
             f'<div class="gl-inset card" data-inset="1">'
             f'<div class="gl-inset-label">{esc(lab)}</div>'
@@ -706,15 +720,10 @@ def _hero_stack(stats: Sequence[Any]) -> str:
     """Right-hand giant % callout stack for chart_hero_dual (#75/F5)."""
     cards = []
     for st in stats[:4]:
-        if isinstance(st, dict):
-            lab = strip_eids(st.get("label") or "")
-            val = strip_eids(st.get("value") or "")
-        elif isinstance(st, (list, tuple)) and len(st) >= 2:
-            lab, val = strip_eids(st[0]), strip_eids(st[1])
-        else:
+        nv = _stat_label_value(st)
+        if not nv:
             continue
-        if not lab and not val:
-            continue
+        lab, val = nv
         cards.append(
             f'<div class="gl-hero card">'
             f'<div class="gl-hero-value">{esc(val)}</div>'
@@ -803,15 +812,10 @@ def render_guidance_statement_card(slide, total, notes, active=False):
     stats = c.get("key_stats") or []
     rows = []
     for st in stats[:4]:
-        if isinstance(st, dict):
-            lab = strip_eids(st.get("label") or "")
-            val = strip_eids(st.get("value") or "")
-        elif isinstance(st, (list, tuple)) and len(st) >= 2:
-            lab, val = strip_eids(st[0]), strip_eids(st[1])
-        else:
+        nv = _stat_label_value(st)
+        if not nv:
             continue
-        if not lab and not val:
-            continue
+        lab, val = nv
         rows.append(
             f'<div class="gl-guid-row">'
             f'<span class="gl-guid-label">{esc(lab)}</span>'
@@ -905,10 +909,30 @@ def render_annex_table(slide, total, notes, active=False):
         return render_metric(slide, total, notes, active=active)
     head = rows[0]
     body = rows[1:] if len(rows) > 1 else []
-    th = '<th class="gl-annex-stub"></th>' if False else "".join(
-        f'<th class="{"gl-annex-stub" if i == 0 else "gl-annex-head"}">{esc(h)}</th>'
-        for i, h in enumerate(head)
-    )
+    # Multi-level headers (#81/F12): visual_spec.primary_visual.header_groups is
+    # [{label, span}] spanning the data columns (stub is a rowspan=2 cell).
+    vs = slide.get("visual_spec") or {}
+    pv = vs.get("primary_visual") or {}
+    header_groups = pv.get("header_groups") if isinstance(pv, dict) else None
+    thead_rows = []
+    if isinstance(header_groups, list) and header_groups:
+        top_cells = [f'<th class="gl-annex-stub" rowspan="2"></th>']
+        for g in header_groups:
+            if isinstance(g, dict):
+                top_cells.append(
+                    f'<th class="gl-annex-group" colspan="{int(g.get("span") or 1)}">{esc(strip_eids(g.get("label") or ""))}</th>'
+                )
+        thead_rows.append("<tr>" + "".join(top_cells) + "</tr>")
+        sub_cells = "".join(
+            f'<th class="gl-annex-head">{esc(h)}</th>' for h in head[1:]
+        )
+        thead_rows.append("<tr>" + sub_cells + "</tr>")
+        thead = "".join(thead_rows)
+    else:
+        thead = "<tr>" + "".join(
+            f'<th class="{"gl-annex-stub" if i == 0 else "gl-annex-head"}">{esc(h)}</th>'
+            for i, h in enumerate(head)
+        ) + "</tr>"
     trs = []
     for r in body:
         tds = []
@@ -920,7 +944,7 @@ def render_annex_table(slide, total, notes, active=False):
         trs.append("<tr>" + "".join(tds) + "</tr>")
     table = (
         f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
-        f'<table class="data-table annex-table"><thead><tr>{th}</tr></thead>'
+        f'<table class="data-table annex-table"><thead>{thead}</thead>'
         f'<tbody>{"".join(trs)}</tbody></table></div>'
     )
     main = table + insight_strip(_so_what(slide))

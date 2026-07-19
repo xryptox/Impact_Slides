@@ -142,6 +142,18 @@ def wrap_deck(
     css = "\n\n".join(p for p in (bundle.font_css, load_css(debug=debug)) if p)
     theme_block = _theme_style(theme)
     slides = "\n".join(slide_html)
+    # Minimal chrome omits the deck-controls markup entirely (not just CSS-hide),
+    # so stage-only decks carry no product control chrome in the DOM (#83/F14).
+    controls_html = (
+        ""
+        if chrome_level == "minimal"
+        else """<div class="deck-controls" aria-label="Deck controls">
+  <button type="button" id="btn-prev" title="Previous">←</button>
+  <button type="button" id="btn-next" title="Next">→</button>
+  <button type="button" id="btn-notes" title="Toggle notes">N</button>
+  <span id="deck-counter" style="color:#fff;font:600 13px var(--font-body);align-self:center"></span>
+</div>"""
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -161,12 +173,7 @@ def wrap_deck(
 {slides}
   </div>
 </div>
-<div class="deck-controls" aria-label="Deck controls">
-  <button type="button" id="btn-prev" title="Previous">←</button>
-  <button type="button" id="btn-next" title="Next">→</button>
-  <button type="button" id="btn-notes" title="Toggle notes">N</button>
-  <span id="deck-counter" style="color:#fff;font:600 13px var(--font-body);align-self:center"></span>
-</div>
+{controls_html}
 <script type="application/json" id="DECK_META">{json.dumps(deck_meta, ensure_ascii=False)}</script>
 <script>
 {_JS}

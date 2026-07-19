@@ -1274,6 +1274,14 @@
   text-align: right;
   border-bottom: 2px solid var(--navy);
 }
+.annex-table .gl-annex-group {
+  font-weight: 700;
+  color: var(--color-on-navy, var(--panel, #fff));
+  background: var(--navy);
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
 .annex-table .gl-annex-cell { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* ---------- multi-panel board host (#80/F11) ---------- */
@@ -1307,6 +1315,32 @@
   font-weight: 700;
   color: var(--navy);
   line-height: 1.05;
+}
+
+/* ---------- chart annotation + axis-break markers (#71/F2, #79/F10) ---------- */
+.chartjs-wrap { position: relative; }
+.chartjs-annotation {
+  position: absolute;
+  top: 12%;
+  left: 22%;
+  padding: var(--space-2, 6px) var(--space-3, 10px);
+  background: var(--panel);
+  border: 1px dashed var(--navy);
+  border-radius: var(--radius-sm, 4px);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.chartjs-axis-break {
+  position: absolute;
+  left: 0;
+  top: 30%;
+  width: 100%;
+  height: 0;
+  border-top: 2px dashed var(--ink-muted);
+  pointer-events: none;
 }
 
 /* ---------- chrome level: stage-only / minimal (#83/F14) ---------- */
