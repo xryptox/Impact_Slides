@@ -1309,6 +1309,14 @@
   line-height: 1.05;
 }
 
+/* ---------- chrome level: stage-only / minimal (#83/F14) ---------- */
+/* Boardroom full chrome remains the default; minimal hides product chrome
+   (deck controls, cover eyebrow, Boardroom foot brand) for parity/export. */
+body.gl-chrome-minimal .deck-controls { display: none; }
+body.gl-chrome-minimal .cover-inner .kicker { display: none; }
+body.gl-chrome-minimal .title-footer,
+body.gl-chrome-minimal .cover-date { display: none; }
+
 /* Native progressive disclosure (P5) — HTML/CSS only, no JS library  */
 /* ------------------------------------------------------------------ */
 .gl-disclosure {
