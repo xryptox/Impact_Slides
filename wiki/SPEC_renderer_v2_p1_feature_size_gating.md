@@ -169,8 +169,8 @@ P3 will vendor Chart.js (or chosen build), map `charts` feature → real bytes +
 | Configuration | Approx HTML bytes | Notes |
 |---------------|-------------------|--------|
 | Baseline mini handoff, self-contained, no optional features | ~175 KB (suppress charts) | Fonts + Boardroom CSS + nav JS |
-| Mini with chart layouts, `charts` suppressed | **~180082 bytes** | Fonts + Boardroom CSS only |
-| Mini with chart layouts, `charts` enabled + Chart.js 4.4.8 | **~384805 bytes** (measured 2026-07-19) | + ~200 KB Chart.js UMD |
+| Mini with chart layouts, `charts` suppressed | **~189772 bytes** (measured 2026-07-20) | Fonts + Boardroom CSS only |
+| Mini with chart layouts, `charts` enabled + Chart.js 4.4.8 + datalabels 2.2.0 | **~410175 bytes** (measured 2026-07-20) | + ~200 KB Chart.js UMD, + ~13 KB datalabels plugin (#84) |
 | + Mermaid allowlist | TBD MVP1.1 | |
 | + Alpine | TBD MVP1.1 | |
 | + Swiper | TBD later | |

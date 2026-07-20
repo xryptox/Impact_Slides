@@ -1343,6 +1343,12 @@
   pointer-events: none;
 }
 
+/* ---------- IR bullet sheet centered title (#85) ---------- */
+/* Centered-title chrome scoped to the ir_bullet_sheet layout only. */
+.layout-ir_bullet_sheet .slide-header {
+  text-align: center;
+}
+
 /* ---------- chrome level: stage-only / minimal (#83/F14) ---------- */
 /* Boardroom full chrome remains the default; minimal hides product chrome
    (deck controls, cover eyebrow, Boardroom foot brand) for parity/export. */

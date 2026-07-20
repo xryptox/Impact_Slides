@@ -1027,7 +1027,7 @@ in P3). See `wiki/SPEC_renderer_v2_p1_feature_size_gating.md`.
 
 **Size.** Every run records `html_bytes` on `run_meta.json`. Crossing the
 advisory threshold (~2 MiB) prints a **soft warning** on stderr and does **not**
-fail the run. Baseline mini fixture is ~180 KB with `charts` suppressed; ~385 KB with
+fail the run. Baseline mini fixture is ~190 KB with `charts` suppressed; ~410 KB with
 Chart.js inlined (measured self-contained).
 
 **Design tokens.** Boardroom brand + curated Open Props–*inspired* primitive

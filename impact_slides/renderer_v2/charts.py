@@ -479,6 +479,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         return "dashed"
 
     datasets = []
+    label_matrix: list[list[str]] = []
     for si, key in enumerate(series_keys):
         color = (
             str(series_colors[si])
@@ -508,10 +509,18 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         if _style_for(si) == "dashed":
             ds["borderDash"] = [8, 4]
         if point_labels:
-            ds["pointLabels"] = [
-                _fmt_unit(v, y_unit, unit_pos) if isinstance(v, (int, float)) else ""
-                for v in data
-            ]
+            # IR on-point labels (#84): pre-formatted label matrix consumed by
+            # the vendored datalabels plugin via the shell's formatter wiring
+            # (Chart.js's own `pointLabels` option is radial-scale-only and is
+            # ignored on cartesian line charts, so it is deliberately NOT used).
+            label_matrix.append(
+                [
+                    _fmt_unit(v, y_unit, unit_pos)
+                    if isinstance(v, (int, float))
+                    else ""
+                    for v in data
+                ]
+            )
         datasets.append(ds)
 
     options = _chartjs_common_options()
@@ -540,7 +549,16 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             y_scale["ticks"]["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
     if point_labels:
-        options["plugins"]["datalabels"] = {"display": True}
+        options["plugins"]["datalabels"] = {
+            "display": True,
+            "anchor": "end",
+            "align": "top",
+            "offset": 2,
+            "color": "#16294d",
+            "font": {"weight": "bold", "size": 11},
+            # Consumed (and removed) by the shell's initCharts formatter.
+            "_labels": label_matrix,
+        }
     return {
         "type": "line",
         "data": {"labels": labels, "datasets": datasets},
