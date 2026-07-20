@@ -17,5 +17,6 @@ Rules:
 | File | Feature id | Notes |
 |------|------------|--------|
 | `chart.umd.min.js` | `charts` | Chart.js 4.4.8 UMD build (jsDelivr). Inlined only when `charts` is enabled. |
+| `chartjs-plugin-datalabels.min.js` | `charts` | chartjs-plugin-datalabels 2.2.0 (jsDelivr, #84). IR on-point data labels; inlined only when `charts` is enabled, after Chart.js. |
 
 Mermaid / Alpine / Swiper / Lucide remain deferred (MVP1.1+).

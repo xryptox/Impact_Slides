@@ -282,9 +282,15 @@ class TestLineChartContract:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         cc = _chartjs_cfg(html)
+        # IR on-point labels (#84): a formatted label matrix the vendored
+        # datalabels plugin renders via the shell formatter — NOT the
+        # radial-only `pointLabels` dataset key, which Chart.js ignores on
+        # cartesian line charts.
         d0 = cc["data"]["datasets"][0]
-        assert d0.get("pointLabels") == ["8%", "10%", "12%"]
-        assert cc["options"]["plugins"]["datalabels"].get("display") is True
+        assert "pointLabels" not in d0
+        dl = cc["options"]["plugins"]["datalabels"]
+        assert dl.get("display") is True
+        assert dl["_labels"][0] == ["8%", "10%", "12%"]
 
     def test_chartjs_annotation_marker(self, tmp_path):
         cfg = {"annotation": {"text": "Leap Year Approx. (1%)"}}
@@ -304,6 +310,7 @@ class TestLineChartContract:
         cc = _chartjs_cfg(html)
         assert "stepSize" not in cc["options"]["scales"]["y"]["ticks"]
         assert "pointLabels" not in cc["data"]["datasets"][0]
+        assert "datalabels" not in cc["options"]["plugins"]
 
 
 # ---------------------------------------------------------------------------
@@ -924,3 +931,89 @@ class TestChromeLevel:
         # mini has grouped_bar_chart
         assert 'data-chartjs="1"' in html or "chart-svg" in html
         assert remote_fetch_urls(html) == []
+
+
+# ---------------------------------------------------------------------------
+# #84 — Chart.js on-point data labels + annotation overlay (datalabels plugin)
+# ---------------------------------------------------------------------------
+
+
+class TestDatalabelsPlugin:
+    def test_plugin_vendored_with_license(self):
+        plugin = LIBS_DIR / "chartjs-plugin-datalabels.min.js"
+        assert plugin.exists() and plugin.stat().st_size > 5000
+        assert (LIBS_DIR / "CHARTJS_PLUGIN_DATALABELS_LICENSE.md").exists()
+
+    def test_plugin_inlined_when_charts_on(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("line_chart", TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-plugin-datalabels" in html
+        assert remote_fetch_urls(html) == []
+
+    def test_plugin_omitted_when_charts_suppressed(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("line_chart", TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, suppress_features=["charts"])
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-plugin-datalabels" not in html
+
+    def test_shell_registers_plugin_and_formats_labels(self, tmp_path):
+        cfg = {"point_labels": True}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # initCharts must register the plugin and attach a formatter that
+        # resolves the _labels matrix (JSON configs cannot carry functions).
+        assert "ChartDataLabels" in html
+        assert "_labels" in html
+        assert "formatter" in html
+
+    def test_plugin_assets_recorded_in_meta(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("line_chart", TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        run_meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+        assert "charts-datalabels" in run_meta["assets_inlined"]
+
+    def test_annotation_positioned_over_chart(self, tmp_path):
+        cfg = {"annotation": {"text": "Leap Year Approx. (1%)"}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # Annotation marker sits inside the (position:relative) chart wrap and
+        # has real styling, so it paints over the Chart.js canvas.
+        wrap_idx = html.index('class="chartjs-wrap"')
+        ann_idx = html.index('class="chartjs-annotation"')
+        assert wrap_idx < ann_idx
+        assert ".chartjs-annotation {" in html
+        assert "position: absolute" in html
+
+
+# ---------------------------------------------------------------------------
+# #85 — IR bullet sheet centered-title chrome
+# ---------------------------------------------------------------------------
+
+
+class TestIrBulletSheetCenteredTitle:
+    def test_centered_header_chrome(self, tmp_path):
+        s = _slide("ir_bullet_sheet", [])
+        s["content"] = {"bullets": ["First **bold** point", "Second point"]}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'data-layout="ir_bullet_sheet"' in html
+        # Centered-title chrome rule scoped to this layout only.
+        assert ".layout-ir_bullet_sheet .slide-header" in html
+        assert "text-align: center" in html
+
+    def test_conventional_layout_header_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("metric_dashboard", [])]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert ".layout-metric_dashboard .slide-header" not in html

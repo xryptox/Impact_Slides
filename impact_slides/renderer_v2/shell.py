@@ -77,6 +77,12 @@ _JS = r"""
   // Chart.js init (P3) — configs are JSON next to each canvas; library inlined when charts on.
   function initCharts() {
     if (typeof Chart === 'undefined') return;
+    // Datalabels plugin (#84): inlined after Chart.js when charts on. The UMD
+    // build self-registers with a global Chart; register explicitly too
+    // (Chart.js dedupes by plugin id) so ordering is not load-dependent.
+    if (typeof ChartDataLabels !== 'undefined') {
+      try { Chart.register(ChartDataLabels); } catch (e) { /* already registered */ }
+    }
     document.querySelectorAll('script.chartjs-config').forEach(function (el) {
       var id = el.getAttribute('data-for');
       var canvas = id ? document.getElementById(id) : null;
@@ -85,6 +91,17 @@ _JS = r"""
         var cfg = JSON.parse(el.textContent || '{}');
         if (!cfg.options) cfg.options = {};
         cfg.options.animation = false;
+        // JSON configs cannot carry functions; resolve the pre-formatted IR
+        // label matrix (#84) into the datalabels formatter here.
+        var dl = cfg.options.plugins && cfg.options.plugins.datalabels;
+        if (dl && dl._labels) {
+          var labelMatrix = dl._labels;
+          delete dl._labels;
+          dl.formatter = function (value, context) {
+            var row = labelMatrix[context.datasetIndex];
+            return row && row[context.dataIndex] ? row[context.dataIndex] : '';
+          };
+        }
         new Chart(canvas.getContext('2d'), cfg);
       } catch (err) {
         console.warn('chart init failed', id, err);

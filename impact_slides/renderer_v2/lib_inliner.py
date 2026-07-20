@@ -31,6 +31,14 @@ CHART_JS_CDN_URL = (
     "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"
 )
 
+# Pinned datalabels plugin (#84) — renders IR on-point data labels on the
+# Chart.js cartesian path (Chart.js's own pointLabels option is radial-only).
+DATALABELS_JS_FILENAME = "chartjs-plugin-datalabels.min.js"
+DATALABELS_JS_CDN_URL = (
+    "https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"
+    "/dist/chartjs-plugin-datalabels.min.js"
+)
+
 # Reserved feature ids for P1+.
 KNOWN_FEATURES = frozenset({"charts", "mermaid", "alpine", "swiper", "icons"})
 
@@ -196,12 +204,22 @@ def build_head_assets(
                     cdn_url=CHART_JS_CDN_URL,
                 )
             )
+            assets.append(
+                AssetRef(
+                    asset_id="charts-datalabels",
+                    kind="js",
+                    path=LIBS_DIR / DATALABELS_JS_FILENAME,
+                    cdn_url=DATALABELS_JS_CDN_URL,
+                )
+            )
         head = _cdn_head(assets)
         return InlineBundle(
             head_html=head,
             meta={
                 "mode": mode.value,
-                "assets": ["charts"] if "charts" in known else [],
+                "assets": (
+                    ["charts", "charts-datalabels"] if "charts" in known else []
+                ),
                 "bytes_inlined": 0,
                 "features": known,
             },
@@ -211,20 +229,22 @@ def build_head_assets(
     head_parts: list[str] = []
 
     if "charts" in known:
-        chart_path = LIBS_DIR / CHART_JS_FILENAME
-        if not chart_path.is_file():
-            raise FileNotFoundError(
-                f"self-contained delivery requires vendored Chart.js at "
-                f"{chart_path} when feature 'charts' is enabled. "
-                f"Vendor the pin under assets/libs/ or suppress charts / use --use-cdn."
+        for fname in (CHART_JS_FILENAME, DATALABELS_JS_FILENAME):
+            chart_path = LIBS_DIR / fname
+            if not chart_path.is_file():
+                raise FileNotFoundError(
+                    f"self-contained delivery requires vendored Chart.js asset "
+                    f"{fname} at {chart_path} when feature 'charts' is enabled. "
+                    f"Vendor the pin under assets/libs/ or suppress charts / use --use-cdn."
+                )
+            raw = chart_path.read_bytes()
+            # Inline as classic scripts so Chart (then ChartDataLabels) globals
+            # are available before deck JS.
+            head_parts.append(
+                "<script>\n" + raw.decode("utf-8") + "\n</script>"
             )
-        raw = chart_path.read_bytes()
-        # Inline as a classic script so Chart global is available before deck JS.
-        head_parts.append(
-            "<script>\n" + raw.decode("utf-8") + "\n</script>"
-        )
-        total += len(raw)
-        inlined = list(inlined) + ["charts"]
+            total += len(raw)
+        inlined = list(inlined) + ["charts", "charts-datalabels"]
 
     return InlineBundle(
         head_html="\n".join(head_parts),
