@@ -221,6 +221,7 @@ class ChartSlide(_BaseSlide):
     layout_type: Literal[
         "grouped_bar_chart",
         "stacked_bar_chart",
+        "horizontal_bar_chart",
         "waterfall_chart",
         "heatmap",
     ] = "grouped_bar_chart"
@@ -350,6 +351,7 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "multi_panel": MultiPanelSlide,
         "grouped_bar_chart": ChartSlide,
         "stacked_bar_chart": ChartSlide,
+        "horizontal_bar_chart": ChartSlide,
         "waterfall_chart": ChartSlide,
         "heatmap": ChartSlide,
         "line_chart": LineChartSlide,

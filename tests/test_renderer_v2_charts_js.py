@@ -1060,3 +1060,82 @@ class TestIrBulletSheetCenteredTitle:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert ".layout-metric_dashboard .slide-header" not in html
+
+
+# ---------------------------------------------------------------------------
+# #88 — horizontal_bar_chart + anniversary retention window (F10+)
+# ---------------------------------------------------------------------------
+
+RETENTION = [
+    ["Year", "US Consumer", "Premium"],
+    ["2022", "92", "95"],
+    ["2023", "93", "96"],
+    ["2024", "94", "96"],
+]
+
+
+def _hbar_slide(cfg=None):
+    s = _slide("horizontal_bar_chart", [])
+    s["visual_spec"] = {
+        "primary_visual": {
+            "type": "horizontal_bar_chart",
+            "steps_or_data": RETENTION,
+        }
+    }
+    if cfg:
+        s["visual_spec"]["primary_visual"]["chart_config"] = cfg
+    return s
+
+
+class TestHorizontalBarChart:
+    def test_chartjs_index_axis(self, tmp_path):
+        path = _write(tmp_path, _handoff([_hbar_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'data-chartjs="1"' in html
+        assert 'data-chart-layout="horizontal_bar_chart"' in html
+        cc = _chartjs_cfg(html)
+        assert cc["options"]["indexAxis"] == "y"
+        assert cc["data"]["labels"] == ["2022", "2023", "2024"]
+
+    def test_anniversary_window_via_axis_break(self, tmp_path):
+        cfg = {"y_axis_break": {"from": 0, "to": 90}, "y_axis_max": 100}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        # value axis is x in horizontal mode
+        assert cc["options"]["scales"]["x"]["ticks"]["min"] == 90.0
+        assert cc["options"]["scales"]["x"]["ticks"]["max"] == 100.0
+
+    def test_bar_labels_inside(self, tmp_path):
+        cfg = {"bar_labels_inside": True}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        dl = cc["options"]["plugins"]["datalabels"]
+        assert dl["display"] is True
+        assert dl["anchor"] == "start"
+        # inside labels are the category (year) labels, per dataset
+        assert dl["_labels"][0] == ["2022", "2023", "2024"]
+
+    def test_svg_fallback_paints_horizontal_geometry(self, tmp_path):
+        path = _write(tmp_path, _handoff([_hbar_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, suppress_features=["charts"])
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'data-chartjs="1"' not in html
+        assert "chart-svg" in html
+        assert "hbar-bar" in html
+
+    def test_feature_detection_and_offline(self, tmp_path):
+        path = _write(tmp_path, _handoff([_hbar_slide()]))
+        out = tmp_path / "out"
+        result = render_deck(path, out, strict=False)
+        assert result["features_enabled"] == ["charts"]
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert remote_fetch_urls(html) == []

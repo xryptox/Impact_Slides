@@ -14,6 +14,7 @@ _CHART_LAYOUTS = frozenset(
     {
         "grouped_bar_chart",
         "stacked_bar_chart",
+        "horizontal_bar_chart",
         "waterfall_chart",
         "heatmap",
         "icon_grid",
@@ -134,7 +135,13 @@ def _steps(slide: Mapping[str, Any]) -> list[Any]:
 
 # MVP Chart.js interactive set (P3). Other chart layouts stay on SVG/pack.
 _CHARTJS_LAYOUTS = frozenset(
-    {"grouped_bar_chart", "line_chart", "combo_chart", "stacked_bar_chart"}
+    {
+        "grouped_bar_chart",
+        "line_chart",
+        "combo_chart",
+        "stacked_bar_chart",
+        "horizontal_bar_chart",
+    }
 )
 
 # Boardroom series palette (semantic/brand — not Chart.js candy defaults).
@@ -443,6 +450,126 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
     }
 
 
+def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Horizontal grouped bars — the anniversary retention board shape (#88).
+
+    Chart.js canonical: ``indexAxis: "y"`` so bars run horizontally; the
+    value axis is then ``x``. The anniversary window comes from the existing
+    ``y_axis_break`` / ``y_axis_min`` / ``y_axis_max`` config (clamps the x
+    domain, e.g. 90–100), and ``bar_labels_inside`` paints category labels
+    inside each bar via the datalabels plugin.
+    """
+    labels, series, rows, _pc = _bar_matrix(slide)
+    if not labels or not rows:
+        return None
+    cfg = _chart_config(slide)
+    palette = _series_colors(cfg)
+    datasets = []
+    for si, name in enumerate(series):
+        color = palette[si % len(palette)]
+        datasets.append(
+            {
+                "label": name,
+                "data": [row[si] if si < len(row) else None for row in rows],
+                "backgroundColor": color,
+                "borderColor": color,
+                "borderWidth": 0,
+            }
+        )
+    options = _chartjs_common_options()
+    options["indexAxis"] = "y"
+    x_scale = options["scales"]["x"]
+    y_break = cfg.get("y_axis_break")
+    if cfg.get("y_axis_min") is not None:
+        x_scale["ticks"]["min"] = float(cfg["y_axis_min"])
+    elif isinstance(y_break, dict) and y_break.get("to") is not None:
+        # Discontinuous high window (e.g. 90–100): exclude the break band.
+        x_scale["ticks"]["min"] = float(y_break["to"])
+    if cfg.get("y_axis_max") is not None:
+        x_scale["ticks"]["max"] = float(cfg["y_axis_max"])
+    if cfg.get("bar_labels_inside"):
+        options["plugins"]["datalabels"] = {
+            "display": True,
+            "anchor": "start",
+            "align": "start",
+            "offset": 4,
+            "color": "#ffffff",
+            "font": {"weight": "bold", "size": 11},
+            # Category (year) labels inside each bar; the shell formatter
+            # resolves the matrix per dataset/dataIndex.
+            "_labels": [[str(lab) for lab in labels] for _ in series],
+        }
+    return {
+        "type": "bar",
+        "data": {"labels": labels, "datasets": datasets},
+        "options": options,
+    }
+
+
+def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
+    """Basic horizontal grouped bars — geometry-parity SVG fallback (#88).
+
+    Orientation is geometry, not a cue: the noscript/export path keeps bars
+    horizontal. Anniversary-window polish (discontinuous axis, inside-bar
+    labels) is Chart.js-only per the locked painter split.
+    """
+    labels, series, rows, _pc = _bar_matrix(slide)
+    if not labels or not series:
+        return '<p class="chart-empty">No bar chart data</p>'
+    vals = [v for r in rows for v in r if v is not None]
+    if not vals:
+        return '<p class="chart-empty">No bar chart data</p>'
+    cfg = _chart_config(slide)
+    palette = _series_colors(cfg)
+    W, H = 960, 540
+    pad_l, pad_r, pad_t, pad_b = 140.0, 24.0, 16.0, 40.0
+    plot_w = W - pad_l - pad_r
+    plot_h = H - pad_t - pad_b
+    x_max = _nice_max(max(vals) * 1.05)
+    x_min = min(0.0, min(vals))
+    rng = (x_max - x_min) or 1.0
+
+    def x_pos(v: float) -> float:
+        return pad_l + ((v - x_min) / rng) * plot_w
+
+    zero_x = x_pos(0.0)
+    n = len(labels)
+    m = len(series)
+    row_h = plot_h / max(n, 1)
+    bar_h = min(28.0, (row_h * 0.7) / max(m, 1))
+    parts = [
+        f'<svg class="chart-svg hbar" viewBox="0 0 {W} {H}" '
+        f'xmlns="http://www.w3.org/2000/svg" role="img">'
+    ]
+    for i, lab in enumerate(labels):
+        cy = pad_t + row_h * i + row_h / 2
+        parts.append(
+            f'<text class="hbar-cat" x="{pad_l - 8:.1f}" y="{cy + 4:.1f}" '
+            f'text-anchor="end" fill="var(--navy, #00175a)" font-size="13" '
+            f'font-weight="600">{esc(lab)}</text>'
+        )
+        for si in range(m):
+            v = rows[i][si] if si < len(rows[i]) else None
+            if v is None:
+                continue
+            x0 = min(zero_x, x_pos(v))
+            w = abs(x_pos(v) - zero_x)
+            by = cy - (bar_h * m) / 2 + si * bar_h
+            color = palette[si % len(palette)]
+            parts.append(
+                f'<rect class="hbar-bar" x="{x0:.1f}" y="{by:.1f}" '
+                f'width="{w:.1f}" height="{bar_h - 3:.1f}" '
+                f'fill="{color}" rx="2"/>'
+            )
+    parts.append(
+        f'<line class="hbar-zero" x1="{zero_x:.1f}" y1="{pad_t:.1f}" '
+        f'x2="{zero_x:.1f}" y2="{H - pad_b:.1f}" '
+        f'stroke="var(--ink, #53565a)" stroke-width="1"/>'
+    )
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     """Chart.js line config honoring the IR chart_config contract (#71).
 
@@ -627,6 +754,8 @@ def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
         return _build_grouped_bar_svg(slide)
     if layout == "stacked_bar_chart":
         return _build_stacked_bar_svg(slide)
+    if layout == "horizontal_bar_chart":
+        return _build_hbar_svg(slide)
     return ""
 
 
@@ -636,6 +765,8 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
 
     if layout == "stacked_bar_chart":
         cfg = _chartjs_bar_config(slide, stacked=True)
+    elif layout == "horizontal_bar_chart":
+        cfg = _chartjs_hbar_config(slide)
     else:
         builders = {
             "grouped_bar_chart": _chartjs_bar_config,
