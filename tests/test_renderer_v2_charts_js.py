@@ -934,6 +934,49 @@ class TestChromeLevel:
 
 
 # ---------------------------------------------------------------------------
+# #87 — Load path preserves string-encoded negatives (F3 root cause)
+# ---------------------------------------------------------------------------
+
+
+class TestStringSignedNegatives:
+    def test_string_signed_stacked_bar_stays_signed_through_render(self, tmp_path):
+        # The sim handoff shape: list-of-lists rows with string numerals.
+        s = _slide("stacked_bar_chart", [])
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "stacked_bar_chart",
+                "steps_or_data": [
+                    ["Quarter", "Write-offs", "Reserve Build/(Release)"],
+                    ["Q1'25", "1223", "-73"],
+                    ["Q2'25", "1183", "222"],
+                    ["Q1'26", "1275", "-24"],
+                ],
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        assert cc["data"]["datasets"][1]["data"] == [-73.0, 222.0, -24.0]
+        assert cc["options"]["scales"]["y"]["ticks"]["min"] < 0
+
+    def test_negative_strings_in_kpi_text_survive(self, tmp_path):
+        s = _slide("metric_dashboard", [])
+        s["content"] = {
+            "key_stats": [{"label": "Reserve Build/(Release)", "value": "($24)"}],
+        }
+        b = _slide("split_text_visual", [])
+        b["content"] = {"bullets": ["Reserve release of -24 vs build of 222"]}
+        path = _write(tmp_path, _handoff([s, b]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "($24)" in html
+        assert "-24" in html
+
+
+# ---------------------------------------------------------------------------
 # #84 — Chart.js on-point data labels + annotation overlay (datalabels plugin)
 # ---------------------------------------------------------------------------
 

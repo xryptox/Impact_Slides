@@ -220,6 +220,22 @@ class TestStrip:
         assert "deal" in strip_eids("big deal (E0140, E0141)").lower()
         assert "E0140" not in strip_eids("big deal (E0140)")
 
+    def test_strip_eids_preserves_negative_numerals(self):
+        # #87/F3: a leading minus on a string numeral is a numeric sign,
+        # not a separator left over from EID removal.
+        assert strip_eids("-73") == "-73"
+        assert strip_eids("-24") == "-24"
+        assert strip_eids("-$24") == "-$24"
+        assert strip_eids("-1.5%") == "-1.5%"
+        assert strip_eids("- 73") == "- 73"
+
+    def test_strip_eids_still_strips_separator_dashes(self):
+        assert strip_eids("Revenue -") == "Revenue"
+        assert strip_eids("- Revenue") == "Revenue"
+        assert strip_eids("Revenue (E0140) -") == "Revenue"
+        assert strip_eids("-") == ""
+        assert strip_eids("(E0140)") == ""
+
     def test_chosen_dek_prefers_subtitle(self):
         slide = {"content": {"subtitle": "Framing", "headline": "$700M all-cash"}}
         assert chosen_dek(slide) == "Framing"
