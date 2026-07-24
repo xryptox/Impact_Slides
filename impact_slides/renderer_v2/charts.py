@@ -759,6 +759,69 @@ def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
     return ""
 
 
+_CALLOUT_TYPES = frozenset({"elbow_arrow", "chevron", "band"})
+
+
+def _build_callout_overlays(
+    callouts: Any, n_labels: int, cid: str
+) -> str:
+    """Geometric callout overlays for the Chart.js wrap (#89/R2).
+
+    Drawable chrome — elbow arrows spanning bar tops, chevrons under the
+    category axis, event bands — positioned as HTML/CSS overlays from
+    category-index anchors. Unknown callout types fail closed (ValueError).
+    Placement is category-fraction based (coarse, like the text annotation).
+    """
+    if not callouts:
+        return ""
+    if not isinstance(callouts, list):
+        raise ValueError("chart_config.callouts must be a list")
+    n = max(int(n_labels or 0), 1)
+    parts: list[str] = []
+    for c in callouts:
+        if not isinstance(c, dict):
+            raise ValueError("chart_config.callouts entries must be objects")
+        ctype = str(c.get("type") or "")
+        if ctype not in _CALLOUT_TYPES:
+            raise ValueError(
+                f"unknown callout type {ctype!r}: "
+                f"expected one of {sorted(_CALLOUT_TYPES)}"
+            )
+        text = esc(str(c.get("text") or ""))
+        if ctype == "elbow_arrow":
+            frm = max(0, int(c.get("from") or 0))
+            to = max(frm, int(c.get("to") if c.get("to") is not None else frm))
+            left = (frm / n) * 100
+            width = ((to - frm + 1) / n) * 100
+            parts.append(
+                f'<div class="chartjs-callout chartjs-callout-elbow" '
+                f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}" '
+                f'style="left:{left:.2f}%;width:{width:.2f}%">'
+                f'<span class="chartjs-callout-label">{text}</span></div>'
+            )
+        elif ctype == "chevron":
+            at = max(0, int(c.get("at") or 0))
+            left = ((at + 0.5) / n) * 100
+            parts.append(
+                f'<div class="chartjs-callout chartjs-callout-chevron" '
+                f'data-for="{esc(cid)}" data-at="{at}" '
+                f'style="left:{left:.2f}%">'
+                f'<span class="chartjs-callout-label">{text}</span></div>'
+            )
+        else:  # band
+            frm = max(0, int(c.get("from") or 0))
+            to = max(frm, int(c.get("to") if c.get("to") is not None else frm))
+            left = (frm / n) * 100
+            width = ((to - frm + 1) / n) * 100
+            parts.append(
+                f'<div class="chartjs-callout chartjs-callout-band" '
+                f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}" '
+                f'style="left:{left:.2f}%;width:{width:.2f}%">'
+                f'<span class="chartjs-callout-label">{text}</span></div>'
+            )
+    return "".join(parts)
+
+
 def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     """Canvas + JSON config + noscript SVG fallback (library loaded in shell)."""
     import json as _json
@@ -798,6 +861,12 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     yb = _chart_config(slide).get("y_axis_break")
     if isinstance(yb, dict) and yb.get("to") is not None:
         break_html = f'<div class="chartjs-axis-break" data-for="{esc(cid)}"></div>'
+    # Geometric callouts (#89/R2): elbow arrows / chevrons / bands.
+    callouts_html = _build_callout_overlays(
+        _chart_config(slide).get("callouts"),
+        len((cfg.get("data") or {}).get("labels") or []),
+        cid,
+    )
     return (
         f'<div class="chartjs-wrap" data-chartjs="1" data-chart-layout="{esc(layout)}">'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
@@ -805,6 +874,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         f"{payload}</script>"
         f"{ann_html}"
         f"{break_html}"
+        f"{callouts_html}"
         f"{noscript}"
         f"</div>"
     )

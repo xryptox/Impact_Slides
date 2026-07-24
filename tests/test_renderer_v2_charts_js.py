@@ -1139,3 +1139,98 @@ class TestHorizontalBarChart:
         assert result["features_enabled"] == ["charts"]
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert remote_fetch_urls(html) == []
+
+
+# ---------------------------------------------------------------------------
+# #89 — Geometric callout layer: elbow arrows, chevrons, bands (R2)
+# ---------------------------------------------------------------------------
+
+
+def _grouped_slide_with_callouts(callouts):
+    s = _slide("grouped_bar_chart", [
+        {"label": "Q1'25", "value": 7},
+        {"label": "Q2'25", "value": 7},
+        {"label": "Q3'25", "value": 9},
+        {"label": "Q4'25", "value": 9},
+        {"label": "Q1'26", "value": 10},
+    ])
+    s["visual_spec"] = {
+        "primary_visual": {
+            "type": "grouped_bar_chart",
+            "steps_or_data": [
+                {"label": "Q1'25", "value": 7},
+                {"label": "Q2'25", "value": 7},
+                {"label": "Q3'25", "value": 9},
+                {"label": "Q4'25", "value": 9},
+                {"label": "Q1'26", "value": 10},
+            ],
+            "chart_config": {"callouts": callouts},
+        }
+    }
+    return s
+
+
+class TestGeometricCallouts:
+    def test_elbow_arrow_renders_with_anchors(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [{"type": "elbow_arrow", "from": 0, "to": 4, "text": "+ ~6 percentage points"}]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-callout-elbow" in html
+        assert "+ ~6 percentage points" in html
+        assert 'data-from="0"' in html and 'data-to="4"' in html
+        # positioned inside the (relative) chart wrap (markup, not bundled CSS)
+        wrap_idx = html.index('class="chartjs-wrap"')
+        assert html.index('class="chartjs-callout chartjs-callout-elbow"') > wrap_idx
+
+    def test_chevron_renders_under_axis(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [{"type": "chevron", "at": 2, "text": "Refresh"}]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-callout-chevron" in html
+        assert "Refresh" in html
+        assert 'data-at="2"' in html
+
+    def test_band_renders_span(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [{"type": "band", "from": 1, "to": 2, "text": "Leap Year"}]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-callout-band" in html
+        assert "Leap Year" in html
+
+    def test_unknown_callout_type_fails_closed(self, tmp_path):
+        s = _grouped_slide_with_callouts([{"type": "fireworks", "at": 1}])
+        path = _write(tmp_path, _handoff([s]))
+        with pytest.raises((ValueError, SystemExit)):
+            render_deck(path, tmp_path / "out", strict=False)
+
+    def test_callout_text_escaped_and_offline(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [{"type": "elbow_arrow", "from": 0, "to": 1, "text": "<script>alert(1)</script>"}]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "alert(1)</script>" not in html
+        assert remote_fetch_urls(html) == []
+
+    def test_no_callouts_unchanged(self, tmp_path):
+        s = _slide("grouped_bar_chart", [{"label": "A", "value": 1}, {"label": "B", "value": 2}])
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # CSS is always bundled; assert no callout *markup* rendered
+        assert 'class="chartjs-callout' not in html
