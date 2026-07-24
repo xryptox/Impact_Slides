@@ -1039,11 +1039,6 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 if items:
                     legend_html = f'<ul class="gl-tile-legend">{"".join(items)}</ul>'
             if top_total or badge or legend_html:
-                total_html = (
-                    f'<div class="gl-tile-top-total">{esc(top_total)}</div>'
-                    if top_total
-                    else ""
-                )
                 badge_html = (
                     f'<span class="gl-tile-badge">{esc(badge)}</span>' if badge else ""
                 )
@@ -1056,11 +1051,36 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     )
                 else:
                     body = chart_html
-                parts.append(
-                    f'<div class="gl-tile gl-tile-chart gl-tile-tall">'
-                    f"{badge_html}{total_html}{lbl}{body}"
-                    f"</div>"
-                )
+                # #99/F11+: opt-in IR navy skin — header band hosts the top
+                # total + tile label; Boardroom default skin unchanged.
+                if str(tile.get("tile_skin") or "").lower() == "ir":
+                    head_total = (
+                        f'<span class="gl-tile-ir-total">{esc(top_total)}</span>'
+                        if top_total
+                        else ""
+                    )
+                    head_lbl = (
+                        f'<span class="gl-tile-ir-title">{esc(label)}</span>'
+                        if label
+                        else ""
+                    )
+                    parts.append(
+                        f'<div class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir">'
+                        f'<div class="gl-tile-ir-head">{head_total}{head_lbl}</div>'
+                        f"{badge_html}{body}"
+                        f"</div>"
+                    )
+                else:
+                    total_html = (
+                        f'<div class="gl-tile-top-total">{esc(top_total)}</div>'
+                        if top_total
+                        else ""
+                    )
+                    parts.append(
+                        f'<div class="gl-tile gl-tile-chart gl-tile-tall">'
+                        f"{badge_html}{total_html}{lbl}{body}"
+                        f"</div>"
+                    )
             else:
                 parts.append(
                     f'<div class="gl-tile gl-tile-chart">{lbl}{chart_html}</div>'

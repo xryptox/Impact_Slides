@@ -1398,6 +1398,37 @@
   color: var(--ink);
 }
 .gl-tile-legend-item { display: flex; align-items: center; gap: 6px; }
+/* IR navy dual tall-card skin (#99/F11+): navy header band hosts the top
+   total + tile title; body keeps the chart + flush exterior legend. */
+.gl-tile-ir {
+  overflow: hidden;
+  padding: 0;
+}
+.gl-tile-ir-head {
+  background: var(--navy);
+  color: var(--color-on-navy, var(--panel, #fff));
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4, 12px);
+}
+.gl-tile-ir-total {
+  font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+}
+.gl-tile-ir-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+.gl-tile-ir .gl-tile-body,
+.gl-tile-ir > .chartjs-wrap,
+.gl-tile-ir > .chart-svg {
+  margin: var(--space-4, 12px) var(--space-4, 12px) var(--space-3, 8px);
+}
 .gl-tile-swatch {
   width: 10px;
   height: 10px;
