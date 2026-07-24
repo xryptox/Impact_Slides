@@ -166,6 +166,7 @@ _Avoid_: annotation (reserved for the text callout field), caption, footnote
 - The Slide Update Plan must be approved before Final Slide Content is generated.
 - Boardroom and `gl-*` are foundational and must not be replaced — only enhanced.
 - Production output defaults to self-contained; CDN is dev-only and never implied by ship docs.
+- No third-party trademarks or brand assets in the renderer or asset pack. Vendored brand marks (e.g. `seal_lockup`) are original artwork only; real companies bring their own mark via the handoff escape hatch.
 - The Inliner is the single owner of vendored asset embedding; layouts must not grow their own `<script src="https://...">`.
 - v2 and v3 preprocessors are frozen regression baselines; v4 (`impact_slides/`) is canonical.
 - `schemas.py` is the single source of truth for output shapes; README, code, and GPT prompts all derive from it.
