@@ -1,0 +1,2801 @@
+{
+  "source_pdf": "C:\\Users\\Ag1Le\\Downloads\\Q1-2026-Earnings-Presentation.pdf",
+  "page_count": 44,
+  "extraction_method": "vision_read_of_pdf_page_png_plus_pdf_text_layer_assist (PyMuPDF used only for rasterize + raw text assist; no preprocessor)",
+  "brand_system": {
+    "primary_navy": "#00175A",
+    "accent_blue": "#006FCF",
+    "text_navy": "#001B4D",
+    "body_navy": "#1A2B5F",
+    "white": "#FFFFFF",
+    "table_header": "#00175A",
+    "light_gray_rule": "#E0E3EB",
+    "annotation_box": "#5B6B9A",
+    "fonts": {
+      "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+      "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+      "numbers": "tabular sans-serif medium/bold"
+    },
+    "layout_cues": [
+      "widescreen 16:9 (960x540 pt)",
+      "centered navy titles on white content slides",
+      "small gray footnote band at bottom with page number bottom-right",
+      "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+      "charts use navy solid + gray dashed multi-series lines with value labels on points",
+      "financial summary uses 3-column pill-header comparison table",
+      "many earnings chart slides = chart + compact dark-header data table beneath"
+    ]
+  },
+  "slides": [
+    {
+      "slide_index": 0,
+      "pdf_page": 0,
+      "pdf_page_image": "extracted/pdf_page_00.png",
+      "title": "American Express Earnings Conference Call Q1'26",
+      "section": "Cover",
+      "layout_hint": "full_bleed_brand_cover_two_tone",
+      "bullets": [],
+      "metrics": [
+        {
+          "label": "Date",
+          "value": "APRIL 23, 2026"
+        }
+      ],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "Open IR earnings call cover.",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "layout_cues": "Dark navy upper ~60%, bright blue lower band, large white title left, Amex centurion seal watermark lower-right with AMEX ribbon banner.",
+      "raw_text": "American Express\nEarnings Conference Call \nQ1'26\nAPRIL 23, 2026",
+      "image_exists": true
+    },
+    {
+      "slide_index": 1,
+      "pdf_page": 1,
+      "pdf_page_image": "extracted/pdf_page_01.png",
+      "title": "Business Highlights",
+      "section": "Highlights",
+      "layout_hint": "centered_title_bullet_list",
+      "bullets": [
+        "Q1 2026 revenue growth of 11%, and EPS of $4.28, up 18% YoY",
+        "Named the Official Payments Partner of the NFL and announced a multi-year partnership extension with the NBA across league platforms, including the WNBA",
+        "Launched the American Express Graphite Business Cash Unlimited Card, kicking off a major expansion of integrated solutions for businesses of all sizes",
+        "Announced the Amex Agentic Commerce Experiences developer kit and industry-first Amex Agent Purchase Protection",
+        "Unveiled next phase of the Resy dining platform, including the planned integration of Resy and Tock venue networks",
+        "Opened Las Vegas Sidecar and New Delhi Centurion Lounge and announced upcoming new or expanded spaces in three other locations",
+        "Ranked #4 on Great Place to Work 2026 list of the 100 Best Companies to Work For in the U.S."
+      ],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Refer to the Statistical Tables for the first-quarter 2026 (the Statistical Tables), available on the American Express Investor Relations website at ir.americanexpress.com",
+      "speaker_notes": "Walk 7 business headlines; bold key partnerships and product names",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "dense_bullets": true,
+      "inline_bold_on_key_phrases": true,
+      "raw_text": "2\nBusiness Highlights\nRefer to the Statistical Tables for the first-quarter 2026 (the Statistical Tables), available on the American Express Investor Relations website at ir.americanexpress.com, for certain defined terms used in this presentation and/or our related \ninvestor conference call.\n\u2022 Q1 2026 revenue growth of 11%, and EPS of $4.28, up 18% YoY\n\u2022 Named the Official Payments Partner of the NFL and announced a multi-year partnership extension \nwith the NBA across league platforms, including the WNBA\n\u2022 Launched the American Express Graphite\u2122 Business Cash Unlimited Card, kicking off a major \nexpansion of integrated solutions for businesses of all sizes\n\u2022 Announced the Amex Agentic Commerce Experiences\u2122 developer kit and industry-first Amex Agent \nPurchase Protection\u2122\n\u2022 Unveiled next phase of the Resy dining platform, including the planned integration of Resy and Tock \nvenue networks\n\u2022 Opened Las Vegas Sidecar and New Delhi Centurion Lounge\u00ae and announced upcoming new or \nexpanded spaces in three other locations\n\u2022 Ranked #4 on Great Place to Work\u2019s\u00ae 2026 list of the 100 Best Companies to Work For\u00ae in the U.S.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 2,
+      "pdf_page": 2,
+      "pdf_page_image": "extracted/pdf_page_02.png",
+      "title": "Summary Financial Performance",
+      "section": "Financials",
+      "layout_hint": "labeled_comparison_table_3col_pill_headers",
+      "bullets": [],
+      "metrics": [
+        {
+          "label": "Total Revenues Net of Interest Expense Q1'26",
+          "value": "$18,907"
+        },
+        {
+          "label": "Total Revenues Net of Interest Expense Q1'25",
+          "value": "$16,967"
+        },
+        {
+          "label": "Revenue YoY",
+          "value": "11%"
+        },
+        {
+          "label": "FX-Adjusted prior",
+          "value": "$17,210"
+        },
+        {
+          "label": "FX-Adjusted YoY",
+          "value": "10%"
+        },
+        {
+          "label": "Net Income Q1'26",
+          "value": "$2,971"
+        },
+        {
+          "label": "Net Income Q1'25",
+          "value": "$2,584"
+        },
+        {
+          "label": "Net Income YoY",
+          "value": "15%"
+        },
+        {
+          "label": "Diluted EPS Q1'26",
+          "value": "$4.28"
+        },
+        {
+          "label": "Diluted EPS Q1'25",
+          "value": "$3.64"
+        },
+        {
+          "label": "EPS YoY",
+          "value": "18%"
+        },
+        {
+          "label": "Avg Diluted Shares Q1'26",
+          "value": "686"
+        },
+        {
+          "label": "Avg Diluted Shares Q1'25",
+          "value": "702"
+        },
+        {
+          "label": "Shares YoY",
+          "value": "(2%)"
+        }
+      ],
+      "table": {
+        "columns": [
+          "Metric",
+          "Q1'26",
+          "Q1'25",
+          "YoY% Inc/(Dec)"
+        ],
+        "rows": [
+          [
+            "Total Revenues Net of Interest Expense",
+            "$18,907",
+            "$16,967",
+            "11%"
+          ],
+          [
+            "FX-Adjusted*",
+            "",
+            "$17,210",
+            "10%"
+          ],
+          [
+            "Net Income",
+            "$2,971",
+            "$2,584",
+            "15%"
+          ],
+          [
+            "Diluted EPS**",
+            "$4.28",
+            "$3.64",
+            "18%"
+          ],
+          [
+            "Average Diluted Shares Outstanding",
+            "686",
+            "702",
+            "(2%)"
+          ]
+        ],
+        "style": "three_pill_header_columns navy headers rounded tops white body row labels left"
+      },
+      "charts": [],
+      "footer_notes": "* FX-adjusted non-GAAP. ** Attributable to common shareholders.",
+      "speaker_notes": "Lead with revenue + EPS; note FX-adjusted and share count decline.",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "3\nSummary Financial Performance\n$ in millions, except per share amounts; % Increase/(decrease) vs. Prior year\n* Total Revenues Net of Interest Expense adjusted for FX is a non-GAAP measure. FX-adjusted information assumes a constant exchange rate between the periods being compared for purposes of currency translation into U.S. \ndollars (i.e., assumes foreign exchange rates for given period apply to prior period against which results are being compared). ** Attributable to common shareholders. Represents net income less earnings allocated to \nparticipating share awards and dividends on preferred shares.\nTotal Revenues Net of Interest Expense\n$18,907\n$16,967\n11%\n    FX-Adjusted*\n$17,210\n10%\nNet Income \n$2,971\n$2,584\n15%\nDiluted EPS**\n$4.28\n$3.64\n18%\nAverage Diluted Shares Outstanding \n686\n702\n(2%)\nYoY% \nInc/(Dec)\nQ1'25\nQ1'26",
+      "image_exists": true
+    },
+    {
+      "slide_index": 3,
+      "pdf_page": 3,
+      "pdf_page_image": "extracted/pdf_page_03.png",
+      "title": "Total Billed Business",
+      "section": "Billings",
+      "layout_hint": "multi_series_line_chart_with_bottom_table",
+      "bullets": [],
+      "metrics": [],
+      "table": {
+        "columns": [
+          "",
+          "Q1'25",
+          "Q2'25",
+          "Q3'25",
+          "Q4'25",
+          "Q1'26"
+        ],
+        "rows": [
+          [
+            "G&S",
+            "7%",
+            "7%",
+            "9%",
+            "8%",
+            "8%"
+          ],
+          [
+            "T&E",
+            "6%",
+            "5%",
+            "8%",
+            "8%",
+            "9%"
+          ]
+        ],
+        "style": "dark_navy_header_band white cells thin borders"
+      },
+      "charts": [
+        {
+          "type": "multi_line",
+          "title": "Total Billed Business",
+          "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted unless otherwise stated)",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "FX-adjusted",
+              "values": [
+                6,
+                7,
+                8,
+                8,
+                9
+              ],
+              "style": "solid navy markers with value labels"
+            },
+            {
+              "name": "Reported",
+              "values": [
+                6,
+                7,
+                9,
+                9,
+                10
+              ],
+              "style": "dashed light-gray markers with end label 'Reported'"
+            }
+          ],
+          "y_axis": {
+            "min": 0,
+            "max": 15,
+            "unit": "%"
+          },
+          "annotations": [
+            {
+              "text": "Leap Year\nApprox.\n(1%)",
+              "style": "dashed rounded box upper-left"
+            }
+          ],
+          "value_labels_on_points": true
+        }
+      ],
+      "footer_notes": "See Annex 1 for reported billings growth rates. G&S = Goods & Services billed business. T&E = Travel & Entertainment billed business.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "4\nTotal Billed Business\n% Increase/(decrease) vs. Prior year (FX-adjusted unless otherwise stated)\nSee Annex 1 for reported billings growth rates. G&S = Goods & Services billed business. T&E = Travel & Entertainment billed business.\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nG&S\n7%\n7%\n9%\n8%\n8%\nT&E\n6%\n5%\n8%\n8%\n9%\n6%\n7%\n9%\n9%\n10%\n6%\n7%\n8%\n8%\n9%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n0%\n5%\n10%\n15%\nLeap Year\nApprox.\n(1%)\nReported",
+      "image_exists": true
+    },
+    {
+      "slide_index": 4,
+      "pdf_page": 4,
+      "pdf_page_image": "extracted/pdf_page_04.png",
+      "title": "U.S. Consumer Services Billed Business",
+      "section": "Billings",
+      "layout_hint": "line_chart_plus_generation_mix_table",
+      "bullets": [],
+      "metrics": [],
+      "table": {
+        "columns": [
+          "Q1'26",
+          "Gen-Z",
+          "Millennials",
+          "Gen-X",
+          "Baby Boomer +",
+          "Total"
+        ],
+        "rows": [
+          [
+            "YoY",
+            "38%",
+            "13%",
+            "8%",
+            "4%",
+            "10%"
+          ],
+          [
+            "% of Total",
+            "6%",
+            "30%",
+            "36%",
+            "28%",
+            "100%"
+          ]
+        ]
+      },
+      "charts": [
+        {
+          "type": "line",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "YoY FX-adj",
+              "values": [
+                7,
+                7,
+                9,
+                9,
+                10
+              ]
+            }
+          ],
+          "callouts": [
+            "T&E, 11% YoY",
+            "G&S, 9% YoY"
+          ],
+          "annotations": [
+            {
+              "text": "Leap Year Approx. (1%)"
+            }
+          ],
+          "value_labels_on_points": true
+        }
+      ],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "7%\n7%\n9%\n9%\n10%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n0%\n5%\n10%\n15%\n5\nU.S. Consumer Services Billed Business\nQ1'26\nGen-Z\nMillennials\nGen-X\nBaby Boomer +\nTotal\nYoY\n38%\n13%\n8%\n4%\n10%\n% of Total\n6%\n30%\n36%\n28%\n100%\n% Increase/(decrease) vs. Prior year\nT&E, 11% YoY\nG&S, 9% YoY\nLeap Year\nApprox.\n(1%)",
+      "image_exists": true
+    },
+    {
+      "slide_index": 5,
+      "pdf_page": 5,
+      "pdf_page_image": "extracted/pdf_page_05.png",
+      "title": "U.S. Consumer Platinum Performance",
+      "section": "US Consumer",
+      "layout_hint": "dual_panel_specialized_charts",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [
+        {
+          "type": "multi_panel_spend_acceleration",
+          "title": "Spend Growth is Accelerating",
+          "note": "Contains Refresh callout and multi-series panels \u2014 complex dual visual"
+        },
+        {
+          "type": "retention_rate_broken_axis",
+          "title": "Account Retention Rate for Card Members in Renewal Anniversary Month",
+          "subtitle": "Retention Rates Remain High and Very Stable",
+          "y_window": [
+            "90%",
+            "100%"
+          ],
+          "callout": "+ ~6 percentage points",
+          "categories": [
+            "January",
+            "February",
+            "March"
+          ],
+          "series_pairs": [
+            "2025",
+            "2026"
+          ]
+        }
+      ],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "complex_layout": "two-column specialized charts with broken-axis retention panels and anniversary-month labels",
+      "raw_text": "Q1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n% Increase/(decrease) vs. Prior year\nRefresh\nSpend Growth is Accelerating\n90.000%\n100.000\nJanuary\nFebruary\nMarch\nAccount Retention Rate for Card Members \nin Renewal Anniversary Month\nRetention Rates Remain High and Very Stable\nAnniversary \nMonth\n//\n2025\n2026\n2025\n2026\n2025\n2026\n6\nU.S. Consumer Platinum Performance\n90%\n100%\n//\n+ ~6 percentage points",
+      "image_exists": true
+    },
+    {
+      "slide_index": 6,
+      "pdf_page": 6,
+      "pdf_page_image": "extracted/pdf_page_06.png",
+      "title": "U.S. Consumer: Membership Model Engagement",
+      "section": "US Consumer",
+      "layout_hint": "three_column_multiplier_cards",
+      "bullets": [],
+      "metrics": [
+        {
+          "col": "Lodging",
+          "primary": "50%",
+          "compare": "5%",
+          "multiplier": "10x",
+          "labels": [
+            "Fine Hotels + Resorts and The Hotel Collection",
+            "U.S. Consumer Services Lodging"
+          ]
+        },
+        {
+          "col": "Restaurants",
+          "primary": "20%",
+          "compare": "10%",
+          "multiplier": "2x",
+          "labels": [
+            "U.S. Resy Restaurants",
+            "U.S. Consumer Services Restaurants"
+          ]
+        },
+        {
+          "col": "Airlines",
+          "primary": "21%",
+          "compare": "11%",
+          "multiplier": "2x",
+          "labels": [
+            "Member Airfares*",
+            "U.S. Consumer Services Airlines"
+          ]
+        }
+      ],
+      "table": null,
+      "charts": [],
+      "footer_notes": "* Member Airfares offers Platinum and Centurion Card Members reduced fares on select premium tickets...",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "subtitle": "Card Member Spend Growth Rates; % Increase/(decrease) vs. Prior year",
+      "raw_text": "Lodging\nAirlines\nRestaurants\n7\nQ1\u20192026 Spend Growth\nQ1\u20192026 Spend Growth\nQ1\u20192026 Spend Growth\nFine Hotels + \nResorts and \nThe Hotel \nCollection\nU.S. Consumer \nServices\n Lodging\n50%\n5%\n10x\nU.S. Resy \nRestaurants \nU.S. Consumer \nServices\n Restaurants\n20%\n10%\n2x\nMember \nAirfares* \nU.S. Consumer \nServices\n Airlines\n21%\n11%\n2x\nU.S. Consumer: Membership Model Engagement\nCard Member Spend Growth Rates; % Increase/(decrease) vs. Prior year\n* Member Airfares offers Platinum and Centurion Card Members reduced fares on select premium tickets on designated international flights and select economy tickets on designated domestic flights, when booked through \nAmerican Express Travel.\n7",
+      "image_exists": true
+    },
+    {
+      "slide_index": 7,
+      "pdf_page": 7,
+      "pdf_page_image": "extracted/pdf_page_07.png",
+      "title": "Membership Model Engagement: Proprietary Lodging Assets",
+      "section": "US Consumer",
+      "layout_hint": "split_chart_and_kpi_cards",
+      "bullets": [
+        "Program Benefits: Early check-in, Late check-out, Room upgrades, Complimentary breakfast and Wi-Fi, Experience credits*"
+      ],
+      "metrics": [
+        {
+          "label": "Premium Global Properties",
+          "value": "3,400+"
+        },
+        {
+          "label": "New Properties Selected out of ~1,400 Applications in 2026",
+          "value": "300+"
+        },
+        {
+          "label": "Average Card Member Value for 2-Night Stay*",
+          "value": "$550"
+        },
+        {
+          "label": "Annual U.S. Platinum Statement Credit",
+          "value": "$600",
+          "sub": "100% Partner-Funded; Pre-Refresh Credit: $200"
+        }
+      ],
+      "table": null,
+      "charts": [
+        {
+          "type": "line",
+          "title": "Lodging Spend Growth",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "Fine Hotels + Resorts and The Hotel Collection",
+              "end_value": "50%"
+            },
+            {
+              "name": "U.S. Consumer Services",
+              "end_value": "5%"
+            }
+          ],
+          "callout": "10x"
+        }
+      ],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "50%\n5%\nQ1\u201925\nQ2\u201925\nQ3\u201925\nQ4\u201925\nQ1\u201926\n8\nMembership Model Engagement: Proprietary Lodging Assets\n* $550 average value and listed program benefits for Fine Hotels + Resorts; benefits vary between Fine Hotels + Resorts and The Hotel Collection and by property within each program. Actual value will vary based on property, room \nrate, upgrade availability, and use of benefits.\nLodging Spend Growth\nFine Hotels + Resorts and \nThe Hotel Collection\n3,400+\nPremium Global Properties\n300+\n$550\nNew Properties Selected out of\n~1,400 Applications in 2026\nAverage Card Member Value \nfor 2-Night Stay*\nProgram Benefits: Early check-in, Late check-out, Room upgrades, \nComplimentary breakfast and Wi-Fi, Experience credits*\n10x\nFine Hotels + Resorts and \nThe Hotel Collection\nU.S. Consumer Services\n% Increase/(decrease) vs. Prior year\n$600\nAnnual U.S. Platinum Statement Credit\n100% Partner-Funded\nPre-Refresh Credit: $200",
+      "image_exists": true
+    },
+    {
+      "slide_index": 8,
+      "pdf_page": 8,
+      "pdf_page_image": "extracted/pdf_page_08.png",
+      "title": "Commercial Services Billed Business",
+      "section": "Billings",
+      "layout_hint": "line_chart_plus_mix_table",
+      "bullets": [],
+      "metrics": [],
+      "table": {
+        "columns": [
+          "Q1'26",
+          "U.S. SME",
+          "U.S. Large & Global Corp.",
+          "Total"
+        ],
+        "rows": [
+          [
+            "YoY",
+            "4%",
+            "4%",
+            "4%"
+          ],
+          [
+            "% of Total",
+            "81%",
+            "19%",
+            "100%"
+          ]
+        ]
+      },
+      "charts": [
+        {
+          "type": "line",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "YoY",
+              "values": [
+                2,
+                2,
+                4,
+                3,
+                4
+              ]
+            }
+          ],
+          "callouts": [
+            "T&E, 6% YoY",
+            "G&S, 3% YoY"
+          ],
+          "annotations": [
+            {
+              "text": "Leap Year Approx. (1%)"
+            }
+          ]
+        }
+      ],
+      "footer_notes": "SME refers to small and mid-sized businesses with less than $300MM in annual revenues.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "2%\n2%\n4%\n3%\n4%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n0%\n5%\n10%\n15%\n9\nCommercial Services Billed Business\nSME refers to small and mid-sized businesses with less than $300MM in annual revenues. All growth rates reflect FX-adjusted rates except for U.S. SME. \nSee Annex 1 for reported billings growth rates.\nQ1'26\nU.S. SME\nU.S. Large & Global Corp.\nTotal\nYoY\n4%\n4%\n4%\n% of Total\n81%\n19%\n100%\n% Increase/(decrease) vs. Prior year (FX-adjusted)\nT&E, 6% YoY\nG&S, 3% YoY\nLeap Year\nApprox.\n(1%)",
+      "image_exists": true
+    },
+    {
+      "slide_index": 9,
+      "pdf_page": 9,
+      "pdf_page_image": "extracted/pdf_page_09.png",
+      "title": "International Card Services Billed Business",
+      "section": "Billings",
+      "layout_hint": "dual_line_chart_plus_mix_table",
+      "bullets": [],
+      "metrics": [],
+      "table": {
+        "columns": [
+          "Q1'26",
+          "Intl Consumer",
+          "Intl SME & Large Corp.",
+          "Total"
+        ],
+        "rows": [
+          [
+            "YoY",
+            "13%",
+            "12%",
+            "13%"
+          ],
+          [
+            "% of Total",
+            "65%",
+            "35%",
+            "100%"
+          ]
+        ]
+      },
+      "charts": [
+        {
+          "type": "multi_line",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "FX-adjusted",
+              "values": [
+                13,
+                12,
+                13,
+                12,
+                13
+              ]
+            },
+            {
+              "name": "Reported",
+              "values": [
+                9,
+                15,
+                14,
+                17,
+                20
+              ]
+            }
+          ],
+          "callouts": [
+            "G&S, 14% YoY",
+            "T&E, 10% YoY"
+          ],
+          "annotations": [
+            {
+              "text": "Leap Year Approx. (1%)"
+            }
+          ]
+        }
+      ],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "13%\n12%\n13%\n12%\n13%\n9%\n15%\n14%\n17%\n20%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n0%\n5%\n10%\n15%\n20%\n25%\n10\nInternational Card Services Billed Business\nQ1'26\nInt\u2019l Consumer\nInt\u2019l SME & Large Corp.\nTotal\nYoY\n13%\n12%\n13%\n% of Total\n65%\n35%\n100%\n% Increase/(decrease) vs. Prior year (FX-adjusted unless otherwise stated)\nG&S, 14% YoY\nT&E, 10% YoY\nSee Annex 1 for reported billings growth rates.\nLeap Year\nApprox.\n(1%)\nReported",
+      "image_exists": true
+    },
+    {
+      "slide_index": 10,
+      "pdf_page": 10,
+      "pdf_page_image": "extracted/pdf_page_10.png",
+      "title": "Transaction Growth",
+      "section": "Volumes",
+      "layout_hint": "single_line_chart",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [
+        {
+          "type": "line",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "Transactions YoY",
+              "values": [
+                9,
+                9,
+                10,
+                9,
+                10
+              ]
+            }
+          ],
+          "annotations": [
+            {
+              "text": "Leap Year Approx. (1%)"
+            }
+          ],
+          "value_labels_on_points": true
+        }
+      ],
+      "footer_notes": "Transactions represent global merchant transactions (excluding ATM transactions and balance transfers) on cards issued by American Express, net of returns.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "9%\n9%\n10%\n9%\n10%\nQ1'25\nQ2\u201925\nQ3\u201925\nQ4\u201925\nQ1'26\n0%\n5%\n10%\n15%\n11\nTransaction Growth\n% Increase/(decrease) vs. Prior year\nLeap Year\nApprox.\n(1%)\nTransactions represent global merchant transactions (excluding ATM transactions and balance transfers) on cards issued by American Express, net of returns.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 11,
+      "pdf_page": 11,
+      "pdf_page_image": "extracted/pdf_page_11.png",
+      "title": "New Acquisitions",
+      "section": "Acquisitions",
+      "layout_hint": "stacked_bar_with_kpi_callouts",
+      "bullets": [],
+      "metrics": [
+        {
+          "label": "Global Consumer New Accounts Acquired from Millennial / Gen-Z",
+          "value": "73%"
+        },
+        {
+          "label": "Global New Accounts Acquired on Fee-Paying Products*",
+          "value": "66%"
+        }
+      ],
+      "table": null,
+      "charts": [
+        {
+          "type": "stacked_bar",
+          "title": "Proprietary New Cards Acquired (in millions)",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "U.S. Consumer Services",
+              "values": [
+                1.5,
+                1.5,
+                1.5,
+                1.3,
+                1.3
+              ]
+            },
+            {
+              "name": "Commercial Services",
+              "values": [
+                0.8,
+                0.7,
+                0.7,
+                0.7,
+                0.8
+              ]
+            },
+            {
+              "name": "International Card Services",
+              "values": [
+                1.1,
+                0.9,
+                1.0,
+                0.9,
+                1.0
+              ]
+            }
+          ],
+          "totals": [
+            3.4,
+            3.1,
+            3.2,
+            2.9,
+            3.1
+          ]
+        }
+      ],
+      "footer_notes": "Proprietary new cards acquired (NCA) / proprietary new accounts acquired (NAA) definitions. *Excludes Corporate.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "12\nNew Acquisitions\nProprietary new cards acquired (NCA) represents the number of new cards issued by American Express, net of replacement cards. \nProprietary new accounts acquired (NAA) represents the number of new Card Member accounts opened, and excludes supplemental cards issued on those accounts. *Excludes Corporate.\n1.5\n1.5\n1.5\n1.3\n1.3\n0.8\n0.7\n0.7\n0.7\n0.8\n1.1\n0.9\n1.0\n0.9\n1.0\n3.4\n3.1\n3.2\n2.9\n3.1\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nInternational \nCard Services\nCommercial \nServices\nU.S. Consumer \nServices\nProprietary New\nAccounts Acquired\nGlobal Consumer \nNew Accounts\nAcquired from\nMillennial / Gen-Z\nGlobal New Accounts\nAcquired on Fee-\nPaying Products*\nProprietary New Cards Acquired\nin millions\nQ1\u20192026\n73\n66 %\n%",
+      "image_exists": true
+    },
+    {
+      "slide_index": 12,
+      "pdf_page": 12,
+      "pdf_page_image": "extracted/pdf_page_12.png",
+      "title": "Total Balances and Billed Business",
+      "section": "Balances",
+      "layout_hint": "dual_line_chart",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [
+        {
+          "type": "multi_line",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "Total Balances",
+              "values": [
+                7,
+                6,
+                7,
+                7,
+                7
+              ]
+            },
+            {
+              "name": "Billed Business",
+              "values": [
+                6,
+                7,
+                8,
+                8,
+                9
+              ]
+            }
+          ],
+          "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted)"
+        }
+      ],
+      "footer_notes": "Total Balances includes Card Balances held for investment and Other Loans.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "13\nTotal Balances and Billed Business\nTotal Balances includes Card Balances held for investment and Other Loans. See the Statistical Tables for more information regarding Card Balances. Total Balances FX-adjusted rates are non-GAAP \nmeasures. See Annex 2 for Total Balances growth rates on a GAAP basis. See Annex 1 for reported billings growth rates. See Slide 3 for an explanation of FX-adjusted information.\n7%\n6%\n7%\n7%\n7%\n6%\n7%\n8%\n8%\n9%\nTotal Balances\nBilled Business\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n% Increase/(decrease) vs. Prior year (FX-adjusted)",
+      "image_exists": true
+    },
+    {
+      "slide_index": 13,
+      "pdf_page": 13,
+      "pdf_page_image": "extracted/pdf_page_13.png",
+      "title": "Credit Metrics",
+      "section": "Credit",
+      "layout_hint": "side_by_side_line_charts",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [
+        {
+          "type": "line",
+          "title": "Net Write-off Rates",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "values": [
+                1.3,
+                1.3,
+                1.3,
+                1.3,
+                1.3
+              ]
+            }
+          ],
+          "subtitle": "% of Average Card Balances"
+        },
+        {
+          "type": "line",
+          "title": "30+ Days Past Due",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "values": [
+                2.1,
+                2.0,
+                1.9,
+                2.1,
+                2.0
+              ]
+            }
+          ],
+          "subtitle": "% of Card Balances"
+        }
+      ],
+      "footer_notes": "Net write-off rates based on principal losses only; Consumer and Small Business Services Card Balances (unavailable for Corporate).",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "14\nCredit Metrics\nNet write-off rates based on principal losses only and both net write-off rates and 30+ days past due as a % represent Consumer and Small Business Services Card Balances (unavailable for Corporate).\nSee the Statistical Tables for net write-off rates including interest and fees.\n1.3%\n1.3%\n1.3%\n1.3%\n1.3%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n2.1%\n2.0%\n1.9%\n2.1%\n2.0%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n30+ Days Past Due\nNet Write-off Rates\n% of Average Card Balances\n% of Card Balances",
+      "image_exists": true
+    },
+    {
+      "slide_index": 14,
+      "pdf_page": 14,
+      "pdf_page_image": "extracted/pdf_page_14.png",
+      "title": "Total Provision",
+      "section": "Credit",
+      "layout_hint": "stacked_bar_with_reserve_rate_row",
+      "bullets": [],
+      "metrics": [
+        {
+          "label": "Reserve Rate for Total Balances",
+          "values_by_quarter": [
+            "2.9%",
+            "2.9%",
+            "2.9%",
+            "2.9%",
+            "2.8%"
+          ]
+        }
+      ],
+      "table": null,
+      "charts": [
+        {
+          "type": "stacked_bar",
+          "unit": "$mm",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "Write-offs",
+              "values": [
+                1223,
+                1183,
+                1162,
+                1273,
+                1275
+              ]
+            },
+            {
+              "name": "Reserve Build/(Release)",
+              "values": [
+                -73,
+                222,
+                125,
+                141,
+                -24
+              ]
+            }
+          ],
+          "totals": [
+            1150,
+            1405,
+            1287,
+            1414,
+            1251
+          ]
+        }
+      ],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "15\nTotal Provision\n$1,150\n$1,405\n$1,287\n$1,414\n$1,251\n$1,223\n$1,183\n$1,162\n$1,273\n$1,275\n($73)\n$222\n$125\n$141\n($24)\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n$ in millions\nWrite-offs\nReserve\nBuild/(Release)\nTotal Provision\nSee Variance Commentary in the appendix section for an explanation of the provision variance versus last year.\nReserve Rate for \nTotal Balances\n2.9%\n2.9%\n2.9%\n2.9%\n2.8%",
+      "image_exists": true
+    },
+    {
+      "slide_index": 15,
+      "pdf_page": 15,
+      "pdf_page_image": "extracted/pdf_page_15.png",
+      "title": "Revenue Performance",
+      "section": "Revenue",
+      "layout_hint": "labeled_comparison_table_4col_pill_headers",
+      "bullets": [],
+      "metrics": [],
+      "table": {
+        "columns": [
+          "Line",
+          "Q1'26",
+          "Q1'25",
+          "Reported YoY% Inc/(Dec)",
+          "FX-Adjusted* YoY% Inc/(Dec)"
+        ],
+        "rows": [
+          [
+            "Discount Revenue",
+            "$9,512",
+            "$8,743",
+            "9%",
+            "7%"
+          ],
+          [
+            "Net Card Fees",
+            "$2,752",
+            "$2,333",
+            "18%",
+            "16%"
+          ],
+          [
+            "Service Fees and Other Revenue",
+            "$1,951",
+            "$1,722",
+            "13%",
+            "9%"
+          ],
+          [
+            "Net Interest Income",
+            "$4,692",
+            "$4,169",
+            "13%",
+            "12%"
+          ],
+          [
+            "Revenues Net of Interest Expense",
+            "$18,907",
+            "$16,967",
+            "11%",
+            "10%"
+          ]
+        ],
+        "style": "pill_header_columns like summary financials"
+      },
+      "charts": [],
+      "footer_notes": "See Variance Commentary in appendix. * FX-adjusted non-GAAP.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "16\nRevenue Performance\n$ in millions; % Increase/(decrease) vs. Prior year\nSee Variance Commentary in the appendix section for an explanation of the revenue variances versus last year. * Revenues line YoY growth rates adjusted for FX are non-GAAP measures. See Annex 3 for Revenues on a \nGAAP and FX-adjusted basis. See Slide 3 for an explanation of FX-adjusted information.\nDiscount Revenue\n$9,512\n$8,743\n9%\n7%\nNet Card Fees\n$2,752\n$2,333\n18%\n16%\nService Fees and Other Revenue\n$1,951\n$1,722\n13%\n9%\nNet Interest Income\n$4,692\n$4,169\n13%\n12%\nRevenues Net of Interest Expense\n$18,907\n$16,967\n11%\n10%\nReported \nYoY% Inc/(Dec)\nFX-Adjusted* \nYoY% Inc/(Dec)\nQ1'26\nQ1'25",
+      "image_exists": true
+    },
+    {
+      "slide_index": 16,
+      "pdf_page": 16,
+      "pdf_page_image": "extracted/pdf_page_16.png",
+      "title": "Net Card Fees",
+      "section": "Revenue",
+      "layout_hint": "dual_panel_bar_and_line",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [
+        {
+          "type": "bar",
+          "title": "Net Card Fees (Q1: 2019-2026)",
+          "categories": [
+            "Q1'19",
+            "Q1'20",
+            "Q1'21",
+            "Q1'22",
+            "Q1'23",
+            "Q1'24",
+            "Q1'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "values": [
+                0.9,
+                1.1,
+                1.3,
+                1.4,
+                1.7,
+                2.0,
+                2.3,
+                2.8
+              ]
+            }
+          ],
+          "callout": "17% / Year CAGR",
+          "unit": "$B"
+        },
+        {
+          "type": "line",
+          "title": "Net Card Fees YoY% (Q1'24-Q1'26)",
+          "categories": [
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "values": [
+                16,
+                16,
+                18,
+                19,
+                20,
+                20,
+                17,
+                16,
+                16
+              ]
+            }
+          ],
+          "y_axis": {
+            "min": 0,
+            "max": 30,
+            "unit": "%"
+          }
+        }
+      ],
+      "footer_notes": "YoY growth rates and CAGR adjusted for FX are non-GAAP measures. See Annex 4.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "17\nNet Card Fees YoY growth rates and CAGR adjusted for FX are non-GAAP measures. See Annex 4 for Net Card Fees growth rates on a GAAP basis. See Slide 3 for an explanation of FX-adjusted information.\nNet Card Fees\nNet Card Fees (Q1: 2019-2026)\nNet Card Fees YoY% (Q1\u201924-Q1\u201926)\n$ in billions - % Increase/(decrease) vs. Prior year & CAGR (FX-adjusted)\n$0.9\n$1.1\n$1.3\n$1.4\n$1.7\n$2.0\n$2.3\n$2.8\nQ1'19\nQ1'20\nQ1'21\nQ1'22\nQ1'23\nQ1'24\nQ1'25\nQ1'26\n17% / Year\n16% 16%\n18% 19% 20% 20%\n17% 16% 16%\nQ1'24 Q2'24 Q3'24 Q4'24 Q1'25 Q2'25 Q3'25 Q4'25 Q1'26\n0%\n5%\n10%\n15%\n20%\n25%\n30%\n% CAGR",
+      "image_exists": true
+    },
+    {
+      "slide_index": 17,
+      "pdf_page": 17,
+      "pdf_page_image": "extracted/pdf_page_17.png",
+      "title": "Premium Lending / Net Interest Income",
+      "section": "Revenue",
+      "layout_hint": "kpi_cagr_with_nii_trend",
+      "bullets": [],
+      "metrics": [
+        {
+          "label": "Billed Business CAGR vs Q1'19",
+          "value": "8%"
+        },
+        {
+          "label": "NII CAGR vs Q1'19",
+          "value": "13%"
+        },
+        {
+          "label": "Total Balances CAGR vs Q1'19",
+          "value": "7%"
+        },
+        {
+          "label": "Margin (NII / Avg Total Balances) CAGR context",
+          "value": "5%"
+        }
+      ],
+      "table": null,
+      "charts": [
+        {
+          "type": "bar_with_yoy_labels",
+          "title": "Net Interest Income",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "values": [
+            4.2,
+            4.2,
+            4.5,
+            4.5,
+            4.7
+          ],
+          "yoy": [
+            11,
+            12,
+            12,
+            12,
+            12
+          ],
+          "unit": "$B"
+        }
+      ],
+      "footer_notes": "Volume & Margin driver decomposition alongside NII bars.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "18\nPremium Lending\nNet Interest Income\nNII: Volume & Margin Drivers\nTotal Balances includes Card Balances, Card Balances held for sale (HFS) and Other Loans. Net Interest Income and Total Balances FX-adjusted growth rates are non-GAAP measures. See Annex 5 for Net Interest Income growth rates and CAGR \non a GAAP basis and Annex 2 for Total Balances CAGR on a GAAP basis. See Annex 1 for reported billings CAGR. See Slide 3 for an explanation of FX-adjusted information. \n$ in billions - % Increase/(decrease) vs. Prior year (FX-adjusted)\nBilled Business\nNet Interest Income\n    Volume\n     Total Balances\n    Margin\n     Net Interest Income / Average \n     Total Balances\nQ1\u201926 vs. Q1\u201919\nCAGR %\n8%\n13%\n7%\n$4.2\n$4.2\n$4.5\n$4.5\n$4.7\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n11%\n12%\n12%\n12%\n12%\nYoY\nGrowth\nCAGR % vs. Q1\u201919 (FX-adjusted except Margin)\n5%",
+      "image_exists": true
+    },
+    {
+      "slide_index": 18,
+      "pdf_page": 18,
+      "pdf_page_image": "extracted/pdf_page_18.png",
+      "title": "Total Revenues Net of Interest Expense",
+      "section": "Revenue",
+      "layout_hint": "combo_dollar_bars_and_growth_lines",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [
+        {
+          "type": "bar",
+          "title": "Revenue $B levels",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "values": [
+            17.0,
+            17.9,
+            18.4,
+            19.0,
+            18.9
+          ]
+        },
+        {
+          "type": "multi_line",
+          "title": "YoY growth %",
+          "categories": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "FX Adjusted",
+              "values": [
+                7,
+                9,
+                11,
+                10,
+                11
+              ]
+            },
+            {
+              "name": "Reported",
+              "values": [
+                8,
+                9,
+                11,
+                9,
+                10
+              ]
+            }
+          ],
+          "annotations": [
+            {
+              "text": "Leap Year Approx. (1%)"
+            }
+          ]
+        }
+      ],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "19\nTotal Revenues Net of Interest Expense\n$ in billions - % Increase/(decrease) vs. Prior year\nRevenues Net of Interest Expense YoY growth rates adjusted for FX are non-GAAP measures. See Annex 6 for Revenues Net of Interest Expense on a GAAP and FX-adjusted basis. See Slide 3 for an explanation of FX-adjusted information.\n7%\n9%\n11%\n10%\n11%\n8%\n9%\n11%\n9%\n10%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n0%\n5%\n10%\n15%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n$B\n$17.0\n$17.9\n$18.4\n$19.0\n$18.9\nLeap Year\nApprox.\n(1%)\nReported\nFX Adjusted",
+      "image_exists": true
+    },
+    {
+      "slide_index": 19,
+      "pdf_page": 19,
+      "pdf_page_image": "extracted/pdf_page_19.png",
+      "title": "Expense Performance",
+      "section": "Expenses",
+      "layout_hint": "multi_row_expense_table_with_yoy",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "content_note": "Expense lines (Card Member Rewards and others) with $mm and YoY; vision: table-/card-led expense walk. Full numbers in raw_text.",
+      "raw_text": "20\nExpense Performance\n$ in millions\nSee Variance Commentary in the appendix section for an explanation of the expense variances versus last year.\nCard Member Rewards\n$4,891\n$4,378\n12%\nBusiness Development\n$1,591\n$1,529\n4%\nCard Member Services\n$1,975\n$1,328\n49%\nVariable Customer Engagement Expenses\n$8,457\n$7,235\n17%\nMarketing\n$1,480\n$1,486\n0%\nOperating Expenses\n$3,941\n$3,766\n5%\n     Total Expenses\n$13,878\n$12,487\n11%\nQ4'24\nYoY%\nInc/(Dec)\nQ1'26\nYoY%\nInc/(Dec)\nQ1'25\n44.7%\nQ1'26 VCE % \nof Revenue",
+      "image_exists": true
+    },
+    {
+      "slide_index": 20,
+      "pdf_page": 20,
+      "pdf_page_image": "extracted/pdf_page_20.png",
+      "title": "Capital",
+      "section": "Capital",
+      "layout_hint": "multi_panel_capital_return",
+      "bullets": [],
+      "metrics": [
+        {
+          "label": "Return on Average Equity (quarters)",
+          "values": [
+            "35%",
+            "34%",
+            "36%",
+            "36%",
+            "34%",
+            "35%"
+          ]
+        },
+        {
+          "label": "CET1 Ratio Q1'26",
+          "value": "10.5%",
+          "target": "10-11%",
+          "regulatory_min": "7%"
+        },
+        {
+          "label": "Net Income Returned to Common Shareholders (3 Year)",
+          "value": "74%"
+        },
+        {
+          "label": "Increase in Quarterly Dividend per Common Share (3 Year)",
+          "value": "58%"
+        }
+      ],
+      "table": null,
+      "charts": [
+        {
+          "type": "stacked_bar",
+          "title": "Capital returned \u2014 Share Repurchases + Dividends ($B)",
+          "categories": [
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "series": [
+            {
+              "name": "Dividends",
+              "values": [
+                0.5,
+                0.6,
+                0.6,
+                0.6,
+                0.6,
+                0.7
+              ]
+            },
+            {
+              "name": "Share Repurchases",
+              "values": [
+                1.1,
+                0.7,
+                1.4,
+                2.3,
+                0.9,
+                1.7
+              ]
+            }
+          ],
+          "totals": [
+            1.6,
+            1.3,
+            2.0,
+            2.9,
+            1.5,
+            2.3
+          ]
+        },
+        {
+          "type": "line",
+          "title": "Common Shares Outstanding (millions)",
+          "values": [
+            702,
+            701,
+            696,
+            689,
+            686,
+            682
+          ]
+        }
+      ],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "35%\n34%\n36%\n36%\n34%\n35%\nCapital Return & Common Shares Outstanding\n$1.6\n$1.3\n$2.0\n$2.9\n$1.5\n$2.3\n$1.1\n$0.7\n$1.4\n$2.3\n$0.9\n$1.7\n$0.5\n$0.6\n$0.6\n$0.6\n$0.6\n$0.7\nQ4'24\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\n702\n701\n696\n689\n686\n682\n21\nCapital\n$ in billions; Common Shares Outstanding in millions\nIncrease in \nQuarterly Dividend \nper Common Share\n(3 Year2)\nNet Income \nReturned to \nCommon \nShareholders\n(3 Year3)\n%\n58\n74\nCET1 Ratio\n(Q1\u201926)\n  %\n10.5\n%\nShare\nRepurchases\nDividends\nCommon Shares \nOutstanding\nCET1 Ratio Target: 10-11%\nRegulatory Minimum: 7%\nInclusive of Stress Capital Buffer\nReturn on \nAverage Equity1\n(1) Return on Average Equity is calculated by dividing annualized net income for the period by average shareholders\u2019 equity for the period. (2) Dividend per common share as of Q1\u201923 vs. Q1\u201926. (3) Net Income Returned to Common Shareholders \nis calculated as the total amount of capital returned to common shareholders through dividends and share repurchases divided by total capital generated through net income available to common shareholders from Q2\u201923 to Q1\u201926. Subtotals \nmay not sum due to rounding.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 21,
+      "pdf_page": 21,
+      "pdf_page_image": "extracted/pdf_page_21.png",
+      "title": "2026 Guidance",
+      "section": "Guidance",
+      "layout_hint": "two_big_guidance_kpis",
+      "bullets": [],
+      "metrics": [
+        {
+          "label": "Revenue Growth",
+          "value": "9% - 10%"
+        },
+        {
+          "label": "EPS",
+          "value": "$17.30 - $17.90"
+        }
+      ],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Our ability to achieve our 2026 guidance is subject to the macroeconomic environment, as well as contingencies and other factors beyond our control. Refer to Cautionary Note Regarding Forward-Looking Statements.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "22\n2026 Guidance\nOur ability to achieve our 2026 guidance is subject to the macroeconomic environment, as well as contingencies and other factors beyond our control. Refer to \"Cautionary Note Regarding Forward-Looking Statements\" at the end of \nthis presentation.\nRevenue Growth:\n9% - 10%\nEPS:\n$17.30 - $17.90\n2026 Guidance",
+      "image_exists": true
+    },
+    {
+      "slide_index": 22,
+      "pdf_page": 22,
+      "pdf_page_image": "extracted/pdf_page_22.png",
+      "title": "Appendix",
+      "section": "Appendix",
+      "layout_hint": "section_divider_brand",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "layout_cues": "Same two-tone navy/blue cover style with centered 'Appendix' title",
+      "raw_text": "Appendix",
+      "image_exists": true
+    },
+    {
+      "slide_index": 23,
+      "pdf_page": 23,
+      "pdf_page_image": "extracted/pdf_page_23.png",
+      "title": "Q1'26 Network Volumes Growth by Customer Type",
+      "section": "Appendix",
+      "layout_hint": "grouped_bars_or_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "24\nQ1\u201926 Network Volumes Growth by Customer Type\n% Increase/(decrease) vs. Prior Year (FX-adjusted)\nAll growth rates reflect FX-adjusted rates except for U.S. Consumer and U.S. SME. See Annex 1 for reported rates. Subtotals may not sum due to rounding.\nU.S. \nSME\n22%\nInt\u2019l\nConsumer\n 15%\nInt\u2019l SME & \nLarge Corp.\n8%\nU.S.\nConsumer\n37%\nU.S. Large & \nGlobal Corp.\n5%\n% of Total \nNetwork Volumes\n$486B\nProcessed \nVolumes\n12%\nInternational Card Services:\n13%\nCommercial Services:\n4%\nU.S. Consumer Services:\n10%\n10%\n4%\n4%\n13%\n12%\n9%",
+      "image_exists": true
+    },
+    {
+      "slide_index": 24,
+      "pdf_page": 24,
+      "pdf_page_image": "extracted/pdf_page_24.png",
+      "title": "FX Impact on Billed Business",
+      "section": "Appendix",
+      "layout_hint": "fx_impact_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "25\nFX Impact on Billed Business\nBilled Business by currency is based on the location where the card is issued. * Represents percentage change in foreign currency exchange rates utilized for conversion of reported results from local currency to \nUSD for Q1 2026 versus Q1 2025. ** Reflects weighted average based on Billed Business mix.\nQ1\u201926 Billed Business \nas a % of Total\nYoY Change in USD* vs. Currency \nStrengthened / (Weakened)\nEuro \u20ac\n5%\n(10%)\nUK \u00a3\n6%\n(6%)\nJapan \u00a5\n4%\n3%\nAustralia $\n4%\n(10%)\nCanada $\n3%\n(4%)\nMexico $\n2%\n(15%)\nTop 6 Intl. Currencies\n24%\n(7%)\nAll Other Intl. Currencies\n3%\n**",
+      "image_exists": true
+    },
+    {
+      "slide_index": 25,
+      "pdf_page": 25,
+      "pdf_page_image": "extracted/pdf_page_25.png",
+      "title": "Travel & Entertainment Billed Business",
+      "section": "Appendix",
+      "layout_hint": "breakdown_table_chart",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "26\nTravel & Entertainment Billed Business \nAll growth rates reflect FX-adjusted rates. See Slide 3 for an explanation of FX-adjusted information.  Subtotals may not sum due to rounding.\nQ1'26\nRestaurants\nLodging\nAirlines\nOther\nTotal T&E\nYoY Growth\n9%\n6%\n8%\n13%\n9%\n% of Total Billed Business\n7%\n5%\n7%\n9%\n29%",
+      "image_exists": true
+    },
+    {
+      "slide_index": 26,
+      "pdf_page": 26,
+      "pdf_page_image": "extracted/pdf_page_26.png",
+      "title": "Credit Reserve Macroeconomic Scenarios: Select Variables",
+      "section": "Appendix",
+      "layout_hint": "multi_scenario_variable_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "27\nCredit Reserve Macroeconomic Scenarios: Select Variables\nQ1 Upside Scenario\nQ1 Baseline Scenario\nQ1 Downside Scenario\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nQ2'26\nQ3'26\nQ4'26\nQ1'27\nQ2'27\nQ3'27\nQ4'27\nQ1'28\n0%\n1%\n2%\n3%\n4%\n5%\n6%\n7%\n8%\n9%\n10%\nQ1 Upside Scenario\nQ1 Baseline Scenario\nQ1 Downside Scenario\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nQ2'26\nQ3'26\nQ4'26\nQ1'27\nQ2'27\nQ3'27\nQ4'27\nQ1'28\n(5)%\n(4)%\n(3)%\n(2)%\n(1)%\n0%\n1%\n2%\n3%\n4%\n5%\n6%\nReflects the range of variables available as of March 31, 2026. Forecast assumptions are from an independent third party and represent the range of forecasts from the macroeconomic scenarios used during the quarter without applying a weight to \nthose scenarios.  * Real GDP QoQ % Change Seasonally Adjusted to Annualized Rates (SAAR).\nU.S. Unemployment Rate %\nU.S. GDP Growth* %",
+      "image_exists": true
+    },
+    {
+      "slide_index": 27,
+      "pdf_page": 27,
+      "pdf_page_image": "extracted/pdf_page_27.png",
+      "title": "Funding and Deposits",
+      "section": "Appendix",
+      "layout_hint": "funding_charts_tables",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "28\nFunding and Deposits\n* Reflects face amount of Card ABS, net of securities retained by the Company. Includes outstanding ABS secured borrowing facility draws.\n** Reflects face amount of unsecured term debt; the long-term debt balance on the Company\u2019s consolidated balance sheet includes capitalized leases and certain adjustments that are not included in these balances.\n72%\n72%\n21%\n21%\n6%\n6%\n1%\n1%\nQ4'25\nQ1'26\n$ in billions\n$ in billions\n$210\n$219\n81%\n82%\n2%\n2%\n10%\n10%\n7%\n6%\nQ4'25\nQ1'26\n$151\n$157\nUnsecured \nFunding**\nCard ABS*\nDeposits\nShort-term \nFunding\nThird Party \nSweep\nThird Party \nCDs\nSavings and \nDirect CDs\n92% FDIC \ninsured at \nQ1'26\nFunding Mix\nChecking\nDeposit Programs",
+      "image_exists": true
+    },
+    {
+      "slide_index": 28,
+      "pdf_page": 28,
+      "pdf_page_image": "extracted/pdf_page_28.png",
+      "title": "Additional Commentary \u2014 Variance Analysis",
+      "section": "Appendix",
+      "layout_hint": "dense_bullet_commentary",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "29\nAdditional Commentary \u2013 Variance Analysis\nThe following summary provides selected variance information for the three months ended March 31, 2026 compared to the same period in the \nprior year. It should be read in conjunction with the statistical tables for Q1'26, available at ir.americanexpress.com.\n\u2022\nDiscount Revenue: Increased 9 percent versus Q1\u201925, driven by an increase in billed business, partially offset by lower average merchant \ndiscount rates primarily due to shifts in geographic and merchant spend mix.\n\u2022\nNet Card Fees: Increased 18 percent versus Q1\u201925, primarily driven by growth in our premium card portfolios. \n\u2022\nService Fees and Other Revenue: Increased 13 percent versus Q1\u201925, primarily driven by increases in foreign-exchange related revenues \nassociated with Card Member cross-currency spending, network partnership revenue and loyalty coalition-related fees.\n\u2022\nInterest Income: Increased 9 percent versus Q1\u201925, primarily driven by growth in revolving loan balances, partially offset by lower interest \nrates.\n\u2022\nInterest Expense: Relatively flat versus Q1\u201925, reflecting growth in customer deposits and long-term debt, offset by lower interest rates paid \non customer deposits.\n\u2022\nProvisions for Credit Losses: Increased 9 percent versus Q1\u201925, primarily driven by higher net write-offs and a lower reserve release in the \ncurrent period.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 29,
+      "pdf_page": 29,
+      "pdf_page_image": "extracted/pdf_page_29.png",
+      "title": "Additional Commentary \u2014 Variance Analysis (cont.)",
+      "section": "Appendix",
+      "layout_hint": "dense_bullet_commentary",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "30\nAdditional Commentary \u2013 Variance Analysis\n\u2022\nCard Member Rewards Expense: Increased 12 percent versus Q1\u201925, primarily driven by higher billed business and changes to the \nMembership Rewards program for U.S. Business Platinum cards.\n\u2022\nBusiness Development Expense: Increased 4 percent versus Q1\u201925, primarily due to increased partner payments and higher client incentives \nand loyalty coalition-related costs, partially offset by a reserve release related to the allocation of revenue to a joint venture partner as a result \nof a final arbitration award.\n\u2022\nCard Member Services Expense: Increased 49 percent versus Q1\u201925, primarily due to higher usage of Card Member benefits and the new U.S. \nPlatinum benefits.\n\u2022\nMarketing Expense: Relatively flat versus Q1\u201925 reflecting consistent levels of spending on customer acquisition and brand advertising.\n\u2022\nSalaries and Employee Benefits Expense: Increased 17 percent versus Q1\u201925, primarily driven by higher compensation and incentive costs.\n\u2022\nOther Expenses: Decreased 11 percent versus Q1\u201925, primarily driven by a release of a reserve associated with international non-income tax, a \ngain recognized in the current period for the remeasurement of our ownership interest in our Switzerland joint venture (Swisscard AECS \nGmbH) resulting from our purchase of the remaining share of the joint venture and gains on Amex Ventures investments, partially offset by \nhigher technology costs and foreign-exchange related losses.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 30,
+      "pdf_page": 30,
+      "pdf_page_image": "extracted/pdf_page_30.png",
+      "title": "Annex 1 (1 of 2) Billed Business and Processed Volumes \u2014 Reported & FX-Adjusted",
+      "section": "Appendix",
+      "layout_hint": "wide_data_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "31\nAnnex 1 (1 of 2)\n* See Slide 3 for an explanation of FX-adjusted information. \n% Increase/(decrease) vs. Prior year\nBilled Business and Processed Volumes \u2013 Reported & FX-Adjusted*\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nBilled Business\nReported\n6%\n7%\n9%\n9%\n10%\nFX-Adjusted*\n6%\n7%\n8%\n8%\n9%\nReported Billed Business Q1\u201919 - Q1\u201926 CAGR\n5%\nFX-Adjusted Billed Business Q1\u201919 - Q1\u201926 CAGR*\n8%\nG&S\nReported\n6%\n8%\n9%\n9%\n10%\nFX-Adjusted*\n7%\n7%\n9%\n8%\n8%\nT&E\nReported\n5%\n6%\n8%\n9%\n12%\nFX-Adjusted*\n6%\n5%\n8%\n8%\n9%\nProcessed Volumes\nReported\n12%\nFX-Adjusted*\n9%",
+      "image_exists": true
+    },
+    {
+      "slide_index": 31,
+      "pdf_page": 31,
+      "pdf_page_image": "extracted/pdf_page_31.png",
+      "title": "Annex 1 (2 of 2) Billed Business \u2014 Reported & FX-Adjusted",
+      "section": "Appendix",
+      "layout_hint": "wide_data_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "32\nAnnex 1 (2 of 2)\n% Increase/(decrease) vs. Prior year\nBilled Business \u2013 Reported & FX-Adjusted*\nQ1'26\nReported\nFX-Adj.*\n International Consumer\n21%\n13%\n International SME & Large Corp.\n19%\n12%\n International Card Services\n    Total Billed Business\n20%\n13%\n    G&S \n21%\n14%\n    T&E \n18%\n10%\nQ1'26\nReported\nFX-Adj.*\n U.S. Large and Global Corp.\n4%\n4%\n Commercial Services\n    Total Billed Business\n4%\n4%\n    G&S\n3%\n3%\n    T&E\n7%\n6%\n* See Slide 3 for an explanation of FX-adjusted information.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 32,
+      "pdf_page": 32,
+      "pdf_page_image": "extracted/pdf_page_32.png",
+      "title": "Annex 2 Total Balances \u2014 Reported & FX-Adjusted",
+      "section": "Appendix",
+      "layout_hint": "wide_data_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "33\nAnnex 2\n$ in billions\nTotal Balances \u2013 Reported & FX-Adjusted*\nQ1'19\nQ1'24\nQ2'24\nQ3'24\nQ4'24\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nGAAP Total Balances\n$142\n$194\n$199\n$202\n$208\n$207\n$212\n$216\n$225\n$224\nFX-Adjusted Total Balances*\n$140\n$193\n$200\n$202\n$211\n$209\nYoY% Inc/(Dec) in GAAP Total Balances\n7%\n7%\n7%\n8%\n8%\nYoY% Inc/(Dec) in FX-Adjusted Total Balances*\n7%\n6%\n7%\n7%\n7%\nGAAP Total Balances (incl. Card Balances HFS) \nQ1\u201919 - Q1\u201926 CAGR\n7%\nFX-Adjusted Total Balances (incl. Card Balances HFS) \nQ1\u201919 - Q1\u201926 CAGR*\n7%\n* See Slide 3 for an explanation of FX-adjusted information.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 33,
+      "pdf_page": 33,
+      "pdf_page_image": "extracted/pdf_page_33.png",
+      "title": "Annex 3 Revenue \u2014 Reported & FX-Adjusted",
+      "section": "Appendix",
+      "layout_hint": "wide_data_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "34\nAnnex 3\n$ in millions\nRevenue \u2013 Reported & FX-Adjusted*\n* See Slide 3 for an explanation of FX-adjusted information.\nQ1'26\nQ1'25\nYoY% \nInc/(Dec)\nDiscount Revenue\n$9,512\n$8,743\n9%\n   FX-Adjusted*\n$8,857\n7%\nNet Card Fees\n$2,752\n$2,333\n18%\n   FX-Adjusted*\n$2,374\n16%\nService Fees and Other Revenue\n$1,951\n$1,722\n13%\n   FX-Adjusted*\n$1,783\n9%\nNet Interest Income\n$4,692\n$4,169\n13%\n   FX-Adjusted*\n$4,196\n12%\nRevenues Net of Interest Expense\n$18,907\n$16,967\n11%\n   FX-Adjusted*\n$17,210\n10%",
+      "image_exists": true
+    },
+    {
+      "slide_index": 34,
+      "pdf_page": 34,
+      "pdf_page_image": "extracted/pdf_page_34.png",
+      "title": "Annex 4 Net Card Fees \u2014 Reported & FX-Adjusted",
+      "section": "Appendix",
+      "layout_hint": "wide_data_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "35\nAnnex 4\n$ in billions\nNet Card Fees \u2013 Reported & FX-Adjusted*\nQ1'19\nQ1'23\nQ2'23\nQ3'23\nQ4'23\nQ1'24\nQ2'24 Q3'24 Q4'24\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nGAAP Net Card Fees\n$0.9\n$1.7\n$1.8\n$1.8\n$1.9\n$2.0\n$2.1\n$2.2\n$2.2\n$2.3\n$2.5\n$2.6\n$2.6\n$2.8\nFX-Adjusted Net Card Fees*\n$0.9\n$1.7\n$1.8\n$1.8\n$1.9\n$2.0\n$2.1\n$2.2\n$2.3\n$2.4\nYoY% Inc/(Dec) in GAAP Net \nCard Fees\n15%\n15%\n18%\n18%\n18%\n20%\n18%\n17%\n18%\nYoY% Inc/(Dec) in FX-Adjusted \nNet Card Fees*\n16%\n16%\n18%\n19%\n20%\n20%\n17%\n16%\n16%\nGAAP Net Card Fees\nQ1\u201919 - Q1\u201926 CAGR\n17%\nFX-Adjusted Net Card Fees\nQ1\u201919 - Q1\u201926 CAGR*\n17%\n* See Slide 3 for an explanation of FX-adjusted information.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 35,
+      "pdf_page": 35,
+      "pdf_page_image": "extracted/pdf_page_35.png",
+      "title": "Annex 5 Net Interest Income \u2014 Reported & FX-Adjusted",
+      "section": "Appendix",
+      "layout_hint": "wide_data_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "36\nAnnex 5\n$ in billions\nNet Interest Income \u2013 Reported & FX-Adjusted*\nQ1'19\nQ1'24\nQ2'24\nQ3'24\nQ4'24\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nGAAP Net Interest Income\n$2.1\n$3.8\n$3.7\n$4.0\n$4.0\n$4.2\n$4.2\n$4.5\n$4.5\n$4.7\nFX-Adjusted Net Interest Income*\n$2.1\n$3.7\n$3.7\n$4.0\n$4.1\n$4.2\nYoY% Inc/(Dec) in GAAP Net Interest Income\n11%\n12%\n12%\n12%\n13%\nYoY% Inc/(Dec) in FX-Adjusted Net Interest Income*\n11%\n12%\n12%\n12%\n12%\nGAAP Net Interest Income Q1\u201919 - Q1\u201926 CAGR\n12%\nFX-Adjusted Net Interest Income Q1\u201919 - Q1\u201926 CAGR*\n13%\n* See Slide 3 for an explanation of FX-adjusted information.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 36,
+      "pdf_page": 36,
+      "pdf_page_image": "extracted/pdf_page_36.png",
+      "title": "Annex 6 Revenues Net of Interest Expense \u2014 Reported & FX-Adjusted",
+      "section": "Appendix",
+      "layout_hint": "wide_data_table",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "Dense IR annex / appendix numeric grid \u2014 see raw_text and page PNG.",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "37\nAnnex 6\nRevenues Net of Interest Expense \u2013 Reported & FX-Adjusted*\nQ1'24\nQ2'24\nQ3'24\nQ4'24\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nGAAP Revenues Net of Interest Expense\n$15.8\n$16.3\n$16.6\n$17.2\n$17.0\n$17.9\n$18.4\n$19.0\n$18.9\nFX-Adjusted Revenues Net of Interest Expense*\n$15.7\n$16.4\n$16.7\n$17.3\n$17.2\nYoY% Inc/(Dec) in GAAP Revenues Net of Interest Expense\n7%\n9%\n11%\n10%\n11%\nYoY% Inc/(Dec) in FX-Adjusted Revenues Net of Interest Expense*\n8%\n9%\n11%\n9%\n10%\n* See Slide 3 for an explanation of FX-adjusted information.\n$ in billions",
+      "image_exists": true
+    },
+    {
+      "slide_index": 37,
+      "pdf_page": 37,
+      "pdf_page_image": "extracted/pdf_page_37.png",
+      "title": "Cautionary Note Regarding Forward-Looking Statements",
+      "section": "Legal",
+      "layout_hint": "dense_legal_prose_multi_page",
+      "bullets": [
+        "Forward-looking statements within the meaning of the Private Securities Litigation Reform Act",
+        "Long risk-factor enumeration begins on this page"
+      ],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "38\nCautionary Note Regarding Forward-Looking Statements\nThis presentation includes forward-looking statements within the meaning of the Private Securities Litigation Reform Act of 1995, which are subject to risks and \nuncertainties. The forward-looking statements, which address American Express Company\u2019s current expectations regarding business and financial performance, \nincluding management\u2019s guidance for 2026, among other matters, contain words such as \u201cbelieve,\u201d \u201cexpect,\u201d \u201canticipate,\u201d \u201cintend,\u201d \u201cplan,\u201d \u201caim,\u201d \u201cwill,\u201d \u201cmay,\u201d \n\u201cshould,\u201d \u201ccould,\u201d \u201cwould,\u201d \u201clikely,\u201d \u201ccontinue\u201d and similar expressions. Readers are cautioned not to place undue reliance on these forward-looking statements, \nwhich speak only as of the date on which they are made. The company undertakes no obligation to update or revise any forward-looking statements. Factors that \ncould cause actual results to differ materially from these forward-looking statements, include, but are not limited to, the following:\n\u2022\nthe company\u2019s ability to achieve its 2026 earnings per common share (EPS) guidance and grow EPS in the future, which will depend in part on revenue \ngrowth, credit performance, credit reserve and expense levels and the effective tax rate remaining consistent with current expectations and the company\u2019s \nability to continue investing in growth initiatives (such as its brand, value propositions, coverage, marketing, technology, partnerships and talent), \ncontrolling operating expenses, effectively managing risk and executing its share repurchase program, any of which could be impacted by, among other \nthings, the factors identified in the subsequent paragraphs as well as the following: macroeconomic and geopolitical conditions, including a slowdown in \nU.S. or global economic growth, changes to consumer and business confidence, higher rates of unemployment and wide-scale layoffs, impacts of the \nMiddle East conflict and other international hostilities and deteriorations in global trade, the effects of announced or future tariffs, changes in interest rates, \ninflation, supply chain issues, energy costs, market volatility, government shutdowns and fiscal and monetary policies; the effects of technology changes \nand the adoption of artificial intelligence (AI); the impact of any future contingencies, including, but not limited to, legal costs and settlements, the \nimposition of fines or monetary penalties, increases in Card Member remediation, investment gains or losses, restructurings, impairments and changes in \nreserves; issues impacting brand perceptions and the company\u2019s reputation; changes in the competitive environment and an inability to realize benefits \nfrom new and extended sponsorships; impacts related to acquisitions, cobrand relationships and other partners; and the impact of regulation and litigation, \nwhich could affect the profitability of the company\u2019s business activities, limit the company\u2019s ability to pursue business opportunities, require changes to \nbusiness practices or alter the company\u2019s relationships with Card Members, partners and merchants;\n\u2022\nthe company\u2019s ability to achieve its 2026 revenue growth guidance and grow revenues net of interest expense in the future, which could be impacted by, \namong other things, the factors identified above and in the subsequent paragraphs, as well as the following: spending volumes not being consistent with \nexpectations, including spending by U.S. consumer and small & mid-sized business Card Members and airline and other travel & entertainment spending \nvolumes, such as due to uncertain business and economic conditions, as well as geopolitical conditions; an inability to address competitive pressures, \nattract and retain customers, invest in and enhance the company\u2019s Membership Model of premium products, differentiated services and partnerships, \nsuccessfully refresh and introduce card products, grow spending and lending with customers across age cohorts (including Millennial and Gen-Z \ncustomers) and commercial segments and implement strategies and business initiatives, including within the premium consumer space, commercial \npayments and the global network; the impacts of portfolio sales; the effects of regulatory initiatives, including pricing regulation, such as pricing for card \nacceptance and potential credit card interest rate caps, and network regulation; merchant coverage growing less than expected or the reduction of \nmerchant acceptance or perceptions of coverage; increased surcharging, steering, suppression or other differential acceptance practices with respect to \nthe company\u2019s products; merchant discount rates changing from the company\u2019s expectations; and changes in foreign currency exchange rates;",
+      "image_exists": true
+    },
+    {
+      "slide_index": 38,
+      "pdf_page": 38,
+      "pdf_page_image": "extracted/pdf_page_38.png",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_hint": "dense_legal_bullet_continuation",
+      "bullets": [
+        "Continuation of forward-looking risk factors \u2014 see raw_text"
+      ],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "39\nCautionary Note Regarding Forward-Looking Statements\n\u2022\nnet card fee revenues not growing consistent with the company\u2019s expectations for 2026 and beyond, which could be impacted by, among other things, the \npace of Card Member acquisition activity and demand for the company\u2019s fee-based products; higher Card Member attrition rates; the success and timing of \nthe company\u2019s refreshes of its card products (including acquisition and retention levels of the U.S. Consumer and Business Platinum Card portfolios); a \ndecrease in the ability and desire of Card Members to pay card fees, such as due to a deterioration in macroeconomic conditions or as a result of changes in \ncard fees; the competitive environment and the perception of the value provided by premium cards; regulatory initiatives impacting card fees; and the \ncompany\u2019s inability to deliver and enhance benefits and services, innovate with respect to its products and develop attractive premium value propositions \nfor new and existing customers;\n\u2022\nnet interest income and the growth of net interest income relative to the growth of Card balances and Other loans outstanding, being higher or lower than \nexpectations, which could be impacted by, among other things, the behavior and financial strength of Card Members and their actual spending, borrowing \nand paydown patterns; the effectiveness of the company\u2019s strategies to enhance Card Member value propositions, grow lending with premium customers \nand capture a greater share of Card Members\u2019 spending and borrowings, and attract new, and retain existing, customers; the company\u2019s ability to \neffectively introduce and enhance lending features on its products and manage underwriting risk; governmental actions to cap credit card interest rates; \nchanges in benchmark interest rates, including where such changes affect the company\u2019s assets or liabilities differently than expected; the company\u2019s \nability to grow deposits, including from Card Members; continued volatility and other changes in capital and credit market conditions and the availability \nand cost of capital; credit actions, including line size and other adjustments to credit availability; the yield on revolve-eligible Card balances and Other loans \ndiffering from current expectations; and loss or impacts to cobrand relationships;   \n\u2022\nfuture credit performance, the level of future delinquency, reserve and write-off rates and the amount and timing of future reserve builds and releases, \nwhich will depend in part on macroeconomic factors such as actual and projected unemployment rates and GDP, as well as the occurrence of events that \nincrease macroeconomic uncertainty or volatility; the ability and willingness of Card Members to pay amounts owed to the company; changes in Card \nbalances and Other loans outstanding, such as from the implementation of the company\u2019s strategy to capture spending and borrowings, or from changes in \nconsumer behavior that affect customer balances (e.g., paydown and revolve rates); changes in the levels of customer acquisitions and the credit profiles of \nnew customers acquired; financial stress and volume of bankruptcies of Card Members and business partners; credit-related fraud levels; the magnitude of \nseasonal fluctuations in credit metrics; the enrollment in, and effectiveness of, financial relief programs and the performance of accounts as they exit from \nsuch programs; the effects of the resumption of student loan repayments; collections capabilities and recoveries of previously written-off balances; and the \nimpact of the usage of debt settlement companies;",
+      "image_exists": true
+    },
+    {
+      "slide_index": 39,
+      "pdf_page": 39,
+      "pdf_page_image": "extracted/pdf_page_39.png",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_hint": "dense_legal_bullet_continuation",
+      "bullets": [
+        "Continuation of forward-looking risk factors \u2014 see raw_text"
+      ],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "40\nCautionary Note Regarding Forward-Looking Statements\n\u2022\nthe actual amount to be spent on Card Member rewards and services and business development in 2026 and beyond, and the relationship of these variable \ncustomer engagement costs to revenues, which could be impacted by the investments and enhancements that the company makes with respect to its value \npropositions, including its rewards programs and product benefits, such as in connection with card refreshes (e.g., benefits on the refreshed U.S. Consumer \nand Business Platinum Cards), to make them attractive to Card Members and prospective customers, potentially in a manner that is not cost-effective; \nchanges in the level of Card Member spending and spending patterns (including the level of spend in bonus categories), the redemption of rewards and \noffers (including travel redemptions) and usage of travel-, lifestyle- and business-related benefits; the costs related to reward point redemptions; levels of \nCard Member acquisitions on premium card products; changes in the company\u2019s models or assumptions used to estimate these expenses; new and \nrenegotiated contractual obligations with business partners; the company\u2019s ability to identify and negotiate partner-funded value for Card Members; and \nthe pace and cost of the expansion of the company\u2019s global lounge collection;\n\u2022\nthe actual amount the company spends on marketing in 2026 and beyond and the effectiveness and efficiency of its marketing spending, which will be \nbased in part on continued changes in the macroeconomic and competitive environment and business performance, including the levels of demand for the \ncompany\u2019s products; the company\u2019s ability to realize marketing efficiencies, including as a result of investments in its product value propositions and the \nuse of technology, such as the personalization of offers, and balance expense control and investments in the business; management\u2019s investment \noptimization process and its ability to develop premium value propositions and drive customer demand; management\u2019s identification and assessment of \nattractive investment opportunities and its decisions regarding the timing of investments; and the receptivity of Card Members and prospective customers \nto advertising and customer acquisition initiatives; \n\u2022\nthe company\u2019s ability to control operating expenses, including relative to revenue growth, which could be impacted by, among other things, salary and \nbenefit expenses to attract and retain talent; the company\u2019s ability to realize operational efficiencies, including through increased scale and automation and \ncontinued adoption of artificial intelligence technologies; management\u2019s ability to balance expense control and investments in the business, and its \ndecisions regarding spending in such areas as technology, business and product development, sales force, premium servicing and AI initiatives; the \ncompany\u2019s ability to innovate efficient channels of customer interactions and the willingness of Card Members to self-service and address issues through \ndigital channels; restructuring activity; fraud costs; inflation and supply chain issues; increased technology costs, including investments in technology \ninnovations and system upgrades; expenses related to enterprise risk management and compliance and consulting, legal and other professional services \nfees, including as a result of the company\u2019s growth, litigation and internal and regulatory reviews; the impact of changes in foreign currency exchange rates \non costs; regulatory assessments; the level of M&A activity and related expenses; information security or cybersecurity incidents; the payment of fines, \npenalties, disgorgement, restitution, non-income tax assessments and litigation-related settlements; the performance of Amex Ventures and other of the \ncompany\u2019s investments; and impairments of goodwill or other assets;",
+      "image_exists": true
+    },
+    {
+      "slide_index": 40,
+      "pdf_page": 40,
+      "pdf_page_image": "extracted/pdf_page_40.png",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_hint": "dense_legal_bullet_continuation",
+      "bullets": [
+        "Continuation of forward-looking risk factors \u2014 see raw_text"
+      ],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "41\nCautionary Note Regarding Forward-Looking Statements\n\u2022\nthe company\u2019s tax rate not remaining consistent with expectations, which could be impacted by, among other things, further changes in tax laws and \nregulation, the implementation by jurisdictions of the Organization for Economic Cooperation and Development\u2019s global minimum tax guidelines (including \nsafe harbors for U.S. multinational enterprises), the company\u2019s geographic mix of income, unfavorable tax audits, assessments and tax litigation outcomes, \nand the occurrence or nonoccurrence of other discrete tax items;\n\u2022\nchanges affecting the company\u2019s plans regarding the return of capital to shareholders, which will depend on factors such as the company\u2019s capital levels \nand regulatory capital ratios; new rulemakings and guidance from the Federal Reserve and other banking regulators, including changes to regulatory capital \nrequirements, such as from recent regulatory capital rule proposals, and changes to the tailoring of enhanced prudential standards applicable to banking \norganizations; results of operations and financial condition; credit ratings and rating agency considerations; results of the stress testing and capital \nplanning process; and the economic environment and market conditions in any given period;\n\u2022\nchanges in the substantial and increasing worldwide competition in the payments industry, including competitive pressure and competitor settlements that \nmay materially impact the prices charged to merchants that accept American Express cards; merchant acceptance, surcharging, steering and other \ndifferential acceptance practices; the desirability of competitor premium card products and competition for partnerships and premium experiences, \nservices and benefits; competition for new and existing cobrand relationships; the effects of the emergence of agentic commerce on the payments \nlandscape and customer payment experiences; competition from new and non-traditional competitors, such as financial technology companies, and with \nrespect to new products, services and technologies, such as the emergence or increase in popularity of digital payment platforms and currencies and other \nalternative payment mechanisms; competitor acquisitions and transactions; and the success of marketing, promotion, rewards programs, offers and \ntravel-, lifestyle- and business-related benefits (e.g., lounges, dining, entertainment and business tools);\n\u2022\nthe company\u2019s ability to sustain its momentum and leadership in the premium consumer space, including with Millennial and Gen-Z consumers, which will \nbe impacted in part by competition, levels of consumer demand for premium card products, brand perceptions (including perceptions related to merchant \ncoverage) and reputation, and the company\u2019s ability to successfully refresh its products and develop and market new benefits, services, experiences and \nother value propositions, as well as new AI and digital capabilities, that appeal to Card Members and new customers, grow spending with new and younger \nage cohort Card Members, offer attractive services and rewards programs and build greater customer loyalty, which will depend in part on identifying and \nfunding investment opportunities, addressing changing customer behaviors, new product innovation and development, Card Member acquisition efforts \nand enrollment processes, including through digital channels, continuing to realize benefits from strategic partnerships, successfully implementing the \ncompany\u2019s dining strategy and evolving the company\u2019s infrastructure to support new products, services and benefits;",
+      "image_exists": true
+    },
+    {
+      "slide_index": 41,
+      "pdf_page": 41,
+      "pdf_page_image": "extracted/pdf_page_41.png",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_hint": "dense_legal_bullet_continuation",
+      "bullets": [
+        "Continuation of forward-looking risk factors \u2014 see raw_text"
+      ],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "42\nCautionary Note Regarding Forward-Looking Statements\n\u2022\nthe company\u2019s ability to build on its leadership in commercial payments and successfully roll out new commercial products and solutions in 2026, which will \ndepend in part on competition, including from financial technology companies and as a result of competitor acquisitions and transactions; the willingness \nand ability of companies to use credit and charge cards for procurement and other business expenditures as well as use the company\u2019s other products and \nservices for financing needs; the acceptance of, and economics related to, B2B payment platforms; the company\u2019s ability to successfully refresh its \nproducts and offer attractive value propositions and new products to current and potential customers, including through its new Graphite Business Cash \nUnlimited Card and upcoming Corporate Cash Back Card, as well as new AI benefits and capabilities; the company\u2019s ability to enhance and expand its \npayment, lending, cash flow and expense management solutions, including the release of new expense management software in 2026, increase customer \nengagement, enhance the corporate card onboarding experience and build out a multi-product digital ecosystem to integrate its broad product set, which is \ndependent on the company\u2019s continued investment in capabilities, features, functionalities, platforms and technologies and the successful introduction of \ncapabilities related to the company\u2019s Center acquisition; and the success of the company\u2019s initiatives to support businesses, such as Small Business \nSaturday and other Shop Small campaigns;\n\u2022\nthe company\u2019s ability to successfully invest in, benefit from and expand the use of technological developments, generative AI, digital payments, servicing, \ntravel, dining & expense management solutions  and other technological capabilities and the actual amount the company spends on technology in 2026 and \nbeyond, which will depend in part on the company\u2019s success in advancing its agentic commerce initiatives, including embedding its payment capabilities in \nemerging AI ecosystems, such as through the Amex Agentic Commerce Experiences\u2122 developer kit and Amex Agent Purchase Protection\u2122, making \nMembership assets discoverable and actionable on AI platforms and building proprietary AI-powered experiences across its platforms; embedding AI into \nits business and increasing automation, including to streamline and improve internal processes and decision making, enhance the company\u2019s products, \ndevelop new capabilities and address servicing and other business and customer needs; developing new features in its applications and platforms and \nenhancing its digital channels; supporting the use of the company\u2019s products as a means of payment through online, mobile, agentic and other digital \nchannels; building partnerships and executing programs with other companies; and effectively utilizing data and data & analytics platforms, including \nsuccessfully migrating to new platforms, all of which will be impacted by investment levels, customer and colleague receptiveness and ability to adopt new \ntechnologies, partner engagement, new product innovation and development and the platforms and infrastructure to support new products, services, \nbenefits and partner integrations;\n\u2022\nthe company\u2019s ability to grow internationally, which could be impacted by regulation and business practices, such as those capping interchange or other \nfees, mandating network access or data localization, imposing greater requirements on payment networks, favoring local competitors or prohibiting or \nlimiting foreign ownership of certain businesses; perceptions of the company\u2019s brand in international jurisdictions; the company\u2019s inability to successfully \nreplicate aspects of its business model internationally and tailor products and services to make them attractive to local customers; competitors with more \nscale, local experience and established relationships with relevant customers, regulators and industry participants; the success of the company and its \nnetwork partners in acquiring Card Members and/or merchants; and geopolitical and economic instability, hostilities and tensions (such as the effects of \nthe Middle East conflict), and impacts to cross-border trade and travel;",
+      "image_exists": true
+    },
+    {
+      "slide_index": 42,
+      "pdf_page": 42,
+      "pdf_page_image": "extracted/pdf_page_42.png",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_hint": "dense_legal_bullet_continuation",
+      "bullets": [
+        "Continuation of forward-looking risk factors \u2014 see raw_text"
+      ],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "raw_text": "43\nCautionary Note Regarding Forward-Looking Statements\n\u2022\nthe company\u2019s ability to successfully implement its dining strategy and grow its dining platform, which will depend in part on the company\u2019s ability to deliver \nvalue to diners, restaurants and other bookable venues; expand and innovate the tools and capabilities offered through the platform, including successfully \nintegrating Tock into the Resy dining platform and developing AI-powered experiences in the Resy app; enable the search and booking of Resy venues \nthrough AI platforms; and successfully implement partnerships and compete with other dining platforms and means of booking reservations;\n\u2022\na failure in or breach of the company\u2019s operational or security systems, processes or infrastructure, or those of third parties, including as a result of \ncyberattacks or outages, which could compromise the confidentiality, integrity, privacy and/or security of data, disrupt the company\u2019s or its partners\u2019 \noperations, reduce the use and acceptance of American Express cards or the company\u2019s digital platforms and lead to regulatory scrutiny, litigation, \nremediation and response costs and reputational harm;\n\u2022\nlegal and regulatory developments, which could affect the profitability of the company\u2019s business activities; limit the company\u2019s ability to pursue business \nopportunities or conduct business in certain jurisdictions; require changes to business practices or governance, or alter the company\u2019s relationships with \nCard Members, partners, merchants and other third parties, including affecting its network operations and practices governing merchant acceptance; \nimpact interest income, card fees and rewards programs; exert further pressure on merchant discount rates and the company\u2019s GNS business, as well as \nresult in an increase in surcharging, steering or other differential acceptance practices; alter the competitive landscape; subject the company to heightened \nregulatory scrutiny and result in increased costs related to regulatory oversight and compliance, litigation-related settlements, judgments or expenses, \nrestitution to Card Members or the imposition of fines or monetary penalties; materially affect capital or liquidity requirements, results of operations or \nability to pay dividends; or result in harm to the American Express brand; and\n\u2022\nfactors beyond the company\u2019s control such as business, economic and geopolitical conditions, consumer and business confidence and spending generally, \nunemployment rates & wide-scale layoffs, market volatility, energy costs, impacts to travel, government shutdowns and other political developments, a \ncontinuation or further escalation or widening of the Middle East conflict or other military conflicts, regional hostilities and international tensions , adverse \ndevelopments affecting third parties, including other financial institutions, merchants, partners or vendors, as well as severe weather conditions and natural \ndisasters (e.g., hurricanes and wildfires), power loss, disruptions in telecommunications, pandemics, terrorism and other catastrophic events, any of which \ncould significantly affect demand for and spending on American Express cards, credit metrics and reserves, customer balances, deposit levels and other \naspects of the company\u2019s business and results of operations or disrupt its global network systems and ability to process transactions.\nA further description of these uncertainties and other risks can be found in American Express Company\u2019s Annual Report on Form 10-K for the year ended \nDecember 31, 2025 and the company\u2019s other reports filed with the Securities and Exchange Commission.",
+      "image_exists": true
+    },
+    {
+      "slide_index": 43,
+      "pdf_page": 43,
+      "pdf_page_image": "extracted/pdf_page_43.png",
+      "title": "(Blank / trailing page)",
+      "section": "End",
+      "layout_hint": "blank_or_back_cover",
+      "bullets": [],
+      "metrics": [],
+      "table": null,
+      "charts": [],
+      "footer_notes": "",
+      "speaker_notes": "",
+      "brand": {
+        "primary_navy": "#00175A",
+        "accent_blue": "#006FCF",
+        "text_navy": "#001B4D",
+        "body_navy": "#1A2B5F",
+        "white": "#FFFFFF",
+        "table_header": "#00175A",
+        "light_gray_rule": "#E0E3EB",
+        "annotation_box": "#5B6B9A",
+        "fonts": {
+          "title": "sans-serif geometric/neo-grotesque bold (Amex corporate)",
+          "body": "sans-serif clean (similar to Helvetica Neue / Amex Sans)",
+          "numbers": "tabular sans-serif medium/bold"
+        },
+        "layout_cues": [
+          "widescreen 16:9 (960x540 pt)",
+          "centered navy titles on white content slides",
+          "small gray footnote band at bottom with page number bottom-right",
+          "cover and section dividers use two-tone navy/bright-blue with centurion seal watermark right",
+          "charts use navy solid + gray dashed multi-series lines with value labels on points",
+          "financial summary uses 3-column pill-header comparison table",
+          "many earnings chart slides = chart + compact dark-header data table beneath"
+        ]
+      },
+      "note": "No substantial text extracted from final page",
+      "raw_text": "",
+      "image_exists": true
+    }
+  ]
+}

@@ -1,0 +1,3307 @@
+{
+  "presentation": {
+    "title": "American Express Earnings Conference Call Q1'26",
+    "subtitle": "Simulation handoff \u00b7 v2 pass_03 \u00b7 last residual A",
+    "audience": "Investors / IR",
+    "primary_goal": "Close last residual A: acquisitions 66/73 pairing, funding 2-tile density, platinum card titles",
+    "readiness_score": 70,
+    "quality_flags": [
+      "simulation",
+      "amex_q1_2026",
+      "pass_03",
+      "v2_post_fixes",
+      "type_a_tuning"
+    ],
+    "theme": {
+      "--color-bg": "#ffffff",
+      "--color-surface": "#ffffff",
+      "--color-ink": "#001B4D",
+      "--color-ink-muted": "#3A4A6B",
+      "--color-accent": "#006FCF",
+      "--color-accent-2": "#00175A",
+      "--color-border": "#E0E3EB",
+      "--color-stage-bg": "#00175A",
+      "--color-primary": "#00175A",
+      "--navy": "#00175A"
+    },
+    "chrome_level": "minimal"
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "brand_cover",
+      "packing_mode": "cover-led",
+      "title": "American Express Earnings Conference Call",
+      "section": "Cover",
+      "content": {
+        "headline": "American Express Earnings Conference Call",
+        "subtitle": "Q1'26  \u00b7  APRIL 23, 2026",
+        "brand_tone": "two-tone",
+        "bullets": [],
+        "key_stats": [],
+        "so_what": "",
+        "brand_mark": "seal_lockup"
+      },
+      "speaker_notes": "v3 pass_01: brand_cover + brand_mark=seal_lockup as slide 1 (round-2 F6+ load path + R3 named seal)."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "ir_bullet_sheet",
+      "packing_mode": "argument-led",
+      "title": "Business Highlights",
+      "section": "Highlights",
+      "content": {
+        "headline": "Business Highlights",
+        "subtitle": "",
+        "bullets": [
+          "Q1 2026 **revenue growth of 11%**, and **EPS of $4.28**, up 18% YoY",
+          "Named the **Official Payments Partner of the NFL** and announced a **multi-year partnership extension with the NBA** across league platforms, including the WNBA",
+          "Launched the **American Express Graphite Business Cash Unlimited Card**, kicking off a major expansion of integrated solutions for businesses of all sizes",
+          "Announced the **Amex Agentic Commerce Experiences** developer kit and industry-first **Amex Agent Purchase Protection**",
+          "Unveiled next phase of the **Resy dining platform**, including the planned integration of **Resy and Tock** venue networks",
+          "Opened **Las Vegas Sidecar** and **New Delhi Centurion Lounge** and announced upcoming new or expanded spaces in three other locations",
+          "Ranked #4 on **Great Place to Work 2026** list of the 100 Best Companies to Work For in the U.S."
+        ],
+        "key_stats": [],
+        "so_what": ""
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Statistical Tables reference",
+            "body": "Refer to the Statistical Tables for Q1 2026 on ir.americanexpress.com for defined terms."
+          }
+        ]
+      },
+      "speaker_notes": "v2 pass_01: ir_bullet_sheet with selective **bold** (F7)."
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "pill_comparison",
+      "packing_mode": "stat-led",
+      "title": "Summary Financial Performance",
+      "section": "Financials",
+      "content": {
+        "subtitle": "$ in millions, except per share amounts; % Increase/(decrease) vs. Prior year",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "pill_comparison",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'26",
+              "Q1'25",
+              "YoY% Inc/(Dec)"
+            ],
+            [
+              "Total Revenues Net of Interest Expense",
+              "$18,907",
+              "$16,967",
+              "11%"
+            ],
+            [
+              "FX-Adjusted*",
+              "\u2014",
+              "$17,210",
+              "10%"
+            ],
+            [
+              "Net Income",
+              "$2,971",
+              "$2,584",
+              "15%"
+            ],
+            [
+              "Diluted EPS**",
+              "$4.28",
+              "$3.64",
+              "18%"
+            ],
+            [
+              "Average Diluted Shares Outstanding",
+              "686",
+              "702",
+              "(2%)"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Non-GAAP / footnotes",
+            "body": "* Total Revenues Net of Interest Expense adjusted for FX is non-GAAP. ** Attributable to common shareholders."
+          }
+        ]
+      },
+      "speaker_notes": "v2 pass_01: pill_comparison layout (F4)."
+    },
+    {
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "Total Billed Business",
+      "section": "Billings",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted unless otherwise stated)",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 6,
+              "series_2": 6
+            },
+            {
+              "label": "Q2'25",
+              "value": 7,
+              "series_2": 7
+            },
+            {
+              "label": "Q3'25",
+              "value": 8,
+              "series_2": 9
+            },
+            {
+              "label": "Q4'25",
+              "value": 8,
+              "series_2": 9
+            },
+            {
+              "label": "Q1'26",
+              "value": 9,
+              "series_2": 10
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "FX-adjusted",
+              "Reported"
+            ],
+            "series_styles": [
+              "solid",
+              "dashed"
+            ],
+            "series_colors": [
+              "#00175A",
+              "#8A93A6"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 15,
+            "y_axis_ticks": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "y_axis_unit": "%",
+            "y_axis_label": "%",
+            "y_label": "%",
+            "annotation": {
+              "text": "Leap Year Approx. (1%)",
+              "x": 90,
+              "y": 55
+            },
+            "force_ticks": true,
+            "show_point_labels": true,
+            "point_labels": true,
+            "gridlines": true
+          }
+        },
+        "secondary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "G&S",
+              "7%",
+              "7%",
+              "9%",
+              "8%",
+              "8%"
+            ],
+            [
+              "T&E",
+              "6%",
+              "5%",
+              "8%",
+              "8%",
+              "9%"
+            ]
+          ]
+        }
+      },
+      "speaker_notes": "v2 pass_01: force_ticks + annotation + dashed series for Chart.js parity (F1/F2/F15). | v2 pass_02: annotation placement polish (A).",
+      "slide_number": 4
+    },
+    {
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "U.S. Consumer Services Billed Business",
+      "section": "Billings",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 7
+            },
+            {
+              "label": "Q2'25",
+              "value": 7
+            },
+            {
+              "label": "Q3'25",
+              "value": 9
+            },
+            {
+              "label": "Q4'25",
+              "value": 9
+            },
+            {
+              "label": "Q1'26",
+              "value": 10
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "UCS Billings"
+            ],
+            "series_colors": [
+              "#00175A"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 15,
+            "y_axis_ticks": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "y_axis_unit": "%",
+            "y_axis_label": "%",
+            "y_label": "%"
+          }
+        },
+        "secondary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "Q1'26",
+              "Gen-Z",
+              "Millennials",
+              "Gen-X",
+              "Baby Boomer +",
+              "Total"
+            ],
+            [
+              "YoY",
+              "38%",
+              "13%",
+              "8%",
+              "4%",
+              "10%"
+            ],
+            [
+              "% of Total",
+              "6%",
+              "30%",
+              "36%",
+              "28%",
+              "100%"
+            ]
+          ]
+        }
+      },
+      "speaker_notes": "Line + generation mix; chips removed.",
+      "slide_number": 5
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "multi_panel",
+      "packing_mode": "chart-led",
+      "title": "U.S. Consumer Platinum Performance",
+      "section": "US Consumer",
+      "content": {
+        "subtitle": "Platinum Refresh \u00b7 spend growth bars + retention 90\u2013100% cohorts",
+        "so_what": "Refresh cohort shows ~+6 pp spend acceleration with stable anniversary retention",
+        "key_stats": [
+          {
+            "label": "Refresh lift (spend)",
+            "value": "+~6 pp"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "multi_panel",
+          "tiles": [
+            {
+              "kind": "chart",
+              "chart_type": "grouped_bar_chart",
+              "label": "Accelerated U.S. Consumer Platinum Spend Growth",
+              "top_total": "+~6 pp",
+              "badge": "Refresh",
+              "steps_or_data": [
+                [
+                  "Quarter",
+                  "Spend growth %"
+                ],
+                [
+                  "Q1'25",
+                  "7"
+                ],
+                [
+                  "Q2'25",
+                  "7"
+                ],
+                [
+                  "Q3'25",
+                  "9"
+                ],
+                [
+                  "Q4'25",
+                  "9"
+                ],
+                [
+                  "Q1'26",
+                  "10"
+                ]
+              ],
+              "chart_config": {
+                "y_axis_min": 0,
+                "y_axis_max": 15,
+                "y_axis_ticks": [
+                  0,
+                  5,
+                  10,
+                  15
+                ],
+                "force_ticks": true,
+                "y_axis_unit": "%",
+                "show_point_labels": true,
+                "point_labels": true,
+                "series_names": [
+                  "Spend growth"
+                ],
+                "series_colors": [
+                  "#00175A"
+                ],
+                "callouts": [
+                  {
+                    "type": "elbow_arrow",
+                    "from": 0,
+                    "to": 4,
+                    "value": 10,
+                    "text": "+ ~6 percentage points"
+                  },
+                  {
+                    "type": "chevron",
+                    "at": 4,
+                    "text": "Refresh"
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "chart",
+              "chart_type": "horizontal_bar_chart",
+              "label": "U.S. Consumer Platinum Retention (anniversary cohorts)",
+              "top_total": "90\u2013100%",
+              "badge": "Anniversary",
+              "side_legend": [
+                {
+                  "label": "2025 (pre-refresh year)",
+                  "color": "#006FCF"
+                },
+                {
+                  "label": "2026 (post-refresh)",
+                  "color": "#00175A"
+                }
+              ],
+              "steps_or_data": [
+                [
+                  "Month",
+                  "2025",
+                  "2026"
+                ],
+                [
+                  "January",
+                  "94",
+                  "96"
+                ],
+                [
+                  "February",
+                  "95",
+                  "97"
+                ],
+                [
+                  "March",
+                  "95",
+                  "97"
+                ]
+              ],
+              "chart_config": {
+                "y_axis_break": {
+                  "from": 0,
+                  "to": 90
+                },
+                "y_axis_min": 90,
+                "y_axis_max": 100,
+                "y_axis_ticks": [
+                  90,
+                  92,
+                  94,
+                  96,
+                  98,
+                  100
+                ],
+                "force_ticks": true,
+                "y_axis_unit": "%",
+                "bar_labels_inside": true,
+                "show_point_labels": true,
+                "point_labels": true,
+                "series_names": [
+                  "2025 (pre-refresh year)",
+                  "2026 (post-refresh)"
+                ],
+                "series_colors": [
+                  "#006FCF",
+                  "#00175A"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "speaker_notes": "v3 pass_01: horizontal_bar_chart retention + elbow/chevron callouts + tall-card chrome (round-2 F10+/R2/F11+)."
+    },
+    {
+      "layout_type": "three_column_comparison",
+      "packing_mode": "stat-led",
+      "title": "U.S. Consumer: Membership Model Engagement",
+      "section": "US Consumer",
+      "content": {
+        "subtitle": "Card Member Spend Growth Rates; % Increase/(decrease) vs. Prior year",
+        "bullets": [
+          "Lodging: Fine Hotels + Resorts / Hotel Collection 50% vs UCS Lodging 5% \u00b7 10x",
+          "Restaurants: U.S. Resy Restaurants 20% vs UCS Restaurants 10% \u00b7 2x",
+          "Airlines: Member Airfares 21% vs UCS Airlines 11% \u00b7 2x"
+        ],
+        "key_stats": [
+          {
+            "label": "Lodging FHR+THC",
+            "value": "50%"
+          },
+          {
+            "label": "UCS Lodging",
+            "value": "5%"
+          },
+          {
+            "label": "Multiplier",
+            "value": "10x"
+          },
+          {
+            "label": "Resy Restaurants",
+            "value": "20%"
+          },
+          {
+            "label": "UCS Restaurants",
+            "value": "10%"
+          },
+          {
+            "label": "Member Airfares",
+            "value": "21%"
+          }
+        ],
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "comparison_grid",
+          "steps_or_data": [
+            "Lodging \u00b7 50% vs 5% \u00b7 10x",
+            "Restaurants \u00b7 20% vs 10% \u00b7 2x",
+            "Airlines \u00b7 21% vs 11% \u00b7 2x"
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Member Airfares footnote",
+            "body": "Member Airfares offers Platinum and Centurion Card Members reduced fares on select premium international and domestic tickets booked through American Express Travel."
+          }
+        ]
+      },
+      "speaker_notes": "Three category multipliers.",
+      "slide_number": 7
+    },
+    {
+      "layout_type": "metric_row_with_breakdown",
+      "packing_mode": "stat-led",
+      "title": "Membership Model Engagement: Proprietary Lodging Assets",
+      "section": "US Consumer",
+      "content": {
+        "subtitle": "Lodging Spend Growth \u00b7 Fine Hotels + Resorts and The Hotel Collection",
+        "key_stats": [
+          {
+            "label": "Premium Global Properties",
+            "value": "3,400+"
+          },
+          {
+            "label": "New Properties Selected (2026)",
+            "value": "300+"
+          },
+          {
+            "label": "Avg CM Value 2-Night Stay",
+            "value": "$550"
+          },
+          {
+            "label": "Annual U.S. Plat Statement Credit",
+            "value": "$600"
+          },
+          {
+            "label": "Partner-Funded",
+            "value": "100%"
+          },
+          {
+            "label": "FHR+THC YoY",
+            "value": "50%"
+          },
+          {
+            "label": "UCS Lodging YoY",
+            "value": "5%"
+          },
+          {
+            "label": "Multiplier",
+            "value": "10x"
+          }
+        ],
+        "bullets": [
+          "Program Benefits: Early check-in, Late check-out, Room upgrades, Complimentary breakfast and Wi-Fi, Experience credits",
+          "300+ new properties selected out of ~1,400 applications in 2026"
+        ],
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 40,
+              "series_2": 5
+            },
+            {
+              "label": "Q2'25",
+              "value": 42,
+              "series_2": 5
+            },
+            {
+              "label": "Q3'25",
+              "value": 45,
+              "series_2": 5
+            },
+            {
+              "label": "Q4'25",
+              "value": 48,
+              "series_2": 5
+            },
+            {
+              "label": "Q1'26",
+              "value": 50,
+              "series_2": 5
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "FHR+THC",
+              "UCS Lodging"
+            ],
+            "series_colors": [
+              "#00175A",
+              "#8A93A6"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 60
+          }
+        }
+      },
+      "speaker_notes": "KPI + dual line lodging differential.",
+      "slide_number": 8
+    },
+    {
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "Commercial Services Billed Business",
+      "section": "Billings",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted)",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 2
+            },
+            {
+              "label": "Q2'25",
+              "value": 2
+            },
+            {
+              "label": "Q3'25",
+              "value": 4
+            },
+            {
+              "label": "Q4'25",
+              "value": 3
+            },
+            {
+              "label": "Q1'26",
+              "value": 4
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Commercial FX-adj"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 15,
+            "y_axis_ticks": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "y_axis_unit": "%",
+            "y_axis_label": "%"
+          }
+        },
+        "secondary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "Q1'26",
+              "U.S. SME",
+              "U.S. Large & Global Corp.",
+              "Total"
+            ],
+            [
+              "YoY",
+              "4%",
+              "4%",
+              "4%"
+            ],
+            [
+              "% of Total",
+              "81%",
+              "19%",
+              "100%"
+            ]
+          ]
+        }
+      },
+      "speaker_notes": "Commercial line + mix.",
+      "slide_number": 9
+    },
+    {
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "International Card Services Billed Business",
+      "section": "Billings",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted unless otherwise stated)",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 13,
+              "series_2": 9
+            },
+            {
+              "label": "Q2'25",
+              "value": 12,
+              "series_2": 15
+            },
+            {
+              "label": "Q3'25",
+              "value": 13,
+              "series_2": 14
+            },
+            {
+              "label": "Q4'25",
+              "value": 12,
+              "series_2": 17
+            },
+            {
+              "label": "Q1'26",
+              "value": 13,
+              "series_2": 20
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "FX-adjusted",
+              "Reported"
+            ],
+            "series_styles": [
+              "solid",
+              "dashed"
+            ],
+            "series_colors": [
+              "#00175A",
+              "#8A93A6"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 25,
+            "annotation": {
+              "text": "Reported",
+              "x": 520,
+              "y": 70
+            }
+          }
+        },
+        "secondary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "Q1'26",
+              "Intl Consumer",
+              "Intl SME & Large Corp.",
+              "Total"
+            ],
+            [
+              "YoY",
+              "13%",
+              "12%",
+              "13%"
+            ],
+            [
+              "% of Total",
+              "65%",
+              "35%",
+              "100%"
+            ]
+          ]
+        }
+      },
+      "speaker_notes": "Dual series ICS.",
+      "slide_number": 10
+    },
+    {
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "Transaction Growth",
+      "section": "Volumes",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 9
+            },
+            {
+              "label": "Q2'25",
+              "value": 9
+            },
+            {
+              "label": "Q3'25",
+              "value": 10
+            },
+            {
+              "label": "Q4'25",
+              "value": 9
+            },
+            {
+              "label": "Q1'26",
+              "value": 10
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Transactions"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 15,
+            "y_axis_ticks": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "y_axis_unit": "%",
+            "y_axis_label": "%",
+            "annotation": {
+              "text": "Leap Year Approx. (1%)",
+              "x": 420,
+              "y": 90
+            }
+          }
+        }
+      },
+      "speaker_notes": "Single series + leap-year annotation.",
+      "slide_number": 11
+    },
+    {
+      "slide_number": 12,
+      "layout_type": "chart_hero_dual",
+      "packing_mode": "chart-led",
+      "title": "New Acquisitions",
+      "section": "Acquisitions",
+      "content": {
+        "subtitle": "Global Consumer New Accounts \u2014 Millennial/Gen-Z 66% (top) \u00b7 Fee-Paying Products* 73% (bottom)",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "Millennial / Gen-Z new accounts",
+            "value": "66%"
+          },
+          {
+            "label": "Fee-Paying Products* new accounts",
+            "value": "73%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "stacked_bar_chart",
+          "steps_or_data": [
+            [
+              "Quarter",
+              "U.S. Consumer Services",
+              "Commercial Services",
+              "International Card Services"
+            ],
+            [
+              "Q1'25",
+              "1.5",
+              "0.8",
+              "1.1"
+            ],
+            [
+              "Q2'25",
+              "1.5",
+              "0.7",
+              "0.9"
+            ],
+            [
+              "Q3'25",
+              "1.5",
+              "0.7",
+              "1.0"
+            ],
+            [
+              "Q4'25",
+              "1.3",
+              "0.7",
+              "0.9"
+            ],
+            [
+              "Q1'26",
+              "1.3",
+              "0.8",
+              "1.0"
+            ]
+          ],
+          "chart_config": {
+            "series_names": [
+              "U.S. Consumer Services",
+              "Commercial Services",
+              "International Card Services"
+            ],
+            "series_colors": [
+              "#00175A",
+              "#006FCF",
+              "#8A93A6"
+            ],
+            "show_point_labels": true,
+            "point_labels": true,
+            "stacked": true
+          }
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "NCA / NAA definitions",
+            "body": "NCA = new cards issued net of replacements. NAA = new Card Member accounts opened, excludes supplemental cards. *Fee-paying excludes Corporate."
+          }
+        ]
+      },
+      "speaker_notes": "v2 pass_03: corrected hero pairing \u2014 66% Millennial top, 73% Fee bottom (A)."
+    },
+    {
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "Total Balances and Billed Business",
+      "section": "Balances",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted)",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 7,
+              "series_2": 6
+            },
+            {
+              "label": "Q2'25",
+              "value": 6,
+              "series_2": 7
+            },
+            {
+              "label": "Q3'25",
+              "value": 7,
+              "series_2": 8
+            },
+            {
+              "label": "Q4'25",
+              "value": 7,
+              "series_2": 8
+            },
+            {
+              "label": "Q1'26",
+              "value": 7,
+              "series_2": 9
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Total Balances",
+              "Billed Business"
+            ],
+            "series_colors": [
+              "#00175A",
+              "#006FCF"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 15,
+            "y_axis_ticks": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "y_axis_unit": "%",
+            "y_axis_label": "%"
+          }
+        }
+      },
+      "speaker_notes": "Two series balances vs billings.",
+      "slide_number": 13
+    },
+    {
+      "layout_type": "dual_chart",
+      "packing_mode": "chart-led",
+      "title": "Credit Metrics",
+      "section": "Credit",
+      "content": {
+        "subtitle": "Net write-off rates and 30+ days past due",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 1.3
+            },
+            {
+              "label": "Q2'25",
+              "value": 1.3
+            },
+            {
+              "label": "Q3'25",
+              "value": 1.3
+            },
+            {
+              "label": "Q4'25",
+              "value": 1.3
+            },
+            {
+              "label": "Q1'26",
+              "value": 1.3
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Net write-off rate"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 3
+          }
+        },
+        "secondary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 2.1
+            },
+            {
+              "label": "Q2'25",
+              "value": 2.0
+            },
+            {
+              "label": "Q3'25",
+              "value": 1.9
+            },
+            {
+              "label": "Q4'25",
+              "value": 2.1
+            },
+            {
+              "label": "Q1'26",
+              "value": 2.0
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "30+ days past due"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 3
+          }
+        }
+      },
+      "speaker_notes": "Side-by-side credit lines with fixed axis.",
+      "slide_number": 14
+    },
+    {
+      "layout_type": "stacked_bar_chart",
+      "packing_mode": "chart-led",
+      "title": "Total Provision",
+      "section": "Credit",
+      "content": {
+        "subtitle": "$ in millions \u00b7 write-offs above / reserve release below axis",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "Q1'26 Total Provision",
+            "value": "$1,251"
+          },
+          {
+            "label": "Write-offs",
+            "value": "$1,275"
+          },
+          {
+            "label": "Reserve Build/(Release)",
+            "value": "($24)"
+          },
+          {
+            "label": "Reserve Rate",
+            "value": "2.8%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "stacked_bar_chart",
+          "steps_or_data": [
+            [
+              "Quarter",
+              "Write-offs",
+              "Reserve Build/(Release)"
+            ],
+            [
+              "Q1'25",
+              "1223",
+              "-73"
+            ],
+            [
+              "Q2'25",
+              "1183",
+              "222"
+            ],
+            [
+              "Q3'25",
+              "1162",
+              "125"
+            ],
+            [
+              "Q4'25",
+              "1273",
+              "141"
+            ],
+            [
+              "Q1'26",
+              "1275",
+              "-24"
+            ]
+          ],
+          "chart_config": {
+            "series_names": [
+              "Write-offs",
+              "Reserve Build/(Release)"
+            ],
+            "series_colors": [
+              "#00175A",
+              "#006FCF"
+            ],
+            "allow_negative": true,
+            "stacked": true,
+            "show_point_labels": true,
+            "point_labels": true
+          }
+        },
+        "secondary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "Reserve Rate",
+              "2.9%",
+              "2.9%",
+              "2.9%",
+              "2.9%",
+              "2.8%"
+            ],
+            [
+              "Total Provision",
+              "1150",
+              "1405",
+              "1287",
+              "1414",
+              "1251"
+            ]
+          ]
+        }
+      },
+      "speaker_notes": "v3 pass_01: signed stacked reserve release re-tested on current renderer negative-sign load path (F3 after round-2).",
+      "slide_number": 15
+    },
+    {
+      "layout_type": "data_table",
+      "packing_mode": "stat-led",
+      "title": "Revenue Performance",
+      "section": "Revenue",
+      "content": {
+        "subtitle": "$ in millions; % Increase/(decrease) vs. Prior year",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "Line",
+              "Q1'26",
+              "Q1'25",
+              "Reported YoY%",
+              "FX-Adj YoY%"
+            ],
+            [
+              "Discount Revenue",
+              "$9,512",
+              "$8,743",
+              "9%",
+              "7%"
+            ],
+            [
+              "Net Card Fees",
+              "$2,752",
+              "$2,333",
+              "18%",
+              "16%"
+            ],
+            [
+              "Service Fees and Other Revenue",
+              "$1,951",
+              "$1,722",
+              "13%",
+              "9%"
+            ],
+            [
+              "Net Interest Income",
+              "$4,692",
+              "$4,169",
+              "13%",
+              "12%"
+            ],
+            [
+              "Revenues Net of Interest Expense",
+              "$18,907",
+              "$16,967",
+              "11%",
+              "10%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* FX-adjusted YoY rates are non-GAAP. See Annex 3."
+          }
+        ]
+      },
+      "speaker_notes": "Revenue table filled.",
+      "slide_number": 16
+    },
+    {
+      "layout_type": "dual_chart",
+      "packing_mode": "chart-led",
+      "title": "Net Card Fees",
+      "section": "Revenue",
+      "content": {
+        "subtitle": "$ in billions \u2014 % Increase/(decrease) vs. Prior year & CAGR (FX-adjusted)",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "CAGR",
+            "value": "17%/yr"
+          },
+          {
+            "label": "Q1'26",
+            "value": "$2.8B"
+          },
+          {
+            "label": "Q1'26 YoY",
+            "value": "16%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "grouped_bar_chart",
+          "steps_or_data": [
+            [
+              "Quarter",
+              "Net Card Fees $B"
+            ],
+            [
+              "Q1'19",
+              "0.9"
+            ],
+            [
+              "Q1'20",
+              "1.1"
+            ],
+            [
+              "Q1'21",
+              "1.3"
+            ],
+            [
+              "Q1'22",
+              "1.4"
+            ],
+            [
+              "Q1'23",
+              "1.7"
+            ],
+            [
+              "Q1'24",
+              "2.0"
+            ],
+            [
+              "Q1'25",
+              "2.3"
+            ],
+            [
+              "Q1'26",
+              "2.8"
+            ]
+          ]
+        },
+        "secondary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'24",
+              "value": 16
+            },
+            {
+              "label": "Q2'24",
+              "value": 16
+            },
+            {
+              "label": "Q3'24",
+              "value": 18
+            },
+            {
+              "label": "Q4'24",
+              "value": 19
+            },
+            {
+              "label": "Q1'25",
+              "value": 20
+            },
+            {
+              "label": "Q2'25",
+              "value": 20
+            },
+            {
+              "label": "Q3'25",
+              "value": 17
+            },
+            {
+              "label": "Q4'25",
+              "value": 16
+            },
+            {
+              "label": "Q1'26",
+              "value": 16
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "YoY %"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 25
+          }
+        }
+      },
+      "speaker_notes": "Long-run bars + recent YoY line.",
+      "slide_number": 17
+    },
+    {
+      "layout_type": "combo_chart",
+      "packing_mode": "chart-led",
+      "title": "Premium Lending \u2014 Net Interest Income",
+      "section": "Revenue",
+      "content": {
+        "subtitle": "NII: Volume & Margin Drivers \u00b7 $ in billions",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "Billed Business CAGR vs Q1'19",
+            "value": "8%"
+          },
+          {
+            "label": "NII CAGR vs Q1'19",
+            "value": "13%"
+          },
+          {
+            "label": "Total Balances CAGR",
+            "value": "7%"
+          },
+          {
+            "label": "Q1'26 NII",
+            "value": "$4.7B"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "combo_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 4.2
+            },
+            {
+              "label": "Q2'25",
+              "value": 4.2
+            },
+            {
+              "label": "Q3'25",
+              "value": 4.5
+            },
+            {
+              "label": "Q4'25",
+              "value": 4.5
+            },
+            {
+              "label": "Q1'26",
+              "value": 4.7
+            }
+          ],
+          "chart_config": {
+            "y_axis_min": 0,
+            "y_axis_max": 6
+          }
+        },
+        "line_overlay": {
+          "label": "YoY Growth %",
+          "style": "dashed",
+          "data": [
+            {
+              "label": "Q1'25",
+              "value": 11
+            },
+            {
+              "label": "Q2'25",
+              "value": 12
+            },
+            {
+              "label": "Q3'25",
+              "value": 12
+            },
+            {
+              "label": "Q4'25",
+              "value": 12
+            },
+            {
+              "label": "Q1'26",
+              "value": 12
+            }
+          ]
+        }
+      },
+      "speaker_notes": "NII combo bars + dashed YoY overlay.",
+      "slide_number": 18
+    },
+    {
+      "slide_number": 19,
+      "layout_type": "line_chart",
+      "packing_mode": "chart-led",
+      "title": "Total Revenues Net of Interest Expense",
+      "section": "Revenue",
+      "content": {
+        "subtitle": "$ in billions \u2014 % Increase/(decrease) vs. Prior year",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 7,
+              "series_2": 8
+            },
+            {
+              "label": "Q2'25",
+              "value": 9,
+              "series_2": 9
+            },
+            {
+              "label": "Q3'25",
+              "value": 11,
+              "series_2": 11
+            },
+            {
+              "label": "Q4'25",
+              "value": 10,
+              "series_2": 9
+            },
+            {
+              "label": "Q1'26",
+              "value": 11,
+              "series_2": 10
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "FX Adjusted",
+              "Reported"
+            ],
+            "series_styles": [
+              "solid",
+              "dashed"
+            ],
+            "series_colors": [
+              "#00175A",
+              "#8A93A6"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 15,
+            "y_axis_ticks": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "force_ticks": true,
+            "y_axis_unit": "%",
+            "y_axis_label": "%",
+            "gridlines": true,
+            "show_point_labels": true,
+            "point_labels": true,
+            "annotation": {
+              "text": "Leap Year Approx. (1%)",
+              "x": 80,
+              "y": 40
+            }
+          }
+        },
+        "secondary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "$B",
+              "$17.0",
+              "$17.9",
+              "$18.4",
+              "$19.0",
+              "$18.9"
+            ]
+          ]
+        }
+      },
+      "disclosure": null,
+      "speaker_notes": "v2 pass_02: switched combo\u2192line_chart with dual YoY series + $B under-table (A). PDF navy under-band styling still type B residual."
+    },
+    {
+      "slide_number": 20,
+      "layout_type": "pill_comparison",
+      "packing_mode": "stat-led",
+      "title": "Expense Performance",
+      "section": "Expenses",
+      "content": {
+        "subtitle": "$ in millions",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "VCE of Revenue",
+            "value": "44.7%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "pill_comparison",
+          "steps_or_data": [
+            [
+              "Expense line",
+              "Q1'26",
+              "Q1'25",
+              "YoY% Inc/(Dec)"
+            ],
+            [
+              "Card Member Rewards",
+              "$4,891",
+              "$4,378",
+              "12%"
+            ],
+            [
+              "Business Development",
+              "$1,591",
+              "$1,529",
+              "4%"
+            ],
+            [
+              "Card Member Services",
+              "$1,975",
+              "$1,328",
+              "49%"
+            ],
+            [
+              "Variable Customer Engagement Expenses",
+              "$8,457",
+              "$7,235",
+              "17%"
+            ],
+            [
+              "Marketing",
+              "$1,480",
+              "$1,486",
+              "0%"
+            ],
+            [
+              "Operating Expenses",
+              "$3,941",
+              "$3,766",
+              "5%"
+            ],
+            [
+              "Total Expenses",
+              "$13,878",
+              "$12,487",
+              "11%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "VCE & variance",
+            "body": "Q1'26 VCE % of Revenue noted on PDF. See Variance Commentary for expense drivers. Card Member Services +49% from Platinum benefits usage."
+          }
+        ]
+      },
+      "speaker_notes": "v2 pass_01: pill_comparison + key_stats VCE inset (F4/F9)."
+    },
+    {
+      "slide_number": 21,
+      "layout_type": "multi_panel",
+      "packing_mode": "stat-led",
+      "title": "Capital",
+      "section": "Capital",
+      "content": {
+        "subtitle": "$ in billions; Common Shares Outstanding in millions",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "CET1 Ratio Q1'26",
+            "value": "10.5%"
+          },
+          {
+            "label": "CET1 Target",
+            "value": "10\u201311%"
+          },
+          {
+            "label": "NI Returned (3yr)",
+            "value": "74%"
+          },
+          {
+            "label": "Dividend/share \u2191 (3yr)",
+            "value": "58%"
+          },
+          {
+            "label": "Q1'26 Capital Returned",
+            "value": "$2.3B"
+          },
+          {
+            "label": "Shares Outstanding",
+            "value": "682"
+          },
+          {
+            "label": "ROE Q1'26",
+            "value": "35%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "multi_panel",
+          "tiles": [
+            {
+              "kind": "chart",
+              "chart_type": "stacked_bar_chart",
+              "label": "Capital composition",
+              "steps_or_data": [
+                [
+                  "Quarter",
+                  "Dividends",
+                  "Share Repurchases"
+                ],
+                [
+                  "Q4'24",
+                  "0.5",
+                  "1.1"
+                ],
+                [
+                  "Q1'25",
+                  "0.6",
+                  "0.7"
+                ],
+                [
+                  "Q2'25",
+                  "0.6",
+                  "1.4"
+                ],
+                [
+                  "Q3'25",
+                  "0.6",
+                  "2.3"
+                ],
+                [
+                  "Q4'25",
+                  "0.6",
+                  "0.9"
+                ],
+                [
+                  "Q1'26",
+                  "0.7",
+                  "1.6"
+                ]
+              ],
+              "chart_config": {}
+            },
+            {
+              "kind": "metric",
+              "label": "CET1 Ratio Q1'26",
+              "value": "10.5%"
+            },
+            {
+              "kind": "metric",
+              "label": "CET1 Target",
+              "value": "10\u201311%"
+            },
+            {
+              "kind": "metric",
+              "label": "NI Returned (3yr)",
+              "value": "74%"
+            },
+            {
+              "kind": "metric",
+              "label": "Dividend/share \u2191 (3yr)",
+              "value": "58%"
+            },
+            {
+              "kind": "metric",
+              "label": "Q1'26 Capital Returned",
+              "value": "$2.3B"
+            }
+          ]
+        }
+      },
+      "speaker_notes": "v2 pass_01: multi_panel capital board (F11)."
+    },
+    {
+      "slide_number": 22,
+      "layout_type": "guidance_statement_card",
+      "packing_mode": "stat-led",
+      "title": "2026 Guidance",
+      "section": "Guidance",
+      "content": {
+        "subtitle": "Full-Year 2026 Guidance",
+        "key_stats": [
+          {
+            "label": "Revenue Growth",
+            "value": "9% \u2013 10%"
+          },
+          {
+            "label": "EPS",
+            "value": "$17.30 \u2013 $17.90"
+          }
+        ],
+        "bullets": [
+          "Subject to the macroeconomic environment and other factors beyond the Company's control."
+        ],
+        "so_what": ""
+      },
+      "speaker_notes": "v2 pass_01: guidance_statement_card (F8)."
+    },
+    {
+      "slide_number": 23,
+      "layout_type": "brand_divider",
+      "packing_mode": "cover-led",
+      "title": "Appendix",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "Supplemental Information",
+        "brand_tone": "two-tone",
+        "brand_mark": "seal_lockup"
+      },
+      "speaker_notes": "v2 pass_01: brand_divider appendix opener (F6). | v3 pass_01: brand_mark=seal_lockup (R3 named asset)."
+    },
+    {
+      "layout_type": "data_table",
+      "packing_mode": "stat-led",
+      "title": "Q1'26 Network Volumes Growth by Customer Type",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior Year (FX-adjusted)",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "U.S. Consumer % of NV",
+            "value": "37%"
+          },
+          {
+            "label": "U.S. SME % of NV",
+            "value": "22%"
+          },
+          {
+            "label": "Processed Volumes",
+            "value": "$486B"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "Segment",
+              "YoY Growth",
+              "% of Network Volumes"
+            ],
+            [
+              "U.S. Consumer Services",
+              "10%",
+              "37%"
+            ],
+            [
+              "U.S. SME",
+              "4%",
+              "22%"
+            ],
+            [
+              "U.S. Large & Global Corp.",
+              "4%",
+              "5%"
+            ],
+            [
+              "Commercial Services (total)",
+              "4%",
+              "\u2014"
+            ],
+            [
+              "Int'l Consumer",
+              "13%",
+              "15%"
+            ],
+            [
+              "Int'l SME & Large Corp.",
+              "12%",
+              "8%"
+            ],
+            [
+              "International Card Services",
+              "13%",
+              "\u2014"
+            ],
+            [
+              "Processed Volumes",
+              "12% report / 9% FX-adj",
+              "$486B"
+            ]
+          ]
+        }
+      },
+      "speaker_notes": "Network volumes table from PDF p23.",
+      "slide_number": 24
+    },
+    {
+      "layout_type": "data_table",
+      "packing_mode": "stat-led",
+      "title": "FX Impact on Billed Business",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "Billed Business by currency (location of card issuance)",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "Currency",
+              "Q1'26 Billed Business % of Total",
+              "YoY Change in USD vs Currency Strengthened/(Weakened)"
+            ],
+            [
+              "Euro \u20ac",
+              "5%",
+              "(10%)"
+            ],
+            [
+              "UK \u00a3",
+              "6%",
+              "(6%)"
+            ],
+            [
+              "Japan \u00a5",
+              "4%",
+              "3%"
+            ],
+            [
+              "Australia $",
+              "4%",
+              "(10%)"
+            ],
+            [
+              "Canada $",
+              "3%",
+              "(4%)"
+            ],
+            [
+              "Mexico $",
+              "2%",
+              "(15%)"
+            ],
+            [
+              "Top 6 Intl. Currencies",
+              "24%",
+              "(7%)"
+            ],
+            [
+              "All Other Intl. Currencies",
+              "3%",
+              "\u2014"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX notes",
+            "body": "* Represents percentage change in FX rates Q1'26 vs Q1'25. ** Reflects weighted average based on Billed Business mix."
+          }
+        ]
+      },
+      "speaker_notes": "FX impact table filled.",
+      "slide_number": 25
+    },
+    {
+      "layout_type": "data_table",
+      "packing_mode": "stat-led",
+      "title": "Travel & Entertainment Billed Business",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "All growth rates FX-adjusted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ],
+            [
+              "Restaurants",
+              "9%",
+              "7%"
+            ],
+            [
+              "Lodging",
+              "6%",
+              "5%"
+            ],
+            [
+              "Airlines",
+              "8%",
+              "7%"
+            ],
+            [
+              "Other",
+              "13%",
+              "9%"
+            ],
+            [
+              "Total T&E",
+              "9%",
+              "29%"
+            ]
+          ]
+        }
+      },
+      "speaker_notes": "T&E breakdown table.",
+      "slide_number": 26
+    },
+    {
+      "layout_type": "dual_chart",
+      "packing_mode": "chart-led",
+      "title": "Credit Reserve Macroeconomic Scenarios: Select Variables",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "U.S. Unemployment Rate % \u00b7 U.S. GDP Growth % (SAAR)",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 4.0,
+              "series_2": 4.2
+            },
+            {
+              "label": "Q2'25",
+              "value": 4.1,
+              "series_2": 4.3
+            },
+            {
+              "label": "Q3'25",
+              "value": 4.2,
+              "series_2": 4.5
+            },
+            {
+              "label": "Q4'25",
+              "value": 4.2,
+              "series_2": 4.6
+            },
+            {
+              "label": "Q1'26",
+              "value": 4.3,
+              "series_2": 4.7
+            },
+            {
+              "label": "Q2'26",
+              "value": 4.2,
+              "series_2": 4.8
+            },
+            {
+              "label": "Q3'26",
+              "value": 4.1,
+              "series_2": 4.9
+            },
+            {
+              "label": "Q4'26",
+              "value": 4.0,
+              "series_2": 5.0
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Baseline UE",
+              "Downside UE"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 10
+          }
+        },
+        "secondary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 2.0,
+              "series_2": 1.0
+            },
+            {
+              "label": "Q2'25",
+              "value": 2.1,
+              "series_2": 0.5
+            },
+            {
+              "label": "Q3'25",
+              "value": 2.0,
+              "series_2": 0.0
+            },
+            {
+              "label": "Q4'25",
+              "value": 1.9,
+              "series_2": -0.5
+            },
+            {
+              "label": "Q1'26",
+              "value": 1.8,
+              "series_2": -1.0
+            },
+            {
+              "label": "Q2'26",
+              "value": 1.9,
+              "series_2": -0.5
+            },
+            {
+              "label": "Q3'26",
+              "value": 2.0,
+              "series_2": 0.0
+            },
+            {
+              "label": "Q4'26",
+              "value": 2.1,
+              "series_2": 0.5
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Baseline GDP",
+              "Downside GDP"
+            ],
+            "y_axis_min": -5,
+            "y_axis_max": 6
+          }
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Scenario note",
+            "body": "Reflects range of variables available as of March 31, 2026 from an independent third party without applying scenario weights. GDP is Real GDP QoQ % SAAR. Numeric series are approx. from chart bands \u2014 not PDF OCR."
+          }
+        ]
+      },
+      "speaker_notes": "Approx. dual scenario lines; triple-scenario exact path still weak/B.",
+      "slide_number": 27
+    },
+    {
+      "slide_number": 28,
+      "layout_type": "multi_panel",
+      "packing_mode": "chart-led",
+      "title": "Funding and Deposits",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "$ in billions \u00b7 92% FDIC insured at Q1'26",
+        "so_what": "Customer Deposits remain ~72% of funding mix",
+        "key_stats": [
+          {
+            "label": "FDIC insured (Q1'26)",
+            "value": "92%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "multi_panel",
+          "tiles": [
+            {
+              "kind": "chart",
+              "chart_type": "stacked_bar_chart",
+              "label": "Funding Mix",
+              "top_total": "$210B / $219B",
+              "badge": "Funding",
+              "side_legend": [
+                {
+                  "label": "Deposits",
+                  "color": "#00175A"
+                },
+                {
+                  "label": "Long-term Debt / Unsecured**",
+                  "color": "#006FCF"
+                },
+                {
+                  "label": "Card ABS*",
+                  "color": "#5B6B9A"
+                },
+                {
+                  "label": "Other / ST",
+                  "color": "#B8BFC9"
+                }
+              ],
+              "steps_or_data": [
+                [
+                  "Quarter",
+                  "Deposits",
+                  "Long-term Debt / Unsecured**",
+                  "Card ABS*",
+                  "Other / ST"
+                ],
+                [
+                  "Q4'25",
+                  "72",
+                  "21",
+                  "6",
+                  "1"
+                ],
+                [
+                  "Q1'26",
+                  "72",
+                  "21",
+                  "6",
+                  "1"
+                ]
+              ],
+              "chart_config": {
+                "stacked": true,
+                "y_axis_min": 0,
+                "y_axis_max": 100,
+                "y_axis_ticks": [
+                  0,
+                  25,
+                  50,
+                  75,
+                  100
+                ],
+                "y_axis_unit": "%",
+                "force_ticks": true,
+                "show_point_labels": true,
+                "point_labels": true,
+                "series_names": [
+                  "Deposits",
+                  "Long-term Debt / Unsecured**",
+                  "Card ABS*",
+                  "Other / ST"
+                ],
+                "series_colors": [
+                  "#00175A",
+                  "#006FCF",
+                  "#5B6B9A",
+                  "#B8BFC9"
+                ]
+              }
+            },
+            {
+              "kind": "chart",
+              "chart_type": "stacked_bar_chart",
+              "label": "Deposit Programs",
+              "top_total": "$151B / $157B",
+              "badge": "Deposits",
+              "side_legend": [
+                {
+                  "label": "Savings and Direct CDs",
+                  "color": "#00175A"
+                },
+                {
+                  "label": "Third Party CDs",
+                  "color": "#006FCF"
+                },
+                {
+                  "label": "Third Party Sweep",
+                  "color": "#5B6B9A"
+                },
+                {
+                  "label": "Checking",
+                  "color": "#B8BFC9"
+                }
+              ],
+              "steps_or_data": [
+                [
+                  "Quarter",
+                  "Savings and Direct CDs",
+                  "Third Party CDs",
+                  "Third Party Sweep",
+                  "Checking"
+                ],
+                [
+                  "Q4'25",
+                  "81",
+                  "10",
+                  "7",
+                  "2"
+                ],
+                [
+                  "Q1'26",
+                  "82",
+                  "10",
+                  "6",
+                  "2"
+                ]
+              ],
+              "chart_config": {
+                "stacked": true,
+                "y_axis_min": 0,
+                "y_axis_max": 100,
+                "y_axis_ticks": [
+                  0,
+                  25,
+                  50,
+                  75,
+                  100
+                ],
+                "y_axis_unit": "%",
+                "force_ticks": true,
+                "show_point_labels": true,
+                "point_labels": true,
+                "series_names": [
+                  "Savings and Direct CDs",
+                  "Third Party CDs",
+                  "Third Party Sweep",
+                  "Checking"
+                ],
+                "series_colors": [
+                  "#00175A",
+                  "#006FCF",
+                  "#5B6B9A",
+                  "#B8BFC9"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Funding footnotes",
+            "body": "* Face amount of Card ABS, net of securities retained; includes ABS facility draws. ** Face amount of unsecured term debt."
+          }
+        ]
+      },
+      "speaker_notes": "v3 pass_01: multi_panel tall-card top_total + side_legend + badge (F11+)."
+    },
+    {
+      "slide_number": 29,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Additional Commentary \u2014 Variance Analysis",
+      "section": "Appendix",
+      "content": {
+        "headline": "Additional Commentary \u2014 Variance Analysis",
+        "subtitle": "Selected Q1'26 vs Q1'25 commentary",
+        "bullets": [
+          "Discount Revenue: Increased 9 percent versus Q1\u201925, driven by an increase in billed business, partially offset by lower average merchant discount rates primarily due to shifts in geographic and merchant spend mix.",
+          "Net Card Fees: Increased 18 percent versus Q1\u201925, primarily driven by growth in our premium card portfolios.",
+          "Service Fees and Other Revenue: Increased 13 percent versus Q1\u201925, primarily driven by increases in foreign-exchange related revenues associated with Card Member cross-currency spending, network partnership revenue and loyalty coalition-related fees.",
+          "Interest Income: Increased 9 percent versus Q1\u201925, primarily driven by growth in revolving loan balances, partially offset by lower interest rates.",
+          "Interest Expense: Relatively flat versus Q1\u201925, reflecting growth in customer deposits and long-term debt, offset by lower interest rates paid on customer deposits.",
+          "Provisions for Credit Losses: Increased 9 percent versus Q1\u201925, primarily driven by higher net write-offs and a lower reserve release in the current period."
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "Dense freeform bullets from PDF raw_text."
+    },
+    {
+      "slide_number": 30,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Additional Commentary \u2014 Variance Analysis (cont.)",
+      "section": "Appendix",
+      "content": {
+        "headline": "Additional Commentary \u2014 Variance Analysis (cont.)",
+        "subtitle": "Selected Q1'26 vs Q1'25 commentary",
+        "bullets": [
+          "Card Member Rewards Expense: Increased 12 percent versus Q1\u201925, primarily driven by higher billed business and changes to the Membership Rewards program for U.S. Business Platinum cards.",
+          "Business Development Expense: Increased 4 percent versus Q1\u201925, primarily due to increased partner payments and higher client incentives and loyalty coalition-related costs, partially offset by a reserve release related to the allocation of revenue to a joint venture partner as a result of a final arbitration award.",
+          "Card Member Services Expense: Increased 49 percent versus Q1\u201925, primarily due to higher usage of Card Member benefits and the new U.S. Platinum benefits.",
+          "Marketing Expense: Relatively flat versus Q1\u201925 reflecting consistent levels of spending on customer acquisition and brand advertising.",
+          "Salaries and Employee Benefits Expense: Increased 17 percent versus Q1\u201925, primarily driven by higher compensation and incentive costs.",
+          "Other Expenses: Decreased 11 percent versus Q1\u201925, primarily driven by a release of a reserve associated with international non-income tax, a gain recognized in the current period for the remeasurement of our ownership interest in our Switzerland joint venture (Swisscard AECS GmbH) resulting from our purchase of the remaining share of the joint venture and gains on Amex Ventures investments, partially offset by higher technology costs and foreign-exchange related losses."
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "Dense freeform bullets from PDF raw_text."
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 1 (1 of 2) Billed Business and Processed Volumes \u2014 Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year \u00b7 $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "Billed Business Reported",
+              "6%",
+              "7%",
+              "9%",
+              "9%",
+              "10%"
+            ],
+            [
+              "Billed Business FX-Adj*",
+              "6%",
+              "7%",
+              "8%",
+              "8%",
+              "9%"
+            ],
+            [
+              "G&S Reported",
+              "6%",
+              "8%",
+              "9%",
+              "9%",
+              "10%"
+            ],
+            [
+              "G&S FX-Adj*",
+              "7%",
+              "7%",
+              "9%",
+              "8%",
+              "8%"
+            ],
+            [
+              "T&E Reported",
+              "5%",
+              "6%",
+              "8%",
+              "9%",
+              "12%"
+            ],
+            [
+              "T&E FX-Adj*",
+              "6%",
+              "5%",
+              "8%",
+              "8%",
+              "9%"
+            ],
+            [
+              "Processed Volumes Reported",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "12%"
+            ],
+            [
+              "Processed Volumes FX-Adj*",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "9%"
+            ],
+            [
+              "BB CAGR Q1'19\u2013Q1'26 Reported",
+              "5%",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "BB CAGR Q1'19\u2013Q1'26 FX-Adj*",
+              "8%",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "header_groups": [
+            {
+              "label": "Prior / Reported",
+              "span": 2
+            },
+            {
+              "label": "Current / FX-Adj",
+              "span": 3
+            }
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 30. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 31
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 1 (2 of 2) Billed Business \u2014 Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year \u00b7 $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Segment",
+              "Q1'26 Reported",
+              "Q1'26 FX-Adj*"
+            ],
+            [
+              "International Consumer",
+              "21%",
+              "13%"
+            ],
+            [
+              "International SME & Large Corp.",
+              "19%",
+              "12%"
+            ],
+            [
+              "ICS Total Billed Business",
+              "20%",
+              "13%"
+            ],
+            [
+              "ICS G&S",
+              "21%",
+              "14%"
+            ],
+            [
+              "ICS T&E",
+              "18%",
+              "10%"
+            ],
+            [
+              "U.S. Large and Global Corp.",
+              "4%",
+              "4%"
+            ],
+            [
+              "Commercial Services Total",
+              "4%",
+              "4%"
+            ],
+            [
+              "Commercial G&S",
+              "3%",
+              "3%"
+            ],
+            [
+              "Commercial T&E",
+              "7%",
+              "6%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 31. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 32
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 2 Total Balances \u2014 Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year \u00b7 $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'19",
+              "Q1'24",
+              "Q2'24",
+              "Q3'24",
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "GAAP Total Balances $B",
+              "142",
+              "194",
+              "199",
+              "202",
+              "208",
+              "207",
+              "212",
+              "216",
+              "225",
+              "224"
+            ],
+            [
+              "YoY GAAP Tot. Balances",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "7%",
+              "7%",
+              "7%",
+              "8%",
+              "8%"
+            ],
+            [
+              "YoY FX-Adj Tot. Balances*",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "\u2014",
+              "7%",
+              "6%",
+              "7%",
+              "7%",
+              "7%"
+            ],
+            [
+              "CAGR GAAP Q1'19\u2013Q1'26",
+              "7%",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CAGR FX-Adj Q1'19\u2013Q1'26*",
+              "7%",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "header_groups": [
+            {
+              "label": "Prior / Reported",
+              "span": 5
+            },
+            {
+              "label": "Current / FX-Adj",
+              "span": 5
+            }
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 32. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 33
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 3 Revenue \u2014 Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year \u00b7 $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "$ in millions",
+              ""
+            ],
+            [
+              "Revenue \u2013 Reported & FX-Adjusted*",
+              ""
+            ],
+            [
+              "* See Slide 3 for an explanation of FX-adjusted ",
+              "information."
+            ],
+            [
+              "Q1'26",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "YoY%",
+              ""
+            ],
+            [
+              "Inc/(Dec)",
+              ""
+            ],
+            [
+              "Discount Revenue",
+              ""
+            ],
+            [
+              "$9,512",
+              ""
+            ],
+            [
+              "$8,743",
+              ""
+            ],
+            [
+              "FX-Adjusted*",
+              ""
+            ],
+            [
+              "$8,857",
+              ""
+            ],
+            [
+              "Net Card Fees",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 33. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 34
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 4 Net Card Fees \u2014 Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year \u00b7 $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "$ in billions",
+              ""
+            ],
+            [
+              "Net Card Fees \u2013 Reported & FX-Adjusted*",
+              ""
+            ],
+            [
+              "Q1'19",
+              ""
+            ],
+            [
+              "Q1'23",
+              ""
+            ],
+            [
+              "Q2'23",
+              ""
+            ],
+            [
+              "Q3'23",
+              ""
+            ],
+            [
+              "Q4'23",
+              ""
+            ],
+            [
+              "Q1'24",
+              ""
+            ],
+            [
+              "Q2'24 Q3'24 Q4'24",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "Q2'25",
+              ""
+            ],
+            [
+              "Q3'25",
+              ""
+            ],
+            [
+              "Q4'25",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 34. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 35
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 5 Net Interest Income \u2014 Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year \u00b7 $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "$ in billions",
+              ""
+            ],
+            [
+              "Net Interest Income \u2013 Reported & FX-Adjusted*",
+              ""
+            ],
+            [
+              "Q1'19",
+              ""
+            ],
+            [
+              "Q1'24",
+              ""
+            ],
+            [
+              "Q2'24",
+              ""
+            ],
+            [
+              "Q3'24",
+              ""
+            ],
+            [
+              "Q4'24",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "Q2'25",
+              ""
+            ],
+            [
+              "Q3'25",
+              ""
+            ],
+            [
+              "Q4'25",
+              ""
+            ],
+            [
+              "Q1'26",
+              ""
+            ],
+            [
+              "GAAP Net Interest Income",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 35. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 36
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 6 Revenues Net of Interest Expense \u2014 Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year \u00b7 $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "Revenues Net of Interest Expense \u2013 Reported & FX",
+              "-Adjusted*"
+            ],
+            [
+              "Q1'24",
+              ""
+            ],
+            [
+              "Q2'24",
+              ""
+            ],
+            [
+              "Q3'24",
+              ""
+            ],
+            [
+              "Q4'24",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "Q2'25",
+              ""
+            ],
+            [
+              "Q3'25",
+              ""
+            ],
+            [
+              "Q4'25",
+              ""
+            ],
+            [
+              "Q1'26",
+              ""
+            ],
+            [
+              "GAAP Revenues Net of Interest Expense",
+              ""
+            ],
+            [
+              "$15.8",
+              ""
+            ],
+            [
+              "$16.3",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 36. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 37
+    },
+    {
+      "slide_number": 38,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Cautionary Note Regarding Forward-Looking Statements",
+      "section": "Legal",
+      "content": {
+        "headline": "Cautionary Note Regarding Forward-Looking Statements",
+        "subtitle": "",
+        "bullets": [
+          "the company\u2019s ability to achieve its 2026 earnings per common share (EPS) guidance and grow EPS in the future, which will depend in part on revenue growth, credit performance, credit reserve and expense levels and the effective tax rate remaining consistent with current expectations and the company\u2019s ability to continue investing in growth initiatives (such as its brand, value propositions, coverage, marketing, technology, partnerships and talent), controlling operating expenses, effectively managing risk and executing its share repurchase program, any of which could be impacted by, among other things, the factors identified in the subsequent paragraphs as well as the following: macroeconomic and geopolitical conditions, including a slowdown in U.S. or global economic growth, changes to consumer and business confidence, higher rates of unemployment and wide-scale layoffs, impacts of the Middle East conflict and other international hostilities and deteriorations in global trade, the effects of announced or future tariffs, changes in interest rates, inflation, supply chain issues, energy costs, market volatility, government shutdowns and fiscal and monetary policies; the effects of technology changes and the adoption of artificial intelligence (AI); the impact of any future contingencies, including, but not limited to, legal costs and settlements, the imposition of fines or monetary penalties, increases in Card Member remediation, investment gains or losses, restructurings, impairments and changes in reserves; issues impacting brand perceptions and the company\u2019s reputation; changes in the competitive environment and an inability to realize benefits from new and extended sponsorships; impacts related to acquisitions, cobrand relationships and other partners; and the impact of regulation and litigation, which could affect the profitability of the company\u2019s business activities, limit the company\u2019s ability to pursue business opportunities, require changes to business practices or alter the company\u2019s relationships with Card Members, partners and merchants;",
+          "the company\u2019s ability to achieve its 2026 revenue growth guidance and grow revenues net of interest expense in the future, which could be impacted by, among other things, the factors identified above and in the subsequent paragraphs, as well as the following: spending volumes not being consistent with expectations, including spending by U.S. consumer and small & mid-sized business Card Members and airline and other travel & entertainment spending volumes, such as due to uncertain business and economic conditions, as well as geopolitical conditions; an inability to address competitive pressures, attract and retain customers, invest in and enhance the company\u2019s Membership Model of premium products, differentiated services and partnerships, successfully refresh and introduce card products, grow spending and lending with customers across age cohorts (including Millennial and Gen-Z customers) and commercial segments and implement strategies and business initiatives, including within the premium consumer space, commercial payments and the global network; the impacts of portfolio sales; the effects of regulatory initiatives, including pricing regulation, such as pricing for card acceptance and potential credit card interest rate caps, and network regulation; merchant coverage growing less than expected or the reduction of merchant acceptance or perceptions of coverage; increased surcharging, steering, suppression or other differential acceptance practices with respect to the company\u2019s products; merchant discount rates changing from the company\u2019s expectations; and changes in foreign currency exchange rates;"
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "FLS legal freeform page."
+    },
+    {
+      "slide_number": 39,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "content": {
+        "headline": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+        "subtitle": "",
+        "bullets": [
+          "net card fee revenues not growing consistent with the company\u2019s expectations for 2026 and beyond, which could be impacted by, among other things, the pace of Card Member acquisition activity and demand for the company\u2019s fee-based products; higher Card Member attrition rates; the success and timing of the company\u2019s refreshes of its card products (including acquisition and retention levels of the U.S. Consumer and Business Platinum Card portfolios); a decrease in the ability and desire of Card Members to pay card fees, such as due to a deterioration in macroeconomic conditions or as a result of changes in card fees; the competitive environment and the perception of the value provided by premium cards; regulatory initiatives impacting card fees; and the company\u2019s inability to deliver and enhance benefits and services, innovate with respect to its products and develop attractive premium value propositions for new and existing customers;",
+          "net interest income and the growth of net interest income relative to the growth of Card balances and Other loans outstanding, being higher or lower than expectations, which could be impacted by, among other things, the behavior and financial strength of Card Members and their actual spending, borrowing and paydown patterns; the effectiveness of the company\u2019s strategies to enhance Card Member value propositions, grow lending with premium customers and capture a greater share of Card Members\u2019 spending and borrowings, and attract new, and retain existing, customers; the company\u2019s ability to effectively introduce and enhance lending features on its products and manage underwriting risk; governmental actions to cap credit card interest rates; changes in benchmark interest rates, including where such changes affect the company\u2019s assets or liabilities differently than expected; the company\u2019s ability to grow deposits, including from Card Members; continued volatility and other changes in capital and credit market conditions and the availability and cost of capital; credit actions, including line size and other adjustments to credit availability; the yield on revolve-eligible Card balances and Other loans differing from current expectations; and loss or impacts to cobrand relationships;",
+          "future credit performance, the level of future delinquency, reserve and write-off rates and the amount and timing of future reserve builds and releases, which will depend in part on macroeconomic factors such as actual and projected unemployment rates and GDP, as well as the occurrence of events that increase macroeconomic uncertainty or volatility; the ability and willingness of Card Members to pay amounts owed to the company; changes in Card balances and Other loans outstanding, such as from the implementation of the company\u2019s strategy to capture spending and borrowings, or from changes in consumer behavior that affect customer balances (e.g., paydown and revolve rates); changes in the levels of customer acquisitions and the credit profiles of new customers acquired; financial stress and volume of bankruptcies of Card Members and business partners; credit-related fraud levels; the magnitude of seasonal fluctuations in credit metrics; the enrollment in, and effectiveness of, financial relief programs and the performance of accounts as they exit from such programs; the effects of the resumption of student loan repayments; collections capabilities and recoveries of previously written-off balances; and the impact of the usage of debt settlement companies;"
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "FLS legal freeform page."
+    },
+    {
+      "slide_number": 40,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "content": {
+        "headline": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+        "subtitle": "",
+        "bullets": [
+          "the actual amount to be spent on Card Member rewards and services and business development in 2026 and beyond, and the relationship of these variable customer engagement costs to revenues, which could be impacted by the investments and enhancements that the company makes with respect to its value propositions, including its rewards programs and product benefits, such as in connection with card refreshes (e.g., benefits on the refreshed U.S. Consumer and Business Platinum Cards), to make them attractive to Card Members and prospective customers, potentially in a manner that is not cost-effective; changes in the level of Card Member spending and spending patterns (including the level of spend in bonus categories), the redemption of rewards and offers (including travel redemptions) and usage of travel-, lifestyle- and business-related benefits; the costs related to reward point redemptions; levels of Card Member acquisitions on premium card products; changes in the company\u2019s models or assumptions used to estimate these expenses; new and renegotiated contractual obligations with business partners; the company\u2019s ability to identify and negotiate partner-funded value for Card Members; and the pace and cost of the expansion of the company\u2019s global lounge collection;",
+          "the actual amount the company spends on marketing in 2026 and beyond and the effectiveness and efficiency of its marketing spending, which will be based in part on continued changes in the macroeconomic and competitive environment and business performance, including the levels of demand for the company\u2019s products; the company\u2019s ability to realize marketing efficiencies, including as a result of investments in its product value propositions and the use of technology, such as the personalization of offers, and balance expense control and investments in the business; management\u2019s investment optimization process and its ability to develop premium value propositions and drive customer demand; management\u2019s identification and assessment of attractive investment opportunities and its decisions regarding the timing of investments; and the receptivity of Card Members and prospective customers to advertising and customer acquisition initiatives;",
+          "the company\u2019s ability to control operating expenses, including relative to revenue growth, which could be impacted by, among other things, salary and benefit expenses to attract and retain talent; the company\u2019s ability to realize operational efficiencies, including through increased scale and automation and continued adoption of artificial intelligence technologies; management\u2019s ability to balance expense control and investments in the business, and its decisions regarding spending in such areas as technology, business and product development, sales force, premium servicing and AI initiatives; the company\u2019s ability to innovate efficient channels of customer interactions and the willingness of Card Members to self-service and address issues through digital channels; restructuring activity; fraud costs; inflation and supply chain issues; increased technology costs, including investments in technology innovations and system upgrades; expenses related to enterprise risk management and compliance and consulting, legal and other professional services fees, including as a result of the company\u2019s growth, litigation and internal and regulatory reviews; the impact of changes in foreign currency exchange rates on costs; regulatory assessments; the level of M&A activity and related expenses; information security or cybersecurity incidents; the payment of fines, penalties, disgorgement, restitution, non-income tax assessments and litigation-related settlements; the performance of Amex Ventures and other of the company\u2019s investments; and impairments of goodwill or other assets;"
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "FLS legal freeform page."
+    },
+    {
+      "slide_number": 41,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "content": {
+        "headline": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+        "subtitle": "",
+        "bullets": [
+          "the company\u2019s tax rate not remaining consistent with expectations, which could be impacted by, among other things, further changes in tax laws and regulation, the implementation by jurisdictions of the Organization for Economic Cooperation and Development\u2019s global minimum tax guidelines (including safe harbors for U.S. multinational enterprises), the company\u2019s geographic mix of income, unfavorable tax audits, assessments and tax litigation outcomes, and the occurrence or nonoccurrence of other discrete tax items;",
+          "changes affecting the company\u2019s plans regarding the return of capital to shareholders, which will depend on factors such as the company\u2019s capital levels and regulatory capital ratios; new rulemakings and guidance from the Federal Reserve and other banking regulators, including changes to regulatory capital requirements, such as from recent regulatory capital rule proposals, and changes to the tailoring of enhanced prudential standards applicable to banking organizations; results of operations and financial condition; credit ratings and rating agency considerations; results of the stress testing and capital planning process; and the economic environment and market conditions in any given period;",
+          "changes in the substantial and increasing worldwide competition in the payments industry, including competitive pressure and competitor settlements that may materially impact the prices charged to merchants that accept American Express cards; merchant acceptance, surcharging, steering and other differential acceptance practices; the desirability of competitor premium card products and competition for partnerships and premium experiences, services and benefits; competition for new and existing cobrand relationships; the effects of the emergence of agentic commerce on the payments landscape and customer payment experiences; competition from new and non-traditional competitors, such as financial technology companies, and with respect to new products, services and technologies, such as the emergence or increase in popularity of digital payment platforms and currencies and other alternative payment mechanisms; competitor acquisitions and transactions; and the success of marketing, promotion, rewards programs, offers and travel-, lifestyle- and business-related benefits (e.g., lounges, dining, entertainment and business tools);",
+          "the company\u2019s ability to sustain its momentum and leadership in the premium consumer space, including with Millennial and Gen-Z consumers, which will be impacted in part by competition, levels of consumer demand for premium card products, brand perceptions (including perceptions related to merchant coverage) and reputation, and the company\u2019s ability to successfully refresh its products and develop and market new benefits, services, experiences and other value propositions, as well as new AI and digital capabilities, that appeal to Card Members and new customers, grow spending with new and younger age cohort Card Members, offer attractive services and rewards programs and build greater customer loyalty, which will depend in part on identifying and funding investment opportunities, addressing changing customer behaviors, new product innovation and development, Card Member acquisition efforts and enrollment processes, including through digital channels, continuing to realize benefits from strategic partnerships, successfully implementing the company\u2019s dining strategy and evolving the company\u2019s infrastructure to support new products, services and benefits;"
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "FLS legal freeform page."
+    },
+    {
+      "slide_number": 42,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "content": {
+        "headline": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+        "subtitle": "",
+        "bullets": [
+          "the company\u2019s ability to build on its leadership in commercial payments and successfully roll out new commercial products and solutions in 2026, which will depend in part on competition, including from financial technology companies and as a result of competitor acquisitions and transactions; the willingness and ability of companies to use credit and charge cards for procurement and other business expenditures as well as use the company\u2019s other products and services for financing needs; the acceptance of, and economics related to, B2B payment platforms; the company\u2019s ability to successfully refresh its products and offer attractive value propositions and new products to current and potential customers, including through its new Graphite Business Cash Unlimited Card and upcoming Corporate Cash Back Card, as well as new AI benefits and capabilities; the company\u2019s ability to enhance and expand its payment, lending, cash flow and expense management solutions, including the release of new expense management software in 2026, increase customer engagement, enhance the corporate card onboarding experience and build out a multi-product digital ecosystem to integrate its broad product set, which is dependent on the company\u2019s continued investment in capabilities, features, functionalities, platforms and technologies and the successful introduction of capabilities related to the company\u2019s Center acquisition; and the success of the company\u2019s initiatives to support businesses, such as Small Business Saturday and other Shop Small campaigns;",
+          "the company\u2019s ability to successfully invest in, benefit from and expand the use of technological developments, generative AI, digital payments, servicing, travel, dining & expense management solutions and other technological capabilities and the actual amount the company spends on technology in 2026 and beyond, which will depend in part on the company\u2019s success in advancing its agentic commerce initiatives, including embedding its payment capabilities in emerging AI ecosystems, such as through the Amex Agentic Commerce Experiences\u2122 developer kit and Amex Agent Purchase Protection\u2122, making Membership assets discoverable and actionable on AI platforms and building proprietary AI-powered experiences across its platforms; embedding AI into its business and increasing automation, including to streamline and improve internal processes and decision making, enhance the company\u2019s products, develop new capabilities and address servicing and other business and customer needs; developing new features in its applications and platforms and enhancing its digital channels; supporting the use of the company\u2019s products as a means of payment through online, mobile, agentic and other digital channels; building partnerships and executing programs with other companies; and effectively utilizing data and data & analytics platforms, including successfully migrating to new platforms, all of which will be impacted by investment levels, customer and colleague receptiveness and ability to adopt new technologies, partner engagement, new product innovation and development and the platforms and infrastructure to support new products, services, benefits and partner integrations;",
+          "the company\u2019s ability to grow internationally, which could be impacted by regulation and business practices, such as those capping interchange or other fees, mandating network access or data localization, imposing greater requirements on payment networks, favoring local competitors or prohibiting or limiting foreign ownership of certain businesses; perceptions of the company\u2019s brand in international jurisdictions; the company\u2019s inability to successfully replicate aspects of its business model internationally and tailor products and services to make them attractive to local customers; competitors with more scale, local experience and established relationships with relevant customers, regulators and industry participants; the success of the company and its network partners in acquiring Card Members and/or merchants; and geopolitical and economic instability, hostilities and tensions (such as the effects of the Middle East conflict), and impacts to cross-border trade and travel;"
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "FLS legal freeform page."
+    },
+    {
+      "slide_number": 43,
+      "layout_type": "split_text_visual",
+      "packing_mode": "argument-led",
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "content": {
+        "headline": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+        "subtitle": "",
+        "bullets": [
+          "the company\u2019s ability to successfully implement its dining strategy and grow its dining platform, which will depend in part on the company\u2019s ability to deliver value to diners, restaurants and other bookable venues; expand and innovate the tools and capabilities offered through the platform, including successfully integrating Tock into the Resy dining platform and developing AI-powered experiences in the Resy app; enable the search and booking of Resy venues through AI platforms; and successfully implement partnerships and compete with other dining platforms and means of booking reservations;",
+          "a failure in or breach of the company\u2019s operational or security systems, processes or infrastructure, or those of third parties, including as a result of cyberattacks or outages, which could compromise the confidentiality, integrity, privacy and/or security of data, disrupt the company\u2019s or its partners\u2019 operations, reduce the use and acceptance of American Express cards or the company\u2019s digital platforms and lead to regulatory scrutiny, litigation, remediation and response costs and reputational harm;",
+          "legal and regulatory developments, which could affect the profitability of the company\u2019s business activities; limit the company\u2019s ability to pursue business opportunities or conduct business in certain jurisdictions; require changes to business practices or governance, or alter the company\u2019s relationships with Card Members, partners, merchants and other third parties, including affecting its network operations and practices governing merchant acceptance; impact interest income, card fees and rewards programs; exert further pressure on merchant discount rates and the company\u2019s GNS business, as well as result in an increase in surcharging, steering or other differential acceptance practices; alter the competitive landscape; subject the company to heightened regulatory scrutiny and result in increased costs related to regulatory oversight and compliance, litigation-related settlements, judgments or expenses, restitution to Card Members or the imposition of fines or monetary penalties; materially affect capital or liquidity requirements, results of operations or ability to pay dividends; or result in harm to the American Express brand; and",
+          "factors beyond the company\u2019s control such as business, economic and geopolitical conditions, consumer and business confidence and spending generally, unemployment rates & wide-scale layoffs, market volatility, energy costs, impacts to travel, government shutdowns and other political developments, a continuation or further escalation or widening of the Middle East conflict or other military conflicts, regional hostilities and international tensions , adverse developments affecting third parties, including other financial institutions, merchants, partners or vendors, as well as severe weather conditions and natural disasters (e.g., hurricanes and wildfires), power loss, disruptions in telecommunications, pandemics, terrorism and other catastrophic events, any of which could significantly affect demand for and spending on American Express cards, credit metrics and reserves, customer balances, deposit levels and other aspects of the company\u2019s business and results of operations or disrupt its global network systems and ability to process transactions. A further description of these uncertainties and other risks can be found in American Express Company\u2019s Annual Report on Form 10-K for the year ended December 31, 2025 and the company\u2019s other reports filed with the Securities and Exchange Commission."
+        ],
+        "body_text": "",
+        "so_what": "",
+        "key_stats": []
+      },
+      "visual_spec": {
+        "grid": {
+          "template_areas": [
+            "main"
+          ],
+          "columns": "1fr",
+          "rows": "1fr",
+          "gap": "16px",
+          "slots": {
+            "main": {
+              "kind": "bullets"
+            }
+          }
+        }
+      },
+      "speaker_notes": "FLS legal freeform page."
+    },
+    {
+      "slide_number": 44,
+      "layout_type": "brand_divider",
+      "packing_mode": "cover-led",
+      "title": "American Express",
+      "section": "End",
+      "content": {
+        "subtitle": "Q1'26 Earnings",
+        "brand_tone": "two-tone",
+        "brand_mark": "seal_lockup"
+      },
+      "speaker_notes": "v2 pass_01: trailing brand plate (F6). | v3 pass_01: brand_mark=seal_lockup (R3 named asset)."
+    }
+  ]
+}
