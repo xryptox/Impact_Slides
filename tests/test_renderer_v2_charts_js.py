@@ -1699,3 +1699,50 @@ class TestIrCalloutChrome:
             r"\.chartjs-callout-chevron \.chartjs-callout-label\s*\{[^}]*background:\s*var\(--navy",
             html,
         )
+
+
+# ---------------------------------------------------------------------------
+# #99 — F11+ IR navy dual tall-card skin (tile_skin: "ir")
+# ---------------------------------------------------------------------------
+
+
+def _ir_skin_slide():
+    s = _tall_card_slide()
+    for t in s["visual_spec"]["primary_visual"]["tiles"]:
+        t["tile_skin"] = "ir"
+    return s
+
+
+class TestIrTallCardSkin:
+    def test_ir_navy_header_band(self, tmp_path):
+        path = _write(tmp_path, _handoff([_ir_skin_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-tile-ir" in html
+        # navy header band hosts top_total + label
+        m = re.search(r'<div class="gl-tile-ir-head">(.+?)</div>\s*<div', html, re.S)
+        assert m, "expected a gl-tile-ir-head navy header band"
+        assert "$148B" in m.group(1)
+        assert "Funding Mix" in m.group(1)
+
+    def test_ir_skin_css_chrome(self, tmp_path):
+        path = _write(tmp_path, _handoff([_ir_skin_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert re.search(
+            r"\.gl-tile-ir-head\s*\{[^}]*background:\s*var\(--navy", html
+        )
+        assert re.search(
+            r"\.gl-tile-ir-head[^}]*color:\s*var\(--color-on-navy", html
+        )
+
+    def test_default_skin_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_tall_card_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # no IR skin markup without tile_skin: "ir" (CSS is bundled)
+        assert 'class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir"' not in html
+        assert "gl-tile-ir-head" not in re.sub(r"<style.*?</style>", "", html, flags=re.S)
