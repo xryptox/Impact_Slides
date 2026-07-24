@@ -813,7 +813,11 @@ def _value_anchor_top(
         return None
     frac = (v - float(lo)) / rng
     frac = max(0.0, min(1.0, frac))
-    return frac * 100.0
+    # Vertical charts: larger values sit higher => smaller top offset.
+    # Horizontal bars: value axis is x (left=lo), so left offset grows.
+    if layout == "horizontal_bar_chart":
+        return frac * 100.0
+    return (1.0 - frac) * 100.0
 
 
 def _build_callout_overlays(

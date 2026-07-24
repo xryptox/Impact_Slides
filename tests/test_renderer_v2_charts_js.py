@@ -5,6 +5,7 @@ Spec: wiki/SPEC_renderer_v2_p3_chartjs.md
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -1263,8 +1264,9 @@ class TestGeometricCallouts:
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
-        # value 10 in a 0-15 domain pins the elbow at 66.67% from the axis base
-        assert "top:66.67%" in html
+        # value 10 in a 0-15 domain pins the elbow 33.33% from the top
+        # (higher value => higher on the chart => smaller top offset)
+        assert "top:33.33%" in html
 
     def test_no_callouts_unchanged(self, tmp_path):
         s = _slide("grouped_bar_chart", [{"label": "A", "value": 1}, {"label": "B", "value": 2}])
@@ -1643,3 +1645,57 @@ class TestBarLabelsInsideSeries:
         path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
         with pytest.raises(ValueError, match="bar_labels_inside"):
             render_deck(path, tmp_path / "out", strict=False)
+
+
+# ---------------------------------------------------------------------------
+# #97 — R2 IR callout chrome (pill band arrow + navy under-axis chevron)
+# ---------------------------------------------------------------------------
+
+
+class TestIrCalloutChrome:
+    def _deck(self, tmp_path):
+        callouts = [
+            {"type": "elbow_arrow", "from": 1, "to": 4, "value": 10,
+             "text": "+ ~6 percentage points"},
+            {"type": "chevron", "at": 4, "text": "Refresh"},
+        ]
+        path = _write(tmp_path, _handoff([_grouped_slide_with_callouts(callouts)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        return (out / "presentation.html").read_text(encoding="utf-8")
+
+    def test_elbow_pill_band_chrome(self, tmp_path):
+        html = self._deck(tmp_path)
+        # pill band: rounded rect with token-blue background (bundled CSS)
+        assert re.search(
+            r"\.chartjs-callout-elbow\s*\{[^}]*border-radius", html
+        ), "elbow must render as a rounded pill band"
+        assert re.search(
+            r"\.chartjs-callout-elbow\s*\{[^}]*background:\s*var\(--blue", html
+        )
+
+    def test_elbow_label_inside_pill(self, tmp_path):
+        html = self._deck(tmp_path)
+        # label sits inside the pill, white on blue — not floating above
+        assert re.search(
+            r"\.chartjs-callout-elbow \.chartjs-callout-label\s*\{[^}]*color:\s*var\(--color-on-navy",
+            html,
+        )
+
+    def test_elbow_stems_present(self, tmp_path):
+        html = self._deck(tmp_path)
+        # elbow stems down to the bar tops via pseudo-elements
+        assert ".chartjs-callout-elbow::before" in html
+        assert ".chartjs-callout-elbow::after" in html
+
+    def test_chevron_navy_under_axis(self, tmp_path):
+        html = self._deck(tmp_path)
+        # navy downward chevron + navy pill label under the axis
+        assert re.search(
+            r"\.chartjs-callout-chevron\s*\{[^}]*border-top:\s*[\d.]+px solid var\(--navy",
+            html,
+        )
+        assert re.search(
+            r"\.chartjs-callout-chevron \.chartjs-callout-label\s*\{[^}]*background:\s*var\(--navy",
+            html,
+        )
