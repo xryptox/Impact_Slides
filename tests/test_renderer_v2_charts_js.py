@@ -1839,3 +1839,70 @@ class TestStackTotals:
         render_deck(path, out, strict=False)
         conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
         assert "datalabels" not in conf["options"]["plugins"]
+
+
+# ---------------------------------------------------------------------------
+# #102 — F4+ freestanding pill packing density
+# ---------------------------------------------------------------------------
+
+
+class TestPillPackingDensity:
+    def _deck(self, tmp_path):
+        s = _slide("pill_comparison", [])
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "pill_comparison",
+                "steps_or_data": [
+                    ["Metric", "Q1'25", "Q1'26", "YoY"],
+                    ["Revenue", "16.9", "17.8", "+6%"],
+                    ["EPS", "2.61", "3.02", "+16%"],
+                    ["ROE", "28%", "30%", "+2pts"],
+                ],
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        return (out / "presentation.html").read_text(encoding="utf-8")
+
+    def test_shells_render(self, tmp_path):
+        html = self._deck(tmp_path)
+        assert "gl-pill-free" in html and "gl-pill-shell" in html
+
+    def test_tighter_column_gutters(self, tmp_path):
+        html = self._deck(tmp_path)
+        # denser gutters than the original gap-md 18px
+        assert re.search(r"\.gl-pill-free\s*\{[^}]*gap:\s*var\(--gap-sm", html)
+
+    def test_narrower_label_rail(self, tmp_path):
+        html = self._deck(tmp_path)
+        # rail narrowed from flex 1.6 toward PDF summary-board proportions
+        assert re.search(r"\.gl-pill-labels\s*\{[^}]*flex:\s*1\.2", html)
+
+    def test_data_table_unchanged(self, tmp_path):
+        # regression guard from #74 still holds
+        path = _write(tmp_path, _handoff([_slide("metric_dashboard", [])]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-pill-col" not in html
+
+
+class TestPillFreeRowDirection:
+    def test_pill_free_is_row_not_gl_card_column(self, tmp_path):
+        # .gl-card sets flex-direction: column; gl-pill-free must win with row
+        s = _slide("pill_comparison", [])
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "pill_comparison",
+                "steps_or_data": [
+                    ["Metric", "A", "B"],
+                    ["Revenue", "1", "2"],
+                ],
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert re.search(r"\.gl-pill-free\s*\{[^}]*flex-direction:\s*row", html)
