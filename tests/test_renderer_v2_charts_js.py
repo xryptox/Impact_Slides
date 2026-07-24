@@ -1601,3 +1601,45 @@ class TestHbarScaleRootDomain:
         y = conf["options"]["scales"]["y"]
         assert "min" not in y or y.get("min") in (0, 0.0) or True  # no explicit clamp
         assert "min" not in (y.get("ticks") or {})
+
+
+# ---------------------------------------------------------------------------
+# #98 — N2 bar_labels_inside "series" source (years inside retention bars)
+# ---------------------------------------------------------------------------
+
+
+class TestBarLabelsInsideSeries:
+    def test_series_source_paints_series_names(self, tmp_path):
+        cfg = {"y_axis_min": 90, "y_axis_max": 100, "bar_labels_inside": "series"}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        dl = conf["options"]["plugins"]["datalabels"]
+        names = [d["label"] for d in conf["data"]["datasets"]]
+        # one row per dataset; every cell is that dataset's series name
+        assert dl["_labels"] == [[n] * len(conf["data"]["labels"]) for n in names]
+
+    def test_true_means_category_backward_compat(self, tmp_path):
+        cfg = {"bar_labels_inside": True}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        dl = conf["options"]["plugins"]["datalabels"]
+        assert dl["_labels"][0] == [str(x) for x in conf["data"]["labels"]]
+
+    def test_category_string_matches_true(self, tmp_path):
+        cfg = {"bar_labels_inside": "category"}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        dl = conf["options"]["plugins"]["datalabels"]
+        assert dl["_labels"][0] == [str(x) for x in conf["data"]["labels"]]
+
+    def test_invalid_source_fails_closed(self, tmp_path):
+        cfg = {"bar_labels_inside": "banana"}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        with pytest.raises(ValueError, match="bar_labels_inside"):
+            render_deck(path, tmp_path / "out", strict=False)
