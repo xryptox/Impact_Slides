@@ -1469,3 +1469,56 @@ class TestBrandMarkAssetPack:
         assert "data:image/svg" in html
         # CSS is always bundled; assert no named-mark *markup* rendered
         assert 'class="gl-brand-mark gl-brand-mark-named"' not in html
+
+
+# ---------------------------------------------------------------------------
+# #94 — Fidelity polish bundle: stage chrome, annex headers, hero type (R1/F12+/R4)
+# ---------------------------------------------------------------------------
+
+
+class TestFidelityPolish:
+    def test_r1_flat_stage_option(self, tmp_path):
+        s = _slide("line_chart", TWO_SERIES)
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "line_chart",
+                "steps_or_data": TWO_SERIES,
+                "chart_config": {"stage": "flat"},
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-flat" in html
+
+    def test_r1_default_stage_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("line_chart", TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # CSS is bundled; assert no flat-stage *markup*
+        assert 'class="chartjs-wrap chartjs-flat"' not in html
+
+    def test_f12_annex_group_banding(self, tmp_path):
+        s = _annex_slide()
+        s["visual_spec"]["primary_visual"]["header_groups"] = [
+            {"label": "FY 2025", "span": 2},
+            {"label": "Q1 2026", "span": 3},
+            {"label": "YoY", "span": 1},
+        ]
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-annex-group" in html
+        assert "gl-annex-group-alt" in html  # alternating banding
+
+    def test_r4_hero_type_scale(self, tmp_path):
+        path = _write(tmp_path, _handoff([_chart_hero_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # giant-% display scale + muted companion card chrome (bundled CSS)
+        assert "font-size: 64px" in html
+        assert ".gl-hero {" in html

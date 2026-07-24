@@ -1150,19 +1150,20 @@
   gap: var(--gap-md, 18px);
   flex: 1;
 }
+/* R4 (#94): muted companion card + larger giant-% display scale. */
 .gl-hero {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: var(--space-4, 16px) var(--space-5, 20px);
-  background: var(--color-surface, var(--panel, #fff));
+  background: var(--color-surface-muted, var(--stage, #f4f6f9));
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-md, 8px);
 }
 .gl-hero-value {
   font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
-  font-size: 56px;
+  font-size: 64px;
   font-weight: 700;
   line-height: 1;
   color: var(--navy);
@@ -1310,6 +1311,14 @@
   font-size: 11px;
   letter-spacing: 0.03em;
 }
+/* F12+ (#94): alternating group banding + stub bottom alignment. */
+.annex-table .gl-annex-group-alt {
+  background: var(--blue, var(--color-primary, #006fcf));
+}
+.annex-table th.gl-annex-stub {
+  vertical-align: bottom;
+  text-align: left;
+}
 .annex-table .gl-annex-cell { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* ---------- multi-panel board host (#80/F11) ---------- */
@@ -1398,6 +1407,14 @@
 
 /* ---------- chart annotation + axis-break markers (#71/F2, #79/F10) ---------- */
 .chartjs-wrap { position: relative; }
+/* R1 (#94): flat IR stage — chart sits on the canvas without Boardroom
+   stage padding/background. */
+.chartjs-wrap.chartjs-flat {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
 .chartjs-annotation {
   position: absolute;
   top: 12%;
