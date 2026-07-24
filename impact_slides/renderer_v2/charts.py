@@ -867,8 +867,11 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         len((cfg.get("data") or {}).get("labels") or []),
         cid,
     )
+    # R1 (#94): chart_config.stage "flat" drops the Boardroom stage chrome so
+    # the chart sits flatter against the canvas (IR stage-dominant style).
+    flat = " chartjs-flat" if _chart_config(slide).get("stage") == "flat" else ""
     return (
-        f'<div class="chartjs-wrap" data-chartjs="1" data-chart-layout="{esc(layout)}">'
+        f'<div class="chartjs-wrap{flat}" data-chartjs="1" data-chart-layout="{esc(layout)}">'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"

@@ -931,10 +931,12 @@ def render_annex_table(slide, total, notes, active=False):
     thead_rows = []
     if isinstance(header_groups, list) and header_groups:
         top_cells = [f'<th class="gl-annex-stub" rowspan="2"></th>']
-        for g in header_groups:
+        for gi, g in enumerate(header_groups):
             if isinstance(g, dict):
+                # F12+ (#94): alternating group banding for IR annex precision.
+                band = " gl-annex-group-alt" if gi % 2 else ""
                 top_cells.append(
-                    f'<th class="gl-annex-group" colspan="{int(g.get("span") or 1)}">{esc(strip_eids(g.get("label") or ""))}</th>'
+                    f'<th class="gl-annex-group{band}" colspan="{int(g.get("span") or 1)}">{esc(strip_eids(g.get("label") or ""))}</th>'
                 )
         thead_rows.append("<tr>" + "".join(top_cells) + "</tr>")
         sub_cells = "".join(
