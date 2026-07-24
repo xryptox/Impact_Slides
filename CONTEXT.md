@@ -152,6 +152,14 @@ _Avoid_: bug (for greenfield recipes)
 How much product shell surrounds the Fixed Stage (e.g. full Boardroom chrome vs stage-only / minimal). Boardroom full chrome remains the default; minimal is an optional delivery choice for parity and export hygiene, not a second brand.
 _Avoid_: IR mode, IR shell, bare mode (when unqualified), theme (theme is tokens/brand; chrome level is shell chrome)
 
+**Anniversary Retention Board**:
+An IR chart recipe of grouped *horizontal* bars in a discontinuous high-window axis (e.g. 90–100% with a break), year labels inside bars — the Platinum retention card shape. Built on the `horizontal_bar_chart` layout; anniversary polish is Chart.js-only while the SVG fallback paints basic horizontal geometry.
+_Avoid_: broken-axis chart (that's the `y_axis_break` field, a general mechanism), vertical retention bars
+
+**Geometric Callout**:
+Drawable annotation chrome (elbow arrows, chevrons, bands) attached to chart geometry — distinct from the text-only `chart_config.annotation` box. Part of the chart painter layer, not slide chrome.
+_Avoid_: annotation (reserved for the text callout field), caption, footnote
+
 ## Rules
 
 - Every major claim in a deck must cite an Evidence ID. Never invent statistics, quotes, or figures.
