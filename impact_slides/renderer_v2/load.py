@@ -28,11 +28,18 @@ def _slides_of(handoff: dict[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
+# Layouts that legitimately occupy deck index 0 without the normalize step
+# forcing/injecting a title_or_opening cover (#92/F6+).
+COVER_LAYOUTS = frozenset({"title_or_opening", "brand_cover"})
+
+
 def normalize_handoff(handoff: dict[str, Any]) -> dict[str, Any]:
     """Deep-copy handoff, scrub E####, force slide 1 to title_or_opening.
 
     If slide 1 was a semantic layout (e.g. quote_card), insert a cover from
     presentation meta and renumber so the semantic content remains visible.
+    A slide 1 that is already a declared cover layout (COVER_LAYOUTS, e.g.
+    brand_cover) is left untouched, preserving 1:1 slide mapping (#92).
     """
     data = deepcopy(handoff)
     data = scrub_tree(data)
@@ -46,7 +53,7 @@ def normalize_handoff(handoff: dict[str, Any]) -> dict[str, Any]:
 
     first = slides[0]
     lt = (first.get("layout_type") or "").strip()
-    if lt and lt != "title_or_opening":
+    if lt and lt not in COVER_LAYOUTS:
         pres = data.get("presentation") or {}
         cover = {
             "slide_number": 1,
@@ -73,9 +80,10 @@ def normalize_handoff(handoff: dict[str, Any]) -> dict[str, Any]:
         }
         slides = [cover] + slides
 
-    # Force layout on #1
-    slides[0]["layout_type"] = "title_or_opening"
-    slides[0].setdefault("packing_mode", "cover-led")
+    # Force layout on #1 unless it is already a declared cover layout (#92).
+    if (slides[0].get("layout_type") or "").strip() not in COVER_LAYOUTS:
+        slides[0]["layout_type"] = "title_or_opening"
+        slides[0].setdefault("packing_mode", "cover-led")
 
     # Renumber
     for i, s in enumerate(slides, 1):

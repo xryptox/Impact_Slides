@@ -1367,3 +1367,39 @@ class TestFreestandingPillColumns:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert "gl-inset" in html
         assert "gl-pill-shell" in html
+
+
+# ---------------------------------------------------------------------------
+# #92 — Cover-seal load path: brand_cover usable as deck slide 1 (F6+)
+# ---------------------------------------------------------------------------
+
+
+class TestCoverSealLoadPath:
+    def test_brand_cover_at_slide_1_no_injection(self, tmp_path):
+        path = _write(tmp_path, _handoff([_brand_cover_slide()]))
+        out = tmp_path / "out"
+        result = render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # brand_cover stays slide 1; no synthetic title_or_opening injected
+        assert result["total_slides"] == 1
+        assert 'data-layout="brand_cover"' in html
+        assert "gl-brand-cover" in html
+        assert "title-slide" not in html
+
+    def test_brand_cover_preserves_1to1_mapping(self, tmp_path):
+        slides = [_brand_cover_slide()] + [
+            _slide("metric_dashboard", []) for _ in range(3)
+        ]
+        path = _write(tmp_path, _handoff(slides))
+        out = tmp_path / "out"
+        result = render_deck(path, out, strict=False)
+        assert result["total_slides"] == 4
+
+    def test_non_cover_slide_1_still_forced(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("metric_dashboard", [])]))
+        out = tmp_path / "out"
+        result = render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # existing contract: a cover is injected and slide 1 is title_or_opening
+        assert result["total_slides"] == 2
+        assert 'data-layout="title_or_opening"' in html
