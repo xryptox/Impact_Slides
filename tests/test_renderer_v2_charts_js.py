@@ -961,6 +961,23 @@ class TestStringSignedNegatives:
         assert cc["data"]["datasets"][1]["data"] == [-73.0, 222.0, -24.0]
         assert cc["options"]["scales"]["y"]["ticks"]["min"] < 0
 
+    def test_negative_strings_in_table_cells_survive(self, tmp_path):
+        s = _slide("data_table", [])
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "data_table",
+                "steps_or_data": [
+                    ["Metric", "Q1'25", "Q1'26"],
+                    ["Reserve Build/(Release)", "-73", "-24"],
+                ],
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "-73" in html and "-24" in html
+
     def test_negative_strings_in_kpi_text_survive(self, tmp_path):
         s = _slide("metric_dashboard", [])
         s["content"] = {
@@ -1140,6 +1157,14 @@ class TestHorizontalBarChart:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert remote_fetch_urls(html) == []
 
+    def test_axis_break_glyph_vertical_on_hbar(self, tmp_path):
+        cfg = {"y_axis_break": {"from": 0, "to": 90}, "y_axis_max": 100}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-axis-break-v" in html
+
 
 # ---------------------------------------------------------------------------
 # #89 — Geometric callout layer: elbow arrows, chevrons, bands (R2)
@@ -1225,6 +1250,21 @@ class TestGeometricCallouts:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert "alert(1)</script>" not in html
         assert remote_fetch_urls(html) == []
+
+    def test_elbow_value_anchor_pins_vertical_position(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [{"type": "elbow_arrow", "from": 0, "to": 4, "value": 10,
+              "text": "+ ~6 percentage points"}]
+        )
+        s["visual_spec"]["primary_visual"]["chart_config"].update(
+            {"y_axis_min": 0, "y_axis_max": 15}
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # value 10 in a 0-15 domain pins the elbow at 66.67% from the axis base
+        assert "top:66.67%" in html
 
     def test_no_callouts_unchanged(self, tmp_path):
         s = _slide("grouped_bar_chart", [{"label": "A", "value": 1}, {"label": "B", "value": 2}])
