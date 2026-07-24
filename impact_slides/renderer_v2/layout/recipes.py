@@ -1490,7 +1490,7 @@ def render_icon_grid(slide, total, notes, active=False):
 
 
 def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False):
-    from ..charts import build_chart_html
+    from ..charts import build_chart_html, is_chart_layout
 
     layout = (slide.get("layout_type") or "grouped_bar_chart").lower()
     chart_html = build_chart_html(slide, layout, use_chartjs=use_chartjs)
@@ -1498,7 +1498,11 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
     secondary = vs.get("secondary_visual") or {}
     key_stats = (slide.get("content") or {}).get("key_stats") or []
 
-    has_table = bool(secondary) and layout == "line_chart"
+    # #100/N1: under-chart tables attach to any chart layout, not just
+    # line_chart (PDF provision boards pair stacked bars with a reserve-rate
+    # row). The plot-alignment path still only engages for label-matched
+    # tables (see below).
+    has_table = bool(secondary) and is_chart_layout(layout)
     has_stats = bool(key_stats)
 
     # When supporting elements share the slide, shrink the chart SVG so the
