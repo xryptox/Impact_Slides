@@ -864,12 +864,23 @@ def render_brand_cover(slide, total, notes, active=False, *, divider: bool = Fal
     """
     import base64
 
+    from ..brand import load_brand_mark
+
     c = slide.get("content") or {}
+    mark_name = strip_eids(c.get("brand_mark") or "")
     mark_svg = c.get("brand_mark_svg")
     subtitle = strip_eids(c.get("subtitle") or "")
     tone = strip_eids(c.get("brand_tone") or "two-tone")
     mark_html = ""
-    if isinstance(mark_svg, str) and mark_svg.strip().startswith("<svg"):
+    if mark_name:
+        # Named vendored seal/lockup (#93/R3): inline SVG, currentColor-toned.
+        # Unknown names fail closed inside load_brand_mark.
+        named = load_brand_mark(mark_name)
+        mark_html = (
+            f'<span class="gl-brand-mark gl-brand-mark-named" '
+            f'data-mark="{esc(mark_name)}">{named}</span>'
+        )
+    elif isinstance(mark_svg, str) and mark_svg.strip().startswith("<svg"):
         # Inline as a data URL so the deck stays self-contained (no remote fetch).
         b64 = base64.b64encode(mark_svg.encode("utf-8")).decode("ascii")
         mark_html = (

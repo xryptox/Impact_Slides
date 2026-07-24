@@ -1403,3 +1403,69 @@ class TestCoverSealLoadPath:
         # existing contract: a cover is injected and slide 1 is title_or_opening
         assert result["total_slides"] == 2
         assert 'data-layout="title_or_opening"' in html
+
+
+# ---------------------------------------------------------------------------
+# #93 — First-class brand mark/seal asset pack (R3)
+# ---------------------------------------------------------------------------
+
+
+class TestBrandMarkAssetPack:
+    def test_seal_asset_vendored_and_inventoried(self):
+        brand_dir = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "assets"
+            / "brand"
+        )
+        seal = brand_dir / "seal_lockup.svg"
+        assert seal.exists() and seal.stat().st_size > 200
+        # token-parameterizable: colors come from currentColor, not hardcoded
+        assert "currentColor" in seal.read_text(encoding="utf-8")
+        third_party = brand_dir.parent / "THIRD_PARTY.md"
+        assert "seal_lockup" in third_party.read_text(encoding="utf-8")
+
+    def test_named_mark_renders_on_brand_cover(self, tmp_path):
+        s = _brand_cover_slide()
+        s["content"].pop("brand_mark_svg", None)
+        s["content"]["brand_mark"] = "seal_lockup"
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-brand-mark-named" in html
+        assert "<svg" in html  # inline SVG, not a fetch
+        assert remote_fetch_urls(html) == []
+
+    def test_named_mark_renders_on_brand_divider(self, tmp_path):
+        s = _brand_cover_slide()
+        s["layout_type"] = "brand_divider"
+        s["slide_number"] = 2
+        s["content"].pop("brand_mark_svg", None)
+        s["content"]["brand_mark"] = "seal_lockup"
+        first = _slide("metric_dashboard", [])
+        path = _write(tmp_path, _handoff([first, s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-brand-mark-named" in html
+        assert "gl-brand-divider" in html
+
+    def test_unknown_mark_fails_closed(self, tmp_path):
+        s = _brand_cover_slide()
+        s["content"].pop("brand_mark_svg", None)
+        s["content"]["brand_mark"] = "acme_evil"
+        path = _write(tmp_path, _handoff([s]))
+        with pytest.raises((ValueError, SystemExit)):
+            render_deck(path, tmp_path / "out", strict=False)
+
+    def test_custom_brand_mark_svg_unchanged(self, tmp_path):
+        # escape hatch: author-supplied SVG still takes the data-URL path
+        path = _write(tmp_path, _handoff([_brand_cover_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "data:image/svg" in html
+        # CSS is always bundled; assert no named-mark *markup* rendered
+        assert 'class="gl-brand-mark gl-brand-mark-named"' not in html

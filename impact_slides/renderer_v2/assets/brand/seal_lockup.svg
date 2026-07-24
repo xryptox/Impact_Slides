@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 124" role="img" aria-label="brand seal lockup">
+  <!-- seal_lockup: original generic seal + ribbon lockup for brand_cover /
+       brand_divider (renderer_v2 asset pack, #93/R3). Colors inherit from
+       currentColor so theme tokens tone the mark. -->
+  <circle cx="60" cy="52" r="38" fill="none" stroke="currentColor" stroke-width="4"/>
+  <circle cx="60" cy="52" r="30" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M60 30l7 15.2 16.3 2.1-12 11.2 3.1 16-14.4-8.2-14.4 8.2 3.1-16-12-11.2 16.3-2.1z" fill="currentColor"/>
+  <path d="M18 100h84l-7 12H25z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M18 100l-9 6 9 6M102 100l9 6-9 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

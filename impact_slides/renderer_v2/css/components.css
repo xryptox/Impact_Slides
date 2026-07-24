@@ -1253,6 +1253,14 @@
   height: 120px;
   object-fit: contain;
 }
+.gl-brand-mark-named {
+  display: inline-flex;
+  color: var(--color-on-navy, var(--panel, #fff));
+}
+.gl-brand-mark-named svg {
+  width: 120px;
+  height: 124px;
+}
 .gl-brand-title {
   font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
   font-size: 44px;
