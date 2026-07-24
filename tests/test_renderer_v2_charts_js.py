@@ -1234,3 +1234,96 @@ class TestGeometricCallouts:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         # CSS is always bundled; assert no callout *markup* rendered
         assert 'class="chartjs-callout' not in html
+
+
+# ---------------------------------------------------------------------------
+# #90 — IR dual tall-card multi_panel recipe (F11+)
+# ---------------------------------------------------------------------------
+
+
+def _tall_card_slide():
+    s = _slide("multi_panel", [])
+    s["visual_spec"] = {
+        "primary_visual": {
+            "type": "multi_panel",
+            "tiles": [
+                {
+                    "kind": "chart",
+                    "chart_type": "stacked_bar_chart",
+                    "label": "Funding Mix",
+                    "top_total": "$148B",
+                    "badge": "NEW",
+                    "side_legend": [
+                        {"label": "Deposits", "color": "#00175A"},
+                        {"label": "Borrowings", "color": "#006FCF"},
+                    ],
+                    "steps_or_data": [
+                        ["Q", "Deposits", "Borrowings"],
+                        ["Q1'25", "80", "20"],
+                        ["Q1'26", "85", "15"],
+                    ],
+                },
+                {
+                    "kind": "chart",
+                    "chart_type": "horizontal_bar_chart",
+                    "label": "Deposit Programs",
+                    "top_total": "$92B",
+                    "steps_or_data": [
+                        ["Program", "Share"],
+                        ["HYSA", "55"],
+                        ["Checking", "37"],
+                    ],
+                },
+            ],
+        }
+    }
+    return s
+
+
+class TestIrDualTallCards:
+    def test_tall_card_slots_render(self, tmp_path):
+        path = _write(tmp_path, _handoff([_tall_card_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-tile-tall" in html
+        assert "gl-tile-top-total" in html and "$148B" in html
+        assert "gl-tile-badge" in html and "NEW" in html
+        assert "gl-tile-legend" in html
+        assert "Deposits" in html and "Borrowings" in html
+
+    def test_tiles_compose_chart_layouts(self, tmp_path):
+        path = _write(tmp_path, _handoff([_tall_card_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # both chart tiles paint on the Chart.js path, horizontal included
+        assert html.count('data-chartjs="1"') >= 2
+        assert 'data-chart-layout="horizontal_bar_chart"' in html
+
+    def test_legacy_tiles_unchanged(self, tmp_path):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "multi_panel",
+                "tiles": [
+                    {"kind": "metric", "label": "ROE", "value": "30%"},
+                    {"kind": "metric", "label": "CET1", "value": "10.7%"},
+                ],
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # CSS is always bundled; assert no tall-card *markup* rendered
+        assert 'class="gl-tile gl-tile-chart gl-tile-tall"' not in html
+        assert 'class="gl-tile-top-total"' not in html
+        assert 'class="gl-tile-legend"' not in html
+
+    def test_tall_card_offline(self, tmp_path):
+        path = _write(tmp_path, _handoff([_tall_card_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert remote_fetch_urls(html) == []

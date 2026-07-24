@@ -997,9 +997,58 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 sub_slide, sub_slide["layout_type"], use_chartjs=use_chartjs
             )
             lbl = f'<div class="gl-tile-label">{esc(label)}</div>' if label else ""
-            parts.append(
-                f'<div class="gl-tile gl-tile-chart">{lbl}{chart_html}</div>'
-            )
+            # IR dual tall-card slots (#90/F11+): freestanding top total,
+            # exterior side legend, badge callout. Only engaged when present,
+            # so legacy tiles keep their existing chrome.
+            top_total = strip_eids(tile.get("top_total") or "")
+            badge = strip_eids(tile.get("badge") or "")
+            legend = tile.get("side_legend")
+            legend_html = ""
+            if isinstance(legend, list) and legend:
+                items = []
+                for entry in legend:
+                    if isinstance(entry, dict):
+                        txt = strip_eids(entry.get("label") or "")
+                        swatch = strip_eids(entry.get("color") or "")
+                    else:
+                        txt, swatch = strip_eids(entry), ""
+                    if not txt:
+                        continue
+                    sw = (
+                        f'<span class="gl-tile-swatch" style="background:{esc(swatch)}"></span>'
+                        if swatch
+                        else ""
+                    )
+                    items.append(f'<li class="gl-tile-legend-item">{sw}{esc(txt)}</li>')
+                if items:
+                    legend_html = f'<ul class="gl-tile-legend">{"".join(items)}</ul>'
+            if top_total or badge or legend_html:
+                total_html = (
+                    f'<div class="gl-tile-top-total">{esc(top_total)}</div>'
+                    if top_total
+                    else ""
+                )
+                badge_html = (
+                    f'<span class="gl-tile-badge">{esc(badge)}</span>' if badge else ""
+                )
+                if legend_html:
+                    body = (
+                        f'<div class="gl-tile-body">'
+                        f'<div class="gl-tile-chart-area">{chart_html}</div>'
+                        f"{legend_html}"
+                        f"</div>"
+                    )
+                else:
+                    body = chart_html
+                parts.append(
+                    f'<div class="gl-tile gl-tile-chart gl-tile-tall">'
+                    f"{badge_html}{total_html}{lbl}{body}"
+                    f"</div>"
+                )
+            else:
+                parts.append(
+                    f'<div class="gl-tile gl-tile-chart">{lbl}{chart_html}</div>'
+                )
         else:
             val = strip_eids(tile.get("value") or "")
             parts.append(
