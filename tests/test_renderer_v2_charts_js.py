@@ -1785,3 +1785,57 @@ class TestSecondaryVisualAnyChart:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert "chart-split" in html and "Revenue" in html
+
+
+# ---------------------------------------------------------------------------
+# #101 — N3 stacked category total tops / signed parentheses
+# ---------------------------------------------------------------------------
+
+
+class TestStackTotals:
+    def test_totals_on_top_segment_only(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {"stack_totals": True}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        dl = conf["options"]["plugins"]["datalabels"]
+        labels = dl["_labels"]
+        n_series = len(conf["data"]["datasets"])
+        assert len(labels) == n_series
+        # exactly one non-empty total cell per category, on the highest
+        # positive segment (so totals sit at the stack top even when the
+        # top series is negative)
+        data = [d["data"] for d in conf["data"]["datasets"]]
+        n_cat = len(conf["data"]["labels"])
+        for ci in range(n_cat):
+            cells = [(si, labels[si][ci]) for si in range(n_series) if labels[si][ci]]
+            assert len(cells) == 1
+            si, val = cells[0]
+            assert data[si][ci] > 0
+            assert all(data[sj][ci] <= 0 for sj in range(si + 1, n_series))
+
+    def test_negative_total_parenthesized(self, tmp_path):
+        steps = [
+            ["Q", "WO", "RR"],
+            ["Q1", "100", "-250"],
+            ["Q2", "300", "-50"],
+        ]
+        s = _slide("stacked_bar_chart", steps)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {"stack_totals": True}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        # totals live on the highest positive segment (series 0 here)
+        top = conf["options"]["plugins"]["datalabels"]["_labels"][0]
+        assert top[0] == "(150)"  # 100 + -250 = -150 -> parenthesized
+        assert top[1] == "250"
+
+    def test_totals_opt_in_default_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("stacked_bar_chart", PROVISION_STACK)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        assert "datalabels" not in conf["options"]["plugins"]

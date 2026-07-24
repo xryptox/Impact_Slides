@@ -445,6 +445,41 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["scales"]["y"]["min"] = float(neg_min) * 1.1
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
+    if stacked and cfg.get("stack_totals"):
+        # #101/N3: per-category signed totals painted above each stack via
+        # the top segment's datalabel; negatives render parenthesized (IR).
+        def _fmt_total(v: float) -> str:
+            if v == int(v):
+                n = f"{abs(int(v)):,}"
+            else:
+                n = f"{abs(v):,.1f}"
+            return f"({n})" if v < 0 else n
+
+        # rows are per-category lists of series values
+        totals = [
+            sum(v for v in row if isinstance(v, (int, float))) for row in rows
+        ]
+        unit = str(cfg.get("y_axis_unit") or "")
+        label_matrix = [[""] * len(labels) for _ in series]
+        for ci, (row, total) in enumerate(zip(rows, totals)):
+            # paint the total on the highest *positive* segment so it sits at
+            # the stack top even when the top series is negative (RR).
+            top_si = 0
+            for si in range(len(series) - 1, -1, -1):
+                v = row[si] if si < len(row) else None
+                if isinstance(v, (int, float)) and v > 0:
+                    top_si = si
+                    break
+            label_matrix[top_si][ci] = f"{unit}{_fmt_total(total)}"
+        options["plugins"]["datalabels"] = {
+            "display": True,
+            "anchor": "end",
+            "align": "top",
+            "offset": 2,
+            "color": "#00175a",
+            "font": {"weight": "bold", "size": 12},
+            "_labels": label_matrix,
+        }
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
