@@ -762,15 +762,57 @@ def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
 _CALLOUT_TYPES = frozenset({"elbow_arrow", "chevron", "band"})
 
 
+def _value_anchor_top(
+    cfg: Mapping[str, Any],
+    chart_cfg: Mapping[str, Any],
+    value: Any,
+    layout: str,
+) -> float | None:
+    """Map a data value to a % offset along the value axis (#89).
+
+    Domain comes from the built Chart.js config's effective ticks when set
+    (explicit min/max, forced ticks, or break-clamped), falling back to the
+    handoff's explicit y_axis_min/y_axis_max (grouped bars don't clamp the
+    scale ticks). For horizontal bars the value axis is x, so the offset is
+    horizontal — the caller applies it as left%. None when no anchor works.
+    """
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    scales = ((cfg.get("options") or {}).get("scales") or {})
+    axis = scales.get("x") if layout == "horizontal_bar_chart" else scales.get("y")
+    ticks = (axis or {}).get("ticks") or {}
+    lo = ticks.get("min")
+    hi = ticks.get("max")
+    if lo is None or hi is None:
+        lo = chart_cfg.get("y_axis_min")
+        hi = chart_cfg.get("y_axis_max")
+    if lo is None or hi is None:
+        return None
+    rng = float(hi) - float(lo)
+    if rng <= 0:
+        return None
+    frac = (v - float(lo)) / rng
+    frac = max(0.0, min(1.0, frac))
+    return frac * 100.0
+
+
 def _build_callout_overlays(
-    callouts: Any, n_labels: int, cid: str
+    callouts: Any,
+    n_labels: int,
+    cid: str,
+    cfg: Mapping[str, Any] | None = None,
+    layout: str = "",
+    chart_cfg: Mapping[str, Any] | None = None,
 ) -> str:
     """Geometric callout overlays for the Chart.js wrap (#89/R2).
 
     Drawable chrome — elbow arrows spanning bar tops, chevrons under the
     category axis, event bands — positioned as HTML/CSS overlays from
-    category-index anchors. Unknown callout types fail closed (ValueError).
-    Placement is category-fraction based (coarse, like the text annotation).
+    category-index anchors, with an optional ``value`` data anchor pinning
+    the elbow along the value axis. Unknown callout types fail closed
+    (ValueError).
     """
     if not callouts:
         return ""
@@ -788,18 +830,7 @@ def _build_callout_overlays(
                 f"expected one of {sorted(_CALLOUT_TYPES)}"
             )
         text = esc(str(c.get("text") or ""))
-        if ctype == "elbow_arrow":
-            frm = max(0, int(c.get("from") or 0))
-            to = max(frm, int(c.get("to") if c.get("to") is not None else frm))
-            left = (frm / n) * 100
-            width = ((to - frm + 1) / n) * 100
-            parts.append(
-                f'<div class="chartjs-callout chartjs-callout-elbow" '
-                f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}" '
-                f'style="left:{left:.2f}%;width:{width:.2f}%">'
-                f'<span class="chartjs-callout-label">{text}</span></div>'
-            )
-        elif ctype == "chevron":
+        if ctype == "chevron":
             at = max(0, int(c.get("at") or 0))
             left = ((at + 0.5) / n) * 100
             parts.append(
@@ -808,17 +839,27 @@ def _build_callout_overlays(
                 f'style="left:{left:.2f}%">'
                 f'<span class="chartjs-callout-label">{text}</span></div>'
             )
-        else:  # band
-            frm = max(0, int(c.get("from") or 0))
-            to = max(frm, int(c.get("to") if c.get("to") is not None else frm))
-            left = (frm / n) * 100
-            width = ((to - frm + 1) / n) * 100
-            parts.append(
-                f'<div class="chartjs-callout chartjs-callout-band" '
-                f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}" '
-                f'style="left:{left:.2f}%;width:{width:.2f}%">'
-                f'<span class="chartjs-callout-label">{text}</span></div>'
-            )
+            continue
+        # elbow_arrow and band share the span geometry; only the CSS class,
+        # the value-anchor dimension, and data attrs differ.
+        frm = max(0, int(c.get("from") or 0))
+        to = max(frm, int(c.get("to") if c.get("to") is not None else frm))
+        left = (frm / n) * 100
+        width = ((to - frm + 1) / n) * 100
+        style = f"left:{left:.2f}%;width:{width:.2f}%"
+        if ctype == "elbow_arrow" and c.get("value") is not None and cfg:
+            anchor = _value_anchor_top(cfg, chart_cfg or {}, c.get("value"), layout)
+            if anchor is not None:
+                # Vertical chart: pin vertically; horizontal bar: pin on x.
+                dim = "left" if layout == "horizontal_bar_chart" else "top"
+                style += f";{dim}:{anchor:.2f}%"
+        suffix = "elbow" if ctype == "elbow_arrow" else "band"
+        parts.append(
+            f'<div class="chartjs-callout chartjs-callout-{suffix}" '
+            f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}" '
+            f'style="{style}">'
+            f'<span class="chartjs-callout-label">{text}</span></div>'
+        )
     return "".join(parts)
 
 
@@ -846,10 +887,11 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     payload = _json.dumps(cfg, ensure_ascii=False)
     svg_fb = _svg_fallback_for_layout(slide, layout)
     noscript = f"<noscript>{svg_fb}</noscript>" if svg_fb else ""
+    chart_cfg = _chart_config(slide)
     # Annotation callout marker (#71/F2): painted as a positioned div so the
     # text is present even if Chart.js annotation plugin is absent.
     ann_html = ""
-    ann = _chart_config(slide).get("annotation")
+    ann = chart_cfg.get("annotation")
     if isinstance(ann, dict) and ann.get("text"):
         a_text = str(ann["text"]).replace("\\n", "\n").replace("\n", " ")
         ann_html = (
@@ -857,19 +899,26 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
             f"{esc(a_text)}</div>"
         )
     # Broken-axis glyph marker (#79/F10): present when y_axis_break is set.
+    # On horizontal bars the break is on the x axis — vertical glyph (#88).
     break_html = ""
-    yb = _chart_config(slide).get("y_axis_break")
+    yb = chart_cfg.get("y_axis_break")
     if isinstance(yb, dict) and yb.get("to") is not None:
-        break_html = f'<div class="chartjs-axis-break" data-for="{esc(cid)}"></div>'
+        orient = " chartjs-axis-break-v" if layout == "horizontal_bar_chart" else ""
+        break_html = (
+            f'<div class="chartjs-axis-break{orient}" data-for="{esc(cid)}"></div>'
+        )
     # Geometric callouts (#89/R2): elbow arrows / chevrons / bands.
     callouts_html = _build_callout_overlays(
-        _chart_config(slide).get("callouts"),
+        chart_cfg.get("callouts"),
         len((cfg.get("data") or {}).get("labels") or []),
         cid,
+        cfg,
+        layout,
+        chart_cfg,
     )
     # R1 (#94): chart_config.stage "flat" drops the Boardroom stage chrome so
     # the chart sits flatter against the canvas (IR stage-dominant style).
-    flat = " chartjs-flat" if _chart_config(slide).get("stage") == "flat" else ""
+    flat = " chartjs-flat" if chart_cfg.get("stage") == "flat" else ""
     return (
         f'<div class="chartjs-wrap{flat}" data-chartjs="1" data-chart-layout="{esc(layout)}">'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'

@@ -1438,6 +1438,15 @@
   border-top: 2px dashed var(--ink-muted);
   pointer-events: none;
 }
+/* On horizontal bars the break is on the x axis — vertical glyph (#88). */
+.chartjs-axis-break-v {
+  left: 30%;
+  top: 0;
+  width: 0;
+  height: 100%;
+  border-top: none;
+  border-left: 2px dashed var(--ink-muted);
+}
 
 /* ---------- IR bullet sheet centered title (#85) ---------- */
 /* Centered-title chrome scoped to the ir_bullet_sheet layout only. */
