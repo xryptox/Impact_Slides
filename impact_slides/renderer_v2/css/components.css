@@ -1349,6 +1349,55 @@
   text-align: center;
 }
 
+/* ---------- geometric callouts (#89/R2) ---------- */
+.chartjs-callout {
+  position: absolute;
+  pointer-events: none;
+}
+.chartjs-callout-label {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+}
+/* Elbow arrow spanning bar tops: top rail + downturned end ticks. */
+.chartjs-callout-elbow {
+  top: 10%;
+  height: 10px;
+  border-top: 2px solid var(--navy);
+  border-left: 2px solid var(--navy);
+  border-right: 2px solid var(--navy);
+  border-bottom: none;
+}
+/* Chevron marker under the category axis. */
+.chartjs-callout-chevron {
+  bottom: 2%;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 10px solid var(--accent, var(--blue, #006fcf));
+}
+.chartjs-callout-chevron .chartjs-callout-label {
+  bottom: calc(100% + 12px);
+}
+/* Event band: translucent vertical span over the plot. */
+.chartjs-callout-band {
+  top: 6%;
+  bottom: 8%;
+  background: rgba(0, 23, 90, 0.06);
+  border-left: 1px dashed var(--navy);
+  border-right: 1px dashed var(--navy);
+}
+.chartjs-callout-band .chartjs-callout-label {
+  bottom: auto;
+  top: -18px;
+}
+
 /* ---------- chrome level: stage-only / minimal (#83/F14) ---------- */
 /* Boardroom full chrome remains the default; minimal hides product chrome
    (deck controls, cover eyebrow, Boardroom foot brand) for parity/export. */
