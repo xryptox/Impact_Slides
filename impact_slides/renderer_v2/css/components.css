@@ -1078,14 +1078,34 @@
 .gl-pill {
   padding: var(--space-4, 16px) var(--space-5, 20px);
 }
-.gl-pill-row {
-  display: grid;
+/* Freestanding pill statement columns (#91/F4+): label rail + separated
+   rounded column shells. */
+.gl-pill-free {
+  display: flex;
+  gap: var(--gap-md, 18px);
   align-items: stretch;
-  gap: var(--gap-sm, 10px);
-  padding: var(--space-2, 6px) 0;
-  border-bottom: 1px solid var(--panel-border);
 }
-.gl-pill-row:last-child { border-bottom: none; }
+.gl-pill-labels {
+  flex: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 6px);
+  justify-content: flex-start;
+  padding-top: var(--space-2, 6px);
+}
+.gl-pill-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 6px);
+  background: var(--color-surface-muted, var(--stage, #f4f6f9));
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-3, 10px) var(--space-3, 10px) var(--space-4, 14px);
+}
+.gl-pill-shell-yoy {
+  background: var(--stage-navy, rgba(0, 23, 90, 0.08));
+  border: 1px solid var(--navy);
+}
 .gl-pill-stub {
   align-self: center;
   font-weight: 600;

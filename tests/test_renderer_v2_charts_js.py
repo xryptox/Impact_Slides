@@ -1327,3 +1327,43 @@ class TestIrDualTallCards:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert remote_fetch_urls(html) == []
+
+
+# ---------------------------------------------------------------------------
+# #91 — Freestanding pill statement columns (F4+)
+# ---------------------------------------------------------------------------
+
+
+class TestFreestandingPillColumns:
+    def test_column_shells_render(self, tmp_path):
+        path = _write(tmp_path, _handoff([_pill_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # freestanding shells: one rounded column per data column + labels rail
+        assert "gl-pill-free" in html
+        assert "gl-pill-labels" in html
+        assert html.count('class="gl-pill-shell') == 3  # Q1'26, Q1'25, YoY
+        # YoY column keeps emphasis at the shell level
+        assert "gl-pill-shell-yoy" in html
+        # exterior row labels still present
+        assert "Billed business" in html and "Revenue" in html
+
+    def test_shell_contains_header_and_cells(self, tmp_path):
+        path = _write(tmp_path, _handoff([_pill_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # each shell carries its pill header and one cell per body row
+        assert html.count("gl-pill-head") >= 3
+        assert "$432B" in html and "+9%" in html
+
+    def test_inset_composition_unchanged(self, tmp_path):
+        s = _pill_slide()
+        s["content"]["key_stats"] = [{"label": "VCE of Revenue", "value": "44.7%"}]
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "gl-inset" in html
+        assert "gl-pill-shell" in html
