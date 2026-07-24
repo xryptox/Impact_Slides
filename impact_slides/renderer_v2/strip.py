@@ -36,13 +36,32 @@ def esc(text: Any) -> str:
     )
 
 
+_SEP_DASH_RUN_TAIL = re.compile(r"\s*[-\u2013\u2014]+\s*$")
+_SIGNED_NUMERAL = re.compile(r"^[-\u2013\u2014]\s*[\d($]")
+
+
+def _strip_separators(s: str) -> str:
+    """Strip leftover separator punctuation after EID removal.
+
+    A leading dash immediately followed by a digit, ``$``, or ``(`` is a
+    numeric sign (``-73``, ``-$24``, ``-(24)``) and is preserved (#87/F3);
+    separator dashes left over from citation removal are still stripped.
+    """
+    s = s.strip(" ,;|")
+    s = _SEP_DASH_RUN_TAIL.sub("", s)
+    while s.startswith(("-", "\u2013", "\u2014")) and not _SIGNED_NUMERAL.match(s):
+        s = s[1:].strip(" ,;|")
+        s = _SEP_DASH_RUN_TAIL.sub("", s)
+    return s
+
+
 def strip_eids(text: Any) -> str:
     if text is None:
         return ""
     s = str(text)
     s = _EID_PARENS.sub("", s)
     s = _EID_BARE.sub("", s)
-    return _WS.sub(" ", s).strip(" ,;|-")
+    return _strip_separators(_WS.sub(" ", s))
 
 
 def strip_eids_keep_newlines(text: Any) -> str:
@@ -57,7 +76,7 @@ def strip_eids_keep_newlines(text: Any) -> str:
     s = _EID_PARENS.sub("", s)
     s = _EID_BARE.sub("", s)
     s = re.sub(r"[^\S\n]+", " ", s)
-    return s.strip(" ,;|-")
+    return _strip_separators(s)
 
 
 def scrub_tree(obj: Any, *, _key: str | None = None) -> Any:
