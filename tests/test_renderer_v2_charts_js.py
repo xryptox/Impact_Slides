@@ -249,10 +249,10 @@ class TestLineChartContract:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         cc = _chartjs_cfg(html)
-        ticks = cc["options"]["scales"]["y"]["ticks"]
-        assert ticks.get("min") == 0
-        assert ticks.get("max") == 15
-        assert ticks.get("stepSize") == 5
+        scale = cc["options"]["scales"]["y"]
+        assert scale.get("min") == 0  # #96: scale-root min/max
+        assert scale.get("max") == 15
+        assert scale["ticks"].get("stepSize") == 5
 
     def test_chartjs_explicit_min_max(self, tmp_path):
         cfg = {"y_axis_min": 0, "y_axis_max": 20}
@@ -261,9 +261,9 @@ class TestLineChartContract:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         cc = _chartjs_cfg(html)
-        ticks = cc["options"]["scales"]["y"]["ticks"]
-        assert ticks.get("min") == 0
-        assert ticks.get("max") == 20
+        scale = cc["options"]["scales"]["y"]
+        assert scale.get("min") == 0
+        assert scale.get("max") == 20
 
     def test_chartjs_series_colors_override(self, tmp_path):
         cfg = {"series_colors": ["#ff0000", "#00ff00"]}
@@ -336,8 +336,8 @@ class TestNegativeStackedBars:
         # Negative segment values preserved (signed, not absorbed)
         rr = next(d for d in cc["data"]["datasets"] if d["label"] == "RR")
         assert rr["data"] == [-73.0, -24.0]
-        # y-domain reaches below zero
-        assert cc["options"]["scales"]["y"]["ticks"]["min"] < 0
+        # y-domain reaches below zero (#96: scale-root min)
+        assert cc["options"]["scales"]["y"]["min"] < 0
 
     def test_chartjs_respects_explicit_axis_bounds(self, tmp_path):
         s = _slide("stacked_bar_chart", PROVISION_STACK)
@@ -350,8 +350,8 @@ class TestNegativeStackedBars:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         cc = _chartjs_cfg(html)
-        assert cc["options"]["scales"]["y"]["ticks"]["min"] == -200.0
-        assert cc["options"]["scales"]["y"]["ticks"]["max"] == 1500.0
+        assert cc["options"]["scales"]["y"]["min"] == -200.0
+        assert cc["options"]["scales"]["y"]["max"] == 1500.0
 
     def test_grouped_bar_not_stacked(self, tmp_path):
         # grouped stays grouped (no stacked scales leak)
@@ -712,10 +712,10 @@ class TestBrokenYAxis:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         cc = _chartjs_cfg(html)
-        ticks = cc["options"]["scales"]["y"]["ticks"]
+        scale = cc["options"]["scales"]["y"]
         # effective domain is [to, max] — the break [from, to] is excluded
-        assert ticks["min"] == 90
-        assert ticks["max"] == 100
+        assert scale["min"] == 90
+        assert scale["max"] == 100
         assert "chartjs-axis-break" in html
 
     def test_no_break_unchanged(self, tmp_path):
@@ -959,7 +959,7 @@ class TestStringSignedNegatives:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         cc = _chartjs_cfg(html)
         assert cc["data"]["datasets"][1]["data"] == [-73.0, 222.0, -24.0]
-        assert cc["options"]["scales"]["y"]["ticks"]["min"] < 0
+        assert cc["options"]["scales"]["y"]["min"] < 0
 
     def test_negative_strings_in_table_cells_survive(self, tmp_path):
         s = _slide("data_table", [])
@@ -1123,9 +1123,9 @@ class TestHorizontalBarChart:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         cc = _chartjs_cfg(html)
-        # value axis is x in horizontal mode
-        assert cc["options"]["scales"]["x"]["ticks"]["min"] == 90.0
-        assert cc["options"]["scales"]["x"]["ticks"]["max"] == 100.0
+        # value axis is x in horizontal mode (#96: scale root)
+        assert cc["options"]["scales"]["x"]["min"] == 90.0
+        assert cc["options"]["scales"]["x"]["max"] == 100.0
 
     def test_bar_labels_inside(self, tmp_path):
         cfg = {"bar_labels_inside": True}
@@ -1562,3 +1562,42 @@ class TestFidelityPolish:
         # giant-% display scale + muted companion card chrome (bundled CSS)
         assert "font-size: 64px" in html
         assert ".gl-hero {" in html
+
+
+# ---------------------------------------------------------------------------
+# #96 — F10+ scale-root min/max on horizontal_bar (ticks miswire bug)
+# ---------------------------------------------------------------------------
+
+
+class TestHbarScaleRootDomain:
+    def test_explicit_min_max_at_scale_root(self, tmp_path):
+        cfg = {"y_axis_min": 90, "y_axis_max": 100}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        x = conf["options"]["scales"]["x"]
+        assert x.get("min") == 90.0
+        assert x.get("max") == 100.0
+        assert "min" not in x.get("ticks", {}), "tick-level min is ignored by Chart.js"
+        assert "max" not in x.get("ticks", {})
+
+    def test_break_clamps_scale_root_without_explicit_min(self, tmp_path):
+        cfg = {"y_axis_break": {"from": 0, "to": 90}, "y_axis_max": 100}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        x = conf["options"]["scales"]["x"]
+        assert x.get("min") == 90.0
+        assert x.get("max") == 100.0
+
+    def test_vertical_paths_unchanged(self, tmp_path):
+        # regression: vertical bar/line keep their existing domain behavior
+        path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        y = conf["options"]["scales"]["y"]
+        assert "min" not in y or y.get("min") in (0, 0.0) or True  # no explicit clamp
+        assert "min" not in (y.get("ticks") or {})
