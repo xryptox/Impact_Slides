@@ -153,6 +153,34 @@ _BOARDROOM_SERIES = (
     "#80c8ff",  # blue-sky
 )
 
+# Brand hex literals for JSON chart configs — mirror tokens.css (JSON can't
+# consume CSS vars). Keep these as the single address for palette drift.
+_NAVY = "#00175a"
+_NAVY_SOFT = "#16294d"
+_WHITE = "#ffffff"
+
+
+def _datalabels_cfg(
+    *,
+    anchor: str,
+    align: str,
+    offset: int,
+    color: str,
+    size: int,
+    labels: list[list[str]],
+) -> dict[str, Any]:
+    """datalabels plugin config; the shell formatter resolves ``_labels``
+    per dataset/dataIndex (and strips the key before Chart.js sees it)."""
+    return {
+        "display": True,
+        "anchor": anchor,
+        "align": align,
+        "offset": offset,
+        "color": color,
+        "font": {"weight": "bold", "size": size},
+        "_labels": labels,
+    }
+
 
 def build_chart_html(
     slide: Mapping[str, Any],
@@ -471,15 +499,10 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                     top_si = si
                     break
             label_matrix[top_si][ci] = f"{unit}{_fmt_total(total)}"
-        options["plugins"]["datalabels"] = {
-            "display": True,
-            "anchor": "end",
-            "align": "top",
-            "offset": 2,
-            "color": "#00175a",
-            "font": {"weight": "bold", "size": 12},
-            "_labels": label_matrix,
-        }
+        options["plugins"]["datalabels"] = _datalabels_cfg(
+            anchor="end", align="top", offset=2, color=_NAVY, size=12,
+            labels=label_matrix,
+        )
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -541,16 +564,10 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 f"bar_labels_inside must be true, 'category', or 'series'; "
                 f"got {bli!r}"
             )
-        options["plugins"]["datalabels"] = {
-            "display": True,
-            "anchor": "start",
-            "align": "start",
-            "offset": 4,
-            "color": "#ffffff",
-            "font": {"weight": "bold", "size": 11},
-            # The shell formatter resolves the matrix per dataset/dataIndex.
-            "_labels": label_matrix,
-        }
+        options["plugins"]["datalabels"] = _datalabels_cfg(
+            anchor="start", align="start", offset=4, color=_WHITE, size=11,
+            labels=label_matrix,
+        )
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -729,16 +746,10 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             y_scale["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
     if point_labels:
-        options["plugins"]["datalabels"] = {
-            "display": True,
-            "anchor": "end",
-            "align": "top",
-            "offset": 2,
-            "color": "#16294d",
-            "font": {"weight": "bold", "size": 11},
-            # Consumed (and removed) by the shell's initCharts formatter.
-            "_labels": label_matrix,
-        }
+        options["plugins"]["datalabels"] = _datalabels_cfg(
+            anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=11,
+            labels=label_matrix,
+        )
     return {
         "type": "line",
         "data": {"labels": labels, "datasets": datasets},
@@ -815,7 +826,7 @@ def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
 _CALLOUT_TYPES = frozenset({"elbow_arrow", "chevron", "band"})
 
 
-def _value_anchor_top(
+def _value_anchor_pct(
     cfg: Mapping[str, Any],
     chart_cfg: Mapping[str, Any],
     value: Any,
@@ -905,7 +916,7 @@ def _build_callout_overlays(
         width = ((to - frm + 1) / n) * 100
         style = f"left:{left:.2f}%;width:{width:.2f}%"
         if ctype == "elbow_arrow" and c.get("value") is not None and cfg:
-            anchor = _value_anchor_top(cfg, chart_cfg or {}, c.get("value"), layout)
+            anchor = _value_anchor_pct(cfg, chart_cfg or {}, c.get("value"), layout)
             if anchor is not None:
                 # Vertical chart: pin vertically; horizontal bar: pin on x.
                 dim = "left" if layout == "horizontal_bar_chart" else "top"
