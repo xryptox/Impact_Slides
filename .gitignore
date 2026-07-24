@@ -35,3 +35,6 @@ output/
 out_*/
 *_output/
 run.log
+
+# Amex/sim fidelity runs live in GNHF worktrees only (large PNG evidence; do not bloat main)
+simulation/
