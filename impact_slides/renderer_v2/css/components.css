@@ -1469,26 +1469,51 @@
   color: var(--navy);
   white-space: nowrap;
 }
-/* Elbow arrow spanning bar tops: top rail + downturned end ticks. */
+/* Elbow arrow (#97/R2): blue pill band spanning the bar tops, elbow stems
+   down to the bars at both ends, label inside the pill. */
 .chartjs-callout-elbow {
   top: 10%;
-  height: 10px;
-  border-top: 2px solid var(--navy);
-  border-left: 2px solid var(--navy);
-  border-right: 2px solid var(--navy);
-  border-bottom: none;
+  height: 28px;
+  background: var(--blue, var(--color-primary, #006fcf));
+  border-radius: var(--radius-round, 999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-/* Chevron marker under the category axis. */
+.chartjs-callout-elbow::before,
+.chartjs-callout-elbow::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  width: 0;
+  height: 14px;
+  border-left: 2px solid var(--blue, var(--color-primary, #006fcf));
+}
+.chartjs-callout-elbow::before { left: 8px; }
+.chartjs-callout-elbow::after { right: 8px; }
+.chartjs-callout-elbow .chartjs-callout-label {
+  position: static;
+  transform: none;
+  color: var(--color-on-navy, var(--panel, #fff));
+  font-size: 12px;
+}
+/* Chevron marker under the category axis (#97/R2): navy down-triangle with
+   a navy pill label beneath it (PDF Refresh marker). */
 .chartjs-callout-chevron {
-  bottom: 2%;
+  bottom: 6%;
   width: 0;
   height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-bottom: 10px solid var(--accent, var(--blue, #006fcf));
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 12px solid var(--navy);
 }
 .chartjs-callout-chevron .chartjs-callout-label {
-  bottom: calc(100% + 12px);
+  bottom: auto;
+  top: calc(100% + 6px);
+  background: var(--navy);
+  color: var(--color-on-navy, var(--panel, #fff));
+  border-radius: var(--radius-round, 999px);
+  padding: 2px var(--space-3, 10px);
 }
 /* Event band: translucent vertical span over the plot. */
 .chartjs-callout-band {
