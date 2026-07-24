@@ -1562,7 +1562,8 @@ class TestFidelityPolish:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         # giant-% display scale + muted companion card chrome (bundled CSS)
-        assert "font-size: 64px" in html
+        # 64px per #94, raised to 80px by #103/R4
+        assert "font-size: 80px" in html
         assert ".gl-hero {" in html
 
 
@@ -1906,3 +1907,51 @@ class TestPillFreeRowDirection:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert re.search(r"\.gl-pill-free\s*\{[^}]*flex-direction:\s*row", html)
+
+
+# ---------------------------------------------------------------------------
+# #103 — Polish bundle: R1 flat stage, R4 hero scale, F12+ annex precision
+# ---------------------------------------------------------------------------
+
+
+class TestPolishBundleR3:
+    def test_r1_flat_stage_is_borderless(self, tmp_path):
+        s = _slide("line_chart", TWO_SERIES)
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "line_chart",
+                "steps_or_data": TWO_SERIES,
+                "chart_config": {"stage": "flat"},
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-flat" in html
+        # truly flat: no radius or margin chrome on the flat wrap
+        assert re.search(
+            r"\.chartjs-wrap\.chartjs-flat\s*\{[^}]*border-radius:\s*0", html
+        )
+
+    def test_r4_hero_giant_scale(self, tmp_path):
+        path = _write(tmp_path, _handoff([_chart_hero_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "font-size: 80px" in html  # up from 64px toward PDF giant type
+
+    def test_f12_annex_group_separation(self, tmp_path):
+        s = _annex_slide()
+        s["visual_spec"]["primary_visual"]["header_groups"] = [
+            {"label": "FY 2025", "span": 2},
+            {"label": "Q1 2026", "span": 3},
+        ]
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # group cells get visible separation for multi-header precision
+        assert re.search(
+            r"\.annex-table \.gl-annex-group\s*\{[^}]*border", html
+        )
