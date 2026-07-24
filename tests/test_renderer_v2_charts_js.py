@@ -1746,3 +1746,42 @@ class TestIrTallCardSkin:
         # no IR skin markup without tile_skin: "ir" (CSS is bundled)
         assert 'class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir"' not in html
         assert "gl-tile-ir-head" not in re.sub(r"<style.*?</style>", "", html, flags=re.S)
+
+
+# ---------------------------------------------------------------------------
+# #100 — N1 secondary_visual under non-line chart layouts
+# ---------------------------------------------------------------------------
+
+
+def _stacked_with_secondary():
+    s = _slide("stacked_bar_chart", PROVISION_STACK)
+    s["visual_spec"]["secondary_visual"] = {
+        "type": "data_table",
+        "steps_or_data": [
+            ["Reserve rate", "0.9%", "0.8%", "1.0%", "0.7%", "0.6%"],
+        ],
+    }
+    return s
+
+
+class TestSecondaryVisualAnyChart:
+    def test_stacked_bar_secondary_table_renders(self, tmp_path):
+        path = _write(tmp_path, _handoff([_stacked_with_secondary()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chart-split" in html
+        assert "Reserve rate" in html
+        assert "0.9%" in html
+
+    def test_line_chart_secondary_unchanged(self, tmp_path):
+        s = _slide("line_chart", TWO_SERIES)
+        s["visual_spec"]["secondary_visual"] = {
+            "type": "data_table",
+            "steps_or_data": [["Revenue", "1", "2", "3"]],
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chart-split" in html and "Revenue" in html
