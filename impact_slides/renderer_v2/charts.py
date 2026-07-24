@@ -491,7 +491,21 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         x_scale["min"] = float(y_break["to"])
     if cfg.get("y_axis_max") is not None:
         x_scale["max"] = float(cfg["y_axis_max"])
-    if cfg.get("bar_labels_inside"):
+    bli = cfg.get("bar_labels_inside")
+    if bli:
+        # #98/N2: "category" (== legacy true) paints the category matrix;
+        # "series" paints each dataset's series name inside its bars
+        # (PDF retention board years).
+        source = "category" if bli is True else str(bli)
+        if source == "category":
+            label_matrix = [[str(lab) for lab in labels] for _ in series]
+        elif source == "series":
+            label_matrix = [[str(name)] * len(labels) for name in series]
+        else:
+            raise ValueError(
+                f"bar_labels_inside must be true, 'category', or 'series'; "
+                f"got {bli!r}"
+            )
         options["plugins"]["datalabels"] = {
             "display": True,
             "anchor": "start",
@@ -499,9 +513,8 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             "offset": 4,
             "color": "#ffffff",
             "font": {"weight": "bold", "size": 11},
-            # Category (year) labels inside each bar; the shell formatter
-            # resolves the matrix per dataset/dataIndex.
-            "_labels": [[str(lab) for lab in labels] for _ in series],
+            # The shell formatter resolves the matrix per dataset/dataIndex.
+            "_labels": label_matrix,
         }
     return {
         "type": "bar",
