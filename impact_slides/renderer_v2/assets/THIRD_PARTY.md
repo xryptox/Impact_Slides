@@ -9,6 +9,7 @@ vendored artifact; update whenever a file under `assets/` changes.
 | IBM Plex Sans (variable WOFF2, latin) | Google Fonts v23 (2026-07) | SIL OFL 1.1 (`fonts/IBM_PLEX_SANS_LICENSE.txt`) | https://fonts.google.com/specimen/IBM+Plex+Sans · upstream: https://github.com/IBM/plex | Google Fonts css2 API, latin subset | `fonts/ibm-plex-sans-latin.woff2` (45.7 KB); weights 400–700 |
 | Chart.js UMD (min) | 4.4.8 | MIT (`libs/CHART_JS_LICENSE.md`) | https://www.chartjs.org/ · https://github.com/chartjs/Chart.js | jsDelivr `chart.js@4.4.8/dist/chart.umd.min.js` | `libs/chart.umd.min.js` (~202 KB); feature-gated `charts`; CDN URL matches min pin |
 | chartjs-plugin-datalabels (min) | 2.2.0 | MIT (`libs/CHARTJS_PLUGIN_DATALABELS_LICENSE.md`) | https://chartjs-plugin-datalabels.netlify.app · https://github.com/chartjs/chartjs-plugin-datalabels | jsDelivr `chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js` | `libs/chartjs-plugin-datalabels.min.js` (~13 KB); feature-gated `charts` (#84); inlined after Chart.js |
+| seal_lockup (brand mark) | 1.0 | Original in-house artwork (project license; no third-party trademark) | n/a — created for this repo | n/a | `brand/seal_lockup.svg` (~0.9 KB); named brand asset pack (#93); inline SVG, `currentColor` token-toned |
 
 Process (per `wiki/SPEC_renderer_v2_p0_self_contained.md`):
 
