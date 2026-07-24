@@ -1166,7 +1166,7 @@
 }
 .gl-hero-value {
   font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
-  font-size: 64px;
+  font-size: 80px;
   font-weight: 700;
   line-height: 1;
   color: var(--navy);
@@ -1313,6 +1313,9 @@
   text-align: center;
   font-size: 11px;
   letter-spacing: 0.03em;
+  /* #103/F12+: visible cell separation for multi-header precision */
+  border: 1px solid var(--panel, #fff);
+  border-bottom-color: var(--panel-border);
 }
 /* F12+ (#94): alternating group banding + stub bottom alignment. */
 .annex-table .gl-annex-group-alt {
@@ -1445,8 +1448,10 @@
    stage padding/background. */
 .chartjs-wrap.chartjs-flat {
   padding: 0;
+  margin: 0;
   background: transparent;
   border: none;
+  border-radius: 0;
   box-shadow: none;
 }
 .chartjs-annotation {
