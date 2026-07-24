@@ -1660,7 +1660,12 @@ class TestIrCalloutChrome:
              "text": "+ ~6 percentage points"},
             {"type": "chevron", "at": 4, "text": "Refresh"},
         ]
-        path = _write(tmp_path, _handoff([_grouped_slide_with_callouts(callouts)]))
+        slide = _grouped_slide_with_callouts(callouts)
+        # explicit 0-15 domain so the value anchor + stem geometry resolve
+        slide["visual_spec"]["primary_visual"]["chart_config"].update(
+            {"y_axis_min": 0, "y_axis_max": 15}
+        )
+        path = _write(tmp_path, _handoff([slide]))
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
         return (out / "presentation.html").read_text(encoding="utf-8")
@@ -1683,11 +1688,45 @@ class TestIrCalloutChrome:
             html,
         )
 
-    def test_elbow_stems_present(self, tmp_path):
+    def test_elbow_arrowhead_and_stem(self, tmp_path):
         html = self._deck(tmp_path)
-        # elbow stems down to the bar tops via pseudo-elements
-        assert ".chartjs-callout-elbow::before" in html
-        assert ".chartjs-callout-elbow::after" in html
+        # right-pointing arrowhead at the capsule end via ::after
+        assert re.search(
+            r"\.chartjs-callout-elbow::after\s*\{[^}]*border-left:\s*[\d.]+px solid var\(--blue",
+            html,
+        )
+        # computed stem element drops from the capsule to the from-bar top
+        assert 'class="chartjs-callout-elbow-stem"' in html
+
+    def test_elbow_stem_geometry_reaches_from_bar_top(self, tmp_path):
+        # deck: bars 7,7,9,9,10 on 0-15 domain; elbow value 10, from 1 to 4.
+        # capsule top = (1 - 10/15) = 33.33%; from-bar (Q2'25=7) top =
+        # (1 - 7/15) = 53.33%; stem height = 20.00% at left 1/5 = 20.00%.
+        html = self._deck(tmp_path)
+        assert "top:33.33%" in html  # capsule anchor (existing contract)
+        m = re.search(
+            r'class="chartjs-callout-elbow-stem" style="([^"]+)"', html
+        )
+        assert m, "expected inline stem geometry"
+        style = m.group(1)
+        assert "left:20.00%" in style
+        assert "top:33.33%" in style
+        assert "height:20.00%" in style
+
+    def test_elbow_stem_fails_closed_without_domain(self, tmp_path):
+        # no y domain and no value anchor => capsule falls back to 10% and
+        # no stem geometry can be derived => stem omitted, deck still renders
+        s = _grouped_slide_with_callouts(
+            [{"type": "elbow_arrow", "from": 0, "to": 4, "text": "x"}]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-callout-elbow" in html
+        assert "chartjs-callout-elbow-stem" not in html.replace(
+            ".chartjs-callout-elbow-stem", ""  # bundled CSS rule
+        )
 
     def test_chevron_navy_under_axis(self, tmp_path):
         html = self._deck(tmp_path)
