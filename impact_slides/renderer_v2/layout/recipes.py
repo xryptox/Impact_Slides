@@ -659,11 +659,13 @@ def render_table(slide, total, notes, active=False):
 
 
 def render_pill_comparison(slide, total, notes, active=False):
-    """Pill-column comparison table (#74/F4).
+    """Freestanding pill statement columns (#74/F4, grown in #91/F4+).
 
-    Exterior row-label stub column + vertical pill/rounded column headers
-    (Q1'26 / Q1'25 / YoY) — the IR statement house style, not a row-striped
-    spreadsheet grid. Composes with the floating key_stats inset (#73).
+    Exterior row-label rail + one fully separated rounded column *shell* per
+    data column (Q1'26 / Q1'25 / YoY) — the IR statement house style, not
+    pill headers over a spreadsheet body. The last column keeps YoY
+    emphasis at the shell level. Composes with the floating key_stats
+    inset (#73).
     """
     rows = _table_matrix(slide)
     if not rows:
@@ -671,25 +673,26 @@ def render_pill_comparison(slide, total, notes, active=False):
     head = rows[0]
     body = rows[1:] if len(rows) > 1 else []
     n_cols = len(head)
-    grid_cols = f"grid-template-columns: 1.6fr repeat({max(n_cols - 1, 1)}, 1fr)"
-    # Header: empty stub cell, then one pill per comparison column
-    head_cells = ['<div class="gl-pill-stub gl-pill-head-empty"></div>']
-    for h in head[1:]:
-        head_cells.append(f'<div class="gl-pill-col gl-pill-head">{esc(h)}</div>')
-    # Body: exterior row label stub, then a cell per column
-    body_rows = []
+    # Exterior label rail: blank head slot, then one stub per body row.
+    label_cells = ['<div class="gl-pill-stub gl-pill-head-empty"></div>']
     for r in body:
-        cells = [f'<div class="gl-pill-stub">{esc(r[0] if r else "")}</div>']
-        for i in range(1, n_cols):
-            cell = r[i] if i < len(r) else ""
-            cls = "gl-pill-cell gl-pill-cell-yoy" if i == n_cols - 1 else "gl-pill-cell"
-            cells.append(f'<div class="{cls}">{esc(cell)}</div>')
-        body_rows.append(f'<div class="gl-pill-row" style="{grid_cols}">{"".join(cells)}</div>')
+        label_cells.append(f'<div class="gl-pill-stub">{esc(r[0] if r else "")}</div>')
+    labels_rail = f'<div class="gl-pill-labels">{"".join(label_cells)}</div>'
+    # One freestanding rounded shell per data column.
+    shells = []
+    for ci in range(1, n_cols):
+        is_last = ci == n_cols - 1
+        shell_cls = "gl-pill-shell gl-pill-shell-yoy" if is_last else "gl-pill-shell"
+        cell_cls = "gl-pill-cell gl-pill-cell-yoy" if is_last else "gl-pill-cell"
+        cells = [f'<div class="gl-pill-head">{esc(head[ci])}</div>']
+        for r in body:
+            cell = r[ci] if ci < len(r) else ""
+            cells.append(f'<div class="{cell_cls}">{esc(cell)}</div>')
+        shells.append(f'<div class="{shell_cls}">{"".join(cells)}</div>')
     table = (
-        f'<div class="gl-pill gl-card">'
-        f'<div class="gl-pill-row gl-pill-head-row" style="{grid_cols}">'
-        f'{"".join(head_cells)}</div>'
-        f'{"".join(body_rows)}'
+        f'<div class="gl-pill gl-pill-free gl-card">'
+        f"{labels_rail}"
+        f'{"".join(shells)}'
         f"</div>"
     )
     inset = _table_inset((slide.get("content") or {}).get("key_stats") or [])
