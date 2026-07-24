@@ -437,12 +437,14 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             (v for row in rows for v in row if isinstance(v, (int, float)) and v < 0),
             default=None,
         )
+        # #96: domain clamps belong at scale ROOT — Chart.js 4 ignores
+        # ticks.min/max. (Auto-domain previously masked this for negatives.)
         if cfg.get("y_axis_min") is not None:
-            options["scales"]["y"]["ticks"]["min"] = float(cfg["y_axis_min"])
+            options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
         elif neg_min is not None:
-            options["scales"]["y"]["ticks"]["min"] = float(neg_min) * 1.1
+            options["scales"]["y"]["min"] = float(neg_min) * 1.1
         if cfg.get("y_axis_max") is not None:
-            options["scales"]["y"]["ticks"]["max"] = float(cfg["y_axis_max"])
+            options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -480,13 +482,15 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     options["indexAxis"] = "y"
     x_scale = options["scales"]["x"]
     y_break = cfg.get("y_axis_break")
+    # #96: scale-root min/max — tick-level values are ignored by Chart.js,
+    # which is why the 90–100 anniversary window never painted in v3.
     if cfg.get("y_axis_min") is not None:
-        x_scale["ticks"]["min"] = float(cfg["y_axis_min"])
+        x_scale["min"] = float(cfg["y_axis_min"])
     elif isinstance(y_break, dict) and y_break.get("to") is not None:
         # Discontinuous high window (e.g. 90–100): exclude the break band.
-        x_scale["ticks"]["min"] = float(y_break["to"])
+        x_scale["min"] = float(y_break["to"])
     if cfg.get("y_axis_max") is not None:
-        x_scale["ticks"]["max"] = float(cfg["y_axis_max"])
+        x_scale["max"] = float(cfg["y_axis_max"])
     if cfg.get("bar_labels_inside"):
         options["plugins"]["datalabels"] = {
             "display": True,
@@ -659,21 +663,22 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     if cfg.get("force_ticks") and isinstance(cfg.get("y_axis_ticks"), list):
         ticks = [float(t) for t in cfg["y_axis_ticks"]]
         if len(ticks) >= 2:
-            y_scale["ticks"]["min"] = ticks[0]
-            y_scale["ticks"]["max"] = ticks[-1]
+            # #96: min/max at scale root; stepSize is a valid ticks option.
+            y_scale["min"] = ticks[0]
+            y_scale["max"] = ticks[-1]
             y_scale["ticks"]["stepSize"] = ticks[1] - ticks[0]
     else:
         if cfg.get("y_axis_min") is not None:
-            y_scale["ticks"]["min"] = float(cfg["y_axis_min"])
+            y_scale["min"] = float(cfg["y_axis_min"])
         if cfg.get("y_axis_max") is not None:
-            y_scale["ticks"]["max"] = float(cfg["y_axis_max"])
+            y_scale["max"] = float(cfg["y_axis_max"])
     if cfg.get("y_axis_label"):
         y_scale["title"] = {"display": True, "text": str(cfg["y_axis_label"])}
     if isinstance(y_break, dict) and y_break.get("to") is not None:
-        # Exclude the break band from the effective domain.
-        y_scale["ticks"]["min"] = float(y_break["to"])
+        # Exclude the break band from the effective domain (#96: scale root).
+        y_scale["min"] = float(y_break["to"])
         if cfg.get("y_axis_max") is not None:
-            y_scale["ticks"]["max"] = float(cfg["y_axis_max"])
+            y_scale["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
     if point_labels:
         options["plugins"]["datalabels"] = {
