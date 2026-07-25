@@ -557,16 +557,21 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         source = "category" if bli is True else str(bli)
         if source == "category":
             label_matrix = [[str(lab) for lab in labels] for _ in series]
+            dl_anchor, dl_align, dl_offset, dl_size = "start", "start", 4, 11
         elif source == "series":
             label_matrix = [[str(name)] * len(labels) for name in series]
+            # N2 residual (v4 sim): PDF year chips sit at the RIGHT end,
+            # inside the bar, at IR weight. anchor=end + align=start is
+            # Chart.js-datalabels for "inside, at the bar's end edge".
+            dl_anchor, dl_align, dl_offset, dl_size = "end", "start", 6, 13
         else:
             raise ValueError(
                 f"bar_labels_inside must be true, 'category', or 'series'; "
                 f"got {bli!r}"
             )
         options["plugins"]["datalabels"] = _datalabels_cfg(
-            anchor="start", align="start", offset=4, color=_WHITE, size=11,
-            labels=label_matrix,
+            anchor=dl_anchor, align=dl_align, offset=dl_offset, color=_WHITE,
+            size=dl_size, labels=label_matrix,
         )
     return {
         "type": "bar",
