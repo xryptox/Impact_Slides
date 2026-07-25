@@ -2025,6 +2025,61 @@ class TestExteriorSegmentNames:
 
 
 # ---------------------------------------------------------------------------
+# F11+ — axis-chrome suppression for IR 100%-stack boards (v4 sim)
+# ---------------------------------------------------------------------------
+
+
+class TestAxisChromeSuppression:
+    def _deck(self, tmp_path, cfg):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = cfg
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        return _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+
+    def test_default_chrome_unchanged(self, tmp_path):
+        conf = self._deck(tmp_path, {})
+        scales = conf["options"]["scales"]
+        assert "display" not in scales["y"]
+        assert "display" not in scales["x"]
+        assert "display" not in scales["y"]["grid"]
+
+    def test_hide_y_axis(self, tmp_path):
+        conf = self._deck(tmp_path, {"show_y_axis": False})
+        assert conf["options"]["scales"]["y"]["display"] is False
+        assert "display" not in conf["options"]["scales"]["x"]
+
+    def test_hide_x_axis(self, tmp_path):
+        conf = self._deck(tmp_path, {"show_x_axis": False})
+        assert conf["options"]["scales"]["x"]["display"] is False
+
+    def test_hide_gridlines_keeps_ticks(self, tmp_path):
+        conf = self._deck(tmp_path, {"show_gridlines": False})
+        scales = conf["options"]["scales"]
+        assert scales["x"]["grid"]["display"] is False
+        assert scales["y"]["grid"]["display"] is False
+        assert "display" not in scales["y"]  # ticks stay
+        assert "ticks" in scales["y"]
+
+    def test_explicit_total_labels_override_computed(self, tmp_path):
+        # PDF funding board: segments are %, totals are $B — different unit
+        conf = self._deck(tmp_path, {
+            "stack_totals": True,
+            "stack_total_labels": ["$210", "$219"],
+        })
+        dl = conf["options"]["plugins"]["datalabels"]
+        flat = [v for row in dl["_labels"] for v in row if v]
+        assert flat == ["$210", "$219"]
+
+    def test_totals_unclipped_with_headroom(self, tmp_path):
+        conf = self._deck(tmp_path, {"stack_totals": True})
+        opts = conf["options"]
+        assert opts["plugins"]["datalabels"]["clip"] is False
+        assert opts["layout"]["padding"]["top"] >= 18
+
+
+# ---------------------------------------------------------------------------
 # #102 — F4+ freestanding pill packing density
 # ---------------------------------------------------------------------------
 
