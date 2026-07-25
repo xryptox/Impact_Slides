@@ -1181,12 +1181,14 @@
   gap: var(--gap-md, 18px);
   flex: 1;
 }
-/* R4 (#94): muted companion card + larger giant-% display scale. */
+/* R4 (#94, finished): muted companion card + IR giant-% pairing — blue
+   digits with a visibly smaller % unit, narrated label beside the number. */
 .gl-hero {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
   padding: var(--space-4, 16px) var(--space-5, 20px);
   background: var(--color-surface-muted, var(--stage, #f4f6f9));
   border: 1px solid var(--panel-border);
@@ -1194,16 +1196,23 @@
 }
 .gl-hero-value {
   font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
-  font-size: 80px;
+  font-size: 110px;
   font-weight: 700;
   line-height: 1;
-  color: var(--navy);
+  color: var(--blue);
+  white-space: nowrap;
+}
+.gl-hero-value-unit {
+  font-size: 0.42em;
+  font-weight: 700;
+  vertical-align: baseline;
+  margin-left: 0.06em;
 }
 .gl-hero-label {
-  margin-top: var(--space-2, 6px);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
-  color: var(--ink-muted);
+  line-height: 1.35;
+  color: var(--ink);
 }
 
 /* ---------- IR bullet sheet (#77/F7) ---------- */
@@ -1330,7 +1339,10 @@
 }
 .annex-table .gl-annex-head {
   font-weight: 700;
-  color: var(--navy);
+  /* F12+ finish: white-on-navy like the base th — this rule's navy text on
+     the navy header bg left quarter sub-headers invisible (PDF annex
+     sub-headers are white-on-navy). */
+  color: var(--ink-on-navy, var(--color-on-navy, #fff));
   text-align: right;
   border-bottom: 2px solid var(--navy);
 }
@@ -1352,6 +1364,11 @@
 .annex-table th.gl-annex-stub {
   vertical-align: bottom;
   text-align: left;
+}
+/* F12+ finish: the multi-header stub slot (rowspan=2 top-left cell) is
+   blank paper in the PDF, not a navy block. */
+.annex-table thead th.gl-annex-stub {
+  background: var(--color-paper, #fff);
 }
 .annex-table .gl-annex-cell { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
 
@@ -1472,6 +1489,16 @@
 
 /* ---------- chart annotation + axis-break markers (#71/F2, #79/F10) ---------- */
 .chartjs-wrap { position: relative; }
+/* R1 finish: stage=flat also flattens the FRAME card (the wrap-only flat
+   left the gray Boardroom pad/shadow around the chart; the PDF sits the
+   chart directly on the white canvas). */
+.chart-frame.chart-frame-flat {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
 /* R1 (#94): flat IR stage — chart sits on the canvas without Boardroom
    stage padding/background. */
 .chartjs-wrap.chartjs-flat {

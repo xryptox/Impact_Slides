@@ -727,9 +727,18 @@ def _hero_stack(stats: Sequence[Any]) -> str:
         if not nv:
             continue
         lab, val = nv
+        # R4 finish: IR giant-% pairing — digits huge, the % unit visibly
+        # smaller, narrated label beside (not below) the number.
+        if val.endswith("%") and len(val) > 1:
+            value_html = (
+                f'<span class="gl-hero-value-num">{esc(val[:-1])}</span>'
+                f'<span class="gl-hero-value-unit">%</span>'
+            )
+        else:
+            value_html = esc(val)
         cards.append(
             f'<div class="gl-hero card">'
-            f'<div class="gl-hero-value">{esc(val)}</div>'
+            f'<div class="gl-hero-value">{value_html}</div>'
             f'<div class="gl-hero-label">{esc(lab)}</div>'
             f"</div>"
         )
@@ -1607,16 +1616,26 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
             n = min(len(key_stats), 6)
             main += f'<div class="metric-strip chart-metric-strip gl-grid gl-grid-{n}">{tiles}</div>'
     main += insight_strip(_so_what(slide))
-    cfg = vs.get("chart_config") or {}
+    from ..charts import _chart_config  # late import: charts -> layout cycle
+
+    # chart_config normatively lives at visual_spec.primary_visual (#71/F15)
+    cfg = _chart_config(slide)
     frame_cls = "chart-frame gl-card"
+    frame_style = "padding:18px 22px"
     if cfg.get("surface") == "white":
         frame_cls += " chart-surface-white"
+    if cfg.get("stage") == "flat":
+        # R1 finish: stage=flat must flatten the FRAME card too — the wrap
+        # alone left the gray Boardroom pad/shadow around the chart, while
+        # the PDF sits the chart directly on the white canvas.
+        frame_cls += " chart-frame-flat"
+        frame_style = ""
     return slide_shell(
         number=int(slide["slide_number"]),
         total=total,
         title=strip_eids(slide.get("title") or ""),
         dek=chosen_dek(slide),
-        main_html=f'<div class="{frame_cls}" style="padding:18px 22px">{main}</div>',
+        main_html=f'<div class="{frame_cls}" style="{frame_style}">{main}</div>',
         notes_html=notes_aside(int(slide["slide_number"]), notes),
         footer_html=source_strip(_source_names(slide)),
         layout_class=layout,
