@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-# Make the repo root importable so `import step1_preprocessor_v2_full` works
-# regardless of where pytest is invoked from.
+# Make the repo root importable so `import impact_slides` and root entry
+# scripts work regardless of where pytest is invoked from.
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -40,13 +40,13 @@ def tmp_workspace():
 @pytest.fixture()
 def make_preprocessor(tmp_workspace):
     """Factory: build a preprocessor pointing at a fresh input/output pair."""
-    from step1_preprocessor_v2_full import ImpactSlidePreprocessorV2
+    from impact_slides.preprocessor import ImpactSlidePreprocessorV4
 
     def _make(filter_level="moderate", boost_keywords=None, enable_ocr=False):
         inp = tmp_workspace / "input"
         out = tmp_workspace / "output"
         inp.mkdir(parents=True, exist_ok=True)
-        p = ImpactSlidePreprocessorV2(
+        p = ImpactSlidePreprocessorV4(
             input_path=str(inp),
             output_dir=str(out),
             filter_level=filter_level,

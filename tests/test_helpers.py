@@ -5,7 +5,7 @@ import math
 import pytest
 import pandas as pd
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 
 # --------------------------------------------------------------------------- #
