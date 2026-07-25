@@ -83,6 +83,68 @@ _JS = r"""
     if (typeof ChartDataLabels !== 'undefined') {
       try { Chart.register(ChartDataLabels); } catch (e) { /* already registered */ }
     }
+    // N5: exterior segment-name column for stacked bars. Config-driven
+    // (options.plugins.segmentNames.items = [{label, color}]); draws each
+    // series name in its segment color at the mid-height of that segment
+    // on the LAST bar, in the right padding gutter. No-op without config.
+    try {
+      Chart.register({
+        id: 'segmentNames',
+        afterDatasetsDraw: function (chart) {
+          var opts = chart.config.options.plugins && chart.config.options.plugins.segmentNames;
+          if (!opts || !opts.items || !opts.items.length) return;
+          var area = chart.chartArea;
+          if (!area) return;
+          var nCat = chart.data.labels ? chart.data.labels.length : 0;
+          if (!nCat) return;
+          var ctx = chart.ctx;
+          ctx.save();
+          ctx.font = "600 12px 'Source Sans 3', sans-serif";
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          var x = area.right + 8;
+          var wrap = function (text) {
+            var words = String(text).split(/\s+/), lines = [''];
+            words.forEach(function (w) {
+              var cur = lines[lines.length - 1];
+              if (cur && (cur + ' ' + w).length > 16 && lines.length < 3) lines.push(w);
+              else lines[lines.length - 1] = cur ? cur + ' ' + w : w;
+            });
+            return lines;
+          };
+          var lh = 13, entries = [];
+          opts.items.forEach(function (item, si) {
+            var meta = chart.getDatasetMeta(si);
+            if (!meta || meta.hidden || !meta.data || !meta.data.length) return;
+            // last visible bar element for this series
+            var bar = null;
+            for (var i = nCat - 1; i >= 0; i--) {
+              if (meta.data[i] && typeof meta.data[i].y === 'number') { bar = meta.data[i]; break; }
+            }
+            if (!bar) return;
+            var midY = (bar.y + (typeof bar.base === 'number' ? bar.base : bar.y)) / 2;
+            var lines = wrap(item.label);
+            entries.push({ y: midY - ((lines.length - 1) * lh) / 2, h: lines.length * lh, lines: lines, color: item.color || '#00175a' });
+          });
+          // collision resolve top-to-bottom: thin adjacent segments would
+          // otherwise print on top of each other (PDF spacing recipe)
+          entries.sort(function (a, b) { return a.y - b.y; });
+          for (var k = 1; k < entries.length; k++) {
+            var minY = entries[k - 1].y + entries[k - 1].h + 2;
+            if (entries[k].y < minY) entries[k].y = minY;
+          }
+          // clamp the whole stack inside the plot area
+          var overflow = entries.length ? entries[entries.length - 1].y + entries[entries.length - 1].h - (area.bottom - 4) : 0;
+          var shift = Math.max(0, overflow);
+          entries.forEach(function (e) {
+            var y0 = Math.max(area.top + 6, e.y - shift);
+            ctx.fillStyle = e.color;
+            e.lines.forEach(function (ln, li) { ctx.fillText(ln, x, y0 + li * lh); });
+          });
+          ctx.restore();
+        }
+      });
+    } catch (e) { /* plugin registration is best-effort */ }
     document.querySelectorAll('script.chartjs-config').forEach(function (el) {
       var id = el.getAttribute('data-for');
       var canvas = id ? document.getElementById(id) : null;
