@@ -1912,7 +1912,8 @@ class TestDualStackLabels:
         conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
         dl = conf["options"]["plugins"]["datalabels"]
         # named sets: in-segment values + above-stack totals, side by side
-        assert set(dl["labels"]) == {"value", "total"}
+        # (negchip joins when thin negatives move below the bar — N3)
+        assert set(dl["labels"]) == {"value", "total", "negchip"}
         value, total = dl["labels"]["value"], dl["labels"]["total"]
         # value set: white, centered inside segments, one cell per series
         assert value["anchor"] == "center"
@@ -1934,7 +1935,9 @@ class TestDualStackLabels:
         seg = sets["value"]["_labels"]
         # PROVISION_STACK: NCO=1251, RR=-73 / NCO=1251, RR=-24
         assert seg[0] == ["$1,251", "$1,251"]
-        assert seg[1] == ["($73)", "($24)"]  # unit inside parens (IR)
+        assert seg[1] == ["($73)", ""]  # thick negative stays inside (IR)
+        # N3: thin negative moves to the below-bar chip set
+        assert sets["negchip"]["_labels"][1] == ["", "($24)"]
         top = sets["total"]["_labels"]
         # totals: 1251-73=1178, 1251-24=1227 on the positive (NCO) segment
         assert top[0] == ["$1,178", "$1,227"]
@@ -1947,10 +1950,11 @@ class TestDualStackLabels:
         path = _write(tmp_path, _handoff([s]))
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
-        dl = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))[
-            "options"]["plugins"]["datalabels"]
-        assert dl["_labels"][0] == ["1,251%", "1,251%"]
-        assert dl["_labels"][1] == ["(73%)", "(24%)"]
+        sets = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))[
+            "options"]["plugins"]["datalabels"]["labels"]
+        assert sets["value"]["_labels"][0] == ["1,251%", "1,251%"]
+        assert sets["value"]["_labels"][1] == ["(73%)", ""]
+        assert sets["negchip"]["_labels"][1] == ["", "(24%)"]
 
     def test_percent_unit_suffixes_totals(self, tmp_path):
         s = _slide("stacked_bar_chart", PROVISION_STACK)
@@ -1972,10 +1976,11 @@ class TestDualStackLabels:
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
         conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
-        dl = conf["options"]["plugins"]["datalabels"]
-        assert "labels" not in dl  # single (legacy) shape, not named sets
-        assert dl["_labels"][0] == ["1,251", "1,251"]
-        assert dl["_labels"][1] == ["(73)", "(24)"]
+        sets = conf["options"]["plugins"]["datalabels"]["labels"]
+        # thin negative present -> value + negchip named sets (N3)
+        assert sets["value"]["_labels"][0] == ["1,251", "1,251"]
+        assert sets["value"]["_labels"][1] == ["(73)", ""]
+        assert sets["negchip"]["_labels"][1] == ["", "(24)"]
 
 
 # ---------------------------------------------------------------------------
@@ -2077,6 +2082,53 @@ class TestAxisChromeSuppression:
         opts = conf["options"]
         assert opts["plugins"]["datalabels"]["clip"] is False
         assert opts["layout"]["padding"]["top"] >= 18
+
+    def test_negative_segment_labels_unclipped_with_bottom_headroom(self, tmp_path):
+        # N3 residual: below-axis ($73)/($24) chips must not clip at plot bottom
+        conf = self._deck(tmp_path, {"point_labels": True})
+        opts = conf["options"]
+        for label_set in opts["plugins"]["datalabels"]["labels"].values():
+            assert label_set["clip"] is False
+        assert opts["layout"]["padding"]["bottom"] >= 18
+
+    def test_thin_negative_gets_below_bar_chip(self, tmp_path):
+        # N3 residual / PDF pairing: thin negatives -> navy chip below the bar;
+        # thick negatives stay white-inside. PROVISION_STACK has -73 (thick)
+        # and -24 (thin) so both recipes appear.
+        conf = self._deck(tmp_path, {"point_labels": True, "y_axis_unit": "$"})
+        sets = conf["options"]["plugins"]["datalabels"]["labels"]
+        assert "negchip" in sets
+        value_flat = [v for row in sets["value"]["_labels"] for v in row if v]
+        chip_flat = [v for row in sets["negchip"]["_labels"] for v in row if v]
+        assert "($73)" in value_flat          # thick -> inside
+        assert "($24)" not in value_flat      # thin -> moved out
+        assert chip_flat == ["($24)"]         # thin -> below-bar chip
+        assert sets["negchip"]["color"] != sets["value"]["color"]  # navy vs white
+
+    def test_thick_negative_stays_inside_no_chip_set(self, tmp_path):
+        s = _slide("stacked_bar_chart", [
+            ["Quarter", "A", "B"],
+            ["Q1", "100", "-80"], ["Q2", "120", "10"]])
+        s["visual_spec"]["primary_visual"]["chart_config"] = {
+            "point_labels": True, "y_axis_unit": "$"}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        dl = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))[
+            "options"]["plugins"]["datalabels"]
+        # single flat set (no negchip) with the negative inside
+        assert "labels" not in dl
+        assert dl["_labels"][1] == ["($80)", "$10"]
+
+    def test_positive_only_segments_no_bottom_padding(self, tmp_path):
+        s = _slide("stacked_bar_chart", [
+            ["Quarter", "A", "B"], ["Q1", "60", "40"], ["Q2", "70", "30"]])
+        s["visual_spec"]["primary_visual"]["chart_config"] = {"point_labels": True}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        opts = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))["options"]
+        assert "bottom" not in opts.get("layout", {}).get("padding", {})
 
 
 # ---------------------------------------------------------------------------
