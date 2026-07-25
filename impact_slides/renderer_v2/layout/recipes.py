@@ -1621,7 +1621,7 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
     # chart_config normatively lives at visual_spec.primary_visual (#71/F15)
     cfg = _chart_config(slide)
     frame_cls = "chart-frame gl-card"
-    frame_style = "padding:18px 22px"
+    frame_style = 'style="padding:18px 22px"'
     if cfg.get("surface") == "white":
         frame_cls += " chart-surface-white"
     if cfg.get("stage") == "flat":
@@ -1635,7 +1635,7 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
         total=total,
         title=strip_eids(slide.get("title") or ""),
         dek=chosen_dek(slide),
-        main_html=f'<div class="{frame_cls}" style="{frame_style}">{main}</div>',
+        main_html=f'<div class="{frame_cls}" {frame_style}>{main}</div>',
         notes_html=notes_aside(int(slide["slide_number"]), notes),
         footer_html=source_strip(_source_names(slide)),
         layout_class=layout,
