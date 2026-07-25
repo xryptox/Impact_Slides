@@ -663,9 +663,9 @@ def render_pill_comparison(slide, total, notes, active=False):
 
     Exterior row-label rail + one fully separated rounded column *shell* per
     data column (Q1'26 / Q1'25 / YoY) — the IR statement house style, not
-    pill headers over a spreadsheet body. The last column keeps YoY
-    emphasis at the shell level. Composes with the floating key_stats
-    inset (#73).
+    pill headers over a spreadsheet body. Shells are white paper with
+    full-width navy header caps; the last column keeps YoY emphasis via
+    bold navy cells. Composes with the floating key_stats inset (#73).
     """
     rows = _table_matrix(slide)
     if not rows:
