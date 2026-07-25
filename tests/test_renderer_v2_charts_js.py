@@ -507,8 +507,11 @@ class TestChartHeroDual:
         # left Chart.js chart + right hero-KPI stack as peers
         assert 'data-chartjs="1"' in html
         assert "gl-hero-stack" in html
-        assert "Millennial/Gen-Z" in html and "66%" in html
-        assert "Fee-Paying" in html and "73%" in html
+        assert "Millennial/Gen-Z" in html
+        assert "Fee-Paying" in html
+        # R4 finish: giant % splits digits / unit into spans
+        assert '<span class="gl-hero-value-num">66</span>' in html
+        assert '<span class="gl-hero-value-num">73</span>' in html
         assert "chart_hero_dual" in html or "layout-chart-hero" in html
 
     def test_no_chart_still_renders_hero(self, tmp_path):
@@ -517,7 +520,7 @@ class TestChartHeroDual:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert "gl-hero-stack" in html
-        assert "66%" in html
+        assert '<span class="gl-hero-value-num">66</span>' in html
 
 
 # ---------------------------------------------------------------------------
@@ -1541,6 +1544,56 @@ class TestFidelityPolish:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         # CSS is bundled; assert no flat-stage *markup*
         assert 'class="chartjs-wrap chartjs-flat"' not in html
+        assert 'class="chart-frame gl-card chart-frame-flat"' not in html
+
+    def test_r1_flat_stage_flattens_frame_card(self, tmp_path):
+        # R1 finish: stage=flat must strip the frame card chrome too
+        s = _slide("line_chart", TWO_SERIES)
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "line_chart",
+                "steps_or_data": TWO_SERIES,
+                "chart_config": {"stage": "flat"},
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chart-frame gl-card chart-frame-flat" in html
+        assert re.search(
+            r"\.chart-frame\.chart-frame-flat\s*\{[^}]*box-shadow:\s*none", html)
+
+    def test_r4_hero_percent_gets_smaller_unit(self, tmp_path):
+        s = _slide("chart_hero_dual", TWO_SERIES)
+        s["content"]["key_stats"] = [
+            {"label": "Millennial / Gen-Z accounts", "value": "66%"},
+            {"label": "Accounts on fee-paying products", "value": "73%"},
+        ]
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<span class="gl-hero-value-num">66</span>' in html
+        assert '<span class="gl-hero-value-unit">%</span>' in html
+
+    def test_f12_annex_subheaders_white_on_navy(self, tmp_path):
+        s = _annex_slide()
+        s["visual_spec"]["primary_visual"]["header_groups"] = [
+            {"label": "Prior / Reported", "span": 2},
+            {"label": "Current / FX-Adj", "span": 2},
+        ]
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # quarter labels present in the sub-header row
+        assert 'class="gl-annex-head"' in html
+        # and the CSS paints them light-on-navy (was navy-on-navy = invisible)
+        assert re.search(
+            r"\.annex-table \.gl-annex-head\s*\{[^}]*color:\s*var\(--ink-on-navy",
+            html,
+        )
 
     def test_f12_annex_group_banding(self, tmp_path):
         s = _annex_slide()
@@ -1562,8 +1615,8 @@ class TestFidelityPolish:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         # giant-% display scale + muted companion card chrome (bundled CSS)
-        # 64px per #94, raised to 80px by #103/R4
-        assert "font-size: 80px" in html
+        # 64px per #94, 80px by #103/R4, IR giant 110px by R4-finish
+        assert "font-size: 110px" in html
         assert ".gl-hero {" in html
 
 
@@ -2228,7 +2281,7 @@ class TestPolishBundleR3:
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
-        assert "font-size: 80px" in html  # up from 64px toward PDF giant type
+        assert "font-size: 110px" in html  # IR giant type scale (R4 finish)
 
     def test_f12_annex_group_separation(self, tmp_path):
         s = _annex_slide()
