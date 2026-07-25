@@ -12,7 +12,8 @@ set -euo pipefail
 
 PDF="C:/Users/Ag1Le/Downloads/Q1-2026-Earnings-Presentation.pdf"
 
-read -r -d '' PROMPT << 'EOF'
+# NOTE: read -d '' returns 1 at EOF (no NUL found); || true keeps set -e alive.
+read -r -d '' PROMPT << 'EOF' || true
 Objective: Produce a gap-analysis document stating which capabilities the current impact_slides.renderer_v2 LACKS to end-to-end replicate a real earnings PDF as standalone HTML slides, based on <=10 iterative screenshot-comparison passes. The deliverable is the analysis, NOT renderer changes.
 
 This is a SIMULATION / OBSERVATION run.
