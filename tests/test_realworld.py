@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 REAL_DIR = Path(r"C:\Users\Ag1Le\Documents\realworld_test\input")
 XLSX = REAL_DIR / "supermarket_sales.xlsx"
@@ -38,7 +38,7 @@ def real_register(tmp_path_factory):
     if not _have_real_files():
         pytest.skip("real-world test files not downloaded (see realworld_test/INSIGHT_QUALITY_ASSESSMENT.md)")
     out = tmp_path_factory.mktemp("realworld_out")
-    p = m.ImpactSlidePreprocessorV2(input_path=str(REAL_DIR), output_dir=str(out),
+    p = m.ImpactSlidePreprocessorV4(input_path=str(REAL_DIR), output_dir=str(out),
                                     filter_level="permissive")
     p.run()
     return json.load(open(out / "evidence_register_seed.json"))

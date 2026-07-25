@@ -22,7 +22,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import step1_preprocessor_v3 as m
+import impact_slides.preprocessor as m
+import impact_slides.logging_setup as ls
 
 
 @pytest.fixture()
@@ -32,7 +33,7 @@ def make_preprocessor(tmp_workspace):
         inp = tmp_workspace / "input"
         out = tmp_workspace / "output"
         inp.mkdir(parents=True, exist_ok=True)
-        p = m.ImpactSlidePreprocessorV2(
+        p = m.ImpactSlidePreprocessorV4(
             input_path=str(inp), output_dir=str(out), filter_level=filter_level,
         )
         return p, inp, out
@@ -44,7 +45,7 @@ def make_preprocessor(tmp_workspace):
 # --------------------------------------------------------------------------- #
 class TestProvenance:
     def test_version_constant_exists(self):
-        assert m.__version__ == "3.0.0"
+        assert m.__version__ == "4.0.0"
 
     def test_git_commit_returns_string_or_none(self):
         c = m.git_commit()
@@ -77,7 +78,7 @@ class TestProvenance:
 class TestLoggerFactory:
     def setup_method(self):
         # reset the singleton so each test gets a fresh logger
-        m._LOG = None
+        ls._LOG = None  # logger cache lives in logging_setup, not the preprocessor re-export
 
     def test_get_logger_returns_logger(self):
         log = m.get_logger()
@@ -102,7 +103,7 @@ class TestLoggerFactory:
         assert "ERROR" in caplog.text
 
     def test_logger_writes_run_log_file(self, tmp_path):
-        m._LOG = None
+        ls._LOG = None  # logger cache lives in logging_setup, not the preprocessor re-export
         log = m.get_logger(log_file=tmp_path / "run.log", verbose=True)
         log.info("file_test", stage="unit")
         # flush handlers
@@ -115,7 +116,7 @@ class TestLoggerFactory:
 
     def test_logger_binds_context(self, caplog):
         """bound context (version, commit, run_id) appears on every line."""
-        m._LOG = None
+        ls._LOG = None  # logger cache lives in logging_setup, not the preprocessor re-export
         log = m.get_logger(verbose=True, run_id="TEST_RUN_ID")
         with caplog.at_level(logging.DEBUG, logger="preprocessor"):
             log.info("context_test")

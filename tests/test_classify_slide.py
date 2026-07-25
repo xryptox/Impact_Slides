@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import pytest
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 
 @pytest.fixture()
 def classifier():
-    return m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_unused")
+    return m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_unused")
 
 
 # --------------------------------------------------------------------------- #

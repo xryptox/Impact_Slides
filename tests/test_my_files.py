@@ -42,7 +42,7 @@ from pathlib import Path
 
 import pytest
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 # ---- Point this at your own folder of source files ----------------------- #
 MY_FILES_DIR = Path(os.environ.get(
@@ -67,7 +67,7 @@ def my_register(tmp_path_factory):
     out = tmp_path_factory.mktemp("my_files_out")
     print(f"\n[my_files] input:  {MY_FILES_DIR}")
     print(f"[my_files] output: {out}")
-    p = m.ImpactSlidePreprocessorV2(input_path=str(MY_FILES_DIR), output_dir=str(out),
+    p = m.ImpactSlidePreprocessorV4(input_path=str(MY_FILES_DIR), output_dir=str(out),
                                     filter_level="permissive")
     p.run()
     return out, json.load(open(out / "evidence_register_seed.json"))

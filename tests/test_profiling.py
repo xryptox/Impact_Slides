@@ -7,12 +7,12 @@ from __future__ import annotations
 import pytest
 import pandas as pd
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 
 @pytest.fixture()
 def pp():
-    return m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_unused", filter_level="permissive")
+    return m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_unused", filter_level="permissive")
 
 
 def _profile(pp, df, sheet="Sheet1"):

@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-import step1_preprocessor_v3 as m
+import impact_slides.preprocessor as m
 from impact_slides.schemas import (EvidenceEntry, FileInventoryItem, CoverageMap,
                      EntitiesSummaryItem, INSIGHT_TYPES, EXTRACTION_METHODS,
                      CONFIDENCE_LEVELS, NARRATIVE_STAGES)
@@ -37,7 +37,7 @@ def make_preprocessor(tmp_workspace):
         inp = tmp_workspace / "input"
         out = tmp_workspace / "output"
         inp.mkdir(parents=True, exist_ok=True)
-        p = m.ImpactSlidePreprocessorV2(
+        p = m.ImpactSlidePreprocessorV4(
             input_path=str(inp), output_dir=str(out),
             filter_level=filter_level, boost_keywords=boost_keywords or [],
         )
@@ -145,7 +145,7 @@ class TestRuntimeValidation:
 
         out = tmp_workspace / "output"
         out.mkdir(parents=True, exist_ok=True)
-        p = m.ImpactSlidePreprocessorV2(input_path=".", output_dir=str(out),
+        p = m.ImpactSlidePreprocessorV4(input_path=".", output_dir=str(out),
                                         filter_level="permissive")
         good = _good_entry(evidence_id="E0001")
         bad_id = _good_entry(evidence_id="BAD_ID")              # violates E####
@@ -182,7 +182,7 @@ class TestEmitSchemaCli:
             pytest.skip("pydantic not installed")
         repo = Path(__file__).resolve().parent.parent
         result = subprocess.run(
-            [sys.executable, str(repo / "step1_preprocessor_v3.py"),
+            [sys.executable, str(repo / "step1_preprocessor_v4.py"),
              "--emit-schema", "--output", str(tmp_path)],
             capture_output=True, text=True, timeout=30,
         )

@@ -32,7 +32,7 @@ Analyst GPT:
   5. Computed group-by aggregate insights (not just suggestions)
 
 Usage:
-    python step1_preprocessor_v3.py --input /path/to/source_files --output ./output
+    python step1_preprocessor_v4.py --input /path/to/source_files --output ./output
 """
 
 import argparse
@@ -171,6 +171,7 @@ except ImportError:
 # config.py). The monolith re-exports them under their original module-level
 # names so every existing call site + the 430-test suite keep working
 # unchanged. The original monolith bodies were relocated verbatim.
+import impact_slides.logging_setup as _logging_setup
 from impact_slides.logging_setup import (
     git_commit as _pkg_git_commit, git_dirty as _pkg_git_dirty,
     get_logger as _pkg_get_logger, _StdlibLogAdapter,
@@ -477,7 +478,7 @@ class ImpactSlidePreprocessorV4:
         """Validate that every stage in the rules is a valid NARRATIVE_STAGES
         member. Raises ValueError at build time so a bad config fails fast."""
         try:
-            from schemas import NARRATIVE_STAGES
+            from impact_slides.schemas import NARRATIVE_STAGES
         except ImportError:
             return  # can't validate without schemas; skip gracefully
         for section in ("insight_types", "slide_type_stages"):
@@ -1169,6 +1170,7 @@ class ImpactSlidePreprocessorV4:
         _LOG_FILE = self.output_dir / "run.log"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         _LOG = None  # reset singleton so each run() gets a fresh logger
+        _logging_setup._LOG = None  # canonical cache — local binding above is vestigial
         self.log = get_logger(
             name="preprocessor", log_file=_LOG_FILE,
             verbose=self.verbose, run_id=self.run_id,
