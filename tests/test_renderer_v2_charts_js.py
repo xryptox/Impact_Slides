@@ -1623,6 +1623,21 @@ class TestBarLabelsInsideSeries:
         # one row per dataset; every cell is that dataset's series name
         assert dl["_labels"] == [[n] * len(conf["data"]["labels"]) for n in names]
 
+    def test_series_labels_anchor_inside_bar_end(self, tmp_path):
+        # N2 residual (v4 sim): PDF year chips are white bold labels at the
+        # RIGHT end, inside the bar — not small labels at the start edge.
+        cfg = {"y_axis_min": 90, "y_axis_max": 100, "bar_labels_inside": "series"}
+        path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        dl = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))[
+            "options"]["plugins"]["datalabels"]
+        assert dl["anchor"] == "end"
+        assert dl["align"] == "start"
+        assert dl["color"].lower() == "#ffffff"
+        assert dl["font"]["weight"] == "bold"
+        assert dl["font"]["size"] >= 13
+
     def test_true_means_category_backward_compat(self, tmp_path):
         cfg = {"bar_labels_inside": True}
         path = _write(tmp_path, _handoff([_hbar_slide(cfg)]))
