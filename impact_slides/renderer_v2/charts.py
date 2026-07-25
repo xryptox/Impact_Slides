@@ -376,9 +376,17 @@ def _series_color(index: int) -> str:
     return _BOARDROOM_SERIES[index % len(_BOARDROOM_SERIES)]
 
 
-def _chartjs_common_options() -> dict[str, Any]:
-    """Calm Boardroom defaults: no animation, readable axes."""
-    return {
+def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Calm Boardroom defaults: no animation, readable axes.
+
+    Optional axis-chrome suppression (F11+, v4 sim): IR 100%%-stack boards
+    carry values in-segment, so the PDF drops gridlines and often the whole
+    y axis. All three keys default to True (current Boardroom chrome), so
+    existing handoffs are unaffected (SC-COMPAT-1):
+      show_gridlines: False  -> hide x+y grid lines, keep ticks
+      show_y_axis / show_x_axis: False -> hide that scale entirely
+    """
+    options = {
         "responsive": True,
         "maintainAspectRatio": False,
         "animation": False,
@@ -408,6 +416,15 @@ def _chartjs_common_options() -> dict[str, Any]:
             },
         },
     }
+    if cfg:
+        if cfg.get("show_gridlines") is False:
+            options["scales"]["x"]["grid"]["display"] = False
+            options["scales"]["y"]["grid"]["display"] = False
+        if cfg.get("show_y_axis") is False:
+            options["scales"]["y"]["display"] = False
+        if cfg.get("show_x_axis") is False:
+            options["scales"]["x"]["display"] = False
+    return options
 
 
 def _align_overlay_to_labels(
@@ -457,7 +474,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 point_colors[i] or color for i in range(len(labels))
             ]
         datasets.append(ds)
-    options = _chartjs_common_options()
+    options = _chartjs_common_options(cfg)
     if stacked:
         options["scales"]["x"]["stacked"] = True
         options["scales"]["y"]["stacked"] = True
@@ -525,10 +542,20 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
 
         total_matrix: list[list[str]] | None = None
         if cfg.get("stack_totals"):
-            # rows are per-category lists of series values
-            totals = [
-                sum(v for v in row if isinstance(v, (int, float))) for row in rows
-            ]
+            # F11+: explicit per-category total labels win over computed sums
+            # — IR 100%-mix boards carry totals in a DIFFERENT unit than the
+            # segments (PDF: 72/21/7 percents inside, $210/$219 above).
+            explicit = cfg.get("stack_total_labels")
+            if isinstance(explicit, (list, tuple)) and explicit:
+                totals: list[Any] = [
+                    str(explicit[ci]) if ci < len(explicit) else ""
+                    for ci in range(len(labels))
+                ]
+            else:
+                # rows are per-category lists of series values
+                totals = [
+                    sum(v for v in row if isinstance(v, (int, float))) for row in rows
+                ]
             total_matrix = [[""] * len(labels) for _ in series]
             for ci, (row, total) in enumerate(zip(rows, totals)):
                 # paint the total on the highest *positive* segment so it sits
@@ -539,7 +566,9 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                     if isinstance(v, (int, float)) and v > 0:
                         top_si = si
                         break
-                total_matrix[top_si][ci] = _fmt_value(total)
+                total_matrix[top_si][ci] = (
+                    total if isinstance(total, str) else _fmt_value(total)
+                )
         seg_matrix: list[list[str]] | None = None
         if cfg.get("point_labels") or cfg.get("show_point_labels"):
             # N4: in-segment per-series values, white centered inside each
@@ -553,6 +582,13 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 ]
                 for si in range(len(series))
             ]
+        if total_matrix is not None:
+            # F11+: totals paint ABOVE the stack — on 100%-domain boards the
+            # stack top equals the axis max, so datalabels' default clip to
+            # the plot area would hide them. Unclip and reserve headroom.
+            layout = options.setdefault("layout", {})
+            padding = layout.setdefault("padding", {})
+            padding["top"] = max(int(padding.get("top") or 0), 22)
         if total_matrix is not None and seg_matrix is not None:
             # N4 dual paint: named label sets so totals (navy, above) and
             # segment values (white, inside) render at once.
@@ -563,17 +599,23 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                         anchor="center", align="center", offset=0,
                         color=_WHITE, size=11, labels=seg_matrix,
                     ),
-                    "total": _datalabels_cfg(
-                        anchor="end", align="top", offset=2,
-                        color=_NAVY, size=12, labels=total_matrix,
-                    ),
+                    "total": {
+                        **_datalabels_cfg(
+                            anchor="end", align="top", offset=2,
+                            color=_NAVY, size=12, labels=total_matrix,
+                        ),
+                        "clip": False,
+                    },
                 },
             }
         elif total_matrix is not None:
-            options["plugins"]["datalabels"] = _datalabels_cfg(
-                anchor="end", align="top", offset=2, color=_NAVY, size=12,
-                labels=total_matrix,
-            )
+            options["plugins"]["datalabels"] = {
+                **_datalabels_cfg(
+                    anchor="end", align="top", offset=2, color=_NAVY, size=12,
+                    labels=total_matrix,
+                ),
+                "clip": False,
+            }
         else:
             options["plugins"]["datalabels"] = _datalabels_cfg(
                 anchor="center", align="center", offset=0, color=_WHITE,
@@ -613,7 +655,7 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 "borderWidth": 0,
             }
         )
-    options = _chartjs_common_options()
+    options = _chartjs_common_options(cfg)
     options["indexAxis"] = "y"
     x_scale = options["scales"]["x"]
     y_break = cfg.get("y_axis_break")
@@ -801,7 +843,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             )
         datasets.append(ds)
 
-    options = _chartjs_common_options()
+    options = _chartjs_common_options(cfg)
     y_scale = options["scales"]["y"]
     # Axis domain: explicit min/max, or forced ticks (0/5/10/15 rails).
     # A y_axis_break {from, to} (#79/F10) renders a discontinuous axis by
@@ -882,7 +924,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 "yAxisID": "y",
             }
         )
-    options = _chartjs_common_options()
+    options = _chartjs_common_options(_chart_config(slide))
     return {
         "type": "bar",
         "data": {"labels": bar_labels, "datasets": datasets},
