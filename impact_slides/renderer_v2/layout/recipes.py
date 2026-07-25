@@ -1686,11 +1686,15 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
     from ..charts import _chart_config  # late import: charts -> layout cycle
 
     cfg = _chart_config(slide)
+    sv = vs.get("secondary_visual") or {}
+    sv_cfg = sv.get("chart_config") if isinstance(sv, dict) else None
     frame_cls = "chart-frame gl-card"
     frame_style = 'style="padding:18px 22px"'
     if cfg.get("surface") == "white":
         frame_cls += " chart-surface-white"
-    if cfg.get("stage") == "flat":
+    if cfg.get("stage") == "flat" or (
+        isinstance(sv_cfg, dict) and sv_cfg.get("stage") == "flat"
+    ):
         frame_cls += " chart-frame-flat"
         frame_style = ""
     return slide_shell(
