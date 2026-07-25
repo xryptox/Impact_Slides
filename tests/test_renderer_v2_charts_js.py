@@ -1952,6 +1952,19 @@ class TestDualStackLabels:
         assert dl["_labels"][0] == ["1,251%", "1,251%"]
         assert dl["_labels"][1] == ["(73%)", "(24%)"]
 
+    def test_percent_unit_suffixes_totals(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {
+            "stack_totals": True, "y_axis_unit": "%"}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        dl = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))[
+            "options"]["plugins"]["datalabels"]
+        # totals: 1251-73=1178, 1251-24=1227 on the positive (NCO) segment
+        assert dl["_labels"][0] == ["1,178%", "1,227%"]
+        assert dl["_labels"][1] == ["", ""]
+
     def test_segment_labels_without_totals_single_set(self, tmp_path):
         s = _slide("stacked_bar_chart", PROVISION_STACK)
         s["visual_spec"]["primary_visual"]["chart_config"] = {"point_labels": True}
