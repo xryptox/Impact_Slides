@@ -1,4 +1,4 @@
-"""Unit tests for module-level pure helper functions in step1_preprocessor_v2_full."""
+"""Unit tests for module-level pure helper functions in impact_slides.preprocessor (v4)."""
 from __future__ import annotations
 
 import math
