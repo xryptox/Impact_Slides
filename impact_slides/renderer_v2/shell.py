@@ -94,13 +94,22 @@ _JS = r"""
         // JSON configs cannot carry functions; resolve the pre-formatted IR
         // label matrix (#84) into the datalabels formatter here.
         var dl = cfg.options.plugins && cfg.options.plugins.datalabels;
-        if (dl && dl._labels) {
-          var labelMatrix = dl._labels;
-          delete dl._labels;
-          dl.formatter = function (value, context) {
+        var bindMatrix = function (target) {
+          var labelMatrix = target._labels;
+          delete target._labels;
+          target.formatter = function (value, context) {
             var row = labelMatrix[context.datasetIndex];
             return row && row[context.dataIndex] ? row[context.dataIndex] : '';
           };
+        };
+        if (dl && dl._labels) {
+          bindMatrix(dl);
+        } else if (dl && dl.labels) {
+          // N4: named label sets (dual paint, e.g. in-segment values plus
+          // stack totals) — each named entry carries its own matrix.
+          Object.keys(dl.labels).forEach(function (name) {
+            if (dl.labels[name] && dl.labels[name]._labels) bindMatrix(dl.labels[name]);
+          });
         }
         new Chart(canvas.getContext('2d'), cfg);
       } catch (err) {
