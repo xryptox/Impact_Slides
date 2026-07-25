@@ -1683,12 +1683,22 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         )
     main = f'<div class="gl-grid gl-grid-2 dual-chart">{"".join(panes)}</div>'
     main += insight_strip(_so_what(slide))
+    from ..charts import _chart_config  # late import: charts -> layout cycle
+
+    cfg = _chart_config(slide)
+    frame_cls = "chart-frame gl-card"
+    frame_style = 'style="padding:18px 22px"'
+    if cfg.get("surface") == "white":
+        frame_cls += " chart-surface-white"
+    if cfg.get("stage") == "flat":
+        frame_cls += " chart-frame-flat"
+        frame_style = ""
     return slide_shell(
         number=int(slide["slide_number"]),
         total=total,
         title=strip_eids(slide.get("title") or ""),
         dek=chosen_dek(slide),
-        main_html=f'<div class="chart-frame gl-card" style="padding:18px 22px">{main}</div>',
+        main_html=f'<div class="{frame_cls}" {frame_style}>{main}</div>',
         notes_html=notes_aside(int(slide["slide_number"]), notes),
         footer_html=source_strip(_source_names(slide)),
         layout_class="dual_chart",
