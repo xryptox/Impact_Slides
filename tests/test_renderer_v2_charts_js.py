@@ -1897,6 +1897,63 @@ class TestStackTotals:
 
 
 # ---------------------------------------------------------------------------
+# N4 — dual simultaneous stacked label sets (in-segment values + total tops)
+# ---------------------------------------------------------------------------
+
+
+class TestDualStackLabels:
+    def test_dual_mode_emits_named_label_sets(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {
+            "stack_totals": True, "point_labels": True, "y_axis_unit": "$"}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        dl = conf["options"]["plugins"]["datalabels"]
+        # named sets: in-segment values + above-stack totals, side by side
+        assert set(dl["labels"]) == {"value", "total"}
+        value, total = dl["labels"]["value"], dl["labels"]["total"]
+        # value set: white, centered inside segments, one cell per series
+        assert value["anchor"] == "center"
+        assert value["color"].lower() == "#ffffff"
+        assert len(value["_labels"]) == len(conf["data"]["datasets"])
+        # total set: navy, above the stack
+        assert total["anchor"] == "end"
+        assert total["align"] == "top"
+
+    def test_dual_mode_formats_segment_values(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {
+            "stack_totals": True, "point_labels": True, "y_axis_unit": "$"}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        sets = conf["options"]["plugins"]["datalabels"]["labels"]
+        seg = sets["value"]["_labels"]
+        # PROVISION_STACK: NCO=1251, RR=-73 / NCO=1251, RR=-24
+        assert seg[0] == ["$1,251", "$1,251"]
+        assert seg[1] == ["($73)", "($24)"]  # unit inside parens (IR)
+        top = sets["total"]["_labels"]
+        # totals: 1251-73=1178, 1251-24=1227 on the positive (NCO) segment
+        assert top[0] == ["$1,178", "$1,227"]
+        assert top[1] == ["", ""]
+
+    def test_segment_labels_without_totals_single_set(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {"point_labels": True}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        dl = conf["options"]["plugins"]["datalabels"]
+        assert "labels" not in dl  # single (legacy) shape, not named sets
+        assert dl["_labels"][0] == ["1,251", "1,251"]
+        assert dl["_labels"][1] == ["(73)", "(24)"]
+
+
+# ---------------------------------------------------------------------------
 # #102 — F4+ freestanding pill packing density
 # ---------------------------------------------------------------------------
 

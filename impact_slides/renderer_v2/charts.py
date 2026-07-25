@@ -473,7 +473,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["scales"]["y"]["min"] = float(neg_min) * 1.1
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
-    if stacked and cfg.get("stack_totals"):
+    if stacked and (cfg.get("stack_totals") or cfg.get("point_labels") or cfg.get("show_point_labels")):
         # #101/N3: per-category signed totals painted above each stack via
         # the top segment's datalabel; negatives render parenthesized (IR).
         def _fmt_total(v: float) -> str:
@@ -483,26 +483,72 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 n = f"{abs(v):,.1f}"
             return f"({n})" if v < 0 else n
 
-        # rows are per-category lists of series values
-        totals = [
-            sum(v for v in row if isinstance(v, (int, float))) for row in rows
-        ]
         unit = str(cfg.get("y_axis_unit") or "")
-        label_matrix = [[""] * len(labels) for _ in series]
-        for ci, (row, total) in enumerate(zip(rows, totals)):
-            # paint the total on the highest *positive* segment so it sits at
-            # the stack top even when the top series is negative (RR).
-            top_si = 0
-            for si in range(len(series) - 1, -1, -1):
-                v = row[si] if si < len(row) else None
-                if isinstance(v, (int, float)) and v > 0:
-                    top_si = si
-                    break
-            label_matrix[top_si][ci] = f"{unit}{_fmt_total(total)}"
-        options["plugins"]["datalabels"] = _datalabels_cfg(
-            anchor="end", align="top", offset=2, color=_NAVY, size=12,
-            labels=label_matrix,
-        )
+
+        def _fmt_segment(v: float) -> str:
+            # N4: in-segment values — unit inside the parens (($73), IR).
+            if v == int(v):
+                n = f"{abs(int(v)):,}"
+            else:
+                n = f"{abs(v):,.1f}"
+            return f"({unit}{n})" if v < 0 else f"{unit}{n}"
+
+        total_matrix: list[list[str]] | None = None
+        if cfg.get("stack_totals"):
+            # rows are per-category lists of series values
+            totals = [
+                sum(v for v in row if isinstance(v, (int, float))) for row in rows
+            ]
+            total_matrix = [[""] * len(labels) for _ in series]
+            for ci, (row, total) in enumerate(zip(rows, totals)):
+                # paint the total on the highest *positive* segment so it sits
+                # at the stack top even when the top series is negative (RR).
+                top_si = 0
+                for si in range(len(series) - 1, -1, -1):
+                    v = row[si] if si < len(row) else None
+                    if isinstance(v, (int, float)) and v > 0:
+                        top_si = si
+                        break
+                total_matrix[top_si][ci] = f"{unit}{_fmt_total(total)}"
+        seg_matrix: list[list[str]] | None = None
+        if cfg.get("point_labels") or cfg.get("show_point_labels"):
+            # N4: in-segment per-series values, white centered inside each
+            # segment — paintable simultaneously with totals (dual sets).
+            seg_matrix = [
+                [
+                    _fmt_segment(row[si])
+                    if si < len(row) and isinstance(row[si], (int, float))
+                    else ""
+                    for row in rows
+                ]
+                for si in range(len(series))
+            ]
+        if total_matrix is not None and seg_matrix is not None:
+            # N4 dual paint: named label sets so totals (navy, above) and
+            # segment values (white, inside) render at once.
+            options["plugins"]["datalabels"] = {
+                "display": True,
+                "labels": {
+                    "value": _datalabels_cfg(
+                        anchor="center", align="center", offset=0,
+                        color=_WHITE, size=11, labels=seg_matrix,
+                    ),
+                    "total": _datalabels_cfg(
+                        anchor="end", align="top", offset=2,
+                        color=_NAVY, size=12, labels=total_matrix,
+                    ),
+                },
+            }
+        elif total_matrix is not None:
+            options["plugins"]["datalabels"] = _datalabels_cfg(
+                anchor="end", align="top", offset=2, color=_NAVY, size=12,
+                labels=total_matrix,
+            )
+        else:
+            options["plugins"]["datalabels"] = _datalabels_cfg(
+                anchor="center", align="center", offset=0, color=_WHITE,
+                size=11, labels=seg_matrix,
+            )
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
