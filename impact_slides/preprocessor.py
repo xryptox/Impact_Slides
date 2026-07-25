@@ -239,8 +239,6 @@ def git_dirty() -> Optional[bool]:
 # the console level to DEBUG instead of gating scattered `if self.verbose`
 # blocks.
 
-_LOG = None  # singleton logger for the preprocessor instance
-
 
 def get_logger(name: str = "preprocessor", log_file: Optional[Path] = None,
                verbose: bool = False, run_id: Optional[str] = None):
@@ -1166,11 +1164,10 @@ class ImpactSlidePreprocessorV4:
     def run(self):
         # v3 #23: initialize the centralized logger (console + run.log file).
         # Done here (not __init__) because output_dir must exist for the file.
-        global _LOG, _LOG_FILE
+        global _LOG_FILE
         _LOG_FILE = self.output_dir / "run.log"
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        _LOG = None  # reset singleton so each run() gets a fresh logger
-        _logging_setup._LOG = None  # canonical cache — local binding above is vestigial
+        _logging_setup._LOG = None  # reset canonical cache so each run() gets a fresh logger
         self.log = get_logger(
             name="preprocessor", log_file=_LOG_FILE,
             verbose=self.verbose, run_id=self.run_id,

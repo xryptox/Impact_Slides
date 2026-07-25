@@ -1,5 +1,5 @@
 """
-Intent / specification tests for step1_preprocessor_v2_full.py.
+Intent / specification tests for impact_slides.preprocessor (v4).
 
 Goal of the codebase (per Best Hybrid Workflow.md): seed source-backed insights
 from PPTX/Excel/PDF/DOCX into a PRIORITY-ORDERED Evidence Register that the

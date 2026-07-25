@@ -1,5 +1,5 @@
 """
-Regression tests for step1_preprocessor_v3.py — the five insight-quality
+Regression tests for impact_slides.preprocessor (v4) — the five insight-quality
 enhancements over v2:
 
   #1  trend / delta insights across time-ordered spreadsheet sheets
