@@ -570,18 +570,57 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                     total if isinstance(total, str) else _fmt_value(total)
                 )
         seg_matrix: list[list[str]] | None = None
+        chip_matrix: list[list[str]] | None = None
         if cfg.get("point_labels") or cfg.get("show_point_labels"):
             # N4: in-segment per-series values, white centered inside each
             # segment — paintable simultaneously with totals (dual sets).
+            #
+            # N3 residual (IR signed-paren pairing): negatives that are THIN
+            # in pixels can't host an inside label — the PDF moves those to a
+            # navy chip just below the below-axis segment (thick negatives
+            # keep the white-inside recipe). Estimated from the data domain;
+            # ~16px is the smallest sliver that fits an 11px label.
+            est_top = (
+                float(cfg["y_axis_max"]) if cfg.get("y_axis_max") is not None
+                else max(
+                    (sum(v for v in row if isinstance(v, (int, float)) and v > 0)
+                     for row in rows),
+                    default=0.0,
+                )
+            )
+            est_bottom = (
+                float(cfg["y_axis_min"]) if cfg.get("y_axis_min") is not None
+                else min(0.0, (neg_min or 0.0) * 1.1)
+            )
+            span = max(est_top - est_bottom, 1e-9)
+
+            def _thin_negative(v: Any) -> bool:
+                return (
+                    isinstance(v, (int, float)) and v < 0
+                    and abs(v) / span * 380 < 16
+                )
+
             seg_matrix = [
                 [
                     _fmt_value(row[si])
                     if si < len(row) and isinstance(row[si], (int, float))
+                    and not _thin_negative(row[si])
                     else ""
                     for row in rows
                 ]
                 for si in range(len(series))
             ]
+            chips = [
+                [
+                    _fmt_value(row[si])
+                    if si < len(row) and _thin_negative(row[si])
+                    else ""
+                    for row in rows
+                ]
+                for si in range(len(series))
+            ]
+            if any(cell for chip_row in chips for cell in chip_row):
+                chip_matrix = chips
         if total_matrix is not None:
             # F11+: totals paint ABOVE the stack — on 100%-domain boards the
             # stack top equals the axis max, so datalabels' default clip to
@@ -589,24 +628,46 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             layout = options.setdefault("layout", {})
             padding = layout.setdefault("padding", {})
             padding["top"] = max(int(padding.get("top") or 0), 22)
+        if seg_matrix is not None and neg_min is not None:
+            # N3 residual: below-axis signed labels (($73)/($24), IR) sit at
+            # the negative segment's center — near the plot bottom on thin
+            # releases, where the default clip cuts them off. Unclip and
+            # reserve bottom headroom.
+            layout = options.setdefault("layout", {})
+            padding = layout.setdefault("padding", {})
+            padding["bottom"] = max(int(padding.get("bottom") or 0), 20)
+        if chip_matrix is not None:
+            chip_set = {
+                **_datalabels_cfg(
+                    anchor="end", align="bottom", offset=2,
+                    color=_NAVY, size=11, labels=chip_matrix,
+                ),
+                "clip": False,
+            }
         if total_matrix is not None and seg_matrix is not None:
             # N4 dual paint: named label sets so totals (navy, above) and
             # segment values (white, inside) render at once.
-            options["plugins"]["datalabels"] = {
-                "display": True,
-                "labels": {
-                    "value": _datalabels_cfg(
+            label_sets: dict[str, Any] = {
+                "value": {
+                    **_datalabels_cfg(
                         anchor="center", align="center", offset=0,
                         color=_WHITE, size=11, labels=seg_matrix,
                     ),
-                    "total": {
-                        **_datalabels_cfg(
-                            anchor="end", align="top", offset=2,
-                            color=_NAVY, size=12, labels=total_matrix,
-                        ),
-                        "clip": False,
-                    },
+                    "clip": False,
                 },
+                "total": {
+                    **_datalabels_cfg(
+                        anchor="end", align="top", offset=2,
+                        color=_NAVY, size=12, labels=total_matrix,
+                    ),
+                    "clip": False,
+                },
+            }
+            if chip_matrix is not None:
+                label_sets["negchip"] = chip_set
+            options["plugins"]["datalabels"] = {
+                "display": True,
+                "labels": label_sets,
             }
         elif total_matrix is not None:
             options["plugins"]["datalabels"] = {
@@ -616,11 +677,28 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 ),
                 "clip": False,
             }
+        elif chip_matrix is not None:
+            options["plugins"]["datalabels"] = {
+                "display": True,
+                "labels": {
+                    "value": {
+                        **_datalabels_cfg(
+                            anchor="center", align="center", offset=0,
+                            color=_WHITE, size=11, labels=seg_matrix,
+                        ),
+                        "clip": False,
+                    },
+                    "negchip": chip_set,
+                },
+            }
         else:
-            options["plugins"]["datalabels"] = _datalabels_cfg(
-                anchor="center", align="center", offset=0, color=_WHITE,
-                size=11, labels=seg_matrix,
-            )
+            options["plugins"]["datalabels"] = {
+                **_datalabels_cfg(
+                    anchor="center", align="center", offset=0, color=_WHITE,
+                    size=11, labels=seg_matrix,
+                ),
+                "clip": False,
+            }
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
