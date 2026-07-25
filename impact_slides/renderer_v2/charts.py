@@ -511,18 +511,11 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
     if stacked and (cfg.get("stack_totals") or cfg.get("point_labels") or cfg.get("show_point_labels")):
         # #101/N3: per-category signed totals painted above each stack via
         # the top segment's datalabel; negatives render parenthesized (IR).
-        def _fmt_total(v: float) -> str:
-            if v == int(v):
-                n = f"{abs(int(v)):,}"
-            else:
-                n = f"{abs(v):,.1f}"
-            return f"({n})" if v < 0 else n
-
         unit = str(cfg.get("y_axis_unit") or "")
 
-        def _fmt_segment(v: float) -> str:
-            # N4: in-segment values — unit inside the parens (($73), IR).
+        def _fmt_value(v: float) -> str:
             # Currency-style units prefix ($1,251); percent-style suffix (72%).
+            # Negatives are parenthesized with the unit inside (($73), IR).
             if v == int(v):
                 n = f"{abs(int(v)):,}"
             else:
@@ -546,14 +539,14 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                     if isinstance(v, (int, float)) and v > 0:
                         top_si = si
                         break
-                total_matrix[top_si][ci] = f"{unit}{_fmt_total(total)}"
+                total_matrix[top_si][ci] = _fmt_value(total)
         seg_matrix: list[list[str]] | None = None
         if cfg.get("point_labels") or cfg.get("show_point_labels"):
             # N4: in-segment per-series values, white centered inside each
             # segment — paintable simultaneously with totals (dual sets).
             seg_matrix = [
                 [
-                    _fmt_segment(row[si])
+                    _fmt_value(row[si])
                     if si < len(row) and isinstance(row[si], (int, float))
                     else ""
                     for row in rows
