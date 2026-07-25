@@ -379,7 +379,7 @@ def _series_color(index: int) -> str:
 def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Calm Boardroom defaults: no animation, readable axes.
 
-    Optional axis-chrome suppression (F11+, v4 sim): IR 100%%-stack boards
+    Optional axis-chrome suppression (F11+, v4 sim): IR 100%-stack boards
     carry values in-segment, so the PDF drops gridlines and often the whole
     y axis. All three keys default to True (current Boardroom chrome), so
     existing handoffs are unaffected (SC-COMPAT-1):
