@@ -1133,6 +1133,7 @@
   flex: none;
   font-size: 16px;
   font-weight: 700;
+  min-height: 1lh;
   padding: 10px 8px;
   margin-bottom: 6px;
   border-bottom: none;
