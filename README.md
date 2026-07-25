@@ -1,18 +1,16 @@
 # Impact Slide Preprocessor — Step 1
 
-This project ships **three versions** of the Step 1 preprocessor:
+This project ships **one version** of the Step 1 preprocessor:
 
 | Version | File | Status |
 |---------|------|--------|
 | **v4** | `step1_preprocessor_v4.py` (55-line shim → `impact_slides/` package) | **Active development — recommended.** Builds on v3 with the Analyst Briefing Generator (v4 #26): a Narrative Readiness Score (0–100 composite + per stage), ranked multi-signal Focus Areas, surfaced cross-file relationships, quality flags, and slide-building recommendations — emitted as `analyst_briefing.md` + `analyst_briefing.json` for a tighter handoff to the Impact Slide Analyst GPT. New `--focus-areas` flag + YAML `briefing` weights/keywords config (30 dedicated tests). **v4 is modularized** into the `impact_slides/` package (13 modules); `step1_preprocessor_v4.py` is a 55-line forwarding shim (PEP 562 `__getattr__`) so every existing `import step1_preprocessor_v4` + CLI invocation keeps working unchanged. |
-| **v3** | `step1_preprocessor_v3.py` | **Stable baseline** (frozen regression net). Adds twelve insight-quality enhancements over v2 plus a Pydantic schema contract, richer PPTX extraction, merged pdfplumber/PyMuPDF table detection, fuzzy/abbreviation cross-file entity matching, tiered semantic dedup with source-merging, optional YAML config, always-on time profiling, centralized logging with run_metadata.json, configurable Why/What/How/Now stage mapping, and IQR outlier/correlation/period-trend analytics (199 dedicated tests). |
-| **v2** | `step1_preprocessor_v2_full.py` | Stable, fully tested (201 tests). The bug-fix baseline. |
 
-All three produce the same Evidence Register handoff for the Impact Slide
-Analyst GPT; each version is a superset of the previous. **Use v4 going
-forward** — it's modularized (each leaf module is single-read and independently
-testable) and emits the strategic Analyst Briefing on top of the v3 register.
-v3/v2 remain as frozen regression baselines.
+v4 produces the Evidence Register handoff for the Impact Slide Analyst GPT.
+**Use v4** — it's modularized (each leaf module is single-read and
+independently testable) and emits the strategic Analyst Briefing on top of
+the v3 register. The legacy v2/v3 frozen regression baselines were removed;
+v4's own test suite is now the sole regression net.
 
 > **Role in the Impact Slides workflow:** Step 1 — Python preprocessor.
 > Ingests business source files (Excel, PowerPoint, PDF, Word) and produces a
@@ -496,9 +494,8 @@ number, a prose assertion, a verbatim quote, or a risk:
 | **Quote** | `speaker_notes_insight`, `emphasized_text` (verbatim text) |
 | **Risk** | never auto-assigned from `insight_type`; only via the **risk-keyword override layer** — evidence whose `text` matches a risk-language regex (`risk`, `exposure`, `volatility`, `headwind`, `vulnerable`, `downside`, `uncertain…`) is reclassified to `Risk` regardless of its `insight_type`. Extend the keyword set with `--semantic-type-keywords` / YAML `semantic_type_keywords`. |
 
-The field is **optional in the schema** (default `None`) so the frozen v2/v3
-regression baselines — which share `schemas.py` but predate the field — still
-validate cleanly. The v4 chokepoint (`_validate_evidence()`) always populates
+The field is **optional in the schema** (default `None`) so registers
+generated before it existed still validate cleanly. The v4 chokepoint (`_validate_evidence()`) always populates
 a real value before the register is written, so **every v4-generated register
 carries `semantic_type`** (the only kind the Analyst GPT consumes). The GPT
 preserves it like `evidence_id`.
@@ -543,7 +540,7 @@ Risk-override still applies). Precedence: a quoted risk statement → `Risk`
 ## CLI Reference
 
 ```
-python step1_preprocessor_v2_full.py --input <folder> --output <folder> [options]
+python step1_preprocessor_v4.py --input <folder> --output <folder> [options]
 ```
 
 Run with no `--input`/`--output` to execute the built-in smoke test.
@@ -701,8 +698,7 @@ Without Tesseract, the pipeline still runs; scanned PDFs simply yield no text
 `step1_preprocessor_v4.py` is the active entry point. It's now a 55-line
 forwarding shim that delegates to the modular `impact_slides/` package — so
 every invocation style below works unchanged, whether you drive it from the
-CLI, a YAML config, or a Python import. (v3/v2 baselines are also present if
-you need the frozen regression versions; swap the filename.)
+CLI, a YAML config, or a Python import.
 
 ### 1. CLI with flags (most common)
 
@@ -961,8 +957,9 @@ insights are "right" (use `--inspect` for that manual review).
 
 ## v3 Enhancements (over v2)
 
-`step1_preprocessor_v3.py` adds twelve insight-quality improvements, each pinned
-by tests in `tests/test_v3.py`. Validated against the real-world files
+The v3 generation (now folded into the `impact_slides/` package) adds twelve
+insight-quality improvements over v2, each pinned by tests in
+`tests/test_v3.py`. Validated against the real-world files
 (supermarket_sales.xlsx + Performance.pptx):
 
 | # | Enhancement | Before (v2) | After (v3) |

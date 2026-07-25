@@ -1,8 +1,8 @@
 # Impact Slide Preprocessor v3 — example YAML config
 # ----------------------------------------------------------------------------
 # Usage:
-#   python step1_preprocessor_v3.py --config config.example.yaml
-#   python step1_preprocessor_v3.py --config config.example.yaml --inspect-top 5
+#   python step1_preprocessor_v4.py --config config.example.yaml
+#   python step1_preprocessor_v4.py --config config.example.yaml --inspect-top 5
 #
 # Precedence (highest wins):  CLI flag  >  YAML value  >  argparse default
 # So any flag you pass on the command line overrides what's set here, and any

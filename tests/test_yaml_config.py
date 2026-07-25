@@ -20,7 +20,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import step1_preprocessor_v3 as m
+import impact_slides.config as m
+import impact_slides.cli as cli
 
 
 # Build a parser that mirrors main()'s flag surface so merge_config can be
@@ -182,7 +183,7 @@ class TestMainIntegration:
             f"input: {inp}\noutput: {out}\nfilter_level: permissive\ndedup_engine: tfidf\n",
             encoding="utf-8",
         )
-        rc = m.main(["--config", str(cfgp)])
+        rc = cli.main(["--config", str(cfgp)])
         assert rc == 0
         assert (out / "evidence_register_seed.json").exists()
 
@@ -195,7 +196,7 @@ class TestMainIntegration:
             encoding="utf-8",
         )
         # CLI --dedup-engine fuzzy must override YAML tfidf
-        rc = m.main(["--config", str(cfgp), "--dedup-engine", "fuzzy"])
+        rc = cli.main(["--config", str(cfgp), "--dedup-engine", "fuzzy"])
         assert rc == 0
 
     def test_bad_config_choice_exits_nonzero(self, tmp_path):
@@ -205,13 +206,13 @@ class TestMainIntegration:
         cfgp.write_text(
             f"input: {inp}\noutput: {out}\nfilter_level: bogus\n", encoding="utf-8",
         )
-        rc = m.main(["--config", str(cfgp)])
+        rc = cli.main(["--config", str(cfgp)])
         assert rc == 1
         # pipeline must NOT have run against the bad config
         assert not (out / "evidence_register_seed.json").exists()
 
     def test_missing_config_file_exits_nonzero(self, tmp_path):
-        rc = m.main(["--config", str(tmp_path / "nope.yaml")])
+        rc = cli.main(["--config", str(tmp_path / "nope.yaml")])
         assert rc == 1
 
     def test_pure_cli_unchanged_no_config(self, tmp_path):
@@ -219,7 +220,7 @@ class TestMainIntegration:
         as before the YAML feature was added."""
         inp, out = tmp_path / "in", tmp_path / "out"
         self._make_xlsx(inp)
-        rc = m.main(["--input", str(inp), "--output", str(out),
+        rc = cli.main(["--input", str(inp), "--output", str(out),
                      "--filter-level", "permissive"])
         assert rc == 0
         assert (out / "evidence_register_seed.json").exists()

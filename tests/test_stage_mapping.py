@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import step1_preprocessor_v3 as m
+import impact_slides.preprocessor as m
 
 
 @pytest.fixture()
@@ -29,7 +29,7 @@ def make_preprocessor(tmp_workspace):
         inp = tmp_workspace / "input"
         out = tmp_workspace / "output"
         inp.mkdir(parents=True, exist_ok=True)
-        p = m.ImpactSlidePreprocessorV2(
+        p = m.ImpactSlidePreprocessorV4(
             input_path=str(inp), output_dir=str(out), filter_level=filter_level,
         )
         if config_snapshot is not None:

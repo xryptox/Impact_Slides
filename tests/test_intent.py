@@ -1,5 +1,5 @@
 """
-Intent / specification tests for step1_preprocessor_v2_full.py.
+Intent / specification tests for impact_slides.preprocessor (v4).
 
 Goal of the codebase (per Best Hybrid Workflow.md): seed source-backed insights
 from PPTX/Excel/PDF/DOCX into a PRIORITY-ORDERED Evidence Register that the
@@ -24,7 +24,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 FRAMEWORK_STAGES = {"Why", "What", "How", "Now"}
 
@@ -75,7 +75,7 @@ def rich_scenario(make_excel, make_pptx, tmp_workspace):
     doc.save(pdf_path)
     doc.close()
 
-    p = m.ImpactSlidePreprocessorV2(input_path=str(inp), output_dir=str(out),
+    p = m.ImpactSlidePreprocessorV4(input_path=str(inp), output_dir=str(out),
                                     filter_level="permissive")
     p.run()
 
@@ -353,7 +353,7 @@ class TestScannedPdfRetention:
         if not m.pytesseract:
             pytest.skip("pytesseract not installed")
         # confirm tesseract binary is reachable
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         pp._ocr_available = None
         if not pp._ensure_tesseract():
             pytest.skip("Tesseract binary not available")
@@ -363,7 +363,7 @@ class TestScannedPdfRetention:
         out = tmp_workspace / "output"
         inp.mkdir(parents=True, exist_ok=True)
         shutil.copy(real_scanned_pdf, inp / "scan.pdf")
-        p = m.ImpactSlidePreprocessorV2(input_path=str(inp), output_dir=str(out),
+        p = m.ImpactSlidePreprocessorV4(input_path=str(inp), output_dir=str(out),
                                         filter_level="permissive")
         p.enable_ocr = True
         p._ocr_available = None

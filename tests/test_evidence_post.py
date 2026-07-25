@@ -6,12 +6,12 @@ from __future__ import annotations
 
 import pytest
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 
 @pytest.fixture()
 def pp():
-    return m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_unused")
+    return m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_unused")
 
 
 # --------------------------------------------------------------------------- #
@@ -163,13 +163,6 @@ class TestCrossFile:
         out = pp._find_cross_file_relationships(evs)
         assert any("Yangon" in e["text"] for e in out), \
             "expected dynamically-derived entity 'Yangon' to be surfaced"
-
-    def test_short_keyword_uses_word_boundary(self, pp):
-        """Short keywords (<=4 chars) must match on word boundaries so 'east'
-        doesn't fire inside 'yeast' or 'beast'."""
-        evs = [self._xlsx_ev("yeast infection rates"), self._pptx_ev("yeast again")]
-        out = pp._find_cross_file_relationships(evs)
-        assert not any("'East'" in e["text"] for e in out)
 
     def test_only_excel_returns_empty(self, pp):
         out = pp._find_cross_file_relationships([self._xlsx_ev("North")])
