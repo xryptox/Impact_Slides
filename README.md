@@ -494,9 +494,8 @@ number, a prose assertion, a verbatim quote, or a risk:
 | **Quote** | `speaker_notes_insight`, `emphasized_text` (verbatim text) |
 | **Risk** | never auto-assigned from `insight_type`; only via the **risk-keyword override layer** — evidence whose `text` matches a risk-language regex (`risk`, `exposure`, `volatility`, `headwind`, `vulnerable`, `downside`, `uncertain…`) is reclassified to `Risk` regardless of its `insight_type`. Extend the keyword set with `--semantic-type-keywords` / YAML `semantic_type_keywords`. |
 
-The field is **optional in the schema** (default `None`) so the frozen v2/v3
-regression baselines — which share `schemas.py` but predate the field — still
-validate cleanly. The v4 chokepoint (`_validate_evidence()`) always populates
+The field is **optional in the schema** (default `None`) so registers
+generated before it existed still validate cleanly. The v4 chokepoint (`_validate_evidence()`) always populates
 a real value before the register is written, so **every v4-generated register
 carries `semantic_type`** (the only kind the Analyst GPT consumes). The GPT
 preserves it like `evidence_id`.
