@@ -636,6 +636,12 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             layout = options.setdefault("layout", {})
             padding = layout.setdefault("padding", {})
             padding["bottom"] = max(int(padding.get("bottom") or 0), 20)
+        value_set = _datalabels_cfg(
+            anchor="center", align="center", offset=0,
+            color=_WHITE, size=11, labels=seg_matrix,
+        )
+        if neg_min is not None:
+            value_set = {**value_set, "clip": False}
         if chip_matrix is not None:
             chip_set = {
                 **_datalabels_cfg(
@@ -648,13 +654,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             # N4 dual paint: named label sets so totals (navy, above) and
             # segment values (white, inside) render at once.
             label_sets: dict[str, Any] = {
-                "value": {
-                    **_datalabels_cfg(
-                        anchor="center", align="center", offset=0,
-                        color=_WHITE, size=11, labels=seg_matrix,
-                    ),
-                    "clip": False,
-                },
+                "value": value_set,
                 "total": {
                     **_datalabels_cfg(
                         anchor="end", align="top", offset=2,
@@ -681,24 +681,12 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["plugins"]["datalabels"] = {
                 "display": True,
                 "labels": {
-                    "value": {
-                        **_datalabels_cfg(
-                            anchor="center", align="center", offset=0,
-                            color=_WHITE, size=11, labels=seg_matrix,
-                        ),
-                        "clip": False,
-                    },
+                    "value": value_set,
                     "negchip": chip_set,
                 },
             }
         else:
-            options["plugins"]["datalabels"] = {
-                **_datalabels_cfg(
-                    anchor="center", align="center", offset=0, color=_WHITE,
-                    size=11, labels=seg_matrix,
-                ),
-                "clip": False,
-            }
+            options["plugins"]["datalabels"] = value_set
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
