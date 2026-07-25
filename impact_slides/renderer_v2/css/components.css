@@ -1084,7 +1084,7 @@
 .gl-pill-free {
   display: flex;
   flex-direction: row; /* explicit: .gl-card sets flex-direction: column */
-  gap: 16px;
+  gap: var(--gap-sm, 12px);
   align-items: stretch;
   flex: 1;
   /* .gl-main is block, so flex:1 alone won't stretch the board — carry an
@@ -1111,7 +1111,7 @@
      IR statement bodies are white — caps alone carry the navy. */
   background: var(--color-paper, #fff);
   border: 1px solid var(--navy);
-  border-radius: 14px;
+  border-radius: var(--radius-lg, 12px);
   overflow: hidden; /* clip the cap to the shell's rounded top corners */
   padding: 0;
 }
