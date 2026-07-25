@@ -1,4 +1,4 @@
-"""End-to-end pipeline (run()) integration tests for step1_preprocessor_v2_full.
+"""End-to-end pipeline (run()) integration tests for impact_slides.preprocessor (v4).
 
 Covers Excel, PPTX (incl. the section-slide crash regression surfaced through
 run()), PDF (text + scanned), output JSON contract, and edge cases.
@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 
 def _load(out_dir, name):

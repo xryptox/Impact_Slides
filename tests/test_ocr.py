@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-import step1_preprocessor_v2_full as m
+import impact_slides.preprocessor as m
 
 TESSERACT_CANDIDATES = [
     shutil.which("tesseract"),
@@ -35,7 +35,7 @@ HAS_TESSERACT = _tesseract_available()
 
 @pytest.fixture()
 def pp():
-    p = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_unused")
+    p = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_unused")
     return p
 
 
@@ -158,7 +158,7 @@ class TestEnableOcrFlagFlowsThroughRun:
         import shutil as _sh
         _sh.copy(real_scanned_pdf, inp / "scan.pdf")
 
-        p = m.ImpactSlidePreprocessorV2(input_path=str(inp), output_dir=str(out),
+        p = m.ImpactSlidePreprocessorV4(input_path=str(inp), output_dir=str(out),
                                         filter_level="permissive")
         p.enable_ocr = True
         p._ocr_available = None
@@ -177,7 +177,7 @@ class TestEnableOcrFlagFlowsThroughRun:
         import shutil as _sh
         _sh.copy(real_scanned_pdf, inp / "scan.pdf")
 
-        p = m.ImpactSlidePreprocessorV2(input_path=str(inp), output_dir=str(out),
+        p = m.ImpactSlidePreprocessorV4(input_path=str(inp), output_dir=str(out),
                                         filter_level="permissive")
         p.enable_ocr = False
         p.run()

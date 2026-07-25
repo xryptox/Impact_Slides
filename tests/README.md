@@ -1,7 +1,7 @@
 # Impact Slides — Test Suite
 
-Pytest suite for both `step1_preprocessor_v2_full.py` (v2) and
-`step1_preprocessor_v3.py` (v3). Step 4 coverage to be added later.
+Pytest suite for `step1_preprocessor_v4.py` and the `impact_slides/`
+package (v4). Step 4 coverage to be added later.
 
 ## Run
 

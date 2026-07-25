@@ -18,7 +18,9 @@ from pathlib import Path
 
 import pytest
 
-import step1_preprocessor_v3 as m
+import impact_slides.preprocessor as m
+import impact_slides.cli as cli
+import impact_slides.dedup as dedup_mod
 
 
 def _ev(eid, text, score=0.8, src="a.xlsx"):
@@ -38,7 +40,7 @@ def make_preprocessor(tmp_workspace):
         inp = tmp_workspace / "input"
         out = tmp_workspace / "output"
         inp.mkdir(parents=True, exist_ok=True)
-        p = m.ImpactSlidePreprocessorV2(
+        p = m.ImpactSlidePreprocessorV4(
             input_path=str(inp), output_dir=str(out), filter_level=filter_level,
         )
         return p, inp, out
@@ -79,7 +81,7 @@ class TestFuzzyTier:
     def test_lexical_rephrasing_collapses_auto(self):
         """auto mode (fuzzy fallback) still catches the lexical rephrasing that
         the v3 #10 test pinned — regression safety for the engine refactor."""
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         evs = [
             _ev("E1", "Recommendation: expand North operations", 0.9),
             _ev("E2", "Recommend expanding North operations", 0.7, "b.pptx"),
@@ -92,7 +94,7 @@ class TestFuzzyTier:
         assert "Recommend expanding North operations" not in texts
 
     def test_distinct_insights_not_collapsed(self):
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         evs = [
             _ev("E1", "Revenue grew strongly in Q3", 0.8),
             _ev("E2", "Profit margins declined in the south", 0.8, "b.pptx"),
@@ -107,7 +109,7 @@ class TestTfidfTier:
         This is the false-positive guard for the opt-in tier."""
         if m.np is None:
             pytest.skip("numpy unavailable")
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         pp.dedup_engine = "tfidf"
         evs = [
             _ev("E1", "revenue grew in north region", 0.9),
@@ -122,7 +124,7 @@ class TestTfidfTier:
         """Identical text (perfect word overlap, cosine=1.0) still collapses."""
         if m.np is None:
             pytest.skip("numpy unavailable")
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         pp.dedup_engine = "tfidf"
         evs = [
             _ev("E1", "quarterly revenue growth accelerated", 0.9),
@@ -140,7 +142,7 @@ class TestTfidfTier:
         0.85 threshold this distinct-metric pair stays separate."""
         if m.np is None:
             pytest.skip("numpy unavailable")
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         pp.dedup_engine = "tfidf"
         evs = [
             _ev("E1", "January: 'Tax 5%' ranges from 0.6045 to 49.26.", 0.9),
@@ -155,7 +157,7 @@ class TestTfidfTier:
 # --------------------------------------------------------------------------- #
 class TestSourceMerging:
     def test_merged_sources_recorded_on_survivor(self):
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         evs = [
             _ev("E1", "Recommendation: expand North operations", 0.9, "a.xlsx"),
             _ev("E2", "Recommend expanding North operations", 0.7, "b.pptx"),
@@ -170,7 +172,7 @@ class TestSourceMerging:
     def test_same_file_near_dup_not_added_to_merged_sources(self):
         """If both near-dups come from the same file, merged_sources stays empty
         (no self-referential source entry)."""
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         evs = [
             _ev("E1", "Recommendation: expand North operations", 0.9, "a.xlsx"),
             _ev("E2", "Recommend expanding North operations", 0.7, "a.xlsx"),
@@ -182,7 +184,7 @@ class TestSourceMerging:
         assert survivor["dedup_merged_ids"] == ["E2"]
 
     def test_three_way_merge_accumulates_sources(self):
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         evs = [
             _ev("E1", "Recommendation: expand North operations", 0.9, "a.xlsx"),
             _ev("E2", "Recommend expanding North operations", 0.8, "b.pptx"),
@@ -222,8 +224,8 @@ class TestEmbeddingsTier:
                 norms[norms == 0] = 1.0
                 return out / norms
 
-        monkeypatch.setattr(m, "_SENTENCE_MODEL", _MockModel())
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        monkeypatch.setattr(dedup_mod, "_SENTENCE_MODEL", _MockModel())  # singleton lives in dedup, not the preprocessor re-export
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         pp.dedup_engine = "embeddings"
         evs = [
             _ev("E1", "north america revenue grew 12%", 0.9, "a.xlsx"),
@@ -248,8 +250,8 @@ class TestEmbeddingsTier:
                 eye = np.eye(max(n, 3))[:n]
                 return eye
 
-        monkeypatch.setattr(m, "_SENTENCE_MODEL", _MockModel())
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        monkeypatch.setattr(dedup_mod, "_SENTENCE_MODEL", _MockModel())  # singleton lives in dedup, not the preprocessor re-export
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         pp.dedup_engine = "embeddings"
         evs = [
             _ev("E1", "Recommendation: expand North operations", 0.9),
@@ -274,5 +276,5 @@ class TestPipelineIntegration:
         pd.DataFrame({"M": [1, 2], "V": [10, 20]}).to_excel(inp / "s.xlsx", index=False)
         argv = ["--input", str(inp), "--output", str(out),
                 "--filter-level", "permissive", "--dedup-engine", "tfidf"]
-        m.main(argv)
+        cli.main(argv)
         assert (out / "evidence_register_seed.json").exists()

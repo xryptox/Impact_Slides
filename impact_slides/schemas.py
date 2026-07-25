@@ -12,7 +12,7 @@ them here means:
   - EvidenceEntry.model_json_schema() produces a precise JSON Schema that can
     be embedded directly into the Analyst GPT instructions.
 
-Run `python step1_preprocessor_v3.py --emit-schema` to (re)generate
+Run `python step1_preprocessor_v4.py --emit-schema` to (re)generate
 `evidence_schema.json` from these models.
 """
 from __future__ import annotations

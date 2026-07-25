@@ -1,5 +1,5 @@
 """
-Regression tests for step1_preprocessor_v3.py — the five insight-quality
+Regression tests for impact_slides.preprocessor (v4) — the five insight-quality
 enhancements over v2:
 
   #1  trend / delta insights across time-ordered spreadsheet sheets
@@ -30,7 +30,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import step1_preprocessor_v3 as m
+import impact_slides.preprocessor as m
 
 REAL_DIR = Path(r"C:\Users\Ag1Le\Documents\realworld_test\input")
 XLSX = REAL_DIR / "supermarket_sales.xlsx"
@@ -49,7 +49,7 @@ def make_preprocessor(tmp_workspace):
         inp = tmp_workspace / "input"
         out = tmp_workspace / "output"
         inp.mkdir(parents=True, exist_ok=True)
-        p = m.ImpactSlidePreprocessorV2(
+        p = m.ImpactSlidePreprocessorV4(
             input_path=str(inp),
             output_dir=str(out),
             filter_level=filter_level,
@@ -65,7 +65,7 @@ def real_run(tmp_path_factory):
     if not _have_real_files():
         pytest.skip("real-world test files not downloaded")
     out = tmp_path_factory.mktemp("v3_real_out")
-    p = m.ImpactSlidePreprocessorV2(input_path=str(REAL_DIR), output_dir=str(out),
+    p = m.ImpactSlidePreprocessorV4(input_path=str(REAL_DIR), output_dir=str(out),
                                     filter_level="permissive")
     p.run()
     return out
@@ -380,7 +380,7 @@ class TestConfidenceModel:
 # --------------------------------------------------------------------------- #
 class TestSemanticDedup:
     def test_rephrasings_collapse(self):
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         evs = [
             {"evidence_id": "E1", "insight_type": "bullet_insight",
              "text": "Recommendation: expand North operations", "priority_score": 0.9,
@@ -400,7 +400,7 @@ class TestSemanticDedup:
         assert "Totally different insight about revenue" in texts   # distinct kept
 
     def test_distinct_insights_not_collapsed(self):
-        pp = m.ImpactSlidePreprocessorV2(input_path=".", output_dir="./_x")
+        pp = m.ImpactSlidePreprocessorV4(input_path=".", output_dir="./_x")
         evs = [
             {"evidence_id": "E1", "insight_type": "bullet_insight",
              "text": "Revenue grew strongly in Q3", "priority_score": 0.8,

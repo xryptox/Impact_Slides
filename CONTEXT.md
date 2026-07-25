@@ -11,7 +11,7 @@ The four-step division of labor: Step 1 Python Preprocessor → Step 2 Analyst �
 _Avoid_: pipeline, process (when ambiguous with the `process_step` evidence type)
 
 **Step 1 Preprocessor**:
-The Python preprocessor (`impact_slides.preprocessor`, entered via `step1_preprocessor_v4.py`) that ingests source files and emits the Evidence Register plus companion artifacts. The current canonical version is **v4**; v2 and v3 are frozen regression baselines and must never be modified.
+The Python preprocessor (`impact_slides.preprocessor`, entered via `step1_preprocessor_v4.py`) that ingests source files and emits the Evidence Register plus companion artifacts. The only shipped version is **v4**; the legacy v2/v3 frozen regression baselines were removed (see `tests/LEGACY_MIGRATION.md`), so v4's own test suite is the sole regression net.
 _Avoid_: preprocessor (unqualified when it could mean v1–v3), extractor
 
 **Analyst**:
@@ -168,5 +168,5 @@ _Avoid_: annotation (reserved for the text callout field), caption, footnote
 - Production output defaults to self-contained; CDN is dev-only and never implied by ship docs.
 - No third-party trademarks or brand assets in the renderer or asset pack. Vendored brand marks (e.g. `seal_lockup`) are original artwork only; real companies bring their own mark via the handoff escape hatch.
 - The Inliner is the single owner of vendored asset embedding; layouts must not grow their own `<script src="https://...">`.
-- v2 and v3 preprocessors are frozen regression baselines; v4 (`impact_slides/`) is canonical.
+- v4 (`impact_slides/`) is the only shipped preprocessor; the v2/v3 frozen regression baselines were removed and v4's suite is the sole regression net.
 - `schemas.py` is the single source of truth for output shapes; README, code, and GPT prompts all derive from it.

@@ -73,7 +73,7 @@ All work is committed and pushed. No uncommitted changes. Three features shipped
 
 ## 3. Important Constraints & Rules
 
-- **v2/v3 are frozen regression baselines** — never modify `step1_preprocessor_v2_full.py` or `step1_preprocessor_v3.py`.
+- **v2/v3 baselines removed** — the root shims `step1_preprocessor.py`, `step1_preprocessor_v2_full.py`, and `step1_preprocessor_v3.py` were deleted (see `tests/LEGACY_MIGRATION.md`); v4's suite is the sole regression net.
 - **v4 shim:** `step1_preprocessor_v4.py` is a 55-line PEP 562 `__getattr__` forwarding shim → `impact_slides.preprocessor` / `impact_slides.cli`. 469 tests import via this shim unchanged.
 - **Schema = single source of truth:** `schemas.py` is canonical for output shapes; README/code/GPT-prompt all derive from it.
 - **Pydantic optional at runtime:** if not installed, validation skipped but pipeline runs.
@@ -152,7 +152,7 @@ All work is committed and pushed. No uncommitted changes. Three features shipped
 3. Update GPT prompt's Source Priority list to include `analyst_briefing.md/.json`, `coverage_map.json`, `run_metadata.json`, `entities_summary.json` (deferred per user).
 4. Consider `brand_style_summary.json`, `image_ocr_summary.json`, `extracted_documents.md` (deferred).
 5. Consider further trunk decomposition: `build_evidence_register` (520 LOC) → `evidence_builder.py` (deferred).
-6. Consider deleting root `step1_preprocessor.py` (v1) and `step1_preprocessor_v2_full.py` if no longer needed as baselines.
+6. ~~Consider deleting root `step1_preprocessor.py` (v1) and `step1_preprocessor_v2_full.py` if no longer needed as baselines.~~ Done — all three legacy shims deleted; see `tests/LEGACY_MIGRATION.md`.
 
 ---
 
