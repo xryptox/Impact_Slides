@@ -866,6 +866,50 @@ def _value_anchor_pct(
     return (1.0 - frac) * 100.0
 
 
+def _elbow_stem_html(
+    cfg: Mapping[str, Any],
+    chart_cfg: Mapping[str, Any],
+    frm: int,
+    n: int,
+    anchor: float | None,
+    layout: str,
+) -> str:
+    """Vertical stem from the elbow capsule down to the from-bar top (R2).
+
+    The PDF recipe drops a stem from the capsule's left end to the top of
+    the first spanned bar. Bar-top height comes from the built Chart.js
+    datasets at the ``from`` category — stacked sums the signed segments,
+    grouped takes the tallest bar — mapped through the same domain math as
+    the capsule anchor. Fails closed ("") when geometry can't be computed.
+    """
+    datasets = ((cfg.get("data") or {}).get("datasets")) or []
+    vals: list[float] = []
+    for ds in datasets:
+        data = (ds or {}).get("data") or []
+        if frm < len(data):
+            v = data[frm]
+            if isinstance(v, (int, float)):
+                vals.append(float(v))
+    if not vals:
+        return ""
+    stacked = bool(
+        ((((cfg.get("options") or {}).get("scales") or {}).get("y") or {}).get("stacked"))
+    )
+    bar_val = sum(vals) if stacked else max(vals)
+    bar_top = _value_anchor_pct(cfg, chart_cfg, bar_val, layout)
+    if bar_top is None:
+        return ""
+    stem_top = anchor if anchor is not None else 10.0
+    height = bar_top - stem_top
+    if height <= 0:
+        return ""
+    left = (frm / max(int(n or 1), 1)) * 100
+    return (
+        f'<div class="chartjs-callout-elbow-stem" '
+        f'style="left:{left:.2f}%;top:{stem_top:.2f}%;height:{height:.2f}%"></div>'
+    )
+
+
 def _build_callout_overlays(
     callouts: Any,
     n_labels: int,
@@ -915,6 +959,7 @@ def _build_callout_overlays(
         left = (frm / n) * 100
         width = ((to - frm + 1) / n) * 100
         style = f"left:{left:.2f}%;width:{width:.2f}%"
+        anchor: float | None = None
         if ctype == "elbow_arrow" and c.get("value") is not None and cfg:
             anchor = _value_anchor_pct(cfg, chart_cfg or {}, c.get("value"), layout)
             if anchor is not None:
@@ -928,6 +973,12 @@ def _build_callout_overlays(
             f'style="{style}">'
             f'<span class="chartjs-callout-label">{text}</span></div>'
         )
+        # IR stem (R2): computed drop from the capsule to the from-bar top,
+        # a sibling of the pill so % resolve against the chart wrap.
+        if ctype == "elbow_arrow" and layout != "horizontal_bar_chart" and cfg:
+            stem = _elbow_stem_html(cfg, chart_cfg or {}, frm, n, anchor, layout)
+            if stem:
+                parts.append(stem)
     return "".join(parts)
 
 
