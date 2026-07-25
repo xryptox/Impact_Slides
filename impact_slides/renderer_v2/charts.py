@@ -516,8 +516,9 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     Chart.js canonical: ``indexAxis: "y"`` so bars run horizontally; the
     value axis is then ``x``. The anniversary window comes from the existing
     ``y_axis_break`` / ``y_axis_min`` / ``y_axis_max`` config (clamps the x
-    domain, e.g. 90–100), and ``bar_labels_inside`` paints category labels
-    inside each bar via the datalabels plugin.
+    domain, e.g. 90–100), and ``bar_labels_inside`` paints category
+    labels (or, in ``"series"`` mode, series-name chips anchored at the
+    bar's end edge) inside each bar via the datalabels plugin.
     """
     labels, series, rows, _pc = _bar_matrix(slide)
     if not labels or not rows:
