@@ -1940,6 +1940,18 @@ class TestDualStackLabels:
         assert top[0] == ["$1,178", "$1,227"]
         assert top[1] == ["", ""]
 
+    def test_percent_unit_suffixes(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {
+            "point_labels": True, "y_axis_unit": "%"}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        dl = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))[
+            "options"]["plugins"]["datalabels"]
+        assert dl["_labels"][0] == ["1,251%", "1,251%"]
+        assert dl["_labels"][1] == ["(73%)", "(24%)"]
+
     def test_segment_labels_without_totals_single_set(self, tmp_path):
         s = _slide("stacked_bar_chart", PROVISION_STACK)
         s["visual_spec"]["primary_visual"]["chart_config"] = {"point_labels": True}
@@ -1951,6 +1963,52 @@ class TestDualStackLabels:
         assert "labels" not in dl  # single (legacy) shape, not named sets
         assert dl["_labels"][0] == ["1,251", "1,251"]
         assert dl["_labels"][1] == ["(73)", "(24)"]
+
+
+# ---------------------------------------------------------------------------
+# N5 — exterior segment-name column on stacked bars (PDF funding board)
+# ---------------------------------------------------------------------------
+
+
+class TestExteriorSegmentNames:
+    def _deck(self, tmp_path, cfg):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = cfg
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        return _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+
+    def test_emits_segment_names_items_in_series_colors(self, tmp_path):
+        conf = self._deck(tmp_path, {"exterior_segment_names": True})
+        plugins = conf["options"]["plugins"]
+        items = plugins["segmentNames"]["items"]
+        names = [d["label"] for d in conf["data"]["datasets"]]
+        colors = [d["backgroundColor"] for d in conf["data"]["datasets"]]
+        assert [i["label"] for i in items] == names
+        assert [i["color"] for i in items] == colors
+
+    def test_replaces_legend_and_reserves_gutter(self, tmp_path):
+        conf = self._deck(tmp_path, {"exterior_segment_names": True})
+        opts = conf["options"]
+        assert opts["plugins"]["legend"]["display"] is False
+        assert opts["layout"]["padding"]["right"] >= 100
+
+    def test_light_segment_colors_fall_back_to_dark(self, tmp_path):
+        # PDF recipe: light segments (e.g. #B8BFC9 gray) get dark names
+        conf = self._deck(tmp_path, {
+            "exterior_segment_names": True,
+            "series_colors": ["#00175A", "#B8BFC9"],
+        })
+        items = conf["options"]["plugins"]["segmentNames"]["items"]
+        assert items[0]["color"] == "#00175A"  # dark navy keeps segment color
+        assert items[1]["color"].lower() != "#b8bfc9"  # light gray -> dark fallback
+
+    def test_opt_in_default_unchanged(self, tmp_path):
+        conf = self._deck(tmp_path, {})
+        assert "segmentNames" not in conf["options"]["plugins"]
+        assert "display" not in conf["options"]["plugins"]["legend"]
+        assert "layout" not in conf["options"]
 
 
 # ---------------------------------------------------------------------------

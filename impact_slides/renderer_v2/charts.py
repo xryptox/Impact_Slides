@@ -473,6 +473,41 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["scales"]["y"]["min"] = float(neg_min) * 1.1
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
+        if cfg.get("exterior_segment_names"):
+            # N5 (v4 sim): exterior segment-name column — series names in
+            # their segment color, aligned to the last bar's segment
+            # mid-heights right of the plot (PDF funding-board recipe).
+            # Painted by the shell's segmentNames inline plugin (JSON can't
+            # carry draw functions); the names replace the legend. Light
+            # segment colors (e.g. #B8BFC9 gray) fall back to dark slate —
+            # the PDF draws those names dark for readability.
+            def _name_color(color: str) -> str:
+                # palette entries may be CSS var() exprs — use the hex
+                # fallback inside for the luminance check, keep the var()
+                # for paint so theming still flows through.
+                probe = color
+                if "var(" in color and "#" in color:
+                    probe = color[color.index("#"):].rstrip(") ").split(",")[0]
+                h = probe.lstrip("#")[:6]
+                try:
+                    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+                except ValueError:
+                    return _NAVY_SOFT
+                # relative luminance; > 0.55 is too light on card backgrounds
+                lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+                return color if lum <= 0.55 else _NAVY_SOFT
+
+            options["plugins"]["legend"]["display"] = False
+            options["layout"] = {"padding": {"right": 120}}
+            options["plugins"]["segmentNames"] = {
+                "items": [
+                    {
+                        "label": str(name),
+                        "color": _name_color(palette[si % len(palette)]),
+                    }
+                    for si, name in enumerate(series)
+                ]
+            }
     if stacked and (cfg.get("stack_totals") or cfg.get("point_labels") or cfg.get("show_point_labels")):
         # #101/N3: per-category signed totals painted above each stack via
         # the top segment's datalabel; negatives render parenthesized (IR).
@@ -487,11 +522,13 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
 
         def _fmt_segment(v: float) -> str:
             # N4: in-segment values — unit inside the parens (($73), IR).
+            # Currency-style units prefix ($1,251); percent-style suffix (72%).
             if v == int(v):
                 n = f"{abs(int(v)):,}"
             else:
                 n = f"{abs(v):,.1f}"
-            return f"({unit}{n})" if v < 0 else f"{unit}{n}"
+            core = f"{n}{unit}" if unit.endswith("%") else f"{unit}{n}"
+            return f"({core})" if v < 0 else core
 
         total_matrix: list[list[str]] | None = None
         if cfg.get("stack_totals"):
