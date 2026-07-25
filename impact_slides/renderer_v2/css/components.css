@@ -1078,60 +1078,88 @@
 .gl-pill {
   padding: var(--space-4, 16px) var(--space-5, 20px);
 }
-/* Freestanding pill statement columns (#91/F4+): label rail + separated
-   rounded column shells. */
-/* #102/F4+: packing-density pass — tighter gutters, narrower exterior
-   label rail, denser shells (PDF summary-board proportions). */
+/* Freestanding pill statement columns (#91/F4+, finished): exterior label
+   rail + fully separated bordered shells with full-width navy header caps —
+   the IR summary-board recipe (white bodies, navy caps, no joined strip). */
 .gl-pill-free {
   display: flex;
   flex-direction: row; /* explicit: .gl-card sets flex-direction: column */
   gap: var(--gap-sm, 12px);
   align-items: stretch;
+  flex: 1;
+  /* .gl-main is block, so flex:1 alone won't stretch the board — carry an
+     explicit floor sized to the PDF summary-board proportions. */
+  min-height: clamp(320px, 46vh, 560px);
+  background: transparent; /* shed the gl-card strip chrome */
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 .gl-pill-labels {
   flex: 1.2;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 4px);
+  gap: 0;
   justify-content: flex-start;
-  padding-top: var(--space-1, 4px);
 }
 .gl-pill-shell {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 4px);
-  background: var(--color-surface-muted, var(--stage, #f4f6f9));
+  gap: 0;
+  /* paper, not --panel: handoff themes may tint --panel gray (F13), but the
+     IR statement bodies are white — caps alone carry the navy. */
+  background: var(--color-paper, #fff);
+  border: 1px solid var(--navy);
   border-radius: var(--radius-lg, 12px);
-  padding: var(--space-2, 6px) var(--space-2, 6px) var(--space-3, 10px);
+  overflow: hidden; /* clip the cap to the shell's rounded top corners */
+  padding: 0;
 }
 .gl-pill-shell-yoy {
-  background: var(--stage-navy, rgba(0, 23, 90, 0.08));
-  border: 1px solid var(--navy);
+  background: var(--color-paper, #fff); /* PDF: all bodies white; caps carry the navy */
 }
 .gl-pill-stub {
-  align-self: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
   font-weight: 600;
+  font-size: 15px;
   color: var(--ink);
   text-align: left;
+  padding: 8px 12px 8px 0;
 }
-.gl-pill-head-empty { border-bottom: none; }
+.gl-pill-head-empty {
+  visibility: hidden; /* rail slot matching the navy cap's height */
+  flex: none;
+  font-size: 16px;
+  font-weight: 700;
+  min-height: 1lh;
+  padding: 10px 8px;
+  margin-bottom: 6px;
+  border-bottom: none;
+}
 .gl-pill-head {
-  align-self: center;
-  justify-self: stretch;
+  flex: none;
+  align-self: stretch;
   text-align: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-on-navy, var(--panel, #fff));
   background: var(--navy);
-  border-radius: var(--radius-round, 999px);
-  padding: var(--space-1, 4px) var(--space-3, 10px);
+  border-radius: 0;
+  padding: 10px 8px;
+  margin-bottom: 6px;
 }
 .gl-pill-cell {
-  align-self: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
+  padding: 8px 12px;
 }
 .gl-pill-cell-yoy {
   font-weight: 700;
