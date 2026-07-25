@@ -1036,8 +1036,9 @@ scales are **always on** (not feature-gated). Single owner doc:
 semantic keys for light rebrands — do not fork layout CSS.
 
 **Charts (P3).** When `charts` is auto-enabled (or forced), **Chart.js 4.4.8**
-is inlined for **grouped bar**, **line**, and **combo** layouts. Suppressing
-`charts` falls back to the existing SVG painters. stacked / waterfall /
+is inlined for **grouped bar**, **stacked bar**, **horizontal bar**, **line**,
+and **combo** layouts. Suppressing
+`charts` falls back to the existing SVG painters. waterfall /
 heatmap / icon_grid stay on the SVG/pack path. Animation defaults off.
 Spec: `wiki/SPEC_renderer_v2_p3_chartjs.md`. Pin: `assets/libs/chart.umd.min.js`.
 
