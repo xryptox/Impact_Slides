@@ -1087,16 +1087,16 @@
   gap: var(--gap-sm, 12px);
   align-items: stretch;
   flex: 1;
-  /* .gl-main is block, so flex:1 alone won't stretch the board — carry an
-     explicit floor sized to the PDF summary-board proportions. */
-  min-height: clamp(320px, 46vh, 560px);
+  /* V5 fill: layout-pill_comparison .gl-main is a flex column now, so
+     flex:1 stretches the board into the free canvas (the min-height clamp
+     was the pre-fill workaround). */
   background: transparent; /* shed the gl-card strip chrome */
   border: none;
   box-shadow: none;
   padding: 0;
 }
 .gl-pill-labels {
-  flex: 1.2;
+  flex: 0.9;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -1156,9 +1156,11 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 15px;
+  /* V5/F4+: PDF statement values are navy semibold, not muted ink. */
+  font-size: 17px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--ink);
+  color: var(--navy);
   padding: 8px 12px;
 }
 .gl-pill-cell-yoy {
@@ -1608,9 +1610,11 @@
   bottom: 6%;
   width: 0;
   height: 0;
-  border-left: 14px solid transparent;
-  border-right: 14px solid transparent;
-  border-top: 18px solid var(--navy);
+  /* V5/R2: chunky IR triangle — the 14/18 chip read as a speck next to the
+     PDF's under-axis Refresh marker. */
+  border-left: 17px solid transparent;
+  border-right: 17px solid transparent;
+  border-top: 22px solid var(--navy);
 }
 .chartjs-callout-chevron .chartjs-callout-label {
   bottom: auto;
@@ -1618,8 +1622,9 @@
   background: var(--navy);
   color: var(--color-on-navy, var(--panel, #fff));
   border-radius: var(--radius-round, 999px);
-  padding: 3px var(--space-4, 12px);
-  font-size: 13px;
+  padding: 4px var(--space-4, 14px);
+  font-size: 14px;
+  font-weight: 700;
 }
 /* Event band: translucent vertical span over the plot. */
 .chartjs-callout-band {
