@@ -5,50 +5,49 @@
 > log below with the latest activity. Do not append historical passes; git
 > history is the archive, this file is the snapshot.
 
-## Last cleanup: 2026-07-25 (merged-branch sweep + simulation history scrub)
+## Last cleanup: 2026-07-25 (sim history purge completed — .git 60MB → 25MB)
 
 ### What was done
 
-**Branches**
-- Deleted 5 merged branches (local + origin): `chore/complete-legacy-baseline-removal`,
-  `feat/amex-f11-stack-packing`, `feat/amex-f4-pill-packing`,
-  `feat/amex-n3-signed-paren-chips`, `feat/amex-p3-polish`.
-- Remaining: `main`, `gnhf/objective-produce-a-9c5007` (sim worktree branch),
-  `assets/issue-evidence` (orphan, see below), local-only `backup/pre-scrub-main`.
-
-**Simulation history scrub (the big one)**
-- `git filter-repo --refs main --path simulation/ --invert-paths` removed all
-  sim PNG history from main; main force-pushed (`a508795 → ecc697e`, forced).
-  **All pre-scrub commit SHAs on main are rewritten.**
-- Issue evidence preserved first: 11 round-3 ticket screenshots moved to the
-  orphan branch `assets/issue-evidence` (11 PNGs + EVIDENCE.md, ~824KB), and
-  the 11 close comments on #96–#103 repinned from `7c66284` →
-  `assets/issue-evidence` URLs (verified HTTP 200).
-- Local safety net: `backup/pre-scrub-main` branch points at pre-scrub main;
-  delete once the rewritten history is trusted.
-- Remote size: GitHub still retains sim blobs because `gnhf/objective-produce-a-9c5007`
-  (the v4 sim baseline) intentionally keeps them per the sim-evidence policy.
-  The remote shrink completes when that branch is eventually deleted.
-  Local `.git` likewise keeps old objects while the backup + gnhf refs exist.
+**Endgame of the sim-scrub (previous pass rewrote main; this pass reclaimed the space)**
+- User deleted the v4 GNHF worktree; deleted branch `gnhf/objective-produce-a-9c5007`
+  and local safety net `backup/pre-scrub-main`.
+- Fixed local `assets/issue-evidence` branch still pointing at the botched
+  full-tree orphan commit (`4894224`) — repointed to `origin/assets/issue-evidence`
+  (`9e3aa27`, the 11-PNG-only orphan).
+- Found the real space-pinners: **no-mistakes custody refs**
+  (`refs/no-mistakes/sync/*` anchors + `refs/remotes/no-mistakes/*` stale feature
+  branches) held the entire pre-scrub chain. Deleted the local refs (the
+  pipeline's own bare mirror at `~/.no-mistakes/repos/` keeps its copies —
+  merged runs need no recovery).
+- `git reflog expire --expire=now --all` + `git gc --prune=now`:
+  **`.git` 60MB → 25MB** (pack 54.6 → 24.2 MiB).
+- Remaining sim refs are exactly the intentional two: `gnhf/objective-produce-a-11b7c0`
+  (active v5 sim run) and `assets/issue-evidence` (orphan screenshots for #96–#103).
+- GitHub side: origin refs no longer reach the old sim chain; GitHub's GC
+  reclaims it in due course.
 
 ### Environment notes (for future cleanups)
-- `git filter-repo` installed via `pip install git-filter-repo`; executable lives
-  in `%APPDATA%\Python\Python314\Scripts` (not on default PATH).
+- **no-mistakes pins history twice**: `refs/remotes/no-mistakes/*` (mirror
+  tracking) AND `refs/no-mistakes/sync/*` (run sync anchors). After any history
+  rewrite, both must be deleted locally before `gc` can reclaim. The mirror
+  repo keeps custody, so this is safe for terminal/merged runs.
+- After force-pushing rewritten history, check `git for-each-ref --contains
+  <old-sha>` to find every ref still pinning old objects before running gc.
 - Orphan-branch recipe: `git checkout --orphan <b>` → `git rm -rfq --cached .`
-  → commit ONLY evidence (`git add -f` needed since `simulation/` is gitignored)
-  → push. Do NOT `git reset` before committing (undoes the index clear).
-- `filter-repo --refs main` limits rewriting to main — essential so the gnhf
-  sim branch and backup refs are untouched.
-- The `no-mistakes` remote is a local bare mirror (`~/.no-mistakes/repos/`);
-  branch deletion and even main force-push are safe — custody lives in the mirror.
-- `gh api` comment PATCH needs the *numeric* comment id (node ids 404);
-  read gh output with `encoding="utf-8"` on this machine.
+  → commit ONLY evidence (`git add -f` since `simulation/` is gitignored) →
+  push `HEAD:<branch>`. Verify the LOCAL branch points at the clean commit
+  afterward (a botched first attempt keeps the full tree alive locally).
+- `git filter-repo` via `pip install git-filter-repo`; executable in
+  `%APPDATA%\Python\Python314\Scripts`.
+- `gh api` comment PATCH needs the *numeric* comment id; read gh output with
+  `encoding="utf-8"` on this machine.
 
 ### Deferred (conscious, re-check next pass)
 - `step4_builder_validator.py` consolidation (real refactor, not a sweep).
 - `tests/test_renderer_v2_charts_js.py` split (~2,100 lines, grows every ticket).
-- Delete `backup/pre-scrub-main` + `gnhf/objective-produce-a-9c5007` when v4
-  sims wrap → then `git gc` for the actual local/remote size win.
+- When the v5 GNHF run wraps: delete its branch/worktree + gc again for the
+  last few MB.
 
 ### Standing policies
 - `simulation/` evidence lives only in GNHF worktrees, never on main
