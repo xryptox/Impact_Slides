@@ -26,15 +26,15 @@ Source PDF (read-only; the visual source of truth):
   C:/Users/Ag1Le/Downloads/Q1-2026-Earnings-Presentation.pdf
 
 Baseline reference (LAST completed sim — tracked in wiki):
-  wiki/baseline_v5_GAP_ANALYSIS.md
-  Companion evidence (v5 full artifacts — passes/, handoffs, screenshots): archived on the remote branch origin/gnhf/objective-produce-a-11b7c0 under simulation/amex_q1_2026/. To consult a file: git fetch origin gnhf/objective-produce-a-11b7c0, then git show origin/gnhf/objective-produce-a-11b7c0:simulation/amex_q1_2026/<path> (single file) or git checkout origin/gnhf/objective-produce-a-11b7c0 -- simulation/ (whole tree into your worktree).
+  wiki/baseline_v6_GAP_ANALYSIS.md
+  Companion evidence (v6 full artifacts — passes/, handoffs, screenshots): archived on the remote branch origin/gnhf/objective-produce-a-03e1d0 under simulation/amex_q1_2026/. To consult a file: git fetch origin gnhf/objective-produce-a-03e1d0, then git show origin/gnhf/objective-produce-a-03e1d0:simulation/amex_q1_2026/<path> (single file) or git checkout origin/gnhf/objective-produce-a-03e1d0 -- simulation/ (whole tree into your worktree).
   POLICY: simulation/ is gitignored on main and lives only in GNHF worktrees/branches to avoid bloating the repo. After each sim run humans (1) store the new GAP_ANALYSIS.md in wiki/ as wiki/baseline_v<N>_GAP_ANALYSIS.md (tracked), (2) keep the run's gnhf branch on origin as the full-artifact archive, (3) update the launcher's baseline path + open list. Always use the LATEST wiki baseline as the before-snapshot. Do not expect simulation/ archives on main.
 
-  That v5 run measured the renderer AFTER Phase B fix PRs #104-#113. Since then, PR #114 merged: board vertical fill (.gl-main flex column on board/chart layouts; boards now grow into the stage), R2 band+elbow canonical merge (a band whose span matches an elbow_arrow is absorbed, label migrates; chevron scaled up), N2 in-bar year chips 14px, F4+ pill typography (17px semibold navy cells). So the CURRENT renderer should already show: taller boards on slides 02/05/11/14/27, one spanning capsule on slide 05 (no double-declare smear IF you declare elbow_arrow alone), heavier chevron/chips, navy pill values on slide 02. Headline: N2 + N3/N4 mostly resolved; N5 wire resolved (packing weak); R1 improved; R2 STILL the last P0 (geometry wrong despite elbow/chevron in DOM); mean MAE 89.38% (+0.23 pp vs v4).
-v5 open list (your REQUIRED re-test checklist — every row must appear in the next delta table):
-P0: R2 (true IR callout chrome: spanning blue pill arrow + large navy Refresh chevron; slide 05)
-P1: N5 residual / F11 packing (multi-line exterior segment-name column density; slide 27), F4+ (freestanding pill packing; slide 02)
-P2: N6 (provision furniture: reserve-rate boxed cells + exterior series legend; slide 14), N2 weight polish (bolder year chips)
+  That v6 run measured the renderer AFTER Phase B fix PRs #104-#114 (board vertical fill, R2 band+elbow merge, N2 14px chips, F4+ pill typography). Headline: #114 verified working (slide 05 +2.00pp, slide 11 +2.67pp under frozen handoff; merge clean; chips + navy cells paint); R2 STILL the only P0 — capsule + chevron paint but GEOMETRY is wrong (mid-plot capsule + axis-scale chip vs PDF L-elbow pill above bar tops + large bottom chevron; elbow-only handoff made zero visual difference, so this is renderer-side); everything else exists-but-weak; mean MAE 89.31% best (flat vs v5 89.38% — white-canvas noise).
+v6 open list (your REQUIRED re-test checklist — every row must appear in the next delta table):
+P0: R2 (true IR callout chrome geometry: L-elbow spanning blue pill arrow above bar tops + large under-axis navy Refresh chevron; slide 05)
+P1: N5 residual / F11 packing (multi-line exterior segment-name column density; slide 27), F4+ (freestanding pill-column packing finish; slide 02)
+P2: N6 (provision furniture: freestanding reserve-rate boxed cells + exterior series legend; slide 14), N2 weight polish (optional, bolder year chips)
 P3: R1 (flat stage residual), R4 (hero % type scale; slide 11), F12+ (annex multi-level header precision)
 Also carry forward any other residual named in v5's future-feature list or divergence catalog.
 
@@ -73,7 +73,7 @@ Worker loop (this is YOUR internal loop; <=10 passes HARD CAP):
 4. Passes 02..<=10: adjust ONLY the handoff JSON (layout choices, content mapping, chart config, token usage) to close divergences of type (A). Re-render, re-screenshot, re-diff, append notes per pass. Do NOT edit renderer code to fix a gap; if a feature is missing, that is a finding to record, not something to implement now.
 5. Stop adjusting early if remaining divergences are ALL type (B) capability gaps, even if <10 passes used.
 6. Write simulation/amex_q1_2026/GAP_ANALYSIS.md containing:
-   - A per-pass summary table: pass #, overall visual similarity (%), top 3 divergences, type (A/B). Also report mean MAE vs the baseline worktree's final mean (v5 pass_01 was 89.36%; v5 pass_03 (final) was 89.38%) so the delta is numeric.
+   - A per-pass summary table: pass #, overall visual similarity (%), top 3 divergences, type (A/B). Also report mean MAE vs the baseline worktree's final mean (v6 pass_01 was 89.29%; v6 pass_02 (final) was 89.31%) so the delta is numeric.
    - A before/after delta table cross-referencing the baseline (v5) open list: for EACH required ID (R2, N5 residual/F11 packing, F4+, N6, N2 weight polish, R1, R4, F12+ and any other baseline residual — but NOT R3, which is wontfix per the exclusion above), row = [baseline finding + slide/pass | new status (resolved/partial/still-gap) | new slide/pass evidence | notes]. This is the headline deliverable. Also note any NEW gaps (continue N# numbering if useful).
    - A prioritized list of renderer features still open AFTER this run, each entry: feature name, what it enables, the SPECIFIC PDF slide + pass/screenshot that motivates it, and whether the feature is "missing entirely" vs "exists but weak". (If a baseline gap is now resolved, it drops OFF this future list. False-positive fixes stay on the list.)
    - A short "what renderer_v2 already does well" section (credit where due).
@@ -86,7 +86,7 @@ Constraints:
 - If a pass reveals the handoff schema cannot express something, that is a capability gap (record it), do not hack around it by editing renderer code.
 - The baseline is the LAST completed sim worktree (absolute path above), not anything under main's simulation/ (that path is gitignored and absent on main). Verify every baseline claim against the CURRENT renderer before marking it resolved — do not assume commits or PR titles mean the visual gap is gone. A gap is only "resolved" if YOUR fresh pass/screenshot in THIS worktree shows it.
 - This is MEASURE-ONLY. Do not start implementing renderer fixes in this run even if a gap looks easy — Phase B (fix branch + no-mistakes gate) comes after GAP_ANALYSIS.md exists.
-- After this run completes, humans will store THIS run's GAP_ANALYSIS.md as wiki/baseline_v6_GAP_ANALYSIS.md and keep THIS run's gnhf branch on origin as the artifact archive (the --push flag pushes each iteration; also git add -f simulation/ before commits since the path is gitignored). Do not try to merge simulation/ onto main.
+- After this run completes, humans will store THIS run's GAP_ANALYSIS.md as wiki/baseline_v7_GAP_ANALYSIS.md and keep THIS run's gnhf branch on origin as the artifact archive (the --push flag pushes each iteration; also git add -f simulation/ before commits since the path is gitignored). Do not try to merge simulation/ onto main.
 
 Stop only when: simulation/amex_q1_2026/GAP_ANALYSIS.md exists with a per-pass table AND a prioritized future-feature list (each citing PDF slide evidence), and <=10 passes are recorded under simulation/amex_q1_2026/passes/.
 EOF
