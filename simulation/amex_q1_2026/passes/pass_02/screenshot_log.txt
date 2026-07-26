@@ -1,0 +1,50 @@
+found 44 .slide elements
+slide 00: sim=82.2% ssim~=82.4%
+slide 01: sim=93.1% ssim~=93.0%
+slide 02: sim=90.6% ssim~=90.2%
+slide 03: sim=92.6% ssim~=92.2%
+slide 04: sim=89.5% ssim~=89.6%
+slide 05: sim=75.9% ssim~=74.9%
+slide 06: sim=90.6% ssim~=90.5%
+slide 07: sim=89.2% ssim~=89.2%
+slide 08: sim=89.4% ssim~=89.5%
+slide 09: sim=89.1% ssim~=89.3%
+slide 10: sim=94.1% ssim~=94.2%
+slide 11: sim=85.7% ssim~=85.2%
+slide 12: sim=83.4% ssim~=82.7%
+slide 13: sim=87.2% ssim~=86.2%
+slide 14: sim=86.1% ssim~=84.9%
+slide 15: sim=88.3% ssim~=87.8%
+slide 16: sim=86.3% ssim~=86.1%
+slide 17: sim=85.2% ssim~=84.7%
+slide 18: sim=92.1% ssim~=91.8%
+slide 19: sim=91.9% ssim~=91.4%
+slide 20: sim=86.4% ssim~=86.3%
+slide 21: sim=91.8% ssim~=91.3%
+slide 22: sim=87.4% ssim~=87.8%
+slide 23: sim=86.8% ssim~=86.4%
+slide 24: sim=91.4% ssim~=91.2%
+slide 25: sim=89.6% ssim~=89.2%
+slide 26: sim=94.4% ssim~=94.5%
+slide 27: sim=78.6% ssim~=77.6%
+slide 28: sim=95.7% ssim~=96.2%
+slide 29: sim=95.2% ssim~=96.1%
+slide 30: sim=92.2% ssim~=92.2%
+slide 31: sim=92.8% ssim~=92.6%
+slide 32: sim=91.7% ssim~=91.4%
+slide 33: sim=93.4% ssim~=93.2%
+slide 34: sim=90.9% ssim~=90.7%
+slide 35: sim=91.4% ssim~=91.2%
+slide 36: sim=91.7% ssim~=91.5%
+slide 37: sim=89.4% ssim~=92.3%
+slide 38: sim=90.7% ssim~=93.0%
+slide 39: sim=90.0% ssim~=92.5%
+slide 40: sim=90.7% ssim~=93.4%
+slide 41: sim=89.3% ssim~=92.5%
+slide 42: sim=90.7% ssim~=93.2%
+slide 43: sim=85.1% ssim~=85.5%
+{
+  "n_slides": 44,
+  "mean_similarity_pct": 89.31,
+  "mean_ssim_approx_pct": 89.5
+}
