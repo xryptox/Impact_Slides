@@ -26,10 +26,10 @@ This is a SIMULATION / OBSERVATION run.
 Source PDF (read-only; the visual source of truth):
   C:/Users/Ag1Le/Downloads/Q1-2026-Earnings-Presentation.pdf
 
-Baseline reference (LAST completed sim worktree — NOT on main):
-  C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-produce-a-11b7c0/simulation/amex_q1_2026/GAP_ANALYSIS.md
-  Companion evidence (read-only): same worktree under simulation/amex_q1_2026/passes/ and extracted/.
-  POLICY: simulation/ is gitignored on main and lives only in GNHF worktrees to avoid bloating the repo. Always use the LAST completed Amex sim worktree's GAP_ANALYSIS.md as the before-snapshot. Do not expect simulation/ archives on main.
+Baseline reference (LAST completed sim — tracked in wiki):
+  wiki/baseline_v5_GAP_ANALYSIS.md
+  Companion evidence (v5 full artifacts — passes/, handoffs, screenshots): archived on the remote branch origin/gnhf/objective-produce-a-11b7c0 under simulation/amex_q1_2026/. To consult a file: git fetch origin gnhf/objective-produce-a-11b7c0, then git show origin/gnhf/objective-produce-a-11b7c0:simulation/amex_q1_2026/<path> (single file) or git checkout origin/gnhf/objective-produce-a-11b7c0 -- simulation/ (whole tree into your worktree).
+  POLICY: simulation/ is gitignored on main and lives only in GNHF worktrees/branches to avoid bloating the repo. After each sim run humans (1) store the new GAP_ANALYSIS.md in wiki/ as wiki/baseline_v<N>_GAP_ANALYSIS.md (tracked), (2) keep the run's gnhf branch on origin as the full-artifact archive, (3) update the launcher's baseline path + open list. Always use the LATEST wiki baseline as the before-snapshot. Do not expect simulation/ archives on main.
 
   That v5 run measured the renderer AFTER all Phase B fix PRs (#104-#113). Headline: N2 + N3/N4 mostly resolved; N5 wire resolved (packing weak); R1 improved; R2 STILL the last P0 (geometry wrong despite elbow/chevron in DOM); mean MAE 89.38% (+0.23 pp vs v4).
 v5 open list (your REQUIRED re-test checklist — every row must appear in the next delta table):
@@ -45,7 +45,7 @@ PERMANENT EXCLUSION — R3 (Centurion seal / brand-asset replication) is a WONTF
     - Do NOT try to recreate the Centurion mark (or any Amex trademark) as SVG or any other form.
     - The generic seal_lockup placeholder on cover/dividers is the ACCEPTED by-design output. Cover/divider pixel divergence attributable to the absent Amex mark is EXPECTED — call it by-design, exclude it from gap counts, and do not let it inflate divergence rankings (note the slide's MAE but tag it 'R3 wontfix — excluded').
     - R3 must NOT appear in the delta table, the future-feature list, or the recommended implementation order. If the baseline (v4) lists R3 as open, record it once as 'dropped: wontfix per CONTEXT.md brand-asset rule' and move on.
-  USE THAT v4 GAP AS THE BEFORE-SNAPSHOT. Your job is the AFTER picture against the CURRENT renderer: for EACH ID above, independently re-test and record resolved / partial / still-gap with YOUR fresh pass/screenshot evidence. Do NOT inherit v4 conclusions blindly — verify each claim fresh. You may read the baseline worktree's passes/screenshots/handoff.json for reference, but your passes/ under THIS worktree's simulation/amex_q1_2026/ must be freshly generated.
+  USE THAT v4 GAP AS THE BEFORE-SNAPSHOT. Your job is the AFTER picture against the CURRENT renderer: for EACH ID above, independently re-test and record resolved / partial / still-gap with YOUR fresh pass/screenshot evidence. Do NOT inherit v4 conclusions blindly — verify each claim fresh. You may consult the v5 archive branch (see Companion evidence above) for passes/screenshots/handoff.json reference, but your passes/ under THIS worktree's simulation/amex_q1_2026/ must be freshly generated.
 
 Tools available (all verified installed):
 - Extraction is VISION-BASED. Do NOT run impact_slides.preprocessor or step1_preprocessor_v4 — no heuristics/EID/priority pipeline. Instead: (1) rasterize each PDF page to a PNG with a PRIMITIVE PyMuPDF call (this is just rasterization, not the preprocessor):
@@ -87,7 +87,7 @@ Constraints:
 - If a pass reveals the handoff schema cannot express something, that is a capability gap (record it), do not hack around it by editing renderer code.
 - The baseline is the LAST completed sim worktree (absolute path above), not anything under main's simulation/ (that path is gitignored and absent on main). Verify every baseline claim against the CURRENT renderer before marking it resolved — do not assume commits or PR titles mean the visual gap is gone. A gap is only "resolved" if YOUR fresh pass/screenshot in THIS worktree shows it.
 - This is MEASURE-ONLY. Do not start implementing renderer fixes in this run even if a gap looks easy — Phase B (fix branch + no-mistakes gate) comes after GAP_ANALYSIS.md exists.
-- After this run completes, humans will treat THIS worktree as the new baseline for the next simulation (update the absolute baseline path in scripts/run_amex_simulation.*). Do not try to merge simulation/ onto main.
+- After this run completes, humans will store THIS run's GAP_ANALYSIS.md as wiki/baseline_v6_GAP_ANALYSIS.md and keep THIS run's gnhf branch on origin as the artifact archive (the --push flag pushes each iteration; also git add -f simulation/ before commits since the path is gitignored). Do not try to merge simulation/ onto main.
 
 Stop only when: simulation/amex_q1_2026/GAP_ANALYSIS.md exists with a per-pass table AND a prioritized future-feature list (each citing PDF slide evidence), and <=10 passes are recorded under simulation/amex_q1_2026/passes/.
 '@
