@@ -27,18 +27,19 @@ Source PDF (read-only; the visual source of truth):
   C:/Users/Ag1Le/Downloads/Q1-2026-Earnings-Presentation.pdf
 
 Baseline reference (LAST completed sim worktree — NOT on main):
-  C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-produce-a-9c5007/simulation/amex_q1_2026/GAP_ANALYSIS.md
+  C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-produce-a-11b7c0/simulation/amex_q1_2026/GAP_ANALYSIS.md
   Companion evidence (read-only): same worktree under simulation/amex_q1_2026/passes/ and extracted/.
   POLICY: simulation/ is gitignored on main and lives only in GNHF worktrees to avoid bloating the repo. Always use the LAST completed Amex sim worktree's GAP_ANALYSIS.md as the before-snapshot. Do not expect simulation/ archives on main.
 
-  That v4 run measured the renderer AFTER round-3 fidelity work. Headline: F10+ and N1 RESOLVED; F11+/N2/N3 wires hold with visual polish residuals; R2 still weak; mean MAE ~89.19% (flat vs v3).
-  v4 open list (your REQUIRED re-test checklist — every row must appear in the next delta table):
-    P0: R2 (IR callout chrome recipe), N2 residual (IR-weight year chips inside bars)
-    P1: F11+ residual / N5 (exterior segment labels + denser packing), N3 residual / N4 (dual stack labels + signed paren chips)
-    P2: F4+ (pill packing finish)
-    P3: R1, R4, F12+
-    Also carry forward any other residual named in v4's future-feature list or divergence catalog (N4, N5, …).
-  PERMANENT EXCLUSION — R3 (Centurion seal / brand-asset replication) is a WONTFIX, NOT A GAP:
+  That v5 run measured the renderer AFTER all Phase B fix PRs (#104-#113). Headline: N2 + N3/N4 mostly resolved; N5 wire resolved (packing weak); R1 improved; R2 STILL the last P0 (geometry wrong despite elbow/chevron in DOM); mean MAE 89.38% (+0.23 pp vs v4).
+v5 open list (your REQUIRED re-test checklist — every row must appear in the next delta table):
+P0: R2 (true IR callout chrome: spanning blue pill arrow + large navy Refresh chevron; slide 05)
+P1: N5 residual / F11 packing (multi-line exterior segment-name column density; slide 27), F4+ (freestanding pill packing; slide 02)
+P2: N6 (provision furniture: reserve-rate boxed cells + exterior series legend; slide 14), N2 weight polish (bolder year chips)
+P3: R1 (flat stage residual), R4 (hero % type scale; slide 11), F12+ (annex multi-level header precision)
+Also carry forward any other residual named in v5's future-feature list or divergence catalog.
+
+PERMANENT EXCLUSION — R3 (Centurion seal / brand-asset replication) is a WONTFIX, NOT A GAP:
     CONTEXT.md rule: no third-party trademarks or brand assets in the renderer or asset pack; vendored marks (e.g. seal_lockup) are original artwork only; real companies bring their own mark via the handoff escape hatch. Therefore:
     - Do NOT report the missing Centurion seal asset or the cover/divider placement recipe as a gap, in any table, list, or divergence catalog.
     - Do NOT try to recreate the Centurion mark (or any Amex trademark) as SVG or any other form.
@@ -73,8 +74,8 @@ Worker loop (this is YOUR internal loop; <=10 passes HARD CAP):
 4. Passes 02..<=10: adjust ONLY the handoff JSON (layout choices, content mapping, chart config, token usage) to close divergences of type (A). Re-render, re-screenshot, re-diff, append notes per pass. Do NOT edit renderer code to fix a gap; if a feature is missing, that is a finding to record, not something to implement now.
 5. Stop adjusting early if remaining divergences are ALL type (B) capability gaps, even if <10 passes used.
 6. Write simulation/amex_q1_2026/GAP_ANALYSIS.md containing:
-   - A per-pass summary table: pass #, overall visual similarity (%), top 3 divergences, type (A/B). Also report mean MAE vs the baseline worktree's final mean (v4 pass_01 was 89.19%; v4 pass_02 was 89.15%) so the delta is numeric.
-   - A before/after delta table cross-referencing the baseline (v4) open list: for EACH required ID (R2, N2 residual, F11+/N5, N3/N4, F4+, R1, R4, F12+ and any other baseline residual — but NOT R3, which is wontfix per the exclusion above), row = [baseline finding + slide/pass | new status (resolved/partial/still-gap) | new slide/pass evidence | notes]. This is the headline deliverable. Also note any NEW gaps (continue N# numbering if useful).
+   - A per-pass summary table: pass #, overall visual similarity (%), top 3 divergences, type (A/B). Also report mean MAE vs the baseline worktree's final mean (v5 pass_01 was 89.36%; v5 pass_03 (final) was 89.38%) so the delta is numeric.
+   - A before/after delta table cross-referencing the baseline (v5) open list: for EACH required ID (R2, N5 residual/F11 packing, F4+, N6, N2 weight polish, R1, R4, F12+ and any other baseline residual — but NOT R3, which is wontfix per the exclusion above), row = [baseline finding + slide/pass | new status (resolved/partial/still-gap) | new slide/pass evidence | notes]. This is the headline deliverable. Also note any NEW gaps (continue N# numbering if useful).
    - A prioritized list of renderer features still open AFTER this run, each entry: feature name, what it enables, the SPECIFIC PDF slide + pass/screenshot that motivates it, and whether the feature is "missing entirely" vs "exists but weak". (If a baseline gap is now resolved, it drops OFF this future list. False-positive fixes stay on the list.)
    - A short "what renderer_v2 already does well" section (credit where due).
 
