@@ -1087,9 +1087,9 @@
   gap: var(--gap-sm, 12px);
   align-items: stretch;
   flex: 1;
-  /* .gl-main is block, so flex:1 alone won't stretch the board — carry an
-     explicit floor sized to the PDF summary-board proportions. */
-  min-height: clamp(320px, 46vh, 560px);
+  /* V5 fill: layout-pill_comparison .gl-main is a flex column now, so
+     flex:1 stretches the board into the free canvas (the min-height clamp
+     was the pre-fill workaround). */
   background: transparent; /* shed the gl-card strip chrome */
   border: none;
   box-shadow: none;

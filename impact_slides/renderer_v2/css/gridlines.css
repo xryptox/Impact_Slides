@@ -330,3 +330,74 @@ body.gl-debug .gl-card,
 body.gl-debug .gl-areas-freeform .gl-slot {
   outline: 1px dashed rgba(0, 111, 207, 0.45);
 }
+
+/* V5 board fill: IR boards grow into the main row instead of packing from
+   the top — the PDF boards fill the stage. .gl-main is block by default
+   (pack-from-top); scoped per layout so prose/list layouts keep top-pack. */
+.gl-slide.layout-multi_panel .gl-main,
+.gl-slide.layout-pill_comparison .gl-main,
+.gl-slide.layout-chart_hero_dual .gl-main,
+.gl-slide.layout-grouped_bar_chart .gl-main,
+.gl-slide.layout-stacked_bar_chart .gl-main,
+.gl-slide.layout-horizontal_bar_chart .gl-main,
+.gl-slide.layout-line_chart .gl-main,
+.gl-slide.layout-combo_chart .gl-main {
+  display: flex;
+  flex-direction: column;
+}
+.gl-slide.layout-multi_panel .gl-multi-panel,
+.gl-slide.layout-chart_hero_dual .gl-areas-chart-hero,
+.gl-slide.layout-grouped_bar_chart .chart-frame,
+.gl-slide.layout-stacked_bar_chart .chart-frame,
+.gl-slide.layout-horizontal_bar_chart .chart-frame,
+.gl-slide.layout-line_chart .chart-frame,
+.gl-slide.layout-combo_chart .chart-frame {
+  flex: 1;
+  min-height: 0;
+}
+/* Chart frame becomes a column host so the wrap grows past the 480px
+   default; the 52vh cap would defeat the fill, so lift it in this context.
+   The wrap sits inside .chart-svg-wrap > .chart-col intermediates, so the
+   column-flex chain must run through them too. */
+.gl-slide.layout-grouped_bar_chart .chart-frame,
+.gl-slide.layout-stacked_bar_chart .chart-frame,
+.gl-slide.layout-horizontal_bar_chart .chart-frame,
+.gl-slide.layout-line_chart .chart-frame,
+.gl-slide.layout-combo_chart .chart-frame,
+.gl-slide.layout-chart_hero_dual .gl-chart-hero-chart,
+.gl-slide.layout-grouped_bar_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-stacked_bar_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-horizontal_bar_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-line_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-combo_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-grouped_bar_chart .chart-frame .chart-col,
+.gl-slide.layout-stacked_bar_chart .chart-frame .chart-col,
+.gl-slide.layout-horizontal_bar_chart .chart-frame .chart-col,
+.gl-slide.layout-line_chart .chart-frame .chart-col,
+.gl-slide.layout-combo_chart .chart-frame .chart-col {
+  display: flex;
+  flex-direction: column;
+}
+.gl-slide.layout-grouped_bar_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-stacked_bar_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-horizontal_bar_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-line_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-combo_chart .chart-frame .chart-svg-wrap,
+.gl-slide.layout-grouped_bar_chart .chart-frame .chart-col,
+.gl-slide.layout-stacked_bar_chart .chart-frame .chart-col,
+.gl-slide.layout-horizontal_bar_chart .chart-frame .chart-col,
+.gl-slide.layout-line_chart .chart-frame .chart-col,
+.gl-slide.layout-combo_chart .chart-frame .chart-col {
+  flex: 1;
+  min-height: 0;
+}
+.gl-slide.layout-grouped_bar_chart .chart-frame .chartjs-wrap,
+.gl-slide.layout-stacked_bar_chart .chart-frame .chartjs-wrap,
+.gl-slide.layout-horizontal_bar_chart .chart-frame .chartjs-wrap,
+.gl-slide.layout-line_chart .chart-frame .chartjs-wrap,
+.gl-slide.layout-combo_chart .chart-frame .chartjs-wrap,
+.gl-slide.layout-chart_hero_dual .gl-chart-hero-chart .chartjs-wrap {
+  flex: 1;
+  min-height: 280px;
+  max-height: none;
+}
