@@ -20,7 +20,7 @@ Objective: Produce a gap-analysis document stating which capabilities the curren
 This is a SIMULATION / OBSERVATION run.
 - Do NOT modify production renderer code, layouts, CSS, schemas, or existing tests.
 - Create new files ONLY, under simulation/amex_q1_2026/.
-- Commit your work to the GNHF worktree branch as you go.
+- Commit your work to the GNHF worktree branch as you go. IMPORTANT: simulation/ is gitignored on main (since 1628633), so a plain `git add simulation/` stages NOTHING and your commits will be empty — always `git add -f simulation/` (plus any other new files) before every commit. The --push flag then preserves each iteration on origin.
 - Preserve all existing repo state.
 
 Source PDF (read-only; the visual source of truth):
