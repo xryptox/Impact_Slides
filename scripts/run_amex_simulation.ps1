@@ -96,6 +96,7 @@ gnhf `
   --max-iterations 30 `
   --max-tokens 10000000 `
   --worktree `
+ --push `
   --prevent-sleep on `
   --stop-when "simulation/amex_q1_2026/GAP_ANALYSIS.md exists with a per-pass table and a prioritized future-feature list, and <=10 passes are recorded under simulation/amex_q1_2026/passes/" `
   $PROMPT
