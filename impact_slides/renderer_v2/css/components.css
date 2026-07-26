@@ -1096,7 +1096,7 @@
   padding: 0;
 }
 .gl-pill-labels {
-  flex: 1.2;
+  flex: 0.9;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -1156,9 +1156,11 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 15px;
+  /* V5/F4+: PDF statement values are navy semibold, not muted ink. */
+  font-size: 17px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--ink);
+  color: var(--navy);
   padding: 8px 12px;
 }
 .gl-pill-cell-yoy {
