@@ -1721,6 +1721,49 @@ class TestBarLabelsInsideSeries:
 # ---------------------------------------------------------------------------
 
 
+class TestCalloutBandElbowMerge:
+    """V5/R2: a band + elbow_arrow over the SAME span is the legacy
+    double-declare workaround — the band is absorbed (its label migrates
+    to the elbow when the elbow has none), not double-painted."""
+
+    def _render(self, tmp_path, callouts):
+        slide = _grouped_slide_with_callouts(callouts)
+        slide["visual_spec"]["primary_visual"]["chart_config"].update(
+            {"y_axis_min": 0, "y_axis_max": 15}
+        )
+        path = _write(tmp_path, _handoff([slide]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        return (out / "presentation.html").read_text(encoding="utf-8")
+
+    def test_band_absorbed_label_migrates(self, tmp_path):
+        html = self._render(tmp_path, [
+            {"type": "band", "from": 0, "to": 4, "text": "+ ~6 percentage points"},
+            {"type": "elbow_arrow", "from": 0, "to": 4, "value": 11, "text": ""},
+        ])
+        assert "chartjs-callout-band" not in html.split("<body")[1]
+        assert html.count("chartjs-callout-elbow") >= 1
+        assert '+ ~6 percentage points' in html
+
+    def test_band_absorbed_elbow_text_wins(self, tmp_path):
+        html = self._render(tmp_path, [
+            {"type": "band", "from": 0, "to": 4, "text": "band label"},
+            {"type": "elbow_arrow", "from": 0, "to": 4, "value": 11,
+             "text": "elbow label"},
+        ])
+        assert "elbow label" in html
+        assert "band label" not in html.split("<body")[1]
+
+    def test_band_different_span_survives(self, tmp_path):
+        html = self._render(tmp_path, [
+            {"type": "band", "from": 2, "to": 3, "text": "event window"},
+            {"type": "elbow_arrow", "from": 0, "to": 4, "value": 11, "text": "x"},
+        ])
+        body = html.split("<body")[1]
+        assert "chartjs-callout-band" in body
+        assert "event window" in body
+
+
 class TestIrCalloutChrome:
     def _deck(self, tmp_path):
         callouts = [

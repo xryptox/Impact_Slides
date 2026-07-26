@@ -1608,9 +1608,11 @@
   bottom: 6%;
   width: 0;
   height: 0;
-  border-left: 14px solid transparent;
-  border-right: 14px solid transparent;
-  border-top: 18px solid var(--navy);
+  /* V5/R2: chunky IR triangle — the 14/18 chip read as a speck next to the
+     PDF's under-axis Refresh marker. */
+  border-left: 17px solid transparent;
+  border-right: 17px solid transparent;
+  border-top: 22px solid var(--navy);
 }
 .chartjs-callout-chevron .chartjs-callout-label {
   bottom: auto;
@@ -1618,8 +1620,9 @@
   background: var(--navy);
   color: var(--color-on-navy, var(--panel, #fff));
   border-radius: var(--radius-round, 999px);
-  padding: 3px var(--space-4, 12px);
-  font-size: 13px;
+  padding: 4px var(--space-4, 14px);
+  font-size: 14px;
+  font-weight: 700;
 }
 /* Event band: translucent vertical span over the plot. */
 .chartjs-callout-band {

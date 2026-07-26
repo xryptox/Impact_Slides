@@ -748,7 +748,8 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             # N2 residual (v4 sim): PDF year chips sit at the RIGHT end,
             # inside the bar, at IR weight. anchor=end + align=start is
             # Chart.js-datalabels for "inside, at the bar's end edge".
-            dl_anchor, dl_align, dl_offset, dl_size = "end", "start", 6, 13
+            # V5/N2 weight polish: 14px — 13 still read light vs the PDF chips.
+            dl_anchor, dl_align, dl_offset, dl_size = "end", "start", 6, 14
         else:
             raise ValueError(
                 f"bar_labels_inside must be true, 'category', or 'series'; "
@@ -1120,6 +1121,37 @@ def _build_callout_overlays(
         return ""
     if not isinstance(callouts, list):
         raise ValueError("chart_config.callouts must be a list")
+    # R2 finish: canonicalize the legacy band+elbow double-declare. Pre-#104
+    # handoffs paired a translucent band (to carry the label) with an
+    # elbow_arrow (for chrome) over the SAME span; the elbow is now the full
+    # spanning recipe, so the band is absorbed — its label migrates to the
+    # elbow when the elbow has none — instead of double-painting.
+    elbow_span_idx: dict[tuple[int, int], int] = {}
+    for i, c in enumerate(callouts):
+        if isinstance(c, dict) and c.get("type") == "elbow_arrow":
+            f_ = max(0, int(c.get("from") or 0))
+            t_ = max(f_, int(c.get("to") if c.get("to") is not None else f_))
+            elbow_span_idx.setdefault((f_, t_), i)
+    if elbow_span_idx:
+        migrated: dict[int, str] = {}  # original elbow index -> band label
+        kept: list[tuple[int, Any]] = []
+        for i, c in enumerate(callouts):
+            if isinstance(c, dict) and c.get("type") == "band":
+                f_ = max(0, int(c.get("from") or 0))
+                t_ = max(f_, int(c.get("to") if c.get("to") is not None else f_))
+                ei = elbow_span_idx.get((f_, t_))
+                if ei is not None:
+                    band_text = str(c.get("text") or "").strip()
+                    if band_text:
+                        migrated[ei] = band_text
+                    continue  # absorbed by the elbow over the same span
+            kept.append((i, c))
+        callouts = [
+            ({**c, "text": migrated[i]} if i in migrated
+             and isinstance(c, dict)
+             and not str(c.get("text") or "").strip() else c)
+            for i, c in kept
+        ]
     n = max(int(n_labels or 0), 1)
     parts: list[str] = []
     for c in callouts:
