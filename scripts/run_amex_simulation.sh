@@ -86,9 +86,10 @@ Constraints:
 - If a pass reveals the handoff schema cannot express something, that is a capability gap (record it), do not hack around it by editing renderer code.
 - The baseline is the LAST completed sim worktree (absolute path above), not anything under main's simulation/ (that path is gitignored and absent on main). Verify every baseline claim against the CURRENT renderer before marking it resolved — do not assume commits or PR titles mean the visual gap is gone. A gap is only "resolved" if YOUR fresh pass/screenshot in THIS worktree shows it.
 - This is MEASURE-ONLY. Do not start implementing renderer fixes in this run even if a gap looks easy — Phase B (fix branch + no-mistakes gate) comes after GAP_ANALYSIS.md exists.
-- After this run completes, humans will store THIS run's GAP_ANALYSIS.md as wiki/baseline_v7_GAP_ANALYSIS.md and keep THIS run's gnhf branch on origin as the artifact archive (the --push flag pushes each iteration; also git add -f simulation/ before commits since the path is gitignored). Do not try to merge simulation/ onto main.
+- FINAL STEP (required deliverable, after GAP_ANALYSIS.md is written): copy it into the tracked wiki as the next baseline — `cp simulation/amex_q1_2026/GAP_ANALYSIS.md wiki/baseline_v7_GAP_ANALYSIS.md` — then commit BOTH the baseline and the artifacts: `git add wiki/baseline_v7_GAP_ANALYSIS.md && git add -f simulation/ && git commit -m "v7 Amex sim: baseline + artifacts"`. The wiki/ path is tracked (plain add works); simulation/ is gitignored so it needs -f. The --push flag then preserves this iteration on origin. Do not try to merge simulation/ onto main.
+- After this run completes, humans keep THIS run's gnhf branch on origin as the artifact archive and retarget the launcher (baseline path + open list) for the next run.
 
-Stop only when: simulation/amex_q1_2026/GAP_ANALYSIS.md exists with a per-pass table AND a prioritized future-feature list (each citing PDF slide evidence), and <=10 passes are recorded under simulation/amex_q1_2026/passes/.
+Stop only when: simulation/amex_q1_2026/GAP_ANALYSIS.md exists with a per-pass table AND a prioritized future-feature list (each citing PDF slide evidence), <=10 passes are recorded under simulation/amex_q1_2026/passes/, AND the final-step commit above (wiki baseline + force-added artifacts) has been made.
 EOF
 
 gnhf \
@@ -98,5 +99,5 @@ gnhf \
   --worktree \
  --push \
   --prevent-sleep on \
-  --stop-when "simulation/amex_q1_2026/GAP_ANALYSIS.md exists with a per-pass table and a prioritized future-feature list, and <=10 passes are recorded under simulation/amex_q1_2026/passes/" \
+  --stop-when "simulation/amex_q1_2026/GAP_ANALYSIS.md exists with a per-pass table and a prioritized future-feature list, <=10 passes are recorded under simulation/amex_q1_2026/passes/, and the final-step commit (wiki/baseline_v7_GAP_ANALYSIS.md plus force-added simulation/ artifacts) has been made" \
   "$PROMPT"
