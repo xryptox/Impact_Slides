@@ -2203,6 +2203,41 @@ class TestExteriorSegmentNames:
         assert "display" not in conf["options"]["plugins"]["legend"]
         assert "layout" not in conf["options"]
 
+    def test_knob_defaults_byte_identical(self, tmp_path):
+        # T2: without the new knobs the emitted config carries only items +
+        # the 120px gutter, exactly as before (SC-COMPAT-1).
+        conf = self._deck(tmp_path, {"exterior_segment_names": True})
+        seg = conf["options"]["plugins"]["segmentNames"]
+        assert set(seg) == {"items"}
+        assert conf["options"]["layout"]["padding"]["right"] == 120
+
+    def test_typography_knobs_propagate(self, tmp_path):
+        conf = self._deck(tmp_path, {
+            "exterior_segment_names": True,
+            "segment_name_font_size": 20,
+            "segment_name_line_height": 22,
+            "segment_name_wrap_chars": 12,
+            "segment_name_max_lines": 4,
+            "segment_name_offset": 24,
+            "segment_name_gutter": 150,
+        })
+        seg = conf["options"]["plugins"]["segmentNames"]
+        assert seg["fontSize"] == 20
+        assert seg["lineHeight"] == 22
+        assert seg["wrapChars"] == 12
+        assert seg["maxLines"] == 4
+        assert seg["offset"] == 24
+        assert conf["options"]["layout"]["padding"]["right"] == 150
+
+    def test_partial_knobs_emit_only_set_keys(self, tmp_path):
+        conf = self._deck(tmp_path, {
+            "exterior_segment_names": True,
+            "segment_name_font_size": 18,
+        })
+        seg = conf["options"]["plugins"]["segmentNames"]
+        assert seg["fontSize"] == 18
+        assert set(seg) == {"items", "fontSize"}
+
 
 # ---------------------------------------------------------------------------
 # F11+ — axis-chrome suppression for IR 100%-stack boards (v4 sim)

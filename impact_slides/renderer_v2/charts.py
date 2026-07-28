@@ -515,8 +515,26 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 return color if lum <= 0.55 else _NAVY_SOFT
 
             options["plugins"]["legend"]["display"] = False
-            options["layout"] = {"padding": {"right": 120}}
+            # N5/T2: measured against the PDF (slide 27 board, 960pt deck):
+            # bar width already matches (144px vs 140px-equiv) — the real
+            # gap is the name column's typography (12px vs ~20px-equiv font,
+            # 8px vs ~27px offset, 100px vs ~117px gutter). Opt-in knobs
+            # below; absent keys keep today's shell hardcodes so existing
+            # decks stay byte-identical (SC-COMPAT-1).
+            gutter = cfg.get("segment_name_gutter", 120)
+            options["layout"] = {"padding": {"right": int(gutter)}}
+            seg_opts: dict[str, Any] = {}
+            for key, knob in (
+                ("fontSize", "segment_name_font_size"),
+                ("lineHeight", "segment_name_line_height"),
+                ("wrapChars", "segment_name_wrap_chars"),
+                ("maxLines", "segment_name_max_lines"),
+                ("offset", "segment_name_offset"),
+            ):
+                if cfg.get(knob) is not None:
+                    seg_opts[key] = int(cfg[knob])
             options["plugins"]["segmentNames"] = {
+                **seg_opts,
                 "items": [
                     {
                         "label": str(name),

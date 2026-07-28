@@ -99,20 +99,24 @@ _JS = r"""
           if (!nCat) return;
           var ctx = chart.ctx;
           ctx.save();
-          ctx.font = "600 12px 'Source Sans 3', sans-serif";
+          // T2 knobs (all optional, defaults = original hardcodes).
+          var num = function (v, d) { return typeof v === 'number' ? v : d; };
+          var fontSize = num(opts.fontSize, 12), lh = num(opts.lineHeight, 13);
+          var wrapChars = num(opts.wrapChars, 16), maxLines = num(opts.maxLines, 3);
+          ctx.font = "600 " + fontSize + "px 'Source Sans 3', sans-serif";
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          var x = area.right + 8;
+          var x = area.right + num(opts.offset, 8);
           var wrap = function (text) {
             var words = String(text).split(/\s+/), lines = [''];
             words.forEach(function (w) {
               var cur = lines[lines.length - 1];
-              if (cur && (cur + ' ' + w).length > 16 && lines.length < 3) lines.push(w);
+              if (cur && (cur + ' ' + w).length > wrapChars && lines.length < maxLines) lines.push(w);
               else lines[lines.length - 1] = cur ? cur + ' ' + w : w;
             });
             return lines;
           };
-          var lh = 13, entries = [];
+          var entries = [];
           opts.items.forEach(function (item, si) {
             var meta = chart.getDatasetMeta(si);
             if (!meta || meta.hidden || !meta.data || !meta.data.length) return;
@@ -129,15 +133,21 @@ _JS = r"""
           // collision resolve top-to-bottom: thin adjacent segments would
           // otherwise print on top of each other (PDF spacing recipe)
           entries.sort(function (a, b) { return a.y - b.y; });
+          // gap scales with line height so larger name fonts (T2 knob) keep
+          // their separation; default lh=13 yields the original 2px.
+          var gap = Math.max(2, Math.round(lh / 6));
           for (var k = 1; k < entries.length; k++) {
-            var minY = entries[k - 1].y + entries[k - 1].h + 2;
+            var minY = entries[k - 1].y + entries[k - 1].h + gap;
             if (entries[k].y < minY) entries[k].y = minY;
           }
-          // clamp the whole stack inside the plot area
+          // clamp the whole stack inside the plot area — uniform shifts only;
+          // per-entry clamping crushes the collision spacing (T2: 100%-stack
+          // boards push the top segment's name above chartArea.top)
           var overflow = entries.length ? entries[entries.length - 1].y + entries[entries.length - 1].h - (area.bottom - 4) : 0;
           var shift = Math.max(0, overflow);
+          var topShift = entries.length ? Math.max(0, area.top + 6 - (entries[0].y - shift)) : 0;
           entries.forEach(function (e) {
-            var y0 = Math.max(area.top + 6, e.y - shift);
+            var y0 = e.y - shift + topShift;
             ctx.fillStyle = e.color;
             e.lines.forEach(function (ln, li) { ctx.fillText(ln, x, y0 + li * lh); });
           });
