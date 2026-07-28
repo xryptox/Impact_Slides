@@ -74,6 +74,39 @@ coordinate-frame defect (callouts → T1, axis-break → R5-A, annotations → R
 why the round-4 spec deferred `chartjs-annotation` as "needs a data anchor" — the anchor was
 already in the handoff all along.
 
+
+### R5-E — canvas charts paint BLACK when the handoff omits `series_colors` (bug)
+
+`_series_colors` (charts.py:2021) falls back to `_BAR_SERIES_COLORS`, whose entries are CSS
+custom-property **strings** — `"var(--navy, #00175a)"`, `"var(--blue, #006fcf)"`. Chart.js paints
+to a `<canvas>`, where **CSS variables do not resolve**; the string is invalid, so Chart.js
+silently falls back to black. Nothing in `charts.py` or `shell.py` calls
+`getComputedStyle`/`getPropertyValue`, so the vars are never resolved anywhere.
+
+Measured on slide 16: `datasets[0].backgroundColor === "var(--navy, #00175a)"` and the bars paint
+black, while the sibling line chart works only because its color arrived as a literal `#006fcf`.
+
+**Blast radius: 13 charts in the v7 deck** declare no `series_colors` and therefore render black
+— slides 05, 08, 10, 13 (x2), 16 (x2), 17, 20 (x2), 26 (x2), 27. This is not an Amex issue: it is
+every deck whose Builder omits the optional key, i.e. the documented default path is broken.
+
+### R5-F — chart pane titles fall through to the Chart.js legend (bug)
+
+PDF draws each pane's title as a **blue heading inside the card, above the plot** ("Net Card Fees
+(Q1: 2019-2026)", "Net Card Fees YoY% (Q1'24-Q1'26)"). `multi_panel` does this correctly via
+`gl-tile-label` (recipes.py:1024/1102), but **`render_dual_chart` passes no label** (recipes.py
+~1660-1700 builds only `title` + `build_chart_html`), so the series name surfaces as a Chart.js
+legend swatch instead — slide 16 shows a gray box reading "Net Card Fees $B" where the PDF has a
+blue heading. User reports the same header/sub-header mismapping across the deck's charts.
+
+### R5-G — absolutely-positioned inset boxes collide with content (bug)
+
+`.gl-inset` (components.css:1050) is `position: absolute; top/right: var(--gap-md); z-index: 5`
+with no layout reservation, so it floats over whatever is beneath. Measured on slide 19: the
+"VCE of Revenue 44.7%" box spans x=1604-1808 while the third pill column spans x=1390-1824 — a
+**204px overlap** that hides the "YoY% Inc/(Dec)" header and the 12% value. User reports the same
+collision on several slides.
+
 ### R5-C — elbow lacks the PDF's left L-bracket arm — **DROPPED (L3)**
 
 PDF page 6 (and page 7's `10x`/`2x` siblings) draw the capsule with a **vertical bracket arm
@@ -115,11 +148,18 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 | **T6** | R5-A: axis-break `//` hatch on the axis, positioned from `scales` via the T1 plugin; delete the mid-plot dashed rule | **P0** | bug |
 | **T7** | R5-B(1): split chevron into stacked triangle + pill, both anchored below `chartArea.bottom` | **P1** | enhancement |
 | **T9** | R5-D: position annotation boxes from their declared `x`/`y` in data space via the T1 plugin; fail closed when unresolvable | **P1** | bug |
+| **T10** | R5-E: resolve the default palette to real hex before it reaches canvas (13 charts render black today) | **P0** | bug |
+| **T11** | R5-F: chart pane titles as in-card headings for `dual_chart` (and any recipe falling through to the legend); audit header/sub-header mapping deck-wide | **P1** | bug |
+| **T12** | R5-G: stop `.gl-inset` overlapping content — reserve space (shrink table columns / gutter) instead of floating | **P1** | bug |
 | ~~T8~~ | ~~R5-C elbow bracket arm~~ — **dropped per L3**, accepted divergence | — | — |
 | — | R5-B(2): chevron `at: 4` → `at: 2` — **sim handoff fix, no code**, apply in the next sim pass | — | handoff |
 
 **T6 + T7 + T9 ship as one bundled PR** (L2): one plugin, one CSS block, three faces of the
 same frame bug.
+
+**T10 ships alone and first.** It is a one-line-class fix with the widest blast radius (13 charts,
+every non-Amex deck that omits `series_colors`) and is independent of the callout work. **T11 and
+T12** are layout/CSS work on different files and should not be bundled with either.
 
 Unchanged from round 4 and still open: F4+ pill packing (P1, slide 02 @ 90.56%), N6 provision
 furniture (P2, slide 14 @ 86.45%), R4 hero type scale (P3, slide 11 @ 87.93%), N5 packing
@@ -147,6 +187,23 @@ green; `TestIrCalloutChrome` updated deliberately for the chevron split; full su
 (baseline 1215 passed, 15 skipped); geometry verified manually via Playwright with a
 screenshot per D8, and the full-suite run done **before** claiming green (round-4 lesson: a
 file-scoped run missed a token audit and landed main red).
+
+**T10:** every dataset color reaching Chart.js is a literal color (hex/rgb), never a `var(...)`
+string; slide 16 bars paint navy `#00175a`; charts that DO declare `series_colors` are unchanged;
+a regression test asserts no serialized Chart.js config contains `var(--`. Prefer resolving the
+token at render time in Python (tokens are known) over a JS `getComputedStyle` pass, so the
+`<noscript>` SVG path benefits too — confirm which at implementation.
+
+**T11:** `dual_chart` panes emit an in-card heading element from the handoff's pane label/title;
+the Chart.js legend is suppressed when a heading carries the same text (no duplicate); decks
+relying on the legend today keep it when no heading text exists. Deck-wide audit of which
+recipes map `label`/`top_total`/sub-header vs which drop them is step one — report the table
+before changing recipes.
+
+**T12:** no `.gl-inset` box overlaps any sibling content box on any of the 44 v7 slides (assert
+by measuring bounding-box intersection in Playwright, not by eye); the inset either reserves a
+column/gutter or the table shrinks to fit; verify slide 19's third column header and 12% value
+are fully visible.
 
 ## 5. Out of scope
 
