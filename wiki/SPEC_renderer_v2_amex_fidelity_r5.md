@@ -107,6 +107,49 @@ with no layout reservation, so it floats over whatever is beneath. Measured on s
 **204px overlap** that hides the "YoY% Inc/(Dec)" header and the 12% value. User reports the same
 collision on several slides.
 
+
+### R5-H — annex group banding alternates navy/blue decoratively (bug)
+
+`recipes.py:946` sets `band = " gl-annex-group-alt" if gi % 2 else ""`, and
+`components.css:1363` paints `-alt` in `var(--blue)`. So the second, fourth, ... header group
+is light blue **purely because of its column index** — a decorative stripe with no semantic
+meaning. User reports it on slides 30 and 32: "Current/FX-Adj" renders light blue while
+"Prior/Reported" is navy, implying a distinction the data does not have.
+
+**PDF ground truth (pages 33, 34 at 150dpi):** the annex header band is **uniformly navy across
+every column**. There is no alternating blue anywhere in the annex family. The `-alt` banding
+introduced by round-3 #94 was invented, not observed.
+
+Fix: drop the index-based alternation and paint all group cells navy. Keep the `-alt` class
+available for a future *semantic* banding need, but do not apply it by column parity.
+
+### R5-I — annex tables are structurally degenerate on slides 33-36 (handoff, not renderer)
+
+Slides 33-36 declare a two-column `['Item', 'Detail']` header and then emit every PDF cell as
+its own row with an empty second column:
+
+```
+['Item', 'Detail'] / ['$ in millions', ''] / ["Q1'26", ''] / ['Discount Revenue', ''] /
+['$9,512', ''] / ['$8,743', ''] / ['FX-Adjusted*', ''] ...
+```
+
+The PDF (page 34) is a clean **4-column table** — row label, `Q1'26`, `Q1'25`, `YoY% Inc/(Dec)` —
+with a paired unbolded `FX-Adjusted*` sub-row under each metric. The transcription flattened a
+2-D table into a 1-D key/value list, losing the column structure entirely. Slide 32 has the
+same class of problem in reverse: the PDF is **two stacked tables** (a values block Q1'19-Q1'26,
+then a CAGR block) and the handoff merged them into one 10-column table with mostly-empty CAGR
+rows.
+
+**This is a transcription/handoff defect, not a renderer gap** — `render_annex_table` faithfully
+renders the degenerate structure it was given. It cannot be fixed in renderer code, and no
+renderer ticket should be filed for it. Two consequences to act on:
+
+1. The **sim prompt** should require the worker to transcribe annex tables as real 2-D grids
+   (row label + one column per period, sub-rows preserved) and to split a PDF page that shows
+   two separate tables into two handoff visuals rather than merging them.
+2. Annex MAE numbers for slides 33-36 are **not measuring the renderer** and should not be cited
+   as renderer gaps in any GAP_ANALYSIS (this is the same trap as F12+, now closed under D11).
+
 ### R5-C — elbow lacks the PDF's left L-bracket arm — **DROPPED (L3)**
 
 PDF page 6 (and page 7's `10x`/`2x` siblings) draw the capsule with a **vertical bracket arm
@@ -151,6 +194,8 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 | **T10** | R5-E: resolve the default palette to real hex before it reaches canvas (13 charts render black today) | **P0** | bug |
 | **T11** | R5-F: chart pane titles as in-card headings for `dual_chart` (and any recipe falling through to the legend); audit header/sub-header mapping deck-wide | **P1** | bug |
 | **T12** | R5-G: stop `.gl-inset` overlapping content — reserve space (shrink table columns / gutter) instead of floating | **P1** | bug |
+| **T13** | R5-H: annex group band uniformly navy; drop index-parity `-alt` banding (PDF has no alternating blue) | **P2** | bug |
+| — | R5-I: annex tables degenerate on 33-36 and merged on 32 — **handoff/transcription defect, no renderer ticket**; fix via sim-prompt rules | — | sim |
 | ~~T8~~ | ~~R5-C elbow bracket arm~~ — **dropped per L3**, accepted divergence | — | — |
 | — | R5-B(2): chevron `at: 4` → `at: 2` — **sim handoff fix, no code**, apply in the next sim pass | — | handoff |
 
@@ -199,6 +244,10 @@ the Chart.js legend is suppressed when a heading carries the same text (no dupli
 relying on the legend today keep it when no heading text exists. Deck-wide audit of which
 recipes map `label`/`top_total`/sub-header vs which drop them is step one — report the table
 before changing recipes.
+
+**T13:** every `.gl-annex-group` cell paints `var(--navy)` on slides 30/31/32; no cell paints
+`var(--blue)` by column parity; the existing F12+ contract test that asserts the white-on-navy
+sub-header stays green, and any test pinning `-alt` by index is updated deliberately.
 
 **T12:** no `.gl-inset` box overlaps any sibling content box on any of the 44 v7 slides (assert
 by measuring bounding-box intersection in Playwright, not by eye); the inset either reserves a
