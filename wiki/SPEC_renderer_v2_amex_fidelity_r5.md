@@ -75,20 +75,23 @@ why the round-4 spec deferred `chartjs-annotation` as "needs a data anchor" — 
 already in the handoff all along.
 
 
-### R5-E — canvas charts paint BLACK when the handoff omits `series_colors` (bug)
+### R5-E — canvas charts paint BLACK when the handoff omits `series_colors` (bug) — **fixed (T10)**
 
-`_series_colors` (charts.py:2021) falls back to `_BAR_SERIES_COLORS`, whose entries are CSS
-custom-property **strings** — `"var(--navy, #00175a)"`, `"var(--blue, #006fcf)"`. Chart.js paints
-to a `<canvas>`, where **CSS variables do not resolve**; the string is invalid, so Chart.js
-silently falls back to black. Nothing in `charts.py` or `shell.py` calls
-`getComputedStyle`/`getPropertyValue`, so the vars are never resolved anywhere.
+**Was:** `_series_colors` fell back to `_BAR_SERIES_COLORS` entries that were CSS custom-property
+**strings** — `"var(--navy, #00175a)"`, `"var(--blue, #006fcf)"`. Chart.js paints to a `<canvas>`,
+where **CSS variables do not resolve**; the string is invalid, so Chart.js silently fell back to
+black. Nothing in `charts.py` or `shell.py` called `getComputedStyle`/`getPropertyValue`.
 
-Measured on slide 16: `datasets[0].backgroundColor === "var(--navy, #00175a)"` and the bars paint
-black, while the sibling line chart works only because its color arrived as a literal `#006fcf`.
+Measured on slide 16 pre-fix: `datasets[0].backgroundColor === "var(--navy, #00175a)"` and the
+bars painted black (sibling line chart only worked because its color arrived as literal `#006fcf`).
+**Blast radius was 13 charts in the v7 deck** with no `series_colors` — slides 05, 08, 10, 13 (x2),
+16 (x2), 17, 20 (x2), 26 (x2), 27 — i.e. every deck whose Builder omits the optional key.
 
-**Blast radius: 13 charts in the v7 deck** declare no `series_colors` and therefore render black
-— slides 05, 08, 10, 13 (x2), 16 (x2), 17, 20 (x2), 26 (x2), 27. This is not an Amex issue: it is
-every deck whose Builder omits the optional key, i.e. the documented default path is broken.
+**Fix (T10):** `_BAR_SERIES_COLORS` is literal hex mirroring `css/tokens.css`
+(`#00175a`/`#006fcf`/`#80c8ff`/`#63666a`). Handoff-declared `series_colors` still pass through
+byte-identical (SC-COMPAT-1), including deliberate `var()` strings for the N5 segmentNames plugin.
+SVG painter `var()` sites stay as-is (CSS resolves them). Regression:
+`TestDefaultPaletteResolved`.
 
 ### R5-F — chart pane titles fall through to the Chart.js legend (bug)
 
@@ -191,7 +194,7 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 | **T6** | R5-A: axis-break `//` hatch on the axis, positioned from `scales` via the T1 plugin; delete the mid-plot dashed rule | **P0** | bug |
 | **T7** | R5-B(1): split chevron into stacked triangle + pill, both anchored below `chartArea.bottom` | **P1** | enhancement |
 | **T9** | R5-D: position annotation boxes from their declared `x`/`y` in data space via the T1 plugin; fail closed when unresolvable | **P1** | bug |
-| **T10** | R5-E: resolve the default palette to real hex before it reaches canvas (13 charts render black today) | **P0** | bug |
+| ~~**T10**~~ | ~~R5-E: resolve the default palette to real hex before it reaches canvas~~ — **shipped** (`_BAR_SERIES_COLORS` → literal hex; `TestDefaultPaletteResolved`) | ~~**P0**~~ | bug |
 | **T11** | R5-F: chart pane titles as in-card headings for `dual_chart` (and any recipe falling through to the legend); audit header/sub-header mapping deck-wide | **P1** | bug |
 | **T12** | R5-G: stop `.gl-inset` overlapping content — reserve space (shrink table columns / gutter) instead of floating | **P1** | bug |
 | **T13** | R5-H: annex group band uniformly navy; drop index-parity `-alt` banding (PDF has no alternating blue) | **P2** | bug |
@@ -202,9 +205,8 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 **T6 + T7 + T9 ship as one bundled PR** (L2): one plugin, one CSS block, three faces of the
 same frame bug.
 
-**T10 ships alone and first.** It is a one-line-class fix with the widest blast radius (13 charts,
-every non-Amex deck that omits `series_colors`) and is independent of the callout work. **T11 and
-T12** are layout/CSS work on different files and should not be bundled with either.
+**T10 shipped alone first** (literal-hex default palette; independent of callout work). **T11 and
+T12** are layout/CSS work on different files and should not be bundled with the callout PR.
 
 Unchanged from round 4 and still open: F4+ pill packing (P1, slide 02 @ 90.56%), N6 provision
 furniture (P2, slide 14 @ 86.45%), R4 hero type scale (P3, slide 11 @ 87.93%), N5 packing
@@ -233,11 +235,10 @@ green; `TestIrCalloutChrome` updated deliberately for the chevron split; full su
 screenshot per D8, and the full-suite run done **before** claiming green (round-4 lesson: a
 file-scoped run missed a token audit and landed main red).
 
-**T10:** every dataset color reaching Chart.js is a literal color (hex/rgb), never a `var(...)`
-string; slide 16 bars paint navy `#00175a`; charts that DO declare `series_colors` are unchanged;
-a regression test asserts no serialized Chart.js config contains `var(--`. Prefer resolving the
-token at render time in Python (tokens are known) over a JS `getComputedStyle` pass, so the
-`<noscript>` SVG path benefits too — confirm which at implementation.
+**T10 (met):** default dataset colors reaching Chart.js are literal hex (never `var(...)`); slide
+16 bars paint navy `#00175a`; handoff-declared `series_colors` pass through unchanged (SC-COMPAT-1);
+`TestDefaultPaletteResolved` asserts no serialized Chart.js config contains `var(--`. Resolved
+server-side in Python (not JS `getComputedStyle`) so the noscript SVG fallback matches.
 
 **T11:** `dual_chart` panes emit an in-card heading element from the handoff's pane label/title;
 the Chart.js legend is suppressed when a heading carries the same text (no duplicate); decks
