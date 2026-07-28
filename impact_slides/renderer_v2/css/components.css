@@ -1573,11 +1573,12 @@
   top: 10%;
   height: 30px;
   background: var(--blue, var(--color-primary, #006fcf));
-  /* Half the height, NOT a round token: on a wide short box the browser
-     scales a 999px radius into an ellipse, painting the capsule as a lens
-     (measured 30px at centre tapering to 14px at the ends once the plugin
-     spanned it bar-centre to bar-centre). 15px keeps true pill ends. */
-  border-radius: 15px;
+  /* A fixed radius, NOT --radius-round: that token is 50%, and a percentage
+     radius on a wide short box is an ellipse by definition — once the plugin
+     spanned this capsule bar-centre to bar-centre (543x30) it painted as a
+     LENS, measured 30px thick at centre tapering to 14px at the ends.
+     --radius-md (14px) is ~half the 30px height, so ends stay true pills. */
+  border-radius: var(--radius-md, 14px);
   display: flex;
   align-items: center;
   justify-content: center;
