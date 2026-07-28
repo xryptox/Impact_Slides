@@ -1891,7 +1891,7 @@ class TestIrCalloutChrome:
     def test_elbow_stem_geometry_reaches_from_bar_top(self, tmp_path):
         # deck: bars 7,7,9,9,10 on 0-15 domain; elbow value 10, from 1 to 4.
         # capsule top = (1 - 10/15) = 33.33%; from-bar (Q2'25=7) top =
-        # (1 - 7/15) = 53.33%; stem height = 20.00% at left 1/5 = 20.00%.
+        # (1 - 7/15) = 53.33%; stem height = 20.00% at left 1.5/5 = 30.00%.
         html = self._deck(tmp_path)
         assert "top:33.33%" in html  # capsule anchor (existing contract)
         m = re.search(
@@ -1899,7 +1899,7 @@ class TestIrCalloutChrome:
         )
         assert m, "expected inline stem geometry"
         style = m.group(1)
-        assert "left:20.00%" in style
+        assert "left:30.00%" in style
         assert "top:33.33%" in style
         assert "height:20.00%" in style
 

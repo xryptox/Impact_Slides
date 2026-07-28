@@ -1142,7 +1142,7 @@ def _elbow_stem_html(
     height = bar_top - stem_top
     if height <= 0:
         return ""
-    left = (frm / max(int(n or 1), 1)) * 100
+    left = ((frm + 0.5) / max(int(n or 1), 1)) * 100
     return (
         f'<div class="chartjs-callout-elbow-stem" '
         f'style="left:{left:.2f}%;top:{stem_top:.2f}%;height:{height:.2f}%" '
