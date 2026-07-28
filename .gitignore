@@ -38,3 +38,7 @@ run.log
 
 # Amex/sim fidelity runs live in GNHF worktrees only (large PNG evidence; do not bloat main)
 simulation/
+
+# Treehouse worktree-pool config: defaults only (max_trees/root), so it is not worth
+# tracking. Pool location is set by the TREEHOUSE_DIR env var, not by this file.
+treehouse.toml
