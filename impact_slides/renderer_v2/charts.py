@@ -525,6 +525,14 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                     for si, name in enumerate(series)
                 ]
             }
+    else:
+        # Grouped bars honour the declared domain too (#96: scale root).
+        # Without this the auto-domain drifts from y_axis_min/max and
+        # value-anchored overlays (callouts) pin off-plot.
+        if cfg.get("y_axis_min") is not None:
+            options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
+        if cfg.get("y_axis_max") is not None:
+            options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
     if stacked and (cfg.get("stack_totals") or cfg.get("point_labels") or cfg.get("show_point_labels")):
         # #101/N3: per-category signed totals painted above each stack via
         # the top segment's datalabel; negatives render parenthesized (IR).
@@ -1057,6 +1065,45 @@ def _value_anchor_pct(
     return (1.0 - frac) * 100.0
 
 
+def _merge_callout_bands(callouts: Any) -> Any:
+    """Canonicalize the legacy band+elbow double-declare (#114).
+
+    Handoffs predating PR 104 paired a translucent band (to carry the label)
+    with an elbow_arrow (for chrome) over the SAME span; the elbow is the full
+    spanning recipe, so the band is absorbed — its label migrates to the
+    elbow when the elbow has none — instead of double-painting. Idempotent.
+    """
+    if not isinstance(callouts, list):
+        return callouts
+    elbow_span_idx: dict[tuple[int, int], int] = {}
+    for i, c in enumerate(callouts):
+        if isinstance(c, dict) and c.get("type") == "elbow_arrow":
+            f_ = max(0, int(c.get("from") or 0))
+            t_ = max(f_, int(c.get("to") if c.get("to") is not None else f_))
+            elbow_span_idx.setdefault((f_, t_), i)
+    if not elbow_span_idx:
+        return callouts
+    migrated: dict[int, str] = {}  # original elbow index -> band label
+    kept: list[tuple[int, Any]] = []
+    for i, c in enumerate(callouts):
+        if isinstance(c, dict) and c.get("type") == "band":
+            f_ = max(0, int(c.get("from") or 0))
+            t_ = max(f_, int(c.get("to") if c.get("to") is not None else f_))
+            ei = elbow_span_idx.get((f_, t_))
+            if ei is not None:
+                band_text = str(c.get("text") or "").strip()
+                if band_text:
+                    migrated[ei] = band_text
+                continue  # absorbed by the elbow over the same span
+        kept.append((i, c))
+    return [
+        ({**c, "text": migrated[i]} if i in migrated
+         and isinstance(c, dict)
+         and not str(c.get("text") or "").strip() else c)
+        for i, c in kept
+    ]
+
+
 def _elbow_stem_html(
     cfg: Mapping[str, Any],
     chart_cfg: Mapping[str, Any],
@@ -1064,6 +1111,7 @@ def _elbow_stem_html(
     n: int,
     anchor: float | None,
     layout: str,
+    cid: str = "",
 ) -> str:
     """Vertical stem from the elbow capsule down to the from-bar top (R2).
 
@@ -1094,10 +1142,11 @@ def _elbow_stem_html(
     height = bar_top - stem_top
     if height <= 0:
         return ""
-    left = (frm / max(int(n or 1), 1)) * 100
+    left = ((frm + 0.5) / max(int(n or 1), 1)) * 100
     return (
         f'<div class="chartjs-callout-elbow-stem" '
-        f'style="left:{left:.2f}%;top:{stem_top:.2f}%;height:{height:.2f}%"></div>'
+        f'style="left:{left:.2f}%;top:{stem_top:.2f}%;height:{height:.2f}%" '
+        f'data-for="{esc(cid)}"></div>'
     )
 
 
@@ -1121,37 +1170,7 @@ def _build_callout_overlays(
         return ""
     if not isinstance(callouts, list):
         raise ValueError("chart_config.callouts must be a list")
-    # R2 finish: canonicalize the legacy band+elbow double-declare. Pre-#104
-    # handoffs paired a translucent band (to carry the label) with an
-    # elbow_arrow (for chrome) over the SAME span; the elbow is now the full
-    # spanning recipe, so the band is absorbed — its label migrates to the
-    # elbow when the elbow has none — instead of double-painting.
-    elbow_span_idx: dict[tuple[int, int], int] = {}
-    for i, c in enumerate(callouts):
-        if isinstance(c, dict) and c.get("type") == "elbow_arrow":
-            f_ = max(0, int(c.get("from") or 0))
-            t_ = max(f_, int(c.get("to") if c.get("to") is not None else f_))
-            elbow_span_idx.setdefault((f_, t_), i)
-    if elbow_span_idx:
-        migrated: dict[int, str] = {}  # original elbow index -> band label
-        kept: list[tuple[int, Any]] = []
-        for i, c in enumerate(callouts):
-            if isinstance(c, dict) and c.get("type") == "band":
-                f_ = max(0, int(c.get("from") or 0))
-                t_ = max(f_, int(c.get("to") if c.get("to") is not None else f_))
-                ei = elbow_span_idx.get((f_, t_))
-                if ei is not None:
-                    band_text = str(c.get("text") or "").strip()
-                    if band_text:
-                        migrated[ei] = band_text
-                    continue  # absorbed by the elbow over the same span
-            kept.append((i, c))
-        callouts = [
-            ({**c, "text": migrated[i]} if i in migrated
-             and isinstance(c, dict)
-             and not str(c.get("text") or "").strip() else c)
-            for i, c in kept
-        ]
+    callouts = _merge_callout_bands(callouts)
     n = max(int(n_labels or 0), 1)
     parts: list[str] = []
     for c in callouts:
@@ -1178,8 +1197,11 @@ def _build_callout_overlays(
         # the value-anchor dimension, and data attrs differ.
         frm = max(0, int(c.get("from") or 0))
         to = max(frm, int(c.get("to") if c.get("to") is not None else frm))
-        left = (frm / n) * 100
-        width = ((to - frm + 1) / n) * 100
+        # D2: span from bar-center fractions, not raw category edges, so the
+        # JS-off fallback lands close; the calloutGeometry plugin writes
+        # exact chartArea pixels on top.
+        left = ((frm + 0.5) / n) * 100
+        width = ((to - frm) / n) * 100
         style = f"left:{left:.2f}%;width:{width:.2f}%"
         anchor: float | None = None
         if ctype == "elbow_arrow" and c.get("value") is not None and cfg:
@@ -1189,16 +1211,20 @@ def _build_callout_overlays(
                 dim = "left" if layout == "horizontal_bar_chart" else "top"
                 style += f";{dim}:{anchor:.2f}%"
         suffix = "elbow" if ctype == "elbow_arrow" else "band"
+        dv = (
+            f' data-value="{esc(str(c.get("value")))}"'
+            if ctype == "elbow_arrow" and c.get("value") is not None else ""
+        )
         parts.append(
             f'<div class="chartjs-callout chartjs-callout-{suffix}" '
-            f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}" '
+            f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}"{dv} '
             f'style="{style}">'
             f'<span class="chartjs-callout-label">{text}</span></div>'
         )
         # IR stem (R2): computed drop from the capsule to the from-bar top,
         # a sibling of the pill so % resolve against the chart wrap.
         if ctype == "elbow_arrow" and layout != "horizontal_bar_chart" and cfg:
-            stem = _elbow_stem_html(cfg, chart_cfg or {}, frm, n, anchor, layout)
+            stem = _elbow_stem_html(cfg, chart_cfg or {}, frm, n, anchor, layout, cid)
             if stem:
                 parts.append(stem)
     return "".join(parts)
@@ -1225,10 +1251,25 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     if not cfg:
         return ""
     cid = _next_chart_id()
+    chart_cfg = _chart_config(slide)
+    # D4: serialize the callout geometry the calloutGeometry plugin needs,
+    # built from the SAME post-merge list the DOM overlays render from, so
+    # the two copies cannot drift.
+    callouts = _merge_callout_bands(chart_cfg.get("callouts"))
+    if isinstance(callouts, list) and callouts:
+        items = [
+            {k: c[k] for k in ("type", "from", "to", "at", "value")
+             if c.get(k) is not None}
+            for c in callouts
+            if isinstance(c, dict) and str(c.get("type") or "") in _CALLOUT_TYPES
+        ]
+        if items:
+            cfg.setdefault("options", {}).setdefault("plugins", {})["callouts"] = {
+                "items": items
+            }
     payload = _json.dumps(cfg, ensure_ascii=False)
     svg_fb = _svg_fallback_for_layout(slide, layout)
     noscript = f"<noscript>{svg_fb}</noscript>" if svg_fb else ""
-    chart_cfg = _chart_config(slide)
     # Annotation callout marker (#71/F2): painted as a positioned div so the
     # text is present even if Chart.js annotation plugin is absent.
     ann_html = ""
@@ -1250,7 +1291,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         )
     # Geometric callouts (#89/R2): elbow arrows / chevrons / bands.
     callouts_html = _build_callout_overlays(
-        chart_cfg.get("callouts"),
+        callouts,
         len((cfg.get("data") or {}).get("labels") or []),
         cid,
         cfg,
