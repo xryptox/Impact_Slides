@@ -117,8 +117,8 @@ def test_per_bar_color_leaves_other_bars_default():
         ],
     )
     html = _build_grouped_bar_svg(slide)
-    # first bar keeps the default series color
-    assert html.count("var(--navy") >= 1
+    # first bar keeps the default series color (literal hex after T10)
+    assert 'fill="#00175a"' in html
     assert html.count('fill="#898a89"') == 1
 
 
