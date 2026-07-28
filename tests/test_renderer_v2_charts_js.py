@@ -1282,6 +1282,85 @@ class TestGeometricCallouts:
 
 
 # ---------------------------------------------------------------------------
+# T1 — R2 callout geometry in chartArea pixels (calloutGeometry plugin)
+# ---------------------------------------------------------------------------
+
+
+class TestCalloutGeometryPlugin:
+    def _render(self, tmp_path, callouts, cfg_update=None):
+        slide = _grouped_slide_with_callouts(callouts)
+        if cfg_update:
+            slide["visual_spec"]["primary_visual"]["chart_config"].update(cfg_update)
+        path = _write(tmp_path, _handoff([slide]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        return html, _chartjs_cfg(html)
+
+    def test_plugin_registered_in_shell(self, tmp_path):
+        html, _ = self._render(tmp_path, [{"type": "chevron", "at": 1, "text": "x"}])
+        assert "calloutGeometry" in html
+        assert "afterLayout" in html
+        # D7: horizontal bars no-op; D6: degenerate chartArea no-op
+        assert "indexAxis" in html
+
+    def test_plugin_config_items_serialized(self, tmp_path):
+        _, conf = self._render(
+            tmp_path,
+            [{"type": "elbow_arrow", "from": 1, "to": 4, "value": 10, "text": "x"},
+             {"type": "chevron", "at": 4, "text": "y"}],
+            {"y_axis_min": 0, "y_axis_max": 15},
+        )
+        items = conf["options"]["plugins"]["callouts"]["items"]
+        assert items == [
+            {"type": "elbow_arrow", "from": 1, "to": 4, "value": 10},
+            {"type": "chevron", "at": 4},
+        ]
+
+    def test_plugin_config_built_after_band_merge(self, tmp_path):
+        # band absorbed by the same-span elbow => config and DOM agree (D4)
+        html, conf = self._render(
+            tmp_path,
+            [{"type": "band", "from": 0, "to": 4, "text": "band label"},
+             {"type": "elbow_arrow", "from": 0, "to": 4, "value": 11, "text": ""}],
+            {"y_axis_min": 0, "y_axis_max": 15},
+        )
+        items = conf["options"]["plugins"]["callouts"]["items"]
+        assert items == [{"type": "elbow_arrow", "from": 0, "to": 4, "value": 11}]
+        assert "chartjs-callout-band" not in html.split("<body")[1]
+
+    def test_data_attributes(self, tmp_path):
+        html, _ = self._render(
+            tmp_path,
+            [{"type": "elbow_arrow", "from": 1, "to": 4, "value": 10, "text": "x"}],
+            {"y_axis_min": 0, "y_axis_max": 15},
+        )
+        assert 'data-value="10"' in html
+        m = re.search(r'class="chartjs-callout-elbow-stem" ([^>]+)', html)
+        assert m and 'data-for="' in m.group(1)
+
+    def test_span_uses_bar_center_fractions(self, tmp_path):
+        # D2: 5 categories, from 1 to 4 => left (1+0.5)/5 = 30%, width 3/5 = 60%
+        html, _ = self._render(
+            tmp_path, [{"type": "elbow_arrow", "from": 1, "to": 4, "text": "x"}]
+        )
+        m = re.search(
+            r'class="chartjs-callout chartjs-callout-elbow"[^>]*style="([^"]+)"', html
+        )
+        assert m
+        assert "left:30.00%" in m.group(1) and "width:60.00%" in m.group(1)
+
+    def test_no_callouts_no_plugin_config(self, tmp_path):
+        s = _slide("grouped_bar_chart", [{"label": "A", "value": 1}])
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        conf = _chartjs_cfg(html)
+        assert "callouts" not in conf["options"]["plugins"]
+
+
+# ---------------------------------------------------------------------------
 # #90 — IR dual tall-card multi_panel recipe (F11+)
 # ---------------------------------------------------------------------------
 

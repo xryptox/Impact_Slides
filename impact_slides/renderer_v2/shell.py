@@ -145,6 +145,100 @@ _JS = r"""
         }
       });
     } catch (e) { /* plugin registration is best-effort */ }
+    // R2/T1: callout geometry in chartArea pixels. The server emits callout
+    // overlays positioned as % of the wrap (close, JS-off-safe); this plugin
+    // overwrites left/top/width/height in exact pixels from the live chart.
+    // Config-driven (options.plugins.callouts.items). No-op without config,
+    // on a degenerate chartArea (hidden slides), and on horizontal bars.
+    // Fail-closed: anything it cannot compute keeps the server-side style.
+    try {
+      Chart.register({
+        id: 'calloutGeometry',
+        afterLayout: function (chart) {
+          var opts = chart.config.options.plugins && chart.config.options.plugins.callouts;
+          if (!opts || !opts.items || !opts.items.length) return;
+          var area = chart.chartArea;
+          if (!area || !(area.right > area.left) || !(area.bottom > area.top)) return;
+          if (chart.options.indexAxis === 'y') return; // horizontal bars keep the approximation
+          var canvas = chart.canvas;
+          var wrap = canvas && canvas.closest ? canvas.closest('.chartjs-wrap') : null;
+          if (!wrap || !canvas.id) return;
+          // canvas may be inset inside the wrap; offsetLeft/offsetTop are
+          // layout-space, so the CSS deck transform cannot skew the math.
+          var ox = 0, oy = 0, el = canvas;
+          while (el && el !== wrap) { ox += el.offsetLeft; oy += el.offsetTop; el = el.offsetParent; }
+          if (el !== wrap) return;
+          var xs = chart.scales.x, ys = chart.scales.y;
+          if (!xs || !ys) return;
+          var px = function (node, prop, v) { node.style[prop] = Math.round(v * 100) / 100 + 'px'; };
+          // NB: at afterLayout the scales are final but dataset ELEMENTS are
+          // not positioned yet (Chart.js positions them after layout), so all
+          // geometry derives from the scales, not from meta.data elements.
+          var centerX = function (i) { // category (= bar, single dataset) center
+            var x = xs.getPixelForValue(i);
+            return (typeof x === 'number' && !isNaN(x)) ? x : null;
+          };
+          var barTopY = function (i) { // top of the bar stack/tallest bar at category i
+            var stacked = chart.options.scales && chart.options.scales.y && chart.options.scales.y.stacked;
+            var vals = [];
+            chart.data.datasets.forEach(function (ds, d) {
+              var meta = chart.getDatasetMeta(d);
+              if (meta && meta.hidden) return;
+              var v = ds.data && ds.data[i];
+              if (typeof v === 'number' && !isNaN(v)) vals.push(v);
+            });
+            if (!vals.length) return null;
+            var top = stacked ? vals.reduce(function (a, b) { return a + b; }, 0)
+                              : Math.max.apply(null, vals);
+            var y = ys.getPixelForValue(top);
+            return (typeof y === 'number' && !isNaN(y)) ? y : null;
+          };
+          var stems = wrap.querySelectorAll('.chartjs-callout-elbow-stem[data-for="' + canvas.id + '"]');
+          var stemIdx = 0;
+          opts.items.forEach(function (item) {
+            var node;
+            if (item.type === 'chevron') {
+              node = wrap.querySelector('.chartjs-callout-chevron[data-for="' + canvas.id + '"][data-at="' + item.at + '"]');
+              if (!node) return;
+              var cx = xs.getPixelForValue(item.at);
+              if (typeof cx !== 'number' || isNaN(cx)) return;
+              px(node, 'left', ox + cx - node.offsetWidth / 2);
+              px(node, 'top', oy + area.bottom); // clear of the plot; at/below chartArea.bottom
+              return;
+            }
+            if (item.type !== 'elbow_arrow' && item.type !== 'band') return;
+            var f = item.from | 0, t = (item.to != null ? item.to : item.from) | 0;
+            node = wrap.querySelector('.chartjs-callout-' + (item.type === 'elbow_arrow' ? 'elbow' : 'band') +
+              '[data-for="' + canvas.id + '"][data-from="' + f + '"][data-to="' + t + '"]');
+            var x0 = centerX(f), x1 = centerX(t);
+            if (!node || x0 == null || x1 == null) return;
+            px(node, 'left', ox + x0);
+            px(node, 'width', Math.max(0, x1 - x0));
+            var capsuleBottom = null;
+            if (item.type === 'elbow_arrow' && item.value != null) {
+              var cy = ys.getPixelForValue(item.value);
+              if (typeof cy === 'number' && !isNaN(cy)) {
+                px(node, 'top', oy + cy - node.offsetHeight / 2);
+                capsuleBottom = cy + node.offsetHeight / 2;
+              }
+            }
+            if (item.type === 'elbow_arrow') {
+              var stem = stemIdx < stems.length ? stems[stemIdx] : null;
+              stemIdx++;
+              // stem: capsule bottom -> from-bar top (stack top = min y)
+              if (stem && capsuleBottom != null) {
+                var topY = barTopY(f);
+                if (topY != null && topY > capsuleBottom) {
+                  px(stem, 'left', ox + x0);
+                  px(stem, 'top', oy + capsuleBottom);
+                  px(stem, 'height', topY - capsuleBottom);
+                }
+              }
+            }
+          });
+        }
+      });
+    } catch (e) { /* plugin registration is best-effort */ }
     document.querySelectorAll('script.chartjs-config').forEach(function (el) {
       var id = el.getAttribute('data-for');
       var canvas = id ? document.getElementById(id) : null;
