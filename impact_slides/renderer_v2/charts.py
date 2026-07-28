@@ -1068,8 +1068,8 @@ def _value_anchor_pct(
 def _merge_callout_bands(callouts: Any) -> Any:
     """Canonicalize the legacy band+elbow double-declare (#114).
 
-    Pre-#104 handoffs paired a translucent band (to carry the label) with an
-    elbow_arrow (for chrome) over the SAME span; the elbow is now the full
+    Handoffs predating PR 104 paired a translucent band (to carry the label)
+    with an elbow_arrow (for chrome) over the SAME span; the elbow is the full
     spanning recipe, so the band is absorbed — its label migrates to the
     elbow when the elbow has none — instead of double-painting. Idempotent.
     """
