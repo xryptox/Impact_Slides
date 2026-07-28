@@ -1,0 +1,46 @@
+{
+  "wrap_w": 709,
+  "wrap_h": 562,
+  "elbow": [
+    {
+      "sel": ".chartjs-callout-elbow",
+      "text": "+ ~6 percentage points",
+      "left_px": 98,
+      "top_px": 60,
+      "w": 544,
+      "h": 30,
+      "style_left": "97.54px",
+      "style_top": "60.45px",
+      "style_width": "543.52px",
+      "style_height": ""
+    }
+  ],
+  "stem": [
+    {
+      "sel": ".chartjs-callout-elbow-stem",
+      "text": "",
+      "left_px": 98,
+      "top_px": 90,
+      "w": 2,
+      "h": 151,
+      "style_left": "97.54px",
+      "style_top": "90.45px",
+      "style_width": "",
+      "style_height": "150.8px"
+    }
+  ],
+  "chevron": [
+    {
+      "sel": ".chartjs-callout-chevron",
+      "text": "Refresh",
+      "left_px": 624,
+      "top_px": 531,
+      "w": 34,
+      "h": 22,
+      "style_left": "624.06px",
+      "style_top": "531.4px",
+      "style_width": "",
+      "style_height": ""
+    }
+  ]
+}

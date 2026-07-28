@@ -1,0 +1,24 @@
+{
+  "elbow": 1,
+  "stem": 1,
+  "chevron": 1,
+  "band": 0,
+  "segmentNamesScript": 6,
+  "calloutGeometry": 1,
+  "elbows": [
+    {
+      "left": "10%",
+      "top": "8.33%",
+      "width": "80%",
+      "height": "",
+      "text": "+ ~6 percentage points"
+    }
+  ],
+  "chevs": [
+    {
+      "left": "90%",
+      "top": "",
+      "text": "Refresh"
+    }
+  ]
+}
