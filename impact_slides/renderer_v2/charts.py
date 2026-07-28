@@ -2010,11 +2010,17 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
 # Internal vertical bar charts (grouped + stacked)
 # ----------------------------------------------------------------------
 
+# Default series palette as literal hex (mirrors tokens.css --navy/--blue/
+# --blue-sky/--ink-muted). These flow into Chart.js JSON configs where CSS
+# custom properties never resolve — a var(--...) string paints black on canvas.
+# Hex is equally valid in the SVG fallback painters, so both paths agree.
+# ponytail: theme overrides of --navy (F13) won't tint default-palette charts;
+# resolve from theme tokens if/when a handoff-native theme ships.
 _BAR_SERIES_COLORS = [
-    "var(--navy, #00175a)",
-    "var(--blue, #006fcf)",
-    "var(--blue-sky, #80c8ff)",
-    "var(--ink-muted, #63666a)",
+    "#00175a",
+    "#006fcf",
+    "#80c8ff",
+    "#63666a",
 ]
 
 
