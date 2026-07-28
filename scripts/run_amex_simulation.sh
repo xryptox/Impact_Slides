@@ -35,7 +35,8 @@ v6 open list (your REQUIRED re-test checklist — every row must appear in the n
 P0: R2 (true IR callout chrome geometry: L-elbow spanning blue pill arrow above bar tops + large under-axis navy Refresh chevron; slide 05)
 P1: N5 residual / F11 packing (multi-line exterior segment-name column density; slide 27), F4+ (freestanding pill-column packing finish; slide 02)
 P2: N6 (provision furniture: freestanding reserve-rate boxed cells + exterior series legend; slide 14), N2 weight polish (optional, bolder year chips)
-P3: R1 (flat stage residual), R4 (hero % type scale; slide 11), F12+ (annex multi-level header precision)
+P3: R4 (hero % type scale; slide 11)
+ACCEPTED DIVERGENCE — R1, F12+, and N2 chip weight are CLOSED, NOT GAPS (locked in wiki/SPEC_renderer_v2_amex_fidelity_r4.md D11): R1 flat-stage residual (~92.6%) and F12+ annex multi-level header precision (~91-95%) sit inside the noise band of white-biased MAE so a fix is unfalsifiable, and N2 in-bar chips are already bold 14px (heavier would look wrong on non-Amex decks). All three were fixed once (#113, #114) and returned as exists-but-weak. Therefore: do NOT report R1, F12+, or N2 chip weight as gaps in the delta table, the future-feature list, the divergence catalog, or the recommended order. Record each once as 'closed: accepted divergence per r4 spec D11' and move on. Their slide MAE may be noted but must not inflate gap rankings.
 Also carry forward any other residual named in v5's future-feature list or divergence catalog.
 
 PERMANENT EXCLUSION — R3 (Centurion seal / brand-asset replication) is a WONTFIX, NOT A GAP:
