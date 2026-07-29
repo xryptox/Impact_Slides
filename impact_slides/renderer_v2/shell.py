@@ -177,7 +177,14 @@ _JS = r"""
           if (el !== wrap) return;
           var xs = chart.scales.x, ys = chart.scales.y;
           if (!xs || !ys) return;
-          var px = function (node, prop, v) { node.style[prop] = Math.round(v * 100) / 100 + 'px'; };
+          // Clearing the opposite edge matters: the CSS fallbacks anchor
+          // some nodes with bottom/right, and top+bottom both set would
+          // constrain the box height (measured: chevron pill crushed to 8px).
+          var px = function (node, prop, v) {
+            node.style[prop] = Math.round(v * 100) / 100 + 'px';
+            if (prop === 'top') node.style.bottom = 'auto';
+            if (prop === 'left') node.style.right = 'auto';
+          };
           // T6/R5-A: axis-break // hatch on the axis at its origin. Unlike
           // callouts this DOES apply to horizontal bars (the -v variant,
           // break on the x axis). Fail-closed: unreadable break value keeps
