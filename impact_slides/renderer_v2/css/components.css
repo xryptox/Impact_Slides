@@ -1525,23 +1525,35 @@
   pointer-events: none;
   white-space: nowrap;
 }
+/* T6/R5-A: the break marker is a small // hatch glyph on the axis at its
+   origin (PDF recipe) — NOT a line across the plot. The calloutGeometry
+   plugin pins it from the live scales; these are JS-off fallbacks. */
 .chartjs-axis-break {
   position: absolute;
   left: 0;
-  top: 30%;
-  width: 100%;
-  height: 0;
-  border-top: 2px dashed var(--ink-muted);
+  bottom: 0;
+  width: 10px;
+  height: 14px;
   pointer-events: none;
 }
-/* On horizontal bars the break is on the x axis — vertical glyph (#88). */
-.chartjs-axis-break-v {
-  left: 30%;
+.chartjs-axis-break::before,
+.chartjs-axis-break::after {
+  content: "";
+  position: absolute;
   top: 0;
-  width: 0;
+  width: 2px;
   height: 100%;
-  border-top: none;
-  border-left: 2px dashed var(--ink-muted);
+  background: var(--ink-muted);
+  transform: skewX(-18deg);
+}
+.chartjs-axis-break::before { left: 2px; }
+.chartjs-axis-break::after { left: 6px; }
+/* On horizontal bars the break is on the x axis — glyph hangs below the
+   axis line at the origin (#88). */
+.chartjs-axis-break-v {
+  left: 0;
+  top: 100%;
+  bottom: auto;
 }
 
 /* ---------- IR bullet sheet centered title (#85) ---------- */

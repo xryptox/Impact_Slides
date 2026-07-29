@@ -1305,7 +1305,8 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     if isinstance(yb, dict) and yb.get("to") is not None:
         orient = " chartjs-axis-break-v" if layout == "horizontal_bar_chart" else ""
         break_html = (
-            f'<div class="chartjs-axis-break{orient}" data-for="{esc(cid)}"></div>'
+            f'<div class="chartjs-axis-break{orient}" data-for="{esc(cid)}" '
+            f'data-break-to="{esc(str(yb.get("to")))}"></div>'
         )
     # Geometric callouts (#89/R2): elbow arrows / chevrons / bands.
     callouts_html = _build_callout_overlays(

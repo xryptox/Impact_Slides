@@ -165,11 +165,8 @@ _JS = r"""
       Chart.register({
         id: 'calloutGeometry',
         afterLayout: function (chart) {
-          var opts = chart.config.options.plugins && chart.config.options.plugins.callouts;
-          if (!opts || !opts.items || !opts.items.length) return;
           var area = chart.chartArea;
           if (!area || !(area.right > area.left) || !(area.bottom > area.top)) return;
-          if (chart.options.indexAxis === 'y') return; // horizontal bars keep the approximation
           var canvas = chart.canvas;
           var wrap = canvas && canvas.closest ? canvas.closest('.chartjs-wrap') : null;
           if (!wrap || !canvas.id) return;
@@ -181,6 +178,34 @@ _JS = r"""
           var xs = chart.scales.x, ys = chart.scales.y;
           if (!xs || !ys) return;
           var px = function (node, prop, v) { node.style[prop] = Math.round(v * 100) / 100 + 'px'; };
+          // T6/R5-A: axis-break // hatch on the axis at its origin. Unlike
+          // callouts this DOES apply to horizontal bars (the -v variant,
+          // break on the x axis). Fail-closed: unreadable break value keeps
+          // the server-side fallback position.
+          var brk = wrap.querySelector('.chartjs-axis-break[data-for="' + canvas.id + '"]');
+          if (brk) {
+            var bto = parseFloat(brk.getAttribute('data-break-to'));
+            if (!isNaN(bto)) {
+              if (brk.className.indexOf('chartjs-axis-break-v') >= 0) {
+                var bx = xs.getPixelForValue(bto);
+                if (typeof bx === 'number' && !isNaN(bx)) {
+                  bx = Math.min(Math.max(bx, area.left), area.right);
+                  px(brk, 'left', ox + bx - brk.offsetWidth / 2);
+                  px(brk, 'top', oy + area.bottom);
+                }
+              } else {
+                var by = ys.getPixelForValue(bto);
+                if (typeof by === 'number' && !isNaN(by)) {
+                  by = Math.min(Math.max(by, area.top), area.bottom);
+                  px(brk, 'left', ox + area.left - brk.offsetWidth);
+                  px(brk, 'top', oy + by - brk.offsetHeight / 2);
+                }
+              }
+            }
+          }
+          if (chart.options.indexAxis === 'y') return; // callouts: horizontal bars keep the approximation (Q7)
+          var opts = chart.config.options.plugins && chart.config.options.plugins.callouts;
+          if (!opts || !opts.items || !opts.items.length) return;
           // NB: at afterLayout the scales are final but dataset ELEMENTS are
           // not positioned yet (Chart.js positions them after layout), so all
           // geometry derives from the scales, not from meta.data elements.

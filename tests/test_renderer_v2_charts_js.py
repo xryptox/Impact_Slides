@@ -733,6 +733,44 @@ class TestBrokenYAxis:
 
 
 # ---------------------------------------------------------------------------
+# T6 — R5-A: axis-break is a // hatch glyph on the axis, not a mid-plot line
+# ---------------------------------------------------------------------------
+
+
+class TestAxisBreakGlyph:
+    def test_break_value_serialized_for_plugin(self, tmp_path):
+        path = _write(tmp_path, _handoff([_broken_axis_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        m = re.search(r'class="chartjs-axis-break" ([^>]+)', html)
+        assert m and 'data-break-to="90"' in m.group(1)
+
+    def test_glyph_is_hatch_not_plot_line(self, tmp_path):
+        path = _write(tmp_path, _handoff([_broken_axis_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        rule = re.search(r"\.chartjs-axis-break\s*\{([^}]+)", html)
+        assert rule, "expected a .chartjs-axis-break CSS rule"
+        body = rule.group(1)
+        # small hatch glyph — no full-span line, no dashed border rule
+        assert "border" not in body
+        assert "width: 100%" not in body and "height: 100%" not in body
+        assert re.search(r"height:\s*1[0-9]px", body), "glyph must be ~14px tall"
+
+    def test_plugin_positions_glyph_from_scales(self, tmp_path):
+        path = _write(tmp_path, _handoff([_broken_axis_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "data-break-to" in html
+        # plugin reads the declared break value and clamps to the axis origin
+        assert "getPixelForValue(bto)" in html
+        assert "chartjs-axis-break-v" in html  # hbar variant handled in JS
+
+
+# ---------------------------------------------------------------------------
 # #81 — Dense widescreen annex table packing (F12)
 # ---------------------------------------------------------------------------
 
