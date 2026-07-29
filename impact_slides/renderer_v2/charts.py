@@ -562,14 +562,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         unit = str(cfg.get("y_axis_unit") or "")
 
         def _fmt_value(v: float) -> str:
-            # Currency-style units prefix ($1,251); percent-style suffix (72%).
-            # Negatives are parenthesized with the unit inside (($73), IR).
-            if v == int(v):
-                n = f"{abs(int(v)):,}"
-            else:
-                n = f"{abs(v):,.1f}"
-            core = f"{n}{unit}" if unit.endswith("%") else f"{unit}{n}"
-            return f"({core})" if v < 0 else core
+            return _fmt_value_label(v, unit)
 
         total_matrix: list[list[str]] | None = None
         if cfg.get("stack_totals"):
@@ -718,6 +711,24 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             }
         else:
             options["plugins"]["datalabels"] = value_set
+    elif not stacked and (cfg.get("point_labels") or cfg.get("show_point_labels")):
+        # T14: grouped/plain bars honour point_labels too — above-bar value
+        # labels (line-path recipe), same unit formatter as stacked/line.
+        unit = str(cfg.get("y_axis_unit") or "")
+        pos = str(cfg.get("y_axis_unit_position") or "")
+        label_matrix = [
+            [
+                _fmt_value_label(row[si], unit, pos)
+                if si < len(row) and isinstance(row[si], (int, float))
+                else ""
+                for row in rows
+            ]
+            for si in range(len(series))
+        ]
+        options["plugins"]["datalabels"] = _datalabels_cfg(
+            anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=11,
+            labels=label_matrix,
+        )
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -2077,6 +2088,24 @@ def _bar_num(v: Any) -> float | None:
         return None
 
 
+def _fmt_value_label(v: float, unit: str = "", pos: str = "") -> str:
+    """Value label with unit. Currency-style units prefix ($1,251);
+    percent-style suffix (72%). Negatives parenthesized with the unit
+    inside (($73), IR). ``pos`` (y_axis_unit_position) overrides the
+    default (prefix unless the unit ends with ``%``).
+
+    Shared by the stacked, grouped-bar, and SVG bar label paths (T14) —
+    the fourth instance of a declared key honoured on only some paths.
+    """
+    if v == int(v):
+        n = f"{abs(int(v)):,}"
+    else:
+        n = f"{abs(v):,.1f}"
+    prefix = pos == "prefix" or (pos != "suffix" and not unit.endswith("%"))
+    core = f"{unit}{n}" if prefix else f"{n}{unit}"
+    return f"({core})" if v < 0 else core
+
+
 def _fmt_bar(v: float, unit: str = "") -> str:
     s = f"{v:,.0f}" if abs(v) >= 1000 else f"{v:g}"
     if not unit:
@@ -2388,7 +2417,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
             parts.append(
                 f'<text x="{x + (bar_w - 4) / 2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
-                f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(v, unit))}</text>'
+                f'font-family="var(--font-body, sans-serif)">{esc(_fmt_value_label(v, str(unit or ""), str(cfg.get("y_axis_unit_position") or "")))}</text>'
             )
         parts.append(
             f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
