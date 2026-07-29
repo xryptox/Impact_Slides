@@ -385,6 +385,9 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
     existing handoffs are unaffected (SC-COMPAT-1):
       show_gridlines: False  -> hide x+y grid lines, keep ticks
       show_y_axis / show_x_axis: False -> hide that scale entirely
+      show_legend: False -> hide the legend (recipes set this when a pane
+        heading already carries a single series' name, so the swatch would
+        only restate it). Defaults to True (Chart.js default, SC-COMPAT-1).
     """
     options = {
         "responsive": True,
@@ -417,6 +420,8 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
         },
     }
     if cfg:
+        if cfg.get("show_legend") is False:
+            options["plugins"]["legend"]["display"] = False
         if cfg.get("show_gridlines") is False:
             options["scales"]["x"]["grid"]["display"] = False
             options["scales"]["y"]["grid"]["display"] = False

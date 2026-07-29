@@ -89,6 +89,43 @@ def test_missing_secondary_renders_single_pane():
     assert "vbar-chart" in html
 
 
+def test_single_series_pane_gets_heading_and_legend_suppressed():
+    # R5-F/T11: pane title renders as an in-card gl-tile-label heading
+    # (sourced from the pane's single series name) and the Chart.js legend
+    # that would restate it is suppressed.
+    slide = _slide()
+    slide["visual_spec"]["primary_visual"]["chart_config"]["series_names"] = [
+        "Net Card Fees $B"
+    ]
+    html = render_dual_chart(slide, 1, "", use_chartjs=True)
+    assert '<div class="gl-tile-label">Net Card Fees $B</div>' in html
+    assert '"display": false' in html or '"display":false' in html
+
+
+def test_multi_series_pane_keeps_legend_and_no_heading():
+    # A legend distinguishing 2+ series is information, not chrome.
+    slide = _slide()
+    slide["visual_spec"]["primary_visual"] = {
+        "type": "line_chart",
+        "chart_config": {"series_names": ["Baseline UE", "Downside UE"]},
+        "steps_or_data": [
+            {"label": "Q1'25", "value": 4.0, "series_2": 4.2},
+            {"label": "Q2'25", "value": 4.1, "series_2": 4.3},
+        ],
+    }
+    html = render_dual_chart(slide, 1, "", use_chartjs=True)
+    assert "gl-tile-label" not in html
+    assert '"display": false' not in html and '"display":false' not in html
+
+
+def test_explicit_pane_label_renders_as_heading():
+    slide = _slide()
+    slide["visual_spec"]["primary_visual"]["label"] = "Fees (Q1: 2019-2026)"
+    slide["visual_spec"]["primary_visual"]["chart_config"]["series_names"] = ["Fees"]
+    html = render_dual_chart(slide, 1, "")
+    assert '<div class="gl-tile-label">Fees (Q1: 2019-2026)</div>' in html
+
+
 def test_combo_pane_with_overlay():
     slide = _slide()
     slide["visual_spec"]["secondary_visual"] = {

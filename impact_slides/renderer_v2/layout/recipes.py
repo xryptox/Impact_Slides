@@ -1502,8 +1502,26 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
     from ..charts import build_chart_html, is_chart_layout
 
     layout = (slide.get("layout_type") or "grouped_bar_chart").lower()
-    chart_html = build_chart_html(slide, layout, use_chartjs=use_chartjs)
     vs = slide.get("visual_spec") or {}
+    pv = vs.get("primary_visual") or {}
+    # R5-F/T11: on a single-series full-slide chart the slide title is the
+    # heading, so a lone Chart.js legend swatch only restates it (the PDF
+    # draws no swatch on single-series charts). Multi-series charts and
+    # combo overlays keep their legend.
+    if (
+        isinstance(pv, Mapping)
+        and len(_visual_series_names(pv)) == 1
+        and not (vs.get("line_overlay") or pv.get("line_overlay"))
+    ):
+        slide = {
+            **slide,
+            "visual_spec": {
+                **vs,
+                "chart_config": {**(vs.get("chart_config") or {}), "show_legend": False},
+            },
+        }
+        vs = slide["visual_spec"]
+    chart_html = build_chart_html(slide, layout, use_chartjs=use_chartjs)
     secondary = vs.get("secondary_visual") or {}
     key_stats = (slide.get("content") or {}).get("key_stats") or []
 
@@ -1644,6 +1662,33 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
     )
 
 
+def _visual_series_names(visual: Mapping[str, Any]) -> list[str]:
+    """Series names a chart will plot, from keys the Builder already emits:
+    chart_config.series_names, or the header row of tabular steps_or_data.
+    Dict rows without names count as unnamed (empty-string) series so the
+    series COUNT is still right for legend-suppression decisions.
+    """
+    cfg = visual.get("chart_config") or {}
+    names = [
+        strip_eids(str(n)) for n in cfg.get("series_names") or [] if str(n).strip()
+    ]
+    steps = visual.get("steps_or_data") or []
+    if not names and steps and isinstance(steps[0], (list, tuple)):
+        names = [strip_eids(str(c)) for c in steps[0][1:] if str(c).strip()]
+    if not names:
+        for row in steps:
+            if isinstance(row, Mapping):
+                if isinstance(row.get("values"), Mapping):
+                    names = [strip_eids(str(k)) for k in row["values"]]
+                else:
+                    n = 1
+                    while f"series_{n + 1}" in row:
+                        n += 1
+                    names = [""] * n
+                break
+    return names
+
+
 def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = False):
     """Two charts side by side (PDF p17: bar chart left, line chart right).
 
@@ -1661,9 +1706,22 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         if not isinstance(visual, dict) or not visual:
             continue
         vt = str(visual.get("type") or "grouped_bar_chart").lower()
+        # Pane heading (R5-F/T11): the PDF draws each pane's title as a
+        # heading inside the card, above the plot. Source it from an
+        # explicit per-pane ``label`` when authored, else from the pane's
+        # single series name. Multi-series panes keep their Chart.js
+        # legend (it distinguishes series — information, not chrome); a
+        # single-series legend only restates the heading, so suppress it.
+        names = _visual_series_names(visual)
+        heading = strip_eids(str(visual.get("label") or ""))
+        if not heading and len(names) == 1:
+            heading = names[0]
+        pane_cfg = dict(visual.get("chart_config") or {})
+        if heading and len(names) <= 1:
+            pane_cfg["show_legend"] = False
         sub_vs: dict[str, Any] = {
             "primary_visual": visual,
-            "chart_config": visual.get("chart_config") or {},
+            "chart_config": pane_cfg,
         }
         if visual.get("line_overlay"):
             sub_vs["line_overlay"] = visual["line_overlay"]
@@ -1677,9 +1735,10 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
             "visual_spec": sub_vs,
             "evidence_sources": slide.get("evidence_sources") or [],
         }
+        lbl = f'<div class="gl-tile-label">{esc(heading)}</div>' if heading else ""
         panes.append(
             f'<div class="dual-chart-pane">'
-            f"{build_chart_html(sub_slide, vt, use_chartjs=use_chartjs)}</div>"
+            f"{lbl}{build_chart_html(sub_slide, vt, use_chartjs=use_chartjs)}</div>"
         )
     main = f'<div class="gl-grid gl-grid-2 dual-chart">{"".join(panes)}</div>'
     main += insight_strip(_so_what(slide))
