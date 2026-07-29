@@ -1767,7 +1767,11 @@ class TestFidelityPolish:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert "gl-annex-group" in html
-        assert "gl-annex-group-alt" in html  # alternating banding
+        # R5-H/T13: no index-parity banding — the PDF annex band is uniformly
+        # navy; gl-annex-group-alt must not be applied by column parity.
+        assert 'class="gl-annex-group-alt"' not in html  # CSS rule may stay
+        # every group cell paints navy, not the blue -alt band
+        assert html.count('class="gl-annex-group"') == 3
 
     def test_r4_hero_type_scale(self, tmp_path):
         path = _write(tmp_path, _handoff([_chart_hero_slide()]))
