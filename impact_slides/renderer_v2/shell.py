@@ -201,12 +201,8 @@ _JS = r"""
                   px(brk, 'top', oy + area.bottom);
                 }
               } else {
-                var by = ys.getPixelForValue(bto);
-                if (typeof by === 'number' && !isNaN(by)) {
-                  by = Math.min(Math.max(by, area.top), area.bottom);
-                  px(brk, 'left', ox + area.left - brk.offsetWidth);
-                  px(brk, 'top', oy + by - brk.offsetHeight / 2);
-                }
+                px(brk, 'left', ox + area.left - brk.offsetWidth);
+                px(brk, 'top', oy + area.bottom);
               }
             }
           }
