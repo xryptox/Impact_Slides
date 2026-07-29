@@ -1730,9 +1730,10 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
     """Two charts side by side (PDF p17: bar chart left, line chart right).
 
     visual_spec.primary_visual and visual_spec.secondary_visual each carry
-    their own ``type`` + ``steps_or_data`` + optional per-pane
+    their own ``type`` + ``steps_or_data`` + optional per-pane ``label`` /
     ``chart_config`` / ``line_overlay``. Each pane is built through the
-    standard chart pipeline (internal builders, pack fallback).
+    standard chart pipeline; pane ``label`` (else single series name) renders
+    as ``gl-tile-label``, and a redundant single-series legend is suppressed.
     """
     from ..charts import build_chart_html
 

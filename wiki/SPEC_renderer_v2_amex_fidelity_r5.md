@@ -93,14 +93,17 @@ byte-identical (SC-COMPAT-1), including deliberate `var()` strings for the N5 se
 SVG painter `var()` sites stay as-is (CSS resolves them). Regression:
 `TestDefaultPaletteResolved`.
 
-### R5-F — chart pane titles fall through to the Chart.js legend (bug)
+### R5-F — chart pane titles fall through to the Chart.js legend (bug) — **shipped (T11)**
 
 PDF draws each pane's title as a **blue heading inside the card, above the plot** ("Net Card Fees
-(Q1: 2019-2026)", "Net Card Fees YoY% (Q1'24-Q1'26)"). `multi_panel` does this correctly via
-`gl-tile-label` (recipes.py:1024/1102), but **`render_dual_chart` passes no label** (recipes.py
-~1660-1700 builds only `title` + `build_chart_html`), so the series name surfaces as a Chart.js
-legend swatch instead — slide 16 shows a gray box reading "Net Card Fees $B" where the PDF has a
-blue heading. User reports the same header/sub-header mismapping across the deck's charts.
+(Q1: 2019-2026)", "Net Card Fees YoY% (Q1'24-Q1'26)"). Pre-fix: `multi_panel` did this via
+`gl-tile-label`, but `render_dual_chart` passed no label, so the series name surfaced as a Chart.js
+legend swatch (slide 16: gray "Net Card Fees $B" where the PDF has a blue heading).
+
+**Fix (T11):** `render_dual_chart` panes emit `gl-tile-label` from an explicit per-pane `label`,
+else the pane's single series name. Single-series legends (dual panes and full-slide charts) are
+suppressed via internal `chart_config.show_legend=False` (default True, SC-COMPAT-1). Multi-series
+panes keep their legend. Regression: `test_dual_chart` heading/legend cases.
 
 ### R5-G — absolutely-positioned inset boxes collide with content (bug)
 
@@ -195,7 +198,7 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 | **T7** | R5-B(1): split chevron into stacked triangle + pill, both anchored below `chartArea.bottom` | **P1** | enhancement |
 | **T9** | R5-D: position annotation boxes from their declared `x`/`y` in data space via the T1 plugin; fail closed when unresolvable | **P1** | bug |
 | ~~**T10**~~ | ~~R5-E: resolve the default palette to real hex before it reaches canvas~~ — **shipped** (`_BAR_SERIES_COLORS` → literal hex; `TestDefaultPaletteResolved`) | ~~**P0**~~ | bug |
-| **T11** | R5-F: chart pane titles as in-card headings for `dual_chart` (and any recipe falling through to the legend); audit header/sub-header mapping deck-wide | **P1** | bug |
+| ~~**T11**~~ | ~~R5-F: chart pane titles as in-card headings for `dual_chart`~~ — **shipped** (`gl-tile-label` + `show_legend`; `test_dual_chart`) | ~~**P1**~~ | bug |
 | **T12** | R5-G: stop `.gl-inset` overlapping content — reserve space (shrink table columns / gutter) instead of floating | **P1** | bug |
 | **T13** | R5-H: annex group band uniformly navy; drop index-parity `-alt` banding (PDF has no alternating blue) | **P2** | bug |
 | — | R5-I: annex tables degenerate on 33-36 and merged on 32 — **handoff/transcription defect, no renderer ticket**; fix via sim-prompt rules | — | sim |
@@ -206,8 +209,9 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 **T6 + T7 + T9 ship as one bundled PR** (L2): one plugin, one CSS block, three faces of the
 same frame bug.
 
-**T10 shipped alone first** (literal-hex default palette; independent of callout work). **T11 and
-T12** are layout/CSS work on different files and should not be bundled with the callout PR.
+**T10 shipped alone first** (literal-hex default palette; independent of callout work). **T11
+shipped** (dual_chart/`render_chart` headings + legend suppression). **T12** is separate layout/CSS
+work and should not be bundled with the callout PR.
 
 Unchanged from round 4 and still open: F4+ pill packing (P1, slide 02 @ 90.56%), N6 provision
 furniture (P2, slide 14 @ 86.45%), R4 hero type scale (P3, slide 11 @ 87.93%), N5 packing
@@ -241,11 +245,10 @@ file-scoped run missed a token audit and landed main red).
 `TestDefaultPaletteResolved` asserts no serialized Chart.js config contains `var(--`. Resolved
 server-side in Python (not JS `getComputedStyle`) so the noscript SVG fallback matches.
 
-**T11:** `dual_chart` panes emit an in-card heading element from the handoff's pane label/title;
-the Chart.js legend is suppressed when a heading carries the same text (no duplicate); decks
-relying on the legend today keep it when no heading text exists. Deck-wide audit of which
-recipes map `label`/`top_total`/sub-header vs which drop them is step one — report the table
-before changing recipes.
+**T11 (met):** `dual_chart` panes emit `gl-tile-label` from per-pane `label` (else single series
+name); single-series legend suppressed via `chart_config.show_legend=False` (default True);
+multi-series / overlay panes keep the legend; full-slide single-series charts likewise drop the
+lone swatch (slide title is the heading). `test_dual_chart` covers heading + legend cases.
 
 **T13:** every `.gl-annex-group` cell paints `var(--navy)` on slides 30/31/32; no cell paints
 `var(--blue)` by column parity; the existing F12+ contract test that asserts the white-on-navy
