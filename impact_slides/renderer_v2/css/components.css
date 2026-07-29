@@ -1627,6 +1627,10 @@
    the bottom offsets here are JS-off fallbacks. */
 .chartjs-callout-chevron-tip {
   bottom: 34px;
+  /* The CSS triangle idiom needs a zero CONTENT box, but this deck sets
+     box-sizing: border-box globally, which would collapse width/height:0 into a
+     34x22 border-box and paint a solid navy block over the bars. */
+  box-sizing: content-box;
   width: 0;
   height: 0;
   /* V5/R2: chunky IR triangle — the 14/18 chip read as a speck next to the
@@ -1639,7 +1643,9 @@
   bottom: 4px;
   background: var(--navy);
   color: var(--color-on-navy, var(--panel, #fff));
-  border-radius: var(--radius-round, 999px);
+  /* --radius-round is 50%, which makes an ellipse on a wide short box (same trap
+     as the T1 capsule). A fixed radius >= half the height gives a true pill. */
+  border-radius: var(--radius-md, 14px);
   padding: 4px var(--space-4, 14px);
   font-size: 14px;
   font-weight: 700;

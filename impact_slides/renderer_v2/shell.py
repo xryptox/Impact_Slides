@@ -262,7 +262,11 @@ _JS = r"""
               var sel = '[data-for="' + canvas.id + '"][data-at="' + item.at + '"]';
               var tip = wrap.querySelector('.chartjs-callout-chevron-tip' + sel);
               var pill = wrap.querySelector('.chartjs-callout-chevron-pill' + sel);
-              var stackY = area.bottom;
+              // Below the tick-label row, not merely below the plot: the PDF puts the
+          // whole Refresh marker clear of the category labels. xs.bottom includes
+          // the tick row; fall back to area.bottom if the scale can't report it.
+          var stackY = (typeof xs.bottom === 'number' && xs.bottom > area.bottom)
+            ? xs.bottom : area.bottom;
               if (tip) {
                 px(tip, 'left', ox + cx - tip.offsetWidth / 2);
                 px(tip, 'top', oy + stackY);
