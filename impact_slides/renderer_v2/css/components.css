@@ -1044,7 +1044,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* ---------- table inset (floating key_stats on data_table, #73) ---------- */
+/* ---------- table inset (key_stats gutter on data_table, #73/T12) ---------- */
 /* R5-G/T12: the inset reserves a real gutter column instead of floating
    (absolute) over the table — row-reverse keeps it on the right like the
    PDF's VCE box, and the table shrinks into the remaining width. */
@@ -1365,7 +1365,8 @@
   border: 1px solid var(--panel, #fff);
   border-bottom-color: var(--panel-border);
 }
-/* F12+ (#94): alternating group banding + stub bottom alignment. */
+/* gl-annex-group-alt: optional semantic band (not applied by index parity; T13).
+   Default group cells stay navy; keep this rule for a future handoff-declared need. */
 .annex-table .gl-annex-group-alt {
   background: var(--blue, var(--color-primary, #006fcf));
 }

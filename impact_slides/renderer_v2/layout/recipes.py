@@ -360,11 +360,12 @@ def _stat_label_value(st: Any) -> tuple[str, str] | None:
 
 
 def _table_inset(stats: Sequence[Any]) -> str:
-    """Floating key_stats inset for table slides (#73/F9).
+    """key_stats inset cards for table slides (#73/F9, gutter via T12).
 
-    Renders each supplied stat as a navy callout card floated beside the
-    table, so VCE-style insets compose into the data_table stage instead of
-    being dropped. Returns empty string when no usable stats are supplied.
+    Renders each supplied stat as a navy callout card. The host recipe wraps
+    these in `.gl-areas-table-inset` so the inset reserves a right gutter and
+    the table shrinks beside it (T12) — not absolute-over-content. Returns
+    empty string when no usable stats are supplied.
     """
     cards = []
     for st in stats[:2]:
@@ -665,7 +666,7 @@ def render_pill_comparison(slide, total, notes, active=False):
     data column (Q1'26 / Q1'25 / YoY) — the IR statement house style, not
     pill headers over a spreadsheet body. Shells are white paper with
     full-width navy header caps; the last column keeps YoY emphasis via
-    bold navy cells. Composes with the floating key_stats inset (#73).
+    bold navy cells. Composes with the key_stats inset gutter (#73/T12).
     """
     rows = _table_matrix(slide)
     if not rows:

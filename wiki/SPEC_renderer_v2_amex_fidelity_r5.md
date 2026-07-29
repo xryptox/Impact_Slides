@@ -105,29 +105,31 @@ else the pane's single series name. Single-series legends (dual panes and full-s
 suppressed via internal `chart_config.show_legend=False` (default True, SC-COMPAT-1). Multi-series
 panes keep their legend. Regression: `test_dual_chart` heading/legend cases.
 
-### R5-G — absolutely-positioned inset boxes collide with content (bug)
+### R5-G — absolutely-positioned inset boxes collide with content (bug) — **fixed (T12)**
 
-`.gl-inset` (components.css:1050) is `position: absolute; top/right: var(--gap-md); z-index: 5`
-with no layout reservation, so it floats over whatever is beneath. Measured on slide 19: the
-"VCE of Revenue 44.7%" box spans x=1604-1808 while the third pill column spans x=1390-1824 — a
-**204px overlap** that hides the "YoY% Inc/(Dec)" header and the 12% value. User reports the same
-collision on several slides.
+**Was:** `.gl-inset` used `position: absolute; top/right: var(--gap-md); z-index: 5` with no
+layout reservation, so it floated over whatever was beneath. Measured on slide 19: the
+"VCE of Revenue 44.7%" box spanned x=1604-1808 while the third pill column spanned x=1390-1824
+— a **204px overlap** that hid the "YoY% Inc/(Dec)" header and the 12% value.
+
+**Fix (T12):** `.gl-areas-table-inset` is a flex row-reverse gutter — the inset reserves real
+width and the table shrinks beside it (not a z-index/opacity stack tweak). Playwright
+bounding-box intersection across all 44 v7 slides: 2 slides emit `.gl-inset`, both 0 overlaps.
 
 
-### R5-H — annex group banding alternates navy/blue decoratively (bug)
+### R5-H — annex group banding alternates navy/blue decoratively (bug) — **fixed (T13)**
 
-`recipes.py:946` sets `band = " gl-annex-group-alt" if gi % 2 else ""`, and
-`components.css:1363` paints `-alt` in `var(--blue)`. So the second, fourth, ... header group
-is light blue **purely because of its column index** — a decorative stripe with no semantic
-meaning. User reports it on slides 30 and 32: "Current/FX-Adj" renders light blue while
-"Prior/Reported" is navy, implying a distinction the data does not have.
+**Was:** `recipes.py` set `band = " gl-annex-group-alt" if gi % 2 else ""`, and
+`components.css` painted `-alt` in `var(--blue)`. So every second header group was light blue
+**purely because of its column index** — a decorative stripe with no semantic meaning.
 
 **PDF ground truth (pages 33, 34 at 150dpi):** the annex header band is **uniformly navy across
 every column**. There is no alternating blue anywhere in the annex family. The `-alt` banding
 introduced by round-3 #94 was invented, not observed.
 
-Fix: drop the index-based alternation and paint all group cells navy. Keep the `-alt` class
-available for a future *semantic* banding need, but do not apply it by column parity.
+**Fix (T13):** drop index-parity alternation; every group cell paints navy. Keep the `-alt`
+class/CSS available for a future *semantic* (handoff-declared) banding need. F12+ white-on-navy
+sub-header contract stays green. Computed styles on annex group cells: all `rgb(0,23,90)`.
 
 ### R5-I — annex tables are structurally degenerate on slides 33-36 (handoff, not renderer)
 
@@ -200,8 +202,8 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 | ~~**T9**~~ | ~~R5-D: position annotation boxes from their declared `x`/`y` as pixel offsets inside `chartArea` via the T1 plugin; fail closed when unresolvable~~ — **shipped** (bundled with T6/T7) | ~~**P1**~~ | bug |
 | ~~**T10**~~ | ~~R5-E: resolve the default palette to real hex before it reaches canvas~~ — **shipped** (`_BAR_SERIES_COLORS` → literal hex; `TestDefaultPaletteResolved`) | ~~**P0**~~ | bug |
 | ~~**T11**~~ | ~~R5-F: chart pane titles as in-card headings for `dual_chart`~~ — **shipped** (`gl-tile-label` + `show_legend`; `test_dual_chart`) | ~~**P1**~~ | bug |
-| **T12** | R5-G: stop `.gl-inset` overlapping content — reserve space (shrink table columns / gutter) instead of floating | **P1** | bug |
-| **T13** | R5-H: annex group band uniformly navy; drop index-parity `-alt` banding (PDF has no alternating blue) | **P2** | bug |
+| ~~**T12**~~ | ~~R5-G: stop `.gl-inset` overlapping content — reserve gutter instead of floating~~ — **shipped** (flex gutter; 0 Playwright bbox overlaps on v7) | ~~**P1**~~ | bug |
+| ~~**T13**~~ | ~~R5-H: annex group band uniformly navy; drop index-parity `-alt` banding~~ — **shipped** (all groups navy; `-alt` kept for semantic use) | ~~**P2**~~ | bug |
 | — | R5-I: annex tables degenerate on 33-36 and merged on 32 — **handoff/transcription defect, no renderer ticket**; fix via sim-prompt rules | — | sim |
 | **F5** | follow-up: handoff theme cannot tint the default chart palette (T10 ceiling) — **do not pick up until the trigger below fires** | **P3** | enhancement |
 | ~~T8~~ | ~~R5-C elbow bracket arm~~ — **dropped per L3**, accepted divergence | — | — |
@@ -211,8 +213,8 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 same frame bug.
 
 **T10 shipped alone first** (literal-hex default palette; independent of callout work). **T11
-shipped** (dual_chart/`render_chart` headings + legend suppression). **T12** is separate layout/CSS
-work and should not be bundled with the callout PR.
+shipped** (dual_chart/`render_chart` headings + legend suppression). **T12 + T13 shipped** as
+inset/annex layout fixes (not bundled with the callout PR).
 
 Unchanged from round 4 and still open: F4+ pill packing (P1, slide 02 @ 90.56%), N6 provision
 furniture (P2, slide 14 @ 86.45%), R4 hero type scale (P3, slide 11 @ 87.93%), N5 packing
@@ -255,14 +257,14 @@ name); single-series legend suppressed via `chart_config.show_legend=False` (def
 multi-series / overlay panes keep the legend; full-slide single-series charts likewise drop the
 lone swatch (slide title is the heading). `test_dual_chart` covers heading + legend cases.
 
-**T13:** every `.gl-annex-group` cell paints `var(--navy)` on slides 30/31/32; no cell paints
-`var(--blue)` by column parity; the existing F12+ contract test that asserts the white-on-navy
-sub-header stays green, and any test pinning `-alt` by index is updated deliberately.
+**T13 (met):** every `.gl-annex-group` cell paints `var(--navy)` (computed `rgb(0,23,90)`); no
+cell paints `var(--blue)` by column parity; F12+ white-on-navy sub-header contract stays green;
+index-parity `-alt` assertion removed (class may remain in CSS for future semantic use).
 
-**T12:** no `.gl-inset` box overlaps any sibling content box on any of the 44 v7 slides (assert
-by measuring bounding-box intersection in Playwright, not by eye); the inset either reserves a
-column/gutter or the table shrinks to fit; verify slide 19's third column header and 12% value
-are fully visible.
+**T12 (met):** no `.gl-inset` box overlaps any sibling content box on any of the 44 v7 slides
+(Playwright bounding-box intersection; 2 slides emit `.gl-inset`, both 0 overlaps); inset
+reserves a flex gutter and the table shrinks beside it; slide 19 third column header + 12%
+value fully visible.
 
 ## 4b. F5 — themed default chart palette (filed, deliberately not scheduled)
 
@@ -286,7 +288,7 @@ palette is now fixed.
   → 4 recipe call sites → the `_chartjs_*_config` builders → **9 `_series_colors` call sites**:
   a wide two-module signature change to alter colours on a deck that does not exist, to a value
   that is currently identical. Speculative generality of exactly the kind that produced the
-  invented `-alt` annex banding now being deleted in T13.
+  invented `-alt` annex banding deleted in T13.
 
 **Escape hatch (already shipped, is the intended path):** any deck needing brand chart colours
 declares `chart_config.series_colors`, which flows through untouched — this is how every Amex
