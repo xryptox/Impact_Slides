@@ -1957,16 +1957,33 @@ class TestIrCalloutChrome:
         )
 
     def test_chevron_navy_under_axis(self, tmp_path):
+        # T7/R5-B: the chevron is now TWO stacked sibling nodes — a navy
+        # down-triangle above a separate navy pill — not one fused node
+        # with a border-top triangle. This contract changed deliberately.
         html = self._deck(tmp_path)
-        # navy downward chevron + navy pill label under the axis
         assert re.search(
-            r"\.chartjs-callout-chevron\s*\{[^}]*border-top:\s*[\d.]+px solid var\(--navy",
+            r"\.chartjs-callout-chevron-tip\s*\{[^}]*border-top:\s*[\d.]+px solid var\(--navy",
             html,
         )
         assert re.search(
-            r"\.chartjs-callout-chevron \.chartjs-callout-label\s*\{[^}]*background:\s*var\(--navy",
+            r"\.chartjs-callout-chevron-pill\s*\{[^}]*background:\s*var\(--navy",
             html,
         )
+
+    def test_chevron_split_markup(self, tmp_path):
+        html = self._deck(tmp_path)
+        # tip and pill are sibling nodes sharing the same anchor
+        tip = re.search(
+            r'class="chartjs-callout chartjs-callout-chevron-tip" ([^>]+)', html
+        )
+        pill = re.search(
+            r'class="chartjs-callout chartjs-callout-chevron-pill" ([^>]+)', html
+        )
+        assert tip and pill, "expected split chevron tip + pill nodes"
+        assert 'data-at="4"' in tip.group(1) and 'data-at="4"' in pill.group(1)
+        assert "Refresh" in html
+        # no fused single-node chevron remains
+        assert 'chartjs-callout-chevron"' not in html
 
 
 # ---------------------------------------------------------------------------

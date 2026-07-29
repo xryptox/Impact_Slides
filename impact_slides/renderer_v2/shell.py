@@ -233,12 +233,23 @@ _JS = r"""
           opts.items.forEach(function (item) {
             var node;
             if (item.type === 'chevron') {
-              node = wrap.querySelector('.chartjs-callout-chevron[data-for="' + canvas.id + '"][data-at="' + item.at + '"]');
-              if (!node) return;
+              // T7/R5-B: split nodes — triangle stacked above a separate
+              // pill, both centred on the anchor, below chartArea.bottom.
               var cx = xs.getPixelForValue(item.at);
               if (typeof cx !== 'number' || isNaN(cx)) return;
-              px(node, 'left', ox + cx - node.offsetWidth / 2);
-              px(node, 'top', oy + area.bottom); // clear of the plot; at/below chartArea.bottom
+              var sel = '[data-for="' + canvas.id + '"][data-at="' + item.at + '"]';
+              var tip = wrap.querySelector('.chartjs-callout-chevron-tip' + sel);
+              var pill = wrap.querySelector('.chartjs-callout-chevron-pill' + sel);
+              var stackY = area.bottom;
+              if (tip) {
+                px(tip, 'left', ox + cx - tip.offsetWidth / 2);
+                px(tip, 'top', oy + stackY);
+                stackY += tip.offsetHeight + 2;
+              }
+              if (pill) {
+                px(pill, 'left', ox + cx - pill.offsetWidth / 2);
+                px(pill, 'top', oy + stackY);
+              }
               return;
             }
             if (item.type !== 'elbow_arrow' && item.type !== 'band') return;

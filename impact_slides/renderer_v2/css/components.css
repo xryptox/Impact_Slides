@@ -1621,10 +1621,12 @@
   color: var(--color-on-navy, var(--panel, #fff));
   font-size: 13px;
 }
-/* Chevron marker under the category axis (R2): large navy down-triangle
-   with a navy pill label beneath it (PDF Refresh marker). */
-.chartjs-callout-chevron {
-  bottom: 6%;
+/* Chevron marker under the category axis (R2/T7): two stacked sibling
+   nodes — a navy down-triangle above a separate navy pill (PDF Refresh
+   marker). The calloutGeometry plugin stacks them below chartArea.bottom;
+   the bottom offsets here are JS-off fallbacks. */
+.chartjs-callout-chevron-tip {
+  bottom: 34px;
   width: 0;
   height: 0;
   /* V5/R2: chunky IR triangle — the 14/18 chip read as a speck next to the
@@ -1633,15 +1635,15 @@
   border-right: 17px solid transparent;
   border-top: 22px solid var(--navy);
 }
-.chartjs-callout-chevron .chartjs-callout-label {
-  bottom: auto;
-  top: calc(100% + 8px);
+.chartjs-callout-chevron-pill {
+  bottom: 4px;
   background: var(--navy);
   color: var(--color-on-navy, var(--panel, #fff));
   border-radius: var(--radius-round, 999px);
   padding: 4px var(--space-4, 14px);
   font-size: 14px;
   font-weight: 700;
+  white-space: nowrap;
 }
 /* Event band: translucent vertical span over the plot. */
 .chartjs-callout-band {

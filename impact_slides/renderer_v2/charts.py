@@ -1204,11 +1204,15 @@ def _build_callout_overlays(
         if ctype == "chevron":
             at = max(0, int(c.get("at") or 0))
             left = ((at + 0.5) / n) * 100
+            # T7/R5-B: two sibling nodes — a navy down-triangle above a
+            # separate navy pill (PDF Refresh marker), not a fused unit.
             parts.append(
-                f'<div class="chartjs-callout chartjs-callout-chevron" '
+                f'<div class="chartjs-callout chartjs-callout-chevron-tip" '
                 f'data-for="{esc(cid)}" data-at="{at}" '
-                f'style="left:{left:.2f}%">'
-                f'<span class="chartjs-callout-label">{text}</span></div>'
+                f'style="left:{left:.2f}%"></div>'
+                f'<div class="chartjs-callout chartjs-callout-chevron-pill" '
+                f'data-for="{esc(cid)}" data-at="{at}" '
+                f'style="left:{left:.2f}%">{text}</div>'
             )
             continue
         # elbow_arrow and band share the span geometry; only the CSS class,
