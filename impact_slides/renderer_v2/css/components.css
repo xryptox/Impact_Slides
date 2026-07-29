@@ -1623,8 +1623,8 @@
 }
 /* Chevron marker under the category axis (R2/T7): two stacked sibling
    nodes — a navy down-triangle above a separate navy pill (PDF Refresh
-   marker). The calloutGeometry plugin stacks them below chartArea.bottom;
-   the bottom offsets here are JS-off fallbacks. */
+   marker). The calloutGeometry plugin stacks them below scales.x.bottom
+   (tick row included); the bottom offsets here are JS-off fallbacks. */
 .chartjs-callout-chevron-tip {
   bottom: 34px;
   /* The CSS triangle idiom needs a zero CONTENT box, but this deck sets

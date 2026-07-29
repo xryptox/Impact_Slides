@@ -155,11 +155,12 @@ _JS = r"""
         }
       });
     } catch (e) { /* plugin registration is best-effort */ }
-    // R2/T1: callout geometry in chartArea pixels. The server emits callout
-    // overlays positioned as % of the wrap (close, JS-off-safe); this plugin
+    // R2/T1 (+ T6/T7/T9): overlay geometry in chartArea pixels. The server
+    // emits overlays as % of the wrap (close, JS-off-safe); this plugin
     // overwrites left/top/width/height in exact pixels from the live chart.
-    // Config-driven (options.plugins.callouts.items). No-op without config,
-    // on a degenerate chartArea (hidden slides), and on horizontal bars.
+    // Positions axis-break + annotation from DOM data-* (also on horizontal
+    // bars); callouts still require options.plugins.callouts.items and no-op
+    // on horizontal bars (Q7). No-op on a degenerate chartArea (hidden slides).
     // Fail-closed: anything it cannot compute keeps the server-side style.
     try {
       Chart.register({
@@ -252,7 +253,7 @@ _JS = r"""
             var node;
             if (item.type === 'chevron') {
               // T7/R5-B: split nodes — triangle stacked above a separate
-              // pill, both centred on the anchor, below chartArea.bottom.
+              // pill, both centred on the anchor, below the tick row.
               var cx = xs.getPixelForValue(item.at);
               if (typeof cx !== 'number' || isNaN(cx)) return;
               var sel = '[data-for="' + canvas.id + '"][data-at="' + item.at + '"]';
