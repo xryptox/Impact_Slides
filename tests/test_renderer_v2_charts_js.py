@@ -2488,3 +2488,31 @@ class TestDefaultPaletteResolved:
         ds0 = cc["data"]["datasets"][0]
         assert ds0["backgroundColor"] == "#00175a"
         assert ds0["borderColor"] == "#00175a"
+
+    def test_themed_palette_token_is_a_known_gap(self, tmp_path):
+        """F5 (r5 spec §4b): a handoff theme overriding a palette token does NOT
+        retint default-palette charts, because canvas cannot read CSS vars.
+
+        This is a filed, deliberately-unscheduled ceiling, not a silent bug. The
+        test documents it so that a future red-branded deck gets a diagnosis
+        instead of mysteriously navy charts. If someone implements F5, this test
+        should FAIL and be replaced by one asserting the theme colour is used.
+        """
+        from impact_slides.renderer_v2.charts import _BAR_SERIES_COLORS
+
+        themed = "#c8102e"  # deliberately unlike the default navy
+        assert themed not in _BAR_SERIES_COLORS, "pick a colour not in the palette"
+
+        h = _handoff([_slide("grouped_bar_chart", BAR_STEPS)])
+        h["presentation"] = {"theme": {"--navy": themed}}
+        path = _write(tmp_path, h)
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+
+        # The theme DOES reach the CSS layer...
+        assert f"--navy: {themed};" in html
+        # ...but the canvas palette stays at the literal default (the F5 ceiling).
+        ds0 = _chartjs_cfg(html)["data"]["datasets"][0]
+        assert ds0["backgroundColor"] == _BAR_SERIES_COLORS[0] == "#00175a"
+        assert ds0["backgroundColor"] != themed

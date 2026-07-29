@@ -199,6 +199,7 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 | **T12** | R5-G: stop `.gl-inset` overlapping content — reserve space (shrink table columns / gutter) instead of floating | **P1** | bug |
 | **T13** | R5-H: annex group band uniformly navy; drop index-parity `-alt` banding (PDF has no alternating blue) | **P2** | bug |
 | — | R5-I: annex tables degenerate on 33-36 and merged on 32 — **handoff/transcription defect, no renderer ticket**; fix via sim-prompt rules | — | sim |
+| **F5** | follow-up: handoff theme cannot tint the default chart palette (T10 ceiling) — **do not pick up until the trigger below fires** | **P3** | enhancement |
 | ~~T8~~ | ~~R5-C elbow bracket arm~~ — **dropped per L3**, accepted divergence | — | — |
 | — | R5-B(2): chevron `at: 4` → `at: 2` — **sim handoff fix, no code**, apply in the next sim pass | — | handoff |
 
@@ -254,6 +255,48 @@ sub-header stays green, and any test pinning `-alt` by index is updated delibera
 by measuring bounding-box intersection in Playwright, not by eye); the inset either reserves a
 column/gutter or the table shrinks to fit; verify slide 19's third column header and 12% value
 are fully visible.
+
+## 4b. F5 — themed default chart palette (filed, deliberately not scheduled)
+
+**Note on the ID:** numbered **F5**, not F4, because `F4+` is already taken repo-wide (freestanding
+pill-column packing, referenced in 7 wiki files and the sim prompt). Reusing `F4` would collide.
+
+**Ceiling introduced by T10.** `_BAR_SERIES_COLORS` is now literal hex, because Chart.js paints to
+a `<canvas>` where CSS custom properties never resolve. Consequence: a handoff-native theme (F13)
+that overrides `--navy` / `--blue` / `--blue-sky` / `--ink-muted` **no longer tints charts that
+rely on the default palette**. The token still themes every CSS-rendered surface; only the canvas
+palette is now fixed.
+
+**Why this is filed and not fixed — measured, not assumed:**
+
+- The only real handoff that overrides a palette token is the v7 Amex deck, and it sets
+  `"--navy": "#00175A"` — **byte-identical (case aside) to T10's default `#00175a`**. Zero pixels
+  change on any deck that exists today.
+- That theme does **not** override `--blue`, `--blue-sky` or `--ink-muted` at all, so even a
+  themed deck was only ever tinting 1 of 4 palette slots.
+- A real fix means threading `theme` from `render_deck` → `_paint_slides` → `build_chart_html`
+  → 4 recipe call sites → the `_chartjs_*_config` builders → **9 `_series_colors` call sites**:
+  a wide two-module signature change to alter colours on a deck that does not exist, to a value
+  that is currently identical. Speculative generality of exactly the kind that produced the
+  invented `-alt` annex banding now being deleted in T13.
+
+**Escape hatch (already shipped, is the intended path):** any deck needing brand chart colours
+declares `chart_config.series_colors`, which flows through untouched — this is how every Amex
+chart that already rendered correctly was working.
+
+**Trigger to pick this up:** a handoff ships a `presentation.theme` whose palette tokens differ
+from the token defaults in `tokens.css`. Not before.
+
+**When picked up:** prefer resolving theme tokens to hex in Python at render time (keeps the
+`<noscript>` SVG path and the Chart.js path in agreement) over a browser `getComputedStyle` pass,
+which would desync the two painters. Only the four palette entries need resolving, not every
+`var()` in the file — SVG `fill=`/`stroke=`/`font-family=` sites resolve correctly via CSS and
+must stay as tokens.
+
+**Related standing guard:** `TestDefaultPaletteResolved::test_no_var_in_any_chartjs_config`
+(added by T10) asserts no serialized Chart.js config contains `var(--`. That guard is the durable
+protection for this whole bug family — the architectural rule is **CSS custom properties cannot
+cross into canvas**, and it must keep passing regardless of how F5 is eventually implemented.
 
 ## 5. Out of scope
 
