@@ -1298,8 +1298,17 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     ann = chart_cfg.get("annotation")
     if isinstance(ann, dict) and ann.get("text"):
         a_text = str(ann["text"]).replace("\\n", "\n").replace("\n", " ")
+        # T9/R5-D: declared x/y are PIXEL offsets within the plot area
+        # (matching the SVG fallback painter's 960x540 frame, charts.py
+        # _svg_* annotation block) — serialized for the calloutGeometry
+        # plugin, which clamps the box inside chartArea. Non-numeric values
+        # are dropped (fail closed: CSS fallback position).
+        xy = ""
+        ax, ay = ann.get("x"), ann.get("y")
+        if isinstance(ax, (int, float)) and isinstance(ay, (int, float)):
+            xy = f' data-x="{ax}" data-y="{ay}"'
         ann_html = (
-            f'<div class="chartjs-annotation" data-for="{esc(cid)}">'
+            f'<div class="chartjs-annotation" data-for="{esc(cid)}"{xy}>'
             f"{esc(a_text)}</div>"
         )
     # Broken-axis glyph marker (#79/F10): present when y_axis_break is set.
@@ -1687,8 +1696,12 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     # -- Annotation callout --------------------------------------------------
     annotation = cfg.get("annotation") or (slide.get("visual_spec") or {}).get("annotation")
     if isinstance(annotation, dict) and annotation.get("text"):
-        ax = float(annotation.get("x", W * 0.25))
-        ay = float(annotation.get("y", H * 0.2))
+        # Fail closed (T9): unreadable x/y fall back to the default anchor.
+        try:
+            ax = float(annotation.get("x", W * 0.25))
+            ay = float(annotation.get("y", H * 0.2))
+        except (TypeError, ValueError):
+            ax, ay = W * 0.25, H * 0.2
         a_text = str(annotation["text"])
         # Accept both real newlines and escaped \n sequences
         lines = a_text.replace("\\n", "\n").split("\n")

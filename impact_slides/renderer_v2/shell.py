@@ -203,6 +203,21 @@ _JS = r"""
               }
             }
           }
+          // T9/R5-D: annotation boxes honour their declared x/y — pixel
+          // offsets within chartArea (matching the SVG fallback painter),
+          // clamped so the box stays inside the plot. Fail-closed: missing
+          // or non-numeric x/y keeps the CSS fallback position.
+          var anns = wrap.querySelectorAll('.chartjs-annotation[data-for="' + canvas.id + '"]');
+          for (var ai = 0; ai < anns.length; ai++) {
+            var an = anns[ai];
+            var axv = parseFloat(an.getAttribute('data-x'));
+            var ayv = parseFloat(an.getAttribute('data-y'));
+            if (isNaN(axv) || isNaN(ayv)) continue;
+            var maxAx = Math.max(0, (area.right - area.left) - an.offsetWidth);
+            var maxAy = Math.max(0, (area.bottom - area.top) - an.offsetHeight);
+            px(an, 'left', ox + area.left + Math.min(Math.max(axv, 0), maxAx));
+            px(an, 'top', oy + area.top + Math.min(Math.max(ayv, 0), maxAy));
+          }
           if (chart.options.indexAxis === 'y') return; // callouts: horizontal bars keep the approximation (Q7)
           var opts = chart.config.options.plugins && chart.config.options.plugins.callouts;
           if (!opts || !opts.items || !opts.items.length) return;

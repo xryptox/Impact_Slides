@@ -1096,6 +1096,49 @@ class TestDatalabelsPlugin:
 
 
 # ---------------------------------------------------------------------------
+# T9 — R5-D: annotation boxes honour their declared x/y (pixel offsets)
+# ---------------------------------------------------------------------------
+
+
+class TestAnnotationCoordinates:
+    def test_declared_xy_serialized_for_plugin(self, tmp_path):
+        cfg = {"annotation": {"text": "Leap Year Approx. (1%)", "x": 420, "y": 90}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        m = re.search(r'class="chartjs-annotation" ([^>]+)', html)
+        assert m and 'data-x="420"' in m.group(1) and 'data-y="90"' in m.group(1)
+
+    def test_non_numeric_xy_fails_closed(self, tmp_path):
+        cfg = {"annotation": {"text": "x", "x": "soon", "y": None}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        m = re.search(r'class="chartjs-annotation" ([^>]+)', html)
+        assert m and "data-x" not in m.group(1) and "data-y" not in m.group(1)
+
+    def test_plugin_positions_box_inside_chartarea(self, tmp_path):
+        cfg = {"annotation": {"text": "x", "x": 90, "y": 55}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # plugin reads data-x/data-y and clamps the box inside chartArea
+        assert "getAttribute('data-x')" in html
+        assert "chartjs-annotation" in html
+
+    def test_no_annotation_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("line_chart", TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # CSS is always bundled; assert no annotation *markup* rendered
+        assert 'class="chartjs-annotation"' not in html
+
+
+# ---------------------------------------------------------------------------
 # #85 — IR bullet sheet centered-title chrome
 # ---------------------------------------------------------------------------
 
