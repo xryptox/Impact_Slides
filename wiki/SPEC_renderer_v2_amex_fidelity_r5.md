@@ -205,6 +205,7 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 | ~~**T12**~~ | ~~R5-G: stop `.gl-inset` overlapping content — reserve gutter instead of floating~~ — **shipped** (flex gutter; 0 Playwright bbox overlaps on v7) | ~~**P1**~~ | bug |
 | ~~**T13**~~ | ~~R5-H: annex group band uniformly navy; drop index-parity `-alt` banding~~ — **shipped** (all groups navy; `-alt` kept for semantic use) | ~~**P2**~~ | bug |
 | — | R5-I: annex tables degenerate on 33-36 and merged on 32 — **handoff/transcription defect, no renderer ticket**; fix via sim-prompt rules | — | sim |
+| **T14** | R5-J/N9: non-stacked vertical bars silently drop `point_labels` entirely on the Chart.js path (and with them `y_axis_unit`), while the SVG painter draws them — painter-parity bug | **P2** | bug |
 | **F5** | follow-up: handoff theme cannot tint the default chart palette (T10 ceiling) — **do not pick up until the trigger below fires** | **P3** | enhancement |
 | ~~T8~~ | ~~R5-C elbow bracket arm~~ — **dropped per L3**, accepted divergence | — | — |
 | — | R5-B(2): chevron `at: 4` → `at: 2` — **sim handoff fix, no code**, apply in the next sim pass | — | handoff |
@@ -265,6 +266,60 @@ index-parity `-alt` assertion removed (class may remain in CSS for future semant
 (Playwright bounding-box intersection; 2 slides emit `.gl-inset`, both 0 overlaps); inset
 reserves a flex gutter and the table shrinks beside it; slide 19 third column header + 12%
 value fully visible.
+
+## 4a. T14 — non-stacked vertical bars drop `point_labels` on the Chart.js path (R5-J / N9)
+
+**Found by the v8 sim** (first run under the geometry+visual method, no MAE). Filed as N9 there
+against a narrower symptom — "`y_axis_unit` `$` prefix does not reach dual_chart bar labels" —
+but the measured defect is wider, so this ticket supersedes that framing.
+
+### Diagnosis (measured, not inferred)
+
+In `_chartjs_bar_config` **both** datalabel branches are nested inside `if stacked ...`:
+
+- `charts.py:559` — `if stacked and (stack_totals or point_labels or show_point_labels)`, which is
+  also where `y_axis_unit` / `y_axis_unit_position` formatting lives (the `_fmt_value` closure).
+- `charts.py:605` — the N4 in-segment `point_labels` branch, likewise stacked-only.
+
+So a **non-stacked** vertical bar chart declaring `point_labels: true` emits **no datalabels
+config at all** — not merely an unprefixed one. Reproduced directly:
+
+| chart | declared | `_labels` emitted |
+|---|---|---|
+| vertical bar, `stacked=True` | `point_labels`, `y_axis_unit: "$"` prefix | `[["$0.9", "$2.8"]]` |
+| vertical bar, grouped/plain | same | **`None`** |
+| line chart | same | `[["$0.9", "$2.8"]]` |
+
+**Painter parity is broken.** For the same handoff the noscript SVG painter *does* draw the value
+labels (as `0.9`, `2.8` — itself missing the `$`), while Chart.js draws none. The two painters must
+agree; today which labels you see depends on whether JS ran.
+
+Evidence: v8 slide 16 (Net Card Fees, PDF p17) declares
+`{point_labels: true, y_axis_unit: "$", y_axis_unit_position: "prefix"}` and paints bare
+`0.9 … 2.8`. This also corrects an earlier in-session judgment that the missing `$` was
+handoff-side: the handoff asked correctly and the renderer dropped it.
+
+### Scope
+
+1. Lift `point_labels` / `show_point_labels` out of the stacked-only gate for vertical bars, so
+   grouped and plain bars paint above-bar value labels (`anchor: end`, `align: top` — the line
+   path's recipe, not the in-segment white recipe, which is stacked-specific).
+2. Route those labels through the **same** unit formatter the stacked and line paths use, so
+   `y_axis_unit` / `y_axis_unit_position` apply (`$0.9` prefix, `72%` suffix, parenthesized
+   negatives) rather than re-implementing the rule a fourth time.
+3. Bring the SVG painter's grouped-bar labels through the same unit formatting for parity.
+4. This is the **fourth** instance of the recurring "honoured on some chart paths only" family
+   (stacked always; horizontal via #96/F10+; grouped via T1's axis clamp; now labels). Prefer a
+   shared helper over a fourth copy.
+
+### Acceptance
+
+- A grouped/plain vertical bar with `point_labels` emits a datalabels config whose `_labels`
+  match the declared unit and position; a stacked chart's output is **unchanged**.
+- Chart.js and SVG painters produce the **same label text** for the same handoff.
+- Decks that do not declare `point_labels` stay byte-identical (SC-COMPAT-1).
+- Full suite green (baseline **1230 passed, 15 skipped**), not a file-scoped run.
+- Verified live on v8 slide 16 with a Playwright probe reading rendered label text.
 
 ## 4b. F5 — themed default chart palette (filed, deliberately not scheduled)
 
