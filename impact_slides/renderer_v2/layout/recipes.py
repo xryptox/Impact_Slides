@@ -940,12 +940,13 @@ def render_annex_table(slide, total, notes, active=False):
     thead_rows = []
     if isinstance(header_groups, list) and header_groups:
         top_cells = [f'<th class="gl-annex-stub" rowspan="2"></th>']
-        for gi, g in enumerate(header_groups):
+        for g in header_groups:
             if isinstance(g, dict):
-                # F12+ (#94): alternating group banding for IR annex precision.
-                band = " gl-annex-group-alt" if gi % 2 else ""
+                # R5-H/T13: no index-parity banding — the PDF annex band is
+                # uniformly navy; gl-annex-group-alt stays available for a
+                # future semantic banding handoff, not column parity.
                 top_cells.append(
-                    f'<th class="gl-annex-group{band}" colspan="{int(g.get("span") or 1)}">{esc(strip_eids(g.get("label") or ""))}</th>'
+                    f'<th class="gl-annex-group" colspan="{int(g.get("span") or 1)}">{esc(strip_eids(g.get("label") or ""))}</th>'
                 )
         thead_rows.append("<tr>" + "".join(top_cells) + "</tr>")
         sub_cells = "".join(
