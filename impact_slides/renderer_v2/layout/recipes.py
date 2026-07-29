@@ -1662,30 +1662,62 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
     )
 
 
+def _is_series_num(v: Any) -> bool:
+    try:
+        float(str(v).replace("%", "").replace(",", "").replace("$", "").strip())
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def _visual_series_names(visual: Mapping[str, Any]) -> list[str]:
     """Series names a chart will plot, from keys the Builder already emits:
-    chart_config.series_names, or the header row of tabular steps_or_data.
-    Dict rows without names count as unnamed (empty-string) series so the
-    series COUNT is still right for legend-suppression decisions.
+    chart_config.series_names, or the header/body shape of steps_or_data.
+    Mirrors charts._bar_matrix series detection so legend-suppression
+    decisions match the series Chart.js actually draws. Unnamed series
+    are empty strings — count is what matters.
     """
     cfg = visual.get("chart_config") or {}
     names = [
         strip_eids(str(n)) for n in cfg.get("series_names") or [] if str(n).strip()
     ]
+    if names:
+        return names
     steps = visual.get("steps_or_data") or []
-    if not names and steps and isinstance(steps[0], (list, tuple)):
-        names = [strip_eids(str(c)) for c in steps[0][1:] if str(c).strip()]
-    if not names:
-        for row in steps:
-            if isinstance(row, Mapping):
-                if isinstance(row.get("values"), Mapping):
-                    names = [strip_eids(str(k)) for k in row["values"]]
-                else:
-                    n = 1
-                    while f"series_{n + 1}" in row:
-                        n += 1
-                    names = [""] * n
-                break
+    if not steps:
+        return names
+    if all(isinstance(x, (list, tuple)) for x in steps):
+        rows_raw = [list(x) for x in steps]
+        first = rows_raw[0]
+        second = rows_raw[1] if len(rows_raw) > 1 else []
+        has_header = (
+            len(rows_raw) > 1
+            and all(isinstance(c, str) for c in first[1:])
+            and any(_is_series_num(c) for c in second[1:])
+        )
+        if has_header:
+            return [strip_eids(str(c)) for c in first[1:] if str(c).strip()]
+        width = max((len(r) - 1 for r in rows_raw), default=0)
+        return [""] * max(width, 0)
+    for row in steps:
+        if isinstance(row, Mapping):
+            vals = row.get("values")
+            if isinstance(vals, Mapping) and vals:
+                return [strip_eids(str(k)) for k in vals]
+            if _is_series_num(row.get("value")):
+                return [""]
+            skip = {"label", "category", "name", "kind", "icon", "color"}
+            flat = [
+                strip_eids(str(k))
+                for k, v in row.items()
+                if k not in skip and _is_series_num(v)
+            ]
+            if flat:
+                return flat
+            n = 1
+            while f"series_{n + 1}" in row:
+                n += 1
+            return [""] * n
     return names
 
 
@@ -1717,7 +1749,7 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         if not heading and len(names) == 1:
             heading = names[0]
         pane_cfg = dict(visual.get("chart_config") or {})
-        if heading and len(names) <= 1:
+        if heading and len(names) <= 1 and not visual.get("line_overlay"):
             pane_cfg["show_legend"] = False
         sub_vs: dict[str, Any] = {
             "primary_visual": visual,
