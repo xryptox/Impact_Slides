@@ -118,6 +118,23 @@ def test_multi_series_pane_keeps_legend_and_no_heading():
     assert '"display": false' not in html and '"display":false' not in html
 
 
+def test_value_plus_series_n_keeps_legend_with_pane_label():
+    # value + series_2 is multi-series even without series_names; a pane
+    # label must not force legend suppression.
+    slide = _slide()
+    slide["visual_spec"]["primary_visual"] = {
+        "type": "line_chart",
+        "label": "Unemployment",
+        "steps_or_data": [
+            {"label": "Q1'25", "value": 4.0, "series_2": 4.2},
+            {"label": "Q2'25", "value": 4.1, "series_2": 4.3},
+        ],
+    }
+    html = render_dual_chart(slide, 1, "", use_chartjs=True)
+    assert '<div class="gl-tile-label">Unemployment</div>' in html
+    assert '"display": false' not in html and '"display":false' not in html
+
+
 def test_explicit_pane_label_renders_as_heading():
     slide = _slide()
     slide["visual_spec"]["primary_visual"]["label"] = "Fees (Q1: 2019-2026)"

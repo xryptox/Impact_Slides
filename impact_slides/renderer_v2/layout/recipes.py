@@ -1705,7 +1705,12 @@ def _visual_series_names(visual: Mapping[str, Any]) -> list[str]:
             if isinstance(vals, Mapping) and vals:
                 return [strip_eids(str(k)) for k in vals]
             if _is_series_num(row.get("value")):
-                return [""]
+                # Line multi-series: primary `value` plus series_2..N
+                # (same keys _line_data / _chartjs_line_config plot).
+                n = 1
+                while f"series_{n + 1}" in row:
+                    n += 1
+                return [""] * n
             skip = {"label", "category", "name", "kind", "icon", "color"}
             flat = [
                 strip_eids(str(k))
