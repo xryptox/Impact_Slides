@@ -163,24 +163,25 @@ page 7 shows arms at **both** ends. Lowest-confidence item in this round — mea
 
 ---
 
-## 2. Proposed mechanism (PROPOSED — needs lock)
+## 2. Mechanism (shipped — T6/T7/T9 bundled)
 
 **P1 — reuse the T1 plugin, do not invent a second one.** `calloutGeometry` already walks
 `chartArea`/`scales` on `afterLayout` and writes wrap-relative pixels per node. The break glyph
 and the split chevron are the same problem in the same frame, so they become additional node
-types the existing plugin positions: break glyph at `scales.x.getPixelForValue(break.to)`
-clamped to the axis origin with its top on `chartArea.bottom`; chevron triangle and pill
-stacked below `chartArea.bottom`, both centred on `scales.x.getPixelForValue(at)`.
+types the existing plugin positions: break `//` hatch at the axis origin (top on
+`chartArea.bottom`; on horizontal bars the `-v` variant also centres on
+`scales.x.getPixelForValue(break.to)`); chevron triangle and pill stacked below
+`scales.x.bottom` (tick row included; falls back to `chartArea.bottom`), both centred on
+`scales.x.getPixelForValue(at)`. Annotation boxes use the same plugin with declared `x`/`y`
+as pixel offsets inside `chartArea`.
 
-**P2 — the break glyph becomes a `//` hatch, not a line.** Replace the full-height dashed rule
-with a small two-stroke glyph on the axis. This is a **visual change to any existing deck that
-declares `y_axis_break`**, so it is a deliberate exception to byte-identical compat: the current
-output is a bug (a mid-plot threshold line), not a contract. Flag at review.
+**P2 — the break glyph is a `//` hatch, not a line.** Replaced the full-height dashed rule
+with a small two-stroke glyph on the axis. Deliberate exception to byte-identical compat for
+decks that declare `y_axis_break` (L1): the old mid-plot line was a bug, not a contract.
 
 **P3 — split the chevron into triangle + pill nodes.** `_build_callout_overlays` emits two
 sibling divs (`chartjs-callout-chevron-tip`, `chartjs-callout-chevron-pill`) instead of one.
-The existing `TestIrCalloutChrome` regexes assert `border-top` navy + a navy label on the
-single node, so that contract changes and must be updated deliberately.
+`TestIrCalloutChrome` was updated deliberately for the split (no fused single-node chevron).
 
 **P4 — no handoff schema change.** `y_axis_break {from,to}` and `callouts[] {type,at,text}`
 stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
@@ -191,9 +192,9 @@ stay as-is; SC-COMPAT-1 holds for every deck that does not use them.
 
 | Ticket | Scope | Pri | Type |
 |---|---|---|---|
-| **T6** | R5-A: axis-break `//` hatch on the axis, positioned from `scales` via the T1 plugin; delete the mid-plot dashed rule | **P0** | bug |
-| **T7** | R5-B(1): split chevron into stacked triangle + pill, both anchored below `chartArea.bottom` | **P1** | enhancement |
-| **T9** | R5-D: position annotation boxes from their declared `x`/`y` in data space via the T1 plugin; fail closed when unresolvable | **P1** | bug |
+| ~~**T6**~~ | ~~R5-A: axis-break `//` hatch on the axis, positioned from `scales` via the T1 plugin; delete the mid-plot dashed rule~~ — **shipped** (bundled with T7/T9) | ~~**P0**~~ | bug |
+| ~~**T7**~~ | ~~R5-B(1): split chevron into stacked triangle + pill, both anchored below the tick row (`scales.x.bottom`)~~ — **shipped** (bundled with T6/T9) | ~~**P1**~~ | enhancement |
+| ~~**T9**~~ | ~~R5-D: position annotation boxes from their declared `x`/`y` as pixel offsets inside `chartArea` via the T1 plugin; fail closed when unresolvable~~ — **shipped** (bundled with T6/T7) | ~~**P1**~~ | bug |
 | ~~**T10**~~ | ~~R5-E: resolve the default palette to real hex before it reaches canvas~~ — **shipped** (`_BAR_SERIES_COLORS` → literal hex; `TestDefaultPaletteResolved`) | ~~**P0**~~ | bug |
 | **T11** | R5-F: chart pane titles as in-card headings for `dual_chart` (and any recipe falling through to the legend); audit header/sub-header mapping deck-wide | **P1** | bug |
 | **T12** | R5-G: stop `.gl-inset` overlapping content — reserve space (shrink table columns / gutter) instead of floating | **P1** | bug |
@@ -215,20 +216,24 @@ density (P1, slide 27 @ 82.99%).
 
 ## 4. Acceptance criteria
 
-**T6:** glyph centre within ±4px of `scales.x.getPixelForValue(break.to)` (horizontal) or the
-y equivalent, clamped to the axis origin; glyph top within ±4px of `chartArea.bottom`; no node
-paints inside the plot area; omitted fail-closed when the break value is unreadable; decks
-without `y_axis_break` byte-identical.
+**T6 (met):** `//` hatch glyph on the axis at its origin — top within ±4px of
+`chartArea.bottom`, entirely outside the plot (no mid-plot dashed rule). On horizontal bars
+the `-v` variant also centres on `scales.x.getPixelForValue(break.to)` (clamped to the plot
+width). Omitted fail-closed when the break value is unreadable; decks without `y_axis_break`
+byte-identical.
 
-**T7:** triangle apex and pill centre within ±4px of `scales.x.getPixelForValue(at)`; pill top
-at/below the triangle base; triangle top at/below `chartArea.bottom`; both omitted fail-closed
-without a resolvable anchor.
+**T7 (met):** split `chartjs-callout-chevron-tip` + `chartjs-callout-chevron-pill` siblings;
+triangle apex and pill centre within ±4px of `scales.x.getPixelForValue(at)`; stack top at/below
+`scales.x.bottom` (tick row included; falls back to `chartArea.bottom`); pill top at/below the
+triangle base; tip uses `box-sizing: content-box` so the CSS triangle is not a solid block;
+pill uses a fixed radius (not `--radius-round` 50%). Both omitted fail-closed without a
+resolvable anchor.
 
-**T9:** box anchor within ±4px of `scales.x.getPixelForValue(x)` / `scales.y.getPixelForValue(y)`
-when the declared values are in data space, clamped inside `chartArea`; omitted fail-closed when
-unresolvable; decks declaring no annotation byte-identical. Note the four v7 declarations look
-like **pixel** guesses, not data values (`x:520` on a 5-category axis) — resolve which space
-`x`/`y` mean as step one, and treat out-of-domain values as a fail-closed case.
+**T9 (met):** declared `x`/`y` are **pixel offsets within the plot area** (matching the SVG
+fallback painter), applied as `chartArea` origin + `(x,y)` and clamped so the box stays inside
+`chartArea`; omitted fail-closed when missing/non-numeric; decks declaring no annotation
+byte-identical. (Judgment call locked at ship: not data-space — values like `x:520` on a
+5-category axis are only coherent as pixels.)
 
 **All:** `TestGeometricCallouts`, `TestCalloutBandElbowMerge`, `TestCalloutGeometryPlugin`
 green; `TestIrCalloutChrome` updated deliberately for the chevron split; full suite green

@@ -733,6 +733,44 @@ class TestBrokenYAxis:
 
 
 # ---------------------------------------------------------------------------
+# T6 — R5-A: axis-break is a // hatch glyph on the axis, not a mid-plot line
+# ---------------------------------------------------------------------------
+
+
+class TestAxisBreakGlyph:
+    def test_break_value_serialized_for_plugin(self, tmp_path):
+        path = _write(tmp_path, _handoff([_broken_axis_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        m = re.search(r'class="chartjs-axis-break" ([^>]+)', html)
+        assert m and 'data-break-to="90"' in m.group(1)
+
+    def test_glyph_is_hatch_not_plot_line(self, tmp_path):
+        path = _write(tmp_path, _handoff([_broken_axis_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        rule = re.search(r"\.chartjs-axis-break\s*\{([^}]+)", html)
+        assert rule, "expected a .chartjs-axis-break CSS rule"
+        body = rule.group(1)
+        # small hatch glyph — no full-span line, no dashed border rule
+        assert "border" not in body
+        assert "width: 100%" not in body and "height: 100%" not in body
+        assert re.search(r"height:\s*1[0-9]px", body), "glyph must be ~14px tall"
+
+    def test_plugin_positions_glyph_from_scales(self, tmp_path):
+        path = _write(tmp_path, _handoff([_broken_axis_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "data-break-to" in html
+        # plugin reads the declared break value and clamps to the axis origin
+        assert "getPixelForValue(bto)" in html
+        assert "chartjs-axis-break-v" in html  # hbar variant handled in JS
+
+
+# ---------------------------------------------------------------------------
 # #81 — Dense widescreen annex table packing (F12)
 # ---------------------------------------------------------------------------
 
@@ -1055,6 +1093,49 @@ class TestDatalabelsPlugin:
         assert wrap_idx < ann_idx
         assert ".chartjs-annotation {" in html
         assert "position: absolute" in html
+
+
+# ---------------------------------------------------------------------------
+# T9 — R5-D: annotation boxes honour their declared x/y (pixel offsets)
+# ---------------------------------------------------------------------------
+
+
+class TestAnnotationCoordinates:
+    def test_declared_xy_serialized_for_plugin(self, tmp_path):
+        cfg = {"annotation": {"text": "Leap Year Approx. (1%)", "x": 420, "y": 90}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        m = re.search(r'class="chartjs-annotation" ([^>]+)', html)
+        assert m and 'data-x="420"' in m.group(1) and 'data-y="90"' in m.group(1)
+
+    def test_non_numeric_xy_fails_closed(self, tmp_path):
+        cfg = {"annotation": {"text": "x", "x": "soon", "y": None}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        m = re.search(r'class="chartjs-annotation" ([^>]+)', html)
+        assert m and "data-x" not in m.group(1) and "data-y" not in m.group(1)
+
+    def test_plugin_positions_box_inside_chartarea(self, tmp_path):
+        cfg = {"annotation": {"text": "x", "x": 90, "y": 55}}
+        path = _write(tmp_path, _handoff([_line_slide_with_cfg(cfg, TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # plugin reads data-x/data-y and clamps the box inside chartArea
+        assert "getAttribute('data-x')" in html
+        assert "chartjs-annotation" in html
+
+    def test_no_annotation_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("line_chart", TWO_SERIES)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # CSS is always bundled; assert no annotation *markup* rendered
+        assert 'class="chartjs-annotation"' not in html
 
 
 # ---------------------------------------------------------------------------
@@ -1919,16 +2000,33 @@ class TestIrCalloutChrome:
         )
 
     def test_chevron_navy_under_axis(self, tmp_path):
+        # T7/R5-B: the chevron is now TWO stacked sibling nodes — a navy
+        # down-triangle above a separate navy pill — not one fused node
+        # with a border-top triangle. This contract changed deliberately.
         html = self._deck(tmp_path)
-        # navy downward chevron + navy pill label under the axis
         assert re.search(
-            r"\.chartjs-callout-chevron\s*\{[^}]*border-top:\s*[\d.]+px solid var\(--navy",
+            r"\.chartjs-callout-chevron-tip\s*\{[^}]*border-top:\s*[\d.]+px solid var\(--navy",
             html,
         )
         assert re.search(
-            r"\.chartjs-callout-chevron \.chartjs-callout-label\s*\{[^}]*background:\s*var\(--navy",
+            r"\.chartjs-callout-chevron-pill\s*\{[^}]*background:\s*var\(--navy",
             html,
         )
+
+    def test_chevron_split_markup(self, tmp_path):
+        html = self._deck(tmp_path)
+        # tip and pill are sibling nodes sharing the same anchor
+        tip = re.search(
+            r'class="chartjs-callout chartjs-callout-chevron-tip" ([^>]+)', html
+        )
+        pill = re.search(
+            r'class="chartjs-callout chartjs-callout-chevron-pill" ([^>]+)', html
+        )
+        assert tip and pill, "expected split chevron tip + pill nodes"
+        assert 'data-at="4"' in tip.group(1) and 'data-at="4"' in pill.group(1)
+        assert "Refresh" in html
+        # no fused single-node chevron remains
+        assert 'chartjs-callout-chevron"' not in html
 
 
 # ---------------------------------------------------------------------------

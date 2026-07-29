@@ -1525,23 +1525,35 @@
   pointer-events: none;
   white-space: nowrap;
 }
+/* T6/R5-A: the break marker is a small // hatch glyph on the axis at its
+   origin (PDF recipe) — NOT a line across the plot. The calloutGeometry
+   plugin pins it from the live scales; these are JS-off fallbacks. */
 .chartjs-axis-break {
   position: absolute;
   left: 0;
-  top: 30%;
-  width: 100%;
-  height: 0;
-  border-top: 2px dashed var(--ink-muted);
+  bottom: 0;
+  width: 10px;
+  height: 14px;
   pointer-events: none;
 }
-/* On horizontal bars the break is on the x axis — vertical glyph (#88). */
-.chartjs-axis-break-v {
-  left: 30%;
+.chartjs-axis-break::before,
+.chartjs-axis-break::after {
+  content: "";
+  position: absolute;
   top: 0;
-  width: 0;
+  width: 2px;
   height: 100%;
-  border-top: none;
-  border-left: 2px dashed var(--ink-muted);
+  background: var(--ink-muted);
+  transform: skewX(-18deg);
+}
+.chartjs-axis-break::before { left: 2px; }
+.chartjs-axis-break::after { left: 6px; }
+/* On horizontal bars the break is on the x axis — glyph hangs below the
+   axis line at the origin (#88). */
+.chartjs-axis-break-v {
+  left: 0;
+  top: 100%;
+  bottom: auto;
 }
 
 /* ---------- IR bullet sheet centered title (#85) ---------- */
@@ -1609,10 +1621,16 @@
   color: var(--color-on-navy, var(--panel, #fff));
   font-size: 13px;
 }
-/* Chevron marker under the category axis (R2): large navy down-triangle
-   with a navy pill label beneath it (PDF Refresh marker). */
-.chartjs-callout-chevron {
-  bottom: 6%;
+/* Chevron marker under the category axis (R2/T7): two stacked sibling
+   nodes — a navy down-triangle above a separate navy pill (PDF Refresh
+   marker). The calloutGeometry plugin stacks them below scales.x.bottom
+   (tick row included); the bottom offsets here are JS-off fallbacks. */
+.chartjs-callout-chevron-tip {
+  bottom: 34px;
+  /* The CSS triangle idiom needs a zero CONTENT box, but this deck sets
+     box-sizing: border-box globally, which would collapse width/height:0 into a
+     34x22 border-box and paint a solid navy block over the bars. */
+  box-sizing: content-box;
   width: 0;
   height: 0;
   /* V5/R2: chunky IR triangle — the 14/18 chip read as a speck next to the
@@ -1621,15 +1639,17 @@
   border-right: 17px solid transparent;
   border-top: 22px solid var(--navy);
 }
-.chartjs-callout-chevron .chartjs-callout-label {
-  bottom: auto;
-  top: calc(100% + 8px);
+.chartjs-callout-chevron-pill {
+  bottom: 4px;
   background: var(--navy);
   color: var(--color-on-navy, var(--panel, #fff));
-  border-radius: var(--radius-round, 999px);
+  /* --radius-round is 50%, which makes an ellipse on a wide short box (same trap
+     as the T1 capsule). A fixed radius >= half the height gives a true pill. */
+  border-radius: var(--radius-md, 14px);
   padding: 4px var(--space-4, 14px);
   font-size: 14px;
   font-weight: 700;
+  white-space: nowrap;
 }
 /* Event band: translucent vertical span over the plot. */
 .chartjs-callout-band {

@@ -155,21 +155,19 @@ _JS = r"""
         }
       });
     } catch (e) { /* plugin registration is best-effort */ }
-    // R2/T1: callout geometry in chartArea pixels. The server emits callout
-    // overlays positioned as % of the wrap (close, JS-off-safe); this plugin
+    // R2/T1 (+ T6/T7/T9): overlay geometry in chartArea pixels. The server
+    // emits overlays as % of the wrap (close, JS-off-safe); this plugin
     // overwrites left/top/width/height in exact pixels from the live chart.
-    // Config-driven (options.plugins.callouts.items). No-op without config,
-    // on a degenerate chartArea (hidden slides), and on horizontal bars.
+    // Positions axis-break + annotation from DOM data-* (also on horizontal
+    // bars); callouts still require options.plugins.callouts.items and no-op
+    // on horizontal bars (Q7). No-op on a degenerate chartArea (hidden slides).
     // Fail-closed: anything it cannot compute keeps the server-side style.
     try {
       Chart.register({
         id: 'calloutGeometry',
         afterLayout: function (chart) {
-          var opts = chart.config.options.plugins && chart.config.options.plugins.callouts;
-          if (!opts || !opts.items || !opts.items.length) return;
           var area = chart.chartArea;
           if (!area || !(area.right > area.left) || !(area.bottom > area.top)) return;
-          if (chart.options.indexAxis === 'y') return; // horizontal bars keep the approximation
           var canvas = chart.canvas;
           var wrap = canvas && canvas.closest ? canvas.closest('.chartjs-wrap') : null;
           if (!wrap || !canvas.id) return;
@@ -180,7 +178,53 @@ _JS = r"""
           if (el !== wrap) return;
           var xs = chart.scales.x, ys = chart.scales.y;
           if (!xs || !ys) return;
-          var px = function (node, prop, v) { node.style[prop] = Math.round(v * 100) / 100 + 'px'; };
+          // Clearing the opposite edge matters: the CSS fallbacks anchor
+          // some nodes with bottom/right, and top+bottom both set would
+          // constrain the box height (measured: chevron pill crushed to 8px).
+          var px = function (node, prop, v) {
+            node.style[prop] = Math.round(v * 100) / 100 + 'px';
+            if (prop === 'top') node.style.bottom = 'auto';
+            if (prop === 'left') node.style.right = 'auto';
+          };
+          // T6/R5-A: axis-break // hatch on the axis at its origin. Unlike
+          // callouts this DOES apply to horizontal bars (the -v variant,
+          // break on the x axis). Fail-closed: unreadable break value keeps
+          // the server-side fallback position.
+          var brk = wrap.querySelector('.chartjs-axis-break[data-for="' + canvas.id + '"]');
+          if (brk) {
+            var bto = parseFloat(brk.getAttribute('data-break-to'));
+            if (!isNaN(bto)) {
+              if (brk.className.indexOf('chartjs-axis-break-v') >= 0) {
+                var bx = xs.getPixelForValue(bto);
+                if (typeof bx === 'number' && !isNaN(bx)) {
+                  bx = Math.min(Math.max(bx, area.left), area.right);
+                  px(brk, 'left', ox + bx - brk.offsetWidth / 2);
+                  px(brk, 'top', oy + area.bottom);
+                }
+              } else {
+                px(brk, 'left', ox + area.left - brk.offsetWidth);
+                px(brk, 'top', oy + area.bottom);
+              }
+            }
+          }
+          // T9/R5-D: annotation boxes honour their declared x/y — pixel
+          // offsets within chartArea (matching the SVG fallback painter),
+          // clamped so the box stays inside the plot. Fail-closed: missing
+          // or non-numeric x/y keeps the CSS fallback position.
+          var anns = wrap.querySelectorAll('.chartjs-annotation[data-for="' + canvas.id + '"]');
+          for (var ai = 0; ai < anns.length; ai++) {
+            var an = anns[ai];
+            var axv = parseFloat(an.getAttribute('data-x'));
+            var ayv = parseFloat(an.getAttribute('data-y'));
+            if (isNaN(axv) || isNaN(ayv)) continue;
+            var maxAx = Math.max(0, (area.right - area.left) - an.offsetWidth);
+            var maxAy = Math.max(0, (area.bottom - area.top) - an.offsetHeight);
+            px(an, 'left', ox + area.left + Math.min(Math.max(axv, 0), maxAx));
+            px(an, 'top', oy + area.top + Math.min(Math.max(ayv, 0), maxAy));
+          }
+          if (chart.options.indexAxis === 'y') return; // callouts: horizontal bars keep the approximation (Q7)
+          var opts = chart.config.options.plugins && chart.config.options.plugins.callouts;
+          if (!opts || !opts.items || !opts.items.length) return;
           // NB: at afterLayout the scales are final but dataset ELEMENTS are
           // not positioned yet (Chart.js positions them after layout), so all
           // geometry derives from the scales, not from meta.data elements.
@@ -208,12 +252,27 @@ _JS = r"""
           opts.items.forEach(function (item) {
             var node;
             if (item.type === 'chevron') {
-              node = wrap.querySelector('.chartjs-callout-chevron[data-for="' + canvas.id + '"][data-at="' + item.at + '"]');
-              if (!node) return;
+              // T7/R5-B: split nodes — triangle stacked above a separate
+              // pill, both centred on the anchor, below the tick row.
               var cx = xs.getPixelForValue(item.at);
               if (typeof cx !== 'number' || isNaN(cx)) return;
-              px(node, 'left', ox + cx - node.offsetWidth / 2);
-              px(node, 'top', oy + area.bottom); // clear of the plot; at/below chartArea.bottom
+              var sel = '[data-for="' + canvas.id + '"][data-at="' + item.at + '"]';
+              var tip = wrap.querySelector('.chartjs-callout-chevron-tip' + sel);
+              var pill = wrap.querySelector('.chartjs-callout-chevron-pill' + sel);
+              // Below the tick-label row, not merely below the plot: the PDF puts the
+          // whole Refresh marker clear of the category labels. xs.bottom includes
+          // the tick row; fall back to area.bottom if the scale can't report it.
+          var stackY = (typeof xs.bottom === 'number' && xs.bottom > area.bottom)
+            ? xs.bottom : area.bottom;
+              if (tip) {
+                px(tip, 'left', ox + cx - tip.offsetWidth / 2);
+                px(tip, 'top', oy + stackY);
+                stackY += tip.offsetHeight + 2;
+              }
+              if (pill) {
+                px(pill, 'left', ox + cx - pill.offsetWidth / 2);
+                px(pill, 'top', oy + stackY);
+              }
               return;
             }
             if (item.type !== 'elbow_arrow' && item.type !== 'band') return;
