@@ -1,0 +1,1599 @@
+{
+  "tolerance_px": 4.0,
+  "summary": {
+    "total": 57,
+    "passed": 57,
+    "failed": 0
+  },
+  "assertions": [
+    {
+      "slide": 5,
+      "node": "elbow.left vs bar0 centre",
+      "measured": 108.73,
+      "expected": 108.74,
+      "delta_px": -0.01,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "elbow.width vs bar0-to-bar4 centres",
+      "measured": 633.11,
+      "expected": 633.12,
+      "delta_px": -0.01,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L elbow.left vs bar0 centre (wrap)",
+      "measured": 108.73,
+      "expected": 108.74,
+      "delta_px": -0.01,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L elbow.width bar0\u2192bar4",
+      "measured": 633.11,
+      "expected": 633.12,
+      "delta_px": -0.01,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L stem.left vs bar0 centre",
+      "measured": 108.73,
+      "expected": 108.74,
+      "delta_px": -0.01,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L chevron split (tip+pill separate, no fused)",
+      "measured": {
+        "tip": true,
+        "pill": true,
+        "fused": false
+      },
+      "expected": {
+        "tip": true,
+        "pill": true,
+        "fused": false
+      },
+      "delta_px": 0,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L chevron-tip centre vs bar2 (at:2)",
+      "measured": 425.3,
+      "expected": 425.3,
+      "delta_px": -0.0,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L chevron-tip top >= chartArea.bottom (outside plot)",
+      "measured": 561,
+      "expected": ">=531.4",
+      "delta_px": 29.6,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L chevron-pill centre vs bar2",
+      "measured": 425.44,
+      "expected": 425.3,
+      "delta_px": 0.14,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L chevron-pill top >= tip.bottom (stacked)",
+      "measured": 585,
+      "expected": ">=583.0",
+      "delta_px": 2,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "R axis-break top >= chartArea.bottom (outside plot)",
+      "measured": 531.390625,
+      "expected": ">=531.4",
+      "delta_px": -0.01,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "R axis-break is small hatch (h<=24 or w<=40)",
+      "measured": {
+        "w": 10,
+        "h": 14,
+        "text": ""
+      },
+      "expected": "small // glyph, not 2px line across plot",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "R tile dataset colors not black / no var(--",
+      "measured": [
+        "#006FCF",
+        "#00175A"
+      ],
+      "expected": "navy/blue hex",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "L tile dataset colors not black / no var(--",
+      "measured": [
+        "#00175A"
+      ],
+      "expected": "navy/blue hex",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 3,
+      "node": "s03 LeapYear ann.left vs area+ x",
+      "measured": 570.86,
+      "expected": 570.86,
+      "delta_px": -0.0,
+      "pass": true
+    },
+    {
+      "slide": 3,
+      "node": "s03 LeapYear ann.top vs area+ y",
+      "measured": 64.0,
+      "expected": 64.0,
+      "delta_px": 0.0,
+      "pass": true
+    },
+    {
+      "slide": 9,
+      "node": "s09 Reported ann.left vs area+ x",
+      "measured": 509.59,
+      "expected": 509.6,
+      "delta_px": -0.01,
+      "pass": true
+    },
+    {
+      "slide": 9,
+      "node": "s09 Reported ann.top vs area+ y",
+      "measured": 74.0,
+      "expected": 74.0,
+      "delta_px": 0.0,
+      "pass": true
+    },
+    {
+      "slide": 10,
+      "node": "s10 LeapYear ann.left vs area+ x",
+      "measured": 472.0,
+      "expected": 472.0,
+      "delta_px": 0.0,
+      "pass": true
+    },
+    {
+      "slide": 10,
+      "node": "s10 LeapYear ann.top vs area+ y",
+      "measured": 60.8,
+      "expected": 60.8,
+      "delta_px": -0.0,
+      "pass": true
+    },
+    {
+      "slide": 18,
+      "node": "s18 LeapYear ann.left vs area+ x",
+      "measured": 550.86,
+      "expected": 550.86,
+      "delta_px": -0.0,
+      "pass": true
+    },
+    {
+      "slide": 18,
+      "node": "s18 LeapYear ann.top vs area+ y",
+      "measured": 64.0,
+      "expected": 64.0,
+      "delta_px": 0.0,
+      "pass": true
+    },
+    {
+      "slide": 16,
+      "node": "dual_chart pane headings present (count>=2)",
+      "measured": 2,
+      "expected": ">=2",
+      "delta_px": null,
+      "pass": true,
+      "note": [
+        {
+          "tag": "DIV",
+          "cls": "gl-tile-label",
+          "text": "Net Card Fees ($B)"
+        },
+        {
+          "tag": "DIV",
+          "cls": "gl-tile-label",
+          "text": "YoY Growth %"
+        }
+      ]
+    },
+    {
+      "slide": 16,
+      "node": "pane0 single-series legend suppressed",
+      "measured": {
+        "legendDisplay": false,
+        "nDS": 1
+      },
+      "expected": "legend.display falsy",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 16,
+      "node": "pane0 colors no var(-- / not black",
+      "measured": [
+        "#00175A"
+      ],
+      "expected": "hex navy/blue",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 16,
+      "node": "pane1 single-series legend suppressed",
+      "measured": {
+        "legendDisplay": false,
+        "nDS": 1
+      },
+      "expected": "legend.display falsy",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 16,
+      "node": "pane1 colors no var(-- / not black",
+      "measured": [
+        "#006fcf"
+      ],
+      "expected": "hex navy/blue",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "s05 pane0 single-series legend suppressed",
+      "measured": {
+        "legendDisplay": false,
+        "nDS": 1
+      },
+      "expected": "legend.display falsy",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "s05 pane0 colors no var(-- / not black",
+      "measured": [
+        "#00175A"
+      ],
+      "expected": "hex navy/blue",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "s05 pane1 multi-series legend kept",
+      "measured": {
+        "legendDisplay": true,
+        "nDS": 2
+      },
+      "expected": "legend available if multi",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "s05 pane1 colors no var(-- / not black",
+      "measured": [
+        "#006FCF",
+        "#00175A"
+      ],
+      "expected": "hex navy/blue",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 19,
+      "node": "inset overlap 'VCE of Revenue44.7%'",
+      "measured": 0,
+      "expected": 0,
+      "delta_px": 0,
+      "pass": true,
+      "note": null
+    },
+    {
+      "slide": 23,
+      "node": "inset overlap 'U.S. Consumer % of NV37%'",
+      "measured": 0,
+      "expected": 0,
+      "delta_px": 0,
+      "pass": true,
+      "note": null
+    },
+    {
+      "slide": 23,
+      "node": "inset overlap 'U.S. SME % of NV22%'",
+      "measured": 0,
+      "expected": 0,
+      "delta_px": 0,
+      "pass": true,
+      "note": null
+    },
+    {
+      "slide": "all",
+      "node": "deck-wide inset\u2194cell overlap count",
+      "measured": 0,
+      "expected": 0,
+      "delta_px": null,
+      "pass": true,
+      "note": []
+    },
+    {
+      "slide": 30,
+      "node": "annex group headers uniformly navy (no light-blue alt)",
+      "measured": {
+        "count": 2,
+        "bgs": [
+          "rgb(0, 23, 90)",
+          "rgb(0, 23, 90)"
+        ],
+        "sample": [
+          {
+            "text": "Prior / Reported",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          },
+          {
+            "text": "Current / FX-Adj",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          }
+        ]
+      },
+      "expected": "all navy, no alt light-blue",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 30,
+      "node": "annex white-on-navy header cells remain",
+      "measured": 5,
+      "expected": ">=1",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 31,
+      "node": "annex group headers uniformly navy (no light-blue alt)",
+      "measured": {
+        "count": 2,
+        "bgs": [
+          "rgb(0, 23, 90)",
+          "rgb(0, 23, 90)"
+        ],
+        "sample": [
+          {
+            "text": "Q1'26 Reported",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q1'26 FX-Adj*",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          }
+        ]
+      },
+      "expected": "all navy, no alt light-blue",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 31,
+      "node": "annex white-on-navy header cells remain",
+      "measured": 2,
+      "expected": ">=1",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 32,
+      "node": "annex group headers uniformly navy (no light-blue alt)",
+      "measured": {
+        "count": 2,
+        "bgs": [
+          "rgb(0, 23, 90)",
+          "rgb(0, 23, 90)"
+        ],
+        "sample": [
+          {
+            "text": "Prior / Reported",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          },
+          {
+            "text": "Current / FX-Adj",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          }
+        ]
+      },
+      "expected": "all navy, no alt light-blue",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 32,
+      "node": "annex white-on-navy header cells remain",
+      "measured": 10,
+      "expected": ">=1",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 5,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#00175A",
+        "#006FCF",
+        "#00175A"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 8,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#006fcf"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 10,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#006fcf"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 13,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#006fcf",
+        "#006fcf"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 16,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#00175A",
+        "#006fcf"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 17,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#006fcf",
+        "#00175a"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 20,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#00175a",
+        "#006fcf"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 26,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#006fcf",
+        "#00175a",
+        "#006fcf",
+        "#00175a"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 27,
+      "node": "chart colors navy/blue, no var(--, not black",
+      "measured": [
+        "#00175A",
+        "#006FCF",
+        "#B8BFC9",
+        "#00175A",
+        "#006FCF",
+        "#5B6B9A",
+        "#B8BFC9"
+      ],
+      "expected": "literal hex palette",
+      "delta_px": null,
+      "pass": true,
+      "note": "bad=[]"
+    },
+    {
+      "slide": 2,
+      "node": "pill board height / slide height",
+      "measured": 0.673,
+      "expected": "PDF near-full board (~0.7+)",
+      "delta_px": null,
+      "pass": true,
+      "note": {
+        "board": {
+          "w": 1728,
+          "h": 726.8125
+        },
+        "slideH": 1080,
+        "nCols": 3,
+        "colWidths": [
+          434.296875,
+          434.3125,
+          434.3125
+        ],
+        "nCells": 15,
+        "cellHeights": [
+          135.359375,
+          135.375,
+          135.359375,
+          135.359375,
+          135.359375,
+          135.359375,
+          135.375,
+          135.359375,
+          135.359375,
+          135.359375,
+          135.359375,
+          135.375
+        ],
+        "avgCellH": 135.3625
+      }
+    },
+    {
+      "slide": 2,
+      "node": "pill column count",
+      "measured": 3,
+      "expected": 3,
+      "delta_px": null,
+      "pass": true,
+      "note": {
+        "colWidths": [
+          434.296875,
+          434.3125,
+          434.3125
+        ],
+        "avgCellH": 135.3625
+      }
+    },
+    {
+      "slide": 27,
+      "node": "funding side_legend count (want 0)",
+      "measured": 0,
+      "expected": 0,
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 27,
+      "node": "funding exterior name nodes present",
+      "measured": 7,
+      "expected": ">=1",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 27,
+      "node": "funding tile0 colors",
+      "measured": [
+        "#00175A",
+        "#006FCF",
+        "#B8BFC9"
+      ],
+      "expected": "not black",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": 27,
+      "node": "funding tile1 colors",
+      "measured": [
+        "#00175A",
+        "#006FCF",
+        "#5B6B9A",
+        "#B8BFC9"
+      ],
+      "expected": "not black",
+      "delta_px": null,
+      "pass": true
+    },
+    {
+      "slide": "all",
+      "node": "no var(-- in chart script colors",
+      "measured": {
+        "count": 0,
+        "sample": []
+      },
+      "expected": 0,
+      "delta_px": null,
+      "pass": true
+    }
+  ],
+  "observations": {
+    "slide05": {
+      "slide": 5,
+      "raw": {
+        "tiles": [
+          {
+            "wrap": {
+              "left": 113,
+              "top": 213.59375,
+              "w": 821,
+              "h": 561.59375,
+              "right": 934,
+              "bottom": 775.1875,
+              "text": "{\"type\": \"bar\", \"data\": {\"labels\": [\"Q1'25\", \"Q2'25\", \"Q3'25\", \"Q4'25\", \"Q1'26\"], \"datasets\": [{\"label\": \"Spend growth %\", \"data\": [7.0, 7.0, 9.0, 9.0, 10.0], \"backgroundColor\": \"#00175A\", \"borderColor\": \"#00175A\", \"borderWidth\": 0}]}, \"options\": {\"responsive\": true, \"maintainAspectRatio\": false, \"animation\": false, \"plugins\": {\"legend\": {\"labels\": {\"color\": \"#53565a\", \"font\": {\"family\": \"'Source Sans 3', sans-serif\", \"size\": 14}}, \"display\": false}, \"tooltip\": {\"enabled\": true}, \"callouts\": {\"items\": [{\"type\": \"elbow_arrow\", \"from\": 0, \"to\": 4, \"value\": 11}, {\"type\": \"chevron\", \"at\": 2}]}}, \"scales\": {\"x\": {\"ticks\": {\"color\": \"#00175a\", \"font\": {\"family\": \"'Source Sans 3', sans-serif\", \"size\": 13}}, \"grid\": {\"color\": \"rgba(224, 228, 234, 0.8)\"}}, \"y\": {\"ticks\": {\"color\": \"#00175a\", \"font\": {\"family\": \"'IBM Plex Sans', sans-serif\", \"size\": 13}}, \"grid\": {\"color\": \"rgba(224, 228, 234, 0.8)\"}, \"min\": 0.0, \"max\": 12.0}}}}+ ~6 percentage pointsRefresh<svg class=\"chart-svg vbar-chart vbar-grouped\" viewBox=\"0 0 900 480\" xmlns=\"http://www.w3.org/2000/svg\" style=\"width:100%;height:auto\"><line x1=\"70\" y1=\"424.0\" x2=\"870\" y2=\"424.0\" stroke=\"var(--panel-border, #d8dce3)\" stroke-width=\"0.5\"/><text x=\"60\" y=\"429.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">0%</text><line x1=\"70\" y1=\"360.0\" x2=\"870\" y2=\"360.0\" stroke=\"var(--panel-border, #d8dce3)\" stroke-width=\"0.5\"/><text x=\"60\" y=\"365.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">2%</text><line x1=\"70\" y1=\"296.0\" x2=\"870\" y2=\"296.0\" stroke=\"var(--panel-border, #d8dce3)\" stroke-width=\"0.5\"/><text x=\"60\" y=\"301.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">4%</text><line x1=\"70\" y1=\"232.0\" x2=\"870\" y2=\"232.0\" stroke=\"var(--panel-border, #d8dce3)\" stroke-width=\"0.5\"/><text x=\"60\" y=\"237.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">6%</text><line x1=\"70\" y1=\"168.0\" x2=\"870\" y2=\"168.0\" stroke=\"var(--panel-border, #d8dce3)\" stroke-width=\"0.5\"/><text x=\"60\" y=\"173.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">8%</text><line x1=\"70\" y1=\"104.0\" x2=\"870\" y2=\"104.0\" stroke=\"var(--panel-border, #d8dce3)\" stroke-width=\"0.5\"/><text x=\"60\" y=\"109.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">10%</text><line x1=\"70\" y1=\"40.0\" x2=\"870\" y2=\"40.0\" stroke=\"var(--panel-border, #d8dce3)\" stroke-width=\"0.5\"/><text x=\"60\" y=\"45.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">12%</text><line x1=\"70\" y1=\"40\" x2=\"70\" y2=\"424\" stroke=\"var(--navy, #00175a)\" stroke-width=\"1\"/><line x1=\"70\" y1=\"424.0\" x2=\"870\" y2=\"424.0\" stroke=\"var(--navy, #00175a)\" stroke-width=\"1\"/><rect class=\"vbar\" x=\"98.0\" y=\"200.0\" width=\"100.0\" height=\"224.0\" fill=\"#00175A\" rx=\"2\"/><text x=\"148.0\" y=\"192.0\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">7%</text><text x=\"150.0\" y=\"449\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">Q1'25</text><rect class=\"vbar\" x=\"258.0\" y=\"200.0\" width=\"100.0\" height=\"224.0\" fill=\"#00175A\" rx=\"2\"/><text x=\"308.0\" y=\"192.0\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">7%</text><text x=\"310.0\" y=\"449\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">Q2'25</text><rect class=\"vbar\" x=\"418.0\" y=\"136.0\" width=\"100.0\" height=\"288.0\" fill=\"#00175A\" rx=\"2\"/><text x=\"468.0\" y=\"128.0\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">9%</text><text x=\"470.0\" y=\"449\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">Q3'25</text><rect class=\"vbar\" x=\"578.0\" y=\"136.0\" width=\"100.0\" height=\"288.0\" fill=\"#00175A\" rx=\"2\"/><text x=\"628.0\" y=\"128.0\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">9%</text><text x=\"630.0\" y=\"449\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">Q4'25</text><rect class=\"vbar\" x=\"738.0\" y=\"104.0\" width=\"100.0\" height=\"320.0\" fill=\"#00175A\" rx=\"2\"/><text x=\"788.0\" y=\"96.0\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">10%</text><text x=\"790.0\" y=\"449\" text-anchor=\"middle\" fill=\"var(--navy, #00175a)\" font-size=\"14\" font-weight=\"600\" font-family=\"var(--font-body, sans-serif)\">Q1'26</text></svg>"
+            },
+            "chartArea": {
+              "left": 29.5999755859375,
+              "top": 10.8,
+              "right": 821,
+              "bottom": 531.4,
+              "height": 520.6,
+              "width": 791.4000244140625
+            },
+            "elbow": {
+              "left": 221.734375,
+              "top": 252.765625,
+              "w": 633.109375,
+              "h": 30,
+              "right": 854.84375,
+              "bottom": 282.765625,
+              "text": "+ ~6 percentage points"
+            },
+            "stem": {
+              "left": 221.734375,
+              "top": 282.765625,
+              "w": 2,
+              "h": 158.515625,
+              "right": 223.734375,
+              "bottom": 441.28125,
+              "text": ""
+            },
+            "tip": {
+              "left": 521.296875,
+              "top": 774.59375,
+              "w": 34,
+              "h": 22,
+              "right": 555.296875,
+              "bottom": 796.59375,
+              "text": ""
+            },
+            "pill": {
+              "left": 500.796875,
+              "top": 798.59375,
+              "w": 75.28125,
+              "h": 28,
+              "right": 576.078125,
+              "bottom": 826.59375,
+              "text": "Refresh"
+            },
+            "oldChevron": null,
+            "axisBreak": null,
+            "axisBreakClass": null,
+            "legendCount": 0,
+            "barCenters": [
+              108.73997802734375,
+              267.0199829101563,
+              425.29998779296875,
+              583.5799926757812,
+              741.8599975585938
+            ],
+            "yOrigin": 531.4,
+            "ox": 0,
+            "oy": 0,
+            "areaInWrap": {
+              "left": 29.5999755859375,
+              "top": 10.8,
+              "right": 821,
+              "bottom": 531.4,
+              "bottomAbs": 531.4
+            },
+            "expectedElbow": {
+              "left": 108.73997802734375,
+              "width": 633.12001953125
+            },
+            "expectedChevronCenter": 425.29998779296875,
+            "expectedChevronTopMin": 531.4,
+            "datasetColors": [
+              "#00175A"
+            ],
+            "calloutItems": [
+              {
+                "type": "elbow_arrow",
+                "from": 0,
+                "to": 4,
+                "value": 11
+              },
+              {
+                "type": "chevron",
+                "at": 2
+              }
+            ]
+          },
+          {
+            "wrap": {
+              "left": 982,
+              "top": 235.59375,
+              "w": 709,
+              "h": 561.59375,
+              "right": 1691,
+              "bottom": 797.1875,
+              "text": "{\"type\": \"bar\", \"data\": {\"labels\": [\"January\", \"February\", \"March\"], \"datasets\": [{\"label\": \"2025\", \"data\": [94.0, 95.0, 95.0], \"backgroundColor\": \"#006FCF\", \"borderColor\": \"#006FCF\", \"borderWidth\": 0}, {\"label\": \"2026\", \"data\": [96.0, 97.0, 97.0], \"backgroundColor\": \"#00175A\", \"borderColor\": \"#00175A\", \"borderWidth\": 0}]}, \"options\": {\"responsive\": true, \"maintainAspectRatio\": false, \"animation\": false, \"plugins\": {\"legend\": {\"labels\": {\"color\": \"#53565a\", \"font\": {\"family\": \"'Source Sans 3', sans-serif\", \"size\": 14}}}, \"tooltip\": {\"enabled\": true}, \"datalabels\": {\"display\": true, \"anchor\": \"end\", \"align\": \"start\", \"offset\": 6, \"color\": \"#ffffff\", \"font\": {\"weight\": \"bold\", \"size\": 14}, \"_labels\": [[\"2025\", \"2025\", \"2025\"], [\"2026\", \"2026\", \"2026\"]]}}, \"scales\": {\"x\": {\"ticks\": {\"color\": \"#00175a\", \"font\": {\"family\": \"'Source Sans 3', sans-serif\", \"size\": 13}}, \"grid\": {\"color\": \"rgba(224, 228, 234, 0.8)\"}, \"min\": 90.0, \"max\": 100.0}, \"y\": {\"ticks\": {\"color\": \"#00175a\", \"font\": {\"family\": \"'IBM Plex Sans', sans-serif\", \"size\": 13}}, \"grid\": {\"color\": \"rgba(224, 228, 234, 0.8)\"}}}, \"indexAxis\": \"y\"}}<svg class=\"chart-svg hbar\" viewBox=\"0 0 960 540\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"><text class=\"hbar-cat\" x=\"132.0\" y=\"100.7\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"13\" font-weight=\"600\">January</text><rect class=\"hbar-bar\" x=\"140.0\" y=\"68.7\" width=\"623.5\" height=\"25.0\" fill=\"#006FCF\" rx=\"2\"/><rect class=\"hbar-bar\" x=\"140.0\" y=\"96.7\" width=\"636.8\" height=\"25.0\" fill=\"#00175A\" rx=\"2\"/><text class=\"hbar-cat\" x=\"132.0\" y=\"262.0\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"13\" font-weight=\"600\">February</text><rect class=\"hbar-bar\" x=\"140.0\" y=\"230.0\" width=\"630.2\" height=\"25.0\" fill=\"#006FCF\" rx=\"2\"/><rect class=\"hbar-bar\" x=\"140.0\" y=\"258.0\" width=\"643.4\" height=\"25.0\" fill=\"#00175A\" rx=\"2\"/><text class=\"hbar-cat\" x=\"132.0\" y=\"423.3\" text-anchor=\"end\" fill=\"var(--navy, #00175a)\" font-size=\"13\" font-weight=\"600\">March</text><rect class=\"hbar-bar\" x=\"140.0\" y=\"391.3\" width=\"630.2\" height=\"25.0\" fill=\"#006FCF\" rx=\"2\"/><rect class=\"hbar-bar\" x=\"140.0\" y=\"419.3\" width=\"643.4\" height=\"25.0\" fill=\"#00175A\" rx=\"2\"/><line class=\"hbar-zero\" x1=\"140.0\" y1=\"16.0\" x2=\"140.0\" y2=\"500.0\" stroke=\"var(--ink, #53565a)\" stroke-width=\"1\"/></svg>"
+            },
+            "chartArea": {
+              "left": 66.10395812988281,
+              "top": 34,
+              "right": 695.155029296875,
+              "bottom": 531.4,
+              "height": 497.4,
+              "width": 629.0510711669922
+            },
+            "elbow": null,
+            "stem": null,
+            "tip": null,
+            "pill": null,
+            "oldChevron": null,
+            "axisBreak": {
+              "left": 1043.09375,
+              "top": 766.984375,
+              "w": 10,
+              "h": 14,
+              "right": 1053.09375,
+              "bottom": 780.984375,
+              "text": ""
+            },
+            "axisBreakClass": "chartjs-axis-break chartjs-axis-break-v",
+            "legendCount": 0,
+            "barCenters": [
+              -5595.355682373047,
+              -5532.450575256348,
+              -5469.545468139649,
+              -5406.640361022949,
+              -5343.735253906249
+            ],
+            "yOrigin": 116.89999999999999,
+            "ox": 0,
+            "oy": 0,
+            "areaInWrap": {
+              "left": 66.10395812988281,
+              "top": 34,
+              "right": 695.155029296875,
+              "bottom": 531.4,
+              "bottomAbs": 531.4
+            },
+            "expectedBreak": {
+              "topMin": 531.4
+            },
+            "datasetColors": [
+              "#006FCF",
+              "#00175A"
+            ],
+            "calloutItems": null
+          }
+        ],
+        "midPlotLines": [
+          {
+            "class": "chartjs-axis-break chartjs-axis-break-v",
+            "top": 766.984375,
+            "h": 14,
+            "text": "",
+            "wrapTop": 235.59375
+          }
+        ]
+      },
+      "geo": {
+        "left": {
+          "wrap": {
+            "w": 821,
+            "h": 561.59375
+          },
+          "ox": 0,
+          "oy": 0,
+          "area": {
+            "left": 29.5999755859375,
+            "top": 10.8,
+            "right": 821,
+            "bottom": 531.4,
+            "height": 520.6,
+            "width": 791.4000244140625
+          },
+          "centers": [
+            108.73997802734375,
+            267.0199829101563,
+            425.29998779296875,
+            583.5799926757812,
+            741.8599975585938
+          ],
+          "elbow": {
+            "left": 108.734375,
+            "top": 39.171875,
+            "w": 633.109375,
+            "h": 30,
+            "right": 741.84375,
+            "bottom": 69.171875,
+            "text": "+ ~6 percentage points",
+            "bg": "rgb(0, 111, 207)",
+            "color": "rgb(83, 86, 90)"
+          },
+          "stem": {
+            "left": 108.734375,
+            "top": 69.171875,
+            "w": 2,
+            "h": 158.515625,
+            "right": 110.734375,
+            "bottom": 227.6875,
+            "text": "",
+            "bg": "rgba(0, 0, 0, 0)",
+            "color": "rgb(83, 86, 90)"
+          },
+          "tip": {
+            "left": 408.296875,
+            "top": 561,
+            "w": 34,
+            "h": 22,
+            "right": 442.296875,
+            "bottom": 583,
+            "text": "",
+            "bg": "rgba(0, 0, 0, 0)",
+            "color": "rgb(83, 86, 90)"
+          },
+          "pill": {
+            "left": 387.796875,
+            "top": 585,
+            "w": 75.28125,
+            "h": 28,
+            "right": 463.078125,
+            "bottom": 613,
+            "text": "Refresh",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          },
+          "fused": null,
+          "axisBreak": null,
+          "colors": [
+            "#00175A"
+          ],
+          "callouts": [
+            {
+              "type": "elbow_arrow",
+              "from": 0,
+              "to": 4,
+              "value": 11
+            },
+            {
+              "type": "chevron",
+              "at": 2
+            }
+          ],
+          "tickLabelBottom": {
+            "areaBottom": 531.4,
+            "wrapH": 561.59375
+          }
+        },
+        "right": {
+          "wrap": {
+            "w": 709,
+            "h": 561.59375
+          },
+          "ox": 0,
+          "oy": 0,
+          "area": {
+            "left": 66.10395812988281,
+            "top": 34,
+            "right": 695.155029296875,
+            "bottom": 531.4,
+            "height": 497.4,
+            "width": 629.0510711669922
+          },
+          "centers": [
+            -5595.355682373047,
+            -5532.450575256348,
+            -5469.545468139649
+          ],
+          "elbow": null,
+          "stem": null,
+          "tip": null,
+          "pill": null,
+          "fused": null,
+          "axisBreak": {
+            "left": 61.09375,
+            "top": 531.390625,
+            "w": 10,
+            "h": 14,
+            "right": 71.09375,
+            "bottom": 545.390625,
+            "text": "",
+            "bg": "rgba(0, 0, 0, 0)",
+            "color": "rgb(83, 86, 90)"
+          },
+          "colors": [
+            "#006FCF",
+            "#00175A"
+          ],
+          "callouts": null,
+          "tickLabelBottom": {
+            "areaBottom": 531.4,
+            "wrapH": 561.59375
+          }
+        }
+      }
+    },
+    "ann_3": {
+      "has": true,
+      "left": 570.859375,
+      "top": 64,
+      "w": 149.703125,
+      "h": 32,
+      "text": "Leap Year Approx. (1%)",
+      "dataX": 520,
+      "dataY": 30,
+      "ox": 0,
+      "oy": 0,
+      "area": {
+        "left": 50.8599609375,
+        "top": 34,
+        "right": 903.858154296875,
+        "bottom": 660.4,
+        "height": 626.4,
+        "width": 852.998193359375
+      },
+      "expectedLeft": 570.8599609375,
+      "expectedTop": 64
+    },
+    "ann_9": {
+      "has": true,
+      "left": 509.59375,
+      "top": 74,
+      "w": 73.890625,
+      "h": 32,
+      "text": "Reported",
+      "dataX": 480,
+      "dataY": 40,
+      "ox": 0,
+      "oy": 0,
+      "area": {
+        "left": 29.5999755859375,
+        "top": 34,
+        "right": 877.858154296875,
+        "bottom": 622.4,
+        "height": 588.4,
+        "width": 848.2581787109375
+      },
+      "expectedLeft": 509.5999755859375,
+      "expectedTop": 74
+    },
+    "ann_10": {
+      "has": true,
+      "left": 472,
+      "top": 60.796875,
+      "w": 149.703125,
+      "h": 32,
+      "text": "Leap Year Approx. (1%)",
+      "dataX": 420,
+      "dataY": 50,
+      "ox": 0,
+      "oy": 0,
+      "area": {
+        "left": 51.9999755859375,
+        "top": 10.8,
+        "right": 1613.858154296875,
+        "bottom": 744.4,
+        "height": 733.6,
+        "width": 1561.8581787109374
+      },
+      "expectedLeft": 471.9999755859375,
+      "expectedTop": 60.8
+    },
+    "ann_18": {
+      "has": true,
+      "left": 550.859375,
+      "top": 64,
+      "w": 149.703125,
+      "h": 32,
+      "text": "Leap Year Approx. (1%)",
+      "dataX": 500,
+      "dataY": 30,
+      "ox": 0,
+      "oy": 0,
+      "area": {
+        "left": 50.8599609375,
+        "top": 34,
+        "right": 903.858154296875,
+        "bottom": 697.4,
+        "height": 663.4,
+        "width": 852.998193359375
+      },
+      "expectedLeft": 550.8599609375,
+      "expectedTop": 64
+    },
+    "dual16": {
+      "headings": [
+        {
+          "tag": "DIV",
+          "cls": "gl-tile-label",
+          "text": "Net Card Fees ($B)"
+        },
+        {
+          "tag": "DIV",
+          "cls": "gl-tile-label",
+          "text": "YoY Growth %"
+        }
+      ],
+      "legends": [
+        {
+          "i": 0,
+          "nDS": 1,
+          "legendDisplay": false,
+          "colors": [
+            "#00175A"
+          ]
+        },
+        {
+          "i": 1,
+          "nDS": 1,
+          "legendDisplay": false,
+          "colors": [
+            "#006fcf"
+          ]
+        }
+      ],
+      "htmlLegendCount": 0,
+      "bodySnippet": "<div class=\"slide-number\">17 / 44</div><div class=\"gl-slide layout-dual_chart\"><header class=\"gl-header slide-header\"><h2 class=\"slide-title\">Net Card Fees</h2><p class=\"subtitle dek gl-dek\">$ in billions \u2014 % Increase/(decrease) vs. Prior year &amp; CAGR (FX-adjusted)</p></header><div class=\"gl-main\"><div class=\"chart-frame gl-card\" style=\"padding:18px 22px\"><div class=\"gl-grid gl-grid-2 dual-chart\"><div class=\"dual-chart-pane\"><div class=\"gl-tile-label\">Net Card Fees ($B)</div><div class=\"chart"
+    },
+    "overlap_hits": [],
+    "annex": {
+      "30": {
+        "groupCount": 2,
+        "ths": [
+          {
+            "text": "",
+            "cls": "gl-annex-stub",
+            "bg": "rgb(255, 255, 255)",
+            "color": "rgb(83, 86, 90)"
+          },
+          {
+            "text": "Prior / Reported",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          },
+          {
+            "text": "Current / FX-Adj",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          },
+          {
+            "text": "Q1'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q2'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q3'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q4'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q1'26",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          }
+        ]
+      },
+      "31": {
+        "groupCount": 0,
+        "ths": [
+          {
+            "text": "Segment",
+            "cls": "gl-annex-stub",
+            "bg": "rgb(255, 255, 255)",
+            "color": "rgb(83, 86, 90)"
+          },
+          {
+            "text": "Q1'26 Reported",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q1'26 FX-Adj*",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          }
+        ]
+      },
+      "32": {
+        "groupCount": 2,
+        "ths": [
+          {
+            "text": "",
+            "cls": "gl-annex-stub",
+            "bg": "rgb(255, 255, 255)",
+            "color": "rgb(83, 86, 90)"
+          },
+          {
+            "text": "Prior / Reported",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          },
+          {
+            "text": "Current / FX-Adj",
+            "cls": "gl-annex-group",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(238, 240, 240)"
+          },
+          {
+            "text": "Q1'19",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q1'24",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q2'24",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q3'24",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q4'24",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q1'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q2'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q3'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q4'25",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "Q1'26",
+            "cls": "gl-annex-head",
+            "bg": "rgb(0, 23, 90)",
+            "color": "rgb(255, 255, 255)"
+          }
+        ]
+      }
+    },
+    "palette": {
+      "5": {
+        "charts": [
+          {
+            "colors": [
+              "#00175A"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          },
+          {
+            "colors": [
+              "#006FCF",
+              "#00175A"
+            ],
+            "labels": [
+              "January",
+              "February",
+              "March"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      },
+      "8": {
+        "charts": [
+          {
+            "colors": [
+              "#006fcf"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      },
+      "10": {
+        "charts": [
+          {
+            "colors": [
+              "#006fcf"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      },
+      "13": {
+        "charts": [
+          {
+            "colors": [
+              "#006fcf"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          },
+          {
+            "colors": [
+              "#006fcf"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      },
+      "16": {
+        "charts": [
+          {
+            "colors": [
+              "#00175A"
+            ],
+            "labels": [
+              "Q1'19",
+              "Q1'20",
+              "Q1'21",
+              "Q1'22",
+              "Q1'23",
+              "Q1'24",
+              "Q1'25",
+              "Q1'26"
+            ]
+          },
+          {
+            "colors": [
+              "#006fcf"
+            ],
+            "labels": [
+              "Q1'24",
+              "Q2'24",
+              "Q3'24",
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      },
+      "17": {
+        "charts": [
+          {
+            "colors": [
+              "#006fcf",
+              "#00175a"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      },
+      "20": {
+        "charts": [
+          {
+            "colors": [
+              "#00175a",
+              "#006fcf"
+            ],
+            "labels": [
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      },
+      "26": {
+        "charts": [
+          {
+            "colors": [
+              "#006fcf",
+              "#00175a"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26",
+              "Q2'26",
+              "Q3'26",
+              "Q4'26"
+            ]
+          },
+          {
+            "colors": [
+              "#006fcf",
+              "#00175a"
+            ],
+            "labels": [
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26",
+              "Q2'26",
+              "Q3'26",
+              "Q4'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": true
+      },
+      "27": {
+        "charts": [
+          {
+            "colors": [
+              "#00175A",
+              "#006FCF",
+              "#B8BFC9"
+            ],
+            "labels": [
+              "Q4'25",
+              "Q1'26"
+            ]
+          },
+          {
+            "colors": [
+              "#00175A",
+              "#006FCF",
+              "#5B6B9A",
+              "#B8BFC9"
+            ],
+            "labels": [
+              "Q4'25",
+              "Q1'26"
+            ]
+          }
+        ],
+        "hasVarInSlide": false
+      }
+    },
+    "pill02": {
+      "board": {
+        "w": 1728,
+        "h": 726.8125
+      },
+      "slideH": 1080,
+      "nCols": 3,
+      "colWidths": [
+        434.296875,
+        434.3125,
+        434.3125
+      ],
+      "nCells": 15,
+      "cellHeights": [
+        135.359375,
+        135.375,
+        135.359375,
+        135.359375,
+        135.359375,
+        135.359375,
+        135.375,
+        135.359375,
+        135.359375,
+        135.359375,
+        135.359375,
+        135.375
+      ],
+      "avgCellH": 135.3625
+    },
+    "funding27": {
+      "sideLegendCount": 0,
+      "exteriorNameNodes": 7,
+      "charts": [
+        {
+          "legendDisplay": false,
+          "nDS": 3,
+          "colors": [
+            "#00175A",
+            "#006FCF",
+            "#B8BFC9"
+          ],
+          "segmentNames": {
+            "n": 3,
+            "fontSize": 16,
+            "offset": 22,
+            "items": [
+              {
+                "label": "Deposits",
+                "color": "#00175A"
+              },
+              {
+                "label": "Unsecured Funding**",
+                "color": "#006FCF"
+              },
+              {
+                "label": "Short-term Funding / Card ABS*",
+                "color": "#16294d"
+              }
+            ]
+          },
+          "padRight": 150
+        },
+        {
+          "legendDisplay": false,
+          "nDS": 4,
+          "colors": [
+            "#00175A",
+            "#006FCF",
+            "#5B6B9A",
+            "#B8BFC9"
+          ],
+          "segmentNames": {
+            "n": 4,
+            "fontSize": 16,
+            "offset": 22,
+            "items": [
+              {
+                "label": "Savings and Direct CDs",
+                "color": "#00175A"
+              },
+              {
+                "label": "Third Party CDs",
+                "color": "#006FCF"
+              },
+              {
+                "label": "Third Party Sweep",
+                "color": "#5B6B9A"
+              },
+              {
+                "label": "Checking",
+                "color": "#16294d"
+              }
+            ]
+          },
+          "padRight": 150
+        }
+      ],
+      "headings": [
+        "Funding Mix",
+        "Deposit Programs"
+      ]
+    }
+  }
+}
