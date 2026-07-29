@@ -2455,3 +2455,36 @@ class TestPolishBundleR3:
         assert re.search(
             r"\.annex-table \.gl-annex-group\s*\{[^}]*border", html
         )
+
+
+class TestDefaultPaletteResolved:
+    """T10/R5-E: Chart.js paints to canvas, where CSS custom properties do not
+    resolve — a var(--...) string silently renders black. Every serialized
+    Chart.js config must therefore carry literal colors."""
+
+    def test_no_var_in_any_chartjs_config(self, tmp_path):
+        slides = [
+            _slide("grouped_bar_chart", BAR_STEPS),
+            _slide("stacked_bar_chart", BAR_STEPS),
+            _slide("horizontal_bar_chart", BAR_STEPS),
+        ]
+        for s in slides:
+            s["slide_number"] = slides.index(s) + 1
+        path = _write(tmp_path, _handoff(slides))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        configs = re.findall(r'class="chartjs-config"[^>]*>(.*?)</script>', html, re.S)
+        assert len(configs) == 3
+        for raw in configs:
+            assert "var(--" not in raw, f"canvas-bound CSS var in config: {raw[:200]}"
+
+    def test_default_bar_first_dataset_is_navy_hex(self, tmp_path):
+        path = _write(tmp_path, _handoff([_slide("grouped_bar_chart", BAR_STEPS)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        ds0 = cc["data"]["datasets"][0]
+        assert ds0["backgroundColor"] == "#00175a"
+        assert ds0["borderColor"] == "#00175a"

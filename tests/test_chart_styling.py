@@ -88,8 +88,9 @@ def test_series_colors_defaults_unchanged():
         [{"label": "Q1", "values": {"A": 7, "B": 6}}],
     )
     html = _build_grouped_bar_svg(slide)
-    assert "var(--navy" in html
-    assert "var(--blue" in html
+    # Default palette is literal hex — Chart.js canvas can't resolve var() (T10).
+    assert 'fill="#00175a"' in html
+    assert 'fill="#006fcf"' in html
 
 
 # ------------------------------------------------------- per-bar color
@@ -116,8 +117,8 @@ def test_per_bar_color_leaves_other_bars_default():
         ],
     )
     html = _build_grouped_bar_svg(slide)
-    # first bar keeps the default series color
-    assert html.count("var(--navy") >= 1
+    # first bar keeps the default series color (literal hex after T10)
+    assert 'fill="#00175a"' in html
     assert html.count('fill="#898a89"') == 1
 
 

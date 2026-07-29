@@ -108,8 +108,9 @@ def test_grouped_bar_legend_series_names():
 
 def test_grouped_bar_series_colors_navy_then_blue():
     html = _build_grouped_bar_svg(_grouped_slide())
-    assert "var(--navy" in html
-    assert "var(--blue)" in html or "var(--blue," in html
+    # Default palette is literal hex — Chart.js canvas can't resolve var() (T10).
+    assert 'fill="#00175a"' in html
+    assert 'fill="#006fcf"' in html
 
 
 def test_grouped_bar_category_labels():
