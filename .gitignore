@@ -42,3 +42,7 @@ simulation/
 # Treehouse worktree-pool config: defaults only (max_trees/root), so it is not worth
 # tracking. Pool location is set by the TREEHOUSE_DIR env var, not by this file.
 treehouse.toml
+
+# Per-ticket delegation briefs handed to worker agents in treehouse worktrees.
+# They are scratch instructions, not repo docs.
+TASK_*.md
