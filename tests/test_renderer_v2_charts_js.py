@@ -1319,6 +1319,44 @@ class TestGeometricCallouts:
         assert "chartjs-callout-band" in html
         assert "Leap Year" in html
 
+    def test_measure_rule_renders_with_anchors(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [{"type": "measure_rule", "from": 0, "to": 4, "text": "17% CAGR"}]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'class="chartjs-callout chartjs-callout-measure"' in html
+        assert 'data-from="0"' in html and 'data-to="4"' in html
+        assert 'chartjs-callout-measure-pill">17% CAGR</span>' in html
+        # dual-ended arrowheads, no band chrome
+        assert "chartjs-callout-measure-arrow-l" in html
+        assert "chartjs-callout-measure-arrow-r" in html
+        assert "chartjs-callout-band" not in html.split("<body")[1]
+        # sub-caption is opt-in: no caption key => no caption node (markup
+        # only — the CSS block is always bundled)
+        assert "chartjs-callout-measure-caption" not in html.split("<body")[1]
+
+    def test_measure_rule_caption_opt_in(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [
+                {
+                    "type": "measure_rule",
+                    "from": 0,
+                    "to": 4,
+                    "text": "17% / Year",
+                    "caption": "% CAGR",
+                }
+            ]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-callout-measure-caption" in html
+        assert "% CAGR" in html
+
     def test_unknown_callout_type_fails_closed(self, tmp_path):
         s = _grouped_slide_with_callouts([{"type": "fireworks", "at": 1}])
         path = _write(tmp_path, _handoff([s]))
@@ -1397,6 +1435,25 @@ class TestCalloutGeometryPlugin:
             {"type": "elbow_arrow", "from": 1, "to": 4, "value": 10},
             {"type": "chevron", "at": 4},
         ]
+
+    def test_plugin_config_measure_rule_serialized(self, tmp_path):
+        _, conf = self._render(
+            tmp_path, [{"type": "measure_rule", "from": 0, "to": 4, "text": "x"}]
+        )
+        items = conf["options"]["plugins"]["callouts"]["items"]
+        assert items == [{"type": "measure_rule", "from": 0, "to": 4}]
+
+    def test_measure_rule_span_uses_bar_center_fractions(self, tmp_path):
+        # 5 categories, from 0 to 4 => left 10%, width 80% (same D2 span rule)
+        html, _ = self._render(
+            tmp_path, [{"type": "measure_rule", "from": 0, "to": 4, "text": "x"}]
+        )
+        m = re.search(
+            r'class="chartjs-callout chartjs-callout-measure"[^>]*style="([^"]+)"',
+            html,
+        )
+        assert m
+        assert "left:10.00%" in m.group(1) and "width:80.00%" in m.group(1)
 
     def test_plugin_config_built_after_band_merge(self, tmp_path):
         # band absorbed by the same-span elbow => config and DOM agree (D4)

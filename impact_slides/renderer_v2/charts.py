@@ -1056,7 +1056,7 @@ def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
     return ""
 
 
-_CALLOUT_TYPES = frozenset({"elbow_arrow", "chevron", "band"})
+_CALLOUT_TYPES = frozenset({"elbow_arrow", "chevron", "band", "measure_rule"})
 
 
 def _value_anchor_pct(
@@ -1241,6 +1241,30 @@ def _build_callout_overlays(
         left = ((frm + 0.5) / n) * 100
         width = ((to - frm) / n) * 100
         style = f"left:{left:.2f}%;width:{width:.2f}%"
+        if ctype == "measure_rule":
+            # N8: thin dual-ended rule from first to last bar centre with a
+            # blue pill interrupting it at the midpoint and an optional gray
+            # sub-caption under the pill (PDF slide-16 CAGR recipe). Pill
+            # text is rendered as declared; the sub-caption is a separate
+            # opt-in ``caption`` key — no text-splitting heuristics.
+            cap = esc(str(c.get("caption") or ""))
+            cap_html = (
+                f'<span class="chartjs-callout-measure-caption">{cap}</span>'
+                if cap
+                else ""
+            )
+            parts.append(
+                f'<div class="chartjs-callout chartjs-callout-measure" '
+                f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}" '
+                f'style="{style}">'
+                f'<i class="chartjs-callout-measure-arrow '
+                f'chartjs-callout-measure-arrow-l"></i>'
+                f'<i class="chartjs-callout-measure-arrow '
+                f'chartjs-callout-measure-arrow-r"></i>'
+                f'<span class="chartjs-callout-measure-pill">{text}</span>'
+                f"{cap_html}</div>"
+            )
+            continue
         anchor: float | None = None
         if ctype == "elbow_arrow" and c.get("value") is not None and cfg:
             anchor = _value_anchor_pct(cfg, chart_cfg or {}, c.get("value"), layout)

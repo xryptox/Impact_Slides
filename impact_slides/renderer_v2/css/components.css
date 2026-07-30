@@ -1670,6 +1670,68 @@
   bottom: auto;
   top: -18px;
 }
+/* Measure rule (N8): thin dual-ended navy rule from the first to the last
+   bar centre, arrowheads at both ends, a blue pill interrupting the rule
+   at its midpoint, and an optional gray sub-caption beneath the pill
+   (PDF slide-16 "17% / Year" + "% CAGR" recipe). The calloutGeometry
+   plugin pins the span to the bar centres and lifts the node above the
+   tallest bar; the top % here is the JS-off fallback. */
+.chartjs-callout-measure {
+  top: 8%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chartjs-callout-measure::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 2px solid var(--navy);
+}
+/* 6x6 arrowheads at both ends pointing outward, tips on the bar centres
+   (measured on the PDF: 6pt wide x 6pt tall, navy). */
+.chartjs-callout-measure-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  box-sizing: content-box;
+  width: 0;
+  height: 0;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+.chartjs-callout-measure-arrow-l {
+  left: 0;
+  border-right: 6px solid var(--navy);
+}
+.chartjs-callout-measure-arrow-r {
+  right: 0;
+  border-left: 6px solid var(--navy);
+}
+.chartjs-callout-measure-pill {
+  position: relative;
+  background: var(--blue, var(--color-primary, #006fcf));
+  color: var(--color-on-navy, var(--panel, #fff));
+  /* --radius-round is 50% and paints an ellipse on a wide short box;
+     a fixed radius >= half the height gives a true pill. */
+  border-radius: var(--radius-md, 14px);
+  padding: var(--size-1, 4px) var(--size-3, 12px);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chartjs-callout-measure-caption {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: var(--size-1, 4px);
+  font-size: 12px;
+  color: var(--ink, #53565a);
+  white-space: nowrap;
+}
 
 /* ---------- chrome level: stage-only / minimal (#83/F14) ---------- */
 /* Boardroom full chrome remains the default; minimal hides product chrome

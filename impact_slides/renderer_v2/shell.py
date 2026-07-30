@@ -275,14 +275,27 @@ _JS = r"""
               }
               return;
             }
-            if (item.type !== 'elbow_arrow' && item.type !== 'band') return;
+            if (item.type !== 'elbow_arrow' && item.type !== 'band' && item.type !== 'measure_rule') return;
             var f = item.from | 0, t = (item.to != null ? item.to : item.from) | 0;
-            node = wrap.querySelector('.chartjs-callout-' + (item.type === 'elbow_arrow' ? 'elbow' : 'band') +
+            var cls = item.type === 'elbow_arrow' ? 'elbow' : (item.type === 'band' ? 'band' : 'measure');
+            node = wrap.querySelector('.chartjs-callout-' + cls +
               '[data-for="' + canvas.id + '"][data-from="' + f + '"][data-to="' + t + '"]');
             var x0 = centerX(f), x1 = centerX(t);
             if (!node || x0 == null || x1 == null) return;
             px(node, 'left', ox + x0);
             px(node, 'width', Math.max(0, x1 - x0));
+            if (item.type === 'measure_rule') {
+              // N8: rule + pill sit above the tallest bar in the span
+              // (PDF: pill bottom clears it by ~16px). Fail-closed:
+              // unreadable bar tops keep the server-side top fallback.
+              var mTop = null;
+              for (var mi = f; mi <= t; mi++) {
+                var my = barTopY(mi);
+                if (my != null && (mTop == null || my < mTop)) mTop = my;
+              }
+              if (mTop != null) px(node, 'top', oy + mTop - node.offsetHeight - 16);
+              return;
+            }
             var capsuleBottom = null;
             if (item.type === 'elbow_arrow' && item.value != null) {
               var cy = ys.getPixelForValue(item.value);
