@@ -418,6 +418,38 @@ class TestBarDensityKnobs:
             assert "categoryPercentage" not in ds
         assert 'class="chartjs-wrap chartjs-fill"' not in html
 
+    def test_bar_percentage_lands_on_hbar_datasets(self, tmp_path):
+        # layout-agnostic: horizontal bars honour the knobs too
+        s = _hbar_slide({"bar_percentage": 0.58, "category_percentage": 1.0})
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        for ds in cc["data"]["datasets"]:
+            assert ds["barPercentage"] == 0.58
+            assert ds["categoryPercentage"] == 1.0
+
+    def test_bar_percentage_lands_on_combo_bar_datasets_only(self, tmp_path):
+        # combo: bar datasets get the knobs, the line dataset does not
+        s = {**COMBO_HANDOFF_SLIDE}
+        s = {**s, "visual_spec": {**s["visual_spec"], "primary_visual": {
+            **s["visual_spec"]["primary_visual"],
+            "chart_config": {"bar_percentage": 0.58},
+        }}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        bars = [d for d in cc["data"]["datasets"] if d.get("type", "bar") == "bar"]
+        lines = [d for d in cc["data"]["datasets"] if d.get("type") == "line"]
+        assert bars and lines
+        for ds in bars:
+            assert ds["barPercentage"] == 0.58
+        for ds in lines:
+            assert "barPercentage" not in ds
+
 
 # ---------------------------------------------------------------------------
 # #73 — Floating inset KPI / key_stats on data_table expense layout (F9)

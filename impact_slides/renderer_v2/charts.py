@@ -451,6 +451,25 @@ def _align_overlay_to_labels(
     return [None] * len(bar_labels)
 
 
+def _apply_bar_density_knobs(
+    datasets: list[dict[str, Any]], cfg: Mapping[str, Any]
+) -> None:
+    # N5 density: opt-in bar width levers (Chart.js barPercentage /
+    # categoryPercentage) onto every bar-type dataset. Absent keys keep
+    # Chart.js defaults, so existing handoffs serialize byte-identical
+    # (SC-COMPAT-1). Applied across vertical, horizontal, and combo bar
+    # configs so the knobs are layout-agnostic as advertised.
+    for knob, field in (
+        ("bar_percentage", "barPercentage"),
+        ("category_percentage", "categoryPercentage"),
+    ):
+        if cfg.get(knob) is not None:
+            v = float(cfg[knob])
+            for ds in datasets:
+                if ds.get("type", "bar") == "bar":
+                    ds[field] = v
+
+
 def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> dict[str, Any] | None:
     """Grouped or stacked bar Chart.js config.
 
@@ -479,16 +498,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 point_colors[i] or color for i in range(len(labels))
             ]
         datasets.append(ds)
-    # N5 density: opt-in bar width levers (Chart.js barPercentage /
-    # categoryPercentage). Absent keys keep Chart.js defaults, so existing
-    # handoffs serialize byte-identical (SC-COMPAT-1).
-    for knob, field in (
-        ("bar_percentage", "barPercentage"),
-        ("category_percentage", "categoryPercentage"),
-    ):
-        if cfg.get(knob) is not None:
-            for ds in datasets:
-                ds[field] = float(cfg[knob])
+    _apply_bar_density_knobs(datasets, cfg)
     options = _chartjs_common_options(cfg)
     if stacked:
         options["scales"]["x"]["stacked"] = True
@@ -773,6 +783,7 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 "borderWidth": 0,
             }
         )
+    _apply_bar_density_knobs(datasets, cfg)
     options = _chartjs_common_options(cfg)
     options["indexAxis"] = "y"
     x_scale = options["scales"]["x"]
@@ -1043,7 +1054,9 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 "yAxisID": "y",
             }
         )
-    options = _chartjs_common_options(_chart_config(slide))
+    cfg = _chart_config(slide)
+    _apply_bar_density_knobs(datasets, cfg)
+    options = _chartjs_common_options(cfg)
     return {
         "type": "bar",
         "data": {"labels": bar_labels, "datasets": datasets},
