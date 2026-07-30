@@ -1628,6 +1628,40 @@
   color: var(--color-on-navy, var(--panel, #fff));
   font-size: 13px;
 }
+/* Line-art elbow (R2, opt-in style: line): the PDF recipe is a thin
+   4px blue rule from the from-bar centre to an arrowhead on the to-bar
+   centre, with the label as an opaque blue pill centred ON the rule
+   (interrupting it) instead of one continuous thick capsule. Measured on
+   PDF page 6: rule 4pt thick spanning bar0->bar4 centres, pill 213x31pt
+   centred on the rule, arrowhead 12x12pt. Same calloutGeometry plugin
+   positioning as the capsule; only the chrome differs. */
+.chartjs-callout-elbow-line {
+  height: 0;
+  background: transparent;
+  border-radius: 0;
+  border-top: 4px solid var(--blue, var(--color-primary, #006fcf));
+}
+.chartjs-callout-elbow-line::after {
+  right: -12px;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 12px solid var(--blue, var(--color-primary, #006fcf));
+}
+.chartjs-callout-elbow-line .chartjs-callout-label {
+  position: absolute;
+  bottom: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--blue, var(--color-primary, #006fcf));
+  color: var(--color-on-navy, var(--panel, #fff));
+  border-radius: var(--radius-md, 14px);
+  padding: var(--size-1, 4px) var(--size-4, 16px);
+  font-size: 14px;
+}
+.chartjs-callout-elbow-line ~ .chartjs-callout-elbow-stem {
+  border-left-width: 4px;
+}
 /* Chevron marker under the category axis (R2/T7): two stacked sibling
    nodes — a navy down-triangle above a separate navy pill (PDF Refresh
    marker). The calloutGeometry plugin stacks them below scales.x.bottom
@@ -1642,9 +1676,9 @@
   height: 0;
   /* V5/R2: chunky IR triangle — the 14/18 chip read as a speck next to the
      PDF's under-axis Refresh marker. */
-  border-left: 17px solid transparent;
-  border-right: 17px solid transparent;
-  border-top: 22px solid var(--navy);
+  border-left: 22px solid transparent;
+  border-right: 22px solid transparent;
+  border-top: 15px solid var(--navy);
 }
 .chartjs-callout-chevron-pill {
   bottom: 4px;
@@ -1653,7 +1687,7 @@
   /* --radius-round is 50%, which makes an ellipse on a wide short box (same trap
      as the T1 capsule). A fixed radius >= half the height gives a true pill. */
   border-radius: var(--radius-md, 14px);
-  padding: 4px var(--space-4, 14px);
+  padding: var(--size-1, 4px) var(--size-6, 24px);
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;

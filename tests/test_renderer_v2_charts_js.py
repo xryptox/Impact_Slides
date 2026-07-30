@@ -1319,6 +1319,40 @@ class TestGeometricCallouts:
         assert "chartjs-callout-band" in html
         assert "Leap Year" in html
 
+    def test_elbow_line_variant_opt_in(self, tmp_path):
+        # R2: style:"line" adds the line-art class; default markup unchanged
+        s = _grouped_slide_with_callouts(
+            [
+                {
+                    "type": "elbow_arrow",
+                    "from": 0,
+                    "to": 4,
+                    "value": 11,
+                    "text": "+ ~6 percentage points",
+                    "style": "line",
+                }
+            ]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert (
+            'class="chartjs-callout chartjs-callout-elbow chartjs-callout-elbow-line"'
+            in html
+        )
+
+    def test_elbow_default_has_no_line_variant(self, tmp_path):
+        s = _grouped_slide_with_callouts(
+            [{"type": "elbow_arrow", "from": 0, "to": 4, "text": "x"}]
+        )
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'class="chartjs-callout chartjs-callout-elbow"' in html
+        assert "chartjs-callout-elbow-line" not in html.split("<body")[1]
+
     def test_measure_rule_renders_with_anchors(self, tmp_path):
         s = _grouped_slide_with_callouts(
             [{"type": "measure_rule", "from": 0, "to": 4, "text": "17% CAGR"}]

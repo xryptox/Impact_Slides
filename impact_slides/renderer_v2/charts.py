@@ -1273,12 +1273,19 @@ def _build_callout_overlays(
                 dim = "left" if layout == "horizontal_bar_chart" else "top"
                 style += f";{dim}:{anchor:.2f}%"
         suffix = "elbow" if ctype == "elbow_arrow" else "band"
+        # R2: opt-in line-art elbow (thin rule + mid pill) vs the default
+        # thick capsule. Declarative ``style: "line"``; default unchanged.
+        variant = (
+            " chartjs-callout-elbow-line"
+            if ctype == "elbow_arrow" and str(c.get("style") or "") == "line"
+            else ""
+        )
         dv = (
             f' data-value="{esc(str(c.get("value")))}"'
             if ctype == "elbow_arrow" and c.get("value") is not None else ""
         )
         parts.append(
-            f'<div class="chartjs-callout chartjs-callout-{suffix}" '
+            f'<div class="chartjs-callout chartjs-callout-{suffix}{variant}" '
             f'data-for="{esc(cid)}" data-from="{frm}" data-to="{to}"{dv} '
             f'style="{style}">'
             f'<span class="chartjs-callout-label">{text}</span></div>'
