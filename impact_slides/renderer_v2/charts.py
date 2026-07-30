@@ -562,14 +562,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         unit = str(cfg.get("y_axis_unit") or "")
 
         def _fmt_value(v: float) -> str:
-            # Currency-style units prefix ($1,251); percent-style suffix (72%).
-            # Negatives are parenthesized with the unit inside (($73), IR).
-            if v == int(v):
-                n = f"{abs(int(v)):,}"
-            else:
-                n = f"{abs(v):,.1f}"
-            core = f"{n}{unit}" if unit.endswith("%") else f"{unit}{n}"
-            return f"({core})" if v < 0 else core
+            return _fmt_value_label(v, unit)
 
         total_matrix: list[list[str]] | None = None
         if cfg.get("stack_totals"):
@@ -718,6 +711,24 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             }
         else:
             options["plugins"]["datalabels"] = value_set
+    elif not stacked and (cfg.get("point_labels") or cfg.get("show_point_labels")):
+        # T14: grouped/plain bars honour point_labels too — above-bar value
+        # labels (line-path recipe), same unit formatter as stacked/line.
+        unit = str(cfg.get("y_axis_unit") or "")
+        pos = str(cfg.get("y_axis_unit_position") or "")
+        label_matrix = [
+            [
+                _fmt_value_label(row[si], unit, pos)
+                if si < len(row) and isinstance(row[si], (int, float))
+                else ""
+                for row in rows
+            ]
+            for si in range(len(series))
+        ]
+        options["plugins"]["datalabels"] = _datalabels_cfg(
+            anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=11,
+            labels=label_matrix,
+        )
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -2077,7 +2088,54 @@ def _bar_num(v: Any) -> float | None:
         return None
 
 
+def _fmt_value_label(v: float, unit: str = "", pos: str = "") -> str:
+    """Value label with unit. Currency-style units prefix ($1,251);
+    percent-style suffix (72%). Negatives parenthesized with the unit
+    inside (($73), IR). ``pos`` (y_axis_unit_position) overrides the
+    default (prefix unless the unit ends with ``%``).
+
+    Shared by the stacked, grouped-bar, and SVG bar label paths (T14) —
+    the fourth instance of a declared key honoured on only some paths.
+
+    Compound currency units SPLIT around the number ($0.9B, $1,223M): the
+    symbol leads and the magnitude suffix trails, which is how ``_fmt_bar``
+    has always painted axis ticks. Treating the unit as atomic would give
+    ``$B0.9`` and, worse, disagree with the ticks on the very same chart.
+
+    Number formatting follows the axis-tick rule (``:g`` under 1000, comma
+    thousands above) rather than the stacked path's former ``.1f``. The two
+    only ever disagreed on fractional values >= 1000, where the old stacked
+    rule dropped the thousands comma (``$1275.5`` vs ``$1,276``); no shipped
+    deck carries such a value. Small magnitudes now keep their precision
+    (0.05 stays 0.05 instead of rounding to 0.1).
+    """
+    neg = v < 0
+    a = abs(v)
+    n = f"{a:,.0f}" if a >= 1000 else f"{a:g}"
+    if not unit:
+        core = n
+    elif unit.startswith("$"):
+        # "$" -> $12 · "$B" -> $12B (symbol leads, magnitude trails).
+        # An explicit suffix request still wins: pos="suffix" -> 12$.
+        core = f"{n}{unit}" if pos == "suffix" else f"${n}{unit[1:]}"
+    elif pos == "prefix":
+        core = f"{unit}{n}"
+    else:
+        # Non-currency units trail by default (72%, 9bps).
+        core = f"{n}{unit}"
+    return f"({core})" if neg else core
+
+
 def _fmt_bar(v: float, unit: str = "") -> str:
+    """Axis-tick label. Shares :func:`_fmt_value_label`'s unit placement and
+    magnitude rules so ticks and value labels on the same chart can never
+    disagree (T14).
+
+    Ticks differ from value labels in one respect: a negative tick keeps a
+    plain signed number rather than IR parentheses. The sign sits where it
+    always has — inside a currency prefix (``$-73``), which looks odd but is
+    long-standing axis output and not this ticket's to change.
+    """
     s = f"{v:,.0f}" if abs(v) >= 1000 else f"{v:g}"
     if not unit:
         return s
@@ -2388,7 +2446,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
             parts.append(
                 f'<text x="{x + (bar_w - 4) / 2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
-                f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(v, unit))}</text>'
+                f'font-family="var(--font-body, sans-serif)">{esc(_fmt_value_label(v, str(unit or ""), str(cfg.get("y_axis_unit_position") or "")))}</text>'
             )
         parts.append(
             f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
