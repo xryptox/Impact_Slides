@@ -2096,17 +2096,46 @@ def _fmt_value_label(v: float, unit: str = "", pos: str = "") -> str:
 
     Shared by the stacked, grouped-bar, and SVG bar label paths (T14) —
     the fourth instance of a declared key honoured on only some paths.
+
+    Compound currency units SPLIT around the number ($0.9B, $1,223M): the
+    symbol leads and the magnitude suffix trails, which is how ``_fmt_bar``
+    has always painted axis ticks. Treating the unit as atomic would give
+    ``$B0.9`` and, worse, disagree with the ticks on the very same chart.
+
+    Number formatting follows the axis-tick rule (``:g`` under 1000, comma
+    thousands above) rather than the stacked path's former ``.1f``. The two
+    only ever disagreed on fractional values >= 1000, where the old stacked
+    rule dropped the thousands comma (``$1275.5`` vs ``$1,276``); no shipped
+    deck carries such a value. Small magnitudes now keep their precision
+    (0.05 stays 0.05 instead of rounding to 0.1).
     """
-    if v == int(v):
-        n = f"{abs(int(v)):,}"
+    neg = v < 0
+    a = abs(v)
+    n = f"{a:,.0f}" if a >= 1000 else f"{a:g}"
+    if not unit:
+        core = n
+    elif unit.startswith("$"):
+        # "$" -> $12 · "$B" -> $12B (symbol leads, magnitude trails).
+        # An explicit suffix request still wins: pos="suffix" -> 12$.
+        core = f"{n}{unit}" if pos == "suffix" else f"${n}{unit[1:]}"
+    elif pos == "prefix":
+        core = f"{unit}{n}"
     else:
-        n = f"{abs(v):,.1f}"
-    prefix = pos == "prefix" or (pos != "suffix" and not unit.endswith("%"))
-    core = f"{unit}{n}" if prefix else f"{n}{unit}"
-    return f"({core})" if v < 0 else core
+        # Non-currency units trail by default (72%, 9bps).
+        core = f"{n}{unit}"
+    return f"({core})" if neg else core
 
 
 def _fmt_bar(v: float, unit: str = "") -> str:
+    """Axis-tick label. Shares :func:`_fmt_value_label`'s unit placement and
+    magnitude rules so ticks and value labels on the same chart can never
+    disagree (T14).
+
+    Ticks differ from value labels in one respect: a negative tick keeps a
+    plain signed number rather than IR parentheses. The sign sits where it
+    always has — inside a currency prefix (``$-73``), which looks odd but is
+    long-standing axis output and not this ticket's to change.
+    """
     s = f"{v:,.0f}" if abs(v) >= 1000 else f"{v:g}"
     if not unit:
         return s
