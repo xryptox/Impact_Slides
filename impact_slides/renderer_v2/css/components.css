@@ -1659,7 +1659,7 @@
   padding: var(--size-1, 4px) var(--size-4, 16px);
   font-size: 14px;
 }
-.chartjs-callout-elbow-line ~ .chartjs-callout-elbow-stem {
+.chartjs-callout-elbow-line + .chartjs-callout-elbow-stem {
   border-left-width: 4px;
 }
 /* Chevron marker under the category axis (R2/T7): two stacked sibling
