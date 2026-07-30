@@ -375,6 +375,51 @@ class TestNegativeStackedBars:
 
 
 # ---------------------------------------------------------------------------
+# N5 — opt-in bar density knobs (bar_percentage / category_percentage /
+# fill_tile). Absent keys must leave configs byte-identical (SC-COMPAT-1).
+# ---------------------------------------------------------------------------
+
+
+class TestBarDensityKnobs:
+    def test_bar_percentage_lands_on_datasets(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {
+            "bar_percentage": 0.58,
+            "category_percentage": 1.0,
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        for ds in cc["data"]["datasets"]:
+            assert ds["barPercentage"] == 0.58
+            assert ds["categoryPercentage"] == 1.0
+
+    def test_fill_tile_adds_wrap_class(self, tmp_path):
+        s = _slide("stacked_bar_chart", PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = {"fill_tile": True}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "chartjs-wrap chartjs-fill" in html
+
+    def test_absent_knobs_byte_identical(self, tmp_path):
+        # SC-COMPAT-1: no knobs → serialized config + wrap classes unchanged
+        plain = _handoff([_slide("stacked_bar_chart", PROVISION_STACK)])
+        path = _write(tmp_path, plain)
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        cc = _chartjs_cfg(html)
+        for ds in cc["data"]["datasets"]:
+            assert "barPercentage" not in ds
+            assert "categoryPercentage" not in ds
+        assert 'class="chartjs-wrap chartjs-fill"' not in html
+
+
+# ---------------------------------------------------------------------------
 # #73 — Floating inset KPI / key_stats on data_table expense layout (F9)
 # ---------------------------------------------------------------------------
 

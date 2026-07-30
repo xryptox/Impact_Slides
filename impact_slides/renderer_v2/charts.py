@@ -479,6 +479,16 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 point_colors[i] or color for i in range(len(labels))
             ]
         datasets.append(ds)
+    # N5 density: opt-in bar width levers (Chart.js barPercentage /
+    # categoryPercentage). Absent keys keep Chart.js defaults, so existing
+    # handoffs serialize byte-identical (SC-COMPAT-1).
+    for knob, field in (
+        ("bar_percentage", "barPercentage"),
+        ("category_percentage", "categoryPercentage"),
+    ):
+        if cfg.get(knob) is not None:
+            for ds in datasets:
+                ds[field] = float(cfg[knob])
     options = _chartjs_common_options(cfg)
     if stacked:
         options["scales"]["x"]["stacked"] = True
@@ -1349,8 +1359,12 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     # R1 (#94): chart_config.stage "flat" drops the Boardroom stage chrome so
     # the chart sits flatter against the canvas (IR stage-dominant style).
     flat = " chartjs-flat" if chart_cfg.get("stage") == "flat" else ""
+    # N5: opt-in flex-fill so the wrap grows into the tile's dead space
+    # (multi_panel tiles are flex columns; without this the plot height is
+    # bounded by Chart.js' intrinsic sizing, leaving unused card below).
+    fill = " chartjs-fill" if chart_cfg.get("fill_tile") else ""
     return (
-        f'<div class="chartjs-wrap{flat}" data-chartjs="1" data-chart-layout="{esc(layout)}">'
+        f'<div class="chartjs-wrap{flat}{fill}" data-chartjs="1" data-chart-layout="{esc(layout)}">'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
