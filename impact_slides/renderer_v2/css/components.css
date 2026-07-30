@@ -1498,6 +1498,10 @@
 
 /* ---------- chart annotation + axis-break markers (#71/F2, #79/F10) ---------- */
 .chartjs-wrap { position: relative; }
+/* N5: opt-in (chart_config.fill_tile) — grow the wrap into the flex tile's
+   remaining height; lifts the default 480px/52vh clamp that otherwise caps
+   the plot and leaves dead card space below it. */
+.chartjs-wrap.chartjs-fill { flex: 1; min-height: 0; height: auto; max-height: none; }
 /* R1 finish: stage=flat also flattens the FRAME card (the wrap-only flat
    left the gray Boardroom pad/shadow around the chart; the PDF sits the
    chart directly on the white canvas). */
