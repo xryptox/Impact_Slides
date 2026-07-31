@@ -110,23 +110,54 @@ def _location(fn) -> str:
     return f"{path.as_posix()}:{line}"
 
 
-def _rg_files(term: str, *paths: str) -> list[str]:
-    """Word-boundary file search. Returns repo-relative posix paths."""
-    try:
-        proc = subprocess.run(
-            ["rg", "-l", "-w", "--", term, *paths],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return []
-    if proc.returncode not in (0, 1):  # 1 == no matches
-        return []
-    return sorted(
-        Path(ln).as_posix() for ln in proc.stdout.splitlines() if ln.strip()
+@functools.lru_cache(maxsize=1)
+def _tracked_files() -> tuple[str, ...]:
+    """Git-tracked repo-relative posix paths.
+
+    Tracked-only is what makes this match ripgrep's old behaviour: rg honours
+    .gitignore, so untracked fixtures (e.g. the excluded visual_regression_deck
+    handoffs) were never in its results either.
+    """
+    proc = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
     )
+    return tuple(p for p in proc.stdout.split("\0") if p.strip())
+
+
+def _rg_files(term: str, *paths: str) -> list[str]:
+    """Word-boundary file search. Returns repo-relative posix paths.
+
+    Pure Python on purpose. This used to shell out to ``rg`` and swallow
+    FileNotFoundError as "no matches", so on a machine without ripgrep every
+    test/fixture column silently came up empty, --check reported the index as
+    stale, and regenerating would have overwritten a correct index with a
+    degraded one (#130). Verified to return byte-identical results to the old
+    ``rg -l -w`` for all 49 layouts across tests/ and tests/fixtures/.
+    """
+    pattern = re.compile(rf"\b{re.escape(term)}\b")
+    prefixes = tuple(p.rstrip("/") for p in paths)
+    hits = []
+    for rel in _tracked_files():
+        if not any(rel == p or rel.startswith(p + "/") for p in prefixes):
+            continue
+        try:
+            raw = (REPO / rel).read_bytes()
+        except OSError:
+            continue
+        if b"\0" in raw[:8192]:  # binary, as rg skips
+            continue
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        if pattern.search(text):
+            hits.append(Path(rel).as_posix())
+    return sorted(hits)
 
 
 def _fmt_refs(files: list[str], strip: str, limit: int = 3) -> str:
