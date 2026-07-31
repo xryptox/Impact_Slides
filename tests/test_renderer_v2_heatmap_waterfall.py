@@ -78,8 +78,37 @@ def test_waterfall_running_total_and_fills(monkeypatch):
     )
     assert len(rects) == 3
     tops = [float(y) for y, _h in rects]
-    # Q3 sits on cumulative 5 after Q1+Q2, so its top is above Q1's top.
-    assert tops[2] < tops[0]
+    heights = [float(h) for _y, h in rects]
+
+    # The defining waterfall invariant: each bridge *starts where the previous
+    # one ended*, so bar N's near edge meets bar N-1's far edge. Asserting only
+    # that one top is above another is not enough -- with the cumulative offset
+    # removed, Q3 (20) is still taller than Q1 (10) and such a check passes on
+    # plain side-by-side bars. Verified by mutation: replacing
+    # `start = level` with `start = 0.0` must fail this test.
+    #
+    # Q1 +10 -> level 10 : spans 0..10
+    # Q2  -5 -> level  5 : spans 5..10, so its bottom == Q1's top
+    # Q3 +20 -> level 25 : spans 5..25, so its bottom == Q2's top
+    q1_top, q2_top, q3_top = tops
+    q1_bot = q1_top + heights[0]
+    q2_bot = q2_top + heights[1]
+    q3_bot = q3_top + heights[2]
+
+    # SVG y grows downward, so a larger data value means a *smaller* y.
+    # Q2 falls 10 -> 5, spanning 5..10: its high edge is Q1's high edge (10).
+    assert q2_top == pytest.approx(q1_top, abs=0.5), (
+        f"Q2 must hang from Q1's level (cumulative bridge): "
+        f"q2_top={q2_top} q1_top={q1_top}"
+    )
+    # Q3 rises 5 -> 25, spanning 5..25: its low edge rests on Q2's low edge (5).
+    assert q3_bot == pytest.approx(q2_bot, abs=0.5), (
+        f"Q3 must stand on Q2's resting level (cumulative bridge): "
+        f"q3_bot={q3_bot} q2_bot={q2_bot}"
+    )
+    # Only Q1 is rooted at the zero baseline; the others float above it.
+    assert q1_bot > q2_bot and q1_bot > q3_bot
+    assert q1_bot > q3_top  # Q1 rooted at 0, Q3 floated well above it
 
 
 def test_heatmap_alpha_scales_with_value(monkeypatch):
@@ -133,3 +162,47 @@ def test_empty_steps_chart_empty(monkeypatch, lt):
     html = charts.build_chart_html(_slide(lt, []), lt)
     assert "chart-empty" in html
     assert lt in html or "No chart data" in html
+
+
+def test_waterfall_total_bars_are_navy_and_absolute(monkeypatch):
+    """`kind: "total"` bars are anchored at zero, not floated on the running level.
+
+    Covers the branch a mutation exposed: breaking the `kind == "total"` check
+    left every previous test green, because none of them declared a total bar.
+    A closing total with value 0 is also auto-filled from the running level,
+    which is the idiom for "close at whatever we ended on".
+    """
+    _stub_pack_absent(monkeypatch)
+    steps = [
+        {"label": "Open", "value": 100, "kind": "total"},
+        {"label": "Up", "value": 50},
+        {"label": "Down", "value": -30},
+        {"label": "Close", "value": 0, "kind": "total"},
+    ]
+    html = charts.build_chart_html(
+        _slide("waterfall_chart", steps), "waterfall_chart", use_chartjs=False
+    )
+
+    # Totals navy, movements blue/ink, in declaration order.
+    assert re.findall(r'class="chart-bar-(\w+)"', html) == [
+        "navy",
+        "blue",
+        "ink",
+        "navy",
+    ]
+
+    # Closing total auto-computes from the running level: 100 + 50 - 30 = 120,
+    # and totals print bare (no +/- sign) unlike movement bars.
+    values = re.findall(r'class="chart-value"[^>]*>([^<]+)<', html)
+    assert values == ["100", "+50", "-30", "120"]
+
+    rects = re.findall(
+        r'<rect class="chart-bar-(?:blue|ink|navy)"[^>]* y="([\d.]+)"[^>]* height="([\d.]+)"',
+        html,
+    )
+    tops = [float(y) for y, _h in rects]
+    heights = [float(h) for _y, h in rects]
+    # Both totals are rooted at the zero baseline, so they share a bottom edge.
+    assert tops[0] + heights[0] == pytest.approx(tops[3] + heights[3], abs=0.5)
+    # The 120 close is taller than the 100 open.
+    assert heights[3] > heights[0]
