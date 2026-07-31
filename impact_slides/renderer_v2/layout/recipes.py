@@ -765,9 +765,14 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     hero = _hero_stack((slide.get("content") or {}).get("key_stats") or [])
     if not chart_html and not hero:
         return render_metric(slide, total, notes, active=active)
+    # R4 (v8): the PDF chart panel carries an in-card title. Source it from an
+    # explicit primary_visual label when authored (T11 convention); absent a
+    # label nothing renders, so decks without one are unchanged.
+    chart_title = strip_eids(str(pv.get("label") or "")) if isinstance(pv, dict) else ""
+    title_html = f'<div class="gl-tile-label">{esc(chart_title)}</div>' if chart_title else ""
     main = (
         f'<div class="gl-areas-chart-hero">'
-        f'<div class="gl-chart-hero-chart">{chart_html or "<div class=\"chart-empty\">No chart</div>"}</div>'
+        f'<div class="gl-chart-hero-chart">{title_html}{chart_html or "<div class=\"chart-empty\">No chart</div>"}</div>'
         f'<div class="gl-chart-hero-stack">{hero}</div>'
         f"</div>" + insight_strip(_so_what(slide))
     )

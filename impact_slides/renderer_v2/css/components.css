@@ -1189,17 +1189,25 @@
 /* ---------- chart | hero-KPI dual card (#75/F5) ---------- */
 .gl-areas-chart-hero {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 2fr 1fr; /* R4 (v8): PDF chart:hero panel ratio is 2:1 */
   gap: var(--gap-md, 18px);
   align-items: stretch;
 }
 .gl-chart-hero-chart { min-width: 0; }
 .gl-chart-hero-stack { display: flex; }
+/* R4 finish (v8): the PDF draws the dual-metric hero side as ONE framed
+   panel (fill --panel, full height, matching the chart panel) holding both
+   metrics — not two stacked bordered cards. The frame lives on the stack;
+   each .gl-hero becomes a transparent metric row inside it. */
 .gl-hero-stack {
   display: flex;
   flex-direction: column;
   gap: var(--gap-md, 18px);
   flex: 1;
+  background: var(--gradient-panel), var(--panel);
+  border-radius: var(--radius-md, 14px);
+  box-shadow: var(--shadow-3);
+  padding: var(--size-5) var(--size-6);
 }
 /* R4 (#94, finished): muted companion card + IR giant-% pairing — blue
    digits with a visibly smaller % unit, narrated label beside the number. */
@@ -1209,10 +1217,7 @@
   flex-direction: row;
   align-items: center;
   gap: 18px;
-  padding: var(--space-4, 16px) var(--space-5, 20px);
-  background: var(--color-surface-muted, var(--stage, #f4f6f9));
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius-md, 8px);
+  padding: 0 var(--size-2);
 }
 .gl-hero-value {
   font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
