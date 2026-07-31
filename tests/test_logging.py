@@ -80,27 +80,64 @@ class TestLoggerFactory:
         # reset the singleton so each test gets a fresh logger
         ls._LOG = None  # logger cache lives in logging_setup, not the preprocessor re-export
 
+    def test_run_log_written_under_both_backends(self, tmp_path):
+        """run.log must be populated whether or not structlog is installed.
+
+        structlog logs through PrintLoggerFactory(stderr) and never touches
+        stdlib logging, so before #129 the FileHandler saw nothing and run.log
+        came out empty on any machine with structlog present -- silently, since
+        the tests asserted through caplog and only ran the stdlib path.
+
+        Forces the stdlib branch in-process to prove both halves mirror to the
+        same sink.
+        """
+        real = ls._HAS_STRUCTLOG
+        try:
+            for backend in (real, False):
+                ls._HAS_STRUCTLOG = backend
+                ls._LOG = None
+                ls._FILE_LOGGER = None
+                out = tmp_path / f"run_{backend}.log"
+                log = ls.get_logger(log_file=out, verbose=True, run_id="R")
+                log.info("mirrored_event", key="v")
+                for h in logging.getLogger("preprocessor.file").handlers:
+                    h.flush()
+                content = out.read_text(encoding="utf-8")
+                assert "mirrored_event" in content, f"empty run.log (structlog={backend})"
+                assert "key=" in content, f"kwargs dropped (structlog={backend})"
+        finally:
+            ls._HAS_STRUCTLOG = real
+            ls._LOG = None
+            ls._FILE_LOGGER = None
+
     def test_get_logger_returns_logger(self):
         log = m.get_logger()
         assert log is not None
         assert hasattr(log, "info") and hasattr(log, "error")
 
-    def test_logger_emits_info(self, caplog):
-        log = m.get_logger(verbose=True)
-        with caplog.at_level(logging.DEBUG, logger="preprocessor"):
-            log.info("test_event", key="value")
-        assert "test_event" in caplog.text
-        assert "value" in caplog.text
+    def test_logger_emits_info(self, tmp_path):
+        """Asserted through run.log, not caplog: structlog logs to stderr via
+        PrintLoggerFactory and never reaches stdlib logging, so caplog is blind
+        to it (#129). run.log is the one sink both backends share."""
+        log = m.get_logger(verbose=True, log_file=tmp_path / "run.log")
+        log.info("test_event", key="value")
+        for h in logging.getLogger("preprocessor.file").handlers:
+            h.flush()
+        content = (tmp_path / "run.log").read_text(encoding="utf-8")
+        assert "test_event" in content
+        assert "value" in content
 
-    def test_logger_emits_warning_and_error(self, caplog):
-        log = m.get_logger(verbose=True)
-        with caplog.at_level(logging.DEBUG, logger="preprocessor"):
-            log.warning("warn_event")
-            log.error("err_event")
-        assert "warn_event" in caplog.text
-        assert "err_event" in caplog.text
-        assert "WARNING" in caplog.text
-        assert "ERROR" in caplog.text
+    def test_logger_emits_warning_and_error(self, tmp_path):
+        log = m.get_logger(verbose=True, log_file=tmp_path / "run.log")
+        log.warning("warn_event")
+        log.error("err_event")
+        for h in logging.getLogger("preprocessor.file").handlers:
+            h.flush()
+        content = (tmp_path / "run.log").read_text(encoding="utf-8")
+        assert "warn_event" in content
+        assert "err_event" in content
+        assert "WARNING" in content
+        assert "ERROR" in content
 
     def test_logger_writes_run_log_file(self, tmp_path):
         ls._LOG = None  # logger cache lives in logging_setup, not the preprocessor re-export

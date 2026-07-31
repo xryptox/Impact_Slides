@@ -59,6 +59,28 @@ def git_dirty() -> Optional[bool]:
 
 
 _LOG = None  # singleton logger for the preprocessor instance
+_FILE_LOGGER = None  # stdlib logger owning this run's run.log FileHandler
+
+
+def _mirror_to_run_log(logger, method_name, event_dict):
+    """structlog processor: copy every event into the run.log file sink.
+
+    structlog logs through PrintLoggerFactory(stderr), which never touches stdlib
+    logging, so the FileHandler attached below saw nothing and run.log came out
+    empty whenever structlog was installed (#129). The stdlib adapter mirrors to
+    the same sink in ``_StdlibLogAdapter._emit``; this is the structlog half.
+
+    Returns ``event_dict`` unchanged -- it is a tap, not a filter.
+    """
+    if _FILE_LOGGER is not None:
+        level = getattr(logging, str(method_name).upper(), logging.INFO)
+        event = event_dict.get("event", "")
+        extra = " ".join(
+            f"{k}={v!r}" for k, v in event_dict.items()
+            if k not in ("event", "level", "timestamp")
+        )
+        _FILE_LOGGER.log(level, f"{event}" + (f" {extra}" if extra else ""))
+    return event_dict
 
 
 class _StdlibLogAdapter:
@@ -133,6 +155,9 @@ def get_logger(name: str = "preprocessor", log_file: Optional[Path] = None,
                 structlog.processors.add_log_level,
                 structlog.processors.TimeStamper(fmt="iso"),
                 structlog.processors.StackInfoRenderer(),
+                # Tap before the renderer: the renderer returns a string, so
+                # anything after it no longer sees the event dict.
+                _mirror_to_run_log,
                 _structlog_console_renderer(),
             ],
             wrapper_class=structlog.make_filtering_bound_logger(
@@ -178,6 +203,10 @@ def get_logger(name: str = "preprocessor", log_file: Optional[Path] = None,
             h.close()
         file_logger.addHandler(fh)
         log._file_logger = file_logger
+        # structlog bypasses stdlib logging, so _mirror_to_run_log reads this
+        # global instead of the per-adapter attribute.
+        global _FILE_LOGGER
+        _FILE_LOGGER = file_logger
 
     _LOG = log
     return log
