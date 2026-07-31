@@ -5,6 +5,7 @@ from typing import Any, Mapping
 
 from ..charts import is_chart_layout
 from ..disclosure import inject_disclosure
+from ..layouts import FALLBACK_LAYOUT, canonical
 from . import freeform, recipes
 
 
@@ -19,12 +20,15 @@ def _primary_visual_type(slide: Mapping[str, Any]) -> str:
 
 
 def resolve_layout(slide: Mapping[str, Any]) -> str:
-    lt = (slide.get("layout_type") or "split_text_visual").lower().strip()
-    if lt in ("other", "", "default"):
-        pvt = _primary_visual_type(slide)
-        if pvt:
-            return pvt
-        return "split_text_visual"
+    """Canonical layout_type for a slide.
+
+    Aliases resolve here (via ``layouts.canonical``) rather than in each branch
+    below, so a spelling schemas accepts cannot fall through to the fallback and
+    silently drop content — which is what ``metric`` and ``table`` used to do.
+    """
+    lt = canonical(slide.get("layout_type"))
+    if not lt:
+        return _primary_visual_type(slide) or FALLBACK_LAYOUT
     return lt
 
 

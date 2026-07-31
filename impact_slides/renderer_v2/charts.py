@@ -8,20 +8,9 @@ import uuid
 from pathlib import Path
 from typing import Any, Mapping
 
+from .layouts import CHART_LAYOUTS as _CHART_LAYOUTS
+from .layouts import CHARTJS_LAYOUTS as _CHARTJS_LAYOUTS
 from .strip import esc, strip_eids
-
-_CHART_LAYOUTS = frozenset(
-    {
-        "grouped_bar_chart",
-        "stacked_bar_chart",
-        "horizontal_bar_chart",
-        "waterfall_chart",
-        "heatmap",
-        "icon_grid",
-        "line_chart",
-        "combo_chart",
-    }
-)
 
 _PACK = None
 _PACK_CSS = ""
@@ -134,16 +123,6 @@ def _steps(slide: Mapping[str, Any]) -> list[Any]:
 
 
 # MVP Chart.js interactive set (P3). Other chart layouts stay on SVG/pack.
-_CHARTJS_LAYOUTS = frozenset(
-    {
-        "grouped_bar_chart",
-        "line_chart",
-        "combo_chart",
-        "stacked_bar_chart",
-        "horizontal_bar_chart",
-    }
-)
-
 # Boardroom series palette (semantic/brand — not Chart.js candy defaults).
 _BOARDROOM_SERIES = (
     "#006fcf",  # blue / accent
