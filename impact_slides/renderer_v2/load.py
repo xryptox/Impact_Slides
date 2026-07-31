@@ -6,6 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from .layouts import COVER_LAYOUTS
 from .strip import scrub_tree
 
 
@@ -28,9 +29,9 @@ def _slides_of(handoff: dict[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
-# Layouts that legitimately occupy deck index 0 without the normalize step
-# forcing/injecting a title_or_opening cover (#92/F6+).
-COVER_LAYOUTS = frozenset({"title_or_opening", "brand_cover"})
+# COVER_LAYOUTS (re-exported from layouts.py) = layouts that legitimately occupy
+# deck index 0 without the normalize step injecting a title_or_opening cover
+# (#92/F6+).
 
 
 def normalize_handoff(handoff: dict[str, Any]) -> dict[str, Any]:

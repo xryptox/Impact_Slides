@@ -245,3 +245,55 @@ class TestRenderDeckValidation:
         # normalize_handoff raises on empty slides — this is expected
         with pytest.raises(ValueError, match="no slides"):
             render_deck(empty, out, strict=False)
+
+
+class TestLayoutAliasDispatch:
+    """Aliases schemas accepts must also route to the right recipe.
+
+    Regression: schemas validated ``metric``/``table`` (TestSlideValidation
+    above) but dispatch only matched the canonical names, so an alias slide
+    validated and then fell through to render_split -- silently dropping
+    key_stats. layouts.canonical() resolves aliases in one place.
+    """
+
+    def test_canonical_resolves_aliases(self):
+        from impact_slides.renderer_v2.layouts import canonical
+
+        assert canonical("metric") == "metric_dashboard"
+        assert canonical("table") == "data_table"
+        assert canonical("cover") == "title_or_opening"
+
+    def test_canonical_passes_through_and_blanks_sentinels(self):
+        from impact_slides.renderer_v2.layouts import canonical
+
+        assert canonical("metric_dashboard") == "metric_dashboard"
+        assert canonical("  METRIC  ") == "metric_dashboard"
+        assert canonical("unknown_layout") == "unknown_layout"
+        for sentinel in ("", "other", "default", None):
+            assert canonical(sentinel) == ""
+
+    def test_metric_alias_renders_key_stats(self):
+        """The actual bug: $1M was dropped when layout_type was 'metric'."""
+        from impact_slides.renderer_v2.layout.dispatch import render_slide
+
+        slide = {
+            "slide_number": 2,
+            "layout_type": "metric",
+            "title": "Metric alias",
+            "content": {"key_stats": [{"label": "Rev", "value": "$1M"}]},
+        }
+        html = render_slide(slide, total=2, notes="")
+        assert "$1M" in html
+
+    def test_alias_and_canonical_paint_identically(self):
+        from impact_slides.renderer_v2.layout.dispatch import render_slide
+
+        for alias, canon in (("metric", "metric_dashboard"), ("table", "data_table")):
+            base = {
+                "slide_number": 2,
+                "title": "T",
+                "content": {"key_stats": [{"label": "A", "value": "1"}]},
+            }
+            a = render_slide({**base, "layout_type": alias}, total=2, notes="")
+            b = render_slide({**base, "layout_type": canon}, total=2, notes="")
+            assert a == b, f"{alias} must paint the same as {canon}"

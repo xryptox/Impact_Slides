@@ -1,112 +1,17 @@
-"""Chart + icon_grid paint — soft-import live Boardroom pack, with pure fallbacks."""
+"""Chart + icon_grid paint — in-repo painters only."""
 from __future__ import annotations
 
-import importlib.util
 import math
-import sys
 import uuid
-from pathlib import Path
 from typing import Any, Mapping
 
+from .layouts import CHART_LAYOUTS as _CHART_LAYOUTS
+from .layouts import CHARTJS_LAYOUTS as _CHARTJS_LAYOUTS
 from .strip import esc, strip_eids
-
-_CHART_LAYOUTS = frozenset(
-    {
-        "grouped_bar_chart",
-        "stacked_bar_chart",
-        "horizontal_bar_chart",
-        "waterfall_chart",
-        "heatmap",
-        "icon_grid",
-        "line_chart",
-        "combo_chart",
-    }
-)
-
-_PACK = None
-_PACK_CSS = ""
-
-
-def _find_pack_path() -> Path | None:
-    here = Path(__file__).resolve()
-    # Prefer sibling live_sim relative to known realworld_test layout
-    candidates = [
-        Path.home()
-        / "Documents"
-        / "realworld_test"
-        / "amex_thefork_acquisition"
-        / "live_copilot_sim"
-        / "_boardroom_charts_pack.py",
-        here.parents[2]
-        / "realworld_test"
-        / "amex_thefork_acquisition"
-        / "live_copilot_sim"
-        / "_boardroom_charts_pack.py",
-        Path(__file__).resolve().parent / "_vendor_charts_pack.py",
-    ]
-    # walk up for Impact_Slides parent
-    for parent in [here.parents[i] for i in range(2, min(6, len(here.parents)))]:
-        candidates.append(
-            parent.parent
-            / "realworld_test"
-            / "amex_thefork_acquisition"
-            / "live_copilot_sim"
-            / "_boardroom_charts_pack.py"
-        )
-        candidates.append(
-            parent
-            / ".."
-            / "realworld_test"
-            / "amex_thefork_acquisition"
-            / "live_copilot_sim"
-            / "_boardroom_charts_pack.py"
-        )
-    for c in candidates:
-        try:
-            c = c.resolve()
-        except OSError:
-            continue
-        if c.is_file():
-            return c
-    return None
-
-
-def _load_pack():
-    global _PACK, _PACK_CSS
-    if _PACK is not None:
-        return _PACK
-    path = _find_pack_path()
-    if not path:
-        _PACK = False
-        return None
-    spec = importlib.util.spec_from_file_location("boardroom_charts_pack_v2", path)
-    if not spec or not spec.loader:
-        _PACK = False
-        return None
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules["boardroom_charts_pack_v2"] = mod
-    spec.loader.exec_module(mod)
-    _PACK = mod
-    _PACK_CSS = getattr(mod, "CHART_CSS", "") or ""
-    return mod
-
-
-def chart_css() -> str:
-    _load_pack()
-    return _PACK_CSS
 
 
 def is_chart_layout(layout_type: str) -> bool:
-    lt = (layout_type or "").lower().strip()
-    if lt in _CHART_LAYOUTS:
-        return True
-    mod = _load_pack()
-    if mod and hasattr(mod, "is_chart_layout"):
-        try:
-            return bool(mod.is_chart_layout(lt))
-        except Exception:
-            return False
-    return False
+    return (layout_type or "").lower().strip() in _CHART_LAYOUTS
 
 
 def _icon_svg(name: str, cls: str = "icon") -> str:
@@ -134,16 +39,6 @@ def _steps(slide: Mapping[str, Any]) -> list[Any]:
 
 
 # MVP Chart.js interactive set (P3). Other chart layouts stay on SVG/pack.
-_CHARTJS_LAYOUTS = frozenset(
-    {
-        "grouped_bar_chart",
-        "line_chart",
-        "combo_chart",
-        "stacked_bar_chart",
-        "horizontal_bar_chart",
-    }
-)
-
 # Boardroom series palette (semantic/brand — not Chart.js candy defaults).
 _BOARDROOM_SERIES = (
     "#006fcf",  # blue / accent
@@ -200,64 +95,10 @@ def build_chart_html(
         return svg
     if lt == "stacked_bar_chart":
         return _build_stacked_bar_svg(slide)
-    mod = _load_pack()
-    s = dict(slide)
-    s["layout_type"] = lt
-    # External pack reads steps_or_data / key_stats / so_what at the TOP level
-    # of the slide dict; our handoff nests them under visual_spec / content.
-    # Bridge the two shapes so the pack can find the data.
-    if not s.get("steps_or_data"):
-        vs = s.get("visual_spec") or {}
-        pv = vs.get("primary_visual") or {}
-        s["steps_or_data"] = pv.get("steps_or_data") or []
-    if not s.get("key_stats"):
-        s["key_stats"] = (s.get("content") or {}).get("key_stats") or []
-    # NOTE: so_what is deliberately NOT bridged — render_chart appends
-    # insight_strip() itself; bridging would make the pack render a duplicate.
-    if mod and hasattr(mod, "build_main"):
-        try:
-            html = mod.build_main(s, esc=esc, icon=_icon_svg)
-            # Pack may legitimately report empty; use matrix fallback when face is empty.
-            if html and "chart-empty" not in html and "<svg" in html:
-                return html
-            if html and "chart-empty" not in html and "heatmap" in lt:
-                return html
-            if html and "chart-empty" not in html and "icon" not in lt:
-                # might still be meaningful non-svg (table-like)
-                if len(html) > 80:
-                    return html
-        except Exception as e:  # pragma: no cover
-            return f'<p class="chart-empty">Chart pack error: {esc(e)}</p>'
     return _fallback_matrix_chart(slide, lt)
 
 
 def build_icon_grid_html(slide: Mapping[str, Any]) -> str:
-    mod = _load_pack()
-    s = dict(slide)
-    s["layout_type"] = "icon_grid"
-    # External pack reads steps_or_data / bullets at the TOP level of the
-    # slide dict; our renderer nests them under visual_spec / content.
-    # Bridge the two shapes so the external pack can find the data.
-    if not s.get("steps_or_data"):
-        vs = s.get("visual_spec") or {}
-        pv = vs.get("primary_visual") or {}
-        s["steps_or_data"] = pv.get("steps_or_data") or []
-    if not s.get("bullets"):
-        s["bullets"] = (s.get("content") or {}).get("bullets") or []
-    if mod and hasattr(mod, "build_icon_grid_main"):
-        try:
-            result = mod.build_icon_grid_main(s, esc=esc, icon=_icon_svg)
-            if "No icon-grid items" not in result:
-                return result
-        except Exception:
-            pass
-    if mod and hasattr(mod, "build_main"):
-        try:
-            result = mod.build_main(s, esc=esc, icon=_icon_svg)
-            if "No icon-grid items" not in result:
-                return result
-        except Exception:
-            pass
     return _fallback_icon_grid(slide)
 
 
@@ -1076,7 +917,178 @@ def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
         return _build_stacked_bar_svg(slide)
     if layout == "horizontal_bar_chart":
         return _build_hbar_svg(slide)
+    if layout == "heatmap":
+        return _build_heatmap_html(slide)
+    if layout == "waterfall_chart":
+        return _build_waterfall_svg(slide)
     return ""
+
+
+def _fmt_chart_num(v: float) -> str:
+    """Compact whole-preferring number for chart labels."""
+    if abs(v - round(v)) < 1e-6:
+        return f"{int(round(v))}"
+    if abs(v) >= 100:
+        return f"{v:.0f}"
+    return f"{v:.1f}".rstrip("0").rstrip(".")
+
+
+def _build_heatmap_html(slide: Mapping[str, Any]) -> str:
+    """In-repo heatmap: HTML table with alpha-scaled blue cells (pack parity)."""
+    labels, series, rows, _pc = _bar_matrix(slide)
+    if not labels or not series or not rows:
+        return '<p class="chart-empty">No chart data for heatmap</p>'
+    vals = [v for r in rows for v in r if v is not None]
+    if not vals:
+        return '<p class="chart-empty">No chart data for heatmap</p>'
+    vmin, vmax = min(vals), max(vals)
+    span = (vmax - vmin) or 1.0  # all-equal: avoid /0, flat low alpha
+
+    def cell_style(v: float) -> str:
+        alpha = 0.15 + 0.75 * ((v - vmin) / span)
+        return f"background: rgba(0, 111, 207, {alpha:.3f});"
+
+    ths = "".join(f"<th>{esc(c[:14])}</th>" for c in series)
+    body: list[str] = []
+    for i, rlab in enumerate(labels):
+        row = rows[i] if i < len(rows) else []
+        cells: list[str] = []
+        for j in range(len(series)):
+            v = row[j] if j < len(row) else None
+            if v is None:
+                cells.append('<td class="heatmap-cell is-null">—</td>')
+            else:
+                cells.append(
+                    f'<td class="heatmap-cell" style="{cell_style(v)}">'
+                    f"{esc(_fmt_chart_num(v))}</td>"
+                )
+        body.append(
+            f'<tr><th class="row-head">{esc(str(rlab)[:22])}</th>'
+            + "".join(cells)
+            + "</tr>"
+        )
+    table = (
+        f'<table class="heatmap-table"><thead><tr><th></th>{ths}</tr></thead>'
+        f"<tbody>{''.join(body)}</tbody></table>"
+    )
+    return f'<div class="chart-frame heatmap-wrap">{table}</div>'
+
+
+
+def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
+    """In-repo waterfall: running-total bridge bars (pack geometry parity)."""
+    labels, series, rows, _pc = _bar_matrix(slide)
+    if not labels or not series or not rows:
+        return '<p class="chart-empty">No chart data for waterfall_chart</p>'
+
+    # Single-series bridges from first column; optional kind on steps_or_data.
+    raw = _steps(slide)
+    bridges: list[tuple[str, float, str]] = []  # label, value, kind
+    for i, lab in enumerate(labels):
+        row = rows[i] if i < len(rows) else []
+        v = row[0] if row else None
+        if v is None:
+            continue
+        kind = ""
+        if i < len(raw) and isinstance(raw[i], dict):
+            kind = str(raw[i].get("kind") or "").lower().strip()
+        if not kind:
+            kind = "up" if v >= 0 else "down"
+        bridges.append((str(lab), float(v), kind))
+    if not bridges:
+        return '<p class="chart-empty">No chart data for waterfall_chart</p>'
+
+    # Running total: up/down float from prior level; total is absolute from 0.
+    level = 0.0
+    centers: list[tuple[str, float, float, str, float]] = []
+    for lab, val, kind in bridges:
+        if kind == "total":
+            if abs(val) < 1e-9 and level:
+                val = level
+            y0, y1 = (0.0, val) if val >= 0 else (val, 0.0)
+            centers.append((lab, y0, y1 - y0, "total", val))
+            level = val
+        else:
+            start = level
+            level = level + val
+            y0, y1 = min(start, level), max(start, level)
+            k = "up" if val >= 0 else "down"
+            centers.append((lab, y0, y1 - y0, k, val))
+
+    vals_ext = [c[1] for c in centers] + [c[1] + c[2] for c in centers] + [0.0]
+    vmin, vmax = min(vals_ext), max(vals_ext)
+    if abs(vmax - vmin) < 1e-6:
+        vmax = vmin + 1.0
+    pad = (vmax - vmin) * 0.08
+    vmin -= pad
+    vmax += pad
+
+    width, height = 1200, 520
+    left, right, top, bottom = 60, 40, 40, 70
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    n = len(centers)
+    slot = plot_w / max(n, 1)
+    bar_w = min(72.0, slot * 0.55)
+
+    def y_scale(v: float) -> float:
+        return top + plot_h * (1 - (v - vmin) / (vmax - vmin))
+
+    navy, blue, ink = "#00175A", "#006FCF", "#63666A"
+    fill_for = {"total": navy, "up": blue, "down": ink}
+    cls_for = {
+        "total": "chart-bar-navy",
+        "up": "chart-bar-blue",
+        "down": "chart-bar-ink",
+    }
+
+    parts = [
+        f'<svg class="chart-svg" viewBox="0 0 {width} {height}" '
+        f'role="img" aria-label="Waterfall chart">'
+    ]
+    if vmin < 0 < vmax:
+        yz = y_scale(0.0)
+        parts.append(
+            f'<line class="chart-gridline" x1="{left}" y1="{yz:.1f}" '
+            f'x2="{width - right}" y2="{yz:.1f}" stroke="#E0E4EA" '
+            f'stroke-width="1" stroke-dasharray="4 4"/>'
+        )
+
+    for i, (lab, y0, h, kind, val) in enumerate(centers):
+        cx = left + slot * i + slot / 2
+        x = cx - bar_w / 2
+        y_top = y_scale(y0 + h)
+        y_bot = y_scale(y0)
+        bh = max(2.0, y_bot - y_top)
+        cls = cls_for[kind]
+        fill = fill_for[kind]
+        parts.append(
+            f'<rect class="{cls}" fill="{fill}" x="{x:.1f}" y="{y_top:.1f}" '
+            f'width="{bar_w:.1f}" height="{bh:.1f}" rx="4"/>'
+        )
+        vlab = _fmt_chart_num(val)
+        if kind != "total" and val > 0:
+            vlab = "+" + vlab
+        parts.append(
+            f'<text class="chart-value" x="{cx:.1f}" y="{y_top - 8:.1f}" '
+            f'text-anchor="middle" fill="{navy}" font-size="18" '
+            f'font-weight="700">{esc(vlab)}</text>'
+        )
+        parts.append(
+            f'<text class="chart-axis-label" x="{cx:.1f}" y="{height - 28}" '
+            f'text-anchor="middle" fill="{ink}" font-size="16">'
+            f"{esc(lab[:16])}</text>"
+        )
+
+    parts.append("</svg>")
+    legend = (
+        '<div class="chart-legend">'
+        '<span><i class="swatch swatch-navy"></i>Total</span>'
+        '<span><i class="swatch swatch-blue"></i>Increase</span>'
+        '<span><i class="swatch swatch-ink"></i>Decrease</span>'
+        "</div>"
+    )
+    return '<div class="chart-frame">' + ''.join(parts) + legend + '</div>'
 
 
 _CALLOUT_TYPES = frozenset({"elbow_arrow", "chevron", "band", "measure_rule"})

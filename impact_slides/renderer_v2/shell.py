@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from .charts import chart_css
 from .lib_inliner import DeliveryMode, InlineBundle, build_head_assets, coerce_delivery
 from .sprite import sprite_svg
 from .strip import esc
@@ -17,7 +16,6 @@ def load_css(*, debug: bool = False) -> str:
     parts = []
     for name in ("tokens.css", "semantic-tokens.css", "viewport.css", "gridlines.css", "components.css"):
         parts.append((_CSS_DIR / name).read_text(encoding="utf-8"))
-    parts.append(chart_css())
     if debug:
         parts.append("body.gl-debug .gl-slide { outline: 2px solid rgba(0,111,207,.35); }")
     return "\n\n".join(parts)
