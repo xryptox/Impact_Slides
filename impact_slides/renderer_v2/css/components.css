@@ -1209,8 +1209,10 @@
   box-shadow: var(--shadow-3);
   padding: var(--size-5) var(--size-6);
 }
-/* R4 (#94, finished): muted companion card + IR giant-% pairing — blue
-   digits with a visibly smaller % unit, narrated label beside the number. */
+/* R4 (#94, finished): IR giant-% pairing — blue digits with a visibly
+   smaller % unit, narrated label beside the number. R4 finish (v8) moved the
+   card chrome onto .gl-hero-stack above, so each .gl-hero is now a transparent
+   metric row inside that framed panel. */
 .gl-hero {
   flex: 1;
   display: flex;
