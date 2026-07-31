@@ -34,7 +34,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `hierarchy_tree` | `render_hierarchy_tree` | impact_slides/renderer_v2/layout/recipes.py:2470 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
 | `horizontal_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `horizontal_process` | `render_horizontal_process` | impact_slides/renderer_v2/layout/recipes.py:2399 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3b_layouts.py` |
-| `icon_grid` | `render_icon_grid` | impact_slides/renderer_v2/layout/recipes.py:1490 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gridlines.py` +2 |
+| `icon_grid` | `render_icon_grid` | impact_slides/renderer_v2/layout/recipes.py:1490 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gridlines.py` +3 |
 | `insight_with_evidence` | `render_insight_with_evidence` | impact_slides/renderer_v2/layout/recipes.py:1924 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
 | `ir_bullet_sheet` | `render_ir_bullet_sheet` | impact_slides/renderer_v2/layout/recipes.py:793 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `kpi_trend_cards` | `render_kpi_trend_cards` | impact_slides/renderer_v2/layout/recipes.py:2300 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3b_layouts.py` |

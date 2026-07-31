@@ -1,101 +1,17 @@
-"""Chart + icon_grid paint — soft-import live Boardroom pack, with pure fallbacks."""
+"""Chart + icon_grid paint — in-repo painters only."""
 from __future__ import annotations
 
-import importlib.util
 import math
-import sys
 import uuid
-from pathlib import Path
 from typing import Any, Mapping
 
 from .layouts import CHART_LAYOUTS as _CHART_LAYOUTS
 from .layouts import CHARTJS_LAYOUTS as _CHARTJS_LAYOUTS
 from .strip import esc, strip_eids
 
-_PACK = None
-_PACK_CSS = ""
-
-
-def _find_pack_path() -> Path | None:
-    here = Path(__file__).resolve()
-    # Prefer sibling live_sim relative to known realworld_test layout
-    candidates = [
-        Path.home()
-        / "Documents"
-        / "realworld_test"
-        / "amex_thefork_acquisition"
-        / "live_copilot_sim"
-        / "_boardroom_charts_pack.py",
-        here.parents[2]
-        / "realworld_test"
-        / "amex_thefork_acquisition"
-        / "live_copilot_sim"
-        / "_boardroom_charts_pack.py",
-        Path(__file__).resolve().parent / "_vendor_charts_pack.py",
-    ]
-    # walk up for Impact_Slides parent
-    for parent in [here.parents[i] for i in range(2, min(6, len(here.parents)))]:
-        candidates.append(
-            parent.parent
-            / "realworld_test"
-            / "amex_thefork_acquisition"
-            / "live_copilot_sim"
-            / "_boardroom_charts_pack.py"
-        )
-        candidates.append(
-            parent
-            / ".."
-            / "realworld_test"
-            / "amex_thefork_acquisition"
-            / "live_copilot_sim"
-            / "_boardroom_charts_pack.py"
-        )
-    for c in candidates:
-        try:
-            c = c.resolve()
-        except OSError:
-            continue
-        if c.is_file():
-            return c
-    return None
-
-
-def _load_pack():
-    global _PACK, _PACK_CSS
-    if _PACK is not None:
-        return _PACK
-    path = _find_pack_path()
-    if not path:
-        _PACK = False
-        return None
-    spec = importlib.util.spec_from_file_location("boardroom_charts_pack_v2", path)
-    if not spec or not spec.loader:
-        _PACK = False
-        return None
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules["boardroom_charts_pack_v2"] = mod
-    spec.loader.exec_module(mod)
-    _PACK = mod
-    _PACK_CSS = getattr(mod, "CHART_CSS", "") or ""
-    return mod
-
-
-def chart_css() -> str:
-    _load_pack()
-    return _PACK_CSS
-
 
 def is_chart_layout(layout_type: str) -> bool:
-    lt = (layout_type or "").lower().strip()
-    if lt in _CHART_LAYOUTS:
-        return True
-    mod = _load_pack()
-    if mod and hasattr(mod, "is_chart_layout"):
-        try:
-            return bool(mod.is_chart_layout(lt))
-        except Exception:
-            return False
-    return False
+    return (layout_type or "").lower().strip() in _CHART_LAYOUTS
 
 
 def _icon_svg(name: str, cls: str = "icon") -> str:
@@ -179,64 +95,10 @@ def build_chart_html(
         return svg
     if lt == "stacked_bar_chart":
         return _build_stacked_bar_svg(slide)
-    mod = _load_pack()
-    s = dict(slide)
-    s["layout_type"] = lt
-    # External pack reads steps_or_data / key_stats / so_what at the TOP level
-    # of the slide dict; our handoff nests them under visual_spec / content.
-    # Bridge the two shapes so the pack can find the data.
-    if not s.get("steps_or_data"):
-        vs = s.get("visual_spec") or {}
-        pv = vs.get("primary_visual") or {}
-        s["steps_or_data"] = pv.get("steps_or_data") or []
-    if not s.get("key_stats"):
-        s["key_stats"] = (s.get("content") or {}).get("key_stats") or []
-    # NOTE: so_what is deliberately NOT bridged — render_chart appends
-    # insight_strip() itself; bridging would make the pack render a duplicate.
-    if mod and hasattr(mod, "build_main"):
-        try:
-            html = mod.build_main(s, esc=esc, icon=_icon_svg)
-            # Pack may legitimately report empty; use matrix fallback when face is empty.
-            if html and "chart-empty" not in html and "<svg" in html:
-                return html
-            if html and "chart-empty" not in html and "heatmap" in lt:
-                return html
-            if html and "chart-empty" not in html and "icon" not in lt:
-                # might still be meaningful non-svg (table-like)
-                if len(html) > 80:
-                    return html
-        except Exception as e:  # pragma: no cover
-            return f'<p class="chart-empty">Chart pack error: {esc(e)}</p>'
     return _fallback_matrix_chart(slide, lt)
 
 
 def build_icon_grid_html(slide: Mapping[str, Any]) -> str:
-    mod = _load_pack()
-    s = dict(slide)
-    s["layout_type"] = "icon_grid"
-    # External pack reads steps_or_data / bullets at the TOP level of the
-    # slide dict; our renderer nests them under visual_spec / content.
-    # Bridge the two shapes so the external pack can find the data.
-    if not s.get("steps_or_data"):
-        vs = s.get("visual_spec") or {}
-        pv = vs.get("primary_visual") or {}
-        s["steps_or_data"] = pv.get("steps_or_data") or []
-    if not s.get("bullets"):
-        s["bullets"] = (s.get("content") or {}).get("bullets") or []
-    if mod and hasattr(mod, "build_icon_grid_main"):
-        try:
-            result = mod.build_icon_grid_main(s, esc=esc, icon=_icon_svg)
-            if "No icon-grid items" not in result:
-                return result
-        except Exception:
-            pass
-    if mod and hasattr(mod, "build_main"):
-        try:
-            result = mod.build_main(s, esc=esc, icon=_icon_svg)
-            if "No icon-grid items" not in result:
-                return result
-        except Exception:
-            pass
     return _fallback_icon_grid(slide)
 
 
