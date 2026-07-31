@@ -1610,14 +1610,42 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
                 colgroup = ""
                 align_attrs = ""
 
-            tbl_cls = "chart-support-table" + (" chart-table-aligned" if aligned else "")
-            tbl_style = f' style="width:{table_w:.2f}%"' if aligned else ""
-            tbl = f'<table class="{tbl_cls}"{tbl_style}{align_attrs}>{colgroup}<thead><tr>'
-            tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
-            tbl += "</tr></thead><tbody>"
-            for row in body:
-                tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
-            tbl += "</tbody></table>"
+            # N6: opt-in outlined-box skin (PDF provision boards: gray-stroked,
+            # unfilled reserve-rate cells under each period column, period labels
+            # already on the chart axis so the header row is dropped).
+            # Declarative via secondary_visual.skin; absent -> today's table.
+            skin = str(secondary.get("skin") or "").strip()
+            if skin == "outlined_boxes":
+                cells_html = ""
+                for row in body:
+                    for ci, c in enumerate(row):
+                        cls_name = "chart-outlined-label" if ci == 0 else "chart-outlined-cell"
+                        # outer slot carries the pitch-matched alignment width;
+                        # the visible stroked box sits inside (PDF p15: cells
+                        # are ~40% of the column pitch, centered, separated).
+                        if aligned:
+                            pct = label_w if ci == 0 else col_w
+                            cells_html += (
+                                f'<div class="{cls_name}" style="width:{pct:.2f}%">'
+                                f'<span class="chart-outlined-box">{esc(c)}</span></div>'
+                            )
+                        else:
+                            cells_html += (
+                                f'<div class="{cls_name}">'
+                                f'<span class="chart-outlined-box">{esc(c)}</span></div>'
+                            )
+                box_cls = "chart-support-outlined" + (" chart-table-aligned" if aligned else "")
+                box_style = f' style="width:{table_w:.2f}%"' if aligned else ""
+                tbl = f'<div class="{box_cls}"{box_style}{align_attrs}>{cells_html}</div>'
+            else:
+                tbl_cls = "chart-support-table" + (" chart-table-aligned" if aligned else "")
+                tbl_style = f' style="width:{table_w:.2f}%"' if aligned else ""
+                tbl = f'<table class="{tbl_cls}"{tbl_style}{align_attrs}>{colgroup}<thead><tr>'
+                tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
+                tbl += "</tr></thead><tbody>"
+                for row in body:
+                    tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
+                tbl += "</tbody></table>"
             # Width sharing is UNCONDITIONAL (#40): every support table lives
             # inside the chart's width context (.chart-col), whether or not
             # its columns align with chart categories. Column alignment
