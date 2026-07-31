@@ -1,5 +1,67 @@
 # Renderer v2 — Agent-Usability Refactor Hotspots
 
+> ## ✅ COMPLETE — all 8 planned steps shipped (2026-07-31)
+>
+> **Do not re-plan this work.** Everything in the plan below is either done or
+> explicitly deferred. This file is kept for the analysis and rationale, not as a
+> backlog. Current state lives in the code; the layout catalog is generated at
+> `wiki/renderer_v2_LAYOUTS.md`.
+>
+> | Step | What shipped | Where |
+> |---|---|---|
+> | 1 | `layouts.py` single catalog (`CHART_LAYOUTS`, `CHARTJS_LAYOUTS`, `COVER_LAYOUTS`, `ALIASES`, `canonical()`) | PR #127 |
+> | 2 | `LAYOUT_RECIPES` registry replaced the ~40-branch if-ladder in `dispatch.py` | PR #127 |
+> | 3 | `scripts/gen_layout_index.py` → generated `wiki/renderer_v2_LAYOUTS.md`, gated in CI | 09f632d, 3d1fdc9 |
+> | 4a | In-repo `heatmap` + `waterfall` painters (`charts/matrix.py`) | PR #127 |
+> | 4 | External Boardroom charts pack deleted; no `Path.home()` in `renderer_v2` | PR #127 |
+> | 5 | `slide_view.py` shared accessors; `icon_grid` per-step `description` fix (#126) | PR #128 |
+> | 6 | `charts.py` → `charts/` (8 modules), `layout/recipes.py` → `recipes/` (9 modules), behind facades | PR #131 |
+> | — | GitHub Actions CI: layout-index gate, `Path.home()` gate, tests | fc5ec2a, 2f8d329 |
+>
+> **Result:** largest renderer file 2,630 → 751 lines. Test suite 1296 → 1341 passing,
+> zero behaviour regressions outside the two bug fixes below.
+>
+> ### Bugs found and fixed en route (none had test coverage)
+>
+> 1. **`metric` / `table` aliases silently dropped `content.key_stats`.** Schemas
+>    accepted both `layout_type` values and tests asserted them, but dispatch never
+>    honoured the aliases — both fell through to `render_split`, discarding stats
+>    with no error. Fixed by `ALIASES` + `canonical()` in Step 1.
+> 2. **`heatmap` and `waterfall_chart` rendered `chart-empty` everywhere except one
+>    dev machine.** They had no in-repo SVG painter and depended on a chart pack
+>    soft-imported from `~/Documents/realworld_test/...`. Fixed in Step 4a before the
+>    pack was deleted.
+> 3. **`icon_grid` silently discarded per-step `description`** (#126), rendering an
+>    empty `tile-body`. Fixed in Step 5, with a test pinning the spec rule that
+>    *primary_visual*-level `description` must stay unrendered.
+>
+> ### Method note worth keeping
+>
+> A green suite was misleading **five** times during this work: it passed through a
+> broken registry, through simulated pack deletion, through a circular parity test,
+> through a dead waterfall bridge, and through all four missing `isinstance` guards.
+> Mutation testing caught every one. For changes in this area, prefer:
+> mutation-test the new assertions, diff rendered fixture output, and assert object
+> **identity** for anything re-exported (`LAYOUT_RECIPES` binds function objects at
+> import time, so a wrapper re-export makes `mock.patch` miss silently).
+>
+> Renderer output is **not** deterministic — three random ids per run
+> (`rv2-chart-<hex>`, `data-tabs-id`, and the tabs id repeated in `name=`/`id=`/`for=`).
+> Normalise all three before comparing hashes, and validate any harness by hashing the
+> same unchanged tree twice.
+>
+> ### Deliberately NOT done
+>
+> - **`recipes._bullets_html` and `freeform._bullets_html` were not merged.** They look
+>   like duplicates but differ in the empty case (`""` vs `'<p class="gl-empty">—</p>'`);
+>   merging changes rendered HTML.
+> - **P2 items below remain open by choice**: `shell.py` JS extraction, loud fallback
+>   breadcrumbs (`data-layout-fallback`), painting validated models in `cli.py`, the
+>   72KB root README split, and `wiki/renderer_v2_CURRENT.md`. None block agent
+>   navigation now that the layout index is generated.
+> - Known follow-ups tracked as issues: #129 (structlog test gap), #130
+>   (`gen_layout_index.py` fails silently without ripgrep).
+
 **Date:** 2026-03-28
 **Scope:** `impact_slides/renderer_v2`
 **Focus:** Make the codebase cheaper for agents to navigate, edit, and extend — not a full redesign.
