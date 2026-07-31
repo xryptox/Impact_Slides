@@ -1015,6 +1015,55 @@
   background: var(--panel);
 }
 
+/* N6: outlined-box skin for secondary_visual tables (PDF provision boards).
+   Opt-in via secondary_visual.skin="outlined_boxes": gray-stroked unfilled
+   cells centered under each period column; the label block is taller
+   (two-line label) and vertically centered with the cells. */
+.chart-support-outlined {
+  display: flex;
+  align-items: center;
+  margin-top: var(--size-3);
+  background: transparent;
+}
+.chart-outlined-label,
+.chart-outlined-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.chart-outlined-label {
+  flex: none;
+}
+.chart-outlined-cell {
+  flex: 1;
+}
+.chart-outlined-box {
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  font-size: var(--fs-sub, 22px);
+  padding: var(--size-2, 8px) var(--size-3, 12px);
+}
+.chart-outlined-label .chart-outlined-box {
+  width: 100%;
+  min-width: 200px; /* keeps a two-line label readable in a narrow chart gutter */
+  min-height: 105px; /* PDF p15: 245x105 two-line label block */
+  font-weight: 600;
+}
+.chart-outlined-cell .chart-outlined-box {
+  width: 40%; /* PDF p15: cell 115px at 282px pitch (~41%) */
+  min-width: 96px;
+  min-height: 58px; /* PDF p15: 115x58 period cells */
+  font-variant-numeric: tabular-nums;
+}
+
 /* Dual chart layout: two charts side by side (Fidelity T7/#35).
    N10: each pane is its own chart-frame card (the PDF draws two separate
    rounded panels, ~24px apart), filling the main band vertically; the plot
@@ -1114,7 +1163,9 @@
   padding: 0;
 }
 .gl-pill-labels {
-  flex: 0.9;
+  /* F4+: widened rail — PDF p3 label column ≈530px of the 1728px canvas
+     (rail flex 1.35 ≈ 530px, shells ≈387px each at gap-sm gutters). */
+  flex: 1.35;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -1141,7 +1192,7 @@
   display: flex;
   align-items: center;
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--fs-pill, 28px);
   color: var(--ink);
   text-align: left;
   padding: 8px 12px 8px 0;
@@ -1149,7 +1200,7 @@
 .gl-pill-head-empty {
   visibility: hidden; /* rail slot matching the navy cap's height */
   flex: none;
-  font-size: 16px;
+  font-size: var(--fs-pill, 28px);
   font-weight: 700;
   min-height: 1lh;
   padding: 10px 8px;
@@ -1161,7 +1212,7 @@
   align-self: stretch;
   text-align: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-pill, 28px);
   color: var(--color-on-navy, var(--panel, #fff));
   background: var(--navy);
   border-radius: 0;
@@ -1175,7 +1226,7 @@
   justify-content: center;
   text-align: center;
   /* V5/F4+: PDF statement values are navy semibold, not muted ink. */
-  font-size: 17px;
+  font-size: var(--fs-pill, 28px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--navy);

@@ -2288,6 +2288,55 @@ class TestSecondaryVisualAnyChart:
 
 
 # ---------------------------------------------------------------------------
+# N6 — outlined-box skin for secondary_visual tables (provision reserve-rate)
+# ---------------------------------------------------------------------------
+
+
+def _stacked_outlined():
+    s = _slide("stacked_bar_chart", PROVISION_STACK)
+    s["visual_spec"]["secondary_visual"] = {
+        "type": "data_table",
+        "skin": "outlined_boxes",
+        "steps_or_data": [
+            ["", "Q4'25", "Q1'26"],
+            ["Reserve Rate for Total Balances", "2.8%", "2.8%"],
+        ],
+    }
+    return s
+
+
+class TestOutlinedBoxesSkin:
+    def test_outlined_boxes_render(self, tmp_path):
+        path = _write(tmp_path, _handoff([_stacked_outlined()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<div class="chart-outlined-label"' in html
+        assert html.count('<div class="chart-outlined-cell"') == 2
+        assert "Reserve Rate for Total Balances" in html
+        # header row dropped: period labels already live on the chart axis
+        box = html.split('<div class="chart-support-outlined', 1)[1]
+        assert "<th" not in box.split("</div></div>", 1)[0]
+
+    def test_outlined_boxes_align_with_chart(self, tmp_path):
+        path = _write(tmp_path, _handoff([_stacked_outlined()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        # header cells match chart category labels 1:1 -> plot-aligned widths
+        assert "chart-support-outlined chart-table-aligned" in html
+        assert "data-align-left" in html
+
+    def test_default_secondary_table_unchanged(self, tmp_path):
+        path = _write(tmp_path, _handoff([_stacked_with_secondary()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<div class="chart-outlined-cell"' not in html
+        assert "chart-support-table" in html
+
+
+# ---------------------------------------------------------------------------
 # #101 — N3 stacked category total tops / signed parentheses
 # ---------------------------------------------------------------------------
 
@@ -2647,8 +2696,9 @@ class TestPillPackingDensity:
     def test_narrower_label_rail(self, tmp_path):
         html = self._deck(tmp_path)
         # rail narrowed from flex 1.6 toward PDF summary-board proportions
-        # (1.2 by #102, 0.9 by V5/F4+ finish)
-        assert re.search(r"\.gl-pill-labels\s*\{[^}]*flex:\s*0\.9", html)
+        # (1.2 by #102, 0.9 by V5/F4+ finish, widened to 1.35 by F4+ type
+        # scale fix: PDF p3 label rail ≈530px of the 1728px canvas)
+        assert re.search(r"\.gl-pill-labels\s*\{[^}]*flex:\s*1\.35", html)
 
     def test_data_table_unchanged(self, tmp_path):
         # regression guard from #74 still holds
