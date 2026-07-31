@@ -42,6 +42,7 @@
   --fs-meta: 14px;
   --fs-foot: 14px;
   --fs-bridge: 18px;
+ --fs-pill: 28px; /* F4+: pill statement board type scale (PDF p3: 14pt ≈ 28px) */
 
   --pad-x: 96px;
   --pad-top: 56px;

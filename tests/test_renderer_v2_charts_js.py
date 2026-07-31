@@ -2647,8 +2647,9 @@ class TestPillPackingDensity:
     def test_narrower_label_rail(self, tmp_path):
         html = self._deck(tmp_path)
         # rail narrowed from flex 1.6 toward PDF summary-board proportions
-        # (1.2 by #102, 0.9 by V5/F4+ finish)
-        assert re.search(r"\.gl-pill-labels\s*\{[^}]*flex:\s*0\.9", html)
+        # (1.2 by #102, 0.9 by V5/F4+ finish, widened to 1.35 by F4+ type
+        # scale fix: PDF p3 label rail ≈530px of the 1728px canvas)
+        assert re.search(r"\.gl-pill-labels\s*\{[^}]*flex:\s*1\.35", html)
 
     def test_data_table_unchanged(self, tmp_path):
         # regression guard from #74 still holds
