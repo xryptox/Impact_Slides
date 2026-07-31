@@ -1,12 +1,73 @@
 """layout_type → recipe dispatch (plus optional freeform grid override)."""
 from __future__ import annotations
 
+from collections.abc import Callable
+from functools import partial
 from typing import Any, Mapping
 
 from ..charts import is_chart_layout
 from ..disclosure import inject_disclosure
-from ..layouts import FALLBACK_LAYOUT, canonical
+from ..layouts import CHART_LAYOUTS, FALLBACK_LAYOUT, canonical
 from . import freeform, recipes
+
+# Recipes that take ``use_chartjs=`` (see recipes.render_chart et al.).
+_PASSES_CHARTJS = frozenset(CHART_LAYOUTS - {"icon_grid"}) | frozenset(
+    {"dual_chart", "chart_hero_dual", "multi_panel"}
+)
+
+# Single map: layout_type → recipe. Aliases resolve in ``resolve_layout`` before
+# lookup. ``brand_divider`` reuses brand_cover via partial (stdlib).
+LAYOUT_RECIPES: dict[str, Callable[..., str]] = {
+    "grouped_bar_chart": recipes.render_chart,
+    "stacked_bar_chart": recipes.render_chart,
+    "horizontal_bar_chart": recipes.render_chart,
+    "waterfall_chart": recipes.render_chart,
+    "heatmap": recipes.render_chart,
+    "line_chart": recipes.render_chart,
+    "combo_chart": recipes.render_chart,
+    "icon_grid": recipes.render_icon_grid,
+    "dual_chart": recipes.render_dual_chart,
+    "title_or_opening": recipes.render_title,
+    "split_text_visual": recipes.render_split,
+    "metric_dashboard": recipes.render_metric,
+    "metric_row_with_breakdown": recipes.render_metric_row_with_breakdown,
+    "insight_with_evidence": recipes.render_insight_with_evidence,
+    "priority_matrix": recipes.render_priority_matrix,
+    "data_table": recipes.render_table,
+    "pill_comparison": recipes.render_pill_comparison,
+    "chart_hero_dual": recipes.render_chart_hero_dual,
+    "ir_bullet_sheet": recipes.render_ir_bullet_sheet,
+    "guidance_statement_card": recipes.render_guidance_statement_card,
+    "brand_cover": recipes.render_brand_cover,
+    "brand_divider": partial(recipes.render_brand_cover, divider=True),
+    "annex_table": recipes.render_annex_table,
+    "multi_panel": recipes.render_multi_panel,
+    "full_process_flow": recipes.render_process,
+    "timeline": recipes.render_process,
+    "roadmap": recipes.render_process,
+    "comparison_grid": recipes.render_comparison,
+    "evidence_cards": recipes.render_evidence_cards,
+    "data_table_with_insight": recipes.render_data_table_with_insight,
+    "comparison_with_metrics": recipes.render_comparison_with_metrics,
+    "system_architecture": recipes.render_system_architecture,
+    "data_flow_diagram": recipes.render_data_flow_diagram,
+    "causal_loop": recipes.render_causal_loop,
+    "before_after": recipes.render_before_after,
+    "quote_card": recipes.render_quote,
+    "risk_opportunity": recipes.render_risk_opportunity,
+    "recommendation_with_rationale": recipes.render_recommendation_with_rationale,
+    "section_divider": recipes.render_section_divider,
+    "before_after_detailed": recipes.render_before_after_detailed,
+    "kpi_trend_cards": recipes.render_kpi_trend_cards,
+    "three_column_comparison": recipes.render_three_column_comparison,
+    "horizontal_process": recipes.render_horizontal_process,
+    "decision_tree": recipes.render_decision_tree,
+    "hierarchy_tree": recipes.render_hierarchy_tree,
+    "ecosystem_map": recipes.render_ecosystem_map,
+    "process_with_decisions": recipes.render_process_with_decisions,
+    "source_deep_dive": recipes.render_source_deep_dive,
+    "circular_process": recipes.render_circular_process,
+}
 
 
 def _primary_visual_type(slide: Mapping[str, Any]) -> str:
@@ -22,9 +83,9 @@ def _primary_visual_type(slide: Mapping[str, Any]) -> str:
 def resolve_layout(slide: Mapping[str, Any]) -> str:
     """Canonical layout_type for a slide.
 
-    Aliases resolve here (via ``layouts.canonical``) rather than in each branch
-    below, so a spelling schemas accepts cannot fall through to the fallback and
-    silently drop content — which is what ``metric`` and ``table`` used to do.
+    Aliases resolve here (via ``layouts.canonical``) rather than per-recipe, so a
+    spelling schemas accepts cannot fall through to the fallback and silently
+    drop content — which is what ``metric`` and ``table`` used to do.
     """
     lt = canonical(slide.get("layout_type"))
     if not lt:
@@ -61,117 +122,22 @@ def _render_slide_body(
         return recipes.render_freeform(slide, total, notes, active=active)
 
     lt = resolve_layout(slide)
-    # chart pack (includes icon_grid)
-    if is_chart_layout(lt) or lt in (
-        "grouped_bar_chart",
-        "stacked_bar_chart",
-        "waterfall_chart",
-        "heatmap",
-    ):
-        if lt == "icon_grid":
-            return recipes.render_icon_grid(slide, total, notes, active=active)
-        s = dict(slide)
-        s["layout_type"] = lt
-        return recipes.render_chart(
-            s, total, notes, active=active, use_chartjs=use_chartjs
-        )
+    fn = LAYOUT_RECIPES.get(lt)
+    if fn is None:
+        # Unknown layout_type: only chart primary_visual may still route;
+        # everything else falls back to split (same as the old ladder tail).
+        pvt = _primary_visual_type(slide)
+        if is_chart_layout(pvt):
+            lt = pvt
+            fn = LAYOUT_RECIPES.get(lt)
+        if fn is None:
+            return recipes.render_split(slide, total, notes, active=active)
 
-    if lt == "dual_chart":
-        return recipes.render_dual_chart(
-            slide, total, notes, active=active, use_chartjs=use_chartjs
-        )
+    # Chart pack reads slide["layout_type"] — stamp the resolved name when the
+    # type was inferred (unspecified layout / primary_visual fallback).
+    if lt in CHART_LAYOUTS:
+        slide = {**slide, "layout_type": lt}
 
-    if lt == "icon_grid":
-        return recipes.render_icon_grid(slide, total, notes, active=active)
-    if lt in ("title_or_opening", "cover"):
-        return recipes.render_title(slide, total, notes, active=active)
-    if lt == "split_text_visual":
-        return recipes.render_split(slide, total, notes, active=active)
-    if lt == "metric_dashboard":
-        return recipes.render_metric(slide, total, notes, active=active)
-    if lt == "metric_row_with_breakdown":
-        return recipes.render_metric_row_with_breakdown(slide, total, notes, active=active)
-    if lt == "insight_with_evidence":
-        return recipes.render_insight_with_evidence(slide, total, notes, active=active)
-    if lt == "priority_matrix":
-        return recipes.render_priority_matrix(slide, total, notes, active=active)
-    if lt == "data_table":
-        return recipes.render_table(slide, total, notes, active=active)
-    if lt == "pill_comparison":
-        return recipes.render_pill_comparison(slide, total, notes, active=active)
-    if lt == "chart_hero_dual":
-        return recipes.render_chart_hero_dual(
-            slide, total, notes, active=active, use_chartjs=use_chartjs
-        )
-    if lt == "ir_bullet_sheet":
-        return recipes.render_ir_bullet_sheet(slide, total, notes, active=active)
-    if lt == "guidance_statement_card":
-        return recipes.render_guidance_statement_card(slide, total, notes, active=active)
-    if lt == "brand_cover":
-        return recipes.render_brand_cover(slide, total, notes, active=active)
-    if lt == "brand_divider":
-        return recipes.render_brand_cover(slide, total, notes, active=active, divider=True)
-    if lt == "annex_table":
-        return recipes.render_annex_table(slide, total, notes, active=active)
-    if lt == "multi_panel":
-        return recipes.render_multi_panel(
-            slide, total, notes, active=active, use_chartjs=use_chartjs
-        )
-    if lt in ("full_process_flow", "timeline", "roadmap"):
-        return recipes.render_process(slide, total, notes, active=active)
-    if lt == "comparison_grid":
-        return recipes.render_comparison(slide, total, notes, active=active)
-    if lt == "evidence_cards":
-        return recipes.render_evidence_cards(slide, total, notes, active=active)
-    if lt == "data_table_with_insight":
-        return recipes.render_data_table_with_insight(slide, total, notes, active=active)
-    if lt == "comparison_with_metrics":
-        return recipes.render_comparison_with_metrics(slide, total, notes, active=active)
-    if lt == "system_architecture":
-        return recipes.render_system_architecture(slide, total, notes, active=active)
-    if lt == "data_flow_diagram":
-        return recipes.render_data_flow_diagram(slide, total, notes, active=active)
-    if lt == "causal_loop":
-        return recipes.render_causal_loop(slide, total, notes, active=active)
-    if lt == "before_after":
-        return recipes.render_before_after(slide, total, notes, active=active)
-    if lt == "quote_card":
-        return recipes.render_quote(slide, total, notes, active=active)
-    if lt == "risk_opportunity":
-        return recipes.render_risk_opportunity(slide, total, notes, active=active)
-    if lt == "recommendation_with_rationale":
-        return recipes.render_recommendation_with_rationale(slide, total, notes, active=active)
-    if lt == "section_divider":
-        return recipes.render_section_divider(slide, total, notes, active=active)
-    if lt == "before_after_detailed":
-        return recipes.render_before_after_detailed(slide, total, notes, active=active)
-    if lt == "kpi_trend_cards":
-        return recipes.render_kpi_trend_cards(slide, total, notes, active=active)
-    if lt == "three_column_comparison":
-        return recipes.render_three_column_comparison(slide, total, notes, active=active)
-    if lt == "horizontal_process":
-        return recipes.render_horizontal_process(slide, total, notes, active=active)
-    if lt == "decision_tree":
-        return recipes.render_decision_tree(slide, total, notes, active=active)
-    if lt == "hierarchy_tree":
-        return recipes.render_hierarchy_tree(slide, total, notes, active=active)
-    if lt == "ecosystem_map":
-        return recipes.render_ecosystem_map(slide, total, notes, active=active)
-    if lt == "process_with_decisions":
-        return recipes.render_process_with_decisions(slide, total, notes, active=active)
-    if lt == "source_deep_dive":
-        return recipes.render_source_deep_dive(slide, total, notes, active=active)
-    if lt == "circular_process":
-        return recipes.render_circular_process(slide, total, notes, active=active)
-
-    pvt = _primary_visual_type(slide)
-    if is_chart_layout(pvt):
-        s = dict(slide)
-        s["layout_type"] = pvt
-        if pvt == "icon_grid":
-            return recipes.render_icon_grid(s, total, notes, active=active)
-        return recipes.render_chart(
-            s, total, notes, active=active, use_chartjs=use_chartjs
-        )
-
-    return recipes.render_split(slide, total, notes, active=active)
+    if lt in _PASSES_CHARTJS:
+        return fn(slide, total, notes, active=active, use_chartjs=use_chartjs)
+    return fn(slide, total, notes, active=active)
