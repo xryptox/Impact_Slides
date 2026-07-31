@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from .layouts import CHART_LAYOUTS as _CHART_LAYOUTS
 from .layouts import CHARTJS_LAYOUTS as _CHARTJS_LAYOUTS
+from .slide_view import steps as _sv_steps
 from .strip import esc, strip_eids
 
 
@@ -28,14 +29,7 @@ def _icon_svg(name: str, cls: str = "icon") -> str:
 
 
 def _steps(slide: Mapping[str, Any]) -> list[Any]:
-    vs = slide.get("visual_spec") or {}
-    if not isinstance(vs, dict):
-        return []
-    pv = vs.get("primary_visual") or {}
-    if not isinstance(pv, dict):
-        return []
-    steps = pv.get("steps_or_data")
-    return list(steps) if isinstance(steps, list) else []
+    return _sv_steps(slide)
 
 
 # MVP Chart.js interactive set (P3). Other chart layouts stay on SVG/pack.
@@ -112,7 +106,11 @@ def _fallback_icon_grid(slide: Mapping[str, Any]) -> str:
     for i, raw in enumerate(tiles_src[:6]):
         if isinstance(raw, dict):
             title = strip_eids(raw.get("title") or raw.get("label") or "")
-            body = strip_eids(raw.get("body") or raw.get("text") or "")
+            # Per-step description is a body alias (#126). primary_visual-level
+            # description remains a non-rendered human caption (spec).
+            body = strip_eids(
+                raw.get("body") or raw.get("text") or raw.get("description") or ""
+            )
             ic = raw.get("icon") or icons[i % len(icons)]
         elif isinstance(raw, str) and ":" in raw:
             title, _, body = raw.partition(":")

@@ -8,6 +8,7 @@ from typing import Any, Mapping
 from ..charts import is_chart_layout
 from ..disclosure import inject_disclosure
 from ..layouts import CHART_LAYOUTS, FALLBACK_LAYOUT, canonical
+from ..slide_view import visual_type as _sv_visual_type
 from . import freeform, recipes
 
 # Recipes that take ``use_chartjs=`` (see recipes.render_chart et al.).
@@ -71,13 +72,7 @@ LAYOUT_RECIPES: dict[str, Callable[..., str]] = {
 
 
 def _primary_visual_type(slide: Mapping[str, Any]) -> str:
-    vs = slide.get("visual_spec") or {}
-    if not isinstance(vs, dict):
-        return ""
-    pv = vs.get("primary_visual") or {}
-    if not isinstance(pv, dict):
-        return ""
-    return str(pv.get("type") or "").lower().strip()
+    return _sv_visual_type(slide)
 
 
 def resolve_layout(slide: Mapping[str, Any]) -> str:
