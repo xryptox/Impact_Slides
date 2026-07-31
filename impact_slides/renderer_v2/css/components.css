@@ -1943,3 +1943,39 @@ body.gl-chrome-minimal .cover-date { display: none; }
   border-bottom-color: var(--color-surface, #fff);
   background: var(--color-surface, #fff);
 }
+
+/* ---- Heatmap + waterfall (in-repo painters; pack CSS parity) ---- */
+.heatmap-wrap { overflow: auto; max-width: 100%; }
+.heatmap-table { border-collapse: separate; border-spacing: 6px; width: 100%; }
+.heatmap-table th {
+  font-size: 15px; font-weight: 700; color: var(--ink-muted);
+  text-align: center; padding: 4px 8px;
+}
+.heatmap-table th.row-head {
+  text-align: left; color: var(--navy); white-space: nowrap; padding-right: 14px;
+}
+.heatmap-cell {
+  min-width: 88px; height: 64px; border-radius: var(--radius-2, 8px); text-align: center;
+  vertical-align: middle; font-size: 18px; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--navy);
+  border: 1px solid transparent;
+}
+.heatmap-cell.is-null {
+  background: var(--color-surface-soft, var(--bg-soft)); color: var(--ink-faint); font-weight: 500;
+}
+.chart-legend {
+  display: flex; flex-wrap: wrap; gap: 18px 28px; margin-top: 14px;
+  font-size: 16px; font-weight: 600; color: var(--ink);
+}
+.chart-legend .swatch {
+  display: inline-block; width: 14px; height: 14px; border-radius: var(--radius-sm, 4px);
+  margin-right: 8px; vertical-align: -2px;
+}
+.swatch-navy { background: var(--navy); }
+.swatch-blue { background: var(--blue); }
+.swatch-ink { background: var(--ink-muted); }
+.chart-bar-blue { fill: var(--blue); }
+.chart-bar-ink { fill: var(--ink-muted); }
+.chart-bar-navy { fill: var(--navy); }
+.chart-gridline { stroke: var(--grid); stroke-width: 1; }
+

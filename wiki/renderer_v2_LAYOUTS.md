@@ -9,55 +9,55 @@ Regenerate: `python scripts/gen_layout_index.py`
 
 | layout_type | recipe | source | fixture | tests |
 |---|---|---|---|---|
-| `annex_table` | `render_annex_table` | impact_slides/renderer_v2/layout/recipes.py:930 | — | `renderer_v2_charts_js.py` |
-| `before_after` | `render_before_after` | impact_slides/renderer_v2/layout/recipes.py:2122 | — | `visual_regression_deck.py`, `wave2_layouts.py` |
-| `before_after_detailed` | `render_before_after_detailed` | impact_slides/renderer_v2/layout/recipes.py:2263 | — | `visual_regression_deck.py`, `wave3a_layouts.py` |
-| `brand_cover` | `render_brand_cover` | impact_slides/renderer_v2/layout/recipes.py:874 | — | `renderer_v2_charts_js.py` |
-| `brand_divider` | `render_brand_cover` `divider=True` | impact_slides/renderer_v2/layout/recipes.py:874 | — | `renderer_v2_charts_js.py` |
-| `causal_loop` | `render_causal_loop` | impact_slides/renderer_v2/layout/recipes.py:2097 | — | `visual_regression_deck.py`, `wave2_layouts.py` |
-| `chart_hero_dual` | `render_chart_hero_dual` | impact_slides/renderer_v2/layout/recipes.py:751 | — | `renderer_v2_charts_js.py` |
-| `circular_process` | `render_circular_process` | impact_slides/renderer_v2/layout/recipes.py:2605 | — | `visual_regression_deck.py`, `wave4b_layouts.py` |
-| `combo_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | `golden_mvp1_handoff.json` | `chart_polish.py`, `chart_styling.py`, `combo_chart.py` +4 |
-| `comparison_grid` | `render_comparison` | impact_slides/renderer_v2/layout/recipes.py:1391 | `mini_handoff.json` | `circle_pair.py`, `existing_layout_refactor.py`, `renderer_v2_gates.py` +3 |
-| `comparison_with_metrics` | `render_comparison_with_metrics` | impact_slides/renderer_v2/layout/recipes.py:1340 | — | `visual_regression_deck.py`, `wave1a_layouts.py` |
-| `data_flow_diagram` | `render_data_flow_diagram` | impact_slides/renderer_v2/layout/recipes.py:2072 | — | `visual_regression_deck.py`, `wave2_layouts.py` |
-| `data_table` | `render_table` | impact_slides/renderer_v2/layout/recipes.py:589 | `mini_handoff.json` | `chart_supporting_elements.py`, `chart_table_alignment.py`, `classify_slide.py` +8 |
-| `data_table_with_insight` | `render_data_table_with_insight` | impact_slides/renderer_v2/layout/recipes.py:1287 | — | `visual_regression_deck.py`, `wave1a_layouts.py` |
-| `decision_tree` | `render_decision_tree` | impact_slides/renderer_v2/layout/recipes.py:2450 | — | `visual_regression_deck.py`, `wave4a_layouts.py` |
-| `dual_chart` | `render_dual_chart` | impact_slides/renderer_v2/layout/recipes.py:1764 | — | `dual_chart.py`, `renderer_v2_features.py` |
-| `ecosystem_map` | `render_ecosystem_map` | impact_slides/renderer_v2/layout/recipes.py:2490 | — | `visual_regression_deck.py`, `wave4a_layouts.py` |
-| `evidence_cards` | `render_evidence_cards` | impact_slides/renderer_v2/layout/recipes.py:1211 | — | `visual_regression_deck.py`, `wave1a_layouts.py` |
-| `full_process_flow` | `render_process` | impact_slides/renderer_v2/layout/recipes.py:1165 | — | `existing_layout_refactor.py`, `renderer_v2_validation.py`, `visual_regression_deck.py` |
-| `grouped_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `bar_group_brackets.py`, `chart_polish.py`, `chart_styling.py` +10 |
-| `guidance_statement_card` | `render_guidance_statement_card` | impact_slides/renderer_v2/layout/recipes.py:823 | — | `renderer_v2_charts_js.py` |
-| `heatmap` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `renderer_v2_validation.py` |
-| `hierarchy_tree` | `render_hierarchy_tree` | impact_slides/renderer_v2/layout/recipes.py:2470 | — | `visual_regression_deck.py`, `wave4a_layouts.py` |
-| `horizontal_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `renderer_v2_charts_js.py` |
-| `horizontal_process` | `render_horizontal_process` | impact_slides/renderer_v2/layout/recipes.py:2399 | — | `visual_regression_deck.py`, `wave3b_layouts.py` |
-| `icon_grid` | `render_icon_grid` | impact_slides/renderer_v2/layout/recipes.py:1490 | `mini_handoff.json` | `existing_layout_refactor.py`, `renderer_v2_gridlines.py`, `renderer_v2_validation.py` +1 |
-| `insight_with_evidence` | `render_insight_with_evidence` | impact_slides/renderer_v2/layout/recipes.py:1924 | — | `visual_regression_deck.py`, `wave1b_layouts.py` |
-| `ir_bullet_sheet` | `render_ir_bullet_sheet` | impact_slides/renderer_v2/layout/recipes.py:793 | — | `renderer_v2_charts_js.py` |
-| `kpi_trend_cards` | `render_kpi_trend_cards` | impact_slides/renderer_v2/layout/recipes.py:2300 | — | `visual_regression_deck.py`, `wave3b_layouts.py` |
-| `line_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | `golden_mvp1_handoff.json` | `chart_polish.py`, `chart_styling.py`, `chart_supporting_elements.py` +6 |
-| `metric_dashboard` | `render_metric` | impact_slides/renderer_v2/layout/recipes.py:551 | `mini_handoff.json` | `existing_layout_refactor.py`, `renderer_v2_charts_js.py`, `renderer_v2_gates.py` +4 |
-| `metric_row_with_breakdown` | `render_metric_row_with_breakdown` | impact_slides/renderer_v2/layout/recipes.py:1843 | — | `visual_regression_deck.py`, `wave1b_layouts.py` |
-| `multi_panel` | `render_multi_panel` | impact_slides/renderer_v2/layout/recipes.py:997 | — | `renderer_v2_charts_js.py` |
-| `pill_comparison` | `render_pill_comparison` | impact_slides/renderer_v2/layout/recipes.py:662 | — | `renderer_v2_charts_js.py` |
-| `priority_matrix` | `render_priority_matrix` | impact_slides/renderer_v2/layout/recipes.py:1997 | — | `visual_regression_deck.py`, `wave1b_layouts.py` |
-| `process_with_decisions` | `render_process_with_decisions` | impact_slides/renderer_v2/layout/recipes.py:2514 | — | `visual_regression_deck.py`, `wave4b_layouts.py` |
-| `quote_card` | `render_quote` | impact_slides/renderer_v2/layout/recipes.py:1435 | `mini_handoff.json` | `existing_layout_refactor.py`, `renderer_v2_gates.py`, `renderer_v2_gridlines.py` +2 |
-| `recommendation_with_rationale` | `render_recommendation_with_rationale` | impact_slides/renderer_v2/layout/recipes.py:2206 | `golden_mvp1_handoff.json` | `visual_regression_deck.py`, `wave3a_layouts.py` |
-| `risk_opportunity` | `render_risk_opportunity` | impact_slides/renderer_v2/layout/recipes.py:2170 | — | `visual_regression_deck.py`, `wave3a_layouts.py` |
-| `roadmap` | `render_process` | impact_slides/renderer_v2/layout/recipes.py:1165 | — | `existing_layout_refactor.py`, `renderer_v2_validation.py`, `visual_regression_deck.py` |
-| `section_divider` | `render_section_divider` | impact_slides/renderer_v2/layout/recipes.py:2236 | — | `intent.py`, `renderer_v2_charts_js.py`, `semantic_type.py` +2 |
-| `source_deep_dive` | `render_source_deep_dive` | impact_slides/renderer_v2/layout/recipes.py:2553 | — | `visual_regression_deck.py`, `wave4b_layouts.py` |
-| `split_text_visual` | `render_split` | impact_slides/renderer_v2/layout/recipes.py:501 | `disclosure_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `renderer_v2_charts_js.py`, `renderer_v2_disclosure.py` +4 |
-| `stacked_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `bar_group_brackets.py`, `chart_polish.py`, `chart_styling.py` +3 |
-| `system_architecture` | `render_system_architecture` | impact_slides/renderer_v2/layout/recipes.py:2047 | — | `visual_regression_deck.py`, `wave2_layouts.py` |
-| `three_column_comparison` | `render_three_column_comparison` | impact_slides/renderer_v2/layout/recipes.py:2350 | — | `circle_pair.py`, `visual_regression_deck.py`, `wave3b_layouts.py` |
-| `timeline` | `render_process` | impact_slides/renderer_v2/layout/recipes.py:1165 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `renderer_v2_gates.py`, `renderer_v2_gridlines.py` +2 |
-| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes.py:467 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `circle_pair.py`, `combo_chart.py`, `line_chart.py` +10 |
-| `waterfall_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `renderer_v2_validation.py` |
+| `annex_table` | `render_annex_table` | impact_slides/renderer_v2/layout/recipes.py:930 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `before_after` | `render_before_after` | impact_slides/renderer_v2/layout/recipes.py:2122 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
+| `before_after_detailed` | `render_before_after_detailed` | impact_slides/renderer_v2/layout/recipes.py:2263 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3a_layouts.py` |
+| `brand_cover` | `render_brand_cover` | impact_slides/renderer_v2/layout/recipes.py:874 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `brand_divider` | `render_brand_cover` `divider=True` | impact_slides/renderer_v2/layout/recipes.py:874 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `causal_loop` | `render_causal_loop` | impact_slides/renderer_v2/layout/recipes.py:2097 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
+| `chart_hero_dual` | `render_chart_hero_dual` | impact_slides/renderer_v2/layout/recipes.py:751 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `circular_process` | `render_circular_process` | impact_slides/renderer_v2/layout/recipes.py:2605 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4b_layouts.py` |
+| `combo_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | `golden_mvp1_handoff.json` | `chart_polish.py`, `chart_styling.py`, `combo_chart.py` +5 |
+| `comparison_grid` | `render_comparison` | impact_slides/renderer_v2/layout/recipes.py:1391 | `mini_handoff.json` | `circle_pair.py`, `existing_layout_refactor.py`, `layout_dispatch_parity.py` +4 |
+| `comparison_with_metrics` | `render_comparison_with_metrics` | impact_slides/renderer_v2/layout/recipes.py:1340 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1a_layouts.py` |
+| `data_flow_diagram` | `render_data_flow_diagram` | impact_slides/renderer_v2/layout/recipes.py:2072 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
+| `data_table` | `render_table` | impact_slides/renderer_v2/layout/recipes.py:589 | `mini_handoff.json` | `chart_supporting_elements.py`, `chart_table_alignment.py`, `classify_slide.py` +9 |
+| `data_table_with_insight` | `render_data_table_with_insight` | impact_slides/renderer_v2/layout/recipes.py:1287 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1a_layouts.py` |
+| `decision_tree` | `render_decision_tree` | impact_slides/renderer_v2/layout/recipes.py:2450 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
+| `dual_chart` | `render_dual_chart` | impact_slides/renderer_v2/layout/recipes.py:1764 | — | `dual_chart.py`, `layout_dispatch_parity.py`, `renderer_v2_features.py` |
+| `ecosystem_map` | `render_ecosystem_map` | impact_slides/renderer_v2/layout/recipes.py:2490 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
+| `evidence_cards` | `render_evidence_cards` | impact_slides/renderer_v2/layout/recipes.py:1211 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1a_layouts.py` |
+| `full_process_flow` | `render_process` | impact_slides/renderer_v2/layout/recipes.py:1165 | — | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_validation.py` +1 |
+| `grouped_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `bar_group_brackets.py`, `chart_polish.py`, `chart_styling.py` +11 |
+| `guidance_statement_card` | `render_guidance_statement_card` | impact_slides/renderer_v2/layout/recipes.py:823 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `heatmap` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |
+| `hierarchy_tree` | `render_hierarchy_tree` | impact_slides/renderer_v2/layout/recipes.py:2470 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
+| `horizontal_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `horizontal_process` | `render_horizontal_process` | impact_slides/renderer_v2/layout/recipes.py:2399 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3b_layouts.py` |
+| `icon_grid` | `render_icon_grid` | impact_slides/renderer_v2/layout/recipes.py:1490 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gridlines.py` +2 |
+| `insight_with_evidence` | `render_insight_with_evidence` | impact_slides/renderer_v2/layout/recipes.py:1924 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
+| `ir_bullet_sheet` | `render_ir_bullet_sheet` | impact_slides/renderer_v2/layout/recipes.py:793 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `kpi_trend_cards` | `render_kpi_trend_cards` | impact_slides/renderer_v2/layout/recipes.py:2300 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3b_layouts.py` |
+| `line_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | `golden_mvp1_handoff.json` | `chart_polish.py`, `chart_styling.py`, `chart_supporting_elements.py` +7 |
+| `metric_dashboard` | `render_metric` | impact_slides/renderer_v2/layout/recipes.py:551 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +5 |
+| `metric_row_with_breakdown` | `render_metric_row_with_breakdown` | impact_slides/renderer_v2/layout/recipes.py:1843 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
+| `multi_panel` | `render_multi_panel` | impact_slides/renderer_v2/layout/recipes.py:997 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `pill_comparison` | `render_pill_comparison` | impact_slides/renderer_v2/layout/recipes.py:662 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `priority_matrix` | `render_priority_matrix` | impact_slides/renderer_v2/layout/recipes.py:1997 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
+| `process_with_decisions` | `render_process_with_decisions` | impact_slides/renderer_v2/layout/recipes.py:2514 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4b_layouts.py` |
+| `quote_card` | `render_quote` | impact_slides/renderer_v2/layout/recipes.py:1435 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gates.py` +3 |
+| `recommendation_with_rationale` | `render_recommendation_with_rationale` | impact_slides/renderer_v2/layout/recipes.py:2206 | `golden_mvp1_handoff.json` | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3a_layouts.py` |
+| `risk_opportunity` | `render_risk_opportunity` | impact_slides/renderer_v2/layout/recipes.py:2170 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3a_layouts.py` |
+| `roadmap` | `render_process` | impact_slides/renderer_v2/layout/recipes.py:1165 | — | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_validation.py` +1 |
+| `section_divider` | `render_section_divider` | impact_slides/renderer_v2/layout/recipes.py:2236 | — | `intent.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +3 |
+| `source_deep_dive` | `render_source_deep_dive` | impact_slides/renderer_v2/layout/recipes.py:2553 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4b_layouts.py` |
+| `split_text_visual` | `render_split` | impact_slides/renderer_v2/layout/recipes.py:501 | `disclosure_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +5 |
+| `stacked_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `bar_group_brackets.py`, `chart_polish.py`, `chart_styling.py` +4 |
+| `system_architecture` | `render_system_architecture` | impact_slides/renderer_v2/layout/recipes.py:2047 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
+| `three_column_comparison` | `render_three_column_comparison` | impact_slides/renderer_v2/layout/recipes.py:2350 | — | `circle_pair.py`, `layout_dispatch_parity.py`, `visual_regression_deck.py` +1 |
+| `timeline` | `render_process` | impact_slides/renderer_v2/layout/recipes.py:1165 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gates.py` +3 |
+| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes.py:467 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `circle_pair.py`, `combo_chart.py`, `layout_dispatch_parity.py` +11 |
+| `waterfall_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes.py:1508 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |
 
 ## Layouts with no direct test reference
 
