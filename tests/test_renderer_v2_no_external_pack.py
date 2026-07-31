@@ -52,3 +52,45 @@ def test_icon_grid_uses_gl_fallback_tiles():
     assert "tile-title" in html
     # pack markup must not return
     assert "icon-grid cols-" not in html
+
+
+def test_icon_grid_per_step_description_renders_in_tile_body():
+    """#126 option 1: per-step description is a body alias."""
+    slide = {
+        "slide_number": 1,
+        "title": "T",
+        "layout_type": "icon_grid",
+        "visual_spec": {
+            "primary_visual": {
+                "steps_or_data": [
+                    {"label": "Speed", "description": "fast delivery"},
+                ]
+            }
+        },
+        "content": {},
+    }
+    html = charts.build_icon_grid_html(slide)
+    assert "fast delivery" in html
+    assert '<div class="tile-body">fast delivery</div>' in html
+
+
+def test_icon_grid_primary_visual_description_not_rendered():
+    """Spec: primary_visual.description is a human caption Step 4 must ignore."""
+    caption = "PV-LEVEL CAPTION MUST NOT APPEAR"
+    slide = {
+        "slide_number": 1,
+        "title": "T",
+        "layout_type": "icon_grid",
+        "visual_spec": {
+            "primary_visual": {
+                "description": caption,
+                "steps_or_data": [
+                    {"label": "Speed", "body": "from body"},
+                ],
+            }
+        },
+        "content": {},
+    }
+    html = charts.build_icon_grid_html(slide)
+    assert caption not in html
+    assert "from body" in html
