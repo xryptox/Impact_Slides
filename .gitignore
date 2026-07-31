@@ -46,3 +46,4 @@ treehouse.toml
 # Per-ticket delegation briefs handed to worker agents in treehouse worktrees.
 # They are scratch instructions, not repo docs.
 TASK_*.md
+Impact_Slides-*/
