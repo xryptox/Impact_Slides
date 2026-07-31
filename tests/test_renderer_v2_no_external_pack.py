@@ -94,3 +94,48 @@ def test_icon_grid_primary_visual_description_not_rendered():
     html = charts.build_icon_grid_html(slide)
     assert caption not in html
     assert "from body" in html
+
+
+class TestSlideViewGuards:
+    """The isinstance guards are why malformed handoffs degrade instead of
+    raising. They were uncovered before slide_view.py centralised them; pin them
+    here so the shared accessors cannot lose a guard silently."""
+
+    def test_non_dict_visual_spec_degrades(self):
+        from impact_slides.renderer_v2 import slide_view
+
+        for bad in ("string", 42, [], ["a"]):
+            assert slide_view.primary_visual({"visual_spec": bad}) == {}
+            assert slide_view.steps({"visual_spec": bad}) == []
+            assert slide_view.visual_type({"visual_spec": bad}) == ""
+
+    def test_non_dict_primary_visual_degrades(self):
+        from impact_slides.renderer_v2 import slide_view
+
+        for bad in ("string", 42, ["a"]):
+            slide = {"visual_spec": {"primary_visual": bad}}
+            assert slide_view.primary_visual(slide) == {}
+            assert slide_view.steps(slide) == []
+            assert slide_view.visual_type(slide) == ""
+
+    def test_non_list_steps_or_data_degrades(self):
+        from impact_slides.renderer_v2 import slide_view
+
+        for bad in ("string", 42, {"a": 1}):
+            slide = {"visual_spec": {"primary_visual": {"steps_or_data": bad}}}
+            assert slide_view.steps(slide) == []
+
+    def test_non_dict_content_degrades(self):
+        from impact_slides.renderer_v2 import slide_view
+
+        for bad in ("string", 42, ["a"]):
+            assert slide_view.content({"content": bad}) == {}
+
+    def test_missing_keys_and_none(self):
+        from impact_slides.renderer_v2 import slide_view
+
+        for slide in ({}, {"visual_spec": None}, {"content": None}):
+            assert slide_view.primary_visual(slide) == {}
+            assert slide_view.steps(slide) == []
+            assert slide_view.visual_type(slide) == ""
+            assert slide_view.content(slide) == {}
