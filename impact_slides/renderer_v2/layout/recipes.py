@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping, Sequence
 
+from ..slide_view import content as _sv_content
+from ..slide_view import steps as _sv_steps
 from ..strip import (
     banned_face_opener,
     chosen_dek,
@@ -35,19 +37,11 @@ _REGIONISH = {
 
 
 def _content(slide: Mapping[str, Any]) -> dict[str, Any]:
-    c = slide.get("content") or {}
-    return c if isinstance(c, dict) else {}
+    return _sv_content(slide)
 
 
 def _vs_steps(slide: Mapping[str, Any]) -> list[Any]:
-    vs = slide.get("visual_spec") or {}
-    if not isinstance(vs, dict):
-        return []
-    pv = vs.get("primary_visual") or {}
-    if not isinstance(pv, dict):
-        return []
-    steps = pv.get("steps_or_data")
-    return list(steps) if isinstance(steps, list) else []
+    return _sv_steps(slide)
 
 
 def _so_what(slide: Mapping[str, Any]) -> str:

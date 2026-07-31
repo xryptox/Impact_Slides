@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from .layouts import CHART_LAYOUTS as _CHART_LAYOUTS
 from .layouts import CHARTJS_LAYOUTS as _CHARTJS_LAYOUTS
+from .slide_view import steps as _sv_steps
 from .strip import esc, strip_eids
 
 
@@ -28,14 +29,7 @@ def _icon_svg(name: str, cls: str = "icon") -> str:
 
 
 def _steps(slide: Mapping[str, Any]) -> list[Any]:
-    vs = slide.get("visual_spec") or {}
-    if not isinstance(vs, dict):
-        return []
-    pv = vs.get("primary_visual") or {}
-    if not isinstance(pv, dict):
-        return []
-    steps = pv.get("steps_or_data")
-    return list(steps) if isinstance(steps, list) else []
+    return _sv_steps(slide)
 
 
 # MVP Chart.js interactive set (P3). Other chart layouts stay on SVG/pack.
