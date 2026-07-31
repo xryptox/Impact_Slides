@@ -341,7 +341,8 @@ body.gl-debug .gl-areas-freeform .gl-slot {
 .gl-slide.layout-stacked_bar_chart .gl-main,
 .gl-slide.layout-horizontal_bar_chart .gl-main,
 .gl-slide.layout-line_chart .gl-main,
-.gl-slide.layout-combo_chart .gl-main {
+.gl-slide.layout-combo_chart .gl-main,
+.gl-slide.layout-dual_chart .gl-main {
   display: flex;
   flex-direction: column;
 }

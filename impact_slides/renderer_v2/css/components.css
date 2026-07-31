@@ -1015,15 +1015,27 @@
   background: var(--panel);
 }
 
-/* Dual chart layout: two charts side by side (Fidelity T7/#35) */
+/* Dual chart layout: two charts side by side (Fidelity T7/#35).
+   N10: each pane is its own chart-frame card (the PDF draws two separate
+   rounded panels, ~24px apart), filling the main band vertically; the plot
+   wrap grows into the card like chartjs-fill does for flex tiles. */
 .dual-chart {
     align-items: stretch;
+    align-content: stretch;
+    gap: var(--size-6);
+    flex: 1;
+    min-height: 0;
 }
 .dual-chart-pane {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+}
+.dual-chart-pane .chartjs-wrap {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    max-height: none;
 }
 .dual-chart-pane .chart-svg {
     width: 100%;
