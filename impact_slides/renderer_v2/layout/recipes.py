@@ -765,9 +765,14 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     hero = _hero_stack((slide.get("content") or {}).get("key_stats") or [])
     if not chart_html and not hero:
         return render_metric(slide, total, notes, active=active)
+    # R4 (v8): the PDF chart panel carries an in-card title. Source it from an
+    # explicit primary_visual label when authored (T11 convention); absent a
+    # label nothing renders, so decks without one are unchanged.
+    chart_title = strip_eids(str(pv.get("label") or "")) if isinstance(pv, dict) else ""
+    title_html = f'<div class="gl-tile-label">{esc(chart_title)}</div>' if chart_title else ""
     main = (
         f'<div class="gl-areas-chart-hero">'
-        f'<div class="gl-chart-hero-chart">{chart_html or "<div class=\"chart-empty\">No chart</div>"}</div>'
+        f'<div class="gl-chart-hero-chart">{title_html}{chart_html or "<div class=\"chart-empty\">No chart</div>"}</div>'
         f'<div class="gl-chart-hero-stack">{hero}</div>'
         f"</div>" + insight_strip(_so_what(slide))
     )
@@ -1740,6 +1745,9 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
     from ..charts import build_chart_html
 
     vs = slide.get("visual_spec") or {}
+    from ..charts import _chart_config  # late import: charts -> layout cycle
+
+    top_cfg = _chart_config(slide)
     panes: list[str] = []
     for key in ("primary_visual", "secondary_visual"):
         visual = vs.get(key)
@@ -1776,32 +1784,26 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
             "evidence_sources": slide.get("evidence_sources") or [],
         }
         lbl = f'<div class="gl-tile-label">{esc(heading)}</div>' if heading else ""
+        # N10: each pane is its own rounded card (the PDF draws two separate
+        # panels, not one shared enclosure). surface/stage modifiers apply
+        # per pane, falling back to the slide-level chart_config.
+        pane_cls = "dual-chart-pane chart-frame gl-card"
+        if pane_cfg.get("surface", top_cfg.get("surface")) == "white":
+            pane_cls += " chart-surface-white"
+        if pane_cfg.get("stage", top_cfg.get("stage")) == "flat":
+            pane_cls += " chart-frame-flat"
         panes.append(
-            f'<div class="dual-chart-pane">'
+            f'<div class="{pane_cls}">'
             f"{lbl}{build_chart_html(sub_slide, vt, use_chartjs=use_chartjs)}</div>"
         )
     main = f'<div class="gl-grid gl-grid-2 dual-chart">{"".join(panes)}</div>'
     main += insight_strip(_so_what(slide))
-    from ..charts import _chart_config  # late import: charts -> layout cycle
-
-    cfg = _chart_config(slide)
-    sv = vs.get("secondary_visual") or {}
-    sv_cfg = sv.get("chart_config") if isinstance(sv, dict) else None
-    frame_cls = "chart-frame gl-card"
-    frame_style = 'style="padding:18px 22px"'
-    if cfg.get("surface") == "white":
-        frame_cls += " chart-surface-white"
-    if cfg.get("stage") == "flat" or (
-        isinstance(sv_cfg, dict) and sv_cfg.get("stage") == "flat"
-    ):
-        frame_cls += " chart-frame-flat"
-        frame_style = ""
     return slide_shell(
         number=int(slide["slide_number"]),
         total=total,
         title=strip_eids(slide.get("title") or ""),
         dek=chosen_dek(slide),
-        main_html=f'<div class="{frame_cls}" {frame_style}>{main}</div>',
+        main_html=main,
         notes_html=notes_aside(int(slide["slide_number"]), notes),
         footer_html=source_strip(_source_names(slide)),
         layout_class="dual_chart",
