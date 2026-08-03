@@ -51,12 +51,12 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `roadmap` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | — | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_validation.py` +1 |
 | `section_divider` | `render_section_divider` | impact_slides/renderer_v2/layout/recipes/covers.py:117 | — | `intent.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +3 |
 | `source_deep_dive` | `render_source_deep_dive` | impact_slides/renderer_v2/layout/recipes/cards.py:246 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4b_layouts.py` |
-| `split_text_visual` | `render_split` | impact_slides/renderer_v2/layout/recipes/comparison.py:293 | `disclosure_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +5 |
+| `split_text_visual` | `render_split` | impact_slides/renderer_v2/layout/recipes/comparison.py:293 | `disclosure_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +6 |
 | `stacked_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:24 | — | `bar_group_brackets.py`, `chart_polish.py`, `chart_styling.py` +4 |
 | `system_architecture` | `render_system_architecture` | impact_slides/renderer_v2/layout/recipes/diagrams.py:23 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
 | `three_column_comparison` | `render_three_column_comparison` | impact_slides/renderer_v2/layout/recipes/comparison.py:183 | — | `circle_pair.py`, `layout_dispatch_parity.py`, `visual_regression_deck.py` +1 |
 | `timeline` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gates.py` +3 |
-| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes/covers.py:25 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `circle_pair.py`, `combo_chart.py`, `layout_dispatch_parity.py` +11 |
+| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes/covers.py:25 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `circle_pair.py`, `combo_chart.py`, `layout_dispatch_parity.py` +12 |
 | `waterfall_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:24 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |
 
 ## Layouts with no direct test reference
