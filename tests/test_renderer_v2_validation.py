@@ -202,6 +202,110 @@ class TestHandoffValidation:
         assert validated[0].title == "Fallback Test"
         assert validated[0].content.bullets == ["keep me"]
 
+    def test_fallback_preserves_downstream_fields(self):
+        """#133: fallback must not drop fields consumers read (manifest/notes/load)."""
+        slide = {
+            "slide_number": 2,
+            "layout_type": "other",
+            "title": "Keep me",
+            "disclosure": "Confidential",
+            "evidence_ids": ["E0100"],
+            "evidence_sources": [{"id": "E0100", "source_file": "demo.docx"}],
+            "kicker": "Key point",
+            "packing_mode": "argument-led",
+            "source_line": "Source: demo",
+            "speaker_notes": "Say this out loud",
+            "content": {
+                "bullets": ["a"],
+                "key_stats": [{"label": "Deal", "value": "$1"}],
+                "so_what": "Matters because X",
+            },
+        }
+        validated, errors = validate_handoff({"slides": [slide]})
+        assert len(errors) == 1
+        m = validated[0]
+        assert isinstance(m, SplitTextVisualSlide)
+        dumped = m.model_dump(exclude_none=True)
+        for key in (
+            "disclosure",
+            "evidence_ids",
+            "kicker",
+            "packing_mode",
+            "source_line",
+            "speaker_notes",
+        ):
+            assert dumped.get(key) == slide[key], key
+        assert dumped["evidence_sources"][0]["id"] == "E0100"
+        assert dumped["evidence_sources"][0]["source_file"] == "demo.docx"
+        assert dumped["content"]["key_stats"] == slide["content"]["key_stats"]
+        assert dumped["content"]["so_what"] == slide["content"]["so_what"]
+
+    @pytest.mark.parametrize(
+        "label,slide",
+        [
+            ("missing slide_number", {"layout_type": "unknown_x", "title": "T"}),
+            ("slide_number as str", {"slide_number": "3", "layout_type": "unknown_x"}),
+            ("slide_number garbage", {"slide_number": "abc", "layout_type": "unknown_x"}),
+            ("content not a dict", {"slide_number": 1, "layout_type": "unknown_x", "content": "oops"}),
+            ("visual_spec not a dict", {"slide_number": 1, "layout_type": "unknown_x", "visual_spec": [1]}),
+            ("content.bullets a str", {"slide_number": 1, "layout_type": "unknown_x", "content": {"bullets": "a,b"}}),
+            ("slide is a str", "totally bogus"),
+            ("slide is None", None),
+        ],
+    )
+    def test_fallback_is_total_on_malformed_input(self, label, slide):
+        """#133: the fallback must degrade, never raise.
+
+        The non-lossy fix spreads the raw dict into the model, which pydantic
+        rejects outright for these shapes -- so the try/except degrade path is
+        load-bearing, not defensive decoration. Without this test, deleting that
+        path entirely leaves the whole suite green (verified by mutation).
+        """
+        validated, errors = validate_handoff({"slides": [slide]})
+        assert len(validated) == 1, label
+        assert isinstance(validated[0], SplitTextVisualSlide), label
+        assert validated[0].layout_type == "split_text_visual", label
+        assert isinstance(validated[0].slide_number, int), label
+        assert len(errors) == 1, label
+
+    def test_bad_slide_number_does_not_cost_the_other_fields(self):
+        """#133: a non-int slide_number must be coerced, not allowed to sink the slide.
+
+        Without the coercion, pydantic rejects the spread dict and the degrade path
+        runs, silently taking all 9 preserved fields with it -- i.e. the bug this
+        issue fixed, re-entered through a different door.
+        """
+        slide = {
+            "slide_number": "abc",  # invalid
+            "layout_type": "unknown_x",
+            "speaker_notes": "Say this",
+            "packing_mode": "argument-led",
+            "evidence_sources": [{"id": "E1"}],
+            "kicker": "K",
+        }
+        validated, errors = validate_handoff({"slides": [slide]})
+        m = validated[0]
+        assert m.slide_number == 1, "bad slide_number should be replaced by position"
+        d = m.model_dump(exclude_none=True)
+        for key in ("speaker_notes", "packing_mode", "kicker"):
+            assert d.get(key) == slide[key], key
+        assert d["evidence_sources"][0]["id"] == "E1"
+
+    def test_fallback_preserves_freeform_fixture_slide(self):
+        freeform = FIXTURES / "freeform_handoff.json"
+        handoff = json.loads(freeform.read_text(encoding="utf-8"))
+        raw = handoff["slides"][1]  # layout_type: other
+        validated, errors = validate_handoff(handoff)
+        assert any("unknown layout_type" in e for e in errors)
+        m = validated[1]
+        d = m.model_dump(exclude_none=True)
+        assert d["speaker_notes"] == raw["speaker_notes"]
+        assert d["packing_mode"] == raw["packing_mode"]
+        assert d["evidence_sources"][0]["id"] == raw["evidence_sources"][0]["id"]
+        assert d["evidence_sources"][0]["source_file"] == raw["evidence_sources"][0]["source_file"]
+        assert d["content"]["key_stats"] == raw["content"]["key_stats"]
+        assert d["content"]["so_what"] == raw["content"]["so_what"]
+
 
 # ---------------------------------------------------------------------------
 # Integration: render_deck with validation
