@@ -67,7 +67,7 @@ def render_brand_cover(slide, total, notes, active=False, *, divider: bool = Fal
 
     from ...brand import load_brand_mark
 
-    c = slide.get("content") or {}
+    c = _sv_content(slide)
     mark_name = strip_eids(c.get("brand_mark") or "")
     mark_svg = c.get("brand_mark_svg")
     subtitle = strip_eids(c.get("subtitle") or "")

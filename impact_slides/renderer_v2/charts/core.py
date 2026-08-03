@@ -5,6 +5,7 @@ from typing import Any, Mapping
 from ..strip import esc, strip_eids
 from ..layouts import CHART_LAYOUTS as _CHART_LAYOUTS
 from ..layouts import CHARTJS_LAYOUTS as _CHARTJS_LAYOUTS
+from ..slide_view import content as _sv_content
 from ..slide_view import steps as _sv_steps
 
 
@@ -68,7 +69,7 @@ def build_icon_grid_html(slide: Mapping[str, Any]) -> str:
 
 def _fallback_icon_grid(slide: Mapping[str, Any]) -> str:
     tiles_src = _steps(slide)
-    c = slide.get("content") or {}
+    c = _sv_content(slide)
     if not tiles_src:
         tiles_src = c.get("bullets") or []
     tiles = []

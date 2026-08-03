@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from . import annotation_callout, arrow_connector, group_boundary, node_box
 from ..strip import esc
+from ..slide_view import content as sv_content
 
 
 def _edge_point(
@@ -214,7 +215,7 @@ def causal_loop_scene(slide: Mapping[str, Any]) -> str:
 
 def before_after_scene(slide: Mapping[str, Any]) -> str:
     """Render side-by-side before/after comparison with transition arrow."""
-    c = slide.get("content") or {}
+    c = sv_content(slide)
     if not isinstance(c, dict):
         c = {}
     bullets = [str(b).strip() for b in (c.get("bullets") or []) if str(b).strip()]

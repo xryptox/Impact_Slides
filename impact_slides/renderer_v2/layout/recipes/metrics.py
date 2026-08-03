@@ -108,7 +108,7 @@ def render_table(slide, total, notes, active=False):
         f'<table class="data-table"><thead><tr>{th}</tr></thead>'
         f'<tbody>{"".join(trs)}</tbody></table></div>'
     )
-    inset = _table_inset((slide.get("content") or {}).get("key_stats") or [])
+    inset = _table_inset(_sv_content(slide).get("key_stats") or [])
     if inset:
         main = (
             f'<div class="gl-areas-table-inset">'
@@ -399,7 +399,7 @@ def render_ir_bullet_sheet(slide, total, notes, active=False):
     """
     from ...rich_text import rich_bullets
 
-    bullets = rich_bullets((slide.get("content") or {}).get("bullets") or [])
+    bullets = rich_bullets(_sv_content(slide).get("bullets") or [])
     if not bullets:
         return render_metric(slide, total, notes, active=active)
     items = "".join(f'<li class="gl-ir-bullet">{b}</li>' for b in bullets)
@@ -429,7 +429,7 @@ def render_guidance_statement_card(slide, total, notes, active=False):
     from content.key_stats (label→value rows) and content.so_what / bullets
     for footnotes. Reuses Boardroom tokens.
     """
-    c = slide.get("content") or {}
+    c = _sv_content(slide)
     stats = c.get("key_stats") or []
     rows = []
     for st in stats[:4]:

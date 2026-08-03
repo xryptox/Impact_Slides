@@ -30,6 +30,12 @@ def visual_type(slide: Mapping[str, Any]) -> str:
 
 
 def content(slide: Mapping[str, Any]) -> dict[str, Any]:
-    """``slide["content"]`` if a dict, else ``{}``."""
+    """``slide["content"]`` if a dict, else ``{}``.
+
+    The isinstance check is load-bearing, not decoration: a bare ``or {}`` catches
+    None and missing but lets a *string* through, and every consumer then calls
+    ``.get()`` on it and raises -- which crashed the whole render even with
+    ``strict=False``. All content readers must route through here.
+    """
     c = slide.get("content") or {}
     return c if isinstance(c, dict) else {}

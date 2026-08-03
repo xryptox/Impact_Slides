@@ -5,6 +5,7 @@ import re
 from typing import Any, Mapping
 
 from .strip import parse_cite_from_quote, strip_eids
+from .slide_view import content as sv_content
 
 _STAGE = re.compile(
     r"^(hold for|make the room feel|leave them with|setup beat|pressure:|"
@@ -62,7 +63,7 @@ def _bridge_as_claim(bridge: str, next_title: str) -> str:
 
 def build_spoken_notes(slide: Mapping[str, Any], next_title: str = "") -> str:
     """3–5 claim sentences; ~40–100 words preferred."""
-    content = slide.get("content") or {}
+    content = sv_content(slide)
     packing = (slide.get("packing_mode") or "").lower()
     layout = (slide.get("layout_type") or "").lower()
     is_cover = (
