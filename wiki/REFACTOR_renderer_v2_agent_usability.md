@@ -1,11 +1,15 @@
 # Renderer v2 — Agent-Usability Refactor Hotspots
 
-> ## ✅ COMPLETE — all 8 planned steps shipped (2026-07-31)
+> ## ✅ COMPLETE — Steps 1–6 shipped; Steps 7–8 deliberately NOT done (2026-07-31)
 >
 > **Do not re-plan this work.** Everything in the plan below is either done or
-> explicitly deferred. This file is kept for the analysis and rationale, not as a
+> explicitly rejected. This file is kept for the analysis and rationale, not as a
 > backlog. Current state lives in the code; the layout catalog is generated at
 > `wiki/renderer_v2_LAYOUTS.md`.
+>
+> ⚠️ **Steps 7 and 8 below are superseded — read the "Steps 7–8: reassessed"
+> section before acting on them.** Step 7's main item would ship a data-loss bug
+> (issue #133). Most of Step 8 was measured to be unnecessary.
 >
 > | Step | What shipped | Where |
 > |---|---|---|
@@ -309,6 +313,10 @@ Step 3 regenerated so `file:line` still resolves.
 
 ### Step 7 — correctness and signal (independent of the above)
 
+
+> 🛑 **SUPERSEDED — do not implement as written. See "Steps 7–8: reassessed" at the end of this file.**
+
+
 - `cli.py`: paint validated slides instead of discarding `_validated_slides` and
   painting raw `handoff["slides"]`. **May change output** — run the golden and visual
   regression suites deliberately.
@@ -316,6 +324,10 @@ Step 3 regenerated so `file:line` still resolves.
   a silent `render_split` fallback is visible instead of inferred.
 
 ### Step 8 — context hygiene
+
+
+> ⚠️ **Mostly rejected on measurement. See "Steps 7–8: reassessed" at the end of this file.**
+
 
 - Split the 72 KB `README.md`: thin root README + `docs/`.
 - Add `wiki/renderer_v2_CURRENT.md` as the single live pointer; mark superseded specs
@@ -341,3 +353,78 @@ steps 1–6 still leave thrash on multi-layout changes.
 - Skipped: full interface redesign, dependency injection, per-layout packages. Add only if registry + split still leaves thrash on multi-layout changes.
 - Size snapshot at analysis time: `recipes.py` ~2593 LOC, `charts.py` ~2504 LOC, `shell.py` ~434 LOC, `schemas.py` ~411 LOC, `dispatch.py` ~173 LOC.
 - Schema layout types ≈52; dispatch explicit ≈45; chart layouts = 8 (`grouped_bar_chart`, `stacked_bar_chart`, `horizontal_bar_chart`, `waterfall_chart`, `heatmap`, `icon_grid`, `line_chart`, `combo_chart`).
+
+---
+
+## Steps 7-8: reassessed (2026-07-31)
+
+Steps 1-6 shipped. Before implementing 7 and 8 their premises were re-measured
+against the post-refactor code. Both were largely wrong. Recording the evidence so
+they are not resurrected from the plan text above.
+
+### Step 7a - "paint validated slides" - REJECTED, would cause data loss
+
+The premise is still true: `cli.py:169` validates into `_validated_slides`, then
+`cli.py:175` paints raw `handoff["slides"]`. But making it paint the models would
+**delete data**.
+
+`validate_handoff` (`schemas.py:372`) replaces a failed slide with a hand-built
+`SplitTextVisualSlide` copying only 4 fields. Measured drops on an unknown
+`layout_type`: `disclosure`, `evidence_ids`, `evidence_sources`, `kicker`,
+`packing_mode`, `source_line`, `speaker_notes`, plus `content.key_stats` and
+`content.so_what`.
+
+Those are consumed by `manifest.py:64`, `notes.py:66,74`, `load.py:62,78,80,87`.
+On the committed fixture `freeform_handoff.json` (slide 2 is `layout_type: "other"`),
+painting models loses the speaker notes, the packing mode, and the deck's only
+`evidence_sources` entry.
+
+So **painting raw is load-bearing, not accidental.** The plan labelled this a
+"correctness win"; it is the reverse. Note it is not a pydantic `extra` issue - all
+47 slide models already set `ConfigDict(extra="allow")`; the loss is purely the
+manual field copy in the fallback.
+
+Tracked as **issue #133**. Fix that first if Step 7a is ever wanted. Scope is
+narrow: 0 of 49 routable layouts fail validation, so only unknown/misspelled
+`layout_type` values reach the lossy path.
+
+### Step 7b - "stamp layout fallbacks" - mostly already true
+
+Fallbacks are no longer silent:
+
+- unknown `layout_type` prints `[validation] slide N (x): unknown layout_type: 'x'`
+- rendered HTML already carries `data-layout="split_text_visual"`
+- Step 1 fixed the genuinely silent case (`metric`/`table` aliases)
+
+Remaining real gap: `run_meta` still reports `errors: []` and `ok: True` when a
+validation warning was printed, and `strict=True` does not raise on an unknown
+layout. That is a change to the public API contract, so it belongs in its own
+issue rather than a refactor step. No `data-layout-fallback` attribute is needed -
+`data-layout` plus the warning already answers "did this fall back?".
+
+### Step 8 - README split - REJECTED
+
+The stated reason ("largest context tax, and it is the first file an agent opens")
+is false. `AGENTS.md` (422 bytes) routes agents to `CONTEXT.md` (11 KB); the 72 KB
+`README.md` is scoped to the **preprocessor** and mentions `renderer_v2` only 12
+times. It is also not stale post-refactor: 0 references to the split monoliths.
+
+Splitting 72 KB of accurate, correctly-scoped docs is churn with merge-conflict
+risk and no measured agent benefit. Skipped.
+
+### Step 8 - stale spec markers - STILL WORTH DOING
+
+This half is real, and the refactor made it worse:
+
+- `wiki/PLAN_renderer_v2_gridlines.md` still documents `_boardroom_charts_pack`,
+  which Step 4 **deleted**. An agent grepping for chart fallbacks finds
+  instructions for code that no longer exists.
+- 6 overlapping `SPEC_renderer_v2_amex_fidelity{,_r2..r6}.md` files; 54 wiki files
+  total. `heatmap` appears in 12 wiki files vs 8 source files - docs outnumber code
+  on chart questions.
+
+Do **not** add `wiki/renderer_v2_CURRENT.md` as originally planned: a
+hand-maintained live pointer becomes another catalog that drifts, exactly the
+failure this refactor spent Steps 1-3 eliminating. The cheap fix is a one-line
+`> **Superseded - historical.** See X.` header on each dead spec, so repo-wide
+greps self-identify as stale.
