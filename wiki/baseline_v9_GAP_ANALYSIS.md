@@ -48,7 +48,7 @@ baseline. `git diff main..HEAD` touches no `impact_slides/`, `tests/`,
 2. `N10`'s cited `852×813` panes were also absent from the evidence files, but
    re-measurement confirms them exactly, so that verdict stands as written.
 
-**Caveat:** `N9` ("no `$` prefix") and `F4+`/`R6-A`/`R6-C` severity readings
+**Verifier follow-up:** all four deferred items (`N9`, `F4+`, `R6-A`, `R6-C`) have now been measured directly — see *Verifier measurement round 2* below. `N9`'s verdict was **wrong** and is corrected there.
 were not independently re-measured beyond the committed probe output.
 
 
@@ -192,7 +192,7 @@ were not independently re-measured beyond the committed probe output.
 | **14** N6 | `.chart-support-outlined` without `chart-table-aligned`; cells unfilled `rgba(0,0,0,0)`; cell0.cx−bar0.cx ≈ **+307px** (flex row, not plot-pitched) |
 | **14** N6 contract | Primary `steps_or_data` is list-of-lists; alignment code only reads Mapping labels → `n=0` → `aligned=false`. Secondary header periods would match cats **if** labels extracted. **Record as source/renderer contract miss, not a missing skin.** |
 | **27** N5 | barPercentage 0.58, categoryPercentage 1.0, `chartjs-fill` on; barW≈194.6 catW≈335.5; stackH≈586; FDIC **badge** w≈174 h≈19 top-right — **not** PDF tall side callout |
-| **16** N9 | datalabels.display true; live sample values remain `0.9…2.8` (no `$` prefix observed on dual_chart bar path) |
+| **17** N9 | datalabels **do** carry the `$` prefix. Painted label models read `$0.9 … $2.8` (bar pane) and `16% … 20%` (line pane). The earlier “no `$` prefix” reading came from inspecting `options.plugins.datalabels` before the shell bound `_labels` into a formatter. |
 | **16** N10 | **two** `.dual-chart-pane.chart-frame.gl-card` (852×813 each) under `.gl-grid-2.dual-chart` — separate framed cards **do** paint |
 | **12** R4 | `chart_hero_dual` **does** paint ONE `.gl-hero-stack` frame (570×755, radius 14px, filled) at grid `1140px 570px` (**2:1**); the two `.gl-hero.card` (522×349) inside are borderless/transparent rows, not separate cards; digits **110px** / unit **46.2px**. Verifier note: `verify_extras.json` `R4_s11` probed slide **11** (a `line_chart`) and returned `nCards:0`, so the original 'two stacked cards' reading was unevidenced. |
 | **05** R2 | one `.chartjs-callout-elbow` w≈633 h=30 + stem; not `elbow-line` class on this handoff (default continuum). L3 silhouette remains accepted |
@@ -219,7 +219,7 @@ were not independently re-measured beyond the committed probe output.
 | **N8 / R6-B** CAGR chrome | still-gap (elbow/band wrong) | measure_rule thin h=25; endpoints on bar centres; pill+`% CAGR` caption centred | **resolved** | lever applied pass_01 |
 | **N6** outlined reserve-rate | still-gap (sheet not boxes) | skin paints 5 unfilled stroked boxes, no thead; **cx not plot-aligned** (aligned path off) | **partial** | skin A works; align B (list-label extract) |
 | **N5 / F11** funding packing | still-gap density | bar% 0.58 / cat% 1.0 / fill_tile true measured; wrap/tile 0.878 | **partial** | knobs A work; tall FDIC callout + on-stack $ chrome still B |
-| **N9** grouped-bar `$` labels | still-gap | dual_chart bar path still shows `0.9…2.8` without `$` despite unit prefix knobs | **still-gap** | B (formatter path) |
+| **N9** grouped-bar `$` labels | still-gap | painted datalabel models read `$0.9…$2.8`; `_fmt_value_label(0.9,'$','prefix')` → `$0.9`; shell `bindMatrix` resolves `_labels` at init | **resolved** (corrected by verifier) | v9 draft misread pre-bind config; unit prefix path works |
 | **N10** dual_chart two cards | still-gap (weak) | two separate `.dual-chart-pane.chart-frame.gl-card` 852×813 | **resolved** | fresh DOM structure |
 | **R4** dual-metric hero frame | type scale OK; frame residual | slide **12**: one `.gl-hero-stack` 570×755 frame, grid `1140px 570px` = 2:1, heroes borderless inside | **resolved** (corrected by verifier) | v9 draft said still-gap citing slide 11, which holds no hero; re-measured on slide 12 |
 | **F4+** pill packing | still weak | 28px type present; board/slide h 0.673 | **still-gap** (weak B) | type partial hold |
@@ -245,7 +245,7 @@ Each item tied to PDF page + v9 evidence path. Marked **missing** vs **weak**, *
 | 1 | **N6 align** | Extract category labels from list-shaped `steps_or_data` (or document required Mapping shape) so `outlined_boxes` gets `chart-table-aligned` pitch | p14 / slide 15 | `passes/pass_01/geometry.json` fails cell0–4 cx; `verify_extras.json` N6_contract; `side_by_side/compare_14.png` | **missing** align path for list primary | **B** |
 | ~~2~~ | ~~**R4 frame**~~ | **WITHDRAWN by verifier** — already shipped (#124). Re-measured slide 12: single 2:1 `.gl-hero-stack` frame present | p11 / slide **12** | verifier Playwright re-measure (stack 570×755, grid 1140px 570px) | — | — |
 | 3 | **N5 callout** | Tall multi-line side FDIC callout (badge is not a substitute) + on-stack total chrome | p28 / slide 28 | `geometry.json` packing rows; badge box in observations; `compare_27.png` | **missing** callout recipe | **B** |
-| 4 | **N9 $ labels** | dual_chart / grouped bar datalabel `$` prefix path honours `y_axis_unit`+`prefix` | p16 / slide 17 | `verify_extras.json` N9_s16; values 0.9…2.8 | **weak/missing** formatter path | **B** |
+| ~~4~~ | ~~**N9 $ labels**~~ | **WITHDRAWN by verifier** — `$` prefix already painted (`$0.9…$2.8` on slide 17) | p16 / slide **17** | verifier read of `Chart.$datalabels._labels` model lines | — | — |
 | 5 | **F4+ pack** | Near-full-bleed freestanding pill board packing (28px type already present) | p2 / slide 02 | geometry pill h ratio 0.673; `compare_02.png` | **weak** packing | **B** |
 | 6 | **R6-A type** | Pane-title size/weight/colour + tick/datalabel recipe vs PDF Net Card Fees | p16 / slide 17 | R6A_s16 titles 13px gray; `compare_16.png` | **weak** type ramp | **B** |
 | 7 | **R6-C inset** | PDF inset card recipe polish (collision already 0) | p19/p23 | R6C_s19/s23; `compare_19.png` `compare_23.png` | **weak** cosmetic | **B** |
@@ -265,7 +265,7 @@ Each item tied to PDF page + v9 evidence path. Marked **missing** vs **weak**, *
 
 1. N6 list-label alignment for `outlined_boxes` (unblocks provision boards already skinned).
 2. ~~R4 single dual-metric frame recipe~~ — withdrawn: verified already shipped.
-3. N9 `$` datalabel prefix on dual_chart/grouped bars.
+3. ~~N9 `$` datalabel prefix on dual_chart/grouped bars~~ — withdrawn: verified already working.
 4. N5 tall side callout (distinct from badge).
 5. F4+ / R6-A / R6-C polish.
 
@@ -307,3 +307,80 @@ Each item tied to PDF page + v9 evidence path. Marked **missing** vs **weak**, *
 ---
 
 *End v9 baseline. Simulation only — no production renderer changes.*
+
+---
+
+## Verifier measurement round 2 (N9, F4+, R6-A, R6-C)
+
+The four items the run left un-remeasured were measured directly against the
+committed deck with Playwright at 1920x1080. Slide numbers below are
+`data-slide-number` (the run's probe keys used stale indices).
+
+### Method note that changed a verdict
+
+Chart configs are emitted as inert JSON (`script.chartjs-config`) because JSON
+cannot carry functions. The shell's `bindMatrix` (`shell.py:330-345`) *deletes*
+`_labels` and installs `formatter` at init. So:
+
+- reading `options.plugins.datalabels.formatter` after init shows **nothing**
+- the painted text lives in the plugin's own models: `Chart.$datalabels._labels[i].model().lines`
+
+Reading the wrong one is what produced the v9 draft's false N9 gap.
+
+### N9 - RESOLVED (was reported still-gap)
+
+Slide 17 `dual_chart`. Handoff sets `y_axis_unit: "$"`,
+`y_axis_unit_position: "prefix"`.
+
+| Pane | Layout | Painted datalabel models |
+|---|---|---|
+| 0 | `grouped_bar_chart` | `$0.9 $1.1 $1.3 $1.4 $1.7 $2 $2.3 $2.8` |
+| 1 | `line_chart` | `16% 16% 17% 20% 20% 19% 18% 16%` |
+
+Confirmed at the unit level too: `_fmt_value_label(0.9, "$", "prefix")` returns
+`$0.9`, and `_chartjs_bar_config` emits
+`_labels: [["$0.9", ..., "$2.8"]]`. **The `$` prefix path works. Not a gap.**
+
+### R6-A - CONFIRMED still-gap (largest open item)
+
+Slide 17, measured against the PDF figures in `wiki/SPEC_renderer_v2_amex_fidelity_r6.md`
+(the spec labels this slide 16 by PDF page; it is `data-slide-number` 17):
+
+| Element | Measured | PDF target | Delta |
+|---|---|---|---|
+| Pane title | **13px** / 600 / `rgb(99,102,106)` gray | 40px bold (navy) | ~3x + colour + weight |
+| Y ticks | **13px** | 24px bold | ~1.8x + weight |
+| X ticks | **13px** | not measured in spec | — |
+| Datalabels | **11px** bold | 28px bold | ~2.5x |
+
+Slide title is 56px/700 navy, so the *slide* ramp is right and only the
+chart-internal ramp is short. No handoff knob exists for any of these four
+(`_chartjs_common_options` hardcodes 13px ticks; datalabel size is a literal
+`11`). Confirmed **B / renderer capability gap**.
+
+### F4+ - CONFIRMED weak (packing, not type)
+
+Slide 3 `pill_comparison`: board `.gl-pill.gl-pill-free.gl-card` is
+1728x726.8 at y=201.2, so **h/slide = 0.673**, w/slide = 0.900, transparent
+background, 16px radius, `display:flex`. Type is already correct at **28px**
+(stubs 600, heads 700 on navy, cells). 6 stubs / 15 cells.
+So the residual is purely vertical packing, matching the run's read.
+
+### R6-C - CONFIRMED partial (cosmetic only)
+
+Insets are on slides **20** and **24** (not 19/23):
+
+| Slide | Count | Box | Skin |
+|---|---|---|---|
+| 20 | 1 | 200x89.7 @ x=1624 | navy `rgb(0,23,90)`, 14px radius, no border, 16px text |
+| 24 | 2 | 200x89.7 @ y=196.2 / 303.9 | same |
+
+Still a solid navy card, not the suspected outlined PDF treatment. Consistent
+with the run: collisions closed, cosmetic recipe open, and per the v8 note it
+should **not** be restyled on assumption until the PDF treatment is measured.
+
+### Net effect
+
+Two of the eight prioritized items were false. Withdrawn: **R4** (round 1) and
+**N9** (here). Six remain, and **R6-A is the largest genuine renderer gap**.
+
