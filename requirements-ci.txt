@@ -5,13 +5,12 @@
 # surface upstream breakage rather than hide it behind a lockfile. Pin here if a
 # release ever breaks the build.
 #
+# structlog is included as of #129: logging_setup.py soft-imports it and prefers it
+# when present, so CI must exercise that path. It previously failed 7 tests because
+# they asserted through caplog, which cannot see structlog's stderr sink -- those
+# tests now assert through run.log, the sink both backends share.
+#
 # NOT listed, deliberately:
-#   structlog             -- impact_slides/logging_setup.py soft-imports it and falls
-#                            back to a stdlib adapter. tests/test_logging.py asserts
-#                            via caplog, which only sees the stdlib path, so INSTALLING
-#                            structlog fails 7 tests. Pre-existing test gap, not a CI
-#                            concern; see the note in the CI PR before "fixing" it by
-#                            adding the dep.
 #   sentence-transformers -- only reached by optional semantic-dedup paths, which the
 #                            suite skips. Multi-hundred-MB torch install for no coverage.
 #   playwright            -- screenshot tooling in scripts/, not exercised by tests.
@@ -33,3 +32,4 @@ pillow
 pytesseract
 openpyxl
 xlrd
+structlog

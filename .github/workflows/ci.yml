@@ -24,13 +24,6 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-ci.txt
 
-      # gen_layout_index.py shells out to `rg` for the word-boundary test/fixture
-      # columns. Without it the search silently returns [] (FileNotFoundError is
-      # caught), those columns come up empty, and --check fails against the
-      # committed index. Not optional.
-      - name: Install ripgrep
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
