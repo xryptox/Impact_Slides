@@ -202,6 +202,59 @@ class TestHandoffValidation:
         assert validated[0].title == "Fallback Test"
         assert validated[0].content.bullets == ["keep me"]
 
+    def test_fallback_preserves_downstream_fields(self):
+        """#133: fallback must not drop fields consumers read (manifest/notes/load)."""
+        slide = {
+            "slide_number": 2,
+            "layout_type": "other",
+            "title": "Keep me",
+            "disclosure": "Confidential",
+            "evidence_ids": ["E0100"],
+            "evidence_sources": [{"id": "E0100", "source_file": "demo.docx"}],
+            "kicker": "Key point",
+            "packing_mode": "argument-led",
+            "source_line": "Source: demo",
+            "speaker_notes": "Say this out loud",
+            "content": {
+                "bullets": ["a"],
+                "key_stats": [{"label": "Deal", "value": "$1"}],
+                "so_what": "Matters because X",
+            },
+        }
+        validated, errors = validate_handoff({"slides": [slide]})
+        assert len(errors) == 1
+        m = validated[0]
+        assert isinstance(m, SplitTextVisualSlide)
+        dumped = m.model_dump(exclude_none=True)
+        for key in (
+            "disclosure",
+            "evidence_ids",
+            "kicker",
+            "packing_mode",
+            "source_line",
+            "speaker_notes",
+        ):
+            assert dumped.get(key) == slide[key], key
+        assert dumped["evidence_sources"][0]["id"] == "E0100"
+        assert dumped["evidence_sources"][0]["source_file"] == "demo.docx"
+        assert dumped["content"]["key_stats"] == slide["content"]["key_stats"]
+        assert dumped["content"]["so_what"] == slide["content"]["so_what"]
+
+    def test_fallback_preserves_freeform_fixture_slide(self):
+        freeform = FIXTURES / "freeform_handoff.json"
+        handoff = json.loads(freeform.read_text(encoding="utf-8"))
+        raw = handoff["slides"][1]  # layout_type: other
+        validated, errors = validate_handoff(handoff)
+        assert any("unknown layout_type" in e for e in errors)
+        m = validated[1]
+        d = m.model_dump(exclude_none=True)
+        assert d["speaker_notes"] == raw["speaker_notes"]
+        assert d["packing_mode"] == raw["packing_mode"]
+        assert d["evidence_sources"][0]["id"] == raw["evidence_sources"][0]["id"]
+        assert d["evidence_sources"][0]["source_file"] == raw["evidence_sources"][0]["source_file"]
+        assert d["content"]["key_stats"] == raw["content"]["key_stats"]
+        assert d["content"]["so_what"] == raw["content"]["so_what"]
+
 
 # ---------------------------------------------------------------------------
 # Integration: render_deck with validation

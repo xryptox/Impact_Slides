@@ -383,13 +383,13 @@ def validate_handoff(raw: Dict[str, Any]) -> tuple[List[ValidatedSlide], List[st
     for i, slide_raw in enumerate(slides_raw):
         if not isinstance(slide_raw, dict):
             errors.append(f"slide {i+1}: not a dict")
-            # minimal fallback
-            fallback = SplitTextVisualSlide(
-                slide_number=i + 1,
-                title=f"Slide {i+1}",
-                content=SlideContent(bullets=["(validation fallback)"]),
+            validated.append(
+                SplitTextVisualSlide(
+                    slide_number=i + 1,
+                    title=f"Slide {i+1}",
+                    content=SlideContent(bullets=["(validation fallback)"]),
+                )
             )
-            validated.append(fallback)
             continue
 
         model, err = validate_slide(slide_raw)
@@ -397,15 +397,18 @@ def validate_handoff(raw: Dict[str, Any]) -> tuple[List[ValidatedSlide], List[st
             validated.append(model)
         else:
             errors.append(f"slide {i+1} ({slide_raw.get('layout_type', '?')}): {err}")
-            fallback = SplitTextVisualSlide(
-                slide_number=slide_raw.get("slide_number", i + 1),
-                title=slide_raw.get("title", f"Slide {i+1}"),
-                content=SlideContent(
-                    bullets=slide_raw.get("content", {}).get("bullets", []),
-                    body_text=slide_raw.get("content", {}).get("body_text", ""),
-                ),
-                visual_spec=slide_raw.get("visual_spec"),
-            )
+            # Non-lossy: keep raw keys via extra="allow"; only force layout + slide_number.
+            data = {**slide_raw, "layout_type": _FALLBACK_LAYOUT}
+            if not isinstance(data.get("slide_number"), int):
+                data["slide_number"] = i + 1
+            try:
+                fallback = SplitTextVisualSlide.model_validate(data)
+            except Exception:
+                fallback = SplitTextVisualSlide(
+                    slide_number=i + 1,
+                    title=str(slide_raw.get("title") or f"Slide {i+1}"),
+                    content=SlideContent(bullets=["(validation fallback)"]),
+                )
             validated.append(fallback)
 
     return validated, errors
