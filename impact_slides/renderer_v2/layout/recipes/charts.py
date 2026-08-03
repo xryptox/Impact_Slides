@@ -46,7 +46,7 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
         vs = slide["visual_spec"]
     chart_html = build_chart_html(slide, layout, use_chartjs=use_chartjs)
     secondary = vs.get("secondary_visual") or {}
-    key_stats = (slide.get("content") or {}).get("key_stats") or []
+    key_stats = _sv_content(slide).get("key_stats") or []
 
     # #100/N1: under-chart tables attach to any chart layout, not just
     # line_chart (PDF provision boards pair stacked bars with a reserve-rate
@@ -308,7 +308,7 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     chart_html = ""
     if isinstance(pv, dict) and pv.get("type"):
         chart_html = build_chart_html(slide, str(pv.get("type")), use_chartjs=use_chartjs)
-    hero = _hero_stack((slide.get("content") or {}).get("key_stats") or [])
+    hero = _hero_stack(_sv_content(slide).get("key_stats") or [])
     if not chart_html and not hero:
         return render_metric(slide, total, notes, active=active)
     # R4 (v8): the PDF chart panel carries an in-card title. Source it from an

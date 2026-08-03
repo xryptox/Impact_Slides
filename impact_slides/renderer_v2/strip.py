@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping
 
+from .slide_view import content as sv_content
+
 _EID_PARENS = re.compile(
     r"\s*\(\s*E\d{4}(?:\s*,\s*E\d{4})*\s*\)",
     re.IGNORECASE,
@@ -123,7 +125,7 @@ def near_dup(a: str, b: str) -> bool:
 
 def chosen_dek(slide: Mapping[str, Any]) -> str:
     """One under-title line: prefer subtitle, drop headline near-dup / KPI noise."""
-    content = slide.get("content") or {}
+    content = sv_content(slide)
     sub = strip_eids(content.get("subtitle") or slide.get("subtitle") or "")
     head = strip_eids(content.get("headline") or "")
     if sub and head:

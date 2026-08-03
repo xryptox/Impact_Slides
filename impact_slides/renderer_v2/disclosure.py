@@ -21,6 +21,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Mapping, Sequence
 
+from .slide_view import content as sv_content
 from .strip import esc
 
 KNOWN_PATTERNS = frozenset({"detail", "accordion", "tabs"})
@@ -62,7 +63,7 @@ def extract_disclosure(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     """Return the disclosure declaration dict, or None if absent."""
     for bag in (
         slide.get("disclosure"),
-        (slide.get("content") or {}).get("disclosure")
+        sv_content(slide).get("disclosure")
         if isinstance(slide.get("content"), Mapping)
         else None,
         (slide.get("visual_spec") or {}).get("disclosure")

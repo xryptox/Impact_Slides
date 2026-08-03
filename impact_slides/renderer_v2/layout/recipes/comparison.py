@@ -58,7 +58,7 @@ def render_pill_comparison(slide, total, notes, active=False):
         f'{"".join(shells)}'
         f"</div>"
     )
-    inset = _table_inset((slide.get("content") or {}).get("key_stats") or [])
+    inset = _table_inset(_sv_content(slide).get("key_stats") or [])
     if inset:
         main = (
             f'<div class="gl-areas-table-inset">'
