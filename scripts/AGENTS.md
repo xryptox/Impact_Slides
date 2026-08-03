@@ -8,6 +8,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 
 - `gen_layout_index.py` — builds/checks `wiki/renderer_v2_LAYOUTS.md`
 - Ad-hoc helpers (`render_slide_shot.py`, shell sims)
+- `run_amex_simulation_v9.sh` — isolated SuperGrok 4.5 GNHF launcher for the measure-only Amex v9 baseline; its temporary GNHF home must not replace `~/.gnhf/config.yml`
 
 ## Local Contracts
 
