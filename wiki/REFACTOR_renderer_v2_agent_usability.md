@@ -412,7 +412,7 @@ times. It is also not stale post-refactor: 0 references to the split monoliths.
 Splitting 72 KB of accurate, correctly-scoped docs is churn with merge-conflict
 risk and no measured agent benefit. Skipped.
 
-### Step 8 - stale spec markers - STILL WORTH DOING
+### Step 8 - stale spec markers - DONE (70b32ee)
 
 This half is real, and the refactor made it worse:
 
@@ -428,3 +428,12 @@ hand-maintained live pointer becomes another catalog that drifts, exactly the
 failure this refactor spent Steps 1-3 eliminating. The cheap fix is a one-line
 `> **Superseded - historical.** See X.` header on each dead spec, so repo-wide
 greps self-identify as stale.
+
+**Shipped:** 10 docs marked with a one-line `> **Superseded - historical ...**`
+header under their H1 -- 2 that describe deleted code
+(`PLAN_renderer_v2_gridlines.md`, `Gen_Renderer_v2_Complete_Layout_Grid_Refactoring_Plan.md`)
+and 8 superseded by a later numbered doc (amex fidelity rounds 1-5, baseline gap
+analyses v5-v7). `wiki/README.md` records the convention and the verified
+exclusions: `_r6` is a live draft pending human lock, `baseline_v8` is current, the
+`p0..p5`/`tokens_owner` specs are shipped but still normative, and the
+`Impact Slide *` prompts are live Step 2/3 artifacts.
