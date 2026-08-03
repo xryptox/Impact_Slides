@@ -1,0 +1,359 @@
+{
+  "N9_s16": [
+    {
+      "i": 0,
+      "nDS": 1,
+      "type": "bar",
+      "datalabels": {
+        "display": true
+      },
+      "domLabels": [],
+      "sampleValues": [
+        0.9,
+        1.1,
+        1.3
+      ]
+    },
+    {
+      "i": 1,
+      "nDS": 1,
+      "type": "line",
+      "datalabels": {
+        "display": true
+      },
+      "domLabels": [],
+      "sampleValues": [
+        16,
+        16,
+        18
+      ]
+    }
+  ],
+  "N9_s16_script": {
+    "slideScriptHits": 0,
+    "dollarFmt": true,
+    "sample": "in,o),e.max=Math.max(e.max,o))}function $(t){return t*(C/180)}function Y(t){retur"
+  },
+  "R2_s05": {
+    "elbows": [
+      {
+        "cls": "chartjs-callout chartjs-callout-elbow",
+        "w": 633.109375,
+        "h": 30,
+        "hasLine": false
+      }
+    ],
+    "stems": 1,
+    "nElbow": 1
+  },
+  "N10_s16": {
+    "nPanes": 0,
+    "panes": [],
+    "nCanvas": 2
+  },
+  "R4_s11": {
+    "nCards": 0,
+    "cards": [],
+    "nums": [
+      {
+        "text": "66%",
+        "fs": "110px",
+        "fw": "700"
+      },
+      {
+        "text": "66",
+        "fs": "110px",
+        "fw": "700"
+      },
+      {
+        "text": "%",
+        "fs": "46.2px",
+        "fw": "700"
+      },
+      {
+        "text": "73%",
+        "fs": "110px",
+        "fw": "700"
+      },
+      {
+        "text": "73",
+        "fs": "110px",
+        "fw": "700"
+      },
+      {
+        "text": "%",
+        "fs": "46.2px",
+        "fw": "700"
+      }
+    ],
+    "labels": [
+      {
+        "text": "of Global Consumer New Accounts Acquired",
+        "fs": "17px"
+      },
+      {
+        "text": "of Global New Accounts Acquired on Fee-P",
+        "fs": "17px"
+      }
+    ]
+  },
+  "F4_s02": {
+    "board": null,
+    "fs28count": 8,
+    "fs28": [
+      {
+        "cls": "gl-pill-stub",
+        "text": "Total Revenues Net of Interest"
+      },
+      {
+        "cls": "gl-pill-stub",
+        "text": "FX-Adjusted*"
+      },
+      {
+        "cls": "gl-pill-stub",
+        "text": "Net Income"
+      },
+      {
+        "cls": "gl-pill-stub",
+        "text": "Diluted EPS**"
+      },
+      {
+        "cls": "gl-pill-stub",
+        "text": "Average Diluted Shares Outstan"
+      },
+      {
+        "cls": "gl-pill-head",
+        "text": "Q1'26"
+      },
+      {
+        "cls": "gl-pill-cell",
+        "text": "$18,907"
+      },
+      {
+        "cls": "gl-pill-cell",
+        "text": "$2,971"
+      }
+    ],
+    "rail": null
+  },
+  "R6A_s16": {
+    "titles": [
+      {
+        "text": "Net Card Fees ($B)",
+        "fs": "13px",
+        "fw": "600",
+        "color": "rgb(99, 102, 106)",
+        "cls": "gl-tile-label"
+      },
+      {
+        "text": "YoY Growth %",
+        "fs": "13px",
+        "fw": "600",
+        "color": "rgb(99, 102, 106)",
+        "cls": "gl-tile-label"
+      }
+    ],
+    "charts": [
+      {
+        "i": 0,
+        "xTickFS": 13,
+        "yTickFS": 13,
+        "xTickColor": "#00175a",
+        "xMaxRotation": 50,
+        "area": {
+          "w": 773,
+          "h": 710
+        }
+      },
+      {
+        "i": 1,
+        "xTickFS": 13,
+        "yTickFS": 13,
+        "xTickColor": "#00175a",
+        "xMaxRotation": 50,
+        "area": {
+          "w": 756,
+          "h": 710
+        }
+      }
+    ]
+  },
+  "R6C_s19": {
+    "nInsets": 7,
+    "insets": [
+      {
+        "cls": "gl-areas-table-inset",
+        "text": "VCE of Revenue44.7%Card Member RewardsBusiness DevelopmentCa",
+        "w": 1728,
+        "h": 478,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(83, 86, 90)",
+        "color": "rgb(83, 86, 90)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset-stage",
+        "text": "VCE of Revenue44.7%",
+        "w": 200,
+        "h": 90,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(83, 86, 90)",
+        "color": "rgb(83, 86, 90)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset-wrap",
+        "text": "VCE of Revenue44.7%",
+        "w": 200,
+        "h": 90,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(83, 86, 90)",
+        "color": "rgb(83, 86, 90)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset card",
+        "text": "VCE of Revenue44.7%",
+        "w": 200,
+        "h": 90,
+        "bg": "rgb(0, 23, 90)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset-label",
+        "text": "VCE of Revenue",
+        "w": 160,
+        "h": 18,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "13px"
+      },
+      {
+        "cls": "gl-inset-value",
+        "text": "44.7%",
+        "w": 160,
+        "h": 36,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "34px"
+      },
+      {
+        "cls": "gl-inset-table",
+        "text": "Card Member RewardsBusiness DevelopmentCard Member ServicesV",
+        "w": 1510,
+        "h": 478,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(83, 86, 90)",
+        "color": "rgb(83, 86, 90)",
+        "fs": "16px"
+      }
+    ]
+  },
+  "R6C_s23": {
+    "nInsets": 10,
+    "insets": [
+      {
+        "cls": "gl-areas-table-inset",
+        "text": "U.S. Consumer % of NV37%U.S. SME % of NV22%SegmentYoY Growth",
+        "w": 1728,
+        "h": 458,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(83, 86, 90)",
+        "color": "rgb(83, 86, 90)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset-stage",
+        "text": "U.S. Consumer % of NV37%U.S. SME % of NV22%",
+        "w": 200,
+        "h": 197,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(83, 86, 90)",
+        "color": "rgb(83, 86, 90)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset-wrap",
+        "text": "U.S. Consumer % of NV37%U.S. SME % of NV22%",
+        "w": 200,
+        "h": 197,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(83, 86, 90)",
+        "color": "rgb(83, 86, 90)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset card",
+        "text": "U.S. Consumer % of NV37%",
+        "w": 200,
+        "h": 90,
+        "bg": "rgb(0, 23, 90)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset-label",
+        "text": "U.S. Consumer % of NV",
+        "w": 160,
+        "h": 18,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "13px"
+      },
+      {
+        "cls": "gl-inset-value",
+        "text": "37%",
+        "w": 160,
+        "h": 36,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "34px"
+      },
+      {
+        "cls": "gl-inset card",
+        "text": "U.S. SME % of NV22%",
+        "w": 200,
+        "h": 90,
+        "bg": "rgb(0, 23, 90)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "16px"
+      },
+      {
+        "cls": "gl-inset-label",
+        "text": "U.S. SME % of NV",
+        "w": 160,
+        "h": 18,
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(238, 240, 240)",
+        "color": "rgb(238, 240, 240)",
+        "fs": "13px"
+      }
+    ]
+  },
+  "F5_theme": {
+    "vals": {
+      "--color-primary": "#00175A",
+      "--chart-1": "",
+      "--series-1": "",
+      "--amex-navy": "",
+      "--gl-navy": ""
+    },
+    "triggered": false,
+    "note": "no theme override attempt in this handoff"
+  },
+  "N6_contract_s14": {
+    "cls": "chart-support-outlined",
+    "aligned": false,
+    "hasWidthStyle": false,
+    "nCells": 5,
+    "headerRowInSource": "Q1'25"
+  }
+}
