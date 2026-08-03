@@ -1,5 +1,7 @@
 # Gen Renderer v2 — Complete Layout Expansion + Grid Design System Refactoring Plan
 
+> **Superseded - historical (2026-07-17). Plans the evolution of `_gen_renderer_v2.py`, which no longer exists; the renderer shipped as the `impact_slides/renderer_v2/` package. Layout catalog is now generated at `wiki/renderer_v2_LAYOUTS.md`.**
+
 **Version:** 1.1 (Updated with Diagram Capabilities)  
 **Date:** July 17, 2026  
 **Document Type:** Exhaustive Implementation Plan  

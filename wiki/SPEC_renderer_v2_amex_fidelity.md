@@ -1,5 +1,7 @@
 # SPEC — renderer_v2 Amex Q1'26 IR Fidelity (sim capability gaps)
 
+> **Superseded - historical. Amex IR fidelity round 1; shipped and closed. Later rounds: `_r2` ... `_r6`. Round 5 is LOCKED and shipped; round 6 (`_r6`) is the live draft.**
+
 **Status:** Spec stub — locked grilling decisions recorded; full ACs live in child tickets.
 **Source / evidence:** `simulation/amex_q1_2026/GAP_ANALYSIS.md` (+ `passes/pass_*/screenshots/compare_YY.png`).
 **Parent epic:** GitHub issue (created from this stub). Children filed F1–F15 (merged where noted).

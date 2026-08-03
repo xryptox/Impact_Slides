@@ -1,5 +1,7 @@
 # SPEC: Amex Q1'26 IR fidelity — round 5 (v7 residuals: callout + axis-break chrome)
 
+> **Superseded - historical. Round 5 is LOCKED and fully shipped (T6-T14). New fidelity tickets land in round 6 (`_r6`), not here.**
+
 **Status:** LOCKED — user-directed from direct inspection of the v7 slide 05 render against
 PDF page 6, locked 2026-07-28. The §1 diagnoses are measured fact.
 

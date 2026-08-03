@@ -1,5 +1,7 @@
 # PLAN — Impact Slide Renderer v2 (Gridlines Design System + Script)
 
+> **Superseded - historical (2026-07-13). Phases 0-7 shipped. Its "sources of truth" table points at `_gen_renderer_v2.py` and `_boardroom_charts_pack.py`, both since deleted (the external charts pack was removed in the agent-usability refactor, PR #127).**
+
 **Status:** Phases 0–7 implemented (2026-07-13) — package `impact_slides.renderer_v2`  
 **Source brief:** `gridlines_implementation.md` (2026-07-13 assessment of the Renderer prompt)  
 **Target deliverable:** a **v2 Python renderer script** that implements a unified CSS Grid design system and composition model, while preserving Boardroom Earnings theme + component physics.  

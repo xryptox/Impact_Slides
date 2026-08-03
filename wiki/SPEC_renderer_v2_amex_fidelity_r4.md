@@ -1,5 +1,7 @@
 # SPEC: Amex Q1'26 IR fidelity — round 4 (v6 residual gaps)
 
+> **Superseded - historical. Round 4; shipped and closed. Round 5 is LOCKED and shipped; round 6 (`_r6`) is the live draft.**
+
 **Status:** LOCKED — alignment record from the 2026-07-26 grilling session (D1–D11 below).
 The measured diagnosis in §1 is fact; §3 records the locked mechanism.
 

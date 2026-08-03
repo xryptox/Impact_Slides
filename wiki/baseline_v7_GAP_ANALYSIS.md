@@ -1,5 +1,7 @@
 # Gap Analysis v7: renderer_v2 vs Amex Q1'26 Earnings PDF (AFTER v6 baseline + round-4 T1/T2)
 
+> **Superseded - historical. Point-in-time gap analysis; see `baseline_v8_GAP_ANALYSIS.md` for the latest baseline.**
+
 **Simulation:** `simulation/amex_q1_2026/`
 **Source of truth:** `C:/Users/Ag1Le/Downloads/Q1-2026-Earnings-Presentation.pdf` (44 pages, 16:9)
 **Renderer under test:** current `impact_slides.renderer_v2` in this worktree (**post-PR #115 T1 calloutGeometry + #116 T2 exterior-name knobs**).

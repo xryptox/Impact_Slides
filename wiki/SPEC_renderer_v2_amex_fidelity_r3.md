@@ -1,5 +1,7 @@
 # SPEC (stub): Amex Q1'26 IR fidelity — round 3 (v3 residual gaps)
 
+> **Superseded - historical. Round 3; shipped and closed (issue #95). Round 5 is LOCKED and shipped; round 6 (`_r6`) is the live draft.**
+
 **Status:** alignment record from the 2026-07-24 grill-with-docs session. Full acceptance criteria live in the child tickets; this stub records the locked decisions only.
 
 **Evidence:** `simulation/amex_q1_2026/GAP_ANALYSIS.md` (v3 AFTER round-2 run; mean MAE 89.10–89.17% vs v2 final 89.25% — flat mean, structural wins; compare shots under `simulation/amex_q1_2026/passes/pass_0N/screenshots/compare_YY.png`).

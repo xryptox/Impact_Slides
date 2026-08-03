@@ -1,5 +1,7 @@
 # SPEC — renderer_v2 Amex IR Fidelity Round 2 (Epic Stub)
 
+> **Superseded - historical. Round 2; shipped and closed. Round 5 is LOCKED and shipped; round 6 (`_r6`) is the live draft.**
+
 **Status:** locked by grill-with-docs session 2026-07-20; tickets are canonical for scope/ACs.
 **Predecessor:** epic #70 (closed) — Amex Q1'26 IR fidelity F1–F15 round 1.
 **Evidence:** `simulation/amex_q1_2026/GAP_ANALYSIS.md` (v2, post-F-feature) vs `simulation/amex_q1_2026_v1_pre_fixes/GAP_ANALYSIS.md` (v1 baseline). Compare shots cited per ticket from `simulation/amex_q1_2026/passes/pass_03/screenshots/`.
