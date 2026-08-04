@@ -22,6 +22,12 @@ _SIDE_CALLOUT_MAX_LINES = 4
 _SIDE_CALLOUT_MIN_SIZE = 12
 _SIDE_CALLOUT_MAX_SIZE = 32
 _SIDE_CALLOUT_MAX_TEXT_LENGTH = 32
+_SIDE_CALLOUT_NAME_KNOB_RANGES = {
+    "segment_name_font_size": (8, 32),
+    "segment_name_line_height": (8, 40),
+    "segment_name_wrap_chars": (4, 32),
+    "segment_name_max_lines": (1, 4),
+}
 _SIDE_CALLOUT_CHAR_WIDTH = 0.45
 
 # Opt-in only: patches shell segmentNames at Chart.register time so exterior
@@ -441,25 +447,55 @@ def _side_callout_lines(
     return out, None
 
 
+def _strict_side_column_error(chart_cfg: Mapping[str, Any]) -> str | None:
+    if chart_cfg.get("exterior_segment_names") is not True:
+        return "requires a valid exterior_segment_names column"
+    offset = chart_cfg.get("segment_name_offset", 8)
+    gutter = chart_cfg.get("segment_name_gutter", 120)
+    if (
+        isinstance(offset, bool)
+        or isinstance(gutter, bool)
+        or not isinstance(offset, (int, float))
+        or not isinstance(gutter, (int, float))
+        or not math.isfinite(offset)
+        or not math.isfinite(gutter)
+        or not float(offset).is_integer()
+        or not float(gutter).is_integer()
+    ):
+        return "requires a valid exterior_segment_names column"
+    offset, gutter = int(offset), int(gutter)
+    if not 0 <= offset < gutter:
+        return "requires a valid exterior_segment_names column"
+    knobs: dict[str, int] = {}
+    for name, (lower, upper) in _SIDE_CALLOUT_NAME_KNOB_RANGES.items():
+        value = chart_cfg.get(name)
+        if value is None:
+            continue
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or not float(value).is_integer()
+            or not lower <= value <= upper
+        ):
+            return f"{name} must be a whole number from {lower} to {upper}"
+        knobs[name] = int(value)
+    font_size = knobs.get("segment_name_font_size", 12)
+    line_height = knobs.get("segment_name_line_height", 13)
+    if line_height < font_size:
+        return "segment_name_line_height must be at least segment_name_font_size"
+    return None
+
+
 def _side_column_geometry(
     chart_cfg: Mapping[str, Any], *, strict: bool = True
 ) -> tuple[int, int] | None:
     if strict:
-        if chart_cfg.get("exterior_segment_names") is not True:
+        if _strict_side_column_error(chart_cfg):
             return None
-        offset = chart_cfg.get("segment_name_offset", 8)
-        gutter = chart_cfg.get("segment_name_gutter", 120)
-        if (
-            isinstance(offset, bool)
-            or isinstance(gutter, bool)
-            or not isinstance(offset, (int, float))
-            or not isinstance(gutter, (int, float))
-            or not math.isfinite(offset)
-            or not math.isfinite(gutter)
-        ):
-            return None
-        offset, gutter = int(offset), int(gutter)
-        return (offset, gutter) if 0 <= offset < gutter else None
+        return int(chart_cfg.get("segment_name_offset", 8)), int(
+            chart_cfg.get("segment_name_gutter", 120)
+        )
     if not chart_cfg.get("exterior_segment_names"):
         return None
     offset = chart_cfg.get("segment_name_offset", 8)
@@ -522,11 +558,12 @@ def _resolve_side_callout(
                 file=sys.stderr,
             )
         return None
+    column_error = _strict_side_column_error(chart_cfg)
     column = _side_column_geometry(chart_cfg)
-    if not column:
+    if not column or column_error:
         if warn:
             print(
-                "[side_callout] ignored: requires a valid exterior_segment_names column",
+                f"[side_callout] ignored: {column_error or 'requires a valid exterior_segment_names column'}",
                 file=sys.stderr,
             )
         return None

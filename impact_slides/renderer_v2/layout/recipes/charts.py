@@ -463,7 +463,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     items.append(f'<li class="gl-tile-legend-item">{sw}{esc(txt)}</li>')
                 if items:
                     legend_html = f'<ul class="gl-tile-legend">{"".join(items)}</ul>'
-            if top_total or badge or legend_html or side_html:
+            if top_total or badge or legend_html:
                 badge_html = (
                     f'<span class="gl-tile-badge">{esc(badge)}</span>' if badge else ""
                 )
@@ -489,9 +489,8 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                         if label
                         else ""
                     )
-                    tile_container = ' style="container-type:inline-size"' if callout_on_tile else ""
                     parts.append(
-                        f'<div class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir"{tile_container}>'
+                        f'<div class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir">'
                         f'<div class="gl-tile-ir-head">{head_total}{head_lbl}</div>'
                         f"{badge_html}{side_html}{body}"
                         f"</div>"
@@ -502,15 +501,15 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                         if top_total
                         else ""
                     )
-                    tile_container = ' style="container-type:inline-size"' if callout_on_tile else ""
                     parts.append(
-                        f'<div class="gl-tile gl-tile-chart gl-tile-tall"{tile_container}>'
+                        f'<div class="gl-tile gl-tile-chart gl-tile-tall">'
                         f"{badge_html}{side_html}{total_html}{lbl}{body}"
                         f"</div>"
                     )
             else:
+                tile_style = ' style="position:relative"' if callout_on_tile else ""
                 parts.append(
-                    f'<div class="gl-tile gl-tile-chart">{lbl}{chart_html}</div>'
+                    f'<div class="gl-tile gl-tile-chart"{tile_style}>{side_html}{lbl}{chart_html}</div>'
                 )
         else:
             val = strip_eids(tile.get("value") or "")

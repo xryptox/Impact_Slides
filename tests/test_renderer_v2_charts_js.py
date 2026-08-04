@@ -3075,14 +3075,20 @@ class TestSideCallout:
         assert "<aside class=\"chart-side-callout" not in html
         assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
 
-    @pytest.mark.parametrize("value", ["wide", [], float("inf")])
-    def test_invalid_name_typography_values_fail_soft(self, tmp_path, value):
-        html = self._render(
-            tmp_path,
-            _side_callout_cfg(segment_name_font_size=value),
-        )
-        assert "<aside class=\"chart-side-callout" in html
-        assert '"fontSize"' not in html
+    @pytest.mark.parametrize(
+        "knob, value",
+        [
+            ("segment_name_font_size", -1),
+            ("segment_name_line_height", 10**9),
+            ("segment_name_wrap_chars", 0),
+            ("segment_name_max_lines", 5),
+        ],
+    )
+    def test_unsafe_name_typography_values_fail_soft(self, tmp_path, capsys, knob, value):
+        html = self._render(tmp_path, _side_callout_cfg(**{knob: value}))
+        assert "<aside class=\"chart-side-callout" not in html
+        assert "segmentNames" not in _chartjs_cfg(html)["options"]["plugins"]
+        assert knob in capsys.readouterr().err
 
     def test_multi_panel_badge_suppressed_when_callout(self, tmp_path):
         s = _slide("multi_panel", [])
@@ -3192,6 +3198,7 @@ class TestSideCallout:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert 'data-side-callout-anchor="tile"' in html
         assert "top:49.8px" in html
+        assert 'class="gl-tile gl-tile-chart gl-tile-tall"' not in html
         assert '<foreignObject x="772" y="49.8" width="128"' not in html
 
     def test_three_column_multi_panel_omits_unfit_callout(self, tmp_path, capsys):
