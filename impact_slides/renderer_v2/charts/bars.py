@@ -412,6 +412,9 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     parts.append("</svg>")
     svg = "".join(parts)
     # N5/#138: same HTML side callout furniture as Chart.js path (JS-off).
+    # Multi-panel may host the callout on the tile instead (external flag).
+    if cfg.get("_side_callout_external"):
+        return svg
     side = _build_side_callout_html(cfg, "stacked_bar_chart")
     if not side:
         return svg

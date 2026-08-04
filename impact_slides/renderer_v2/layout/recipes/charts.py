@@ -377,8 +377,20 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
         kind = str(tile.get("kind") or "metric")
         label = strip_eids(tile.get("label") or "")
         if kind == "chart":
+            from ...charts.callouts import _build_side_callout_html
+
             chart_type = str(tile.get("chart_type") or "grouped_bar_chart")
             tile_cfg = tile.get("chart_config") or {}
+            if not isinstance(tile_cfg, dict):
+                tile_cfg = {}
+            # #138: host side_callout on the tile (PDF tile-local top 49.8px),
+            # not the chart wrap whose top sits ~72px lower after totals/label.
+            callout_on_tile = side_callout_active(tile_cfg, chart_type)
+            paint_cfg = (
+                {**tile_cfg, "_side_callout_external": True}
+                if callout_on_tile
+                else tile_cfg
+            )
             sub_slide = {
                 **slide,
                 "layout_type": chart_type,
@@ -386,12 +398,21 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     "primary_visual": {
                         "type": chart_type,
                         "steps_or_data": tile.get("steps_or_data") or [],
-                        "chart_config": tile_cfg,
+                        "chart_config": paint_cfg,
                     }
                 },
             }
             chart_html = build_chart_html(
                 sub_slide, sub_slide["layout_type"], use_chartjs=use_chartjs
+            )
+            tile_skin = str(tile.get("tile_skin") or "").lower()
+            tile_pad = 0 if tile_skin == "ir" else 16
+            side_html = (
+                _build_side_callout_html(
+                    tile_cfg, chart_type, host="tile", tile_pad_px=tile_pad
+                )
+                if callout_on_tile
+                else ""
             )
             lbl = f'<div class="gl-tile-label">{esc(label)}</div>' if label else ""
             # IR dual tall-card slots (#90/F11+): freestanding top total,
@@ -399,11 +420,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             # so legacy tiles keep their existing chrome.
             top_total = strip_eids(tile.get("top_total") or "")
             # #138: side_callout supersedes the pill badge on the same tile.
-            badge = ""
-            if not side_callout_active(
-                tile_cfg if isinstance(tile_cfg, dict) else {}, chart_type
-            ):
-                badge = strip_eids(tile.get("badge") or "")
+            badge = "" if callout_on_tile else strip_eids(tile.get("badge") or "")
             legend = tile.get("side_legend")
             legend_html = ""
             if isinstance(legend, list) and legend:
@@ -424,7 +441,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     items.append(f'<li class="gl-tile-legend-item">{sw}{esc(txt)}</li>')
                 if items:
                     legend_html = f'<ul class="gl-tile-legend">{"".join(items)}</ul>'
-            if top_total or badge or legend_html:
+            if top_total or badge or legend_html or side_html:
                 badge_html = (
                     f'<span class="gl-tile-badge">{esc(badge)}</span>' if badge else ""
                 )
@@ -439,7 +456,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     body = chart_html
                 # #99/F11+: opt-in IR navy skin — header band hosts the top
                 # total + tile label; Boardroom default skin unchanged.
-                if str(tile.get("tile_skin") or "").lower() == "ir":
+                if tile_skin == "ir":
                     head_total = (
                         f'<span class="gl-tile-ir-total">{esc(top_total)}</span>'
                         if top_total
@@ -453,7 +470,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     parts.append(
                         f'<div class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir">'
                         f'<div class="gl-tile-ir-head">{head_total}{head_lbl}</div>'
-                        f"{badge_html}{body}"
+                        f"{badge_html}{side_html}{body}"
                         f"</div>"
                     )
                 else:
@@ -464,7 +481,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     )
                     parts.append(
                         f'<div class="gl-tile gl-tile-chart gl-tile-tall">'
-                        f"{badge_html}{total_html}{lbl}{body}"
+                        f"{badge_html}{side_html}{total_html}{lbl}{body}"
                         f"</div>"
                     )
             else:

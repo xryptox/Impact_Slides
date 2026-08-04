@@ -2916,6 +2916,11 @@ class TestSideCallout:
         assert "color:#53565A" in html
         assert "left:calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))" in html
         assert "line-height:29px" in html
+        # PDF p28 tile-local offset (49.8px), not a guessed wrap-local 12px.
+        assert "top:49.8px" in html
+        assert "top:12px" not in html
+        assert 'data-side-callout-anchor="wrap"' in html
+        assert 'data-side-callout-name-gap="8"' in html
 
     def test_callout_independent_of_stack_totals(self, tmp_path):
         html = self._render(
@@ -3052,3 +3057,34 @@ class TestSideCallout:
         assert "<aside class=\"chart-side-callout" in html
         assert 'class="gl-tile-badge"' not in html
         assert "92% of deposits FDIC insured*" not in html
+        # Tile host: callout is a direct child of the tall tile, not the wrap.
+        assert 'data-side-callout-anchor="tile"' in html
+        assert "top:49.8px" in html
+        # left compensates tile pad so x matches exterior-name column
+        assert "- 16px)" in html
+        # chart wrap must not also embed a second callout
+        assert html.count("<aside class=\"chart-side-callout") == 1
+        # name-reservation hook present for segmentNames plugin
+        assert "data-side-callout-name-gap" in html
+        assert "aside.chart-side-callout" in html  # shell plugin reads the DOM
+
+    def test_side_callout_geometry_contract_fails_old_top(self, tmp_path):
+        """Pin the positioning contract that the old top:12px wrap host broke.
+
+        Markup-only: the old recipe put top:12px on the chart wrap (~72px below
+        tile top → stage T≈285). Locked PDF local offset is 49.8px tile-top.
+        """
+        html = self._render(tmp_path, _side_callout_cfg())
+        # Extract the aside style blob
+        import re
+
+        m = re.search(
+            r'<aside class="chart-side-callout[^"]*"[^>]*style="([^"]+)"',
+            html,
+        )
+        assert m, "side callout aside missing"
+        style = m.group(1)
+        assert "top:49.8px" in style
+        assert "top:12px" not in style
+        # Mutation trap: removing the PDF offset must fail this test.
+        assert re.search(r"top:49\.8px", style)

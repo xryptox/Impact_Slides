@@ -738,7 +738,12 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         chart_cfg,
     )
     # N5/#138: shared-column side callout (HTML furniture, not a plugin).
-    side_callout_html = _build_side_callout_html(chart_cfg, layout)
+    # Multi-panel hosts it on the tile (tile-local PDF offset); flag skips embed.
+    side_callout_html = (
+        ""
+        if chart_cfg.get("_side_callout_external")
+        else _build_side_callout_html(chart_cfg, layout)
+    )
     # R1 (#94): chart_config.stage "flat" drops the Boardroom stage chrome so
     # the chart sits flatter against the canvas (IR stage-dominant style).
     flat = " chartjs-flat" if chart_cfg.get("stage") == "flat" else ""

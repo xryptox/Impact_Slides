@@ -10,6 +10,10 @@ _SIDE_CALLOUT_LAYOUTS = frozenset({"stacked_bar_chart"})
 _SIDE_CALLOUT_DEFAULT_SIZE = 24
 _SIDE_CALLOUT_LEAD_SIZE = 26
 _SIDE_CALLOUT_COLOR = "#53565A"
+# PDF p28 Deposit Programs: callout top is 49.8px below tile top (stage px).
+_SIDE_CALLOUT_TILE_TOP_PX = 49.8
+# Gap between callout bottom and first exterior name (stage/canvas px).
+_SIDE_CALLOUT_NAME_GAP_PX = 8
 
 
 
@@ -403,10 +407,15 @@ def _build_side_callout_html(
     layout: str,
     *,
     warn: bool = True,
+    host: str = "wrap",
+    tile_pad_px: int = 16,
 ) -> str:
     """Plain HTML/CSS side callout furniture (Chart.js + JS-off paths).
 
     Styles are inline so global CSS stays byte-neutral when side_callout is off.
+
+    host="tile": position in the multi-panel tile coordinate system (PDF local
+    top = 49.8px). host="wrap": chart wrap is the containing block (standalone).
     """
     plan = _resolve_side_callout(chart_cfg, layout, warn=warn)
     if not plan:
@@ -418,11 +427,28 @@ def _build_side_callout_html(
         line_html.append(
             f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{_SIDE_CALLOUT_COLOR};line-height:29px">{esc(str(ln["text"]))}</div>'
         )
-    # left edge ≈ chartArea.right + segment_name_offset inside the name gutter
+    top = f"{_SIDE_CALLOUT_TILE_TOP_PX}px"
+    # Shared x with exterior names: chartArea.right + offset ≡ wrap_width - gutter + offset.
+    # Tile padding-box is wider than the wrap by tile_pad on each side — subtract one pad
+    # so left lands on the same column as the wrap-hosted formula.
+    if host == "tile":
+        pad = max(0, int(tile_pad_px))
+        left = (
+            f"calc(100% - var(--side-callout-gutter) + var(--side-callout-offset)"
+            f" - {pad}px)"
+        )
+        anchor = "tile"
+    else:
+        left = (
+            "calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))"
+        )
+        anchor = "wrap"
     return (
         f'<aside class="chart-side-callout chart-side-callout--{esc(plan["skin"])} '
         f'chart-side-callout--{esc(plan["placement"])}" '
-        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;top:12px;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{_SIDE_CALLOUT_COLOR};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;width:max-content;max-width:160px;left:calc(100% - var(--side-callout-gutter) + var(--side-callout-offset));right:auto" '
+        f'data-side-callout-anchor="{anchor}" '
+        f'data-side-callout-name-gap="{_SIDE_CALLOUT_NAME_GAP_PX}" '
+        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;top:{top};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{_SIDE_CALLOUT_COLOR};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;width:max-content;max-width:160px;left:{left};right:auto" '
         f'aria-label="{esc(plan["aria"])}">'
         f'{ "".join(line_html) }'
         f"</aside>"
