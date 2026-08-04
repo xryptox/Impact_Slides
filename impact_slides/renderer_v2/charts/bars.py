@@ -11,7 +11,7 @@ from .core import _chart_config, _steps
 from .callouts import (
     _SIDE_CALLOUT_NAME_GAP_PX,
     _SIDE_CALLOUT_TILE_TOP_PX,
-    _build_side_callout_html,
+    _build_side_callout_svg,
     _resolve_side_callout,
     _side_column_geometry,
 )
@@ -331,7 +331,8 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
-    column = _side_column_geometry(cfg)
+    side_plan = _resolve_side_callout(cfg, "stacked_bar_chart", warn=False)
+    column = _side_column_geometry(cfg) if side_plan else None
     pad_l, pad_r, pad_t, pad_b = (
         geom["pad_l"],
         column[1] if column else geom["pad_r"],
@@ -448,13 +449,10 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
                 else sum(v for v in prior if isinstance(v, (int, float)) and v < 0) - value / 2
             )
             names.append((y_pos(mid), str(name), palette[j % len(palette)]))
-        side_plan = _resolve_side_callout(cfg, "stacked_bar_chart", warn=False)
         min_y = (
             _SIDE_CALLOUT_TILE_TOP_PX
             + _SIDE_CALLOUT_NAME_GAP_PX
-            + 29 * len(side_plan["lines"])
-            if side_plan
-            else pad_t
+            + sum(int(line["line_height"]) for line in side_plan["lines"])
         )
         names.sort()
         for i, (y, name, color) in enumerate(names):
@@ -465,20 +463,10 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
                 f'fill="{color}" font-size="12" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(name)}</text>'
             )
+    if side_plan and not cfg.get("_side_callout_external"):
+        parts.append(_build_side_callout_svg(cfg, "stacked_bar_chart", warn=False))
     parts.append("</svg>")
-    svg = "".join(parts)
-    # N5/#138: same HTML side callout furniture as Chart.js path (JS-off).
-    # Multi-panel may host the callout on the tile instead (external flag).
-    if cfg.get("_side_callout_external"):
-        return svg
-    side = _build_side_callout_html(cfg, "stacked_bar_chart")
-    if not side:
-        return svg
-    return (
-        f'<div class="chart-svg-wrap chart-svg-wrap--side-callout" '
-        f'style="position:relative;width:100%">'
-        f"{svg}{side}</div>"
-    )
+    return "".join(parts)
 
 
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from typing import Any, Mapping, Sequence
 
 from ...slide_view import content as _sv_content
@@ -383,14 +384,24 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             tile_cfg = tile.get("chart_config") or {}
             if not isinstance(tile_cfg, dict):
                 tile_cfg = {}
+            legend = tile.get("side_legend")
+            has_side_legend = isinstance(legend, list) and bool(legend)
             # #138: host side_callout on the tile (PDF tile-local top 49.8px),
             # not the chart wrap whose top sits ~72px lower after totals/label.
             callout_on_tile = side_callout_active(tile_cfg, chart_type)
-            paint_cfg = (
-                {**tile_cfg, "_side_callout_external": True}
-                if callout_on_tile
-                else tile_cfg
-            )
+            if callout_on_tile and has_side_legend:
+                print(
+                    "[side_callout] omitted: tile side_legend occupies the exterior-name lane",
+                    file=sys.stderr,
+                )
+                paint_cfg = {k: v for k, v in tile_cfg.items() if k != "side_callout"}
+                callout_on_tile = False
+            else:
+                paint_cfg = (
+                    {**tile_cfg, "_side_callout_external": True}
+                    if callout_on_tile and use_chartjs
+                    else tile_cfg
+                )
             sub_slide = {
                 **slide,
                 "layout_type": chart_type,
@@ -409,9 +420,12 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             tile_pad = 0 if tile_skin == "ir" else 16
             side_html = (
                 _build_side_callout_html(
-                    tile_cfg, chart_type, host="tile", tile_pad_px=tile_pad
+                    tile_cfg,
+                    chart_type,
+                    host="tile",
+                    tile_pad_px=tile_pad,
                 )
-                if callout_on_tile
+                if callout_on_tile and use_chartjs
                 else ""
             )
             lbl = f'<div class="gl-tile-label">{esc(label)}</div>' if label else ""
@@ -421,7 +435,6 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             top_total = strip_eids(tile.get("top_total") or "")
             # #138: side_callout supersedes the pill badge on the same tile.
             badge = "" if callout_on_tile else strip_eids(tile.get("badge") or "")
-            legend = tile.get("side_legend")
             legend_html = ""
             if isinstance(legend, list) and legend:
                 items = []
@@ -467,8 +480,9 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                         if label
                         else ""
                     )
+                    tile_container = ' style="container-type:inline-size"' if callout_on_tile else ""
                     parts.append(
-                        f'<div class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir">'
+                        f'<div class="gl-tile gl-tile-chart gl-tile-tall gl-tile-ir"{tile_container}>'
                         f'<div class="gl-tile-ir-head">{head_total}{head_lbl}</div>'
                         f"{badge_html}{side_html}{body}"
                         f"</div>"
@@ -479,8 +493,9 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                         if top_total
                         else ""
                     )
+                    tile_container = ' style="container-type:inline-size"' if callout_on_tile else ""
                     parts.append(
-                        f'<div class="gl-tile gl-tile-chart gl-tile-tall">'
+                        f'<div class="gl-tile gl-tile-chart gl-tile-tall"{tile_container}>'
                         f"{badge_html}{side_html}{total_html}{lbl}{body}"
                         f"</div>"
                     )

@@ -5,6 +5,7 @@ import math
 import sys
 from typing import Any, Mapping
 from ..strip import esc, strip_eids
+from .geometry import chart_geometry
 
 # N5/#138: shared-column side callout (plain HTML furniture, not a Chart.js plugin).
 _SIDE_CALLOUT_LAYOUTS = frozenset({"stacked_bar_chart"})
@@ -17,6 +18,11 @@ _SIDE_CALLOUT_TILE_TOP_PX = 49.8
 # Gap between callout bottom and first exterior name (stage/canvas px).
 _SIDE_CALLOUT_NAME_GAP_PX = 8
 _SIDE_CALLOUT_MIN_PLOT_WIDTH = 240
+_SIDE_CALLOUT_MAX_LINES = 4
+_SIDE_CALLOUT_MIN_SIZE = 12
+_SIDE_CALLOUT_MAX_SIZE = 32
+_SIDE_CALLOUT_MAX_TEXT_LENGTH = 32
+_SIDE_CALLOUT_CHAR_WIDTH = 0.45
 
 # Opt-in only: patches shell segmentNames at Chart.register time so exterior
 # names clear the callout. Emitted next to the aside — never in global shell.
@@ -42,6 +48,12 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         var cbr = callEl.getBoundingClientRect();
         var ccr = canvas.getBoundingClientRect();
         if (!(ccr.height > 0)) return base.call(this, chart);
+        if (cbr.width <= 0 || callEl.scrollWidth > cbr.width ||
+            cbr.left < ccr.left || cbr.right > ccr.right || cbr.bottom > ccr.bottom) {
+          callEl.style.display = 'none';
+          console.warn('[side_callout] omitted: callout does not fit the measured exterior-name lane');
+          return base.call(this, chart);
+        }
         var minWidth = parseFloat(callEl.getAttribute('data-side-callout-min-plot-width') || '');
         var area = chart.chartArea;
         if (!isNaN(minWidth) && area && area.right - area.left < minWidth) {
@@ -63,6 +75,11 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         try { base.call(this, chart); }
         finally { ctx.fillText = orig; }
         if (!batch.length) return;
+        if (nameMin + (batch.length - 1) * lh + lh / 2 > chart.height) {
+          callEl.style.display = 'none';
+          console.warn('[side_callout] omitted: exterior names do not fit below callout');
+          return;
+        }
         var extra = Math.max(0, nameMin - batch[0].y);
         for (var j = 0; j < batch.length; j++) {
           var it = batch[j];
@@ -349,52 +366,64 @@ def _build_callout_overlays(
     return "".join(parts)
 
 
-def _side_callout_lines(raw: Mapping[str, Any]) -> list[dict[str, Any]] | None:
-    """Normalize structured side_callout into generic paint lines.
+def _side_callout_line_height(size: int) -> int:
+    return max(29, math.ceil(size * 1.115))
 
-    Accepted shapes (least API that stays generic, no issuer heuristics):
-    - ``lines``: list of strings or ``{text, size?}`` dicts
-    - ``value`` + ``label``: value is one line; label may be a string or
-      list of strings (explicit breaks — no free-form splitting)
-    """
+
+def _side_callout_lines(
+    raw: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]] | None, str | None]:
+    """Normalize bounded structured side_callout lines into paint lines."""
     lines_in = raw.get("lines")
-    out: list[dict[str, Any]] = []
-    if isinstance(lines_in, (list, tuple)) and lines_in:
-        for i, item in enumerate(lines_in):
+    items: list[tuple[Any, Any]] = []
+    if lines_in is not None:
+        if not isinstance(lines_in, (list, tuple)) or not lines_in:
+            return None, "lines must be a non-empty list"
+        if len(lines_in) > _SIDE_CALLOUT_MAX_LINES:
+            return None, f"lines exceed maximum of {_SIDE_CALLOUT_MAX_LINES}"
+        for item in lines_in:
             if isinstance(item, Mapping):
-                text = strip_eids(item.get("text") or item.get("value") or "")
-                size = item.get("size")
+                items.append((item.get("text", item.get("value")), item.get("size")))
+            elif isinstance(item, str):
+                items.append((item, None))
             else:
-                text = strip_eids(item)
-                size = None
-            if not text:
-                continue
-            entry: dict[str, Any] = {"text": text}
-            if (
-                not isinstance(size, bool)
-                and isinstance(size, (int, float))
-                and math.isfinite(size)
-                and size > 0
-            ):
-                entry["size"] = int(size)
-            elif i == 0:
-                entry["size"] = _SIDE_CALLOUT_LEAD_SIZE
-            out.append(entry)
+                return None, "each line must be text or an object"
     else:
-        value = strip_eids(raw.get("value") or "")
+        value = raw.get("value")
         label = raw.get("label")
-        if value:
-            out.append({"text": value, "size": _SIDE_CALLOUT_LEAD_SIZE})
+        if value is not None:
+            items.append((value, _SIDE_CALLOUT_LEAD_SIZE))
         if isinstance(label, (list, tuple)):
-            for part in label:
-                t = strip_eids(part)
-                if t:
-                    out.append({"text": t})
-        else:
-            t = strip_eids(label or "")
-            if t:
-                out.append({"text": t})
-    return out or None
+            items.extend((part, None) for part in label)
+        elif label is not None:
+            items.append((label, None))
+    if not items or len(items) > _SIDE_CALLOUT_MAX_LINES:
+        return None, f"lines exceed maximum of {_SIDE_CALLOUT_MAX_LINES}"
+    out: list[dict[str, Any]] = []
+    for index, (text_raw, size_raw) in enumerate(items):
+        if not isinstance(text_raw, str):
+            return None, "line text must be a string"
+        text = strip_eids(text_raw).strip()
+        if not text:
+            return None, "line text must not be empty"
+        if len(text) > _SIDE_CALLOUT_MAX_TEXT_LENGTH:
+            return None, f"line text exceeds maximum of {_SIDE_CALLOUT_MAX_TEXT_LENGTH} characters"
+        size = _SIDE_CALLOUT_LEAD_SIZE if index == 0 else _SIDE_CALLOUT_DEFAULT_SIZE
+        if size_raw is not None:
+            if (
+                isinstance(size_raw, bool)
+                or not isinstance(size_raw, (int, float))
+                or not math.isfinite(size_raw)
+                or not float(size_raw).is_integer()
+                or not _SIDE_CALLOUT_MIN_SIZE <= size_raw <= _SIDE_CALLOUT_MAX_SIZE
+            ):
+                return None, (
+                    f"line size must be a whole number from {_SIDE_CALLOUT_MIN_SIZE} "
+                    f"to {_SIDE_CALLOUT_MAX_SIZE}"
+                )
+            size = int(size_raw)
+        out.append({"text": text, "size": size, "line_height": _side_callout_line_height(size)})
+    return out, None
 
 
 def _side_column_geometry(
@@ -461,10 +490,13 @@ def _resolve_side_callout(
                 file=sys.stderr,
             )
         return None
-    lines = _side_callout_lines(raw)
+    lines, lines_error = _side_callout_lines(raw)
     if not lines:
         if warn:
-            print("[side_callout] ignored: empty value/label/lines", file=sys.stderr)
+            print(
+                f"[side_callout] ignored: {lines_error or 'empty value/label/lines'}",
+                file=sys.stderr,
+            )
         return None
     column = _side_column_geometry(chart_cfg)
     if not column:
@@ -475,10 +507,35 @@ def _resolve_side_callout(
             )
         return None
     offset, gutter = column
-    plot_width = 900 - 70 - gutter
+    geom = chart_geometry("stacked_bar_chart")
+    plot_width = geom["width"] - geom["pad_l"] - gutter
+    lane_width = gutter - offset
+    required_lane_width = max(
+        math.ceil(len(str(line["text"])) * int(line["size"]) * _SIDE_CALLOUT_CHAR_WIDTH)
+        for line in lines
+    )
+    callout_height = sum(int(line["line_height"]) for line in lines)
+    names_height = 12 + 3 * 16
+    available_height = geom["height"] - _SIDE_CALLOUT_TILE_TOP_PX - _SIDE_CALLOUT_NAME_GAP_PX - names_height
     if plot_width <= 0:
         if warn:
             print("[side_callout] omitted: exterior-name gutter leaves no plot", file=sys.stderr)
+        return None
+    if lane_width < required_lane_width:
+        if warn:
+            print(
+                f"[side_callout] omitted: exterior-name lane {lane_width}px "
+                f"< required callout width {required_lane_width}px",
+                file=sys.stderr,
+            )
+        return None
+    if callout_height > available_height:
+        if warn:
+            print(
+                f"[side_callout] omitted: callout height {callout_height}px "
+                f"> available column height {available_height:.1f}px",
+                file=sys.stderr,
+            )
         return None
     min_w = raw.get("min_plot_width")
     if min_w is not None and (
@@ -507,7 +564,33 @@ def _resolve_side_callout(
         "offset": offset,
         "gutter": gutter,
         "min_plot_width": min_w,
+        "lane_width": lane_width,
     }
+
+
+def _build_side_callout_svg(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str,
+    *,
+    warn: bool = True,
+) -> str:
+    """HTML callout embedded in the SVG coordinate system for JS-off charts."""
+    plan = _resolve_side_callout(chart_cfg, layout, warn=warn)
+    if not plan:
+        return ""
+    geom = chart_geometry("stacked_bar_chart")
+    x = geom["width"] - plan["gutter"] + plan["offset"]
+    lines = "".join(
+        f'<div style="font-size:{line["size"]}px;font-weight:700;color:{_SIDE_CALLOUT_COLOR};line-height:{line["line_height"]}px">{esc(str(line["text"]))}</div>'
+        for line in plan["lines"]
+    )
+    return (
+        f'<foreignObject x="{x}" y="{_SIDE_CALLOUT_TILE_TOP_PX}" '
+        f'width="{plan["lane_width"]}" height="{geom["height"] - _SIDE_CALLOUT_TILE_TOP_PX}">'
+        f'<aside xmlns="http://www.w3.org/1999/xhtml" class="chart-side-callout chart-side-callout--{esc(plan["skin"])} chart-side-callout--{esc(plan["placement"])}" '
+        f'style="margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{_SIDE_CALLOUT_COLOR};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;text-align:left;width:{plan["lane_width"]}px" aria-label="{esc(plan["aria"])}">'
+        f"{lines}</aside></foreignObject>"
+    )
 
 
 def _build_side_callout_html(
@@ -533,32 +616,29 @@ def _build_side_callout_html(
     top_css = f"top:{_SIDE_CALLOUT_TILE_TOP_PX}px"
     line_html = []
     for ln in plan["lines"]:
-        size = int(ln.get("size") or _SIDE_CALLOUT_DEFAULT_SIZE)
+        size = int(ln["size"])
+        line_height = int(ln["line_height"])
         line_html.append(
-            f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{ink};line-height:29px">{esc(str(ln["text"]))}</div>'
+            f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{ink};line-height:{line_height}px">{esc(str(ln["text"]))}</div>'
         )
-    # Shared x with exterior names: chartArea.right + offset ≡ wrap_width - gutter + offset.
-    # Tile padding-box is wider than the wrap by tile_pad on each side — subtract one pad
-    # so left lands on the same column as the wrap-hosted formula.
     if host == "tile":
         pad = max(0, int(tile_pad_px))
         left = (
             f"calc(100% - var(--side-callout-gutter) + var(--side-callout-offset)"
             f" - {pad}px)"
         )
-        anchor = "tile"
+        width = "width:calc(var(--side-callout-gutter) - var(--side-callout-offset));max-width:160px"
     else:
-        left = (
-            "calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))"
-        )
-        anchor = "wrap"
+        left = "calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))"
+        width = "width:calc(var(--side-callout-gutter) - var(--side-callout-offset));max-width:160px"
+    anchor = "tile" if host == "tile" else "wrap"
     aside = (
         f'<aside class="chart-side-callout chart-side-callout--{esc(plan["skin"])} '
         f'chart-side-callout--{esc(plan["placement"])}" '
         f'data-side-callout-anchor="{anchor}" '
         f'data-side-callout-name-gap="{_SIDE_CALLOUT_NAME_GAP_PX}" '
         f'data-side-callout-min-plot-width="{plan["min_plot_width"] or ""}" '
-        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;{top_css};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{ink};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;width:max-content;max-width:160px;left:{left};right:auto" '
+        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;{top_css};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{ink};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;{width};left:{left};right:auto" '
         f'aria-label="{esc(plan["aria"])}">'
         f'{ "".join(line_html) }'
         f"</aside>"

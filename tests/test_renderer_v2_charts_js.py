@@ -2931,6 +2931,7 @@ class TestSideCallout:
         assert "max-width:160px" in html
         assert "color:#53565A" in html
         assert "left:calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))" in html
+        assert "width:calc(var(--side-callout-gutter) - var(--side-callout-offset))" in html
         assert "line-height:29px" in html
         # PDF p28 tile-local offset (49.8px), not a guessed wrap-local 12px.
         assert "top:49.8px" in html
@@ -3043,8 +3044,8 @@ class TestSideCallout:
 
     def test_svg_path_emits_shared_name_column_and_callout(self, tmp_path):
         html = self._render(tmp_path, _side_callout_cfg(), suppress=["charts"])
-        assert "<aside class=\"chart-side-callout" in html
-        assert "chart-svg-wrap--side-callout" in html
+        assert '<aside xmlns="http://www.w3.org/1999/xhtml" class="chart-side-callout' in html
+        assert "chart-svg-wrap--side-callout" not in html
         assert "92% FDIC" in html
         assert "vbar-segment-name" in html
         assert ">NCO</text>" in html and ">RR</text>" in html
@@ -3104,7 +3105,7 @@ class TestSideCallout:
         # Tile host: callout is a direct child of the tall tile, not the wrap.
         assert 'data-side-callout-anchor="tile"' in html
         assert "top:49.8px" in html
-        # left compensates tile pad so x matches exterior-name column
+        # The Chart.js tile host keeps the existing CSS-pixel column formula.
         assert "- 16px)" in html
         # chart wrap must not also embed a second callout
         assert html.count("<aside class=\"chart-side-callout") == 1
@@ -3149,3 +3150,51 @@ class TestSideCallout:
         ).read_text(encoding="utf-8")
         assert "chart-side-callout" not in shell
         assert "sideCallout" not in shell
+
+    @pytest.mark.parametrize(
+        "cfg, diagnostic",
+        [
+            (_side_callout_cfg(segment_name_gutter=23, segment_name_offset=22), "exterior-name lane"),
+            (_side_callout_cfg(segment_name_offset="wide"), "requires a valid exterior_segment_names column"),
+            (_side_callout_cfg(side_callout={"lines": ["x"] * 5}), "lines exceed maximum"),
+            (_side_callout_cfg(side_callout={"lines": [{"text": "x", "size": 10**9}]}), "line size"),
+        ],
+    )
+    def test_invalid_or_over_budget_callout_omits_with_diagnostic(
+        self, tmp_path, capsys, cfg, diagnostic
+    ):
+        html = self._render(tmp_path, cfg)
+        assert '<aside class="chart-side-callout' not in html
+        assert diagnostic in capsys.readouterr().err
+
+    def test_svg_callout_uses_viewbox_coordinates(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg(), suppress=["charts"])
+        assert '<foreignObject x="772" y="49.8" width="128"' in html
+        assert "font-size:26px" in html
+
+    def test_svg_multi_panel_callout_uses_scaled_tile_column(self, tmp_path):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart", "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, suppress_features=["charts"])
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<foreignObject x="772" y="49.8" width="128"' in html
+
+    def test_multi_panel_callout_omits_when_side_legend_owns_right_lane(
+        self, tmp_path, capsys
+    ):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart", "steps_or_data": PROVISION_STACK,
+            "side_legend": [{"label": "Legend"}], "chart_config": _side_callout_cfg(),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<aside class="chart-side-callout' not in html
+        assert "side_legend occupies the exterior-name lane" in capsys.readouterr().err
