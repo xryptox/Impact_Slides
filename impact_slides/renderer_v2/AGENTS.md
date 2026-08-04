@@ -18,7 +18,7 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
 - Shared field accessors: `slide_view.py` only (`content`, `steps`, `primary_visual`, `visual_type`). `content()` must keep the `isinstance(..., dict)` guard — bare `or {}` crashes on string content
 - `cli.py` paints **raw** `handoff["slides"]` after `validate_handoff` (load-bearing; do not paint validated models without fixing fallback field loss — see issue history #133)
 - `validate_handoff` fallback must be non-lossy **and** total (spread raw + degrade path)
-- No external chart pack; no `Path.home()` anywhere under this tree
+- No external chart pack; no home-directory lookups anywhere under this tree
 - Delivery default: self-contained (`DeliveryMode.SELF_CONTAINED`)
 
 ## Work Guidance
@@ -37,7 +37,7 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
 
 - `python -m pytest -q` — suite must stay green
 - `python scripts/gen_layout_index.py --check`
-- CI also greps this tree for `Path.home()`
+- CI also greps this tree for home-directory lookups (`Path` + `.home()`)
 - For dispatch/registry and crash-degrade changes: mutation-test the new assertions (green suite alone has lied here before)
 
 ## Child DOX Index
