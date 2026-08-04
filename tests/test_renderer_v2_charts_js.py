@@ -3060,6 +3060,12 @@ class TestSideCallout:
         assert "<aside class=\"chart-side-callout" not in html
         assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
 
+    @pytest.mark.parametrize("side_callout", [[], "", 0, {}])
+    def test_malformed_falsy_callout_emits_diagnostic(self, tmp_path, capsys, side_callout):
+        html = self._render(tmp_path, _side_callout_cfg(side_callout=side_callout))
+        assert '<aside class="chart-side-callout' not in html
+        assert "ignored" in capsys.readouterr().err
+
     @pytest.mark.parametrize("value", ["wide", [], float("inf")])
     def test_invalid_name_column_values_fail_soft(self, tmp_path, capsys, value):
         html = self._render(
@@ -3188,11 +3194,30 @@ class TestSideCallout:
         assert "top:49.8px" in html
         assert '<foreignObject x="772" y="49.8" width="128"' not in html
 
+    def test_three_column_multi_panel_omits_unfit_callout(self, tmp_path, capsys):
+        tile = {
+            "kind": "chart", "chart_type": "stacked_bar_chart", "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(),
+        }
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [tile] * 5}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, suppress_features=["charts"])
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<aside class="chart-side-callout' not in html
+        assert "exterior-name lane" in capsys.readouterr().err
+
     def test_noscript_hides_wrap_callout_before_painting_svg(self, tmp_path):
         html = self._render(tmp_path, _side_callout_cfg())
         assert '<style>[data-side-callout-html=wrap]{display:none}</style>' in html
         assert html.count('<aside class="chart-side-callout') == 1
         assert '<foreignObject x="772" y="49.8" width="128"' in html
+
+    def test_name_gap_script_converts_scaled_stage_coordinates(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert "var hostScaleX = hbr.width / host.offsetWidth;" in html
+        assert "(ccr.right - hbr.left) / hostScaleX" in html
 
     def test_svg_invalid_callout_emits_diagnostic(self, tmp_path, capsys):
         html = self._render(

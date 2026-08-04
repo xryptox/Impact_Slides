@@ -371,6 +371,9 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
     tiles = pv.get("tiles") if isinstance(pv, dict) else None
     if not isinstance(tiles, list) or not tiles:
         return render_metric(slide, total, notes, active=active)
+    tile_count = sum(isinstance(tile, dict) for tile in tiles)
+    cols = 2 if tile_count <= 4 else 3
+    tile_width = (1920 - 2 * 96 - (cols - 1) * 18) / cols - 2 * 17
     parts = []
     for tile in tiles:
         if not isinstance(tile, dict):
@@ -388,20 +391,23 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             has_side_legend = isinstance(legend, list) and bool(legend)
             # #138: host side_callout on the tile (PDF tile-local top 49.8px),
             # not the chart wrap whose top sits ~72px lower after totals/label.
-            callout_on_tile = side_callout_active(tile_cfg, chart_type)
+            callout_requested = "side_callout" in tile_cfg
+            callout_on_tile = side_callout_active(
+                tile_cfg, chart_type, available_width=tile_width, warn=True
+            )
             if callout_on_tile and has_side_legend:
                 print(
                     "[side_callout] omitted: tile side_legend occupies the exterior-name lane",
                     file=sys.stderr,
                 )
-                paint_cfg = {k: v for k, v in tile_cfg.items() if k != "side_callout"}
                 callout_on_tile = False
-            else:
-                paint_cfg = (
-                    {**tile_cfg, "_side_callout_external": True}
-                    if callout_on_tile
-                    else tile_cfg
-                )
+            paint_cfg = (
+                {**tile_cfg, "_side_callout_external": True}
+                if callout_on_tile
+                else {k: v for k, v in tile_cfg.items() if k != "side_callout"}
+                if callout_requested
+                else tile_cfg
+            )
             sub_slide = {
                 **slide,
                 "layout_type": chart_type,
@@ -424,8 +430,10 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     chart_type,
                     host="tile",
                     tile_pad_px=tile_pad,
+                    available_width=tile_width,
+                    warn=False,
                 )
-                if callout_on_tile
+                if callout_requested and not has_side_legend
                 else ""
             )
             lbl = f'<div class="gl-tile-label">{esc(label)}</div>' if label else ""
@@ -513,8 +521,6 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             )
     if not parts:
         return render_metric(slide, total, notes, active=active)
-    n = len(parts)
-    cols = 2 if n <= 4 else 3
     main = (
         f'<div class="gl-multi-panel gl-multi-panel-{cols}col">'
         f'{"".join(parts)}'
@@ -530,7 +536,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
         footer_html=source_strip(_source_names(slide)),
         layout_class="multi_panel",
         active=active,
-        item_count=n,
+        item_count=len(parts),
     )
 
 

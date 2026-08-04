@@ -50,8 +50,9 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         var hbr = host.getBoundingClientRect();
         var offset = parseFloat(callEl.getAttribute('data-side-callout-offset') || '');
         var gutter = parseFloat(callEl.getAttribute('data-side-callout-gutter') || '');
-        if (!(ccr.height > 0) || isNaN(offset) || isNaN(gutter)) return base.call(this, chart);
-        callEl.style.left = (ccr.right - hbr.left - gutter + offset) + 'px';
+        var hostScaleX = hbr.width / host.offsetWidth;
+        if (!(ccr.height > 0) || !(hostScaleX > 0) || isNaN(offset) || isNaN(gutter)) return base.call(this, chart);
+        callEl.style.left = ((ccr.right - hbr.left) / hostScaleX - gutter + offset) + 'px';
         callEl.style.width = (gutter - offset) + 'px';
         cbr = callEl.getBoundingClientRect();
         if (cbr.width <= 0 || callEl.scrollWidth > cbr.width ||
@@ -465,6 +466,7 @@ def _resolve_side_callout(
     layout: str,
     *,
     warn: bool = True,
+    available_width: float | None = None,
 ) -> dict[str, Any] | None:
     """Return paint plan for opt-in side_callout, or None when inert/unsupported.
 
@@ -475,9 +477,9 @@ def _resolve_side_callout(
     """
     if not isinstance(chart_cfg, Mapping):
         return None
-    raw = chart_cfg.get("side_callout")
-    if not raw:
+    if "side_callout" not in chart_cfg:
         return None
+    raw = chart_cfg["side_callout"]
     if not isinstance(raw, Mapping):
         if warn:
             print(
@@ -535,10 +537,13 @@ def _resolve_side_callout(
         if warn:
             print("[side_callout] omitted: exterior-name gutter leaves no plot", file=sys.stderr)
         return None
-    if lane_width < required_lane_width:
+    effective_lane_width = lane_width
+    if available_width is not None:
+        effective_lane_width = lane_width * available_width / geom["width"]
+    if effective_lane_width < required_lane_width:
         if warn:
             print(
-                f"[side_callout] omitted: exterior-name lane {lane_width}px "
+                f"[side_callout] omitted: exterior-name lane {effective_lane_width:.1f}px "
                 f"< required callout width {required_lane_width}px",
                 file=sys.stderr,
             )
@@ -614,6 +619,7 @@ def _build_side_callout_html(
     warn: bool = True,
     host: str = "wrap",
     tile_pad_px: int = 16,
+    available_width: float | None = None,
 ) -> str:
     """Plain HTML/CSS side callout furniture (Chart.js + JS-off paths).
 
@@ -622,7 +628,9 @@ def _build_side_callout_html(
     host="tile": multi-panel tile coords (PDF local top offset). host="wrap":
     chart wrap is the containing block (standalone).
     """
-    plan = _resolve_side_callout(chart_cfg, layout, warn=warn)
+    plan = _resolve_side_callout(
+        chart_cfg, layout, warn=warn, available_width=available_width
+    )
     if not plan:
         return ""
     ink = _SIDE_CALLOUT_COLOR  # '#53565A' — quoted CSS string for token-audit
@@ -665,6 +673,11 @@ def _build_side_callout_html(
 def side_callout_active(
     chart_cfg: Mapping[str, Any] | None,
     layout: str = "stacked_bar_chart",
+    *,
+    available_width: float | None = None,
+    warn: bool = False,
 ) -> bool:
     """True when side_callout will paint (suppresses competing tile badge)."""
-    return _resolve_side_callout(chart_cfg, layout, warn=False) is not None
+    return _resolve_side_callout(
+        chart_cfg, layout, warn=warn, available_width=available_width
+    ) is not None
