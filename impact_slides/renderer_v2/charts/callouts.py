@@ -28,7 +28,25 @@ _SIDE_CALLOUT_NAME_KNOB_RANGES = {
     "segment_name_wrap_chars": (4, 32),
     "segment_name_max_lines": (1, 4),
 }
-_SIDE_CALLOUT_CHAR_WIDTH = 0.45
+_SIDE_CALLOUT_CHAR_EM = {
+    " ": 0.22, "'": 0.21, "\u2019": 0.21, ".": 0.28, ",": 0.28, ":": 0.28,
+    ";": 0.28, "!": 0.30, "|": 0.28, '"': 0.36,
+    "(": 0.35, ")": 0.35, "[": 0.35, "]": 0.35,
+    "-": 0.38, "/": 0.42, "\\": 0.42, "?": 0.54, "*": 0.50, "_": 0.56,
+    "\u2013": 0.56, "\u2014": 0.82, "+": 0.60, "=": 0.60, "<": 0.60, ">": 0.60,
+    "#": 0.70, "$": 0.57, "\u20ac": 0.57, "\u00a3": 0.57, "\u00a5": 0.57,
+    "%": 0.78, "@": 0.95, "&": 0.75,
+    "i": 0.27, "j": 0.28, "l": 0.27, "f": 0.34, "t": 0.37, "r": 0.40,
+    "w": 0.78, "m": 0.90,
+    "I": 0.29, "J": 0.55, "F": 0.55, "L": 0.56, "E": 0.60, "S": 0.60,
+    "T": 0.60, "Z": 0.61, "Y": 0.61, "P": 0.63, "X": 0.63, "R": 0.65,
+    "B": 0.66, "K": 0.66, "V": 0.66, "A": 0.67, "C": 0.66, "D": 0.66,
+    "G": 0.72, "U": 0.73, "H": 0.74, "N": 0.74, "O": 0.75, "Q": 0.75,
+    "M": 0.87, "W": 0.93,
+}
+_SIDE_CALLOUT_EM_DIGIT = 0.57
+_SIDE_CALLOUT_EM_UPPER = 0.75
+_SIDE_CALLOUT_EM_DEFAULT = 0.56
 
 # Opt-in only: patches shell segmentNames at Chart.register time so exterior
 # names clear the callout. Emitted next to the aside — never in global shell.
@@ -54,15 +72,16 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         var cbr = callEl.getBoundingClientRect();
         var ccr = canvas.getBoundingClientRect();
         var hbr = host.getBoundingClientRect();
-        var offset = parseFloat(callEl.getAttribute('data-side-callout-offset') || '');
-        var gutter = parseFloat(callEl.getAttribute('data-side-callout-gutter') || '');
+        var laneLeft = parseFloat(callEl.getAttribute('data-side-callout-lane-left') || '');
+        var laneWidth = parseFloat(callEl.getAttribute('data-side-callout-lane-width') || '');
         var hostScaleX = hbr.width / host.offsetWidth;
-        if (!(ccr.height > 0) || !(hostScaleX > 0) || isNaN(offset) || isNaN(gutter)) return base.call(this, chart);
-        callEl.style.left = ((ccr.right - hbr.left) / hostScaleX - gutter + offset) + 'px';
-        callEl.style.width = (gutter - offset) + 'px';
+        if (!(ccr.height > 0) || !(hostScaleX > 0) || isNaN(laneLeft) || isNaN(laneWidth)) return base.call(this, chart);
+        var canvasWidth = ccr.width / hostScaleX;
+        callEl.style.left = ((ccr.left - hbr.left) / hostScaleX + canvasWidth * laneLeft / 100) + 'px';
+        callEl.style.width = (canvasWidth * laneWidth / 100) + 'px';
         cbr = callEl.getBoundingClientRect();
         if (callEl.clientWidth <= 0 || callEl.scrollWidth > callEl.clientWidth ||
-            cbr.left < ccr.left || cbr.right > ccr.right || cbr.bottom > ccr.bottom) {
+            cbr.left < ccr.left - 1 || cbr.right > ccr.right + 1 || cbr.bottom > ccr.bottom) {
           callEl.style.display = 'none';
           console.warn('[side_callout] omitted: callout does not fit the measured exterior-name lane');
           return base.call(this, chart);
@@ -391,6 +410,20 @@ def _side_callout_line_height(size: int) -> int:
     return max(29, math.ceil(size * 1.115))
 
 
+def _side_callout_text_width(text: str, size: int) -> float:
+    return sum(
+        _SIDE_CALLOUT_CHAR_EM.get(
+            ch,
+            _SIDE_CALLOUT_EM_DIGIT
+            if ch.isdigit()
+            else _SIDE_CALLOUT_EM_UPPER
+            if ch.isupper()
+            else _SIDE_CALLOUT_EM_DEFAULT,
+        )
+        for ch in text
+    ) * size
+
+
 def _side_callout_lines(
     raw: Mapping[str, Any],
 ) -> tuple[list[dict[str, Any]] | None, str | None]:
@@ -572,7 +605,7 @@ def _resolve_side_callout(
     plot_width = geom["width"] - geom["pad_l"] - gutter
     lane_width = gutter - offset
     required_lane_width = max(
-        math.ceil(len(str(line["text"])) * int(line["size"]) * _SIDE_CALLOUT_CHAR_WIDTH)
+        _side_callout_text_width(str(line["text"]), int(line["size"]))
         for line in lines
     )
     callout_height = sum(int(line["line_height"]) for line in lines)
@@ -704,6 +737,7 @@ def _build_side_callout_html(
         f'chart-side-callout--{esc(plan["placement"])}" '
         f'data-side-callout-html="{anchor}" data-side-callout-anchor="{anchor}" '
         f'data-side-callout-offset="{plan["offset"]}" data-side-callout-gutter="{plan["gutter"]}" '
+        f'data-side-callout-lane-left="{x_pct:.6f}" data-side-callout-lane-width="{lane_pct:.6f}" '
         f'data-side-callout-name-gap="{_SIDE_CALLOUT_NAME_GAP_PX}" '
         f'data-side-callout-min-plot-width="{plan["min_plot_width"] or ""}" '
         f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;{top_css};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{ink};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;{width};left:{left};right:auto" '

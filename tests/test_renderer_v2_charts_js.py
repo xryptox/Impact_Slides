@@ -3224,8 +3224,18 @@ class TestSideCallout:
     def test_name_gap_script_uses_unscaled_fit_width(self, tmp_path):
         html = self._render(tmp_path, _side_callout_cfg())
         assert "var hostScaleX = hbr.width / host.offsetWidth;" in html
-        assert "(ccr.right - hbr.left) / hostScaleX" in html
         assert "callEl.scrollWidth > callEl.clientWidth" in html
+
+    def test_name_gap_script_maps_shared_lane_proportionally(self, tmp_path):
+        # The shared right lane is a proportion of the 900-unit chart geometry,
+        # mapped into Chart.js CSS coords the same way the SVG viewBox maps it.
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert 'data-side-callout-lane-left="85.777778"' in html
+        assert 'data-side-callout-lane-width="14.222222"' in html
+        assert "canvasWidth * laneLeft / 100" in html
+        assert "canvasWidth * laneWidth / 100" in html
+        assert "(ccr.left - hbr.left) / hostScaleX" in html
+        assert "(gutter - offset) + 'px'" not in html
 
     def test_legacy_name_column_coercions_survive_without_callout(self, tmp_path):
         conf = _chartjs_cfg(self._render(tmp_path, {
@@ -3270,6 +3280,39 @@ class TestSideCallout:
         )
         assert '<aside class="chart-side-callout' not in html
         assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
+    def test_multi_panel_badge_only_tile_keeps_tall_geometry(self, tmp_path):
+        # A badge-only tile is tall; enabling the callout suppresses only the
+        # badge chrome — the tall-card geometry must not rebalance.
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart", "label": "Deposit Programs",
+            "badge": "92% of deposits FDIC insured*",
+            "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<div class="gl-tile gl-tile-chart gl-tile-tall">' in html
+        assert 'class="gl-tile-badge"' not in html
+        assert "92% of deposits FDIC insured*" not in html
+        assert '<aside class="chart-side-callout' in html
+
+    def test_unbreakable_wide_text_omitted_with_diagnostic(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            _side_callout_cfg(
+                side_callout={
+                    "lines": [{"text": "WWWWWWWWWW", "size": 26}],
+                    "placement": "right",
+                    "skin": "tall",
+                }
+            ),
+        )
+        assert '<aside class="chart-side-callout' not in html
+        assert "exterior-name lane" in capsys.readouterr().err
 
     def test_multi_panel_callout_omits_when_side_legend_owns_right_lane(
         self, tmp_path, capsys

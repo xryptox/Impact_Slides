@@ -442,8 +442,10 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             # exterior side legend, badge callout. Only engaged when present,
             # so legacy tiles keep their existing chrome.
             top_total = strip_eids(tile.get("top_total") or "")
-            # #138: side_callout supersedes the pill badge on the same tile.
-            badge = "" if callout_on_tile else strip_eids(tile.get("badge") or "")
+            # #138: side_callout supersedes the pill badge chrome on the same
+            # tile, but the tile keeps its existing tall-card geometry.
+            badge_text = strip_eids(tile.get("badge") or "")
+            badge = "" if callout_on_tile else badge_text
             legend_html = ""
             if isinstance(legend, list) and legend:
                 items = []
@@ -463,7 +465,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     items.append(f'<li class="gl-tile-legend-item">{sw}{esc(txt)}</li>')
                 if items:
                     legend_html = f'<ul class="gl-tile-legend">{"".join(items)}</ul>'
-            if top_total or badge or legend_html:
+            if top_total or badge or legend_html or badge_text:
                 badge_html = (
                     f'<span class="gl-tile-badge">{esc(badge)}</span>' if badge else ""
                 )
