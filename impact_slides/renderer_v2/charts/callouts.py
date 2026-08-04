@@ -1,8 +1,15 @@
 """Callout overlay geometry for chart panes."""
 from __future__ import annotations
 
+import sys
 from typing import Any, Mapping
 from ..strip import esc, strip_eids
+
+# N5/#138: shared-column side callout (plain HTML furniture, not a Chart.js plugin).
+_SIDE_CALLOUT_LAYOUTS = frozenset({"stacked_bar_chart"})
+_SIDE_CALLOUT_DEFAULT_SIZE = 24
+_SIDE_CALLOUT_LEAD_SIZE = 26
+_SIDE_CALLOUT_COLOR = "#53565A"
 
 
 
@@ -271,3 +278,160 @@ def _build_callout_overlays(
             if stem:
                 parts.append(stem)
     return "".join(parts)
+
+
+def _side_callout_lines(raw: Mapping[str, Any]) -> list[dict[str, Any]] | None:
+    """Normalize structured side_callout into generic paint lines.
+
+    Accepted shapes (least API that stays generic, no issuer heuristics):
+    - ``lines``: list of strings or ``{text, size?}`` dicts
+    - ``value`` + ``label``: value is one line; label may be a string or
+      list of strings (explicit breaks — no free-form splitting)
+    """
+    lines_in = raw.get("lines")
+    out: list[dict[str, Any]] = []
+    if isinstance(lines_in, (list, tuple)) and lines_in:
+        for i, item in enumerate(lines_in):
+            if isinstance(item, Mapping):
+                text = strip_eids(item.get("text") or item.get("value") or "")
+                size = item.get("size")
+            else:
+                text = strip_eids(item)
+                size = None
+            if not text:
+                continue
+            entry: dict[str, Any] = {"text": text}
+            if isinstance(size, (int, float)) and size > 0:
+                entry["size"] = int(size)
+            elif i == 0:
+                entry["size"] = _SIDE_CALLOUT_LEAD_SIZE
+            out.append(entry)
+    else:
+        value = strip_eids(raw.get("value") or "")
+        label = raw.get("label")
+        if value:
+            out.append({"text": value, "size": _SIDE_CALLOUT_LEAD_SIZE})
+        if isinstance(label, (list, tuple)):
+            for part in label:
+                t = strip_eids(part)
+                if t:
+                    out.append({"text": t})
+        else:
+            t = strip_eids(label or "")
+            if t:
+                out.append({"text": t})
+    return out or None
+
+
+def _resolve_side_callout(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str,
+    *,
+    warn: bool = True,
+) -> dict[str, Any] | None:
+    """Return paint plan for opt-in side_callout, or None when inert/unsupported.
+
+    Shared-column Recipe A (sign-off #138): callout sits at the top of the
+    existing right text column — no second x-lane, no plot shrink. Over-budget
+    fail-soft is preserved for an explicit ``min_plot_width`` gate only; the
+    PDF/v9 shared-column case is not over-budget.
+    """
+    if not isinstance(chart_cfg, Mapping):
+        return None
+    raw = chart_cfg.get("side_callout")
+    if not raw:
+        return None
+    if not isinstance(raw, Mapping):
+        if warn:
+            print(
+                "[side_callout] ignored: side_callout must be an object",
+                file=sys.stderr,
+            )
+        return None
+    lt = (layout or "").lower().strip()
+    if lt not in _SIDE_CALLOUT_LAYOUTS:
+        if warn:
+            print(
+                f"[side_callout] ignored: unsupported layout {lt!r} "
+                f"(supported: {sorted(_SIDE_CALLOUT_LAYOUTS)})",
+                file=sys.stderr,
+            )
+        return None
+    placement = str(raw.get("placement") or "right").lower().strip()
+    skin = str(raw.get("skin") or "tall").lower().strip()
+    if placement != "right" or skin != "tall":
+        if warn:
+            print(
+                f"[side_callout] ignored: unsupported placement/skin "
+                f"{placement!r}/{skin!r} (locked: right/tall)",
+                file=sys.stderr,
+            )
+        return None
+    lines = _side_callout_lines(raw)
+    if not lines:
+        if warn:
+            print("[side_callout] ignored: empty value/label/lines", file=sys.stderr)
+        return None
+    # Fail-soft gate: only when author supplies min_plot_width AND a measured
+    # plot_width_px below it. Shared-column composition does not raise padRight.
+    min_w = raw.get("min_plot_width")
+    plot_w = chart_cfg.get("plot_width_px")
+    if (
+        isinstance(min_w, (int, float))
+        and isinstance(plot_w, (int, float))
+        and plot_w < min_w
+    ):
+        if warn:
+            print(
+                f"[side_callout] omitted: plot width {plot_w}px < min_plot_width {min_w}px",
+                file=sys.stderr,
+            )
+        return None
+    aria = " ".join(str(ln["text"]) for ln in lines)
+    return {
+        "placement": placement,
+        "skin": skin,
+        "lines": lines,
+        "aria": aria,
+        "offset": int(chart_cfg.get("segment_name_offset") or 22),
+        "gutter": int(chart_cfg.get("segment_name_gutter") or 150),
+    }
+
+
+def _build_side_callout_html(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str,
+    *,
+    warn: bool = True,
+) -> str:
+    """Plain HTML/CSS side callout furniture (Chart.js + JS-off paths)."""
+    plan = _resolve_side_callout(chart_cfg, layout, warn=warn)
+    if not plan:
+        return ""
+    line_html = []
+    for ln in plan["lines"]:
+        size = int(ln.get("size") or _SIDE_CALLOUT_DEFAULT_SIZE)
+        line_html.append(
+            f'<div class="chart-side-callout__line" style="font-size:{size}px">'
+            f'{esc(str(ln["text"]))}</div>'
+        )
+    # left edge ≈ chartArea.right + segment_name_offset inside the name gutter
+    style = (
+        f"--side-callout-offset:{plan['offset']}px;"
+        f"--side-callout-gutter:{plan['gutter']}px"
+    )
+    return (
+        f'<aside class="chart-side-callout chart-side-callout--{esc(plan["skin"])} '
+        f'chart-side-callout--{esc(plan["placement"])}" '
+        f'style="{style}" aria-label="{esc(plan["aria"])}">'
+        f'{ "".join(line_html) }'
+        f"</aside>"
+    )
+
+
+def side_callout_active(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str = "stacked_bar_chart",
+) -> bool:
+    """True when side_callout will paint (suppresses competing tile badge)."""
+    return _resolve_side_callout(chart_cfg, layout, warn=False) is not None

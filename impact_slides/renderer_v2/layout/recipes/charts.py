@@ -363,6 +363,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
     tiles. Builds on the chart-embedding pattern proven by chart_hero_dual.
     """
     from ...charts import build_chart_html
+    from ...charts.callouts import side_callout_active
 
     vs = slide.get("visual_spec") or {}
     pv = vs.get("primary_visual") or {}
@@ -376,14 +377,16 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
         kind = str(tile.get("kind") or "metric")
         label = strip_eids(tile.get("label") or "")
         if kind == "chart":
+            chart_type = str(tile.get("chart_type") or "grouped_bar_chart")
+            tile_cfg = tile.get("chart_config") or {}
             sub_slide = {
                 **slide,
-                "layout_type": str(tile.get("chart_type") or "grouped_bar_chart"),
+                "layout_type": chart_type,
                 "visual_spec": {
                     "primary_visual": {
-                        "type": str(tile.get("chart_type") or "grouped_bar_chart"),
+                        "type": chart_type,
                         "steps_or_data": tile.get("steps_or_data") or [],
-                        "chart_config": tile.get("chart_config") or {},
+                        "chart_config": tile_cfg,
                     }
                 },
             }
@@ -395,7 +398,12 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             # exterior side legend, badge callout. Only engaged when present,
             # so legacy tiles keep their existing chrome.
             top_total = strip_eids(tile.get("top_total") or "")
-            badge = strip_eids(tile.get("badge") or "")
+            # #138: side_callout supersedes the pill badge on the same tile.
+            badge = ""
+            if not side_callout_active(
+                tile_cfg if isinstance(tile_cfg, dict) else {}, chart_type
+            ):
+                badge = strip_eids(tile.get("badge") or "")
             legend = tile.get("side_legend")
             legend_html = ""
             if isinstance(legend, list) and legend:

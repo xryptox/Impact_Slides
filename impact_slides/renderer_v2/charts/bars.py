@@ -8,6 +8,7 @@ from ..strip import esc, strip_eids
 from .format import _bar_num, _fmt_bar, _fmt_value_label, _nice_max, _nice_step, _series_colors
 from .geometry import chart_geometry
 from .core import _chart_config, _steps
+from .callouts import _build_side_callout_html
 
 
 
@@ -409,7 +410,15 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         )
 
     parts.append("</svg>")
-    return "".join(parts)
+    svg = "".join(parts)
+    # N5/#138: same HTML side callout furniture as Chart.js path (JS-off).
+    side = _build_side_callout_html(cfg, "stacked_bar_chart")
+    if not side:
+        return svg
+    return (
+        f'<div class="chart-svg-wrap chart-svg-wrap--side-callout">'
+        f"{svg}{side}</div>"
+    )
 
 
 

@@ -6,7 +6,13 @@ from typing import Any, Mapping
 from ..strip import esc, strip_eids
 
 from .format import _NAVY, _NAVY_SOFT, _WHITE, _fmt_unit, _fmt_value_label, _series_color, _series_colors
-from .callouts import _CALLOUT_TYPES, _align_overlay_to_labels, _build_callout_overlays, _merge_callout_bands
+from .callouts import (
+    _CALLOUT_TYPES,
+    _align_overlay_to_labels,
+    _build_callout_overlays,
+    _build_side_callout_html,
+    _merge_callout_bands,
+)
 from .bars import _bar_matrix
 from .lines import _combo_bar_data, _combo_line_data, _line_data
 from .core import _chart_config, _svg_fallback_for_layout
@@ -731,6 +737,8 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         layout,
         chart_cfg,
     )
+    # N5/#138: shared-column side callout (HTML furniture, not a plugin).
+    side_callout_html = _build_side_callout_html(chart_cfg, layout)
     # R1 (#94): chart_config.stage "flat" drops the Boardroom stage chrome so
     # the chart sits flatter against the canvas (IR stage-dominant style).
     flat = " chartjs-flat" if chart_cfg.get("stage") == "flat" else ""
@@ -746,6 +754,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         f"{ann_html}"
         f"{break_html}"
         f"{callouts_html}"
+        f"{side_callout_html}"
         f"{noscript}"
         f"</div>"
     )
