@@ -20,6 +20,101 @@ from ..regions import gl_card, insight_strip, notes_aside, slide_shell, source_s
 from .shared import _content, _hero_stack, _so_what, _source_names, _visual_series_names, _vs_steps
 from .metrics import render_metric
 
+# #136: Chart.js runtime re-pitch for plot-aligned support tables. Emitted
+# inline only next to an aligned table (byte-inert when absent — #138 lesson).
+# Static SVG contract attrs stay; this no-ops when Chart.js is not on the page.
+_CHART_TABLE_ALIGN_JS = """
+<script data-rv2-chart-table-align="1">
+(function () {
+  if (window.__rv2ChartTableAlignInstalled) return;
+  window.__rv2ChartTableAlignInstalled = 1;
+  function pageX(canvas, chart, tickX) {
+    var r = canvas.getBoundingClientRect();
+    var k = r.width / (chart.width || r.width || 1);
+    return r.left + tickX * k;
+  }
+  function alignOne(wrap) {
+    var col = wrap.closest('.chart-col');
+    if (!col) return;
+    var colR = col.getBoundingClientRect();
+    if (!colR.width) return;
+    var canvas = col.querySelector('canvas');
+    if (!canvas || typeof Chart === 'undefined' || !Chart.getChart) return;
+    var chart = Chart.getChart(canvas);
+    if (!chart || !chart.scales || !chart.scales.x) return;
+    var xScale = chart.scales.x;
+    var isOutlined = wrap.classList.contains('chart-support-outlined');
+    var n;
+    if (isOutlined) {
+      n = wrap.querySelectorAll('.chart-outlined-cell').length;
+    } else {
+      var cols = wrap.querySelectorAll('colgroup col');
+      n = cols.length ? cols.length - 1 : 0;
+    }
+    if (n < 1) return;
+    var ticks = [];
+    for (var i = 0; i < n; i++) {
+      var tx = (typeof xScale.getPixelForTick === 'function')
+        ? xScale.getPixelForTick(i)
+        : xScale.getPixelForValue(i);
+      if (typeof tx !== 'number' || !isFinite(tx)) return;
+      ticks.push(pageX(canvas, chart, tx));
+    }
+    var first = ticks[0], last = ticks[n - 1];
+    var pitch = n === 1 ? (colR.width / 2) : (last - first) / (n - 1);
+    if (!(pitch > 0)) return;
+    var leftEdge = first - pitch / 2;
+    var rightEdge = last + pitch / 2;
+    var labelW = Math.max(0, leftEdge - colR.left);
+    var wrapW = Math.max(pitch, rightEdge - colR.left);
+    if (n > 1) wrapW = labelW + pitch * n;
+    if (!(wrapW > 0)) return;
+    wrap.style.width = (wrapW / colR.width * 100).toFixed(4) + '%';
+    if (isOutlined) {
+      var lab = wrap.querySelector('.chart-outlined-label');
+      if (lab) {
+        lab.style.flex = 'none';
+        lab.style.width = (labelW / wrapW * 100).toFixed(4) + '%';
+      }
+      var cells = wrap.querySelectorAll('.chart-outlined-cell');
+      var cw = (pitch / wrapW * 100).toFixed(4) + '%';
+      for (var c = 0; c < cells.length; c++) {
+        cells[c].style.flex = 'none';
+        cells[c].style.width = cw;
+      }
+    } else {
+      var cg = wrap.querySelectorAll('colgroup col');
+      if (cg.length >= n + 1) {
+        cg[0].style.width = (labelW / wrapW * 100).toFixed(4) + '%';
+        var tw = (pitch / wrapW * 100).toFixed(4) + '%';
+        for (var j = 1; j <= n; j++) cg[j].style.width = tw;
+      }
+    }
+  }
+  function alignAll() {
+    var list = document.querySelectorAll('.chart-table-aligned');
+    for (var i = 0; i < list.length; i++) alignOne(list[i]);
+  }
+  function boot() {
+    alignAll();
+    var n = 0;
+    var t = setInterval(function () {
+      alignAll();
+      if (++n > 60) clearInterval(t);
+    }, 50);
+  }
+  if (document.readyState === 'complete') boot();
+  else window.addEventListener('load', boot);
+  window.addEventListener('resize', alignAll);
+  try {
+    var mo = new MutationObserver(function () { alignAll(); });
+    mo.observe(document.documentElement, {
+      subtree: true, attributes: true, attributeFilter: ['class']
+    });
+  } catch (e) {}
+})();
+</script>
+"""
 
 
 def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False):
@@ -91,15 +186,24 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
             # the table shares the SVG's width context (PDF house style).
             primary = vs.get("primary_visual") or {}
             raw_steps = primary.get("steps_or_data") or []
-            labels = [
-                str(p.get("label") or p.get("x") or "").strip()
-                for p in raw_steps
-                if isinstance(p, Mapping)
-            ]
+            # Category labels from either supported primary form (#136):
+            # mapping points use label/x; row-list data skips the header row
+            # and takes the first cell of each data row.
+            if raw_steps and all(isinstance(p, Mapping) for p in raw_steps):
+                labels = [
+                    str(p.get("label") or p.get("x") or "").strip()
+                    for p in raw_steps
+                ]
+            elif (
+                len(raw_steps) > 1
+                and all(isinstance(p, (list, tuple)) and len(p) > 0 for p in raw_steps)
+            ):
+                labels = [str(r[0]).strip() for r in raw_steps[1:]]
+            else:
+                labels = []
             n = len(labels)
             aligned = (
                 n > 0
-                and len(raw_steps) == n
                 and all(len(r) == n + 1 for r in table_rows)
                 and [c.strip() for c in header[1:]] == labels
             )
@@ -167,10 +271,12 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
             # inside the chart's width context (.chart-col), whether or not
             # its columns align with chart categories. Column alignment
             # (colgroup) remains conditional on the header/category match.
+            # #136: Chart.js runtime re-pitch only when this table is aligned.
+            align_js = _CHART_TABLE_ALIGN_JS if aligned else ""
             cls = " ".join(wrap_classes + (["chart-align-table"] if aligned else []))
             main = (
                 f'<div class="chart-svg-wrap {cls}">'
-                f'<div class="chart-col">{chart_html}{tbl}</div></div>'
+                f'<div class="chart-col">{chart_html}{tbl}{align_js}</div></div>'
             )
     # Metric strip from key_stats (PDF pattern: chart + KPI row below)
     if has_stats:
