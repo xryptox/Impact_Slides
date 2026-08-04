@@ -9,13 +9,18 @@ compares them numerically.
 """
 
 import re
+from pathlib import Path
 
+from impact_slides.renderer_v2 import render_deck
 from impact_slides.renderer_v2.charts import (
     _build_line_chart_svg,
     chart_column_interval,
     chart_geometry,
 )
 from impact_slides.renderer_v2.layout.dispatch import render_slide
+
+_ALIGN_JS_MARKER = 'data-rv2-chart-table-align="1"'
+_GOLDEN = Path(__file__).resolve().parent / "fixtures" / "renderer_v2" / "golden_mvp1_handoff.json"
 
 
 def _slide(secondary=None, **vs_extra):
@@ -304,3 +309,52 @@ def test_outlined_mismatched_headers_stay_unaligned():
     # cells still render, but without pitch widths
     assert html.count('<div class="chart-outlined-cell"') == 2
     assert 'chart-outlined-cell" style="width:' not in html
+    assert _ALIGN_JS_MARKER not in html
+
+
+# ------------------------------------------- #136 Chart.js runtime re-pitch
+
+
+def test_runtime_align_script_on_aligned_table_skin():
+    html = _render(_slide(secondary=_MATCHING_SECONDARY))
+    assert _ALIGN_JS_MARKER in html
+    assert "chart-table-aligned" in html
+    assert 'data-align-left="' in html
+    assert "<colgroup>" in html
+
+
+def test_runtime_align_script_on_aligned_outlined_skin():
+    html = _render(_outlined_slide(_ROW_LIST_PRIMARY, _OUTLINED_MATCHING))
+    assert _ALIGN_JS_MARKER in html
+    assert "chart-support-outlined chart-table-aligned" in html
+    assert 'data-align-left="' in html
+    assert 'data-align-right="' in html
+    assert 'data-align-width="' in html
+
+
+def test_runtime_align_script_absent_when_unaligned():
+    secondary = {
+        "type": "data_table",
+        "steps_or_data": [
+            ["Metric", "Value"],
+            ["G&S", "7%"],
+        ],
+    }
+    html = _render(_slide(secondary=secondary))
+    assert "chart-support-table" in html
+    assert "chart-table-aligned" not in html
+    assert _ALIGN_JS_MARKER not in html
+
+
+def test_runtime_align_script_absent_without_secondary():
+    html = _render(_slide())
+    assert _ALIGN_JS_MARKER not in html
+
+
+def test_golden_mvp1_byte_inert_no_align_script(tmp_path):
+    """Decks without an aligned support table must not emit the runtime script."""
+    out = tmp_path / "out"
+    render_deck(_GOLDEN, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert _ALIGN_JS_MARKER not in html
+    assert "__rv2ChartTableAlignInstalled" not in html
