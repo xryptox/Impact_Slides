@@ -2890,15 +2890,31 @@ class TestSideCallout:
 
     def test_default_absent_no_markup(self, tmp_path):
         html = self._render(tmp_path, {"stack_totals": True})
-        # #138 styles are opt-in only — default deck must not emit markup or CSS.
-        assert "chart-side-callout" not in html
-        assert "--side-callout-" not in html
-        assert "side-callout" not in html
+        # #138 is opt-in only — default product HTML (incl. inlined JS/CSS)
+        # must carry zero feature identifiers or name-gap boot code.
+        for needle in (
+            "chart-side-callout",
+            "--side-callout-",
+            "side-callout",
+            "sideCallout",
+            "side_callout",
+            "data-side-callout",
+            "__sideCalloutNameGap",
+        ):
+            assert needle not in html, f"default deck leaked {needle!r}"
+        # Global shell must stay free of the old #138 plugin hook.
+        shell = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "shell.py"
+        ).read_text(encoding="utf-8")
+        assert "chart-side-callout" not in shell
+        assert "side-callout" not in shell
+        assert "sideCallout" not in shell
 
     def test_default_css_bundle_has_no_side_callout_rules(self, tmp_path):
         # Global components.css must stay free of #138 selectors (byte-compat).
-        from pathlib import Path
-
         css = (
             Path(__file__).resolve().parents[1]
             / "impact_slides"
@@ -3064,20 +3080,27 @@ class TestSideCallout:
         assert "- 16px)" in html
         # chart wrap must not also embed a second callout
         assert html.count("<aside class=\"chart-side-callout") == 1
-        # name-reservation hook present for segmentNames plugin
+        # name-reservation is local to the active callout (not global shell).
         assert "data-side-callout-name-gap" in html
-        assert "aside.chart-side-callout" in html  # shell plugin reads the DOM
+        assert "data-side-callout-name-gap-boot" in html
+        assert "aside.chart-side-callout" in html
+        assert "__sideCalloutNameGap" in html
+        shell = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "shell.py"
+        ).read_text(encoding="utf-8")
+        assert "aside.chart-side-callout" not in shell
 
     def test_side_callout_geometry_contract_fails_old_top(self, tmp_path):
         """Pin the positioning contract that the old top:12px wrap host broke.
 
         Markup-only: the old recipe put top:12px on the chart wrap (~72px below
         tile top → stage T≈285). Locked PDF local offset is 49.8px tile-top.
+        Also traps the old global-shell segmentNames leak.
         """
         html = self._render(tmp_path, _side_callout_cfg())
-        # Extract the aside style blob
-        import re
-
         m = re.search(
             r'<aside class="chart-side-callout[^"]*"[^>]*style="([^"]+)"',
             html,
@@ -3088,3 +3111,13 @@ class TestSideCallout:
         assert "top:12px" not in style
         # Mutation trap: removing the PDF offset must fail this test.
         assert re.search(r"top:49\.8px", style)
+        # Active callout ships a local name-gap boot; global shell must not.
+        assert "data-side-callout-name-gap-boot" in html
+        shell = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "shell.py"
+        ).read_text(encoding="utf-8")
+        assert "chart-side-callout" not in shell
+        assert "sideCallout" not in shell

@@ -144,22 +144,6 @@ _JS = r"""
           var overflow = entries.length ? entries[entries.length - 1].y + entries[entries.length - 1].h - (area.bottom - 4) : 0;
           var shift = Math.max(0, overflow);
           var topShift = entries.length ? Math.max(0, area.top + 6 - (entries[0].y - shift)) : 0;
-          // #138: when a shared-column side_callout is present, keep names below
-          // its rendered bottom (DOM-measured). No-op without the aside.
-          var hostEl = (canvas.closest && canvas.closest('.gl-tile')) || (canvas.closest && canvas.closest('.chartjs-wrap')) || null;
-          var callEl = hostEl && hostEl.querySelector ? hostEl.querySelector('aside.chart-side-callout') : null;
-          if (callEl && entries.length) {
-            var cbr = callEl.getBoundingClientRect();
-            var ccr = canvas.getBoundingClientRect();
-            if (ccr.height > 0) {
-              var sy = chart.height / ccr.height;
-              var gap = parseFloat(callEl.getAttribute('data-side-callout-name-gap') || '');
-              if (isNaN(gap)) gap = 8;
-              // textBaseline middle → first line center must clear callout bottom + gap
-              var nameMin = (cbr.bottom - ccr.top) * sy + gap + lh / 2;
-              topShift = Math.max(topShift, nameMin - (entries[0].y - shift));
-            }
-          }
           entries.forEach(function (e) {
             var y0 = e.y - shift + topShift;
             ctx.fillStyle = e.color;

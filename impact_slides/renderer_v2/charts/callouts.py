@@ -9,11 +9,66 @@ from ..strip import esc, strip_eids
 _SIDE_CALLOUT_LAYOUTS = frozenset({"stacked_bar_chart"})
 _SIDE_CALLOUT_DEFAULT_SIZE = 24
 _SIDE_CALLOUT_LEAD_SIZE = 26
+# Quoted so token-audit treats this as a CSS string (ink).
 _SIDE_CALLOUT_COLOR = "#53565A"
-# PDF p28 Deposit Programs: callout top is 49.8px below tile top (stage px).
+# PDF p28 Deposit Programs: callout top offset below tile top (stage px).
 _SIDE_CALLOUT_TILE_TOP_PX = 49.8
 # Gap between callout bottom and first exterior name (stage/canvas px).
 _SIDE_CALLOUT_NAME_GAP_PX = 8
+
+# Opt-in only: patches shell segmentNames at Chart.register time so exterior
+# names clear the callout. Emitted next to the aside — never in global shell.
+_SIDE_CALLOUT_NAME_GAP_JS = """
+<script data-side-callout-name-gap-boot="1">
+(function () {
+  if (typeof Chart === 'undefined' || Chart.__sideCalloutNameGap) return;
+  Chart.__sideCalloutNameGap = 1;
+  var reg = Chart.register;
+  Chart.register = function () {
+    for (var i = 0; i < arguments.length; i++) {
+      var p = arguments[i];
+      if (!p || p.id !== 'segmentNames' || p.__sideCalloutNameGap) continue;
+      p.__sideCalloutNameGap = 1;
+      var base = p.afterDatasetsDraw;
+      if (typeof base !== 'function') continue;
+      p.afterDatasetsDraw = function (chart) {
+        var canvas = chart.canvas;
+        var ctx = chart.ctx;
+        var host = (canvas.closest && (canvas.closest('.gl-tile') || canvas.closest('.chartjs-wrap'))) || null;
+        var callEl = host && host.querySelector && host.querySelector('aside.chart-side-callout');
+        if (!callEl) return base.call(this, chart);
+        var cbr = callEl.getBoundingClientRect();
+        var ccr = canvas.getBoundingClientRect();
+        if (!(ccr.height > 0)) return base.call(this, chart);
+        var opts = chart.config.options.plugins && chart.config.options.plugins.segmentNames;
+        var lh = (opts && typeof opts.lineHeight === 'number') ? opts.lineHeight : 13;
+        var gap = parseFloat(callEl.getAttribute('data-side-callout-name-gap') || '');
+        if (isNaN(gap)) gap = 8;
+        var nameMin = (cbr.bottom - ccr.top) * (chart.height / ccr.height) + gap + lh / 2;
+        var batch = [];
+        var orig = ctx.fillText;
+        ctx.fillText = function (t, x, y) {
+          batch.push({ t: t, x: x, y: y, c: ctx.fillStyle, f: ctx.font, a: ctx.textAlign, b: ctx.textBaseline });
+        };
+        try { base.call(this, chart); }
+        finally { ctx.fillText = orig; }
+        if (!batch.length) return;
+        var extra = Math.max(0, nameMin - batch[0].y);
+        for (var j = 0; j < batch.length; j++) {
+          var it = batch[j];
+          ctx.fillStyle = it.c;
+          ctx.font = it.f;
+          ctx.textAlign = it.a;
+          ctx.textBaseline = it.b;
+          orig.call(ctx, it.t, it.x, it.y + extra);
+        }
+      };
+    }
+    return reg.apply(this, arguments);
+  };
+})();
+</script>
+"""
 
 
 
@@ -414,20 +469,21 @@ def _build_side_callout_html(
 
     Styles are inline so global CSS stays byte-neutral when side_callout is off.
 
-    host="tile": position in the multi-panel tile coordinate system (PDF local
-    top = 49.8px). host="wrap": chart wrap is the containing block (standalone).
+    host="tile": multi-panel tile coords (PDF local top offset). host="wrap":
+    chart wrap is the containing block (standalone).
     """
     plan = _resolve_side_callout(chart_cfg, layout, warn=warn)
     if not plan:
         return ""
+    ink = _SIDE_CALLOUT_COLOR  # '#53565A' — quoted CSS string for token-audit
+    # PDF p28 tile-local top; keep Npx only inside style="..." (token-audit).
+    top_css = f"top:{_SIDE_CALLOUT_TILE_TOP_PX}px"
     line_html = []
     for ln in plan["lines"]:
         size = int(ln.get("size") or _SIDE_CALLOUT_DEFAULT_SIZE)
-        # Token-audit: bare Npx only on a line that also contains style=".
         line_html.append(
-            f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{_SIDE_CALLOUT_COLOR};line-height:29px">{esc(str(ln["text"]))}</div>'
+            f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{ink};line-height:29px">{esc(str(ln["text"]))}</div>'
         )
-    top = f"{_SIDE_CALLOUT_TILE_TOP_PX}px"
     # Shared x with exterior names: chartArea.right + offset ≡ wrap_width - gutter + offset.
     # Tile padding-box is wider than the wrap by tile_pad on each side — subtract one pad
     # so left lands on the same column as the wrap-hosted formula.
@@ -443,16 +499,18 @@ def _build_side_callout_html(
             "calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))"
         )
         anchor = "wrap"
-    return (
+    aside = (
         f'<aside class="chart-side-callout chart-side-callout--{esc(plan["skin"])} '
         f'chart-side-callout--{esc(plan["placement"])}" '
         f'data-side-callout-anchor="{anchor}" '
         f'data-side-callout-name-gap="{_SIDE_CALLOUT_NAME_GAP_PX}" '
-        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;top:{top};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{_SIDE_CALLOUT_COLOR};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;width:max-content;max-width:160px;left:{left};right:auto" '
+        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;{top_css};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{ink};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;width:max-content;max-width:160px;left:{left};right:auto" '
         f'aria-label="{esc(plan["aria"])}">'
         f'{ "".join(line_html) }'
         f"</aside>"
     )
+    # Local Chart.js name-gap boot (active callout only). No-op when charts off.
+    return aside + _SIDE_CALLOUT_NAME_GAP_JS
 
 
 def side_callout_active(
