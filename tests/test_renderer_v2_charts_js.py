@@ -2947,7 +2947,8 @@ class TestSideCallout:
                     "label": ["insured at", "Q1'26"],
                     "placement": "right",
                     "skin": "tall",
-                }
+                },
+                "exterior_segment_names": True,
             },
         )
         assert "<aside class=\"chart-side-callout" in html
@@ -3000,9 +3001,7 @@ class TestSideCallout:
         assert "<aside class=\"chart-side-callout" not in html
         assert "unsupported placement/skin" in capsys.readouterr().err
 
-    def test_over_budget_fail_soft(self, tmp_path, capsys):
-        # Reachable only via explicit min_plot_width + plot_width_px (Recipe A
-        # does not manufacture a parallel-lane budget itself).
+    def test_geometry_budget_fail_soft_without_handoff_measurement(self, tmp_path, capsys):
         html = self._render(
             tmp_path,
             {
@@ -3011,10 +3010,10 @@ class TestSideCallout:
                     "label": ["insured at", "Q1'26"],
                     "placement": "right",
                     "skin": "tall",
-                    "min_plot_width": 500,
+                    "min_plot_width": 800,
                 },
-                "plot_width_px": 400,
                 "exterior_segment_names": True,
+                "segment_name_gutter": 700,
             },
         )
         assert "<aside class=\"chart-side-callout" not in html
@@ -3035,18 +3034,47 @@ class TestSideCallout:
                     ],
                     "placement": "right",
                     "skin": "tall",
-                }
+                },
+                "exterior_segment_names": True,
             },
         )
         assert "Alpha" in html and "Beta" in html and "Gamma" in html
         assert "font-size:26px" in html
 
-    def test_svg_path_emits_callout(self, tmp_path):
+    def test_svg_path_emits_shared_name_column_and_callout(self, tmp_path):
         html = self._render(tmp_path, _side_callout_cfg(), suppress=["charts"])
         assert "<aside class=\"chart-side-callout" in html
         assert "chart-svg-wrap--side-callout" in html
         assert "92% FDIC" in html
+        assert "vbar-segment-name" in html
+        assert ">NCO</text>" in html and ">RR</text>" in html
         assert 'data-chartjs="1"' not in html
+
+    def test_callout_requires_valid_exterior_name_column(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            {"side_callout": {"value": "92%", "placement": "right", "skin": "tall"}},
+        )
+        assert "<aside class=\"chart-side-callout" not in html
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
+    @pytest.mark.parametrize("value", ["wide", [], float("inf")])
+    def test_invalid_name_column_values_fail_soft(self, tmp_path, capsys, value):
+        html = self._render(
+            tmp_path,
+            _side_callout_cfg(segment_name_offset=value),
+        )
+        assert "<aside class=\"chart-side-callout" not in html
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
+    @pytest.mark.parametrize("value", ["wide", [], float("inf")])
+    def test_invalid_name_typography_values_fail_soft(self, tmp_path, value):
+        html = self._render(
+            tmp_path,
+            _side_callout_cfg(segment_name_font_size=value),
+        )
+        assert "<aside class=\"chart-side-callout" in html
+        assert '"fontSize"' not in html
 
     def test_multi_panel_badge_suppressed_when_callout(self, tmp_path):
         s = _slide("multi_panel", [])

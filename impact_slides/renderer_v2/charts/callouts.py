@@ -1,6 +1,7 @@
 """Callout overlay geometry for chart panes."""
 from __future__ import annotations
 
+import math
 import sys
 from typing import Any, Mapping
 from ..strip import esc, strip_eids
@@ -15,6 +16,7 @@ _SIDE_CALLOUT_COLOR = "#53565A"
 _SIDE_CALLOUT_TILE_TOP_PX = 49.8
 # Gap between callout bottom and first exterior name (stage/canvas px).
 _SIDE_CALLOUT_NAME_GAP_PX = 8
+_SIDE_CALLOUT_MIN_PLOT_WIDTH = 240
 
 # Opt-in only: patches shell segmentNames at Chart.register time so exterior
 # names clear the callout. Emitted next to the aside — never in global shell.
@@ -40,6 +42,14 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         var cbr = callEl.getBoundingClientRect();
         var ccr = canvas.getBoundingClientRect();
         if (!(ccr.height > 0)) return base.call(this, chart);
+        var minWidth = parseFloat(callEl.getAttribute('data-side-callout-min-plot-width') || '');
+        var area = chart.chartArea;
+        if (!isNaN(minWidth) && area && area.right - area.left < minWidth) {
+          callEl.style.display = 'none';
+          console.warn('[side_callout] omitted: plot width below min_plot_width');
+          return base.call(this, chart);
+        }
+        callEl.style.display = '';
         var opts = chart.config.options.plugins && chart.config.options.plugins.segmentNames;
         var lh = (opts && typeof opts.lineHeight === 'number') ? opts.lineHeight : 13;
         var gap = parseFloat(callEl.getAttribute('data-side-callout-name-gap') || '');
@@ -360,7 +370,12 @@ def _side_callout_lines(raw: Mapping[str, Any]) -> list[dict[str, Any]] | None:
             if not text:
                 continue
             entry: dict[str, Any] = {"text": text}
-            if isinstance(size, (int, float)) and size > 0:
+            if (
+                not isinstance(size, bool)
+                and isinstance(size, (int, float))
+                and math.isfinite(size)
+                and size > 0
+            ):
                 entry["size"] = int(size)
             elif i == 0:
                 entry["size"] = _SIDE_CALLOUT_LEAD_SIZE
@@ -380,6 +395,26 @@ def _side_callout_lines(raw: Mapping[str, Any]) -> list[dict[str, Any]] | None:
             if t:
                 out.append({"text": t})
     return out or None
+
+
+def _side_column_geometry(
+    chart_cfg: Mapping[str, Any],
+) -> tuple[int, int] | None:
+    if chart_cfg.get("exterior_segment_names") is not True:
+        return None
+    offset = chart_cfg.get("segment_name_offset", 8)
+    gutter = chart_cfg.get("segment_name_gutter", 120)
+    if (
+        isinstance(offset, bool)
+        or isinstance(gutter, bool)
+        or not isinstance(offset, (int, float))
+        or not isinstance(gutter, (int, float))
+        or not math.isfinite(offset)
+        or not math.isfinite(gutter)
+    ):
+        return None
+    offset, gutter = int(offset), int(gutter)
+    return (offset, gutter) if 0 <= offset < gutter else None
 
 
 def _resolve_side_callout(
@@ -431,18 +466,35 @@ def _resolve_side_callout(
         if warn:
             print("[side_callout] ignored: empty value/label/lines", file=sys.stderr)
         return None
-    # Fail-soft gate: only when author supplies min_plot_width AND a measured
-    # plot_width_px below it. Shared-column composition does not raise padRight.
-    min_w = raw.get("min_plot_width")
-    plot_w = chart_cfg.get("plot_width_px")
-    if (
-        isinstance(min_w, (int, float))
-        and isinstance(plot_w, (int, float))
-        and plot_w < min_w
-    ):
+    column = _side_column_geometry(chart_cfg)
+    if not column:
         if warn:
             print(
-                f"[side_callout] omitted: plot width {plot_w}px < min_plot_width {min_w}px",
+                "[side_callout] ignored: requires a valid exterior_segment_names column",
+                file=sys.stderr,
+            )
+        return None
+    offset, gutter = column
+    plot_width = 900 - 70 - gutter
+    if plot_width <= 0:
+        if warn:
+            print("[side_callout] omitted: exterior-name gutter leaves no plot", file=sys.stderr)
+        return None
+    min_w = raw.get("min_plot_width")
+    if min_w is not None and (
+        isinstance(min_w, bool)
+        or not isinstance(min_w, (int, float))
+        or not math.isfinite(min_w)
+        or min_w <= 0
+    ):
+        if warn:
+            print("[side_callout] ignored: min_plot_width must be a positive number", file=sys.stderr)
+        return None
+    min_w = max(_SIDE_CALLOUT_MIN_PLOT_WIDTH, int(min_w or 0))
+    if plot_width < min_w:
+        if warn:
+            print(
+                f"[side_callout] omitted: plot width {plot_width}px < min_plot_width {min_w}px",
                 file=sys.stderr,
             )
         return None
@@ -452,8 +504,9 @@ def _resolve_side_callout(
         "skin": skin,
         "lines": lines,
         "aria": aria,
-        "offset": int(chart_cfg.get("segment_name_offset") or 22),
-        "gutter": int(chart_cfg.get("segment_name_gutter") or 150),
+        "offset": offset,
+        "gutter": gutter,
+        "min_plot_width": min_w,
     }
 
 
@@ -504,6 +557,7 @@ def _build_side_callout_html(
         f'chart-side-callout--{esc(plan["placement"])}" '
         f'data-side-callout-anchor="{anchor}" '
         f'data-side-callout-name-gap="{_SIDE_CALLOUT_NAME_GAP_PX}" '
+        f'data-side-callout-min-plot-width="{plan["min_plot_width"] or ""}" '
         f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;{top_css};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{ink};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;width:max-content;max-width:160px;left:{left};right:auto" '
         f'aria-label="{esc(plan["aria"])}">'
         f'{ "".join(line_html) }'

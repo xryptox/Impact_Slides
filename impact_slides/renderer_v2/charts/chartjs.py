@@ -1,6 +1,7 @@
 """Chart.js config builders and HTML shell."""
 from __future__ import annotations
 
+import math
 import uuid
 from typing import Any, Mapping
 from ..strip import esc, strip_eids
@@ -12,6 +13,7 @@ from .callouts import (
     _build_callout_overlays,
     _build_side_callout_html,
     _merge_callout_bands,
+    _side_column_geometry,
 )
 from .bars import _bar_matrix
 from .lines import _combo_bar_data, _combo_line_data, _line_data
@@ -170,7 +172,8 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["scales"]["y"]["min"] = float(neg_min) * 1.1
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
-        if cfg.get("exterior_segment_names"):
+        column = _side_column_geometry(cfg)
+        if cfg.get("exterior_segment_names") and column:
             # N5 (v4 sim): exterior segment-name column — series names in
             # their segment color, aligned to the last bar's segment
             # mid-heights right of the plot (PDF funding-board recipe).
@@ -201,8 +204,8 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             # 8px vs ~27px offset, 100px vs ~117px gutter). Opt-in knobs
             # below; absent keys keep today's shell hardcodes so existing
             # decks stay byte-identical (SC-COMPAT-1).
-            gutter = cfg.get("segment_name_gutter", 120)
-            options["layout"] = {"padding": {"right": int(gutter)}}
+            _offset, gutter = column
+            options["layout"] = {"padding": {"right": gutter}}
             seg_opts: dict[str, Any] = {}
             for key, knob in (
                 ("fontSize", "segment_name_font_size"),
@@ -211,8 +214,14 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 ("maxLines", "segment_name_max_lines"),
                 ("offset", "segment_name_offset"),
             ):
-                if cfg.get(knob) is not None:
-                    seg_opts[key] = int(cfg[knob])
+                value = cfg.get(knob)
+                if (
+                    value is not None
+                    and not isinstance(value, bool)
+                    and isinstance(value, (int, float))
+                    and math.isfinite(value)
+                ):
+                    seg_opts[key] = int(value)
             options["plugins"]["segmentNames"] = {
                 **seg_opts,
                 "items": [
