@@ -1,0 +1,215 @@
+88:    def test_chartjs_file_and_license_exist(self):
+92:    def test_inliner_embeds_when_charts_on(self):
+101:    def test_inliner_omits_when_charts_off(self):
+106:    def test_missing_vendor_fails_self_contained(self, monkeypatch, tmp_path):
+117:    def test_grouped_bar_chartjs_when_on(self, tmp_path):
+130:    def test_line_chartjs_when_on(self, tmp_path):
+138:    def test_combo_chartjs_when_on(self, tmp_path):
+146:    def test_svg_fallback_when_charts_suppressed(self, tmp_path):
+157:    def test_noscript_svg_when_charts_on(self, tmp_path):
+169:    def test_cdn_url_matches_min_pin(self):
+178:    def test_combo_overlay_label_align_no_silent_pad(self):
+227:    def test_chartjs_uses_series_names(self, tmp_path):
+237:    def test_chartjs_dashed_secondary_series(self, tmp_path):
+246:    def test_chartjs_force_ticks(self, tmp_path):
+258:    def test_chartjs_explicit_min_max(self, tmp_path):
+269:    def test_chartjs_series_colors_override(self, tmp_path):
+279:    def test_chartjs_point_labels(self, tmp_path):
+296:    def test_chartjs_annotation_marker(self, tmp_path):
+305:    def test_no_config_keeps_defaults(self, tmp_path):
+328:    def test_chartjs_stacked_scales_signed(self, tmp_path):
+343:    def test_chartjs_respects_explicit_axis_bounds(self, tmp_path):
+357:    def test_grouped_bar_not_stacked(self, tmp_path):
+366:    def test_svg_fallback_negative_below_axis(self, tmp_path):
+384:    def test_bar_percentage_lands_on_datasets(self, tmp_path):
+399:    def test_fill_tile_adds_wrap_class(self, tmp_path):
+408:    def test_absent_knobs_byte_identical(self, tmp_path):
+421:    def test_bar_percentage_lands_on_hbar_datasets(self, tmp_path):
+433:    def test_bar_percentage_lands_on_combo_bar_datasets_only(self, tmp_path):
+483:    def test_inset_renders_on_data_table(self, tmp_path):
+497:    def test_no_inset_without_key_stats(self, tmp_path):
+533:    def test_pill_columns_and_exterior_labels(self, tmp_path):
+545:    def test_data_table_unchanged(self, tmp_path):
+579:    def test_chart_and_hero_stack_peers(self, tmp_path):
+594:    def test_no_chart_still_renders_hero(self, tmp_path):
+619:    def test_bold_span_rendered(self, tmp_path):
+632:    def test_plain_bullet_unchanged(self, tmp_path):
+640:    def test_unsafe_markup_stripped(self, tmp_path):
+677:    def test_card_chrome_and_rows(self, tmp_path):
+689:    def test_footnotes_render(self, tmp_path):
+723:    def test_brand_mark_inlined_and_two_tone(self, tmp_path):
+735:    def test_section_divider_unchanged_without_brand_mark(self, tmp_path):
+750:    def test_brand_divider_two_tone(self, tmp_path):
+790:    def test_break_excludes_range_from_domain(self, tmp_path):
+802:    def test_no_break_unchanged(self, tmp_path):
+818:    def test_break_value_serialized_for_plugin(self, tmp_path):
+826:    def test_glyph_is_hatch_not_plot_line(self, tmp_path):
+839:    def test_plugin_positions_glyph_from_scales(self, tmp_path):
+870:    def test_annex_density_markers(self, tmp_path):
+882:    def test_conventional_table_unchanged(self, tmp_path):
+891:    def test_multi_level_headers(self, tmp_path):
+936:    def test_charts_and_metrics_as_tiles(self, tmp_path):
+949:    def test_multi_panel_self_contained(self, tmp_path):
+963:    def test_presentation_theme_overrides_tokens(self, tmp_path):
+974:    def test_theme_kwarg_still_works(self, tmp_path):
+988:    def test_minimal_hides_chrome(self, tmp_path):
+999:    def test_boardroom_default_unchanged(self, tmp_path):
+1009:    def test_animation_false_in_config(self, tmp_path):
+1016:    def test_boardroom_colors_not_candy_default_only(self, tmp_path):
+1023:    def test_non_mvp_layout_still_paints(self, tmp_path):
+1046:    def test_mini_fixture_chartjs_path(self, tmp_path):
+1061:    def test_string_signed_stacked_bar_stays_signed_through_render(self, tmp_path):
+1083:    def test_negative_strings_in_table_cells_survive(self, tmp_path):
+1100:    def test_negative_strings_in_kpi_text_survive(self, tmp_path):
+1121:    def test_plugin_vendored_with_license(self):
+1126:    def test_plugin_inlined_when_charts_on(self, tmp_path):
+1134:    def test_plugin_omitted_when_charts_suppressed(self, tmp_path):
+1141:    def test_shell_registers_plugin_and_formats_labels(self, tmp_path):
+1153:    def test_plugin_assets_recorded_in_meta(self, tmp_path):
+1160:    def test_annotation_positioned_over_chart(self, tmp_path):
+1181:    def test_declared_xy_serialized_for_plugin(self, tmp_path):
+1190:    def test_non_numeric_xy_fails_closed(self, tmp_path):
+1199:    def test_plugin_positions_box_inside_chartarea(self, tmp_path):
+1209:    def test_no_annotation_unchanged(self, tmp_path):
+1224:    def test_centered_header_chrome(self, tmp_path):
+1236:    def test_conventional_layout_header_unchanged(self, tmp_path):
+1270:    def test_chartjs_index_axis(self, tmp_path):
+1281:    def test_anniversary_window_via_axis_break(self, tmp_path):
+1292:    def test_bar_labels_inside(self, tmp_path):
+1305:    def test_svg_fallback_paints_horizontal_geometry(self, tmp_path):
+1314:    def test_feature_detection_and_offline(self, tmp_path):
+1322:    def test_axis_break_glyph_vertical_on_hbar(self, tmp_path):
+1361:    def test_elbow_arrow_renders_with_anchors(self, tmp_path):
+1376:    def test_chevron_renders_under_axis(self, tmp_path):
+1388:    def test_band_renders_span(self, tmp_path):
+1399:    def test_elbow_line_variant_opt_in(self, tmp_path):
+1422:    def test_elbow_default_has_no_line_variant(self, tmp_path):
+1433:    def test_measure_rule_renders_with_anchors(self, tmp_path):
+1452:    def test_measure_rule_caption_opt_in(self, tmp_path):
+1471:    def test_unknown_callout_type_fails_closed(self, tmp_path):
+1477:    def test_callout_text_escaped_and_offline(self, tmp_path):
+1488:    def test_elbow_value_anchor_pins_vertical_position(self, tmp_path):
+1504:    def test_no_callouts_unchanged(self, tmp_path):
+1530:    def test_plugin_registered_in_shell(self, tmp_path):
+1537:    def test_plugin_config_items_serialized(self, tmp_path):
+1550:    def test_plugin_config_measure_rule_serialized(self, tmp_path):
+1557:    def test_measure_rule_span_uses_bar_center_fractions(self, tmp_path):
+1569:    def test_plugin_config_built_after_band_merge(self, tmp_path):
+1581:    def test_data_attributes(self, tmp_path):
+1591:    def test_span_uses_bar_center_fractions(self, tmp_path):
+1602:    def test_no_callouts_no_plugin_config(self, tmp_path):
+1657:    def test_tall_card_slots_render(self, tmp_path):
+1668:    def test_tiles_compose_chart_layouts(self, tmp_path):
+1677:    def test_legacy_tiles_unchanged(self, tmp_path):
+1697:    def test_tall_card_offline(self, tmp_path):
+1711:    def test_column_shells_render(self, tmp_path):
+1725:    def test_shell_contains_header_and_cells(self, tmp_path):
+1734:    def test_inset_composition_unchanged(self, tmp_path):
+1751:    def test_brand_cover_at_slide_1_no_injection(self, tmp_path):
+1762:    def test_brand_cover_preserves_1to1_mapping(self, tmp_path):
+1771:    def test_non_cover_slide_1_still_forced(self, tmp_path):
+1787:    def test_seal_asset_vendored_and_inventoried(self):
+1802:    def test_named_mark_renders_on_brand_cover(self, tmp_path):
+1814:    def test_named_mark_renders_on_brand_divider(self, tmp_path):
+1828:    def test_unknown_mark_fails_closed(self, tmp_path):
+1836:    def test_custom_brand_mark_svg_unchanged(self, tmp_path):
+1853:    def test_r1_flat_stage_option(self, tmp_path):
+1868:    def test_r1_default_stage_unchanged(self, tmp_path):
+1877:    def test_r1_flat_stage_flattens_frame_card(self, tmp_path):
+1895:    def test_r4_hero_percent_gets_smaller_unit(self, tmp_path):
+1908:    def test_f12_annex_subheaders_white_on_navy(self, tmp_path):
+1926:    def test_f12_annex_group_banding(self, tmp_path):
+1944:    def test_r4_hero_type_scale(self, tmp_path):
+1961:    def test_explicit_min_max_at_scale_root(self, tmp_path):
+1973:    def test_break_clamps_scale_root_without_explicit_min(self, tmp_path):
+1983:    def test_vertical_paths_unchanged(self, tmp_path):
+2000:    def test_series_source_paints_series_names(self, tmp_path):
+2011:    def test_series_labels_anchor_inside_bar_end(self, tmp_path):
+2026:    def test_true_means_category_backward_compat(self, tmp_path):
+2035:    def test_category_string_matches_true(self, tmp_path):
+2044:    def test_invalid_source_fails_closed(self, tmp_path):
+2071:    def test_band_absorbed_label_migrates(self, tmp_path):
+2080:    def test_band_absorbed_elbow_text_wins(self, tmp_path):
+2089:    def test_band_different_span_survives(self, tmp_path):
+2116:    def test_elbow_pill_band_chrome(self, tmp_path):
+2126:    def test_elbow_label_inside_pill(self, tmp_path):
+2134:    def test_elbow_arrowhead_and_stem(self, tmp_path):
+2144:    def test_elbow_stem_geometry_reaches_from_bar_top(self, tmp_path):
+2159:    def test_elbow_stem_fails_closed_without_domain(self, tmp_path):
+2174:    def test_chevron_navy_under_axis(self, tmp_path):
+2188:    def test_chevron_split_markup(self, tmp_path):
+2217:    def test_ir_navy_header_band(self, tmp_path):
+2229:    def test_ir_skin_css_chrome(self, tmp_path):
+2241:    def test_default_skin_unchanged(self, tmp_path):
+2268:    def test_stacked_bar_secondary_table_renders(self, tmp_path):
+2277:    def test_line_chart_secondary_unchanged(self, tmp_path):
+2309:    def test_outlined_boxes_render(self, tmp_path):
+2321:    def test_outlined_boxes_align_with_chart(self, tmp_path):
+2330:    def test_default_secondary_table_unchanged(self, tmp_path):
+2345:    def test_totals_on_top_segment_only(self, tmp_path):
+2368:    def test_negative_total_parenthesized(self, tmp_path):
+2385:    def test_totals_opt_in_default_unchanged(self, tmp_path):
+2399:    def test_dual_mode_emits_named_label_sets(self, tmp_path):
+2420:    def test_dual_mode_formats_segment_values(self, tmp_path):
+2440:    def test_percent_unit_suffixes(self, tmp_path):
+2453:    def test_percent_unit_suffixes_totals(self, tmp_path):
+2466:    def test_segment_labels_without_totals_single_set(self, tmp_path):
+2494:    def test_emits_segment_names_items_in_series_colors(self, tmp_path):
+2503:    def test_replaces_legend_and_reserves_gutter(self, tmp_path):
+2509:    def test_light_segment_colors_fall_back_to_dark(self, tmp_path):
+2519:    def test_opt_in_default_unchanged(self, tmp_path):
+2525:    def test_knob_defaults_byte_identical(self, tmp_path):
+2533:    def test_typography_knobs_propagate(self, tmp_path):
+2551:    def test_partial_knobs_emit_only_set_keys(self, tmp_path):
+2575:    def test_default_chrome_unchanged(self, tmp_path):
+2582:    def test_hide_y_axis(self, tmp_path):
+2587:    def test_hide_x_axis(self, tmp_path):
+2591:    def test_hide_gridlines_keeps_ticks(self, tmp_path):
+2599:    def test_explicit_total_labels_override_computed(self, tmp_path):
+2609:    def test_totals_unclipped_with_headroom(self, tmp_path):
+2615:    def test_negative_segment_labels_unclipped_with_bottom_headroom(self, tmp_path):
+2623:    def test_thin_negative_gets_below_bar_chip(self, tmp_path):
+2637:    def test_thick_negative_stays_inside_no_chip_set(self, tmp_path):
+2652:    def test_positive_only_segments_no_bottom_padding(self, tmp_path):
+2687:    def test_shells_render(self, tmp_path):
+2691:    def test_tighter_column_gutters(self, tmp_path):
+2696:    def test_narrower_label_rail(self, tmp_path):
+2703:    def test_data_table_unchanged(self, tmp_path):
+2713:    def test_pill_free_is_row_not_gl_card_column(self, tmp_path):
+2738:    def test_r1_flat_stage_is_borderless(self, tmp_path):
+2757:    def test_r4_hero_giant_scale(self, tmp_path):
+2764:    def test_f12_annex_group_separation(self, tmp_path):
+2785:    def test_no_var_in_any_chartjs_config(self, tmp_path):
+2802:    def test_default_bar_first_dataset_is_navy_hex(self, tmp_path):
+2812:    def test_themed_palette_token_is_a_known_gap(self, tmp_path):
+2876:    def test_supported_stacked_emits_three_lines(self, tmp_path):
+2891:    def test_default_absent_no_markup(self, tmp_path):
+2916:    def test_default_css_bundle_has_no_side_callout_rules(self, tmp_path):
+2928:    def test_enabled_callout_keeps_locked_inline_styles(self, tmp_path):
+2943:    def test_callout_independent_of_stack_totals(self, tmp_path):
+2963:    def test_totals_independent_of_callout(self, tmp_path):
+2974:    def test_unsupported_layout_ignored(self, tmp_path, capsys):
+2991:    def test_unsupported_skin_ignored(self, tmp_path, capsys):
+3006:    def test_geometry_budget_fail_soft_without_handoff_measurement(self, tmp_path, capsys):
+3027:    def test_lines_api_generic(self, tmp_path):
+3046:    def test_svg_path_emits_shared_name_column_and_callout(self, tmp_path):
+3055:    def test_callout_requires_valid_exterior_name_column(self, tmp_path, capsys):
+3064:    def test_malformed_falsy_callout_emits_diagnostic(self, tmp_path, capsys, side_callout):
+3070:    def test_invalid_name_column_values_fail_soft(self, tmp_path, capsys, value):
+3087:    def test_unsafe_name_typography_values_fail_soft(self, tmp_path, capsys, knob, value):
+3093:    def test_multi_panel_badge_suppressed_when_callout(self, tmp_path):
+3139:    def test_side_callout_geometry_contract_fails_old_top(self, tmp_path):
+3177:    def test_invalid_or_over_budget_callout_omits_with_diagnostic(
+3184:    def test_svg_callout_uses_viewbox_coordinates(self, tmp_path):
+3189:    def test_svg_multi_panel_callout_uses_tile_local_html(self, tmp_path):
+3204:    def test_three_column_multi_panel_omits_unfit_callout(self, tmp_path, capsys):
+3218:    def test_noscript_hides_wrap_callout_before_painting_svg(self, tmp_path):
+3224:    def test_name_gap_script_uses_unscaled_fit_width(self, tmp_path):
+3229:    def test_name_gap_script_maps_shared_lane_proportionally(self, tmp_path):
+3240:    def test_legacy_name_column_coercions_survive_without_callout(self, tmp_path):
+3250:    def test_legacy_null_offset_preserves_plugin_default(self, tmp_path):
+3259:    def test_multi_panel_invalid_callout_column_fails_soft(self, tmp_path, capsys):
+3275:    def test_svg_invalid_callout_emits_diagnostic(self, tmp_path, capsys):
+3284:    def test_multi_panel_badge_only_tile_keeps_tall_geometry(self, tmp_path):
+3303:    def test_unbreakable_wide_text_omitted_with_diagnostic(self, tmp_path, capsys):
+3317:    def test_multi_panel_callout_omits_when_side_legend_owns_right_lane(
