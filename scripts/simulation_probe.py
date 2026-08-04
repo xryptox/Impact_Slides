@@ -16,6 +16,18 @@ from __future__ import annotations
 
 from typing import Any
 
+# JS body shared by readiness wait + measurement (resolves Chart on a canvas).
+_CHART_FROM_CANVAS = """
+  function chartFromCanvas(canvas) {
+    if (!canvas) return null;
+    if (typeof Chart !== 'undefined' && Chart.getChart) {
+      const c = Chart.getChart(canvas);
+      if (c) return c;
+    }
+    return canvas.__chart || canvas.chart || canvas.__fakeChart || null;
+  }
+"""
+
 
 class ProbeError(RuntimeError):
     """Raised when a simulation probe cannot make a conclusive measurement."""
@@ -30,6 +42,7 @@ def activate_slide(page: Any, slide_number: int, expected_layout: str) -> dict[s
 
     Returns an identity dict ``{slide_number, layout}``. Raises :class:`ProbeError`
     if the target is missing, duplicated, or the layout does not match.
+    Does not wait for Chart.js — non-chart probes stay cheap.
     """
     sn = int(slide_number)
     result = page.evaluate(
@@ -124,98 +137,125 @@ def painted_datalabel_lines(
     expected_layout: str,
     *,
     chart_index: int = 0,
+    timeout_ms: int = 5000,
 ) -> dict[str, Any]:
     """Read painted Chart.js datalabel model lines from the target slide.
 
-    Inspects ``chart.$datalabels._labels[*].model().lines`` (rendered plugin
-    state), not ``options.plugins.datalabels``. Missing chart, plugin state, or
-    labels raise :class:`ProbeError`.
+    After activation, waits until the target canvas has a Chart instance and a
+    nonempty ``chart.$datalabels._labels`` list, then inspects
+    ``_labels[*].model().lines`` (rendered plugin state), not
+    ``options.plugins.datalabels``. Missing chart/plugin state/labels or a
+    readiness timeout raise :class:`ProbeError`.
     """
     identity = activate_slide(page, slide_number, expected_layout)
     sn = identity["slide_number"]
     idx = int(chart_index)
-    result = page.evaluate(
-        """({sn, idx}) => {
-          const slide = document.querySelector(
-            'section.slide[data-slide-number="' + sn + '"]'
-          );
-          if (!slide) {
-            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
-          }
-          const canvases = slide.querySelectorAll('canvas');
-          if (!canvases.length) {
-            return {ok: false, err: 'no canvas in slide ' + sn};
-          }
-          if (idx < 0 || idx >= canvases.length) {
-            return {
-              ok: false,
-              err: 'chart_index ' + idx + ' out of range (0..' + (canvases.length - 1)
-                + ') on slide ' + sn,
-            };
-          }
-          const canvas = canvases[idx];
-          const chart = (typeof Chart !== 'undefined' && Chart.getChart)
-            ? Chart.getChart(canvas)
-            : (canvas.__chart || canvas.chart || null);
-          if (!chart) {
-            return {ok: false, err: 'no Chart instance on canvas index ' + idx
-              + ' of slide ' + sn};
-          }
-          const plugin = chart.$datalabels;
-          if (!plugin || !Array.isArray(plugin._labels)) {
-            return {
-              ok: false,
-              err: 'chart.$datalabels._labels missing on slide ' + sn
-                + ' chart_index=' + idx
-                + ' (do not read options.plugins.datalabels)',
-            };
-          }
-          if (plugin._labels.length === 0) {
-            return {
-              ok: false,
-              err: 'chart.$datalabels._labels is empty on slide ' + sn
-                + ' chart_index=' + idx,
-            };
-          }
-          const lines = [];
-          for (let i = 0; i < plugin._labels.length; i++) {
-            const lab = plugin._labels[i];
-            if (!lab || typeof lab.model !== 'function') {
-              return {
-                ok: false,
-                err: 'datalabel[' + i + '] has no model() on slide ' + sn,
-              };
-            }
-            const model = lab.model();
-            if (!model || !Array.isArray(model.lines)) {
-              return {
-                ok: false,
-                err: 'datalabel[' + i + '].model().lines missing on slide ' + sn,
-              };
-            }
-            for (const line of model.lines) {
-              lines.push(String(line));
-            }
-          }
-          if (lines.length === 0) {
-            return {
-              ok: false,
-              err: 'painted datalabel lines empty on slide ' + sn
-                + ' chart_index=' + idx,
-            };
-          }
-          // Surface options-only trap for callers that log both sources.
-          const optDl = chart.options
-            && chart.options.plugins
-            && chart.options.plugins.datalabels;
-          return {
-            ok: true,
-            lines,
-            options_datalabels_keys: optDl ? Object.keys(optDl) : [],
-          };
-        }""",
-        {"sn": sn, "idx": idx},
+    ready_js = (
+        "({sn, idx}) => {"
+        + _CHART_FROM_CANVAS
+        + """
+        const slide = document.querySelector(
+          'section.slide[data-slide-number="' + sn + '"]'
+        );
+        if (!slide) return false;
+        const canvases = slide.querySelectorAll('canvas');
+        if (idx < 0 || idx >= canvases.length) return false;
+        const chart = chartFromCanvas(canvases[idx]);
+        return !!(chart && chart.$datalabels
+          && Array.isArray(chart.$datalabels._labels)
+          && chart.$datalabels._labels.length > 0);
+      }"""
     )
+    try:
+        page.wait_for_function(
+            ready_js, arg={"sn": sn, "idx": idx}, timeout=int(timeout_ms)
+        )
+    except Exception as exc:
+        raise ProbeError(
+            f"painted labels did not become ready on slide {sn} "
+            f"chart_index={idx} within {int(timeout_ms)}ms"
+        ) from exc
+
+    measure_js = (
+        "({sn, idx}) => {"
+        + _CHART_FROM_CANVAS
+        + """
+        const slide = document.querySelector(
+          'section.slide[data-slide-number="' + sn + '"]'
+        );
+        if (!slide) {
+          return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+        }
+        const canvases = slide.querySelectorAll('canvas');
+        if (!canvases.length) {
+          return {ok: false, err: 'no canvas in slide ' + sn};
+        }
+        if (idx < 0 || idx >= canvases.length) {
+          return {
+            ok: false,
+            err: 'chart_index ' + idx + ' out of range (0..' + (canvases.length - 1)
+              + ') on slide ' + sn,
+          };
+        }
+        const chart = chartFromCanvas(canvases[idx]);
+        if (!chart) {
+          return {ok: false, err: 'no Chart instance on canvas index ' + idx
+            + ' of slide ' + sn};
+        }
+        const plugin = chart.$datalabels;
+        if (!plugin || !Array.isArray(plugin._labels)) {
+          return {
+            ok: false,
+            err: 'chart.$datalabels._labels missing on slide ' + sn
+              + ' chart_index=' + idx
+              + ' (do not read options.plugins.datalabels)',
+          };
+        }
+        if (plugin._labels.length === 0) {
+          return {
+            ok: false,
+            err: 'chart.$datalabels._labels is empty on slide ' + sn
+              + ' chart_index=' + idx,
+          };
+        }
+        const lines = [];
+        for (let i = 0; i < plugin._labels.length; i++) {
+          const lab = plugin._labels[i];
+          if (!lab || typeof lab.model !== 'function') {
+            return {
+              ok: false,
+              err: 'datalabel[' + i + '] has no model() on slide ' + sn,
+            };
+          }
+          const model = lab.model();
+          if (!model || !Array.isArray(model.lines)) {
+            return {
+              ok: false,
+              err: 'datalabel[' + i + '].model().lines missing on slide ' + sn,
+            };
+          }
+          for (const line of model.lines) {
+            lines.push(String(line));
+          }
+        }
+        if (lines.length === 0) {
+          return {
+            ok: false,
+            err: 'painted datalabel lines empty on slide ' + sn
+              + ' chart_index=' + idx,
+          };
+        }
+        const optDl = chart.options
+          && chart.options.plugins
+          && chart.options.plugins.datalabels;
+        return {
+          ok: true,
+          lines,
+          options_datalabels_keys: optDl ? Object.keys(optDl) : [],
+        };
+      }"""
+    )
+    result = page.evaluate(measure_js, {"sn": sn, "idx": idx})
     if not result or not result.get("ok"):
         err = (result or {}).get("err") or "painted_datalabel_lines failed"
         raise ProbeError(err)

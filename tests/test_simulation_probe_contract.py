@@ -50,6 +50,9 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
 <section class="slide" data-slide-number="20" data-layout="inset_demo">
   <div class="gl-inset">inset 20</div>
 </section>
+<section class="slide" data-slide-number="21" data-layout="bare_canvas">
+  <canvas id="c21" width="200" height="100"></canvas>
+</section>
 <script>
 // Fake Chart registry: options.plugins.datalabels is display-only (pre-bind
 // trap), while $datalabels._labels[*].model().lines holds painted strings.
@@ -127,3 +130,9 @@ def test_painted_datalabels_not_options_only(page):
     # have used it as the label source (options has no label strings).
     assert row["options_datalabels_keys"] == ["display"]
     assert "$0.9" not in row["options_datalabels_keys"]
+
+
+def test_painted_datalabels_timeout_is_probe_error(page):
+    """Readiness wait must fail clearly when Chart labels never appear."""
+    with pytest.raises(ProbeError, match=r"painted labels did not become ready on slide 21.*chart_index=0"):
+        painted_datalabel_lines(page, 21, "bare_canvas", timeout_ms=300)

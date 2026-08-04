@@ -114,8 +114,12 @@ measured-vs-expected positions, overlap counts, structure/DOM counts, and
 Chart.js scales/chartArea/bar centres. Use PDF/HTML 1920x1080 side-by-side PNGs
 as secondary qualitative evidence. Never report MAE or a similarity percentage.
 
-At 1920x1080 the deck stage scale is 1.0. Save re-runnable probes under
-simulation/amex_q1_2026/probes/.
+At 1920x1080 the deck stage scale is 1.0. Navigate by removing .active from all
+section.slide and adding it to the target slide, then wait for Chart.js; do not
+use scrollIntoView. Prefer scripts/simulation_probe.py — activate_slide for
+identity, painted_datalabel_lines as the preferred waiting path for datalabel
+measurements (it waits for a Chart instance + nonempty $datalabels._labels).
+Save re-runnable probes under simulation/amex_q1_2026/probes/.
 
 === PROBE CONTRACT (#137) ===
 
@@ -130,9 +134,10 @@ reinvent raw slide selectors.
 - A selector that matches zero elements inside a valid target is inconclusive
   / probe failure — never successful evidence of absence (never count: 0 as a
   pass).
-- N9 / Chart.js value labels: read painted plugin models
-  chart.$datalabels._labels[*].model().lines (or the helper's equivalent).
-  Do NOT judge labels from options.plugins.datalabels / pre-bind config.
+- N9 / Chart.js value labels: use painted_datalabel_lines (waits for Chart.js
+  painted plugin models chart.$datalabels._labels[*].model().lines). Do NOT
+  judge labels from options.plugins.datalabels / pre-bind config, and do not
+  measure immediately after toggling .active without a readiness wait.
 - Correct identities for this deck:
     R4  = data-slide-number 12 / data-layout chart_hero_dual
           (NOT ordinal index 11; slide 11 is line_chart)
