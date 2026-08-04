@@ -2890,8 +2890,32 @@ class TestSideCallout:
 
     def test_default_absent_no_markup(self, tmp_path):
         html = self._render(tmp_path, {"stack_totals": True})
-        # CSS always bundles the selector; assert no callout *element*.
-        assert "<aside class=\"chart-side-callout" not in html
+        # #138 styles are opt-in only — default deck must not emit markup or CSS.
+        assert "chart-side-callout" not in html
+        assert "--side-callout-" not in html
+        assert "side-callout" not in html
+
+    def test_default_css_bundle_has_no_side_callout_rules(self, tmp_path):
+        # Global components.css must stay free of #138 selectors (byte-compat).
+        from pathlib import Path
+
+        css = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "css"
+            / "components.css"
+        ).read_text(encoding="utf-8")
+        assert "chart-side-callout" not in css
+        assert "side-callout" not in css
+
+    def test_enabled_callout_keeps_locked_inline_styles(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert "position:absolute" in html
+        assert "max-width:160px" in html
+        assert "color:#53565A" in html
+        assert "left:calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))" in html
+        assert "line-height:29px" in html
 
     def test_callout_independent_of_stack_totals(self, tmp_path):
         html = self._render(

@@ -331,7 +331,7 @@ def _resolve_side_callout(
 ) -> dict[str, Any] | None:
     """Return paint plan for opt-in side_callout, or None when inert/unsupported.
 
-    Shared-column Recipe A (sign-off #138): callout sits at the top of the
+    Shared-column Recipe A (sign-off issue 138): callout sits at the top of the
     existing right text column — no second x-lane, no plot shrink. Over-budget
     fail-soft is preserved for an explicit ``min_plot_width`` gate only; the
     PDF/v9 shared-column case is not over-budget.
@@ -404,26 +404,26 @@ def _build_side_callout_html(
     *,
     warn: bool = True,
 ) -> str:
-    """Plain HTML/CSS side callout furniture (Chart.js + JS-off paths)."""
+    """Plain HTML/CSS side callout furniture (Chart.js + JS-off paths).
+
+    Styles are inline so global CSS stays byte-neutral when side_callout is off.
+    """
     plan = _resolve_side_callout(chart_cfg, layout, warn=warn)
     if not plan:
         return ""
     line_html = []
     for ln in plan["lines"]:
         size = int(ln.get("size") or _SIDE_CALLOUT_DEFAULT_SIZE)
+        # Token-audit: bare Npx only on a line that also contains style=".
         line_html.append(
-            f'<div class="chart-side-callout__line" style="font-size:{size}px">'
-            f'{esc(str(ln["text"]))}</div>'
+            f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{_SIDE_CALLOUT_COLOR};line-height:29px">{esc(str(ln["text"]))}</div>'
         )
     # left edge ≈ chartArea.right + segment_name_offset inside the name gutter
-    style = (
-        f"--side-callout-offset:{plan['offset']}px;"
-        f"--side-callout-gutter:{plan['gutter']}px"
-    )
     return (
         f'<aside class="chart-side-callout chart-side-callout--{esc(plan["skin"])} '
         f'chart-side-callout--{esc(plan["placement"])}" '
-        f'style="{style}" aria-label="{esc(plan["aria"])}">'
+        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;top:12px;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{_SIDE_CALLOUT_COLOR};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;width:max-content;max-width:160px;left:calc(100% - var(--side-callout-gutter) + var(--side-callout-offset));right:auto" '
+        f'aria-label="{esc(plan["aria"])}">'
         f'{ "".join(line_html) }'
         f"</aside>"
     )

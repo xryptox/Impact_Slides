@@ -1509,47 +1509,6 @@
   font-weight: 700;
   letter-spacing: 0.04em;
 }
-/* N5/#138: shared right-column side callout (plain text; Recipe A).
-   Sits at top of the existing segment-name gutter — not a second x-lane. */
-.chart-side-callout {
-  position: absolute;
-  top: 12px;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  color: #53565A;
-  font-family: var(--font-display, "IBM Plex Sans", sans-serif);
-  font-weight: 700;
-  font-size: 24px;
-  line-height: 29px;
-  text-align: left;
-  pointer-events: none;
-  z-index: 2;
-  width: max-content;
-  max-width: 160px;
-}
-.chart-side-callout--right {
-  /* left edge ≈ chartArea.right + segment_name_offset inside padRight gutter */
-  left: calc(100% - var(--side-callout-gutter, 150px) + var(--side-callout-offset, 22px));
-  right: auto;
-}
-.chart-side-callout--tall .chart-side-callout__line {
-  font-weight: 700;
-  color: #53565A;
-  line-height: 29px;
-}
-.chart-svg-wrap {
-  position: relative;
-  width: 100%;
-}
-.chart-svg-wrap--side-callout > .chart-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
 .gl-tile-body {
   display: flex;
   gap: var(--space-3, 10px);

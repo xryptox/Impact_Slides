@@ -416,7 +416,8 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     if not side:
         return svg
     return (
-        f'<div class="chart-svg-wrap chart-svg-wrap--side-callout">'
+        f'<div class="chart-svg-wrap chart-svg-wrap--side-callout" '
+        f'style="position:relative;width:100%">'
         f"{svg}{side}</div>"
     )
 
