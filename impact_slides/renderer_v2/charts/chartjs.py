@@ -172,7 +172,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["scales"]["y"]["min"] = float(neg_min) * 1.1
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
-        column = _side_column_geometry(cfg)
+        column = _side_column_geometry(cfg, strict="side_callout" in cfg)
         if cfg.get("exterior_segment_names") and column:
             # N5 (v4 sim): exterior segment-name column — series names in
             # their segment color, aligned to the last bar's segment
@@ -215,7 +215,10 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 ("offset", "segment_name_offset"),
             ):
                 value = cfg.get(knob)
-                if (
+                if "side_callout" not in cfg:
+                    if value is not None:
+                        seg_opts[key] = int(value)
+                elif (
                     value is not None
                     and not isinstance(value, bool)
                     and isinstance(value, (int, float))

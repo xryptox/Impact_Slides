@@ -3214,10 +3214,21 @@ class TestSideCallout:
         assert html.count('<aside class="chart-side-callout') == 1
         assert '<foreignObject x="772" y="49.8" width="128"' in html
 
-    def test_name_gap_script_converts_scaled_stage_coordinates(self, tmp_path):
+    def test_name_gap_script_uses_unscaled_fit_width(self, tmp_path):
         html = self._render(tmp_path, _side_callout_cfg())
         assert "var hostScaleX = hbr.width / host.offsetWidth;" in html
         assert "(ccr.right - hbr.left) / hostScaleX" in html
+        assert "callEl.scrollWidth > callEl.clientWidth" in html
+
+    def test_legacy_name_column_coercions_survive_without_callout(self, tmp_path):
+        conf = _chartjs_cfg(self._render(tmp_path, {
+            "exterior_segment_names": 1,
+            "segment_name_gutter": "150",
+            "segment_name_offset": "22",
+        }))
+        assert conf["options"]["plugins"]["legend"]["display"] is False
+        assert conf["options"]["layout"]["padding"]["right"] == 150
+        assert conf["options"]["plugins"]["segmentNames"]["offset"] == 22
 
     def test_svg_invalid_callout_emits_diagnostic(self, tmp_path, capsys):
         html = self._render(

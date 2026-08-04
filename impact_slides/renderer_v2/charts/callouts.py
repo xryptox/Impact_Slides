@@ -55,7 +55,7 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         callEl.style.left = ((ccr.right - hbr.left) / hostScaleX - gutter + offset) + 'px';
         callEl.style.width = (gutter - offset) + 'px';
         cbr = callEl.getBoundingClientRect();
-        if (cbr.width <= 0 || callEl.scrollWidth > cbr.width ||
+        if (callEl.clientWidth <= 0 || callEl.scrollWidth > callEl.clientWidth ||
             cbr.left < ccr.left || cbr.right > ccr.right || cbr.bottom > ccr.bottom) {
           callEl.style.display = 'none';
           console.warn('[side_callout] omitted: callout does not fit the measured exterior-name lane');
@@ -442,23 +442,30 @@ def _side_callout_lines(
 
 
 def _side_column_geometry(
-    chart_cfg: Mapping[str, Any],
+    chart_cfg: Mapping[str, Any], *, strict: bool = True
 ) -> tuple[int, int] | None:
-    if chart_cfg.get("exterior_segment_names") is not True:
+    if strict:
+        if chart_cfg.get("exterior_segment_names") is not True:
+            return None
+        offset = chart_cfg.get("segment_name_offset", 8)
+        gutter = chart_cfg.get("segment_name_gutter", 120)
+        if (
+            isinstance(offset, bool)
+            or isinstance(gutter, bool)
+            or not isinstance(offset, (int, float))
+            or not isinstance(gutter, (int, float))
+            or not math.isfinite(offset)
+            or not math.isfinite(gutter)
+        ):
+            return None
+        offset, gutter = int(offset), int(gutter)
+        return (offset, gutter) if 0 <= offset < gutter else None
+    if not chart_cfg.get("exterior_segment_names"):
         return None
-    offset = chart_cfg.get("segment_name_offset", 8)
-    gutter = chart_cfg.get("segment_name_gutter", 120)
-    if (
-        isinstance(offset, bool)
-        or isinstance(gutter, bool)
-        or not isinstance(offset, (int, float))
-        or not isinstance(gutter, (int, float))
-        or not math.isfinite(offset)
-        or not math.isfinite(gutter)
-    ):
-        return None
-    offset, gutter = int(offset), int(gutter)
-    return (offset, gutter) if 0 <= offset < gutter else None
+    return (
+        int(chart_cfg.get("segment_name_offset", 8)),
+        int(chart_cfg.get("segment_name_gutter", 120)),
+    )
 
 
 def _resolve_side_callout(
