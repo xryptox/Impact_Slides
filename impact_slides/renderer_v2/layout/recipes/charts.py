@@ -91,15 +91,24 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
             # the table shares the SVG's width context (PDF house style).
             primary = vs.get("primary_visual") or {}
             raw_steps = primary.get("steps_or_data") or []
-            labels = [
-                str(p.get("label") or p.get("x") or "").strip()
-                for p in raw_steps
-                if isinstance(p, Mapping)
-            ]
+            # Category labels from either supported primary form (#136):
+            # mapping points use label/x; row-list data skips the header row
+            # and takes the first cell of each data row.
+            if raw_steps and all(isinstance(p, Mapping) for p in raw_steps):
+                labels = [
+                    str(p.get("label") or p.get("x") or "").strip()
+                    for p in raw_steps
+                ]
+            elif (
+                len(raw_steps) > 1
+                and all(isinstance(p, (list, tuple)) and len(p) > 0 for p in raw_steps)
+            ):
+                labels = [str(r[0]).strip() for r in raw_steps[1:]]
+            else:
+                labels = []
             n = len(labels)
             aligned = (
                 n > 0
-                and len(raw_steps) == n
                 and all(len(r) == n + 1 for r in table_rows)
                 and [c.strip() for c in header[1:]] == labels
             )

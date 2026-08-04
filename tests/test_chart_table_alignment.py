@@ -218,3 +218,89 @@ def test_aligned_table_still_nested_after_40():
     assert "chart-table-aligned" in html
     assert '<div class="chart-col">' in html
     assert "chart-align-table" in html
+
+
+# ------------------------------------------- N6 / #136 row-list primary labels
+
+_ROW_LIST_PRIMARY = [
+    ["Quarter", "Write-offs", "Reserve Build/(Release)"],
+    ["Q1'25", "1223", "-73"],
+    ["Q2'25", "1200", "-50"],
+    ["Q3'25", "1100", "-40"],
+    ["Q4'25", "1251", "-73"],
+    ["Q1'26", "1251", "-24"],
+]
+
+_OUTLINED_MATCHING = {
+    "type": "data_table",
+    "skin": "outlined_boxes",
+    "steps_or_data": [
+        ["", "Q1'25", "Q2'25", "Q3'25", "Q4'25", "Q1'26"],
+        ["Reserve Rate for Total Balances", "2.9%", "2.8%", "2.8%", "2.8%", "2.8%"],
+    ],
+}
+
+
+def _outlined_slide(primary_steps, secondary):
+    return {
+        "slide_number": 1,
+        "title": "Provisions",
+        "layout_type": "stacked_bar_chart",
+        "content": {"bullets": [], "key_stats": []},
+        "visual_spec": {
+            "primary_visual": {
+                "type": "stacked_bar_chart",
+                "steps_or_data": primary_steps,
+            },
+            "secondary_visual": secondary,
+        },
+    }
+
+
+def test_outlined_row_list_primary_aligns():
+    """#136: row-list primary categories must pitch-match outlined cells."""
+    html = _render(_outlined_slide(_ROW_LIST_PRIMARY, _OUTLINED_MATCHING))
+    assert "chart-support-outlined chart-table-aligned" in html
+    assert 'data-align-left="' in html
+    assert 'data-align-right="' in html
+    assert 'data-align-width="' in html
+    # five pitch-matched value slots + one label slot
+    cells = re.findall(
+        r'<div class="chart-outlined-cell" style="width:([\d.]+)%"',
+        html,
+    )
+    assert len(cells) == 5
+    assert all(float(w) > 0 for w in cells)
+    # equal pitch across the five period slots
+    assert len({round(float(w), 2) for w in cells}) == 1
+
+
+def test_outlined_mapping_primary_still_aligns():
+    primary = [
+        {"label": "Q1'25", "values": {"NCO": 1223, "RR": -73}},
+        {"label": "Q2'25", "values": {"NCO": 1200, "RR": -50}},
+        {"label": "Q3'25", "values": {"NCO": 1100, "RR": -40}},
+        {"label": "Q4'25", "values": {"NCO": 1251, "RR": -73}},
+        {"label": "Q1'26", "values": {"NCO": 1251, "RR": -24}},
+    ]
+    html = _render(_outlined_slide(primary, _OUTLINED_MATCHING))
+    assert "chart-support-outlined chart-table-aligned" in html
+    assert html.count('<div class="chart-outlined-cell" style="width:') == 5
+
+
+def test_outlined_mismatched_headers_stay_unaligned():
+    secondary = {
+        "type": "data_table",
+        "skin": "outlined_boxes",
+        "steps_or_data": [
+            ["", "FY24", "FY25"],
+            ["Reserve Rate", "2.9%", "2.8%"],
+        ],
+    }
+    html = _render(_outlined_slide(_ROW_LIST_PRIMARY, secondary))
+    assert "chart-support-outlined" in html
+    assert "chart-table-aligned" not in html
+    assert "data-align-left" not in html
+    # cells still render, but without pitch widths
+    assert html.count('<div class="chart-outlined-cell"') == 2
+    assert 'chart-outlined-cell" style="width:' not in html
