@@ -47,7 +47,13 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         if (!callEl) return base.call(this, chart);
         var cbr = callEl.getBoundingClientRect();
         var ccr = canvas.getBoundingClientRect();
-        if (!(ccr.height > 0)) return base.call(this, chart);
+        var hbr = host.getBoundingClientRect();
+        var offset = parseFloat(callEl.getAttribute('data-side-callout-offset') || '');
+        var gutter = parseFloat(callEl.getAttribute('data-side-callout-gutter') || '');
+        if (!(ccr.height > 0) || isNaN(offset) || isNaN(gutter)) return base.call(this, chart);
+        callEl.style.left = (ccr.right - hbr.left - gutter + offset) + 'px';
+        callEl.style.width = (gutter - offset) + 'px';
+        cbr = callEl.getBoundingClientRect();
         if (cbr.width <= 0 || callEl.scrollWidth > cbr.width ||
             cbr.left < ccr.left || cbr.right > ccr.right || cbr.bottom > ccr.bottom) {
           callEl.style.display = 'none';
@@ -78,6 +84,14 @@ _SIDE_CALLOUT_NAME_GAP_JS = """
         if (nameMin + (batch.length - 1) * lh + lh / 2 > chart.height) {
           callEl.style.display = 'none';
           console.warn('[side_callout] omitted: exterior names do not fit below callout');
+          for (var j = 0; j < batch.length; j++) {
+            var it = batch[j];
+            ctx.fillStyle = it.c;
+            ctx.font = it.f;
+            ctx.textAlign = it.a;
+            ctx.textBaseline = it.b;
+            orig.call(ctx, it.t, it.x, it.y);
+          }
           return;
         }
         var extra = Math.max(0, nameMin - batch[0].y);
@@ -621,21 +635,22 @@ def _build_side_callout_html(
         line_html.append(
             f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{ink};line-height:{line_height}px">{esc(str(ln["text"]))}</div>'
         )
+    geom = chart_geometry("stacked_bar_chart")
+    x_pct = 100 * (geom["width"] - plan["gutter"] + plan["offset"]) / geom["width"]
+    lane_pct = 100 * plan["lane_width"] / geom["width"]
     if host == "tile":
         pad = max(0, int(tile_pad_px))
-        left = (
-            f"calc(100% - var(--side-callout-gutter) + var(--side-callout-offset)"
-            f" - {pad}px)"
-        )
-        width = "width:calc(var(--side-callout-gutter) - var(--side-callout-offset));max-width:160px"
+        left = f"calc({x_pct:.6f}% + {pad * (1 - 2 * x_pct / 100):.6f}px)"
+        width = f"width:calc({lane_pct:.6f}% - {2 * pad * lane_pct / 100:.6f}px)"
     else:
-        left = "calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))"
-        width = "width:calc(var(--side-callout-gutter) - var(--side-callout-offset));max-width:160px"
+        left = f"{x_pct:.6f}%"
+        width = f"width:{lane_pct:.6f}%"
     anchor = "tile" if host == "tile" else "wrap"
     aside = (
         f'<aside class="chart-side-callout chart-side-callout--{esc(plan["skin"])} '
         f'chart-side-callout--{esc(plan["placement"])}" '
-        f'data-side-callout-anchor="{anchor}" '
+        f'data-side-callout-html="{anchor}" data-side-callout-anchor="{anchor}" '
+        f'data-side-callout-offset="{plan["offset"]}" data-side-callout-gutter="{plan["gutter"]}" '
         f'data-side-callout-name-gap="{_SIDE_CALLOUT_NAME_GAP_PX}" '
         f'data-side-callout-min-plot-width="{plan["min_plot_width"] or ""}" '
         f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;{top_css};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{ink};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;{width};left:{left};right:auto" '

@@ -331,7 +331,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
-    side_plan = _resolve_side_callout(cfg, "stacked_bar_chart", warn=False)
+    side_plan = _resolve_side_callout(cfg, "stacked_bar_chart")
     column = _side_column_geometry(cfg) if side_plan else None
     pad_l, pad_r, pad_t, pad_b = (
         geom["pad_l"],

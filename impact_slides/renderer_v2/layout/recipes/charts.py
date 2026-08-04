@@ -399,7 +399,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             else:
                 paint_cfg = (
                     {**tile_cfg, "_side_callout_external": True}
-                    if callout_on_tile and use_chartjs
+                    if callout_on_tile
                     else tile_cfg
                 )
             sub_slide = {
@@ -425,7 +425,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     host="tile",
                     tile_pad_px=tile_pad,
                 )
-                if callout_on_tile and use_chartjs
+                if callout_on_tile
                 else ""
             )
             lbl = f'<div class="gl-tile-label">{esc(label)}</div>' if label else ""

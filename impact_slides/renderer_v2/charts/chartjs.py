@@ -705,9 +705,20 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
             cfg.setdefault("options", {}).setdefault("plugins", {})["callouts"] = {
                 "items": items
             }
+    # N5/#138: shared-column side callout (HTML furniture, not a plugin).
+    # Multi-panel hosts it on the tile (tile-local PDF offset); flag skips embed.
+    side_callout_html = (
+        ""
+        if chart_cfg.get("_side_callout_external")
+        else _build_side_callout_html(chart_cfg, layout)
+    )
     payload = _json.dumps(cfg, ensure_ascii=False)
     svg_fb = _svg_fallback_for_layout(slide, layout)
-    noscript = f"<noscript>{svg_fb}</noscript>" if svg_fb else ""
+    noscript = (
+        f'<noscript>{"<style>[data-side-callout-html=wrap]{display:none}</style>" if side_callout_html else ""}{svg_fb}</noscript>'
+        if svg_fb
+        else ""
+    )
     # Annotation callout marker (#71/F2): painted as a positioned div so the
     # text is present even if Chart.js annotation plugin is absent.
     ann_html = ""
@@ -745,13 +756,6 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         cfg,
         layout,
         chart_cfg,
-    )
-    # N5/#138: shared-column side callout (HTML furniture, not a plugin).
-    # Multi-panel hosts it on the tile (tile-local PDF offset); flag skips embed.
-    side_callout_html = (
-        ""
-        if chart_cfg.get("_side_callout_external")
-        else _build_side_callout_html(chart_cfg, layout)
     )
     # R1 (#94): chart_config.stage "flat" drops the Boardroom stage chrome so
     # the chart sits flatter against the canvas (IR stage-dominant style).

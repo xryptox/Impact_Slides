@@ -2928,15 +2928,16 @@ class TestSideCallout:
     def test_enabled_callout_keeps_locked_inline_styles(self, tmp_path):
         html = self._render(tmp_path, _side_callout_cfg())
         assert "position:absolute" in html
-        assert "max-width:160px" in html
         assert "color:#53565A" in html
-        assert "left:calc(100% - var(--side-callout-gutter) + var(--side-callout-offset))" in html
-        assert "width:calc(var(--side-callout-gutter) - var(--side-callout-offset))" in html
+        assert "left:85.777778%" in html
+        assert "width:14.222222%" in html
         assert "line-height:29px" in html
         # PDF p28 tile-local offset (49.8px), not a guessed wrap-local 12px.
         assert "top:49.8px" in html
         assert "top:12px" not in html
         assert 'data-side-callout-anchor="wrap"' in html
+        assert 'data-side-callout-offset="22"' in html
+        assert 'data-side-callout-gutter="150"' in html
         assert 'data-side-callout-name-gap="8"' in html
 
     def test_callout_independent_of_stack_totals(self, tmp_path):
@@ -3105,8 +3106,9 @@ class TestSideCallout:
         # Tile host: callout is a direct child of the tall tile, not the wrap.
         assert 'data-side-callout-anchor="tile"' in html
         assert "top:49.8px" in html
-        # The Chart.js tile host keeps the existing CSS-pixel column formula.
-        assert "- 16px)" in html
+        # The tile host maps the SVG's 900-unit column to its scaled content box.
+        assert "left:calc(85.777778% + -11.448889px)" in html
+        assert "width:calc(14.222222% - 4.551111px)" in html
         # chart wrap must not also embed a second callout
         assert html.count("<aside class=\"chart-side-callout") == 1
         # name-reservation is local to the active callout (not global shell).
@@ -3172,7 +3174,7 @@ class TestSideCallout:
         assert '<foreignObject x="772" y="49.8" width="128"' in html
         assert "font-size:26px" in html
 
-    def test_svg_multi_panel_callout_uses_scaled_tile_column(self, tmp_path):
+    def test_svg_multi_panel_callout_uses_tile_local_html(self, tmp_path):
         s = _slide("multi_panel", [])
         s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
             "kind": "chart", "chart_type": "stacked_bar_chart", "steps_or_data": PROVISION_STACK,
@@ -3182,7 +3184,24 @@ class TestSideCallout:
         out = tmp_path / "out"
         render_deck(path, out, strict=False, suppress_features=["charts"])
         html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'data-side-callout-anchor="tile"' in html
+        assert "top:49.8px" in html
+        assert '<foreignObject x="772" y="49.8" width="128"' not in html
+
+    def test_noscript_hides_wrap_callout_before_painting_svg(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert '<style>[data-side-callout-html=wrap]{display:none}</style>' in html
+        assert html.count('<aside class="chart-side-callout') == 1
         assert '<foreignObject x="772" y="49.8" width="128"' in html
+
+    def test_svg_invalid_callout_emits_diagnostic(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            _side_callout_cfg(segment_name_offset="wide"),
+            suppress=["charts"],
+        )
+        assert '<aside class="chart-side-callout' not in html
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
 
     def test_multi_panel_callout_omits_when_side_legend_owns_right_lane(
         self, tmp_path, capsys
