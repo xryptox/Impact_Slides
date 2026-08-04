@@ -462,8 +462,9 @@ def _side_column_geometry(
         return (offset, gutter) if 0 <= offset < gutter else None
     if not chart_cfg.get("exterior_segment_names"):
         return None
+    offset = chart_cfg.get("segment_name_offset", 8)
     return (
-        int(chart_cfg.get("segment_name_offset", 8)),
+        int(offset) if offset is not None else 8,
         int(chart_cfg.get("segment_name_gutter", 120)),
     )
 

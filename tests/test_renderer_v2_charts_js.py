@@ -3230,6 +3230,31 @@ class TestSideCallout:
         assert conf["options"]["layout"]["padding"]["right"] == 150
         assert conf["options"]["plugins"]["segmentNames"]["offset"] == 22
 
+    def test_legacy_null_offset_preserves_plugin_default(self, tmp_path):
+        conf = _chartjs_cfg(self._render(tmp_path, {
+            "exterior_segment_names": True,
+            "segment_name_offset": None,
+        }))
+        segment_names = conf["options"]["plugins"]["segmentNames"]
+        assert conf["options"]["plugins"]["legend"]["display"] is False
+        assert "offset" not in segment_names
+
+    def test_multi_panel_invalid_callout_column_fails_soft(self, tmp_path, capsys):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart",
+            "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(segment_name_offset="wide"),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        conf = _chartjs_cfg(html)
+        assert '<aside class="chart-side-callout' not in html
+        assert "segmentNames" not in conf["options"]["plugins"]
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
     def test_svg_invalid_callout_emits_diagnostic(self, tmp_path, capsys):
         html = self._render(
             tmp_path,

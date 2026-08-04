@@ -392,9 +392,10 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             # #138: host side_callout on the tile (PDF tile-local top 49.8px),
             # not the chart wrap whose top sits ~72px lower after totals/label.
             callout_requested = "side_callout" in tile_cfg
-            callout_on_tile = side_callout_active(
+            callout_valid = side_callout_active(
                 tile_cfg, chart_type, available_width=tile_width, warn=True
             )
+            callout_on_tile = callout_valid
             if callout_on_tile and has_side_legend:
                 print(
                     "[side_callout] omitted: tile side_legend occupies the exterior-name lane",
@@ -405,7 +406,7 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 {**tile_cfg, "_side_callout_external": True}
                 if callout_on_tile
                 else {k: v for k, v in tile_cfg.items() if k != "side_callout"}
-                if callout_requested
+                if callout_requested and callout_valid
                 else tile_cfg
             )
             sub_slide = {
