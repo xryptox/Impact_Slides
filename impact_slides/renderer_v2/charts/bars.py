@@ -8,6 +8,13 @@ from ..strip import esc, strip_eids
 from .format import _bar_num, _fmt_bar, _fmt_value_label, _nice_max, _nice_step, _series_colors
 from .geometry import chart_geometry
 from .core import _chart_config, _steps
+from .callouts import (
+    _SIDE_CALLOUT_NAME_GAP_PX,
+    _SIDE_CALLOUT_TILE_TOP_PX,
+    _build_side_callout_svg,
+    _resolve_side_callout,
+    _side_column_geometry,
+)
 
 
 
@@ -175,12 +182,14 @@ def _vbar_frame(
     y_min: float,
     y_ticks: list[float],
     series: list[str],
+    *,
+    pad_r: float | None = None,
 ) -> list[str]:
-    """Emit SVG open + gridlines + axes + legend."""
     show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
-    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
+    pad_l, default_pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
+    pad_r = default_pad_r if pad_r is None else pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
 
@@ -322,7 +331,14 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
-    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
+    side_plan = _resolve_side_callout(cfg, "stacked_bar_chart")
+    column = _side_column_geometry(cfg) if side_plan else None
+    pad_l, pad_r, pad_t, pad_b = (
+        geom["pad_l"],
+        column[1] if column else geom["pad_r"],
+        _vbar_pad_t(cfg, series),
+        56,
+    )
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
@@ -335,7 +351,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
             return pad_t + plot_h / 2
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
-    parts = _vbar_frame("vbar-stacked", cfg, y_max, y_min, y_ticks, series)
+    parts = _vbar_frame("vbar-stacked", cfg, y_max, y_min, y_ticks, series, pad_r=pad_r)
     zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
 
     n = len(labels)
@@ -408,6 +424,47 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
             f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
 
+    if column:
+        offset, gutter = column
+        names: list[tuple[float, str, str]] = []
+        for j, name in enumerate(series):
+            last = next(
+                (
+                    i for i in range(n - 1, -1, -1)
+                    if j < len(matrix[i])
+                    and isinstance(matrix[i][j], (int, float))
+                    and matrix[i][j]
+                ),
+                None,
+            )
+            if last is None:
+                continue
+            value = matrix[last][j]
+            if not isinstance(value, (int, float)):
+                continue
+            prior = matrix[last][:j + 1]
+            mid = (
+                sum(v for v in prior if isinstance(v, (int, float)) and v > 0) - value / 2
+                if value > 0
+                else sum(v for v in prior if isinstance(v, (int, float)) and v < 0) - value / 2
+            )
+            names.append((y_pos(mid), str(name), palette[j % len(palette)]))
+        min_y = (
+            _SIDE_CALLOUT_TILE_TOP_PX
+            + _SIDE_CALLOUT_NAME_GAP_PX
+            + sum(int(line["line_height"]) for line in side_plan["lines"])
+        )
+        names.sort()
+        for i, (y, name, color) in enumerate(names):
+            y = max(y, min_y if i == 0 else names[i - 1][0] + 16)
+            names[i] = (y, name, color)
+            parts.append(
+                f'<text class="vbar-segment-name" x="{W - gutter + offset:.1f}" y="{y:.1f}" '
+                f'fill="{color}" font-size="12" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(name)}</text>'
+            )
+    if side_plan and not cfg.get("_side_callout_external"):
+        parts.append(_build_side_callout_svg(cfg, "stacked_bar_chart", warn=False))
     parts.append("</svg>")
     return "".join(parts)
 

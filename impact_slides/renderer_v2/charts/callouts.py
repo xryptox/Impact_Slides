@@ -1,8 +1,141 @@
 """Callout overlay geometry for chart panes."""
 from __future__ import annotations
 
+import math
+import sys
 from typing import Any, Mapping
 from ..strip import esc, strip_eids
+from .geometry import chart_geometry
+
+# N5/#138: shared-column side callout (plain HTML furniture, not a Chart.js plugin).
+_SIDE_CALLOUT_LAYOUTS = frozenset({"stacked_bar_chart"})
+_SIDE_CALLOUT_DEFAULT_SIZE = 24
+_SIDE_CALLOUT_LEAD_SIZE = 26
+# Quoted so token-audit treats this as a CSS string (ink).
+_SIDE_CALLOUT_COLOR = "#53565A"
+# PDF p28 Deposit Programs: callout top offset below tile top (stage px).
+_SIDE_CALLOUT_TILE_TOP_PX = 49.8
+# Gap between callout bottom and first exterior name (stage/canvas px).
+_SIDE_CALLOUT_NAME_GAP_PX = 8
+_SIDE_CALLOUT_MIN_PLOT_WIDTH = 240
+_SIDE_CALLOUT_MAX_LINES = 4
+_SIDE_CALLOUT_MIN_SIZE = 12
+_SIDE_CALLOUT_MAX_SIZE = 32
+_SIDE_CALLOUT_MAX_TEXT_LENGTH = 32
+_SIDE_CALLOUT_NAME_KNOB_RANGES = {
+    "segment_name_font_size": (8, 32),
+    "segment_name_line_height": (8, 40),
+    "segment_name_wrap_chars": (4, 32),
+    "segment_name_max_lines": (1, 4),
+}
+_SIDE_CALLOUT_CHAR_EM = {
+    " ": 0.22, "'": 0.21, "\u2019": 0.21, ".": 0.28, ",": 0.28, ":": 0.28,
+    ";": 0.28, "!": 0.30, "|": 0.28, '"': 0.36,
+    "(": 0.35, ")": 0.35, "[": 0.35, "]": 0.35,
+    "-": 0.38, "/": 0.42, "\\": 0.42, "?": 0.54, "*": 0.50, "_": 0.56,
+    "\u2013": 0.56, "\u2014": 0.82, "+": 0.60, "=": 0.60, "<": 0.60, ">": 0.60,
+    "#": 0.70, "$": 0.57, "\u20ac": 0.57, "\u00a3": 0.57, "\u00a5": 0.57,
+    "%": 0.78, "@": 0.95, "&": 0.75,
+    "i": 0.27, "j": 0.28, "l": 0.27, "f": 0.34, "t": 0.37, "r": 0.40,
+    "w": 0.78, "m": 0.90,
+    "I": 0.29, "J": 0.55, "F": 0.55, "L": 0.56, "E": 0.60, "S": 0.60,
+    "T": 0.60, "Z": 0.61, "Y": 0.61, "P": 0.63, "X": 0.63, "R": 0.65,
+    "B": 0.66, "K": 0.66, "V": 0.66, "A": 0.67, "C": 0.66, "D": 0.66,
+    "G": 0.72, "U": 0.73, "H": 0.74, "N": 0.74, "O": 0.75, "Q": 0.75,
+    "M": 0.87, "W": 0.93,
+}
+_SIDE_CALLOUT_EM_DIGIT = 0.57
+_SIDE_CALLOUT_EM_UPPER = 0.75
+_SIDE_CALLOUT_EM_DEFAULT = 0.56
+
+# Opt-in only: patches shell segmentNames at Chart.register time so exterior
+# names clear the callout. Emitted next to the aside — never in global shell.
+_SIDE_CALLOUT_NAME_GAP_JS = """
+<script data-side-callout-name-gap-boot="1">
+(function () {
+  if (typeof Chart === 'undefined' || Chart.__sideCalloutNameGap) return;
+  Chart.__sideCalloutNameGap = 1;
+  var reg = Chart.register;
+  Chart.register = function () {
+    for (var i = 0; i < arguments.length; i++) {
+      var p = arguments[i];
+      if (!p || p.id !== 'segmentNames' || p.__sideCalloutNameGap) continue;
+      p.__sideCalloutNameGap = 1;
+      var base = p.afterDatasetsDraw;
+      if (typeof base !== 'function') continue;
+      p.afterDatasetsDraw = function (chart) {
+        var canvas = chart.canvas;
+        var ctx = chart.ctx;
+        var host = (canvas.closest && (canvas.closest('.gl-tile') || canvas.closest('.chartjs-wrap'))) || null;
+        var callEl = host && host.querySelector && host.querySelector('aside.chart-side-callout');
+        if (!callEl) return base.call(this, chart);
+        var cbr = callEl.getBoundingClientRect();
+        var ccr = canvas.getBoundingClientRect();
+        var hbr = host.getBoundingClientRect();
+        var laneLeft = parseFloat(callEl.getAttribute('data-side-callout-lane-left') || '');
+        var laneWidth = parseFloat(callEl.getAttribute('data-side-callout-lane-width') || '');
+        var hostScaleX = hbr.width / host.offsetWidth;
+        if (!(ccr.height > 0) || !(hostScaleX > 0) || isNaN(laneLeft) || isNaN(laneWidth)) return base.call(this, chart);
+        var canvasWidth = ccr.width / hostScaleX;
+        callEl.style.left = ((ccr.left - hbr.left) / hostScaleX + canvasWidth * laneLeft / 100) + 'px';
+        callEl.style.width = (canvasWidth * laneWidth / 100) + 'px';
+        cbr = callEl.getBoundingClientRect();
+        if (callEl.clientWidth <= 0 || callEl.scrollWidth > callEl.clientWidth ||
+            cbr.left < ccr.left - 1 || cbr.right > ccr.right + 1 || cbr.bottom > ccr.bottom) {
+          callEl.style.display = 'none';
+          console.warn('[side_callout] omitted: callout does not fit the measured exterior-name lane');
+          return base.call(this, chart);
+        }
+        var minWidth = parseFloat(callEl.getAttribute('data-side-callout-min-plot-width') || '');
+        var area = chart.chartArea;
+        if (!isNaN(minWidth) && area && area.right - area.left < minWidth) {
+          callEl.style.display = 'none';
+          console.warn('[side_callout] omitted: plot width below min_plot_width');
+          return base.call(this, chart);
+        }
+        callEl.style.display = '';
+        var opts = chart.config.options.plugins && chart.config.options.plugins.segmentNames;
+        var lh = (opts && typeof opts.lineHeight === 'number') ? opts.lineHeight : 13;
+        var gap = parseFloat(callEl.getAttribute('data-side-callout-name-gap') || '');
+        if (isNaN(gap)) gap = 8;
+        var nameMin = (cbr.bottom - ccr.top) * (chart.height / ccr.height) + gap + lh / 2;
+        var batch = [];
+        var orig = ctx.fillText;
+        ctx.fillText = function (t, x, y) {
+          batch.push({ t: t, x: x, y: y, c: ctx.fillStyle, f: ctx.font, a: ctx.textAlign, b: ctx.textBaseline });
+        };
+        try { base.call(this, chart); }
+        finally { ctx.fillText = orig; }
+        if (!batch.length) return;
+        if (nameMin + (batch.length - 1) * lh + lh / 2 > chart.height) {
+          callEl.style.display = 'none';
+          console.warn('[side_callout] omitted: exterior names do not fit below callout');
+          for (var j = 0; j < batch.length; j++) {
+            var it = batch[j];
+            ctx.fillStyle = it.c;
+            ctx.font = it.f;
+            ctx.textAlign = it.a;
+            ctx.textBaseline = it.b;
+            orig.call(ctx, it.t, it.x, it.y);
+          }
+          return;
+        }
+        var extra = Math.max(0, nameMin - batch[0].y);
+        for (var j = 0; j < batch.length; j++) {
+          var it = batch[j];
+          ctx.fillStyle = it.c;
+          ctx.font = it.f;
+          ctx.textAlign = it.a;
+          ctx.textBaseline = it.b;
+          orig.call(ctx, it.t, it.x, it.y + extra);
+        }
+      };
+    }
+    return reg.apply(this, arguments);
+  };
+})();
+</script>
+"""
 
 
 
@@ -271,3 +404,359 @@ def _build_callout_overlays(
             if stem:
                 parts.append(stem)
     return "".join(parts)
+
+
+def _side_callout_line_height(size: int) -> int:
+    return max(29, math.ceil(size * 1.115))
+
+
+def _side_callout_text_width(text: str, size: int) -> float:
+    return sum(
+        _SIDE_CALLOUT_CHAR_EM.get(
+            ch,
+            _SIDE_CALLOUT_EM_DIGIT
+            if ch.isdigit()
+            else _SIDE_CALLOUT_EM_UPPER
+            if ch.isupper()
+            else _SIDE_CALLOUT_EM_DEFAULT,
+        )
+        for ch in text
+    ) * size
+
+
+def _side_callout_lines(
+    raw: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]] | None, str | None]:
+    """Normalize bounded structured side_callout lines into paint lines."""
+    lines_in = raw.get("lines")
+    items: list[tuple[Any, Any]] = []
+    if lines_in is not None:
+        if not isinstance(lines_in, (list, tuple)) or not lines_in:
+            return None, "lines must be a non-empty list"
+        if len(lines_in) > _SIDE_CALLOUT_MAX_LINES:
+            return None, f"lines exceed maximum of {_SIDE_CALLOUT_MAX_LINES}"
+        for item in lines_in:
+            if isinstance(item, Mapping):
+                items.append((item.get("text", item.get("value")), item.get("size")))
+            elif isinstance(item, str):
+                items.append((item, None))
+            else:
+                return None, "each line must be text or an object"
+    else:
+        value = raw.get("value")
+        label = raw.get("label")
+        if value is not None:
+            items.append((value, _SIDE_CALLOUT_LEAD_SIZE))
+        if isinstance(label, (list, tuple)):
+            items.extend((part, None) for part in label)
+        elif label is not None:
+            items.append((label, None))
+    if not items or len(items) > _SIDE_CALLOUT_MAX_LINES:
+        return None, f"lines exceed maximum of {_SIDE_CALLOUT_MAX_LINES}"
+    out: list[dict[str, Any]] = []
+    for index, (text_raw, size_raw) in enumerate(items):
+        if not isinstance(text_raw, str):
+            return None, "line text must be a string"
+        text = strip_eids(text_raw).strip()
+        if not text:
+            return None, "line text must not be empty"
+        if len(text) > _SIDE_CALLOUT_MAX_TEXT_LENGTH:
+            return None, f"line text exceeds maximum of {_SIDE_CALLOUT_MAX_TEXT_LENGTH} characters"
+        size = _SIDE_CALLOUT_LEAD_SIZE if index == 0 else _SIDE_CALLOUT_DEFAULT_SIZE
+        if size_raw is not None:
+            if (
+                isinstance(size_raw, bool)
+                or not isinstance(size_raw, (int, float))
+                or not math.isfinite(size_raw)
+                or not float(size_raw).is_integer()
+                or not _SIDE_CALLOUT_MIN_SIZE <= size_raw <= _SIDE_CALLOUT_MAX_SIZE
+            ):
+                return None, (
+                    f"line size must be a whole number from {_SIDE_CALLOUT_MIN_SIZE} "
+                    f"to {_SIDE_CALLOUT_MAX_SIZE}"
+                )
+            size = int(size_raw)
+        out.append({"text": text, "size": size, "line_height": _side_callout_line_height(size)})
+    return out, None
+
+
+def _strict_side_column_error(chart_cfg: Mapping[str, Any]) -> str | None:
+    if chart_cfg.get("exterior_segment_names") is not True:
+        return "requires a valid exterior_segment_names column"
+    offset = chart_cfg.get("segment_name_offset", 8)
+    gutter = chart_cfg.get("segment_name_gutter", 120)
+    if (
+        isinstance(offset, bool)
+        or isinstance(gutter, bool)
+        or not isinstance(offset, (int, float))
+        or not isinstance(gutter, (int, float))
+        or not math.isfinite(offset)
+        or not math.isfinite(gutter)
+        or not float(offset).is_integer()
+        or not float(gutter).is_integer()
+    ):
+        return "requires a valid exterior_segment_names column"
+    offset, gutter = int(offset), int(gutter)
+    if not 0 <= offset < gutter:
+        return "requires a valid exterior_segment_names column"
+    knobs: dict[str, int] = {}
+    for name, (lower, upper) in _SIDE_CALLOUT_NAME_KNOB_RANGES.items():
+        value = chart_cfg.get(name)
+        if value is None:
+            continue
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or not float(value).is_integer()
+            or not lower <= value <= upper
+        ):
+            return f"{name} must be a whole number from {lower} to {upper}"
+        knobs[name] = int(value)
+    font_size = knobs.get("segment_name_font_size", 12)
+    line_height = knobs.get("segment_name_line_height", 13)
+    if line_height < font_size:
+        return "segment_name_line_height must be at least segment_name_font_size"
+    return None
+
+
+def _side_column_geometry(
+    chart_cfg: Mapping[str, Any], *, strict: bool = True
+) -> tuple[int, int] | None:
+    if strict:
+        if _strict_side_column_error(chart_cfg):
+            return None
+        return int(chart_cfg.get("segment_name_offset", 8)), int(
+            chart_cfg.get("segment_name_gutter", 120)
+        )
+    if not chart_cfg.get("exterior_segment_names"):
+        return None
+    offset = chart_cfg.get("segment_name_offset", 8)
+    return (
+        int(offset) if offset is not None else 8,
+        int(chart_cfg.get("segment_name_gutter", 120)),
+    )
+
+
+def _resolve_side_callout(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str,
+    *,
+    warn: bool = True,
+    available_width: float | None = None,
+) -> dict[str, Any] | None:
+    """Return paint plan for opt-in side_callout, or None when inert/unsupported.
+
+    Shared-column Recipe A (sign-off issue 138): callout sits at the top of the
+    existing right text column — no second x-lane, no plot shrink. Over-budget
+    fail-soft is preserved for an explicit ``min_plot_width`` gate only; the
+    PDF/v9 shared-column case is not over-budget.
+    """
+    if not isinstance(chart_cfg, Mapping):
+        return None
+    if "side_callout" not in chart_cfg:
+        return None
+    raw = chart_cfg["side_callout"]
+    if not isinstance(raw, Mapping):
+        if warn:
+            print(
+                "[side_callout] ignored: side_callout must be an object",
+                file=sys.stderr,
+            )
+        return None
+    lt = (layout or "").lower().strip()
+    if lt not in _SIDE_CALLOUT_LAYOUTS:
+        if warn:
+            print(
+                f"[side_callout] ignored: unsupported layout {lt!r} "
+                f"(supported: {sorted(_SIDE_CALLOUT_LAYOUTS)})",
+                file=sys.stderr,
+            )
+        return None
+    placement = str(raw.get("placement") or "right").lower().strip()
+    skin = str(raw.get("skin") or "tall").lower().strip()
+    if placement != "right" or skin != "tall":
+        if warn:
+            print(
+                f"[side_callout] ignored: unsupported placement/skin "
+                f"{placement!r}/{skin!r} (locked: right/tall)",
+                file=sys.stderr,
+            )
+        return None
+    lines, lines_error = _side_callout_lines(raw)
+    if not lines:
+        if warn:
+            print(
+                f"[side_callout] ignored: {lines_error or 'empty value/label/lines'}",
+                file=sys.stderr,
+            )
+        return None
+    column_error = _strict_side_column_error(chart_cfg)
+    column = _side_column_geometry(chart_cfg)
+    if not column or column_error:
+        if warn:
+            print(
+                f"[side_callout] ignored: {column_error or 'requires a valid exterior_segment_names column'}",
+                file=sys.stderr,
+            )
+        return None
+    offset, gutter = column
+    geom = chart_geometry("stacked_bar_chart")
+    plot_width = geom["width"] - geom["pad_l"] - gutter
+    lane_width = gutter - offset
+    required_lane_width = max(
+        _side_callout_text_width(str(line["text"]), int(line["size"]))
+        for line in lines
+    )
+    callout_height = sum(int(line["line_height"]) for line in lines)
+    names_height = 12 + 3 * 16
+    available_height = geom["height"] - _SIDE_CALLOUT_TILE_TOP_PX - _SIDE_CALLOUT_NAME_GAP_PX - names_height
+    if plot_width <= 0:
+        if warn:
+            print("[side_callout] omitted: exterior-name gutter leaves no plot", file=sys.stderr)
+        return None
+    effective_lane_width = lane_width
+    if available_width is not None:
+        effective_lane_width = lane_width * available_width / geom["width"]
+    if effective_lane_width < required_lane_width:
+        if warn:
+            print(
+                f"[side_callout] omitted: exterior-name lane {effective_lane_width:.1f}px "
+                f"< required callout width {required_lane_width}px",
+                file=sys.stderr,
+            )
+        return None
+    if callout_height > available_height:
+        if warn:
+            print(
+                f"[side_callout] omitted: callout height {callout_height}px "
+                f"> available column height {available_height:.1f}px",
+                file=sys.stderr,
+            )
+        return None
+    min_w = raw.get("min_plot_width")
+    if min_w is not None and (
+        isinstance(min_w, bool)
+        or not isinstance(min_w, (int, float))
+        or not math.isfinite(min_w)
+        or min_w <= 0
+    ):
+        if warn:
+            print("[side_callout] ignored: min_plot_width must be a positive number", file=sys.stderr)
+        return None
+    min_w = max(_SIDE_CALLOUT_MIN_PLOT_WIDTH, int(min_w or 0))
+    if plot_width < min_w:
+        if warn:
+            print(
+                f"[side_callout] omitted: plot width {plot_width}px < min_plot_width {min_w}px",
+                file=sys.stderr,
+            )
+        return None
+    aria = " ".join(str(ln["text"]) for ln in lines)
+    return {
+        "placement": placement,
+        "skin": skin,
+        "lines": lines,
+        "aria": aria,
+        "offset": offset,
+        "gutter": gutter,
+        "min_plot_width": min_w,
+        "lane_width": lane_width,
+    }
+
+
+def _build_side_callout_svg(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str,
+    *,
+    warn: bool = True,
+) -> str:
+    """HTML callout embedded in the SVG coordinate system for JS-off charts."""
+    plan = _resolve_side_callout(chart_cfg, layout, warn=warn)
+    if not plan:
+        return ""
+    geom = chart_geometry("stacked_bar_chart")
+    x = geom["width"] - plan["gutter"] + plan["offset"]
+    lines = "".join(
+        f'<div style="font-size:{line["size"]}px;font-weight:700;color:{_SIDE_CALLOUT_COLOR};line-height:{line["line_height"]}px">{esc(str(line["text"]))}</div>'
+        for line in plan["lines"]
+    )
+    return (
+        f'<foreignObject x="{x}" y="{_SIDE_CALLOUT_TILE_TOP_PX}" '
+        f'width="{plan["lane_width"]}" height="{geom["height"] - _SIDE_CALLOUT_TILE_TOP_PX}">'
+        f'<aside xmlns="http://www.w3.org/1999/xhtml" class="chart-side-callout chart-side-callout--{esc(plan["skin"])} chart-side-callout--{esc(plan["placement"])}" '
+        f'style="margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{_SIDE_CALLOUT_COLOR};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;text-align:left;width:{plan["lane_width"]}px" aria-label="{esc(plan["aria"])}">'
+        f"{lines}</aside></foreignObject>"
+    )
+
+
+def _build_side_callout_html(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str,
+    *,
+    warn: bool = True,
+    host: str = "wrap",
+    tile_pad_px: int = 16,
+    available_width: float | None = None,
+) -> str:
+    """Plain HTML/CSS side callout furniture (Chart.js + JS-off paths).
+
+    Styles are inline so global CSS stays byte-neutral when side_callout is off.
+
+    host="tile": multi-panel tile coords (PDF local top offset). host="wrap":
+    chart wrap is the containing block (standalone).
+    """
+    plan = _resolve_side_callout(
+        chart_cfg, layout, warn=warn, available_width=available_width
+    )
+    if not plan:
+        return ""
+    ink = _SIDE_CALLOUT_COLOR  # '#53565A' — quoted CSS string for token-audit
+    # PDF p28 tile-local top; keep Npx only inside style="..." (token-audit).
+    top_css = f"top:{_SIDE_CALLOUT_TILE_TOP_PX}px"
+    line_html = []
+    for ln in plan["lines"]:
+        size = int(ln["size"])
+        line_height = int(ln["line_height"])
+        line_html.append(
+            f'<div class="chart-side-callout__line" style="font-size:{size}px;font-weight:700;color:{ink};line-height:{line_height}px">{esc(str(ln["text"]))}</div>'
+        )
+    geom = chart_geometry("stacked_bar_chart")
+    x_pct = 100 * (geom["width"] - plan["gutter"] + plan["offset"]) / geom["width"]
+    lane_pct = 100 * plan["lane_width"] / geom["width"]
+    if host == "tile":
+        pad = max(0, int(tile_pad_px))
+        left = f"calc({x_pct:.6f}% + {pad * (1 - 2 * x_pct / 100):.6f}px)"
+        width = f"width:calc({lane_pct:.6f}% - {2 * pad * lane_pct / 100:.6f}px)"
+    else:
+        left = f"{x_pct:.6f}%"
+        width = f"width:{lane_pct:.6f}%"
+    anchor = "tile" if host == "tile" else "wrap"
+    aside = (
+        f'<aside class="chart-side-callout chart-side-callout--{esc(plan["skin"])} '
+        f'chart-side-callout--{esc(plan["placement"])}" '
+        f'data-side-callout-html="{anchor}" data-side-callout-anchor="{anchor}" '
+        f'data-side-callout-offset="{plan["offset"]}" data-side-callout-gutter="{plan["gutter"]}" '
+        f'data-side-callout-lane-left="{x_pct:.6f}" data-side-callout-lane-width="{lane_pct:.6f}" '
+        f'data-side-callout-name-gap="{_SIDE_CALLOUT_NAME_GAP_PX}" '
+        f'data-side-callout-min-plot-width="{plan["min_plot_width"] or ""}" '
+        f'style="--side-callout-offset:{plan["offset"]}px;--side-callout-gutter:{plan["gutter"]}px;position:absolute;{top_css};margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:{ink};font-family:var(--font-display,\'IBM Plex Sans\',sans-serif);font-weight:700;font-size:24px;line-height:29px;text-align:left;pointer-events:none;z-index:2;{width};left:{left};right:auto" '
+        f'aria-label="{esc(plan["aria"])}">'
+        f'{ "".join(line_html) }'
+        f"</aside>"
+    )
+    # Local Chart.js name-gap boot (active callout only). No-op when charts off.
+    return aside + _SIDE_CALLOUT_NAME_GAP_JS
+
+
+def side_callout_active(
+    chart_cfg: Mapping[str, Any] | None,
+    layout: str = "stacked_bar_chart",
+    *,
+    available_width: float | None = None,
+    warn: bool = False,
+) -> bool:
+    """True when side_callout will paint (suppresses competing tile badge)."""
+    return _resolve_side_callout(
+        chart_cfg, layout, warn=warn, available_width=available_width
+    ) is not None

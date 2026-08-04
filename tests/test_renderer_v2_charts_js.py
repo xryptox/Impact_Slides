@@ -2836,3 +2836,495 @@ class TestDefaultPaletteResolved:
         ds0 = _chartjs_cfg(html)["data"]["datasets"][0]
         assert ds0["backgroundColor"] == _BAR_SERIES_COLORS[0] == "#00175a"
         assert ds0["backgroundColor"] != themed
+
+
+# ---------------------------------------------------------------------------
+# N5/#138 — shared-column side_callout (stacked vertical bars only)
+# ---------------------------------------------------------------------------
+
+
+def _side_callout_cfg(**extra):
+    base = {
+        "side_callout": {
+            "value": "92% FDIC",
+            "label": ["insured at", "Q1'26"],
+            "placement": "right",
+            "skin": "tall",
+        },
+        "exterior_segment_names": True,
+        "segment_name_gutter": 150,
+        "segment_name_offset": 22,
+        "stack_totals": True,
+        "stack_total_labels": ["$151", "$157"],
+    }
+    base.update(extra)
+    return base
+
+
+class TestSideCallout:
+    def _render(self, tmp_path, cfg, layout="stacked_bar_chart", *, suppress=None):
+        s = _slide(layout, PROVISION_STACK)
+        s["visual_spec"]["primary_visual"]["chart_config"] = cfg
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        kw = {}
+        if suppress:
+            kw["suppress_features"] = suppress
+        render_deck(path, out, strict=False, **kw)
+        return (out / "presentation.html").read_text(encoding="utf-8")
+
+    def test_supported_stacked_emits_three_lines(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert 'class="chart-side-callout chart-side-callout--tall chart-side-callout--right"' in html
+        assert "92% FDIC" in html
+        assert "insured at" in html
+        assert "Q1'26" in html
+        assert 'aria-label="92% FDIC insured at Q1\'26"' in html
+        assert "font-size:26px" in html
+        assert "font-size:24px" in html
+        # shared-column vars from exterior-name gutter/offset
+        assert "--side-callout-gutter:150px" in html
+        assert "--side-callout-offset:22px" in html
+        # plain text — no box chrome classes
+        assert "chart-side-callout__value" not in html or "background" not in html.split("chart-side-callout")[1][:200]
+
+    def test_default_absent_no_markup(self, tmp_path):
+        html = self._render(tmp_path, {"stack_totals": True})
+        # #138 is opt-in only — default product HTML (incl. inlined JS/CSS)
+        # must carry zero feature identifiers or name-gap boot code.
+        for needle in (
+            "chart-side-callout",
+            "--side-callout-",
+            "side-callout",
+            "sideCallout",
+            "side_callout",
+            "data-side-callout",
+            "__sideCalloutNameGap",
+        ):
+            assert needle not in html, f"default deck leaked {needle!r}"
+        # Global shell must stay free of the old #138 plugin hook.
+        shell = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "shell.py"
+        ).read_text(encoding="utf-8")
+        assert "chart-side-callout" not in shell
+        assert "side-callout" not in shell
+        assert "sideCallout" not in shell
+
+    def test_default_css_bundle_has_no_side_callout_rules(self, tmp_path):
+        # Global components.css must stay free of #138 selectors (byte-compat).
+        css = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "css"
+            / "components.css"
+        ).read_text(encoding="utf-8")
+        assert "chart-side-callout" not in css
+        assert "side-callout" not in css
+
+    def test_enabled_callout_keeps_locked_inline_styles(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert "position:absolute" in html
+        assert "color:#53565A" in html
+        assert "left:85.777778%" in html
+        assert "width:14.222222%" in html
+        assert "line-height:29px" in html
+        # PDF p28 tile-local offset (49.8px), not a guessed wrap-local 12px.
+        assert "top:49.8px" in html
+        assert "top:12px" not in html
+        assert 'data-side-callout-anchor="wrap"' in html
+        assert 'data-side-callout-offset="22"' in html
+        assert 'data-side-callout-gutter="150"' in html
+        assert 'data-side-callout-name-gap="8"' in html
+
+    def test_callout_independent_of_stack_totals(self, tmp_path):
+        html = self._render(
+            tmp_path,
+            {
+                "side_callout": {
+                    "value": "92% FDIC",
+                    "label": ["insured at", "Q1'26"],
+                    "placement": "right",
+                    "skin": "tall",
+                },
+                "exterior_segment_names": True,
+            },
+        )
+        assert "<aside class=\"chart-side-callout" in html
+        conf = _chartjs_cfg(html)
+        # no stack_totals → no datalabels totals matrix required
+        assert "datalabels" not in conf["options"]["plugins"] or "_labels" not in (
+            conf["options"]["plugins"].get("datalabels") or {}
+        )
+
+    def test_totals_independent_of_callout(self, tmp_path):
+        conf = _chartjs_cfg(
+            self._render(
+                tmp_path,
+                {"stack_totals": True, "stack_total_labels": ["$151", "$157"]},
+            )
+        )
+        dl = conf["options"]["plugins"]["datalabels"]
+        flat = [v for row in dl["_labels"] for v in row if v]
+        assert flat == ["$151", "$157"]
+
+    def test_unsupported_layout_ignored(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            {
+                "side_callout": {
+                    "value": "X",
+                    "label": "Y",
+                    "placement": "right",
+                    "skin": "tall",
+                }
+            },
+            layout="grouped_bar_chart",
+        )
+        assert "<aside class=\"chart-side-callout" not in html
+        err = capsys.readouterr().err
+        assert "side_callout" in err and "unsupported layout" in err
+
+    def test_unsupported_skin_ignored(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            {
+                "side_callout": {
+                    "value": "X",
+                    "label": "Y",
+                    "placement": "right",
+                    "skin": "pill",
+                }
+            },
+        )
+        assert "<aside class=\"chart-side-callout" not in html
+        assert "unsupported placement/skin" in capsys.readouterr().err
+
+    def test_geometry_budget_fail_soft_without_handoff_measurement(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            {
+                "side_callout": {
+                    "value": "92% FDIC",
+                    "label": ["insured at", "Q1'26"],
+                    "placement": "right",
+                    "skin": "tall",
+                    "min_plot_width": 800,
+                },
+                "exterior_segment_names": True,
+                "segment_name_gutter": 700,
+            },
+        )
+        assert "<aside class=\"chart-side-callout" not in html
+        # chart + exterior names still present
+        conf = _chartjs_cfg(html)
+        assert "segmentNames" in conf["options"]["plugins"]
+        assert "omitted" in capsys.readouterr().err
+
+    def test_lines_api_generic(self, tmp_path):
+        html = self._render(
+            tmp_path,
+            {
+                "side_callout": {
+                    "lines": [
+                        {"text": "Alpha", "size": 26},
+                        "Beta",
+                        {"text": "Gamma"},
+                    ],
+                    "placement": "right",
+                    "skin": "tall",
+                },
+                "exterior_segment_names": True,
+            },
+        )
+        assert "Alpha" in html and "Beta" in html and "Gamma" in html
+        assert "font-size:26px" in html
+
+    def test_svg_path_emits_shared_name_column_and_callout(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg(), suppress=["charts"])
+        assert '<aside xmlns="http://www.w3.org/1999/xhtml" class="chart-side-callout' in html
+        assert "chart-svg-wrap--side-callout" not in html
+        assert "92% FDIC" in html
+        assert "vbar-segment-name" in html
+        assert ">NCO</text>" in html and ">RR</text>" in html
+        assert 'data-chartjs="1"' not in html
+
+    def test_callout_requires_valid_exterior_name_column(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            {"side_callout": {"value": "92%", "placement": "right", "skin": "tall"}},
+        )
+        assert "<aside class=\"chart-side-callout" not in html
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
+    @pytest.mark.parametrize("side_callout", [[], "", 0, {}])
+    def test_malformed_falsy_callout_emits_diagnostic(self, tmp_path, capsys, side_callout):
+        html = self._render(tmp_path, _side_callout_cfg(side_callout=side_callout))
+        assert '<aside class="chart-side-callout' not in html
+        assert "ignored" in capsys.readouterr().err
+
+    @pytest.mark.parametrize("value", ["wide", [], float("inf")])
+    def test_invalid_name_column_values_fail_soft(self, tmp_path, capsys, value):
+        html = self._render(
+            tmp_path,
+            _side_callout_cfg(segment_name_offset=value),
+        )
+        assert "<aside class=\"chart-side-callout" not in html
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
+    @pytest.mark.parametrize(
+        "knob, value",
+        [
+            ("segment_name_font_size", -1),
+            ("segment_name_line_height", 10**9),
+            ("segment_name_wrap_chars", 0),
+            ("segment_name_max_lines", 5),
+        ],
+    )
+    def test_unsafe_name_typography_values_fail_soft(self, tmp_path, capsys, knob, value):
+        html = self._render(tmp_path, _side_callout_cfg(**{knob: value}))
+        assert "<aside class=\"chart-side-callout" not in html
+        assert "segmentNames" not in _chartjs_cfg(html)["options"]["plugins"]
+        assert knob in capsys.readouterr().err
+
+    def test_multi_panel_badge_suppressed_when_callout(self, tmp_path):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {
+            "primary_visual": {
+                "type": "multi_panel",
+                "tiles": [
+                    {
+                        "kind": "chart",
+                        "chart_type": "stacked_bar_chart",
+                        "label": "Deposit Programs",
+                        "top_total": "$151B · $157B",
+                        "badge": "92% of deposits FDIC insured*",
+                        "steps_or_data": PROVISION_STACK,
+                        "chart_config": _side_callout_cfg(),
+                    }
+                ],
+            }
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert "<aside class=\"chart-side-callout" in html
+        assert 'class="gl-tile-badge"' not in html
+        assert "92% of deposits FDIC insured*" not in html
+        # Tile host: callout is a direct child of the tall tile, not the wrap.
+        assert 'data-side-callout-anchor="tile"' in html
+        assert "top:49.8px" in html
+        # The tile host maps the SVG's 900-unit column to its scaled content box.
+        assert "left:calc(85.777778% + -11.448889px)" in html
+        assert "width:calc(14.222222% - 4.551111px)" in html
+        # chart wrap must not also embed a second callout
+        assert html.count("<aside class=\"chart-side-callout") == 1
+        # name-reservation is local to the active callout (not global shell).
+        assert "data-side-callout-name-gap" in html
+        assert "data-side-callout-name-gap-boot" in html
+        assert "aside.chart-side-callout" in html
+        assert "__sideCalloutNameGap" in html
+        shell = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "shell.py"
+        ).read_text(encoding="utf-8")
+        assert "aside.chart-side-callout" not in shell
+
+    def test_side_callout_geometry_contract_fails_old_top(self, tmp_path):
+        """Pin the positioning contract that the old top:12px wrap host broke.
+
+        Markup-only: the old recipe put top:12px on the chart wrap (~72px below
+        tile top → stage T≈285). Locked PDF local offset is 49.8px tile-top.
+        Also traps the old global-shell segmentNames leak.
+        """
+        html = self._render(tmp_path, _side_callout_cfg())
+        m = re.search(
+            r'<aside class="chart-side-callout[^"]*"[^>]*style="([^"]+)"',
+            html,
+        )
+        assert m, "side callout aside missing"
+        style = m.group(1)
+        assert "top:49.8px" in style
+        assert "top:12px" not in style
+        # Mutation trap: removing the PDF offset must fail this test.
+        assert re.search(r"top:49\.8px", style)
+        # Active callout ships a local name-gap boot; global shell must not.
+        assert "data-side-callout-name-gap-boot" in html
+        shell = (
+            Path(__file__).resolve().parents[1]
+            / "impact_slides"
+            / "renderer_v2"
+            / "shell.py"
+        ).read_text(encoding="utf-8")
+        assert "chart-side-callout" not in shell
+        assert "sideCallout" not in shell
+
+    @pytest.mark.parametrize(
+        "cfg, diagnostic",
+        [
+            (_side_callout_cfg(segment_name_gutter=23, segment_name_offset=22), "exterior-name lane"),
+            (_side_callout_cfg(segment_name_offset="wide"), "requires a valid exterior_segment_names column"),
+            (_side_callout_cfg(side_callout={"lines": ["x"] * 5}), "lines exceed maximum"),
+            (_side_callout_cfg(side_callout={"lines": [{"text": "x", "size": 10**9}]}), "line size"),
+        ],
+    )
+    def test_invalid_or_over_budget_callout_omits_with_diagnostic(
+        self, tmp_path, capsys, cfg, diagnostic
+    ):
+        html = self._render(tmp_path, cfg)
+        assert '<aside class="chart-side-callout' not in html
+        assert diagnostic in capsys.readouterr().err
+
+    def test_svg_callout_uses_viewbox_coordinates(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg(), suppress=["charts"])
+        assert '<foreignObject x="772" y="49.8" width="128"' in html
+        assert "font-size:26px" in html
+
+    def test_svg_multi_panel_callout_uses_tile_local_html(self, tmp_path):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart", "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, suppress_features=["charts"])
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'data-side-callout-anchor="tile"' in html
+        assert "top:49.8px" in html
+        assert 'class="gl-tile gl-tile-chart gl-tile-tall"' not in html
+        assert '<foreignObject x="772" y="49.8" width="128"' not in html
+
+    def test_three_column_multi_panel_omits_unfit_callout(self, tmp_path, capsys):
+        tile = {
+            "kind": "chart", "chart_type": "stacked_bar_chart", "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(),
+        }
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [tile] * 5}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False, suppress_features=["charts"])
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<aside class="chart-side-callout' not in html
+        assert "exterior-name lane" in capsys.readouterr().err
+
+    def test_noscript_hides_wrap_callout_before_painting_svg(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert '<style>[data-side-callout-html=wrap]{display:none}</style>' in html
+        assert html.count('<aside class="chart-side-callout') == 1
+        assert '<foreignObject x="772" y="49.8" width="128"' in html
+
+    def test_name_gap_script_uses_unscaled_fit_width(self, tmp_path):
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert "var hostScaleX = hbr.width / host.offsetWidth;" in html
+        assert "callEl.scrollWidth > callEl.clientWidth" in html
+
+    def test_name_gap_script_maps_shared_lane_proportionally(self, tmp_path):
+        # The shared right lane is a proportion of the 900-unit chart geometry,
+        # mapped into Chart.js CSS coords the same way the SVG viewBox maps it.
+        html = self._render(tmp_path, _side_callout_cfg())
+        assert 'data-side-callout-lane-left="85.777778"' in html
+        assert 'data-side-callout-lane-width="14.222222"' in html
+        assert "canvasWidth * laneLeft / 100" in html
+        assert "canvasWidth * laneWidth / 100" in html
+        assert "(ccr.left - hbr.left) / hostScaleX" in html
+        assert "(gutter - offset) + 'px'" not in html
+
+    def test_legacy_name_column_coercions_survive_without_callout(self, tmp_path):
+        conf = _chartjs_cfg(self._render(tmp_path, {
+            "exterior_segment_names": 1,
+            "segment_name_gutter": "150",
+            "segment_name_offset": "22",
+        }))
+        assert conf["options"]["plugins"]["legend"]["display"] is False
+        assert conf["options"]["layout"]["padding"]["right"] == 150
+        assert conf["options"]["plugins"]["segmentNames"]["offset"] == 22
+
+    def test_legacy_null_offset_preserves_plugin_default(self, tmp_path):
+        conf = _chartjs_cfg(self._render(tmp_path, {
+            "exterior_segment_names": True,
+            "segment_name_offset": None,
+        }))
+        segment_names = conf["options"]["plugins"]["segmentNames"]
+        assert conf["options"]["plugins"]["legend"]["display"] is False
+        assert "offset" not in segment_names
+
+    def test_multi_panel_invalid_callout_column_fails_soft(self, tmp_path, capsys):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart",
+            "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(segment_name_offset="wide"),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        conf = _chartjs_cfg(html)
+        assert '<aside class="chart-side-callout' not in html
+        assert "segmentNames" not in conf["options"]["plugins"]
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
+    def test_svg_invalid_callout_emits_diagnostic(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            _side_callout_cfg(segment_name_offset="wide"),
+            suppress=["charts"],
+        )
+        assert '<aside class="chart-side-callout' not in html
+        assert "requires a valid exterior_segment_names column" in capsys.readouterr().err
+
+    def test_multi_panel_badge_only_tile_keeps_tall_geometry(self, tmp_path):
+        # A badge-only tile is tall; enabling the callout suppresses only the
+        # badge chrome — the tall-card geometry must not rebalance.
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart", "label": "Deposit Programs",
+            "badge": "92% of deposits FDIC insured*",
+            "steps_or_data": PROVISION_STACK,
+            "chart_config": _side_callout_cfg(),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<div class="gl-tile gl-tile-chart gl-tile-tall">' in html
+        assert 'class="gl-tile-badge"' not in html
+        assert "92% of deposits FDIC insured*" not in html
+        assert '<aside class="chart-side-callout' in html
+
+    def test_unbreakable_wide_text_omitted_with_diagnostic(self, tmp_path, capsys):
+        html = self._render(
+            tmp_path,
+            _side_callout_cfg(
+                side_callout={
+                    "lines": [{"text": "WWWWWWWWWW", "size": 26}],
+                    "placement": "right",
+                    "skin": "tall",
+                }
+            ),
+        )
+        assert '<aside class="chart-side-callout' not in html
+        assert "exterior-name lane" in capsys.readouterr().err
+
+    def test_multi_panel_callout_omits_when_side_legend_owns_right_lane(
+        self, tmp_path, capsys
+    ):
+        s = _slide("multi_panel", [])
+        s["visual_spec"] = {"primary_visual": {"type": "multi_panel", "tiles": [{
+            "kind": "chart", "chart_type": "stacked_bar_chart", "steps_or_data": PROVISION_STACK,
+            "side_legend": [{"label": "Legend"}], "chart_config": _side_callout_cfg(),
+        }]}}
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert '<aside class="chart-side-callout' not in html
+        assert "side_legend occupies the exterior-name lane" in capsys.readouterr().err

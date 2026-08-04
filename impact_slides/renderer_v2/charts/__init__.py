@@ -7,7 +7,7 @@ and ``charts.X`` keep working (same object identity for mock.patch).
 from __future__ import annotations
 
 from .format import _BOARDROOM_SERIES, _NAVY, _NAVY_SOFT, _WHITE, _series_color, _BAR_SERIES_COLORS, _series_colors, _fmt_unit, _bar_num, _fmt_value_label, _fmt_bar, _fmt_chart_num, _nice_max, _nice_step
-from .callouts import _align_overlay_to_labels, _CALLOUT_TYPES, _value_anchor_pct, _merge_callout_bands, _elbow_stem_html, _build_callout_overlays
+from .callouts import _align_overlay_to_labels, _CALLOUT_TYPES, _value_anchor_pct, _merge_callout_bands, _elbow_stem_html, _build_callout_overlays, _build_side_callout_html, _build_side_callout_svg, _resolve_side_callout, side_callout_active
 from .geometry import _CHART_GEOMETRY, chart_geometry, chart_column_interval
 from .core import is_chart_layout, _icon_svg, _steps, _chart_config, build_icon_grid_html, _fallback_icon_grid, _svg_fallback_for_layout, build_chart_html
 from .bars import _bar_matrix, _bar_axes, _vbar_pad_t, _bar_group_brackets, _vbar_frame, _build_grouped_bar_svg, _build_stacked_bar_svg, _build_hbar_svg
@@ -30,6 +30,8 @@ __all__ = [
     '_bar_matrix',
     '_bar_num',
     '_build_callout_overlays',
+    '_build_side_callout_html',
+    '_build_side_callout_svg',
     '_build_chartjs_html',
     '_build_combo_chart_svg',
     '_build_grouped_bar_svg',
@@ -57,6 +59,7 @@ __all__ = [
     '_icon_svg',
     '_line_data',
     '_merge_callout_bands',
+    '_resolve_side_callout',
     '_next_chart_id',
     '_nice_max',
     '_nice_step',
@@ -72,4 +75,5 @@ __all__ = [
     'chart_column_interval',
     'chart_geometry',
     'is_chart_layout',
+    'side_callout_active',
 ]
