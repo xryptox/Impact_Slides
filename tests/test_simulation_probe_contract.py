@@ -53,6 +53,9 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
 <section class="slide" data-slide-number="21" data-layout="bare_canvas">
   <canvas id="c21" width="200" height="100"></canvas>
 </section>
+<section class="slide" data-slide-number="22" data-layout="late_chart">
+  <canvas id="c22" width="200" height="100"></canvas>
+</section>
 <script>
 // Fake Chart registry: options.plugins.datalabels is display-only (pre-bind
 // trap), while $datalabels._labels[*].model().lines holds painted strings.
@@ -130,6 +133,18 @@ def test_painted_datalabels_not_options_only(page):
     # have used it as the label source (options has no label strings).
     assert row["options_datalabels_keys"] == ["display"]
     assert "$0.9" not in row["options_datalabels_keys"]
+
+
+def test_painted_datalabels_waits_for_late_chart(page):
+    """Readiness wait must survive labels arriving after activation."""
+    page.evaluate(
+        """() => setTimeout(() => {
+          document.getElementById('c22').__fakeChart = {
+            $datalabels: {_labels: [{model: () => ({lines: ['$2.2']})}]}
+          };
+        }, 100)"""
+    )
+    assert painted_datalabel_lines(page, 22, "late_chart", timeout_ms=1000)["lines"] == ["$2.2"]
 
 
 def test_painted_datalabels_timeout_is_probe_error(page):
