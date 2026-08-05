@@ -116,8 +116,34 @@ as secondary qualitative evidence. Never report MAE or a similarity percentage.
 
 At 1920x1080 the deck stage scale is 1.0. Navigate by removing .active from all
 section.slide and adding it to the target slide, then wait for Chart.js; do not
-use scrollIntoView. Save re-runnable probes under
-simulation/amex_q1_2026/probes/.
+use scrollIntoView. Prefer scripts/simulation_probe.py — activate_slide for
+identity, painted_datalabel_lines as the preferred waiting path for datalabel
+measurements (it waits for a Chart instance + nonempty $datalabels._labels).
+Save re-runnable probes under simulation/amex_q1_2026/probes/.
+
+=== PROBE CONTRACT (#137) ===
+
+Copy/import scripts/simulation_probe.py into every reusable probe. Do not
+reinvent raw slide selectors.
+
+- Address slides ONLY via section.slide[data-slide-number="…"] plus the
+  expected data-layout. Never use undocumented zero-based ordinal indices
+  (section.slide[index] / nth). Activate only after asserting exactly one
+  match and layout equality; otherwise fail the probe.
+- Every JSON result row MUST include both slide_number and layout.
+- A selector that matches zero elements inside a valid target is inconclusive
+  / probe failure — never successful evidence of absence (never count: 0 as a
+  pass).
+- N9 / Chart.js value labels: use painted_datalabel_lines (waits for Chart.js
+  painted plugin models chart.$datalabels._labels[*].model().lines). Do NOT
+  judge labels from options.plugins.datalabels / pre-bind config, and do not
+  measure immediately after toggling .active without a readiness wait.
+- Correct identities for this deck:
+    R4  = data-slide-number 12 / data-layout chart_hero_dual
+          (NOT ordinal index 11; slide 11 is line_chart)
+    R6-C inset slides = data-slide-number 20 and 24
+          (PDF pages may still be referred to as p19/p23; do not call the
+          HTML slides 19/23)
 
 === PASS 01: REQUIRED FRESH CURRENT-RENDERER CHECK ===
 
@@ -151,16 +177,19 @@ simulation/amex_q1_2026/probes/.
 
 === ITEMS TO VERIFY, NOT ASSUME ===
 
-- N9: grouped-bar $ labels still land correctly.
+- N9: grouped-bar $ labels still land correctly (painted datalabel models,
+  not options.plugins.datalabels).
 - R2: line-style elbow remains correct where exercised.
 - N10: dual_chart paints two separate framed cards.
-- R4: dual-metric hero is one framed 2:1 panel.
+- R4: dual-metric hero on slide_number 12 / chart_hero_dual is one framed 2:1
+  panel (not slide 11 / line_chart).
 - F4+: pill comparison has 28px type and measured rail/column dimensions.
 - R6-A: Slide 17/PDF p16 pane-title, tick, and datalabel size, colour, weight,
   clipping, and rotation. This may be a renderer B gap; do not add font knobs
   or CSS.
-- R6-C: Slides 19 and 23 inset skin. Establish the PDF recipe more carefully if
-  possible; recheck collision geometry. Do not restyle CSS on assumption.
+- R6-C: slide_number 20 and 24 inset skin (PDF p19/p23). Establish the PDF
+  recipe more carefully if possible; recheck collision geometry. Do not
+  restyle CSS on assumption.
 - F5: Mention only if this deck proves a theme override cannot tint the default
   chart palette; otherwise record it as not triggered.
 
