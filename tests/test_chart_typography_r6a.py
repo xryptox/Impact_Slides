@@ -233,6 +233,48 @@ class TestPaneTitle:
         err = capsys.readouterr().err.lower()
         assert "legacy" in err or "canvas" in err
 
+    def test_render_deck_hosts_pass_size_viable_default(self, tmp_path):
+        """Default dual_chart host geometry must still emit the 40px title."""
+        path = _write(tmp_path, _handoff([_dual_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        assert 'class="gl-chart-pane-title"' in html
+        assert "font-size:40px" in html
+        assert "gl-chart-pane-title-legacy" not in html
+
+    def test_render_deck_tight_host_strict_raises(self, tmp_path, monkeypatch):
+        """Mutation trap: if hosts stop passing sizes, tight geometry never fails."""
+        import impact_slides.renderer_v2.layout.recipes.charts as recipes_charts
+
+        monkeypatch.setattr(
+            recipes_charts,
+            "chart_host_size",
+            lambda kind, cols=2: (200.0, 300.0),
+        )
+        path = _write(tmp_path, _handoff([_dual_slide()]))
+        with pytest.raises((ValueError, SystemExit), match="canvas|legacy|title"):
+            render_deck(path, tmp_path / "out", strict=True)
+
+    def test_render_deck_tight_host_nonstrict_legacy(self, tmp_path, monkeypatch, capsys):
+        import impact_slides.renderer_v2.layout.recipes.charts as recipes_charts
+
+        monkeypatch.setattr(
+            recipes_charts,
+            "chart_host_size",
+            lambda kind, cols=2: (200.0, 300.0),
+        )
+        path = _write(tmp_path, _handoff([_dual_slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+        assert "gl-chart-pane-title-legacy" in html
+        assert "gl-tile-label" in html
+        err = capsys.readouterr().err.lower()
+        assert "legacy" in err or "canvas" in err
+        assert any("canvas" in w or "legacy" in w for w in meta.get("warnings", []))
+
     def test_metric_tile_label_unchanged(self, tmp_path):
         s = {
             "slide_number": 1,
@@ -449,6 +491,105 @@ class TestCollision:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert "data-rv2-collision" not in html
         assert "data-rv2-datalabel-collision" not in html
+
+    def test_collision_js_collects_flat_labels(self):
+        """Mutation trap: nested row[si][ci] walk gathers nothing on flat plugin shape."""
+        from impact_slides.renderer_v2.charts.typography import DATALABEL_COLLISION_JS
+
+        js = DATALABEL_COLLISION_JS
+        assert "$context" in js
+        assert "datasetIndex" in js
+        assert "dataIndex" in js
+        # Must iterate the flat _labels list, not assume nested series rows.
+        assert "labels[i]" in js or "labels.length" in js
+        assert "row[ci]" not in js
+        assert "labels[si]" not in js
+
+    def test_chartjs_collision_playwright(self, tmp_path):
+        """Real browser proof: forced collisions set data-datalabel-suppressed."""
+        pytest.importorskip("playwright.sync_api")
+        from playwright.sync_api import sync_playwright
+
+        s = {
+            "slide_number": 1,
+            "title": "Dense",
+            "layout_type": "grouped_bar_chart",
+            "content": {"bullets": [], "so_what": "x"},
+            "visual_spec": {
+                "primary_visual": {
+                    "type": "grouped_bar_chart",
+                    "chart_config": {
+                        "point_labels": True,
+                        "series_names": ["A", "B"],
+                        "typography": {"datalabel_font_size": 32},
+                    },
+                    "steps_or_data": [
+                        {"label": f"C{i}", "A": 10 + i * 0.01, "B": 10 + i * 0.01 + 0.02}
+                        for i in range(12)
+                    ],
+                }
+            },
+            "evidence_sources": [],
+        }
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        html_path = out / "presentation.html"
+        # Absent typography must not ship collision attr (already covered);
+        # present path must suppress in a live Chart.js deck.
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1920, "height": 1080})
+            logs: list[str] = []
+            page.on("console", lambda msg: logs.append(msg.text))
+            page.goto(html_path.resolve().as_uri(), wait_until="networkidle")
+            # Auto title slide is active first — advance to the chart.
+            page.keyboard.press("ArrowRight")
+            page.wait_for_timeout(2000)
+            info = page.evaluate(
+                """() => {
+                  const wrap = document.querySelector('.chartjs-wrap');
+                  const c = Chart.getChart(document.querySelector('canvas'));
+                  const labels = c && c.$datalabels && c.$datalabels._labels || [];
+                  const kept = [];
+                  const gone = [];
+                  for (const lab of labels) {
+                    const m = lab.model();
+                    const row = {
+                      di: lab.$context.datasetIndex,
+                      ci: lab.$context.dataIndex,
+                      t: (m.lines || []).join(' '),
+                      op: m.opacity,
+                      vis: lab.$layout && lab.$layout._visible,
+                      disp: m.display,
+                    };
+                    if (m.opacity === 0 || m.display === false || row.vis === false) gone.push(row);
+                    else kept.push(row);
+                  }
+                  return {
+                    supp: wrap && wrap.getAttribute('data-datalabel-suppressed'),
+                    coll: wrap && wrap.getAttribute('data-rv2-collision'),
+                    flat: Array.isArray(labels) && labels.length > 0 && !Array.isArray(labels[0]),
+                    kept, gone,
+                  };
+                }"""
+            )
+            browser.close()
+        assert info["coll"] == "1"
+        assert info["flat"] is True
+        assert info["supp"] is not None and int(info["supp"]) > 0
+        assert len(info["gone"]) >= 1
+        # Earlier dataset/category wins: series 0 cat 0 must remain if present.
+        kept_keys = {(k["di"], k["ci"]) for k in info["kept"]}
+        gone_keys = {(g["di"], g["ci"]) for g in info["gone"]}
+        if (0, 0) in kept_keys or (0, 0) in gone_keys:
+            assert (0, 0) in kept_keys
+        # Later colliding series should be among suppressed when present.
+        assert any(di >= 1 for di, _ci in gone_keys) or any(
+            ci > 0 for _di, ci in gone_keys
+        )
+        assert any("[typography] datalabel suppressed" in t for t in logs)
+        assert any("series" in t and "category" in t for t in logs)
 
 
 # ---------------------------------------------------------------------------

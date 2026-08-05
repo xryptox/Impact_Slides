@@ -37,6 +37,56 @@ PANE_TITLE_RESERVE_PX = int(PANE_TITLE_FS * PANE_TITLE_LH * PANE_TITLE_MAX_LINES
 MIN_CANVAS_W = 320
 MIN_CANVAS_H = 240
 
+# Deterministic pre-render host geometry (1920×1080 stage tokens).
+_STAGE_W = 1920
+_STAGE_H = 1080
+_PAD_X = 96
+_PAD_TOP = 56
+_PAD_BOTTOM = 48
+_GAP_HEADER_MAIN = 40
+_HEADER_BLOCK = 96  # title line + dek allowance
+_FOOTER_BLOCK = 40
+_INSIGHT_BLOCK = 48
+_DUAL_GAP = 24  # --size-6 / dual-chart gap
+_HERO_GAP = 18  # --gap-md
+_TILE_GAP = 18
+_TILE_PAD = 17
+_CHARTJS_WRAP_H = 480  # components.css .chartjs-wrap height
+
+
+def _main_band_h() -> float:
+    return float(
+        _STAGE_H
+        - _PAD_TOP
+        - _PAD_BOTTOM
+        - _HEADER_BLOCK
+        - _GAP_HEADER_MAIN
+        - _FOOTER_BLOCK
+        - _INSIGHT_BLOCK
+    )
+
+
+def chart_host_size(kind: str, *, cols: int = 2) -> tuple[float, float]:
+    """Fixed host (title+plot) size for pane-title remaining-canvas check.
+
+    kind: dual_chart | chart_hero_dual | multi_panel
+    """
+    content_w = float(_STAGE_W - 2 * _PAD_X)
+    main_h = _main_band_h()
+    if kind == "dual_chart":
+        pane_w = (content_w - _DUAL_GAP) / 2.0
+        return pane_w, main_h
+    if kind == "chart_hero_dual":
+        # grid 2fr 1fr + gap — chart column is 2/3 of remaining.
+        chart_w = (content_w - _HERO_GAP) * 2.0 / 3.0
+        return chart_w, main_h
+    # multi_panel tile (matches recipes/charts.py tile_width).
+    n = max(int(cols), 1)
+    tile_w = (content_w - (n - 1) * _TILE_GAP) / n - 2 * _TILE_PAD
+    # Tile plot host ≈ default chart wrap; title sits above it in the tile.
+    tile_h = float(_CHARTJS_WRAP_H + PANE_TITLE_RESERVE_PX)
+    return tile_w, tile_h
+
 # Inline styles (not global CSS) so decks without pane titles stay byte-identical
 # and token-audit does not see bare px literals in a stylesheet string.
 _PANE_TITLE_STYLE = (
@@ -279,6 +329,8 @@ def suppress_colliding_labels(
 
 
 # Chart.js collision boot — emission-scoped (only when datalabel_font_size set).
+# Live plugin shape: chart.$datalabels._labels is a FLAT list of label objects
+# with $context.{datasetIndex,dataIndex}; not nested per-series rows.
 DATALABEL_COLLISION_JS = """
 <script data-rv2-datalabel-collision="1">
 (function () {
@@ -288,59 +340,72 @@ DATALABEL_COLLISION_JS = """
   function intersects(a, b) {
     return !(a.r + MARGIN <= b.l || b.r + MARGIN <= a.l || a.b + MARGIN <= b.t || b.b + MARGIN <= a.t);
   }
-  function run(chart, wrap) {
-    var labels = chart.$datalabels && chart.$datalabels._labels;
-    if (!labels || !labels.length) return;
-    // Build list in dataset then category order (plugin stores per-dataset arrays).
-    var items = [];
-    for (var si = 0; si < labels.length; si++) {
-      var row = labels[si] || [];
-      for (var ci = 0; ci < row.length; ci++) {
-        var lab = row[ci];
-        if (!lab || typeof lab.geometry !== 'function' || typeof lab.model !== 'function') continue;
-        var model = lab.model();
-        if (!model || !model.display) continue;
-        // Skip non-ordinary sets (totals / in-segment / chips live in named sets).
-        var key = lab.$groups && lab.$groups._key;
-        if (key && key !== '$default' && key !== 'value') continue;
-        var g = lab.geometry() || {};
-        var el = lab._el;
-        if (!el) continue;
-        // Position center from element + geometry frame (plugin draw path).
-        var cx = (typeof el.x === 'number') ? el.x : 0;
-        var cy = (typeof el.y === 'number') ? el.y : 0;
-        var w = g.w || 0, h = g.h || 0;
-        var ox = (g.x || 0), oy = (g.y || 0);
-        // Prefer live layout box when the plugin has prepared $layout.
-        if (lab.$layout && lab.$layout._box && lab.$layout._box._rect) {
-          var r = lab.$layout._box._rect;
-          items.push({
-            si: si, ci: ci, lab: lab,
-            box: {l: r.x, t: r.y, r: r.x + r.w, b: r.y + r.h},
-            text: (model.lines || []).join(' ')
-          });
-        } else {
-          items.push({
-            si: si, ci: ci, lab: lab,
-            box: {l: cx + ox, t: cy + oy, r: cx + ox + w, b: cy + oy + h},
-            text: (model.lines || []).join(' ')
-          });
-        }
-      }
+  function absBox(lab, chart) {
+    var ctx = lab.$context || {};
+    var si = ctx.datasetIndex | 0, ci = ctx.dataIndex | 0;
+    var meta = chart.getDatasetMeta(si);
+    var el = meta && meta.data && meta.data[ci];
+    // Element pixel coords are authoritative once the chart has real layout.
+    // Plugin $layout._box._rect is often still 0×0 at afterDatasetsDraw.
+    if (!el || typeof el.x !== 'number' || typeof el.y !== 'number') return null;
+    var g = (typeof lab.geometry === 'function' && lab.geometry()) || {};
+    var w = g.w || 0, h = g.h || 0;
+    if (!(w > 0 && h > 0)) return null;
+    return {
+      l: el.x + (g.x || 0), t: el.y + (g.y || 0),
+      r: el.x + (g.x || 0) + w, b: el.y + (g.y || 0) + h,
+      si: si, ci: ci
+    };
+  }
+  function chartReady(chart) {
+    if (!chart || chart.width < 10 || chart.height < 10) return false;
+    var area = chart.chartArea;
+    if (!area || area.right - area.left < 10 || area.bottom - area.top < 10) return false;
+    // Inactive slides keep zeroed bar geometry (x≈0 for all points).
+    var meta = chart.getDatasetMeta(0);
+    var pts = meta && meta.data || [];
+    if (!pts.length) return false;
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (var i = 0; i < pts.length; i++) {
+      var p = pts[i];
+      if (typeof p.x === 'number') { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; }
+      if (typeof p.y === 'number') { if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y; }
     }
+    return (maxX - minX > 2) || (maxY - minY > 2);
+  }
+  function run(chart, wrap) {
+    if (!chartReady(chart)) return false;
+    var labels = chart.$datalabels && chart.$datalabels._labels;
+    if (!labels || !labels.length) return false;
+    // Flat label list (chartjs-plugin-datalabels prepare() output).
+    var items = [];
+    for (var i = 0; i < labels.length; i++) {
+      var lab = labels[i];
+      if (!lab || typeof lab.model !== 'function') continue;
+      var model = lab.model();
+      if (!model || model.display === false) continue;
+      var key = lab.$groups && lab.$groups._key;
+      if (key && key !== '$default' && key !== 'value') continue;
+      var box = absBox(lab, chart);
+      if (!box) continue;
+      items.push({
+        si: box.si, ci: box.ci, lab: lab, box: box,
+        text: (model.lines || []).join(' ')
+      });
+    }
+    if (!items.length) return false;
     items.sort(function (a, b) {
       return a.si !== b.si ? a.si - b.si : a.ci - b.ci;
     });
     var kept = [];
     var suppressed = [];
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i], hit = false;
+    for (var j = 0; j < items.length; j++) {
+      var it = items[j], hit = false;
       for (var k = 0; k < kept.length; k++) {
         if (intersects(it.box, kept[k].box)) { hit = true; break; }
       }
       if (hit) {
-        // Hide via display override on the label config context.
-        if (it.lab._model) it.lab._model.opacity = 0;
+        if (it.lab._model) { it.lab._model.opacity = 0; it.lab._model.display = false; }
         if (it.lab.$layout) it.lab.$layout._visible = false;
         suppressed.push(it);
       } else {
@@ -351,20 +416,33 @@ DATALABEL_COLLISION_JS = """
       wrap.setAttribute('data-datalabel-suppressed', String(suppressed.length));
       var layout = wrap.getAttribute('data-chart-layout') || '';
       suppressed.forEach(function (s) {
-        console.warn(
-          '[typography] datalabel suppressed',
-          {layout: layout, series: s.si, category: s.ci, label: s.text, count: suppressed.length}
-        );
+        console.warn('[typography] datalabel suppressed', {
+          layout: layout, series: s.si, category: s.ci, label: s.text, count: suppressed.length
+        });
       });
-      // Redraw once so opacity/visibility sticks.
       try { chart.draw(); } catch (e) {}
+    } else if (wrap && !wrap.getAttribute('data-datalabel-suppressed')) {
+      wrap.setAttribute('data-datalabel-suppressed', '0');
     }
+    return true;
   }
-  // Hook Chart after each chart is constructed.
-  var orig = Chart && Chart.prototype && Chart.prototype.update;
-  if (!orig || Chart.__rv2CollisionHooked) return;
+  function processWrap(wrap) {
+    if (!wrap || wrap.getAttribute('data-rv2-collision') !== '1') return;
+    var canvas = wrap.querySelector('canvas');
+    if (!canvas || typeof Chart === 'undefined' || !Chart.getChart) return;
+    var chart = Chart.getChart(canvas);
+    if (!chart || chart.__rv2CollisionDone) return;
+    // Ensure layout when slide just became visible.
+    if (chart.width < 2) {
+      try { chart.resize(); chart.update('none'); } catch (e) {}
+    }
+    if (run(chart, wrap)) chart.__rv2CollisionDone = 1;
+  }
+  function processAll() {
+    document.querySelectorAll('.chartjs-wrap[data-rv2-collision="1"]').forEach(processWrap);
+  }
+  if (typeof Chart === 'undefined' || Chart.__rv2CollisionHooked) return;
   Chart.__rv2CollisionHooked = 1;
-  // Prefer afterDraw plugin registration.
   try {
     Chart.register({
       id: 'rv2DatalabelCollision',
@@ -373,12 +451,28 @@ DATALABEL_COLLISION_JS = """
         var canvas = chart.canvas;
         var wrap = canvas && canvas.closest ? canvas.closest('.chartjs-wrap') : null;
         if (!wrap || wrap.getAttribute('data-rv2-collision') !== '1') return;
-        // Wait one frame so datalabels $layout boxes exist.
-        chart.__rv2CollisionDone = 1;
-        run(chart, wrap);
+        if (run(chart, wrap)) chart.__rv2CollisionDone = 1;
       }
     });
   } catch (e) {}
+  // Inactive slides are display:none at init (zero geometry). Re-run when a
+  // slide becomes .active and on a short rAF budget after load.
+  try {
+    var mo = new MutationObserver(function () { processAll(); });
+    document.querySelectorAll('.slide').forEach(function (s) {
+      mo.observe(s, { attributes: true, attributeFilter: ['class'] });
+    });
+  } catch (e) {}
+  var tries = 0;
+  function tick() {
+    processAll();
+    if (++tries < 45) requestAnimationFrame(tick);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { requestAnimationFrame(tick); });
+  } else {
+    requestAnimationFrame(tick);
+  }
 })();
 </script>
 """

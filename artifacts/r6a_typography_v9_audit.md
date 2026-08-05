@@ -1,37 +1,18 @@
-# R6-A chart-internal typography — 44-slide synthetic audit (#139)
+# R6-A chart-internal typography — synthetic contract audit (#139)
 
-## chartjs
-- **slides**: `44`
-- **pane_titles**: `20`
-- **legacy_title_fallbacks**: `0`
-- **metric_gl_tile_labels**: `5`
-- **collision_wraps**: `2`
-- **collision_js_emissions**: `2`
-- **y_tick_24_hits**: `3`
-- **datalabel_28_hits**: `2`
-- **maxRotation_overrides**: `0`
-- **autoSkip_overrides**: `0`
-- **warnings_total**: `7`
-- **unsupported_warnings**: `['unsupported field ignored: unknown_knob', 'unsupported field ignored: unknown_knob', 'unsupported field ignored: unknown_knob']`
-- **invalid_group_warnings**: `['ignored entire group: y_tick_font_size must be a whole number from 8 to 28', 'ignored entire group: y_tick_font_size must be a whole number from 8 to 28', 'ignored entire group: y_tick_font_size must be a whole number from 8 to 28', 'ignored entire group: y_tick_font_size must be a whole number from 8 to 28']`
-- **suppressed_warnings**: `[]`
-- **clipped_titles_enumerated**: `CSS -webkit-line-clamp:2 on pane titles; no Chromium post-measure`
-- **x_tick_rotation_skip**: `Native Chart.js defaults preserved (no maxRotation/autoSkip override)`
+**Honest scope:** this is a **synthetic 44-slide contract audit**, not a full archived-v9 handoff run.
 
-## svg
-- **slides**: `44`
-- **pane_titles**: `20`
-- **legacy_title_fallbacks**: `0`
-- **metric_gl_tile_labels**: `5`
-- **collision_wraps**: `0`
-- **collision_js_emissions**: `0`
-- **y_tick_24_hits**: `12`
-- **datalabel_28_hits**: `12`
-- **maxRotation_overrides**: `0`
-- **autoSkip_overrides**: `0`
-- **warnings_total**: `2`
-- **unsupported_warnings**: `['unsupported field ignored: unknown_knob']`
-- **invalid_group_warnings**: `['ignored entire group: y_tick_font_size must be a whole number from 8 to 28']`
-- **suppressed_warnings**: `[]`
-- **clipped_titles_enumerated**: `CSS -webkit-line-clamp:2 on pane titles; no Chromium post-measure`
-- **x_tick_rotation_skip**: `Native Chart.js defaults preserved (no maxRotation/autoSkip override)`
+The worktree has no archived v9 44-slide handoff/deck. Historical v8/v9 artifacts must not be modified. Therefore:
+
+- **Completed here:** synthetic deck covering dual_chart / chart_hero_dual / multi_panel / grouped / line / stacked / combo / hbar hosts under Chart.js and SVG painters, with opt-in typography, invalid/unsupported knobs, and pane-title emission.
+- **Outstanding:** full 44-slide **archived v9** audit against the real Amex v9 handoff/deck (Chart.js + SVG), enumerating clipped titles, legacy title fallbacks, rotations/skips, suppressed labels, and unsupported warnings on production content. Do that when the archived handoff is available in a GNHF/sim worktree without touching historical artifacts in-repo.
+
+See `r6a_typography_v9_audit.json` for the last synthetic run counts.
+
+## Repair evidence (host canvas + Chart.js collision)
+
+- Production hosts (`dual_chart`, `chart_hero_dual`, `multi_panel`) pass `chart_host_size(...)` into `chart_pane_title_html`.
+- Default viable hosts still emit 40px `.gl-chart-pane-title`.
+- Tight host (monkeypatched) via `render_deck`: strict raises; non-strict → legacy title + stderr/`run_meta.warnings`.
+- Chart.js collision JS walks **flat** `chart.$datalabels._labels` via `$context.datasetIndex` / `dataIndex`.
+- Playwright proof: dense multi-series deck sets `data-datalabel-suppressed="N"` (N>0), keeps earlier series/category, console.warn details, no collision boot when `datalabel_font_size` absent.
