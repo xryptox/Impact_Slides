@@ -20,6 +20,8 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
 - `validate_handoff` fallback must be non-lossy **and** total (spread raw + degrade path)
 - No external chart pack; no home-directory lookups anywhere under this tree
 - Delivery default: self-contained (`DeliveryMode.SELF_CONTAINED`)
+- Chart pane titles: HTML-owned `.gl-chart-pane-title` via `charts/typography.chart_pane_title_html` (recipe label → `chart_config.title` → single series name). Ordinary non-chart `.gl-tile-label` stays 13px gray
+- Opt-in `chart_config.typography` (`x_tick_font_size` 8–24, `y_tick_font_size` 8–28, `datalabel_font_size` 8–32): absent → legacy Chart.js 13/13/11. Invalid group: strict raises; non-strict drops whole group + warns. Collision only when `datalabel_font_size` set (`charts/typography.py`)
 
 ## Work Guidance
 
@@ -32,6 +34,7 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
   - `gl-tabs-[0-9a-f]{6,}`
   - `data-tabs-id="..."`
 - Cross-worktree HTML diffs are unreliable (CRLF on vendored Chart.js); toggle sources in one worktree
+- `render_deck` sets typography strict/warnings contextvars; SVG collision warnings land in `run_meta.json` `warnings`
 
 ## Verification
 

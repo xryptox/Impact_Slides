@@ -1,0 +1,37 @@
+# R6-A chart-internal typography — 44-slide synthetic audit (#139)
+
+## chartjs
+- **slides**: `44`
+- **pane_titles**: `20`
+- **legacy_title_fallbacks**: `0`
+- **metric_gl_tile_labels**: `5`
+- **collision_wraps**: `2`
+- **collision_js_emissions**: `2`
+- **y_tick_24_hits**: `3`
+- **datalabel_28_hits**: `2`
+- **maxRotation_overrides**: `0`
+- **autoSkip_overrides**: `0`
+- **warnings_total**: `7`
+- **unsupported_warnings**: `['unsupported field ignored: unknown_knob', 'unsupported field ignored: unknown_knob', 'unsupported field ignored: unknown_knob']`
+- **invalid_group_warnings**: `['ignored entire group: y_tick_font_size must be a whole number from 8 to 28', 'ignored entire group: y_tick_font_size must be a whole number from 8 to 28', 'ignored entire group: y_tick_font_size must be a whole number from 8 to 28', 'ignored entire group: y_tick_font_size must be a whole number from 8 to 28']`
+- **suppressed_warnings**: `[]`
+- **clipped_titles_enumerated**: `CSS -webkit-line-clamp:2 on pane titles; no Chromium post-measure`
+- **x_tick_rotation_skip**: `Native Chart.js defaults preserved (no maxRotation/autoSkip override)`
+
+## svg
+- **slides**: `44`
+- **pane_titles**: `20`
+- **legacy_title_fallbacks**: `0`
+- **metric_gl_tile_labels**: `5`
+- **collision_wraps**: `0`
+- **collision_js_emissions**: `0`
+- **y_tick_24_hits**: `12`
+- **datalabel_28_hits**: `12`
+- **maxRotation_overrides**: `0`
+- **autoSkip_overrides**: `0`
+- **warnings_total**: `2`
+- **unsupported_warnings**: `['unsupported field ignored: unknown_knob']`
+- **invalid_group_warnings**: `['ignored entire group: y_tick_font_size must be a whole number from 8 to 28']`
+- **suppressed_warnings**: `[]`
+- **clipped_titles_enumerated**: `CSS -webkit-line-clamp:2 on pane titles; no Chromium post-measure`
+- **x_tick_rotation_skip**: `Native Chart.js defaults preserved (no maxRotation/autoSkip override)`

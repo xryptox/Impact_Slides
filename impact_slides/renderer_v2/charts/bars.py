@@ -15,6 +15,12 @@ from .callouts import (
     _resolve_side_callout,
     _side_column_geometry,
 )
+from .typography import (
+    estimate_label_box,
+    resolve_typography,
+    suppress_colliding_labels,
+    _warn,
+)
 
 
 
@@ -199,6 +205,15 @@ def _vbar_frame(
             return pad_t + plot_h / 2
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
+    typo = resolve_typography(cfg)
+    # SVG legacy y-tick is 14; only override when the knob is explicitly set.
+    y_tick_fs = (
+        int(typo["y_tick_font_size"]) if typo.get("y_tick_font_size_set") else 14
+    )
+    y_tick_wt = "700" if typo.get("y_tick_font_size_set") else "600"
+    x_tick_fs = (
+        int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 14
+    )
     parts: list[str] = [
         f'<svg class="chart-svg vbar-chart {cls}" viewBox="0 0 {W} {H}" '
         f'xmlns="http://www.w3.org/2000/svg" '
@@ -213,9 +228,15 @@ def _vbar_frame(
             )
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
             f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(tick, unit))}</text>'
         )
+    # Stash sizes on cfg for value/x label painters in the same call.
+    cfg["_typo_x_tick_fs"] = x_tick_fs
+    cfg["_typo_dl_fs"] = (
+        int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 14
+    )
+    cfg["_typo_dl_set"] = int(typo.get("datalabel_font_size_set") or 0)
     parts.append(
         f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
         f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
@@ -278,8 +299,15 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
     group_w = slot * 0.65
     bar_w = group_w / len(series)
     palette = _series_colors(cfg)
+    dl_fs = int(cfg.get("_typo_dl_fs") or 14)
+    x_fs = int(cfg.get("_typo_x_tick_fs") or 14)
+    dl_set = bool(cfg.get("_typo_dl_set"))
 
     parts.extend(_bar_group_brackets(cfg, labels, pad_l, slot, pad_t - 22))
+
+    # Collect ordinary value labels for optional collision suppression (#139).
+    label_items: list[dict[str, Any]] = []
+    label_markup: list[str] = []
 
     for i, lab in enumerate(labels):
         gx = pad_l + i * slot + (slot - group_w) / 2
@@ -301,16 +329,44 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
                 f'<rect class="vbar" x="{x:.1f}" y="{y:.1f}" width="{bar_w - 4:.1f}" '
                 f'height="{max(bh, 0):.1f}" fill="{color}" rx="2"/>'
             )
-            parts.append(
-                f'<text x="{x + (bar_w - 4) / 2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
-                f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
-                f'font-family="var(--font-body, sans-serif)">{esc(_fmt_value_label(v, str(unit or ""), str(cfg.get("y_axis_unit_position") or "")))}</text>'
+            txt = _fmt_value_label(
+                v, str(unit or ""), str(cfg.get("y_axis_unit_position") or "")
+            )
+            cx = x + (bar_w - 4) / 2
+            label_items.append(
+                {
+                    "series": j,
+                    "category": i,
+                    "label": txt,
+                    "box": estimate_label_box(txt, x=cx, y=label_y, font_size=dl_fs),
+                }
+            )
+            label_markup.append(
+                f'<text x="{cx:.1f}" y="{label_y:.1f}" text-anchor="middle" '
+                f'fill="var(--navy, #00175a)" font-size="{dl_fs}" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(txt)}</text>'
             )
         parts.append(
             f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
-            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="14" '
+            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
             f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
+
+    if dl_set and label_items:
+        suppressed, details = suppress_colliding_labels(label_items)
+        keep = set(range(len(label_items))) - set(suppressed)
+        for i in sorted(keep):
+            parts.append(label_markup[i])
+        if suppressed:
+            _warn(
+                f"svg datalabel suppressed count={len(suppressed)} "
+                + "; ".join(
+                    f"series={d['series']} category={d['category']} label={d['label']!r}"
+                    for d in details
+                )
+            )
+    else:
+        parts.extend(label_markup)
 
     parts.append("</svg>")
     return "".join(parts)

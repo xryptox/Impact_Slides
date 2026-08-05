@@ -1475,6 +1475,8 @@
   color: var(--ink-muted);
   margin-bottom: var(--space-2, 6px);
 }
+/* #139 R6-A pane-title CSS is emission-scoped (see charts/typography.py)
+   so decks without chart pane headings stay byte-identical. */
 .gl-tile-metric { justify-content: center; align-items: flex-start; }
 .gl-tile-metric-value {
   font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
