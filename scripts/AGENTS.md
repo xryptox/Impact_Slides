@@ -26,6 +26,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 
 - `python scripts/gen_layout_index.py --check`
 - `pytest -q tests/test_gen_layout_index.py`
+- `pytest -q tests/test_simulation_probe_contract.py` (Playwright; skipped in CI when not installed)
 
 ## Child DOX Index
 
