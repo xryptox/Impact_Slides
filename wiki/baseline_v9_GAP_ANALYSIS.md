@@ -82,7 +82,7 @@ were not independently re-measured beyond the committed probe output.
 
 | Pass | A result | B confirmation |
 |-----:|----------|----------------|
-| 01 | **N8** measure_rule: thin h=25 rule, left/right on bar0/barN centres (δ≈0), pill+caption centred; **N5** bar%/cat%/fill_tile land (0.58/1.0/true, wrap/tile h ratio 0.878); **N6** skin active, 5 unfilled cells, no thead | **N6** column alignment requires list-format category extraction (or equivalent) — source header would match periods if labels extracted; **R4** still two stacked hero cards; **N5** badge ≠ tall side FDIC callout; **R6-A** pane title 13px gray residual *(then; shipped #139 post-v9)*; **F4+** packing still weak vs PDF full board |
+| 01 | **N8** measure_rule: thin h=25 rule, left/right on bar0/barN centres (δ≈0), pill+caption centred; **N5** bar%/cat%/fill_tile land (0.58/1.0/true, wrap/tile h ratio 0.878); **N6** skin active, 5 unfilled cells, no thead | **N6** column alignment requires list-format category extraction (or equivalent) — source header would match periods if labels extracted; **R4** still two stacked hero cards; **N5** badge ≠ tall side FDIC callout; **R6-A** pane title 13px gray residual *(then; shipped #139 post-v9)*; **F4+** packing residual *(then; shipped #140 post-v9 — direct five-row `:only-child` board)* |
 
 ---
 
@@ -196,7 +196,7 @@ were not independently re-measured beyond the committed probe output.
 | **16** N10 | **two** `.dual-chart-pane.chart-frame.gl-card` (852×813 each) under `.gl-grid-2.dual-chart` — separate framed cards **do** paint |
 | **12** R4 | `chart_hero_dual` **does** paint ONE `.gl-hero-stack` frame (570×755, radius 14px, filled) at grid `1140px 570px` (**2:1**); the two `.gl-hero.card` (522×349) inside are borderless/transparent rows, not separate cards; digits **110px** / unit **46.2px**. Verifier note: `verify_extras.json` `R4_s11` probed slide **11** (a `line_chart`) and returned `nCards:0`, so the original 'two stacked cards' reading was unevidenced. |
 | **05** R2 | one `.chartjs-callout-elbow` w≈633 h=30 + stem; not `elbow-line` class on this handoff (default continuum). L3 silhouette remains accepted |
-| **02** F4+ | 28px type present on `.gl-pill-stub`/cells (8+ nodes); board h/slide = **0.673** (geometry); freestanding packing still short of PDF full-bleed board |
+| **02** F4+ | **v9 measure (historical):** 28px type present; board h/slide = **0.673**; packing short of PDF full board. **Post-v9:** shipped #140 — CSS-only PDF p3 recipe on direct five-row `pill_comparison` boards (`[data-items='5'] .gl-main > .gl-pill-free:only-child`; inset/`so_what` stay legacy) |
 | **16** R6-A | **v9 measure (historical):** pane titles `.gl-tile-label` **13px / 600 / rgb(99,102,106)**; x ticks 13px. **Post-v9:** shipped #139 — `.gl-chart-pane-title` 40/700/navy + opt-in `chart_config.typography` (see `SPEC_renderer_v2_amex_fidelity_r6.md` / renderer AGENTS) |
 | **19/23** R6-C | inset cards navy `gl-inset card` 200×90, value 34px; deck-wide inset↔cell overlap **0** (geometry). Cosmetic recipe vs PDF still open; collision closed |
 | **F5** | theme override **not triggered** this handoff (`--color-primary:#00175A` only; no attempt to retint default chart palette) |
@@ -222,7 +222,7 @@ were not independently re-measured beyond the committed probe output.
 | **N9** grouped-bar `$` labels | still-gap | painted datalabel models read `$0.9…$2.8`; `_fmt_value_label(0.9,'$','prefix')` → `$0.9`; shell `bindMatrix` resolves `_labels` at init | **resolved** (corrected by verifier) | v9 draft misread pre-bind config; unit prefix path works |
 | **N10** dual_chart two cards | still-gap (weak) | two separate `.dual-chart-pane.chart-frame.gl-card` 852×813 | **resolved** | fresh DOM structure |
 | **R4** dual-metric hero frame | type scale OK; frame residual | slide **12**: one `.gl-hero-stack` 570×755 frame, grid `1140px 570px` = 2:1, heroes borderless inside | **resolved** (corrected by verifier) | v9 draft said still-gap citing slide 11, which holds no hero; re-measured on slide 12 |
-| **F4+** pill packing | still weak | 28px type present; board/slide h 0.673 | **still-gap** (weak B) | type partial hold |
+| **F4+** pill packing | still weak | 28px type present; board/slide h 0.673 | **shipped #140** (post-v9) | direct five-row freestanding board packing; inset/`so_what` siblings keep flexible legacy path |
 | **R2** elbow geometry / line recipe | T1 holds; L3 accepted; chrome residual | default elbow continuum on s05 (not line-class) | **partial / accepted L3** | line-style not exercised this handoff |
 | **R6-A** s17 pane title/ticks/labels | open (possible B) | titles 13px gray 600; ticks 13; rotation 50 | **shipped #139** (post-v9) | capability closed; archived-v9 full audit outstanding |
 | **R6-C** inset skin s19/s23 | cosmetic open; collision closed | navy inset cards + 34px values; overlap 0 | **partial** | collision resolved; recipe cosmetic |
@@ -246,7 +246,7 @@ Each item tied to PDF page + v9 evidence path. Marked **missing** vs **weak**, *
 | ~~2~~ | ~~**R4 frame**~~ | **WITHDRAWN by verifier** — already shipped (#124). Re-measured slide 12: single 2:1 `.gl-hero-stack` frame present | p11 / slide **12** | verifier Playwright re-measure (stack 570×755, grid 1140px 570px) | — | — |
 | 3 | **N5 callout** | Tall multi-line side FDIC callout (badge is not a substitute) + on-stack total chrome | p28 / slide 28 | `geometry.json` packing rows; badge box in observations; `compare_27.png` | **missing** callout recipe | **B** |
 | ~~4~~ | ~~**N9 $ labels**~~ | **WITHDRAWN by verifier** — `$` prefix already painted (`$0.9…$2.8` on slide 17) | p16 / slide **17** | verifier read of `Chart.$datalabels._labels` model lines | — | — |
-| 5 | **F4+ pack** | Near-full-bleed freestanding pill board packing (28px type already present) | p2 / slide 02 | geometry pill h ratio 0.673; `compare_02.png` | **weak** packing | **B** |
+| ~~5~~ | ~~**F4+ pack**~~ | **SHIPPED #140** (post-v9) — CSS-only PDF-faithful packing for direct five-row freestanding `pill_comparison` boards (`:only-child`); 28px type/navy caps retained; inset and `so_what` siblings stay on legacy flexible packing | p2 / slide 02 | `components.css` F4+ selectors; `TestPillPdfSummaryBoard` | — | — |
 | ~~6~~ | ~~**R6-A type**~~ | **SHIPPED #139** (post-v9) — HTML pane title + opt-in `chart_config.typography`; live contract in renderer AGENTS | p16 / slide 17 | historical R6A_s16 13px gray | — | — |
 | 7 | **R6-C inset** | PDF inset card recipe polish (collision already 0) | p19/p23 | R6C_s19/s23; `compare_19.png` `compare_23.png` | **weak** cosmetic | **B** |
 | 8 | **R2 line elbow** | Opt-in line-style elbow continuum where PDF wants thin rule (L3 arm accepted closed) | p5 / slide 05 | R2_s05 default elbow; `compare_05.png` | **weak** recipe | **B** (knob may exist; not proven this deck) |
@@ -267,7 +267,7 @@ Each item tied to PDF page + v9 evidence path. Marked **missing** vs **weak**, *
 2. ~~R4 single dual-metric frame recipe~~ — withdrawn: verified already shipped.
 3. ~~N9 `$` datalabel prefix on dual_chart/grouped bars~~ — withdrawn: verified already working.
 4. N5 tall side callout (distinct from badge).
-5. F4+ / R6-C polish (R6-A shipped #139).
+5. ~~F4+ pack~~ — shipped #140. R6-C polish (R6-A shipped #139).
 
 ---
 
@@ -359,13 +359,18 @@ That measure locked the #139 contract. **Capability is now shipped:** shared
 the pre-fix 13px gray residual as an open renderer gap. Archived-v9 full-deck
 audit remains outstanding (`artifacts/r6a_typography_v9_audit.md`).
 
-### F4+ - CONFIRMED weak (packing, not type)
+### F4+ - was CONFIRMED weak at v9 measure; **shipped #140** (post-v9)
 
-Slide 3 `pill_comparison`: board `.gl-pill.gl-pill-free.gl-card` is
-1728x726.8 at y=201.2, so **h/slide = 0.673**, w/slide = 0.900, transparent
-background, 16px radius, `display:flex`. Type is already correct at **28px**
-(stubs 600, heads 700 on navy, cells). 6 stubs / 15 cells.
-So the residual is purely vertical packing, matching the run's read.
+**v9 measure (historical):** Slide 3 `pill_comparison` board `.gl-pill.gl-pill-free.gl-card`
+was 1728x726.8 at y=201.2 (**h/slide = 0.673**, w/slide = 0.900); type already
+correct at **28px**. Residual was vertical packing only.
+
+**Post-v9 capability:** CSS-only PDF p3 recipe on direct five-row freestanding
+boards — `.slide[data-layout='pill_comparison'][data-items='5'] .gl-main >
+.gl-pill-free:only-child` (owner: `impact_slides/renderer_v2/css/components.css`,
+`TestPillPdfSummaryBoard`). `:only-child` keeps inset-backed and `so_what`
+sibling boards on legacy flexible packing. Do not re-file the pre-fix 0.673
+h/slide residual as an open renderer gap for direct five-row boards.
 
 ### R6-C - CONFIRMED partial (cosmetic only)
 
@@ -383,6 +388,6 @@ should **not** be restyled on assumption until the PDF treatment is measured.
 ### Net effect
 
 Two of the eight prioritized items were false at measure time. Withdrawn: **R4**
-(round 1) and **N9** (here). **R6-A shipped #139** after this baseline; remaining
-open items are N6 align, N5 callout, F4+ pack, R6-C inset, R2 line elbow.
+(round 1) and **N9** (here). **R6-A shipped #139** and **F4+ shipped #140** after
+this baseline; remaining open items are N6 align, N5 callout, R6-C inset, R2 line elbow.
 
