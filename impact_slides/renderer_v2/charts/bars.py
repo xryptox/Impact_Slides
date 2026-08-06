@@ -474,9 +474,10 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
             )
         # Category labels sit lower when negative totals occupy the usual row
         cat_y = H - 12 if any(neg_sums) else H - pad_b + 25
+        x_fs = int(cfg.get("_typo_x_tick_fs") or 14)
         parts.append(
             f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{cat_y}" '
-            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="14" '
+            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
             f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
 
@@ -541,6 +542,16 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No bar chart data</p>'
     cfg = _chart_config(slide)
     palette = _series_colors(cfg)
+    typo = resolve_typography(cfg)
+    # indexAxis=y: category labels sit on y; value ticks on x.
+    cat_fs = (
+        int(typo["y_tick_font_size"]) if typo.get("y_tick_font_size_set") else 13
+    )
+    cat_wt = "700" if typo.get("y_tick_font_size_set") else "600"
+    x_tick_fs = (
+        int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 13
+    )
+    x_tick_wt = "700" if typo.get("x_tick_font_size_set") else "600"
     W, H = 960, 540
     pad_l, pad_r, pad_t, pad_b = 140.0, 24.0, 16.0, 40.0
     plot_w = W - pad_l - pad_r
@@ -561,12 +572,25 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
         f'<svg class="chart-svg hbar" viewBox="0 0 {W} {H}" '
         f'xmlns="http://www.w3.org/2000/svg" role="img">'
     ]
+    # Value-axis tick labels (x) when opt-in typography is set.
+    if typo.get("x_tick_font_size_set"):
+        n_ticks = 5
+        for ti in range(n_ticks):
+            tv = x_min + (rng * ti / (n_ticks - 1))
+            tx = x_pos(tv)
+            parts.append(
+                f'<text class="hbar-xtick" x="{tx:.1f}" y="{H - pad_b + 18:.1f}" '
+                f'text-anchor="middle" fill="var(--navy, #00175a)" '
+                f'font-size="{x_tick_fs}" font-weight="{x_tick_wt}" '
+                f'font-family="var(--font-body, sans-serif)">'
+                f'{esc(_fmt_bar(tv, ""))}</text>'
+            )
     for i, lab in enumerate(labels):
         cy = pad_t + row_h * i + row_h / 2
         parts.append(
             f'<text class="hbar-cat" x="{pad_l - 8:.1f}" y="{cy + 4:.1f}" '
-            f'text-anchor="end" fill="var(--navy, #00175a)" font-size="13" '
-            f'font-weight="600">{esc(lab)}</text>'
+            f'text-anchor="end" fill="var(--navy, #00175a)" font-size="{cat_fs}" '
+            f'font-weight="{cat_wt}">{esc(lab)}</text>'
         )
         for si in range(m):
             v = rows[i][si] if si < len(rows[i]) else None

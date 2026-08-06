@@ -24,6 +24,7 @@ from .typography import (
     LEGACY_Y_TICK,
     ordinary_datalabel_size,
     resolve_typography,
+    uses_ordinary_datalabels,
 )
 
 
@@ -783,10 +784,12 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     # (multi_panel tiles are flex columns; without this the plot height is
     # bounded by Chart.js' intrinsic sizing, leaving unused card below).
     fill = " chartjs-fill" if chart_cfg.get("fill_tile") else ""
-    # #139: collision only when datalabel_font_size is supplied; JS is
-    # emission-scoped so default decks stay byte-identical.
+    # #139: collision only on ordinary-label layouts when datalabel_font_size
+    # is set; stacked/in-segment and named value sets stay untouched.
     typo = resolve_typography(chart_cfg)
-    collision = bool(typo.get("datalabel_font_size_set"))
+    collision = bool(typo.get("datalabel_font_size_set")) and uses_ordinary_datalabels(
+        layout, chart_cfg
+    )
     coll_attr = ' data-rv2-collision="1"' if collision else ""
     coll_js = DATALABEL_COLLISION_JS if collision else ""
     return (

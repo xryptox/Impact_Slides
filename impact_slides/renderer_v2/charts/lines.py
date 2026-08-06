@@ -473,6 +473,14 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     overlay_style = overlay_cfg.get("style", "solid")
 
     cfg = _chart_config(slide)
+    typo = resolve_typography(cfg)
+    y_tick_fs = (
+        int(typo["y_tick_font_size"]) if typo.get("y_tick_font_size_set") else 14
+    )
+    y_tick_wt = "700" if typo.get("y_tick_font_size_set") else "600"
+    x_tick_fs = (
+        int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 14
+    )
     show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("combo_chart", has_overlay=bool(line_points))
     W, H = geom["width"], geom["height"]
@@ -535,7 +543,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         tick_label = _fmtb(float(tick))
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
 
@@ -563,7 +571,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             tick_label = f"{tick:g}{line_unit}" if line_unit else f"{tick:g}"
             parts.append(
                 f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
-                f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+                f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
                 f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
             )
 
@@ -636,7 +644,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             )
         parts.append(
             f'<text x="{x + bar_w/2:.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
 

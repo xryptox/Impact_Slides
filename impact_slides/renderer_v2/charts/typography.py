@@ -211,6 +211,19 @@ def ordinary_datalabel_size(typo: Mapping[str, int], *, default: int = LEGACY_DA
     return default
 
 
+def uses_ordinary_datalabels(layout: str, chart_cfg: Mapping[str, Any] | None) -> bool:
+    """True when this layout paints ordinary above-bar / on-point value labels.
+
+    Collision and datalabel_font_size only apply on that path — not stacked
+    in-segment/totals, hbar inside chips, or combo dual-paint.
+    """
+    if not isinstance(chart_cfg, Mapping):
+        return False
+    if not (chart_cfg.get("point_labels") or chart_cfg.get("show_point_labels")):
+        return False
+    return layout in ("grouped_bar_chart", "line_chart")
+
+
 def chart_pane_title_html(
     text: str,
     *,

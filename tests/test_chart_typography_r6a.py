@@ -422,7 +422,8 @@ class TestPainterPaths:
         path = _write(tmp_path, _handoff([s]))
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
-        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        conf = _chartjs_cfg(html)
         dl = conf["options"]["plugins"]["datalabels"]
         # In-segment / named sets stay at legacy 11.
         if "labels" in dl and isinstance(dl["labels"], dict):
@@ -431,6 +432,9 @@ class TestPainterPaths:
                     assert entry["font"]["size"] == 11
         else:
             assert dl["font"]["size"] == 11
+        # Collision must not arm on non-ordinary (stacked) label paths.
+        assert "data-rv2-collision" not in html
+        assert "data-rv2-datalabel-collision" not in html
 
 
 # ---------------------------------------------------------------------------
