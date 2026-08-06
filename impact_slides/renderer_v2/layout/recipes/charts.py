@@ -19,6 +19,7 @@ from ..regions import gl_card, insight_strip, notes_aside, slide_shell, source_s
 
 from .shared import _content, _hero_stack, _so_what, _source_names, _visual_series_names, _vs_steps
 from .metrics import render_metric
+from ...charts.typography import chart_host_size, chart_pane_title_html
 
 # #136: Chart.js runtime re-pitch for plot-aligned support tables. Emitted
 # inline only next to an aligned table (byte-inert when absent — #138 lesson).
@@ -328,7 +329,8 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
     their own ``type`` + ``steps_or_data`` + optional per-pane ``label`` /
     ``chart_config`` / ``line_overlay``. Each pane is built through the
     standard chart pipeline; pane ``label`` (else single series name) renders
-    as ``gl-tile-label``, and a redundant single-series legend is suppressed.
+    as ``gl-chart-pane-title`` (issue 139), and a redundant single-series legend is
+    suppressed.
     """
     from ...charts import build_chart_html
 
@@ -349,10 +351,14 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         # legend (it distinguishes series — information, not chrome); a
         # single-series legend only restates the heading, so suppress it.
         names = _visual_series_names(visual)
+        pane_cfg = dict(visual.get("chart_config") or {})
+        # #139: recipe label wins; chart_config.title is fallback; single
+        # series name last. One HTML-owned title — never duplicate internals.
         heading = strip_eids(str(visual.get("label") or ""))
+        if not heading:
+            heading = strip_eids(str(pane_cfg.get("title") or ""))
         if not heading and len(names) == 1:
             heading = names[0]
-        pane_cfg = dict(visual.get("chart_config") or {})
         if heading and len(names) <= 1 and not visual.get("line_overlay"):
             pane_cfg["show_legend"] = False
         sub_vs: dict[str, Any] = {
@@ -371,7 +377,14 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
             "visual_spec": sub_vs,
             "evidence_sources": slide.get("evidence_sources") or [],
         }
-        lbl = f'<div class="gl-tile-label">{esc(heading)}</div>' if heading else ""
+        # #139: HTML-owned chart pane title (recipe heading wins).
+        # Pass fixed dual-pane host geometry so remaining-canvas 320×240 runs.
+        aw, ah = chart_host_size("dual_chart")
+        lbl = (
+            chart_pane_title_html(heading, available_w=aw, available_h=ah)
+            if heading
+            else ""
+        )
         # N10: each pane is its own rounded card (the PDF draws two separate
         # panels, not one shared enclosure). surface/stage modifiers apply
         # per pane, falling back to the slide-level chart_config.
@@ -421,8 +434,19 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     # R4 (v8): the PDF chart panel carries an in-card title. Source it from an
     # explicit primary_visual label when authored (T11 convention); absent a
     # label nothing renders, so decks without one are unchanged.
-    chart_title = strip_eids(str(pv.get("label") or "")) if isinstance(pv, dict) else ""
-    title_html = f'<div class="gl-tile-label">{esc(chart_title)}</div>' if chart_title else ""
+    chart_title = ""
+    if isinstance(pv, dict):
+        chart_title = strip_eids(str(pv.get("label") or ""))
+        if not chart_title:
+            pv_cfg = pv.get("chart_config") if isinstance(pv.get("chart_config"), dict) else {}
+            chart_title = strip_eids(str(pv_cfg.get("title") or ""))
+    # #139: fixed hero chart-column host size for remaining-canvas check.
+    aw, ah = chart_host_size("chart_hero_dual")
+    title_html = (
+        chart_pane_title_html(chart_title, available_w=aw, available_h=ah)
+        if chart_title
+        else ""
+    )
     main = (
         f'<div class="gl-areas-chart-hero">'
         f'<div class="gl-chart-hero-chart">{title_html}{chart_html or "<div class=\"chart-empty\">No chart</div>"}</div>'
@@ -543,7 +567,14 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 if callout_requested and not has_side_legend
                 else ""
             )
-            lbl = f'<div class="gl-tile-label">{esc(label)}</div>' if label else ""
+            # #139: chart tile heading uses shared pane-title class; metric
+            # tiles below keep ordinary gl-tile-label. Host size from tile cols.
+            aw, ah = chart_host_size("multi_panel", cols=cols)
+            lbl = (
+                chart_pane_title_html(label, available_w=aw, available_h=ah)
+                if label
+                else ""
+            )
             # IR dual tall-card slots (#90/F11+): freestanding top total,
             # exterior side legend, badge callout. Only engaged when present,
             # so legacy tiles keep their existing chrome.

@@ -8,6 +8,12 @@ from .format import _fmt_unit, _series_colors
 from .geometry import chart_geometry
 from .bars import _bar_matrix
 from .core import _chart_config, _steps
+from .typography import (
+    estimate_label_box,
+    resolve_typography,
+    suppress_colliding_labels,
+    _warn,
+)
 
 
 
@@ -132,6 +138,21 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No line chart data</p>'
 
     cfg = _chart_config(slide)
+    typo = resolve_typography(cfg)
+    y_tick_fs = (
+        int(typo["y_tick_font_size"]) if typo.get("y_tick_font_size_set") else 14
+    )
+    y_tick_wt = "700" if typo.get("y_tick_font_size_set") else "600"
+    x_tick_fs = (
+        int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 14
+    )
+    dl_fs_primary = (
+        int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 14
+    )
+    dl_fs_secondary = (
+        int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 12
+    )
+    dl_set = bool(typo.get("datalabel_font_size_set"))
     show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("line_chart", n=len(points))
     W, H = geom["width"], geom["height"]
@@ -213,7 +234,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         tick_label = _fmtu(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
 
@@ -233,7 +254,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     for i, p in enumerate(points):
         parts.append(
             f'<text x="{x_pos(i):.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(p["label"])}</text>'
         )
 
@@ -307,6 +328,8 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     # when series converge or cross (PDF earnings-deck convention).
     # 3+ series keeps fixed sides (primary above, others below).
     two_series = len(all_series) == 2
+    label_items: list[dict] = []
+    label_markup: list[str] = []
     for i, p in enumerate(points):
         cx, cy = x_pos(i), y_pos(p["value"])
         above = True
@@ -318,15 +341,26 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         # First point sits ON the y-axis line — anchor its label start-side
         # so the text clears the axis instead of straddling it (#39).
         l_anchor, l_x = ("start", cx + 4) if i == 0 else ("middle", cx)
-        parts.append(
+        txt = _fmtu(p["value"])
+        label_items.append(
+            {
+                "series": 0,
+                "category": i,
+                "label": txt,
+                "box": estimate_label_box(
+                    txt, x=l_x, y=ly, font_size=dl_fs_primary, anchor=l_anchor
+                ),
+            }
+        )
+        label_markup.append(
             f'<text x="{l_x:.1f}" y="{ly:.1f}" text-anchor="{l_anchor}" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
-            f'font-family="var(--font-body, sans-serif)">{esc(_fmtu(p["value"]))}</text>'
+            f'fill="var(--navy, #00175a)" font-size="{dl_fs_primary}" font-weight="600" '
+            f'font-family="var(--font-body, sans-serif)">{esc(txt)}</text>'
         )
 
     # Data labels for secondary series
     if len(all_series) > 1:
-        for sk_entry in all_series[1:]:
+        for s_i, sk_entry in enumerate(all_series[1:], start=1):
             sk = sk_entry["key"]
             for i, p in enumerate(points):
                 if sk not in p:
@@ -337,11 +371,38 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
                     above = p[sk] > p["value"]
                 ly = cy - 12 if above else cy + 18
                 l_anchor, l_x = ("start", cx + 4) if i == 0 else ("middle", cx)
-                parts.append(
-                    f'<text x="{l_x:.1f}" y="{ly:.1f}" text-anchor="{l_anchor}" '
-                    f'fill="var(--ink-muted, #63666a)" font-size="12" '
-                    f'font-family="var(--font-body, sans-serif)">{esc(_fmtu(p[sk]))}</text>'
+                txt = _fmtu(p[sk])
+                label_items.append(
+                    {
+                        "series": s_i,
+                        "category": i,
+                        "label": txt,
+                        "box": estimate_label_box(
+                            txt, x=l_x, y=ly, font_size=dl_fs_secondary, anchor=l_anchor
+                        ),
+                    }
                 )
+                label_markup.append(
+                    f'<text x="{l_x:.1f}" y="{ly:.1f}" text-anchor="{l_anchor}" '
+                    f'fill="var(--ink-muted, #63666a)" font-size="{dl_fs_secondary}" '
+                    f'font-family="var(--font-body, sans-serif)">{esc(txt)}</text>'
+                )
+
+    if dl_set and label_items:
+        suppressed, details = suppress_colliding_labels(label_items)
+        keep = set(range(len(label_items))) - set(suppressed)
+        for i in sorted(keep):
+            parts.append(label_markup[i])
+        if suppressed:
+            _warn(
+                f"svg datalabel suppressed count={len(suppressed)} "
+                + "; ".join(
+                    f"series={d['series']} category={d['category']} label={d['label']!r}"
+                    for d in details
+                )
+            )
+    else:
+        parts.extend(label_markup)
 
     # -- Legend -------------------------------------------------------------
     if len(all_series) > 1 and series_names:
@@ -412,6 +473,14 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     overlay_style = overlay_cfg.get("style", "solid")
 
     cfg = _chart_config(slide)
+    typo = resolve_typography(cfg)
+    y_tick_fs = (
+        int(typo["y_tick_font_size"]) if typo.get("y_tick_font_size_set") else 14
+    )
+    y_tick_wt = "700" if typo.get("y_tick_font_size_set") else "600"
+    x_tick_fs = (
+        int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 14
+    )
     show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("combo_chart", has_overlay=bool(line_points))
     W, H = geom["width"], geom["height"]
@@ -474,7 +543,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         tick_label = _fmtb(float(tick))
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
 
@@ -502,7 +571,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             tick_label = f"{tick:g}{line_unit}" if line_unit else f"{tick:g}"
             parts.append(
                 f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
-                f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+                f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
                 f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
             )
 
@@ -575,7 +644,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             )
         parts.append(
             f'<text x="{x + bar_w/2:.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
+            f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
             f'font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
         )
 

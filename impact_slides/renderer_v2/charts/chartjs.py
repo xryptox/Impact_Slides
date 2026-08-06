@@ -18,6 +18,14 @@ from .callouts import (
 from .bars import _bar_matrix
 from .lines import _combo_bar_data, _combo_line_data, _line_data
 from .core import _chart_config, _svg_fallback_for_layout
+from .typography import (
+    DATALABEL_COLLISION_JS,
+    LEGACY_X_TICK,
+    LEGACY_Y_TICK,
+    ordinary_datalabel_size,
+    resolve_typography,
+    uses_ordinary_datalabels,
+)
 
 
 
@@ -63,6 +71,13 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
         heading already carries a single series' name, so the swatch would
         only restate it). Defaults to True (Chart.js default, SC-COMPAT-1).
     """
+    typo = resolve_typography(cfg or {})
+    x_size = int(typo.get("x_tick_font_size", LEGACY_X_TICK))
+    y_size = int(typo.get("y_tick_font_size", LEGACY_Y_TICK))
+    y_weight = "bold" if y_size != LEGACY_Y_TICK else None
+    y_font: dict[str, Any] = {"family": "'IBM Plex Sans', sans-serif", "size": y_size}
+    if y_weight:
+        y_font["weight"] = y_weight
     options = {
         "responsive": True,
         "maintainAspectRatio": False,
@@ -80,14 +95,14 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
             "x": {
                 "ticks": {
                     "color": "#00175a",
-                    "font": {"family": "'Source Sans 3', sans-serif", "size": 13},
+                    "font": {"family": "'Source Sans 3', sans-serif", "size": x_size},
                 },
                 "grid": {"color": "rgba(224, 228, 234, 0.8)"},
             },
             "y": {
                 "ticks": {
                     "color": "#00175a",
-                    "font": {"family": "'IBM Plex Sans', sans-serif", "size": 13},
+                    "font": y_font,
                 },
                 "grid": {"color": "rgba(224, 228, 234, 0.8)"},
             },
@@ -412,8 +427,9 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             ]
             for si in range(len(series))
         ]
+        dl_size = ordinary_datalabel_size(resolve_typography(cfg))
         options["plugins"]["datalabels"] = _datalabels_cfg(
-            anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=11,
+            anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=dl_size,
             labels=label_matrix,
         )
     return {
@@ -605,8 +621,9 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             y_scale["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
     if point_labels:
+        dl_size = ordinary_datalabel_size(resolve_typography(cfg))
         options["plugins"]["datalabels"] = _datalabels_cfg(
-            anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=11,
+            anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=dl_size,
             labels=label_matrix,
         )
     return {
@@ -767,8 +784,17 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     # (multi_panel tiles are flex columns; without this the plot height is
     # bounded by Chart.js' intrinsic sizing, leaving unused card below).
     fill = " chartjs-fill" if chart_cfg.get("fill_tile") else ""
+    # #139: collision only on ordinary-label layouts when datalabel_font_size
+    # is set; stacked/in-segment and named value sets stay untouched.
+    typo = resolve_typography(chart_cfg)
+    collision = bool(typo.get("datalabel_font_size_set")) and uses_ordinary_datalabels(
+        layout, chart_cfg
+    )
+    coll_attr = ' data-rv2-collision="1"' if collision else ""
+    coll_js = DATALABEL_COLLISION_JS if collision else ""
     return (
-        f'<div class="chartjs-wrap{flat}{fill}" data-chartjs="1" data-chart-layout="{esc(layout)}">'
+        f'<div class="chartjs-wrap{flat}{fill}" data-chartjs="1" '
+        f'data-chart-layout="{esc(layout)}"{coll_attr}>'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
@@ -777,5 +803,6 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         f"{callouts_html}"
         f"{side_callout_html}"
         f"{noscript}"
+        f"{coll_js}"
         f"</div>"
     )

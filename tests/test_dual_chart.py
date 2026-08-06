@@ -90,7 +90,7 @@ def test_missing_secondary_renders_single_pane():
 
 
 def test_single_series_pane_gets_heading_and_legend_suppressed():
-    # R5-F/T11: pane title renders as an in-card gl-tile-label heading
+    # R5-F/T11 + #139: pane title renders as in-card gl-chart-pane-title heading
     # (sourced from the pane's single series name) and the Chart.js legend
     # that would restate it is suppressed.
     slide = _slide()
@@ -98,7 +98,7 @@ def test_single_series_pane_gets_heading_and_legend_suppressed():
         "Net Card Fees $B"
     ]
     html = render_dual_chart(slide, 1, "", use_chartjs=True)
-    assert '<div class="gl-tile-label">Net Card Fees $B</div>' in html
+    assert 'class="gl-chart-pane-title"' in html and ">Net Card Fees $B</div>" in html
     assert '"display": false' in html or '"display":false' in html
 
 
@@ -114,6 +114,7 @@ def test_multi_series_pane_keeps_legend_and_no_heading():
         ],
     }
     html = render_dual_chart(slide, 1, "", use_chartjs=True)
+    assert "gl-chart-pane-title" not in html
     assert "gl-tile-label" not in html
     assert '"display": false' not in html and '"display":false' not in html
 
@@ -131,7 +132,7 @@ def test_value_plus_series_n_keeps_legend_with_pane_label():
         ],
     }
     html = render_dual_chart(slide, 1, "", use_chartjs=True)
-    assert '<div class="gl-tile-label">Unemployment</div>' in html
+    assert 'class="gl-chart-pane-title"' in html and ">Unemployment</div>" in html
     assert '"display": false' not in html and '"display":false' not in html
 
 
@@ -140,7 +141,7 @@ def test_explicit_pane_label_renders_as_heading():
     slide["visual_spec"]["primary_visual"]["label"] = "Fees (Q1: 2019-2026)"
     slide["visual_spec"]["primary_visual"]["chart_config"]["series_names"] = ["Fees"]
     html = render_dual_chart(slide, 1, "")
-    assert '<div class="gl-tile-label">Fees (Q1: 2019-2026)</div>' in html
+    assert 'class="gl-chart-pane-title"' in html and ">Fees (Q1: 2019-2026)</div>" in html
 
 
 def test_combo_pane_with_overlay():

@@ -82,7 +82,7 @@ were not independently re-measured beyond the committed probe output.
 
 | Pass | A result | B confirmation |
 |-----:|----------|----------------|
-| 01 | **N8** measure_rule: thin h=25 rule, left/right on bar0/barN centres (δ≈0), pill+caption centred; **N5** bar%/cat%/fill_tile land (0.58/1.0/true, wrap/tile h ratio 0.878); **N6** skin active, 5 unfilled cells, no thead | **N6** column alignment requires list-format category extraction (or equivalent) — source header would match periods if labels extracted; **R4** still two stacked hero cards; **N5** badge ≠ tall side FDIC callout; **R6-A** pane title 13px gray residual; **F4+** packing still weak vs PDF full board |
+| 01 | **N8** measure_rule: thin h=25 rule, left/right on bar0/barN centres (δ≈0), pill+caption centred; **N5** bar%/cat%/fill_tile land (0.58/1.0/true, wrap/tile h ratio 0.878); **N6** skin active, 5 unfilled cells, no thead | **N6** column alignment requires list-format category extraction (or equivalent) — source header would match periods if labels extracted; **R4** still two stacked hero cards; **N5** badge ≠ tall side FDIC callout; **R6-A** pane title 13px gray residual *(then; shipped #139 post-v9)*; **F4+** packing still weak vs PDF full board |
 
 ---
 
@@ -197,7 +197,7 @@ were not independently re-measured beyond the committed probe output.
 | **12** R4 | `chart_hero_dual` **does** paint ONE `.gl-hero-stack` frame (570×755, radius 14px, filled) at grid `1140px 570px` (**2:1**); the two `.gl-hero.card` (522×349) inside are borderless/transparent rows, not separate cards; digits **110px** / unit **46.2px**. Verifier note: `verify_extras.json` `R4_s11` probed slide **11** (a `line_chart`) and returned `nCards:0`, so the original 'two stacked cards' reading was unevidenced. |
 | **05** R2 | one `.chartjs-callout-elbow` w≈633 h=30 + stem; not `elbow-line` class on this handoff (default continuum). L3 silhouette remains accepted |
 | **02** F4+ | 28px type present on `.gl-pill-stub`/cells (8+ nodes); board h/slide = **0.673** (geometry); freestanding packing still short of PDF full-bleed board |
-| **16** R6-A | pane titles `.gl-tile-label` **13px / 600 / rgb(99,102,106)**; x ticks 13px navy; maxRotation 50 — weight/size vs PDF still soft (possible B; no font knobs added) |
+| **16** R6-A | **v9 measure (historical):** pane titles `.gl-tile-label` **13px / 600 / rgb(99,102,106)**; x ticks 13px. **Post-v9:** shipped #139 — `.gl-chart-pane-title` 40/700/navy + opt-in `chart_config.typography` (see `SPEC_renderer_v2_amex_fidelity_r6.md` / renderer AGENTS) |
 | **19/23** R6-C | inset cards navy `gl-inset card` 200×90, value 34px; deck-wide inset↔cell overlap **0** (geometry). Cosmetic recipe vs PDF still open; collision closed |
 | **F5** | theme override **not triggered** this handoff (`--color-primary:#00175A` only; no attempt to retint default chart palette) |
 
@@ -224,7 +224,7 @@ were not independently re-measured beyond the committed probe output.
 | **R4** dual-metric hero frame | type scale OK; frame residual | slide **12**: one `.gl-hero-stack` 570×755 frame, grid `1140px 570px` = 2:1, heroes borderless inside | **resolved** (corrected by verifier) | v9 draft said still-gap citing slide 11, which holds no hero; re-measured on slide 12 |
 | **F4+** pill packing | still weak | 28px type present; board/slide h 0.673 | **still-gap** (weak B) | type partial hold |
 | **R2** elbow geometry / line recipe | T1 holds; L3 accepted; chrome residual | default elbow continuum on s05 (not line-class) | **partial / accepted L3** | line-style not exercised this handoff |
-| **R6-A** s17 pane title/ticks/labels | open (possible B) | titles 13px gray 600; ticks 13; rotation 50 | **still-gap** (B) | no font knobs added |
+| **R6-A** s17 pane title/ticks/labels | open (possible B) | titles 13px gray 600; ticks 13; rotation 50 | **shipped #139** (post-v9) | capability closed; archived-v9 full audit outstanding |
 | **R6-C** inset skin s19/s23 | cosmetic open; collision closed | navy inset cards + 34px values; overlap 0 | **partial** | collision resolved; recipe cosmetic |
 | **F5** theme palette tint | not assumed | no theme override in handoff | **not triggered** | |
 | **R1** | accepted D11 | not reopened | **accepted** | |
@@ -247,7 +247,7 @@ Each item tied to PDF page + v9 evidence path. Marked **missing** vs **weak**, *
 | 3 | **N5 callout** | Tall multi-line side FDIC callout (badge is not a substitute) + on-stack total chrome | p28 / slide 28 | `geometry.json` packing rows; badge box in observations; `compare_27.png` | **missing** callout recipe | **B** |
 | ~~4~~ | ~~**N9 $ labels**~~ | **WITHDRAWN by verifier** — `$` prefix already painted (`$0.9…$2.8` on slide 17) | p16 / slide **17** | verifier read of `Chart.$datalabels._labels` model lines | — | — |
 | 5 | **F4+ pack** | Near-full-bleed freestanding pill board packing (28px type already present) | p2 / slide 02 | geometry pill h ratio 0.673; `compare_02.png` | **weak** packing | **B** |
-| 6 | **R6-A type** | Pane-title size/weight/colour + tick/datalabel recipe vs PDF Net Card Fees | p16 / slide 17 | R6A_s16 titles 13px gray; `compare_16.png` | **weak** type ramp | **B** |
+| ~~6~~ | ~~**R6-A type**~~ | **SHIPPED #139** (post-v9) — HTML pane title + opt-in `chart_config.typography`; live contract in renderer AGENTS | p16 / slide 17 | historical R6A_s16 13px gray | — | — |
 | 7 | **R6-C inset** | PDF inset card recipe polish (collision already 0) | p19/p23 | R6C_s19/s23; `compare_19.png` `compare_23.png` | **weak** cosmetic | **B** |
 | 8 | **R2 line elbow** | Opt-in line-style elbow continuum where PDF wants thin rule (L3 arm accepted closed) | p5 / slide 05 | R2_s05 default elbow; `compare_05.png` | **weak** recipe | **B** (knob may exist; not proven this deck) |
 
@@ -267,7 +267,7 @@ Each item tied to PDF page + v9 evidence path. Marked **missing** vs **weak**, *
 2. ~~R4 single dual-metric frame recipe~~ — withdrawn: verified already shipped.
 3. ~~N9 `$` datalabel prefix on dual_chart/grouped bars~~ — withdrawn: verified already working.
 4. N5 tall side callout (distinct from badge).
-5. F4+ / R6-A / R6-C polish.
+5. F4+ / R6-C polish (R6-A shipped #139).
 
 ---
 
@@ -341,22 +341,23 @@ Confirmed at the unit level too: `_fmt_value_label(0.9, "$", "prefix")` returns
 `$0.9`, and `_chartjs_bar_config` emits
 `_labels: [["$0.9", ..., "$2.8"]]`. **The `$` prefix path works. Not a gap.**
 
-### R6-A - CONFIRMED still-gap (largest open item)
+### R6-A - was CONFIRMED still-gap at v9 measure; **shipped #139** (post-v9)
 
 Slide 17, measured against the PDF figures in `wiki/SPEC_renderer_v2_amex_fidelity_r6.md`
 (the spec labels this slide 16 by PDF page; it is `data-slide-number` 17):
 
-| Element | Measured | PDF target | Delta |
+| Element | Measured (v9) | PDF target | Delta then |
 |---|---|---|---|
 | Pane title | **13px** / 600 / `rgb(99,102,106)` gray | 40px bold (navy) | ~3x + colour + weight |
 | Y ticks | **13px** | 24px bold | ~1.8x + weight |
 | X ticks | **13px** | not measured in spec | — |
 | Datalabels | **11px** bold | 28px bold | ~2.5x |
 
-Slide title is 56px/700 navy, so the *slide* ramp is right and only the
-chart-internal ramp is short. No handoff knob exists for any of these four
-(`_chartjs_common_options` hardcodes 13px ticks; datalabel size is a literal
-`11`). Confirmed **B / renderer capability gap**.
+That measure locked the #139 contract. **Capability is now shipped:** shared
+`.gl-chart-pane-title` + opt-in `chart_config.typography` (owner:
+`impact_slides/renderer_v2/AGENTS.md`, `charts/typography.py`). Do not re-file
+the pre-fix 13px gray residual as an open renderer gap. Archived-v9 full-deck
+audit remains outstanding (`artifacts/r6a_typography_v9_audit.md`).
 
 ### F4+ - CONFIRMED weak (packing, not type)
 
@@ -381,6 +382,7 @@ should **not** be restyled on assumption until the PDF treatment is measured.
 
 ### Net effect
 
-Two of the eight prioritized items were false. Withdrawn: **R4** (round 1) and
-**N9** (here). Six remain, and **R6-A is the largest genuine renderer gap**.
+Two of the eight prioritized items were false at measure time. Withdrawn: **R4**
+(round 1) and **N9** (here). **R6-A shipped #139** after this baseline; remaining
+open items are N6 align, N5 callout, F4+ pack, R6-C inset, R2 line elbow.
 

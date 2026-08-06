@@ -29,6 +29,12 @@ from .manifest import (
 )
 from .notes import build_spoken_notes
 from .shell import wrap_deck
+from .charts.typography import (
+    begin_render_warnings,
+    reset_render_strict,
+    set_render_strict,
+    take_render_warnings,
+)
 
 
 def _prevalidate_disclosure(slides: list[Any]) -> dict[int, str]:
@@ -103,8 +109,9 @@ def _build_run_meta(
     features_list: list[str],
     html_bytes: int,
     slides: list[Any],
+    warnings: list[str] | None = None,
 ) -> dict[str, Any]:
-    return {
+    meta: dict[str, Any] = {
         "generator": "impact_slides.renderer_v2",
         "version": __version__,
         "style_preset": "BoardroomEarnings",
@@ -117,6 +124,9 @@ def _build_run_meta(
         "bytes_inlined": int(bundle.meta.get("bytes_inlined") or 0),
         "layouts": [s.get("layout_type") for s in slides],
     }
+    if warnings:
+        meta["warnings"] = list(warnings)
+    return meta
 
 
 def render_deck(
@@ -183,11 +193,17 @@ def render_deck(
     features_list = sorted(features)
     bundle = build_head_assets(delivery, feature_ids=features_list)
 
-    notes_by_num, bodies = _paint_slides(
-        slides,
-        total=total,
-        use_chartjs=("charts" in features),
-    )
+    strict_tok = set_render_strict(strict)
+    warn_tok = begin_render_warnings()
+    try:
+        notes_by_num, bodies = _paint_slides(
+            slides,
+            total=total,
+            use_chartjs=("charts" in features),
+        )
+    finally:
+        warnings = take_render_warnings(warn_tok)
+        reset_render_strict(strict_tok)
 
     html = wrap_deck(
         bodies,
@@ -216,6 +232,7 @@ def render_deck(
         features_list=features_list,
         html_bytes=html_bytes,
         slides=slides,
+        warnings=warnings,
     )
     (out / "run_meta.json").write_text(
         json.dumps(run_meta, indent=2) + "\n", encoding="utf-8"
