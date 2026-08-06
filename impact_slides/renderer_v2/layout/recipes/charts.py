@@ -329,7 +329,7 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
     their own ``type`` + ``steps_or_data`` + optional per-pane ``label`` /
     ``chart_config`` / ``line_overlay``. Each pane is built through the
     standard chart pipeline; pane ``label`` (else single series name) renders
-    as ``gl-chart-pane-title`` (#139), and a redundant single-series legend is
+    as ``gl-chart-pane-title`` (issue 139), and a redundant single-series legend is
     suppressed.
     """
     from ...charts import build_chart_html
