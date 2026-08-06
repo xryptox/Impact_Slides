@@ -1237,6 +1237,38 @@
   color: var(--navy);
 }
 
+/* F4+ Amex summary board: direct five-row statements match PDF p3.
+   :only-child leaves insight-bearing boards on flexible legacy packing. */
+.slide[data-layout='pill_comparison'][data-items='5'] .gl-main > .gl-pill-free:only-child {
+  flex: 0 0 624.64px;
+  align-self: flex-start;
+  width: 1564.911px;
+  margin: 61.492px 0 0 31.312px;
+  gap: 17.4445px;
+}
+.slide[data-layout='pill_comparison'][data-items='5'] .gl-main > .gl-pill-free:only-child > .gl-pill-labels {
+  flex: 0 0 624.8335px;
+}
+.slide[data-layout='pill_comparison'][data-items='5'] .gl-main > .gl-pill-free:only-child > .gl-pill-shell {
+  flex: 0 0 295.914px;
+}
+.slide[data-layout='pill_comparison'][data-items='5'] .gl-main > .gl-pill-free:only-child > .gl-pill-shell > .gl-pill-head,
+.slide[data-layout='pill_comparison'][data-items='5'] .gl-main > .gl-pill-free:only-child > .gl-pill-labels > .gl-pill-head-empty {
+  height: 115.2px;
+  min-height: 115.2px;
+  margin-bottom: 0;
+}
+.slide[data-layout='pill_comparison'][data-items='5'] .gl-main > .gl-pill-free:only-child > .gl-pill-shell > .gl-pill-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  line-height: 1;
+}
+.slide[data-layout='pill_comparison'][data-items='5'] .gl-main > .gl-pill-free:only-child > .gl-pill-shell-yoy > .gl-pill-head {
+  padding-inline: 76px;
+}
+
 /* ---------- chart | hero-KPI dual card (#75/F5) ---------- */
 .gl-areas-chart-hero {
   display: grid;

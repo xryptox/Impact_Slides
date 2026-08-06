@@ -51,6 +51,17 @@ def _write(tmp_path: Path, handoff: dict) -> Path:
     return p
 
 
+def _css_rule(html: str, selector: str) -> dict[str, str]:
+    match = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", html)
+    assert match, f"missing CSS rule: {selector}"
+    return {
+        name.strip(): value.strip()
+        for declaration in match.group(1).split(";")
+        if ":" in declaration
+        for name, value in [declaration.split(":", 1)]
+    }
+
+
 BAR_STEPS = [
     {"label": "A", "value": 10},
     {"label": "B", "value": 20},
@@ -2727,6 +2738,172 @@ class TestPillFreeRowDirection:
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert re.search(r"\.gl-pill-free\s*\{[^}]*flex-direction:\s*row", html)
+
+
+# ---------------------------------------------------------------------------
+# #140 — F4+ direct five-row PDF p3 summary board
+# ---------------------------------------------------------------------------
+
+
+class TestPillPdfSummaryBoard:
+    @staticmethod
+    def _slide(*, so_what="", key_stats=None):
+        return {
+            "slide_number": 1,
+            "layout_type": "pill_comparison",
+            "title": "Summary Financial Performance",
+            "content": {
+                "so_what": so_what,
+                "key_stats": key_stats or [],
+                "subtitle": (
+                    "$ in millions, except per share amounts; "
+                    "% Increase/(decrease) vs. Prior year"
+                ),
+            },
+            "visual_spec": {
+                "primary_visual": {
+                    "type": "pill_comparison",
+                    "steps_or_data": [
+                        ["Metric", "Q1'26", "Q1'25", "YoY% Inc/(Dec)"],
+                        ["Revenue", "$18,907", "$16,967", "11%"],
+                        ["FX-adjusted", "$17,210", "$15,600", "10%"],
+                        ["Net income", "$2,971", "$2,584", "15%"],
+                        ["Diluted EPS", "$4.28", "$3.64", "18%"],
+                        ["Shares", "686", "702", "(2%)"],
+                    ],
+                }
+            },
+            "speaker_notes": "Notes.",
+        }
+
+    def _deck(self, tmp_path, **kwargs):
+        path = _write(tmp_path, _handoff([self._slide(**kwargs)]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        return (out / "presentation.html").read_text(encoding="utf-8")
+
+    def test_pdf_recipe_is_scoped_to_an_only_child_five_row_board(self, tmp_path):
+        html = self._deck(tmp_path)
+        assert 'class="slide gl-density-hero gl-items-5"' in html
+        assert 'data-layout="pill_comparison" data-items="5"' in html
+        selector = (
+            ".slide[data-layout='pill_comparison'][data-items='5'] "
+            ".gl-main > .gl-pill-free:only-child"
+        )
+        recipe = _css_rule(html, selector)
+        assert recipe["flex"] == "0 0 624.64px"
+        assert recipe["align-self"] == "flex-start"
+        assert recipe["width"] == "1564.911px"
+        assert recipe["margin"] == "61.492px 0 0 31.312px"
+        assert recipe["gap"] == "17.4445px"
+        assert _css_rule(html, selector + " > .gl-pill-labels")["flex"] == "0 0 624.8335px"
+        assert _css_rule(html, selector + " > .gl-pill-shell")["flex"] == "0 0 295.914px"
+        assert _css_rule(html, selector + " > .gl-pill-shell-yoy > .gl-pill-head")[
+            "padding-inline"
+        ] == "76px"
+
+    def test_insight_bearing_five_row_board_stays_out_of_fixed_recipe(
+        self, tmp_path
+    ):
+        html = self._deck(tmp_path, so_what="Keep the insight visible.")
+        board = html.index('class="gl-pill gl-pill-free gl-card"')
+        insight = html.index('class="insight-strip so-what-callout"')
+        main_start = html.rfind('<div class="gl-main">', 0, board)
+        main_end = html.index('</div><div class="gl-footer">', board)
+        assert main_start < board < insight < main_end
+        assert ':only-child' in html
+
+    def test_inset_backed_five_row_board_stays_out_of_fixed_recipe(
+        self, tmp_path
+    ):
+        html = self._deck(tmp_path, key_stats=[{"label": "KPI", "value": "42"}])
+        assert '<div class="gl-areas-table-inset">' in html
+        assert (
+            '<div class="gl-inset-table">'
+            '<div class="gl-pill gl-pill-free gl-card">'
+        ) in html
+
+    def test_pdf_geometry_playwright(self, tmp_path):
+        pytest.importorskip("playwright.sync_api")
+        from playwright.sync_api import sync_playwright
+
+        path = _write(tmp_path, _handoff([self._slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1920, "height": 1080})
+            page.goto(
+                (out / "presentation.html").resolve().as_uri(),
+                wait_until="networkidle",
+            )
+            page.keyboard.press("ArrowRight")
+            measured = page.evaluate(
+                """() => {
+                  const r = el => {
+                    const x = el.getBoundingClientRect();
+                    return [x.x, x.y, x.width, x.height];
+                  };
+                  const board = document.querySelector(
+                    '.slide.active .gl-main > .gl-pill-free:only-child'
+                  );
+                  const shell = board.querySelector('.gl-pill-shell');
+                  const cap = shell.querySelector('.gl-pill-head');
+                  const yoy = board.querySelector('.gl-pill-shell-yoy .gl-pill-head');
+                  return {
+                    board: r(board), shell: r(shell), cap: r(cap),
+                    yoy_height: yoy.getBoundingClientRect().height,
+                    font: getComputedStyle(cap).fontSize,
+                  };
+                }"""
+            )
+            browser.close()
+        assert measured["board"] == pytest.approx(
+            [127.312, 262.68, 1564.911, 624.64], abs=0.1
+        )
+        assert measured["shell"][:3] == pytest.approx(
+            [769.592, 262.68, 295.914], abs=0.1
+        )
+        assert measured["cap"][3] == pytest.approx(115.2, abs=0.1)
+        assert measured["yoy_height"] == pytest.approx(115.2, abs=0.1)
+        assert measured["font"] == "28px"
+
+    def test_pdf_recipe_removal_breaks_browser_geometry(self, tmp_path, monkeypatch):
+        from impact_slides.renderer_v2 import shell
+
+        original = shell.load_css
+        selector = (
+            ".slide[data-layout='pill_comparison'][data-items='5'] "
+            ".gl-main > .gl-pill-free:only-child {"
+        )
+        monkeypatch.setattr(
+            shell,
+            "load_css",
+            lambda **kwargs: original(**kwargs).replace(
+                selector,
+                selector.replace("data-items='5", "data-items='6"),
+            ),
+        )
+        path = _write(tmp_path, _handoff([self._slide()]))
+        out = tmp_path / "out"
+        render_deck(path, out, strict=False)
+        pytest.importorskip("playwright.sync_api")
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1920, "height": 1080})
+            page.goto(
+                (out / "presentation.html").resolve().as_uri(),
+                wait_until="networkidle",
+            )
+            page.keyboard.press("ArrowRight")
+            height = page.eval_on_selector(
+                '.slide.active .gl-pill-free',
+                "element => element.getBoundingClientRect().height",
+            )
+            browser.close()
+        assert height != pytest.approx(624.64, abs=0.1)
 
 
 # ---------------------------------------------------------------------------
