@@ -1,0 +1,409 @@
+{
+  "ok": false,
+  "pdf_pages": 44,
+  "html_slides": 44,
+  "mismatches": [
+    {
+      "slide": 29,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    },
+    {
+      "slide": 30,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    },
+    {
+      "slide": 38,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    },
+    {
+      "slide": 39,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    },
+    {
+      "slide": 40,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    },
+    {
+      "slide": 41,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    },
+    {
+      "slide": 42,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    },
+    {
+      "slide": 43,
+      "handoff": "split_text_visual",
+      "html": "freeform_grid",
+      "err": "layout mismatch"
+    }
+  ],
+  "rows": [
+    {
+      "slide_number": 1,
+      "title": "American Express Earnings Conference Call",
+      "expected_layout": "brand_cover",
+      "html_layout": "brand_cover",
+      "pdf_page_index": 0,
+      "pdf_physical_page": 1
+    },
+    {
+      "slide_number": 2,
+      "title": "Business Highlights",
+      "expected_layout": "ir_bullet_sheet",
+      "html_layout": "ir_bullet_sheet",
+      "pdf_page_index": 1,
+      "pdf_physical_page": 2
+    },
+    {
+      "slide_number": 3,
+      "title": "Summary Financial Performance",
+      "expected_layout": "pill_comparison",
+      "html_layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3
+    },
+    {
+      "slide_number": 4,
+      "title": "Total Billed Business",
+      "expected_layout": "line_chart",
+      "html_layout": "line_chart",
+      "pdf_page_index": 3,
+      "pdf_physical_page": 4
+    },
+    {
+      "slide_number": 5,
+      "title": "U.S. Consumer Services Billed Business",
+      "expected_layout": "line_chart",
+      "html_layout": "line_chart",
+      "pdf_page_index": 4,
+      "pdf_physical_page": 5
+    },
+    {
+      "slide_number": 6,
+      "title": "U.S. Consumer Platinum Performance",
+      "expected_layout": "multi_panel",
+      "html_layout": "multi_panel",
+      "pdf_page_index": 5,
+      "pdf_physical_page": 6
+    },
+    {
+      "slide_number": 7,
+      "title": "U.S. Consumer: Membership Model Engagement",
+      "expected_layout": "three_column_comparison",
+      "html_layout": "three_column_comparison",
+      "pdf_page_index": 6,
+      "pdf_physical_page": 7
+    },
+    {
+      "slide_number": 8,
+      "title": "Membership Model Engagement: Proprietary Lodging Assets",
+      "expected_layout": "metric_row_with_breakdown",
+      "html_layout": "metric_row_with_breakdown",
+      "pdf_page_index": 7,
+      "pdf_physical_page": 8
+    },
+    {
+      "slide_number": 9,
+      "title": "Commercial Services Billed Business",
+      "expected_layout": "line_chart",
+      "html_layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9
+    },
+    {
+      "slide_number": 10,
+      "title": "International Card Services Billed Business",
+      "expected_layout": "line_chart",
+      "html_layout": "line_chart",
+      "pdf_page_index": 9,
+      "pdf_physical_page": 10
+    },
+    {
+      "slide_number": 11,
+      "title": "Transaction Growth",
+      "expected_layout": "line_chart",
+      "html_layout": "line_chart",
+      "pdf_page_index": 10,
+      "pdf_physical_page": 11
+    },
+    {
+      "slide_number": 12,
+      "title": "New Acquisitions",
+      "expected_layout": "chart_hero_dual",
+      "html_layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12
+    },
+    {
+      "slide_number": 13,
+      "title": "Total Balances and Billed Business",
+      "expected_layout": "line_chart",
+      "html_layout": "line_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13
+    },
+    {
+      "slide_number": 14,
+      "title": "Credit Metrics",
+      "expected_layout": "dual_chart",
+      "html_layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14
+    },
+    {
+      "slide_number": 15,
+      "title": "Total Provision",
+      "expected_layout": "stacked_bar_chart",
+      "html_layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15
+    },
+    {
+      "slide_number": 16,
+      "title": "Revenue Performance",
+      "expected_layout": "data_table",
+      "html_layout": "data_table",
+      "pdf_page_index": 15,
+      "pdf_physical_page": 16
+    },
+    {
+      "slide_number": 17,
+      "title": "Net Card Fees",
+      "expected_layout": "dual_chart",
+      "html_layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17
+    },
+    {
+      "slide_number": 18,
+      "title": "Premium Lending \u2014 Net Interest Income",
+      "expected_layout": "combo_chart",
+      "html_layout": "combo_chart",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18
+    },
+    {
+      "slide_number": 19,
+      "title": "Total Revenues Net of Interest Expense",
+      "expected_layout": "line_chart",
+      "html_layout": "line_chart",
+      "pdf_page_index": 18,
+      "pdf_physical_page": 19
+    },
+    {
+      "slide_number": 20,
+      "title": "Expense Performance",
+      "expected_layout": "pill_comparison",
+      "html_layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20
+    },
+    {
+      "slide_number": 21,
+      "title": "Capital",
+      "expected_layout": "multi_panel",
+      "html_layout": "multi_panel",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21
+    },
+    {
+      "slide_number": 22,
+      "title": "2026 Guidance",
+      "expected_layout": "guidance_statement_card",
+      "html_layout": "guidance_statement_card",
+      "pdf_page_index": 21,
+      "pdf_physical_page": 22
+    },
+    {
+      "slide_number": 23,
+      "title": "Appendix",
+      "expected_layout": "brand_divider",
+      "html_layout": "brand_divider",
+      "pdf_page_index": 22,
+      "pdf_physical_page": 23
+    },
+    {
+      "slide_number": 24,
+      "title": "Q1'26 Network Volumes Growth by Customer Type",
+      "expected_layout": "data_table",
+      "html_layout": "data_table",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24
+    },
+    {
+      "slide_number": 25,
+      "title": "FX Impact on Billed Business",
+      "expected_layout": "data_table",
+      "html_layout": "data_table",
+      "pdf_page_index": 24,
+      "pdf_physical_page": 25
+    },
+    {
+      "slide_number": 26,
+      "title": "Travel & Entertainment Billed Business",
+      "expected_layout": "data_table",
+      "html_layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26
+    },
+    {
+      "slide_number": 27,
+      "title": "Credit Reserve Macroeconomic Scenarios: Select Variables",
+      "expected_layout": "dual_chart",
+      "html_layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27
+    },
+    {
+      "slide_number": 28,
+      "title": "Funding and Deposits",
+      "expected_layout": "multi_panel",
+      "html_layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28
+    },
+    {
+      "slide_number": 29,
+      "title": "Additional Commentary \u2014 Variance Analysis",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 28,
+      "pdf_physical_page": 29
+    },
+    {
+      "slide_number": 30,
+      "title": "Additional Commentary \u2014 Variance Analysis (cont.)",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 29,
+      "pdf_physical_page": 30
+    },
+    {
+      "slide_number": 31,
+      "title": "Annex 1 (1 of 2) Billed Business and Processed Volumes \u2014 Reported & FX-Adjusted",
+      "expected_layout": "annex_table",
+      "html_layout": "annex_table",
+      "pdf_page_index": 30,
+      "pdf_physical_page": 31
+    },
+    {
+      "slide_number": 32,
+      "title": "Annex 1 (2 of 2) Billed Business \u2014 Reported & FX-Adjusted",
+      "expected_layout": "annex_table",
+      "html_layout": "annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32
+    },
+    {
+      "slide_number": 33,
+      "title": "Annex 2 Total Balances \u2014 Reported & FX-Adjusted",
+      "expected_layout": "annex_table",
+      "html_layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33
+    },
+    {
+      "slide_number": 34,
+      "title": "Annex 3 Revenue \u2014 Reported & FX-Adjusted",
+      "expected_layout": "annex_table",
+      "html_layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34
+    },
+    {
+      "slide_number": 35,
+      "title": "Annex 4 Net Card Fees \u2014 Reported & FX-Adjusted",
+      "expected_layout": "annex_table",
+      "html_layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35
+    },
+    {
+      "slide_number": 36,
+      "title": "Annex 5 Net Interest Income \u2014 Reported & FX-Adjusted",
+      "expected_layout": "annex_table",
+      "html_layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36
+    },
+    {
+      "slide_number": 37,
+      "title": "Annex 6 Revenues Net of Interest Expense \u2014 Reported & FX-Adjusted",
+      "expected_layout": "annex_table",
+      "html_layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37
+    },
+    {
+      "slide_number": 38,
+      "title": "Cautionary Note Regarding Forward-Looking Statements",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 37,
+      "pdf_physical_page": 38
+    },
+    {
+      "slide_number": 39,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 38,
+      "pdf_physical_page": 39
+    },
+    {
+      "slide_number": 40,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 39,
+      "pdf_physical_page": 40
+    },
+    {
+      "slide_number": 41,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 40,
+      "pdf_physical_page": 41
+    },
+    {
+      "slide_number": 42,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 41,
+      "pdf_physical_page": 42
+    },
+    {
+      "slide_number": 43,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "expected_layout": "split_text_visual",
+      "html_layout": "freeform_grid",
+      "pdf_page_index": 42,
+      "pdf_physical_page": 43
+    },
+    {
+      "slide_number": 44,
+      "title": "American Express",
+      "expected_layout": "brand_divider",
+      "html_layout": "brand_divider",
+      "pdf_page_index": 43,
+      "pdf_physical_page": 44
+    }
+  ]
+}

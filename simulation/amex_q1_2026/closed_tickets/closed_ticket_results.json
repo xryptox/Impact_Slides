@@ -1,0 +1,3171 @@
+{
+  "contract": "#137 activate_slide + painted_datalabel_lines",
+  "html": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html",
+  "run_meta_warnings": [],
+  "n_checks": 78,
+  "n_pass": 78,
+  "n_fail": 0,
+  "rows": [
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined skin present",
+      "measured": {
+        "hasOutlined": true,
+        "nCells": 5
+      },
+      "expected": {
+        "hasOutlined": true,
+        "nCells": 5
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "runtime alignment marker",
+      "measured": {
+        "alignedMarker": true,
+        "runtimeAligned": true,
+        "classList": [
+          "chart-support-outlined",
+          "chart-table-aligned",
+          "chart-svg-wrap",
+          "chart-split",
+          "chart-with-stats",
+          "chart-align-table"
+        ]
+      },
+      "expected": "aligned marker emitted when plot-align engages",
+      "delta_px": null,
+      "pass": true,
+      "note": "marker absence is residual if list-shaped primary blocks extract"
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[0] cx vs bar[0] cx",
+      "measured": {
+        "cell_cx": 640.859375,
+        "bar_cx": 640.84375
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.016,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[1] cx vs bar[1] cx",
+      "measured": {
+        "cell_cx": 762.90625,
+        "bar_cx": 762.84375
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.062,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[2] cx vs bar[2] cx",
+      "measured": {
+        "cell_cx": 884.953125,
+        "bar_cx": 884.84375
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.109,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[3] cx vs bar[3] cx",
+      "measured": {
+        "cell_cx": 1007,
+        "bar_cx": 1006.84375
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.156,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[4] cx vs bar[4] cx",
+      "measured": {
+        "cell_cx": 1129.046875,
+        "bar_cx": 1128.84375
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.203,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "max |cell_cx - bar_cx| over 5",
+      "measured": {
+        "max_abs_delta": 0.203,
+        "deltas": [
+          0.016,
+          0.062,
+          0.109,
+          0.156,
+          0.203
+        ]
+      },
+      "expected": "<= 12",
+      "delta_px": 0.203,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "exactly one side_callout",
+      "measured": {
+        "nCallouts": 1,
+        "lines": [
+          "92% FDIC",
+          "insured at",
+          "Q1'26"
+        ]
+      },
+      "expected": 1,
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "callout unboxed three-line",
+      "measured": {
+        "lines": [
+          "92% FDIC",
+          "insured at",
+          "Q1'26"
+        ],
+        "borderW": 0.0,
+        "unboxed": true
+      },
+      "expected": {
+        "lines>=3": true,
+        "unboxed": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "callout top near 49.8px",
+      "measured": {
+        "top_stage": 251.984375,
+        "top_local": 50.796875,
+        "d_stage": 202.184375,
+        "d_local": 0.9968750000000028
+      },
+      "expected": "abs(top-49.8)<=12 (stage or tile-local)",
+      "delta_px": 0.997,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "no callout/name/plot overlap",
+      "measured": {
+        "overlaps": []
+      },
+      "expected": [],
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "no duplicate FDIC badge chrome",
+      "measured": {
+        "fdicNodes": 0,
+        "nonCalloutFdic": [],
+        "callouts": [
+          "92% FDIC insured at Q1'26"
+        ]
+      },
+      "expected": "callout only (badge suppressed)",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "independent $151 / $157 stack totals",
+      "measured": {
+        "has_151": true,
+        "has_157": true,
+        "sample": "$210B \u00b7 $219BFunding Mix{\"type\": \"bar\", \"data\": {\"labels\": [\"Q4'25\", \"Q1'26\"], \"datasets\": [{\"label\": \"Deposits\", \"data\" $210B \u00b7 $219B $151B \u00b7 $157B $210B \u00b7 $219B\nFunding Mix\n92% FDIC\ninsured at\nQ1'26"
+      },
+      "expected": {
+        "has_151": true,
+        "has_157": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "exterior segment names present",
+      "measured": {
+        "n": 3
+      },
+      "expected": ">=1",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "two HTML pane titles (~40px)",
+      "measured": {
+        "nTitles": 2,
+        "titles": [
+          {
+            "text": "Net Card Fees ($B)",
+            "fontSize": 40,
+            "fontWeight": "700",
+            "color": "rgb(0, 23, 90)"
+          },
+          {
+            "text": "YoY Growth %",
+            "fontSize": 40,
+            "fontWeight": "700",
+            "color": "rgb(0, 23, 90)"
+          }
+        ]
+      },
+      "expected": {
+        "count": 2,
+        "fontSize": 40,
+        "weight": 700
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "no duplicate SVG title",
+      "measured": {
+        "svgTitles": [
+          "$0",
+          "$1",
+          "$2",
+          "$3",
+          "Q1'19",
+          "Q1'20",
+          "Q1'21",
+          "Q1'22",
+          "Q1'23",
+          "Q1'24",
+          "Q1'25",
+          "Q1'26",
+          "$0.9",
+          "$1.1",
+          "$1.3",
+          "$1.4",
+          "$1.7",
+          "$2",
+          "$2.3",
+          "$2.8"
+        ],
+        "dup": []
+      },
+      "expected": [],
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane0 y_tick_font_size 24 bold",
+      "measured": {
+        "yTickSize": 24,
+        "yTickWeight": "bold"
+      },
+      "expected": {
+        "size": 24,
+        "weight": "bold/700"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane0 painted datalabel font ~28",
+      "measured": {
+        "lines": [
+          "$2.8",
+          "$2.3",
+          "$2",
+          "$1.7",
+          "$1.4",
+          "$1.3",
+          "$1.1",
+          "$0.9"
+        ],
+        "sizes": [
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28
+        ],
+        "nLabels": 8
+      },
+      "expected": "size 28 where painted",
+      "delta_px": null,
+      "pass": true,
+      "note": "empty sizes = suppression or missing paint"
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane0 x-tick rotation/skip (record)",
+      "measured": {
+        "minRotation": 0,
+        "autoSkip": true
+      },
+      "expected": "recorded",
+      "delta_px": null,
+      "pass": true,
+      "note": "native state observation"
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane0 no Chart title plugin fallback",
+      "measured": {
+        "titleDisplay": false,
+        "titleText": null
+      },
+      "expected": false,
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane1 y_tick_font_size 24 bold",
+      "measured": {
+        "yTickSize": 24,
+        "yTickWeight": "bold"
+      },
+      "expected": {
+        "size": 24,
+        "weight": "bold/700"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane1 painted datalabel font ~28",
+      "measured": {
+        "lines": [
+          "16%",
+          "16%",
+          "17%",
+          "20%",
+          "20%",
+          "19%",
+          "18%",
+          "16%",
+          "16%"
+        ],
+        "sizes": [
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28
+        ],
+        "nLabels": 9
+      },
+      "expected": "size 28 where painted",
+      "delta_px": null,
+      "pass": true,
+      "note": "empty sizes = suppression or missing paint"
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane1 x-tick rotation/skip (record)",
+      "measured": {
+        "minRotation": 0,
+        "autoSkip": true
+      },
+      "expected": "recorded",
+      "delta_px": null,
+      "pass": true,
+      "note": "native state observation"
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "pane1 no Chart title plugin fallback",
+      "measured": {
+        "titleDisplay": false,
+        "titleText": null
+      },
+      "expected": false,
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "unsupported typography warnings",
+      "measured": [],
+      "expected": "none (or recorded)",
+      "delta_px": null,
+      "pass": true,
+      "note": "presence recorded; not auto-fail unless blocks paint"
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.x vs PDF target",
+      "measured": 127.296875,
+      "expected": 127.312,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.y vs PDF target",
+      "measured": 262.671875,
+      "expected": 262.68,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.w vs PDF target",
+      "measured": 1564.90625,
+      "expected": 1564.911,
+      "delta_px": -0.005,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.h vs PDF target",
+      "measured": 624.625,
+      "expected": 624.64,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "first_shell.x vs PDF target",
+      "measured": 769.5625,
+      "expected": 769.592,
+      "delta_px": -0.029,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "first_shell.y vs PDF target",
+      "measured": 262.671875,
+      "expected": 262.68,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "first_shell.w vs PDF target",
+      "measured": 295.90625,
+      "expected": 295.914,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "cap height vs 115.2",
+      "measured": 115.1875,
+      "expected": 115.2,
+      "delta_px": -0.013,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "five body rows present",
+      "measured": 5,
+      "expected": 5,
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "body row centres (record)",
+      "measured": {
+        "cys": [
+          428.796875,
+          530.6796875,
+          632.5703125,
+          734.4609375,
+          836.3515625
+        ],
+        "gaps": [
+          101.8828125,
+          101.890625,
+          101.890625,
+          101.890625
+        ]
+      },
+      "expected": "5 centres",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "YoY cap two-line ~28px",
+      "measured": {
+        "text": "YoY% Inc/(Dec)",
+        "fontSize": 28,
+        "h": 115.1875,
+        "lineHeight": "28px"
+      },
+      "expected": {
+        "fontSize": 28,
+        "two_line": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "no slide overflow",
+      "measured": {
+        "scrollW": 1920,
+        "clientW": 1920,
+        "scrollH": 1080,
+        "clientH": 1080
+      },
+      "expected": "scroll<=client",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "check": "slide20 inset pill board: does NOT match fixed-board selector",
+      "measured": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0,
+        "hasBoard": false,
+        "boardClass": null,
+        "insets": [
+          "gl-inset card"
+        ],
+        "layout": "pill_comparison"
+      },
+      "expected": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "check": "slide20 retains inset/legacy pill geometry path",
+      "measured": {
+        "hasBoard": false,
+        "boardClass": null,
+        "insets": [
+          "gl-inset card"
+        ]
+      },
+      "expected": "inset-backed or non-fixed board",
+      "delta_px": null,
+      "pass": true,
+      "note": "presence of inset or non-fixed class is legacy path"
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "data_table",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "slide24 data-table: does NOT match fixed-board selector",
+      "measured": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0,
+        "hasBoard": false,
+        "boardClass": null,
+        "insets": [
+          "gl-inset card",
+          "gl-inset card"
+        ],
+        "layout": "data_table"
+      },
+      "expected": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "data_table",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "slide24 has data-table insets (legacy)",
+      "measured": {
+        "insets": [
+          "gl-inset card",
+          "gl-inset card"
+        ],
+        "n": 2
+      },
+      "expected": ">=2 insets OR table layout without fixed pill board",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined skin present",
+      "measured": {
+        "hasOutlined": true,
+        "nCells": 5
+      },
+      "expected": {
+        "hasOutlined": true,
+        "nCells": 5
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "runtime alignment marker",
+      "measured": {
+        "alignedMarker": true,
+        "runtimeAligned": true,
+        "classList": [
+          "chart-support-outlined",
+          "chart-table-aligned",
+          "chart-svg-wrap",
+          "chart-split",
+          "chart-with-stats",
+          "chart-align-table"
+        ]
+      },
+      "expected": "aligned marker emitted when plot-align engages",
+      "delta_px": null,
+      "pass": true,
+      "note": "marker absence is residual if list-shaped primary blocks extract"
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[0] cx vs bar[0] cx",
+      "measured": {
+        "cell_cx": 706.578125,
+        "bar_cx": 706.5625
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.016,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[1] cx vs bar[1] cx",
+      "measured": {
+        "cell_cx": 841.734375,
+        "bar_cx": 841.7291666666667
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.005,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[2] cx vs bar[2] cx",
+      "measured": {
+        "cell_cx": 976.90625,
+        "bar_cx": 976.8958333333334
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.01,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[3] cx vs bar[3] cx",
+      "measured": {
+        "cell_cx": 1112.0625,
+        "bar_cx": 1112.0625
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.0,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined cell[4] cx vs bar[4] cx",
+      "measured": {
+        "cell_cx": 1247.234375,
+        "bar_cx": 1247.2291666666665
+      },
+      "expected": "abs(delta) <= 12",
+      "delta_px": 0.005,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "max |cell_cx - bar_cx| over 5",
+      "measured": {
+        "max_abs_delta": 0.016,
+        "deltas": [
+          0.016,
+          0.005,
+          0.01,
+          0.0,
+          0.005
+        ]
+      },
+      "expected": "<= 12",
+      "delta_px": 0.016,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "exactly one side_callout",
+      "measured": {
+        "nCallouts": 1,
+        "lines": [
+          "92% FDIC",
+          "insured at",
+          "Q1'26"
+        ]
+      },
+      "expected": 1,
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "callout unboxed three-line",
+      "measured": {
+        "lines": [
+          "92% FDIC",
+          "insured at",
+          "Q1'26"
+        ],
+        "borderW": 0.0,
+        "unboxed": true
+      },
+      "expected": {
+        "lines>=3": true,
+        "unboxed": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "callout top near 49.8px",
+      "measured": {
+        "top_stage": 251.984375,
+        "top_local": 50.796875,
+        "d_stage": 202.184375,
+        "d_local": 0.9968750000000028
+      },
+      "expected": "abs(top-49.8)<=12 (stage or tile-local)",
+      "delta_px": 0.997,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "no callout/name/plot overlap",
+      "measured": {
+        "overlaps": []
+      },
+      "expected": [],
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "no duplicate FDIC badge chrome",
+      "measured": {
+        "fdicNodes": 0,
+        "nonCalloutFdic": [],
+        "callouts": [
+          "92% FDIC insured at Q1'26"
+        ]
+      },
+      "expected": "callout only (badge suppressed)",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "independent $151 / $157 stack totals",
+      "measured": {
+        "has_151": true,
+        "has_157": true,
+        "sample": "$210B \u00b7 $219BFunding Mix{\"type\": \"bar\", \"data\": {\"labels\": [\"Q4'25\", \"Q1'26\"], \"datasets\": [{\"label\": \"Deposits\", \"data\" $210B \u00b7 $219B $151B \u00b7 $157B $210B \u00b7 $219B\nFunding Mix\n0%\n25%\n50%\n75%\n100%\nDepos"
+      },
+      "expected": {
+        "has_151": true,
+        "has_157": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "exterior segment names present",
+      "measured": {
+        "n": 3
+      },
+      "expected": ">=1",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "svg",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "two HTML pane titles (~40px)",
+      "measured": {
+        "nTitles": 2,
+        "titles": [
+          {
+            "text": "Net Card Fees ($B)",
+            "fontSize": 40,
+            "fontWeight": "700",
+            "color": "rgb(0, 23, 90)"
+          },
+          {
+            "text": "YoY Growth %",
+            "fontSize": 40,
+            "fontWeight": "700",
+            "color": "rgb(0, 23, 90)"
+          }
+        ]
+      },
+      "expected": {
+        "count": 2,
+        "fontSize": 40,
+        "weight": 700
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "svg",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "no duplicate SVG title",
+      "measured": {
+        "svgTitles": [
+          "$0",
+          "$1",
+          "$2",
+          "$3",
+          "Q1'19",
+          "Q1'20",
+          "Q1'21",
+          "Q1'22",
+          "Q1'23",
+          "Q1'24",
+          "Q1'25",
+          "Q1'26",
+          "$0.9",
+          "$1.1",
+          "$1.3",
+          "$1.4",
+          "$1.7",
+          "$2",
+          "$2.3",
+          "$2.8"
+        ],
+        "dup": []
+      },
+      "expected": [],
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "svg",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "JS-off HTML pane titles retained",
+      "measured": [
+        {
+          "text": "Net Card Fees ($B)",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "text": "YoY Growth %",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "expected": 2,
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "svg",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "JS-off SVG text audit (y ticks / labels)",
+      "measured": [
+        {
+          "n": 0,
+          "sample": []
+        },
+        {
+          "n": 0,
+          "sample": []
+        }
+      ],
+      "expected": "record font-size attrs",
+      "delta_px": null,
+      "pass": true,
+      "note": "qualitative SVG typography record"
+    },
+    {
+      "ticket": "#139",
+      "mode": "svg",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "unsupported typography warnings",
+      "measured": [],
+      "expected": "none (or recorded)",
+      "delta_px": null,
+      "pass": true,
+      "note": "presence recorded; not auto-fail unless blocks paint"
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.x vs PDF target",
+      "measured": 127.296875,
+      "expected": 127.312,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.y vs PDF target",
+      "measured": 262.671875,
+      "expected": 262.68,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.w vs PDF target",
+      "measured": 1564.90625,
+      "expected": 1564.911,
+      "delta_px": -0.005,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.h vs PDF target",
+      "measured": 624.625,
+      "expected": 624.64,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "first_shell.x vs PDF target",
+      "measured": 769.5625,
+      "expected": 769.592,
+      "delta_px": -0.029,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "first_shell.y vs PDF target",
+      "measured": 262.671875,
+      "expected": 262.68,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "first_shell.w vs PDF target",
+      "measured": 295.90625,
+      "expected": 295.914,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "cap height vs 115.2",
+      "measured": 115.1875,
+      "expected": 115.2,
+      "delta_px": -0.013,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "five body rows present",
+      "measured": 5,
+      "expected": 5,
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "body row centres (record)",
+      "measured": {
+        "cys": [
+          428.796875,
+          530.6796875,
+          632.5703125,
+          734.4609375,
+          836.3515625
+        ],
+        "gaps": [
+          101.8828125,
+          101.890625,
+          101.890625,
+          101.890625
+        ]
+      },
+      "expected": "5 centres",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "YoY cap two-line ~28px",
+      "measured": {
+        "text": "YoY% Inc/(Dec)",
+        "fontSize": 28,
+        "h": 115.1875,
+        "lineHeight": "28px"
+      },
+      "expected": {
+        "fontSize": 28,
+        "two_line": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "no slide overflow",
+      "measured": {
+        "scrollW": 1920,
+        "clientW": 1920,
+        "scrollH": 1080,
+        "clientH": 1080
+      },
+      "expected": "scroll<=client",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "check": "slide20 inset pill board: does NOT match fixed-board selector",
+      "measured": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0,
+        "hasBoard": false,
+        "boardClass": null,
+        "insets": [
+          "gl-inset card"
+        ],
+        "layout": "pill_comparison"
+      },
+      "expected": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "check": "slide20 retains inset/legacy pill geometry path",
+      "measured": {
+        "hasBoard": false,
+        "boardClass": null,
+        "insets": [
+          "gl-inset card"
+        ]
+      },
+      "expected": "inset-backed or non-fixed board",
+      "delta_px": null,
+      "pass": true,
+      "note": "presence of inset or non-fixed class is legacy path"
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 24,
+      "layout": "data_table",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "slide24 data-table: does NOT match fixed-board selector",
+      "measured": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0,
+        "hasBoard": false,
+        "boardClass": null,
+        "insets": [
+          "gl-inset card",
+          "gl-inset card"
+        ],
+        "layout": "data_table"
+      },
+      "expected": {
+        "fixedMatch": false,
+        "s3SelectorHits": 0
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 24,
+      "layout": "data_table",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "slide24 has data-table insets (legacy)",
+      "measured": {
+        "insets": [
+          "gl-inset card",
+          "gl-inset card"
+        ],
+        "n": 2
+      },
+      "expected": ">=2 insets OR table layout without fixed pill board",
+      "delta_px": null,
+      "pass": true,
+      "note": ""
+    }
+  ],
+  "deck_audit_139_chartjs": [
+    {
+      "slide_number": 1,
+      "layout": "brand_cover",
+      "pdf_page_index": 0,
+      "pdf_physical_page": 1,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 2,
+      "layout": "ir_bullet_sheet",
+      "pdf_page_index": 1,
+      "pdf_physical_page": 2,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 4,
+      "layout": "line_chart",
+      "pdf_page_index": 3,
+      "pdf_physical_page": 4,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 10
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 5,
+      "layout": "line_chart",
+      "pdf_page_index": 4,
+      "pdf_physical_page": 5,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 5
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 6,
+      "layout": "multi_panel",
+      "pdf_page_index": 5,
+      "pdf_physical_page": 6,
+      "mode": "chartjs",
+      "pane_title_state": [
+        {
+          "text": "Spend Growth is Accelerating",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        },
+        {
+          "i": 1,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        },
+        {
+          "i": 1,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 5
+        },
+        {
+          "i": 1,
+          "nPainted": 6
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 7,
+      "layout": "three_column_comparison",
+      "pdf_page_index": 6,
+      "pdf_physical_page": 7,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 8,
+      "layout": "metric_row_with_breakdown",
+      "pdf_page_index": 7,
+      "pdf_physical_page": 8,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 9,
+      "layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 5
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 10,
+      "layout": "line_chart",
+      "pdf_page_index": 9,
+      "pdf_physical_page": 10,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 10
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 11,
+      "layout": "line_chart",
+      "pdf_page_index": 10,
+      "pdf_physical_page": 11,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 5
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 30
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 13,
+      "layout": "line_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 10
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14,
+      "mode": "chartjs",
+      "pane_title_state": [
+        {
+          "text": "Net write-off rate",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "text": "30+ days past due",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        },
+        {
+          "i": 1,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        },
+        {
+          "i": 1,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 5
+        },
+        {
+          "i": 1,
+          "nPainted": 5
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 30
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 16,
+      "layout": "data_table",
+      "pdf_page_index": 15,
+      "pdf_physical_page": 16,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "mode": "chartjs",
+      "pane_title_state": [
+        {
+          "text": "Net Card Fees ($B)",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "text": "YoY Growth %",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        },
+        {
+          "i": 1,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 24
+        },
+        {
+          "i": 1,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 24
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 8
+        },
+        {
+          "i": 1,
+          "nPainted": 9
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 18,
+      "layout": "combo_chart",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 10
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 19,
+      "layout": "line_chart",
+      "pdf_page_index": 18,
+      "pdf_physical_page": 19,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 10
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 21,
+      "layout": "multi_panel",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "mode": "chartjs",
+      "pane_title_state": [
+        {
+          "text": "Capital composition",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 12
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 22,
+      "layout": "guidance_statement_card",
+      "pdf_page_index": 21,
+      "pdf_physical_page": 22,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 23,
+      "layout": "brand_divider",
+      "pdf_page_index": 22,
+      "pdf_physical_page": 23,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 24,
+      "layout": "data_table",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 25,
+      "layout": "data_table",
+      "pdf_page_index": 24,
+      "pdf_physical_page": 25,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 26,
+      "layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "mode": "chartjs",
+      "pane_title_state": "none",
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        },
+        {
+          "i": 1,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        },
+        {
+          "i": 1,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 16
+        },
+        {
+          "i": 1,
+          "nPainted": 16
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "mode": "chartjs",
+      "pane_title_state": [
+        {
+          "text": "Funding Mix",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "text": "Deposit Programs",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": [
+        {
+          "i": 0,
+          "titlePlugin": false,
+          "text": null
+        },
+        {
+          "i": 1,
+          "titlePlugin": false,
+          "text": null
+        }
+      ],
+      "tick_rotation_skip": [
+        {
+          "i": 0,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        },
+        {
+          "i": 1,
+          "xRot": 0,
+          "xSkip": true,
+          "yTick": 13
+        }
+      ],
+      "datalabel_suppression": [
+        {
+          "i": 0,
+          "nPainted": 12
+        },
+        {
+          "i": 1,
+          "nPainted": 16
+        }
+      ],
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 29,
+      "layout": "freeform_grid",
+      "pdf_page_index": 28,
+      "pdf_physical_page": 29,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 30,
+      "layout": "freeform_grid",
+      "pdf_page_index": 29,
+      "pdf_physical_page": 30,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 31,
+      "layout": "annex_table",
+      "pdf_page_index": 30,
+      "pdf_physical_page": 31,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 32,
+      "layout": "annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 38,
+      "layout": "freeform_grid",
+      "pdf_page_index": 37,
+      "pdf_physical_page": 38,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 39,
+      "layout": "freeform_grid",
+      "pdf_page_index": 38,
+      "pdf_physical_page": 39,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 40,
+      "layout": "freeform_grid",
+      "pdf_page_index": 39,
+      "pdf_physical_page": 40,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 41,
+      "layout": "freeform_grid",
+      "pdf_page_index": 40,
+      "pdf_physical_page": 41,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 42,
+      "layout": "freeform_grid",
+      "pdf_page_index": 41,
+      "pdf_physical_page": 42,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 43,
+      "layout": "freeform_grid",
+      "pdf_page_index": 42,
+      "pdf_physical_page": 43,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 44,
+      "layout": "brand_divider",
+      "pdf_page_index": 43,
+      "pdf_physical_page": 44,
+      "mode": "chartjs",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    }
+  ],
+  "deck_audit_139_svg": [
+    {
+      "slide_number": 1,
+      "layout": "brand_cover",
+      "pdf_page_index": 0,
+      "pdf_physical_page": 1,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 2,
+      "layout": "ir_bullet_sheet",
+      "pdf_page_index": 1,
+      "pdf_physical_page": 2,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 4,
+      "layout": "line_chart",
+      "pdf_page_index": 3,
+      "pdf_physical_page": 4,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 5,
+      "layout": "line_chart",
+      "pdf_page_index": 4,
+      "pdf_physical_page": 5,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 6,
+      "layout": "multi_panel",
+      "pdf_page_index": 5,
+      "pdf_physical_page": 6,
+      "mode": "svg",
+      "pane_title_state": [
+        {
+          "text": "Spend Growth is Accelerating",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 7,
+      "layout": "three_column_comparison",
+      "pdf_page_index": 6,
+      "pdf_physical_page": 7,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 8,
+      "layout": "metric_row_with_breakdown",
+      "pdf_page_index": 7,
+      "pdf_physical_page": 8,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 9,
+      "layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 10,
+      "layout": "line_chart",
+      "pdf_page_index": 9,
+      "pdf_physical_page": 10,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 11,
+      "layout": "line_chart",
+      "pdf_page_index": 10,
+      "pdf_physical_page": 11,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 13,
+      "layout": "line_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14,
+      "mode": "svg",
+      "pane_title_state": [
+        {
+          "text": "Net write-off rate",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "text": "30+ days past due",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 16,
+      "layout": "data_table",
+      "pdf_page_index": 15,
+      "pdf_physical_page": 16,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "mode": "svg",
+      "pane_title_state": [
+        {
+          "text": "Net Card Fees ($B)",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "text": "YoY Growth %",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 18,
+      "layout": "combo_chart",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 19,
+      "layout": "line_chart",
+      "pdf_page_index": 18,
+      "pdf_physical_page": 19,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 21,
+      "layout": "multi_panel",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "mode": "svg",
+      "pane_title_state": [
+        {
+          "text": "Capital composition",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 22,
+      "layout": "guidance_statement_card",
+      "pdf_page_index": 21,
+      "pdf_physical_page": 22,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 23,
+      "layout": "brand_divider",
+      "pdf_page_index": 22,
+      "pdf_physical_page": 23,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 24,
+      "layout": "data_table",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 25,
+      "layout": "data_table",
+      "pdf_page_index": 24,
+      "pdf_physical_page": 25,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 26,
+      "layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "mode": "svg",
+      "pane_title_state": "none",
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "mode": "svg",
+      "pane_title_state": [
+        {
+          "text": "Funding Mix",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "text": "Deposit Programs",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "legacy_title_fallback": "n/a-js-off",
+      "tick_rotation_skip": "n/a-js-off",
+      "datalabel_suppression": "n/a-js-off",
+      "unsupported_typography_warning": "none observed at probe time",
+      "clipping": false
+    },
+    {
+      "slide_number": 29,
+      "layout": "freeform_grid",
+      "pdf_page_index": 28,
+      "pdf_physical_page": 29,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 30,
+      "layout": "freeform_grid",
+      "pdf_page_index": 29,
+      "pdf_physical_page": 30,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 31,
+      "layout": "annex_table",
+      "pdf_page_index": 30,
+      "pdf_physical_page": 31,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 32,
+      "layout": "annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 38,
+      "layout": "freeform_grid",
+      "pdf_page_index": 37,
+      "pdf_physical_page": 38,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 39,
+      "layout": "freeform_grid",
+      "pdf_page_index": 38,
+      "pdf_physical_page": 39,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 40,
+      "layout": "freeform_grid",
+      "pdf_page_index": 39,
+      "pdf_physical_page": 40,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 41,
+      "layout": "freeform_grid",
+      "pdf_page_index": 40,
+      "pdf_physical_page": 41,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 42,
+      "layout": "freeform_grid",
+      "pdf_page_index": 41,
+      "pdf_physical_page": 42,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 43,
+      "layout": "freeform_grid",
+      "pdf_page_index": 42,
+      "pdf_physical_page": 43,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    },
+    {
+      "slide_number": 44,
+      "layout": "brand_divider",
+      "pdf_page_index": 43,
+      "pdf_physical_page": 44,
+      "mode": "svg",
+      "pane_title_state": "not applicable",
+      "legacy_title_fallback": "not applicable",
+      "tick_rotation_skip": "not applicable",
+      "datalabel_suppression": "not applicable",
+      "unsupported_typography_warning": "not applicable",
+      "clipping": "not applicable"
+    }
+  ]
+}

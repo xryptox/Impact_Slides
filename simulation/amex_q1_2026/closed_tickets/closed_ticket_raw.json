@@ -1,0 +1,1640 @@
+{
+  "modes": {
+    "chartjs": {
+      "136": {
+        "mode": "chartjs",
+        "data": {
+          "nCells": 5,
+          "cells": [
+            {
+              "x": 592.859375,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 688.859375,
+              "bottom": 899.203125,
+              "cx": 640.859375,
+              "cy": 870.203125,
+              "text": "2.9%"
+            },
+            {
+              "x": 714.90625,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 810.90625,
+              "bottom": 899.203125,
+              "cx": 762.90625,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 836.953125,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 932.953125,
+              "bottom": 899.203125,
+              "cx": 884.953125,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 959,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 1055,
+              "bottom": 899.203125,
+              "cx": 1007,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1081.046875,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 1177.046875,
+              "bottom": 899.203125,
+              "cx": 1129.046875,
+              "cy": 870.203125,
+              "text": "2.8%"
+            }
+          ],
+          "nBars": 5,
+          "bars": [
+            {
+              "cx": 640.84375,
+              "x": 61
+            },
+            {
+              "cx": 762.84375,
+              "x": 183
+            },
+            {
+              "cx": 884.84375,
+              "x": 305
+            },
+            {
+              "cx": 1006.84375,
+              "x": 427
+            },
+            {
+              "cx": 1128.84375,
+              "x": 549
+            }
+          ],
+          "nSvgBars": 0,
+          "svgBars": [],
+          "hasOutlined": true,
+          "classList": [
+            "chart-support-outlined",
+            "chart-table-aligned",
+            "chart-svg-wrap",
+            "chart-split",
+            "chart-with-stats",
+            "chart-align-table"
+          ],
+          "alignedMarker": true,
+          "runtimeAligned": true
+        },
+        "console_warnings": []
+      },
+      "138": {
+        "mode": "chartjs",
+        "data": {
+          "nTilesGuess": 2,
+          "nWraps": 2,
+          "labels": [],
+          "nCallouts": 1,
+          "callouts": [
+            {
+              "x": 1691.234375,
+              "y": 251.984375,
+              "w": 116.75,
+              "h": 87,
+              "right": 1807.984375,
+              "bottom": 338.984375,
+              "cx": 1749.609375,
+              "cy": 295.484375,
+              "text": "92% FDICinsured atQ1'26",
+              "lines": [
+                "92% FDIC",
+                "insured at",
+                "Q1'26"
+              ],
+              "borderW": "0px",
+              "borderStyle": "none",
+              "boxShadow": "none",
+              "classes": "chart-side-callout chart-side-callout--tall chart-side-callout--right"
+            }
+          ],
+          "badges": [],
+          "fdicBadges": [],
+          "exterior": [
+            {
+              "text": "Deposits",
+              "i": 0
+            },
+            {
+              "text": "Unsecured Funding**",
+              "i": 1
+            },
+            {
+              "text": "Short-term Funding / Card ABS*",
+              "i": 2
+            }
+          ],
+          "totals": [],
+          "dollarTexts": [
+            {
+              "x": 96,
+              "y": 201.1875,
+              "w": 855,
+              "h": 726.8125,
+              "right": 951,
+              "bottom": 928,
+              "cx": 523.5,
+              "cy": 564.59375,
+              "text": "$210B \u00b7 $219BFunding Mix{\"type\": \"bar\", \"data\": {\"labels\": [\"Q4'25\", \"Q1'26\"], \"datasets\": [{\"label\": \"Deposits\", \"data\""
+            },
+            {
+              "x": 113,
+              "y": 218.1875,
+              "w": 821,
+              "h": 30.796875,
+              "right": 934,
+              "bottom": 248.984375,
+              "cx": 523.5,
+              "cy": 233.5859375,
+              "text": "$210B \u00b7 $219B"
+            },
+            {
+              "x": 986,
+              "y": 218.1875,
+              "w": 821,
+              "h": 30.796875,
+              "right": 1807,
+              "bottom": 248.984375,
+              "cx": 1396.5,
+              "cy": 233.5859375,
+              "text": "$151B \u00b7 $157B"
+            }
+          ],
+          "plot": {
+            "x": 113,
+            "y": 320.984375,
+            "w": 671,
+            "h": 560.4,
+            "right": 784,
+            "bottom": 881.384375
+          },
+          "tileBox": {
+            "x": 96,
+            "y": 201.1875,
+            "w": 1728,
+            "h": 726.8125,
+            "right": 1824,
+            "bottom": 928,
+            "cx": 960,
+            "cy": 564.59375,
+            "text": "$210B \u00b7 $219BFunding Mix{\"type\": \"bar\", \"data\": {\"labels\": [\"Q4'25\", \"Q1'26\"], \"datasets\": [{\"label\": \"Deposits\", \"data\""
+          },
+          "fitNotes": [],
+          "depTextSample": "$210B \u00b7 $219B\nFunding Mix\n92% FDIC\ninsured at\nQ1'26\n$151B \u00b7 $157B\nDeposit Programs"
+        },
+        "console": []
+      },
+      "139": {
+        "mode": "chartjs",
+        "data": {
+          "paneTitles": [
+            {
+              "x": 119,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 925,
+              "bottom": 262.1875,
+              "cx": 522,
+              "cy": 241.1875,
+              "text": "Net Card Fees ($B)",
+              "fontSize": 40,
+              "fontWeight": "700",
+              "color": "rgb(0, 23, 90)",
+              "tag": "DIV"
+            },
+            {
+              "x": 995,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 1801,
+              "bottom": 262.1875,
+              "cx": 1398,
+              "cy": 241.1875,
+              "text": "YoY Growth %",
+              "fontSize": 40,
+              "fontWeight": "700",
+              "color": "rgb(0, 23, 90)",
+              "tag": "DIV"
+            }
+          ],
+          "svgTitles": [
+            "$0",
+            "$1",
+            "$2",
+            "$3",
+            "Q1'19",
+            "Q1'20",
+            "Q1'21",
+            "Q1'22",
+            "Q1'23",
+            "Q1'24",
+            "Q1'25",
+            "Q1'26",
+            "$0.9",
+            "$1.1",
+            "$1.3",
+            "$1.4",
+            "$1.7",
+            "$2",
+            "$2.3",
+            "$2.8",
+            "0%",
+            "6%",
+            "12%",
+            "18%",
+            "24%",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26",
+            "16%",
+            "16%",
+            "18%",
+            "19%",
+            "20%",
+            "20%",
+            "17%",
+            "16%",
+            "16%"
+          ],
+          "charts": [
+            {
+              "i": 0,
+              "yTickSize": 24,
+              "yTickWeight": "bold",
+              "xTickSize": 13,
+              "xMinRotation": 0,
+              "xAutoSkip": true,
+              "dlFontSize_options": 28,
+              "paintedFonts": [
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                }
+              ],
+              "hasSvgTitlePlugin": false,
+              "titleText": null
+            },
+            {
+              "i": 1,
+              "yTickSize": 24,
+              "yTickWeight": "bold",
+              "xTickSize": 13,
+              "xMinRotation": 0,
+              "xAutoSkip": true,
+              "dlFontSize_options": 28,
+              "paintedFonts": [
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                },
+                {
+                  "family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                  "lineHeight": 33.6,
+                  "size": 28,
+                  "style": "normal",
+                  "weight": "bold",
+                  "string": "normal bold 28px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                }
+              ],
+              "hasSvgTitlePlugin": false,
+              "titleText": null
+            }
+          ],
+          "panes": [
+            {
+              "overflow": "hidden",
+              "x": 96,
+              "y": 201.1875,
+              "w": 852,
+              "h": 812.8125,
+              "right": 948,
+              "bottom": 1014,
+              "cx": 522,
+              "cy": 607.59375,
+              "text": "Net Card Fees ($B){\"type\": \"bar\", \"data\": {\"labels\": [\"Q1'19\", \"Q1'20\", \"Q1'21\", \"Q1'22\", \"Q1'23\", \"Q1'24\", \"Q1'25\", \"Q1"
+            },
+            {
+              "overflow": "visible",
+              "x": 119,
+              "y": 270.1875,
+              "w": 806,
+              "h": 724.8125,
+              "right": 925,
+              "bottom": 995,
+              "cx": 522,
+              "cy": 632.59375,
+              "text": "{\"type\": \"bar\", \"data\": {\"labels\": [\"Q1'19\", \"Q1'20\", \"Q1'21\", \"Q1'22\", \"Q1'23\", \"Q1'24\", \"Q1'25\", \"Q1'26\"], \"datasets\":"
+            },
+            {
+              "overflow": "hidden",
+              "x": 972,
+              "y": 201.1875,
+              "w": 852,
+              "h": 812.8125,
+              "right": 1824,
+              "bottom": 1014,
+              "cx": 1398,
+              "cy": 607.59375,
+              "text": "YoY Growth %{\"type\": \"line\", \"data\": {\"labels\": [\"Q1'24\", \"Q2'24\", \"Q3'24\", \"Q4'24\", \"Q1'25\", \"Q2'25\", \"Q3'25\", \"Q4'25\","
+            },
+            {
+              "overflow": "visible",
+              "x": 995,
+              "y": 270.1875,
+              "w": 806,
+              "h": 724.8125,
+              "right": 1801,
+              "bottom": 995,
+              "cx": 1398,
+              "cy": 632.59375,
+              "text": "{\"type\": \"line\", \"data\": {\"labels\": [\"Q1'24\", \"Q2'24\", \"Q3'24\", \"Q4'24\", \"Q1'25\", \"Q2'25\", \"Q3'25\", \"Q4'25\", \"Q1'26\"], \""
+            }
+          ]
+        },
+        "console": []
+      },
+      "140": {
+        "mode": "chartjs",
+        "data": {
+          "board": {
+            "x": 127.296875,
+            "y": 262.671875,
+            "w": 1564.90625,
+            "h": 624.625,
+            "right": 1692.203125,
+            "bottom": 887.296875,
+            "cx": 909.75,
+            "cy": 574.984375,
+            "text": "Total Revenues Net of Interest ExpenseFX-Adjusted*Net IncomeDiluted EPS**Average Diluted Shares OutstandingQ1'26$18,907$"
+          },
+          "boardClasses": "gl-pill gl-pill-free gl-card",
+          "shells": [
+            {
+              "x": 769.5625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1065.46875,
+              "bottom": 887.296875,
+              "cx": 917.515625,
+              "cy": 574.984375,
+              "text": "Q1'26$18,907$2,971$4.28686"
+            },
+            {
+              "x": 1082.90625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1378.8125,
+              "bottom": 887.296875,
+              "cx": 1230.859375,
+              "cy": 574.984375,
+              "text": "Q1'25$16,967$17,210$2,584$3.64702"
+            },
+            {
+              "x": 1396.25,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1692.15625,
+              "bottom": 887.296875,
+              "cx": 1544.203125,
+              "cy": 574.984375,
+              "text": "YoY% Inc/(Dec)11%10%15%18%(2%)"
+            }
+          ],
+          "caps": [
+            {
+              "x": 770.5625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1064.46875,
+              "bottom": 378.859375,
+              "cx": 917.515625,
+              "cy": 321.265625,
+              "text": "Q1'26",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            },
+            {
+              "x": 1083.90625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1377.8125,
+              "bottom": 378.859375,
+              "cx": 1230.859375,
+              "cy": 321.265625,
+              "text": "Q1'25",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            },
+            {
+              "x": 1397.25,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1691.15625,
+              "bottom": 378.859375,
+              "cx": 1544.203125,
+              "cy": 321.265625,
+              "text": "YoY% Inc/(Dec)",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            }
+          ],
+          "rows": [
+            {
+              "x": 127.296875,
+              "y": 377.859375,
+              "w": 624.828125,
+              "h": 101.875,
+              "right": 752.125,
+              "bottom": 479.734375,
+              "cx": 439.7109375,
+              "cy": 428.796875,
+              "text": "Total Revenues Net of Interest Expense"
+            },
+            {
+              "x": 127.296875,
+              "y": 479.734375,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 581.625,
+              "cx": 439.7109375,
+              "cy": 530.6796875,
+              "text": "FX-Adjusted*"
+            },
+            {
+              "x": 127.296875,
+              "y": 581.625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 683.515625,
+              "cx": 439.7109375,
+              "cy": 632.5703125,
+              "text": "Net Income"
+            },
+            {
+              "x": 127.296875,
+              "y": 683.515625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 785.40625,
+              "cx": 439.7109375,
+              "cy": 734.4609375,
+              "text": "Diluted EPS**"
+            },
+            {
+              "x": 127.296875,
+              "y": 785.40625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 887.296875,
+              "cx": 439.7109375,
+              "cy": 836.3515625,
+              "text": "Average Diluted Shares Outstanding"
+            }
+          ],
+          "labelCells": [
+            {
+              "x": 127.296875,
+              "y": 377.859375,
+              "w": 624.828125,
+              "h": 101.875,
+              "right": 752.125,
+              "bottom": 479.734375,
+              "cx": 439.7109375,
+              "cy": 428.796875,
+              "text": "Total Revenues Net of Interest Expense"
+            },
+            {
+              "x": 127.296875,
+              "y": 479.734375,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 581.625,
+              "cx": 439.7109375,
+              "cy": 530.6796875,
+              "text": "FX-Adjusted*"
+            },
+            {
+              "x": 127.296875,
+              "y": 581.625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 683.515625,
+              "cx": 439.7109375,
+              "cy": 632.5703125,
+              "text": "Net Income"
+            },
+            {
+              "x": 127.296875,
+              "y": 683.515625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 785.40625,
+              "cx": 439.7109375,
+              "cy": 734.4609375,
+              "text": "Diluted EPS**"
+            },
+            {
+              "x": 127.296875,
+              "y": 785.40625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 887.296875,
+              "cx": 439.7109375,
+              "cy": 836.3515625,
+              "text": "Average Diluted Shares Outstanding"
+            }
+          ],
+          "valueCells": [
+            {
+              "x": 770.5625,
+              "y": 378.859375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 480.34375,
+              "cx": 917.515625,
+              "cy": 429.6015625,
+              "text": "$18,907"
+            },
+            {
+              "x": 770.5625,
+              "y": 480.34375,
+              "w": 293.90625,
+              "h": 101.5,
+              "right": 1064.46875,
+              "bottom": 581.84375,
+              "cx": 917.515625,
+              "cy": 531.09375,
+              "text": ""
+            },
+            {
+              "x": 770.5625,
+              "y": 581.84375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 683.328125,
+              "cx": 917.515625,
+              "cy": 632.5859375,
+              "text": "$2,971"
+            },
+            {
+              "x": 770.5625,
+              "y": 683.328125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 784.8125,
+              "cx": 917.515625,
+              "cy": 734.0703125,
+              "text": "$4.28"
+            },
+            {
+              "x": 770.5625,
+              "y": 784.8125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 886.296875,
+              "cx": 917.515625,
+              "cy": 835.5546875,
+              "text": "686"
+            },
+            {
+              "x": 1083.90625,
+              "y": 378.859375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 480.34375,
+              "cx": 1230.859375,
+              "cy": 429.6015625,
+              "text": "$16,967"
+            },
+            {
+              "x": 1083.90625,
+              "y": 480.34375,
+              "w": 293.90625,
+              "h": 101.5,
+              "right": 1377.8125,
+              "bottom": 581.84375,
+              "cx": 1230.859375,
+              "cy": 531.09375,
+              "text": "$17,210"
+            },
+            {
+              "x": 1083.90625,
+              "y": 581.84375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 683.328125,
+              "cx": 1230.859375,
+              "cy": 632.5859375,
+              "text": "$2,584"
+            },
+            {
+              "x": 1083.90625,
+              "y": 683.328125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 784.8125,
+              "cx": 1230.859375,
+              "cy": 734.0703125,
+              "text": "$3.64"
+            },
+            {
+              "x": 1083.90625,
+              "y": 784.8125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 886.296875,
+              "cx": 1230.859375,
+              "cy": 835.5546875,
+              "text": "702"
+            },
+            {
+              "x": 1397.25,
+              "y": 378.859375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 480.34375,
+              "cx": 1544.203125,
+              "cy": 429.6015625,
+              "text": "11%"
+            },
+            {
+              "x": 1397.25,
+              "y": 480.34375,
+              "w": 293.90625,
+              "h": 101.5,
+              "right": 1691.15625,
+              "bottom": 581.84375,
+              "cx": 1544.203125,
+              "cy": 531.09375,
+              "text": "10%"
+            },
+            {
+              "x": 1397.25,
+              "y": 581.84375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 683.328125,
+              "cx": 1544.203125,
+              "cy": 632.5859375,
+              "text": "15%"
+            },
+            {
+              "x": 1397.25,
+              "y": 683.328125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 784.8125,
+              "cx": 1544.203125,
+              "cy": 734.0703125,
+              "text": "18%"
+            },
+            {
+              "x": 1397.25,
+              "y": 784.8125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 886.296875,
+              "cx": 1544.203125,
+              "cy": 835.5546875,
+              "text": "(2%)"
+            }
+          ],
+          "overflow": "hidden",
+          "slideOverflow": {
+            "scrollW": 1920,
+            "clientW": 1920,
+            "scrollH": 1080,
+            "clientH": 1080
+          },
+          "yoyCaps": [
+            {
+              "x": 1397.25,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1691.15625,
+              "bottom": 378.859375,
+              "cx": 1544.203125,
+              "cy": 321.265625,
+              "text": "YoY% Inc/(Dec)",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            }
+          ],
+          "fixedBoardSelectorMatch": false,
+          "isFreeBoard": true,
+          "isInsetBoard": false
+        }
+      }
+    },
+    "svg": {
+      "136": {
+        "mode": "svg",
+        "data": {
+          "nCells": 5,
+          "cells": [
+            {
+              "x": 658.578125,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 754.578125,
+              "bottom": 899.203125,
+              "cx": 706.578125,
+              "cy": 870.203125,
+              "text": "2.9%"
+            },
+            {
+              "x": 793.734375,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 889.734375,
+              "bottom": 899.203125,
+              "cx": 841.734375,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 928.90625,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 1024.90625,
+              "bottom": 899.203125,
+              "cx": 976.90625,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1064.0625,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 1160.0625,
+              "bottom": 899.203125,
+              "cx": 1112.0625,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1199.234375,
+              "y": 841.203125,
+              "w": 96,
+              "h": 58,
+              "right": 1295.234375,
+              "bottom": 899.203125,
+              "cx": 1247.234375,
+              "cy": 870.203125,
+              "text": "2.8%"
+            }
+          ],
+          "nBars": 0,
+          "bars": [],
+          "nSvgBars": 5,
+          "svgBars": [
+            {
+              "cx": 706.5625,
+              "xLocal": 150
+            },
+            {
+              "cx": 841.7291666666667,
+              "xLocal": 310
+            },
+            {
+              "cx": 976.8958333333334,
+              "xLocal": 470
+            },
+            {
+              "cx": 1112.0625,
+              "xLocal": 630
+            },
+            {
+              "cx": 1247.2291666666665,
+              "xLocal": 790
+            }
+          ],
+          "hasOutlined": true,
+          "classList": [
+            "chart-support-outlined",
+            "chart-table-aligned",
+            "chart-svg-wrap",
+            "chart-split",
+            "chart-with-stats",
+            "chart-align-table"
+          ],
+          "alignedMarker": true,
+          "runtimeAligned": true
+        },
+        "console_warnings": []
+      },
+      "138": {
+        "mode": "svg",
+        "data": {
+          "nTilesGuess": 2,
+          "nWraps": 2,
+          "labels": [],
+          "nCallouts": 1,
+          "callouts": [
+            {
+              "x": 1690.234375,
+              "y": 251.984375,
+              "w": 116.75,
+              "h": 87,
+              "right": 1806.984375,
+              "bottom": 338.984375,
+              "cx": 1748.609375,
+              "cy": 295.484375,
+              "text": "92% FDICinsured atQ1'26",
+              "lines": [
+                "92% FDIC",
+                "insured at",
+                "Q1'26"
+              ],
+              "borderW": "0px",
+              "borderStyle": "none",
+              "boxShadow": "none",
+              "classes": "chart-side-callout chart-side-callout--tall chart-side-callout--right"
+            }
+          ],
+          "badges": [],
+          "fdicBadges": [],
+          "exterior": [
+            {
+              "text": "Deposits",
+              "i": 0
+            },
+            {
+              "text": "Unsecured Funding**",
+              "i": 1
+            },
+            {
+              "text": "Short-term Funding / Card ABS*",
+              "i": 2
+            }
+          ],
+          "totals": [],
+          "dollarTexts": [
+            {
+              "x": 96,
+              "y": 201.1875,
+              "w": 855,
+              "h": 726.8125,
+              "right": 951,
+              "bottom": 928,
+              "cx": 523.5,
+              "cy": 564.59375,
+              "text": "$210B \u00b7 $219BFunding Mix{\"type\": \"bar\", \"data\": {\"labels\": [\"Q4'25\", \"Q1'26\"], \"datasets\": [{\"label\": \"Deposits\", \"data\""
+            },
+            {
+              "x": 113,
+              "y": 218.1875,
+              "w": 821,
+              "h": 30.796875,
+              "right": 934,
+              "bottom": 248.984375,
+              "cx": 523.5,
+              "cy": 233.5859375,
+              "text": "$210B \u00b7 $219B"
+            },
+            {
+              "x": 986,
+              "y": 218.1875,
+              "w": 821,
+              "h": 30.796875,
+              "right": 1807,
+              "bottom": 248.984375,
+              "cx": 1396.5,
+              "cy": 233.5859375,
+              "text": "$151B \u00b7 $157B"
+            }
+          ],
+          "plot": null,
+          "tileBox": {
+            "x": 96,
+            "y": 201.1875,
+            "w": 1728,
+            "h": 726.8125,
+            "right": 1824,
+            "bottom": 928,
+            "cx": 960,
+            "cy": 564.59375,
+            "text": "$210B \u00b7 $219BFunding Mix{\"type\": \"bar\", \"data\": {\"labels\": [\"Q4'25\", \"Q1'26\"], \"datasets\": [{\"label\": \"Deposits\", \"data\""
+          },
+          "fitNotes": [],
+          "depTextSample": "$210B \u00b7 $219B\nFunding Mix\n0%\n25%\n50%\n75%\n100%\nDeposits\nUnsecured Funding**\nShort-term Funding / Card ABS*\n72%\n21%\n7%\n100%\nQ4'25\n72%\n21%\n7%\n100%\nQ1'26\n92% FDIC\ninsured at\nQ1'26\n$151B \u00b7 $157B\nDeposit Programs\n0%\n25%\n50%\n75%\n100%\nSavings and Direct CDs\nThird Party CDs\nThird Party Sweep\nChecking\n81%\n10%\n7%\n100%\nQ4'25\n82%\n10%\n6%\n100%\nQ1'26\nChecking\nThird Party Sweep\nThird Party CDs\nSavings and Direct C"
+        },
+        "console": []
+      },
+      "139": {
+        "mode": "svg",
+        "data": {
+          "paneTitles": [
+            {
+              "x": 119,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 925,
+              "bottom": 262.1875,
+              "cx": 522,
+              "cy": 241.1875,
+              "text": "Net Card Fees ($B)",
+              "fontSize": 40,
+              "fontWeight": "700",
+              "color": "rgb(0, 23, 90)",
+              "tag": "DIV"
+            },
+            {
+              "x": 995,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 1801,
+              "bottom": 262.1875,
+              "cx": 1398,
+              "cy": 241.1875,
+              "text": "YoY Growth %",
+              "fontSize": 40,
+              "fontWeight": "700",
+              "color": "rgb(0, 23, 90)",
+              "tag": "DIV"
+            }
+          ],
+          "svgTitles": [
+            "$0",
+            "$1",
+            "$2",
+            "$3",
+            "Q1'19",
+            "Q1'20",
+            "Q1'21",
+            "Q1'22",
+            "Q1'23",
+            "Q1'24",
+            "Q1'25",
+            "Q1'26",
+            "$0.9",
+            "$1.1",
+            "$1.3",
+            "$1.4",
+            "$1.7",
+            "$2",
+            "$2.3",
+            "$2.8",
+            "0%",
+            "6%",
+            "12%",
+            "18%",
+            "24%",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26",
+            "16%",
+            "16%",
+            "18%",
+            "19%",
+            "20%",
+            "20%",
+            "17%",
+            "16%",
+            "16%"
+          ],
+          "charts": [],
+          "panes": [
+            {
+              "overflow": "hidden",
+              "x": 96,
+              "y": 201.1875,
+              "w": 852,
+              "h": 812.8125,
+              "right": 948,
+              "bottom": 1014,
+              "cx": 522,
+              "cy": 607.59375,
+              "text": "Net Card Fees ($B){\"type\": \"bar\", \"data\": {\"labels\": [\"Q1'19\", \"Q1'20\", \"Q1'21\", \"Q1'22\", \"Q1'23\", \"Q1'24\", \"Q1'25\", \"Q1"
+            },
+            {
+              "overflow": "visible",
+              "x": 119,
+              "y": 270.1875,
+              "w": 806,
+              "h": 724.8125,
+              "right": 925,
+              "bottom": 995,
+              "cx": 522,
+              "cy": 632.59375,
+              "text": "{\"type\": \"bar\", \"data\": {\"labels\": [\"Q1'19\", \"Q1'20\", \"Q1'21\", \"Q1'22\", \"Q1'23\", \"Q1'24\", \"Q1'25\", \"Q1'26\"], \"datasets\":"
+            },
+            {
+              "overflow": "hidden",
+              "x": 972,
+              "y": 201.1875,
+              "w": 852,
+              "h": 812.8125,
+              "right": 1824,
+              "bottom": 1014,
+              "cx": 1398,
+              "cy": 607.59375,
+              "text": "YoY Growth %{\"type\": \"line\", \"data\": {\"labels\": [\"Q1'24\", \"Q2'24\", \"Q3'24\", \"Q4'24\", \"Q1'25\", \"Q2'25\", \"Q3'25\", \"Q4'25\","
+            },
+            {
+              "overflow": "visible",
+              "x": 995,
+              "y": 270.1875,
+              "w": 806,
+              "h": 724.8125,
+              "right": 1801,
+              "bottom": 995,
+              "cx": 1398,
+              "cy": 632.59375,
+              "text": "{\"type\": \"line\", \"data\": {\"labels\": [\"Q1'24\", \"Q2'24\", \"Q3'24\", \"Q4'24\", \"Q1'25\", \"Q2'25\", \"Q3'25\", \"Q4'25\", \"Q1'26\"], \""
+            }
+          ]
+        },
+        "console": []
+      },
+      "140": {
+        "mode": "svg",
+        "data": {
+          "board": {
+            "x": 127.296875,
+            "y": 262.671875,
+            "w": 1564.90625,
+            "h": 624.625,
+            "right": 1692.203125,
+            "bottom": 887.296875,
+            "cx": 909.75,
+            "cy": 574.984375,
+            "text": "Total Revenues Net of Interest ExpenseFX-Adjusted*Net IncomeDiluted EPS**Average Diluted Shares OutstandingQ1'26$18,907$"
+          },
+          "boardClasses": "gl-pill gl-pill-free gl-card",
+          "shells": [
+            {
+              "x": 769.5625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1065.46875,
+              "bottom": 887.296875,
+              "cx": 917.515625,
+              "cy": 574.984375,
+              "text": "Q1'26$18,907$2,971$4.28686"
+            },
+            {
+              "x": 1082.90625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1378.8125,
+              "bottom": 887.296875,
+              "cx": 1230.859375,
+              "cy": 574.984375,
+              "text": "Q1'25$16,967$17,210$2,584$3.64702"
+            },
+            {
+              "x": 1396.25,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1692.15625,
+              "bottom": 887.296875,
+              "cx": 1544.203125,
+              "cy": 574.984375,
+              "text": "YoY% Inc/(Dec)11%10%15%18%(2%)"
+            }
+          ],
+          "caps": [
+            {
+              "x": 770.5625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1064.46875,
+              "bottom": 378.859375,
+              "cx": 917.515625,
+              "cy": 321.265625,
+              "text": "Q1'26",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            },
+            {
+              "x": 1083.90625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1377.8125,
+              "bottom": 378.859375,
+              "cx": 1230.859375,
+              "cy": 321.265625,
+              "text": "Q1'25",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            },
+            {
+              "x": 1397.25,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1691.15625,
+              "bottom": 378.859375,
+              "cx": 1544.203125,
+              "cy": 321.265625,
+              "text": "YoY% Inc/(Dec)",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            }
+          ],
+          "rows": [
+            {
+              "x": 127.296875,
+              "y": 377.859375,
+              "w": 624.828125,
+              "h": 101.875,
+              "right": 752.125,
+              "bottom": 479.734375,
+              "cx": 439.7109375,
+              "cy": 428.796875,
+              "text": "Total Revenues Net of Interest Expense"
+            },
+            {
+              "x": 127.296875,
+              "y": 479.734375,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 581.625,
+              "cx": 439.7109375,
+              "cy": 530.6796875,
+              "text": "FX-Adjusted*"
+            },
+            {
+              "x": 127.296875,
+              "y": 581.625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 683.515625,
+              "cx": 439.7109375,
+              "cy": 632.5703125,
+              "text": "Net Income"
+            },
+            {
+              "x": 127.296875,
+              "y": 683.515625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 785.40625,
+              "cx": 439.7109375,
+              "cy": 734.4609375,
+              "text": "Diluted EPS**"
+            },
+            {
+              "x": 127.296875,
+              "y": 785.40625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 887.296875,
+              "cx": 439.7109375,
+              "cy": 836.3515625,
+              "text": "Average Diluted Shares Outstanding"
+            }
+          ],
+          "labelCells": [
+            {
+              "x": 127.296875,
+              "y": 377.859375,
+              "w": 624.828125,
+              "h": 101.875,
+              "right": 752.125,
+              "bottom": 479.734375,
+              "cx": 439.7109375,
+              "cy": 428.796875,
+              "text": "Total Revenues Net of Interest Expense"
+            },
+            {
+              "x": 127.296875,
+              "y": 479.734375,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 581.625,
+              "cx": 439.7109375,
+              "cy": 530.6796875,
+              "text": "FX-Adjusted*"
+            },
+            {
+              "x": 127.296875,
+              "y": 581.625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 683.515625,
+              "cx": 439.7109375,
+              "cy": 632.5703125,
+              "text": "Net Income"
+            },
+            {
+              "x": 127.296875,
+              "y": 683.515625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 785.40625,
+              "cx": 439.7109375,
+              "cy": 734.4609375,
+              "text": "Diluted EPS**"
+            },
+            {
+              "x": 127.296875,
+              "y": 785.40625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 887.296875,
+              "cx": 439.7109375,
+              "cy": 836.3515625,
+              "text": "Average Diluted Shares Outstanding"
+            }
+          ],
+          "valueCells": [
+            {
+              "x": 770.5625,
+              "y": 378.859375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 480.34375,
+              "cx": 917.515625,
+              "cy": 429.6015625,
+              "text": "$18,907"
+            },
+            {
+              "x": 770.5625,
+              "y": 480.34375,
+              "w": 293.90625,
+              "h": 101.5,
+              "right": 1064.46875,
+              "bottom": 581.84375,
+              "cx": 917.515625,
+              "cy": 531.09375,
+              "text": ""
+            },
+            {
+              "x": 770.5625,
+              "y": 581.84375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 683.328125,
+              "cx": 917.515625,
+              "cy": 632.5859375,
+              "text": "$2,971"
+            },
+            {
+              "x": 770.5625,
+              "y": 683.328125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 784.8125,
+              "cx": 917.515625,
+              "cy": 734.0703125,
+              "text": "$4.28"
+            },
+            {
+              "x": 770.5625,
+              "y": 784.8125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1064.46875,
+              "bottom": 886.296875,
+              "cx": 917.515625,
+              "cy": 835.5546875,
+              "text": "686"
+            },
+            {
+              "x": 1083.90625,
+              "y": 378.859375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 480.34375,
+              "cx": 1230.859375,
+              "cy": 429.6015625,
+              "text": "$16,967"
+            },
+            {
+              "x": 1083.90625,
+              "y": 480.34375,
+              "w": 293.90625,
+              "h": 101.5,
+              "right": 1377.8125,
+              "bottom": 581.84375,
+              "cx": 1230.859375,
+              "cy": 531.09375,
+              "text": "$17,210"
+            },
+            {
+              "x": 1083.90625,
+              "y": 581.84375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 683.328125,
+              "cx": 1230.859375,
+              "cy": 632.5859375,
+              "text": "$2,584"
+            },
+            {
+              "x": 1083.90625,
+              "y": 683.328125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 784.8125,
+              "cx": 1230.859375,
+              "cy": 734.0703125,
+              "text": "$3.64"
+            },
+            {
+              "x": 1083.90625,
+              "y": 784.8125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1377.8125,
+              "bottom": 886.296875,
+              "cx": 1230.859375,
+              "cy": 835.5546875,
+              "text": "702"
+            },
+            {
+              "x": 1397.25,
+              "y": 378.859375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 480.34375,
+              "cx": 1544.203125,
+              "cy": 429.6015625,
+              "text": "11%"
+            },
+            {
+              "x": 1397.25,
+              "y": 480.34375,
+              "w": 293.90625,
+              "h": 101.5,
+              "right": 1691.15625,
+              "bottom": 581.84375,
+              "cx": 1544.203125,
+              "cy": 531.09375,
+              "text": "10%"
+            },
+            {
+              "x": 1397.25,
+              "y": 581.84375,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 683.328125,
+              "cx": 1544.203125,
+              "cy": 632.5859375,
+              "text": "15%"
+            },
+            {
+              "x": 1397.25,
+              "y": 683.328125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 784.8125,
+              "cx": 1544.203125,
+              "cy": 734.0703125,
+              "text": "18%"
+            },
+            {
+              "x": 1397.25,
+              "y": 784.8125,
+              "w": 293.90625,
+              "h": 101.484375,
+              "right": 1691.15625,
+              "bottom": 886.296875,
+              "cx": 1544.203125,
+              "cy": 835.5546875,
+              "text": "(2%)"
+            }
+          ],
+          "overflow": "hidden",
+          "slideOverflow": {
+            "scrollW": 1920,
+            "clientW": 1920,
+            "scrollH": 1080,
+            "clientH": 1080
+          },
+          "yoyCaps": [
+            {
+              "x": 1397.25,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1691.15625,
+              "bottom": 378.859375,
+              "cx": 1544.203125,
+              "cy": 321.265625,
+              "text": "YoY% Inc/(Dec)",
+              "fontSize": 28,
+              "whiteSpace": "normal",
+              "lineHeight": "28px"
+            }
+          ],
+          "fixedBoardSelectorMatch": false,
+          "isFreeBoard": true,
+          "isInsetBoard": false
+        }
+      }
+    }
+  }
+}
