@@ -1,8 +1,8 @@
-# Renderer v2 — Amex fidelity round 6 (DRAFT — mechanisms PROPOSED, pending human lock)
+# Renderer v2 — Amex fidelity round 6
 
-Status: **DRAFT.** Diagnoses are measured and trustworthy; mechanisms are
-proposals and must not be implemented before a human lock. Round 5 is LOCKED and
-fully shipped (T6–T14), so new tickets land here rather than reopening it.
+Status: **partially shipped.** Diagnoses remain measured fact. **R6-A is
+decision-locked and shipped** (issue #139). R6-B is a handoff lever (no renderer
+work). R6-C stays open/blocked. Round 5 is LOCKED and fully shipped (T6–T14).
 
 Baseline: `wiki/baseline_v8_GAP_ANALYSIS.md`. Artifacts branch:
 `origin/gnhf/objective-produce-a-b7e827`.
@@ -19,74 +19,51 @@ skipped**):
 
 ---
 
-## R6-A — chart-internal typography is roughly half PDF scale (slide 16, PDF p16)
+## R6-A — chart-internal typography — **shipped (#139)**
 
-**Type B (renderer capability). Priority P1.**
+**Type B (renderer capability). Priority P1. Locked on issue #139; implemented.**
 
-This is the residual visible in the slide-16 side-by-side after #123/#124
-landed. It is **pre-existing, not a regression**: verified identical on
-`origin/main` before PR #124 by rendering both and comparing crops. It sat
-unfiled because every previous round scoped slide 16 to callout chrome
-(N8) or card structure (N10), never to the type inside the plot.
+Live operating contract: `impact_slides/renderer_v2/AGENTS.md` (pane titles +
+`chart_config.typography`). Owner module: `charts/typography.py`. Tests:
+`tests/test_chart_typography_r6a.py`. Synthetic audit note (not full archived-v9):
+`artifacts/r6a_typography_v9_audit.md`.
 
-### Measured, PDF (`get_text("dict")`, sizes ×2.001 to our 1920×1080 stage) vs live render
+### Pre-fix measured residual (PDF p16 / deck slide 17)
 
-| element | PDF | ours | how ours is set |
+| element | PDF | pre-fix | how it was set |
 |---|---:|---:|---|
-| pane title | **40px bold** | **13px**, weight 600, gray `rgb(99,102,106)` | `.gl-tile-label` (CSS) |
-| bar value label | **28px bold** | **11px bold** | Chart.js `plugins.datalabels.font.size` |
+| pane title | **40px bold navy** | **13px**, weight 600, gray | `.gl-tile-label` (CSS) |
+| bar/line value label | **28px bold** | **11px bold** | Chart.js datalabels |
 | x tick | — | **13px** | `scales.x.ticks.font.size` |
 | y tick | **24px bold** | **13px** | `scales.y.ticks.font.size` |
-| line value label | **28px bold** | 11px bold | datalabels |
-| CAGR pill | 24px | (n/a — see R6-B) | — |
-| `% CAGR` caption | 24px | (n/a — see R6-B) | — |
 
-So three independent scales are all far too small: the CSS pane heading
-(13 vs 40), the Chart.js tick fonts (13 vs 24), and the datalabel font
-(11 vs 28). The pane title is additionally the **wrong colour and weight** —
-gray 600 where the PDF is navy bold, reading as a caption rather than a heading.
+### Locked mechanism (shipped)
 
-Note this is the *same* underlying complaint as F4+ (#125), which found
-`pill_comparison` text at 15–17px against a PDF 28px. F4+ fixed one recipe's
-CSS; R6-A is the chart-internal equivalent and covers **every chart**, not just
-slide 16 — so its blast radius is much larger than F4+'s.
+1. **Unconditional shared pane title** on hosts that already emit a distinct
+   pane/tile/card heading (`dual_chart`, `chart_hero_dual`, `multi_panel`):
+   HTML-owned `.gl-chart-pane-title` at 40px/700/navy. Ordinary non-chart
+   `.gl-tile-label` stays 13px gray. Hosts pass `chart_host_size(...)`; if
+   remaining canvas would fall under 320×240, `strict=True` fails and
+   `strict=False` keeps legacy one-line title + warning.
+2. **Opt-in `chart_config.typography`** (`x_tick_font_size` 8–24,
+   `y_tick_font_size` 8–28, `datalabel_font_size` 8–32). Absent group → legacy
+   Chart.js 13/13/11 (SC-COMPAT-1). Invalid group: strict raises; non-strict
+   drops whole group + warns. Ticks on Chart.js + SVG painters;
+   `datalabel_font_size` + collision only on ordinary-label layouts
+   (`grouped_bar_chart` / `line_chart` with `point_labels`).
+3. **Opt-in collision suppression** when `datalabel_font_size` is set: keep
+   earlier series then category; 2px margin; Chart.js actual bounds +
+   `data-datalabel-suppressed`; SVG estimated boxes + stderr/`run_meta.warnings`.
 
-### Proposed mechanism (NOT locked)
+### Acceptance (locked)
 
-Two candidate shapes, and the choice is a real trade-off:
-
-1. **Raise the defaults.** Honest about the fact that 11–13px type on a
-   1920×1080 stage viewed as a slide is simply too small, and fixes every deck
-   at once. But it is an unconditional restyle of every chart in every existing
-   deck, and several pinned tests assert current sizes.
-2. **Opt-in `chart_config` font-scale knobs** (e.g. `tick_font_size`,
-   `label_font_size`, plus a `gl-tile-label` scale) defaulting to today's
-   values, preserving SC-COMPAT-1 byte-identity.
-
-**Recommendation: (1) for the pane title specifically** — 13px gray 600 vs 40px
-navy bold is not a taste difference, and T11 (#119) introduced that heading only
-last round, so little depends on its current size. **(2) for the Chart.js tick
-and datalabel sizes**, because those are read by every chart on every slide and
-an unconditional bump risks overflow/collision on dense boards (the annex tables
-and multi-panel tiles are the obvious hazards).
-
-A measurement step is mandatory before implementing, per r4 D4/D10 — three
-tickets on this deck (R4, N5, F4+) had their filed framing disproved by
-measurement, and R4 was specifically mis-scoped as a type-scale gap **twice**.
-Do not assume this one is right either: confirm against the PDF first, and check
-whether raising tick sizes forces Chart.js to drop or rotate tick labels.
-
-### Acceptance (proposed)
-
-- Pane title within ±2px of PDF 40px, navy, bold.
-- Tick and value-label sizes within ±2px of the PDF figures above.
-- No clipped/dropped/rotated ticks on any of the 44 v8 slides — enumerate and
-  eyeball, do not sample.
-- SC-COMPAT-1 stated explicitly per sub-change: which are unconditional and
-  which are opt-in.
-- Full suite green (baseline **1310 passed, 15 skipped**) — the FULL suite, not a
-  file-scoped subset; token-audit tests have twice landed failures on `main`
-  because only chart tests were run.
+- Pane hosts emit 40px/700/navy `.gl-chart-pane-title` (legacy fallback path covered).
+- Opt-in typography bounds/invalid/unsupported + both painter paths covered by tests.
+- Collision ordering/diagnostics covered; boot only when `datalabel_font_size` set.
+- Full suite + `gen_layout_index.py --check` green.
+- **Outstanding (explicit):** full 44-slide **archived v9** audit on real Amex
+  handoff/deck — synthetic contract audit only so far
+  (`artifacts/r6a_typography_v9_audit.md`).
 
 ---
 
@@ -133,7 +110,7 @@ cosmetic divergence.
 
 | Pri | item | type | note |
 |---:|---|---|---|
-| **P1** | R6-A chart-internal typography | B | this spec; largest remaining visual gap |
+| — | ~~R6-A chart-internal typography~~ | B | **shipped #139** (archived-v9 full audit still outstanding) |
 | **P3** | R6-C inset outlined skin | B | blocked on measurement |
 | **P3** | F5 theme cannot tint default chart palette | B | r5 spec; do not pick up until its trigger fires |
 

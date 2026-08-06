@@ -90,7 +90,7 @@ def test_missing_secondary_renders_single_pane():
 
 
 def test_single_series_pane_gets_heading_and_legend_suppressed():
-    # R5-F/T11: pane title renders as an in-card gl-tile-label heading
+    # R5-F/T11 + #139: pane title renders as in-card gl-chart-pane-title heading
     # (sourced from the pane's single series name) and the Chart.js legend
     # that would restate it is suppressed.
     slide = _slide()

@@ -13,7 +13,7 @@ Archive of historical prompts, plans, research, and specs. Not the live engineer
 
 - Live agent entry remains root `AGENTS.md`, `CONTEXT.md`, `docs/agents/`, and code under `impact_slides/`
 - Stale docs carry `> **Superseded - historical...**` immediately under the H1 (see `README.md` policy)
-- Do **not** mark without cause: live GPT prompts (`Impact Slide *`), `SPEC_renderer_v2_amex_fidelity_r6.md` (draft), current baseline gap docs, normative shipped p0–p5/token specs, generated `renderer_v2_LAYOUTS.md`
+- Do **not** mark without cause: live GPT prompts (`Impact Slide *`), `SPEC_renderer_v2_amex_fidelity_r6.md` (R6-A shipped #139; R6-C still open), current baseline gap docs, normative shipped p0–p5/token specs, generated `renderer_v2_LAYOUTS.md`
 - Repo-wide `rg` will not read `README.md` — per-file markers matter
 
 ## Work Guidance
