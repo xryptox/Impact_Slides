@@ -24,11 +24,11 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `data_table` | `render_table` | impact_slides/renderer_v2/layout/recipes/metrics.py:62 | `mini_handoff.json` | `chart_supporting_elements.py`, `chart_table_alignment.py`, `classify_slide.py` +9 |
 | `data_table_with_insight` | `render_data_table_with_insight` | impact_slides/renderer_v2/layout/recipes/metrics.py:218 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1a_layouts.py` |
 | `decision_tree` | `render_decision_tree` | impact_slides/renderer_v2/layout/recipes/diagrams.py:105 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
-| `dual_chart` | `render_dual_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:448 | — | `chart_typography_r6a.py`, `dual_chart.py`, `layout_dispatch_parity.py` +1 |
+| `dual_chart` | `render_dual_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:448 | `amex_s13_s14_corrected.json`, `amex_s13_s14_v10_broken.json` | `chart_typography_r6a.py`, `dual_chart.py`, `layout_dispatch_parity.py` +1 |
 | `ecosystem_map` | `render_ecosystem_map` | impact_slides/renderer_v2/layout/recipes/diagrams.py:147 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
 | `evidence_cards` | `render_evidence_cards` | impact_slides/renderer_v2/layout/recipes/cards.py:23 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1a_layouts.py` |
 | `full_process_flow` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | — | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_validation.py` +1 |
-| `grouped_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `bar_group_brackets.py`, `chart_hero_dual_headings.py`, `chart_polish.py` +13 |
+| `grouped_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | `amex_s13_s14_corrected.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `bar_group_brackets.py`, `chart_hero_dual_headings.py`, `chart_polish.py` +13 |
 | `guidance_statement_card` | `render_guidance_statement_card` | impact_slides/renderer_v2/layout/recipes/metrics.py:426 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `heatmap` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |
 | `hierarchy_tree` | `render_hierarchy_tree` | impact_slides/renderer_v2/layout/recipes/diagrams.py:126 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
@@ -38,7 +38,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `insight_with_evidence` | `render_insight_with_evidence` | impact_slides/renderer_v2/layout/recipes/cards.py:100 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
 | `ir_bullet_sheet` | `render_ir_bullet_sheet` | impact_slides/renderer_v2/layout/recipes/metrics.py:395 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `kpi_trend_cards` | `render_kpi_trend_cards` | impact_slides/renderer_v2/layout/recipes/metrics.py:344 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3b_layouts.py` |
-| `line_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | `golden_mvp1_handoff.json` | `chart_polish.py`, `chart_styling.py`, `chart_supporting_elements.py` +8 |
+| `line_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | `amex_s13_s14_v10_broken.json`, `golden_mvp1_handoff.json` | `amex_s13_s14_handoff_contract.py`, `chart_polish.py`, `chart_styling.py` +9 |
 | `metric_dashboard` | `render_metric` | impact_slides/renderer_v2/layout/recipes/metrics.py:23 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +5 |
 | `metric_row_with_breakdown` | `render_metric_row_with_breakdown` | impact_slides/renderer_v2/layout/recipes/metrics.py:136 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
 | `multi_panel` | `render_multi_panel` | impact_slides/renderer_v2/layout/recipes/charts.py:626 | — | `chart_typography_r6a.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
