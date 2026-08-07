@@ -126,7 +126,7 @@ Evolve the existing chart paint path so that:
 - Chart.js for stacked, waterfall, heatmap, icon_grid (follow-on).
 - Mermaid / diagram taxonomy beyond “quantitative stays on charts path.”
 - Alpine, Swiper, Lucide.
-- Heavy Chart.js plugins (datalabels/annotation/zoom) unless a single plugin is required for combo parity — default **no plugins** in P3.
+- Heavy Chart.js plugins (datalabels/annotation/zoom) unless a single plugin is required for combo parity — default **no plugins** in P3. *(Post-P3 #152: shell registers a config-driven `zeroLine` plugin for mixed negative/positive domains only; plot gridlines stay off and there is no force-on hatch.)*
 - Animation/motion design.
 - PDF canvas rasterization fidelity.
 - Replacing Boardroom/`gl-*` chrome.

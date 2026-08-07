@@ -2583,12 +2583,85 @@ class TestAxisChromeSuppression:
         render_deck(path, out, strict=False)
         return _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
 
-    def test_default_chrome_unchanged(self, tmp_path):
+    def test_plot_gridlines_default_off_keeps_axes(self, tmp_path):
         conf = self._deck(tmp_path, {})
         scales = conf["options"]["scales"]
-        assert "display" not in scales["y"]
+        assert "display" not in scales["y"]  # axis scale stays
         assert "display" not in scales["x"]
-        assert "display" not in scales["y"]["grid"]
+        assert scales["x"]["grid"]["display"] is False
+        assert scales["y"]["grid"]["display"] is False
+        assert "ticks" in scales["y"]
+
+    def test_stale_show_gridlines_true_ignored(self, tmp_path):
+        conf = self._deck(tmp_path, {"show_gridlines": True, "gridlines": True})
+        scales = conf["options"]["scales"]
+        assert scales["x"]["grid"]["display"] is False
+        assert scales["y"]["grid"]["display"] is False
+
+    def test_negative_domain_emits_zero_line_not_grids(self, tmp_path):
+        # #152 host: grids stay off; mixed-sign domain gets independent zeroLine.
+        conf = self._deck(tmp_path, {})
+        scales = conf["options"]["scales"]
+        assert scales["x"]["grid"]["display"] is False
+        assert scales["y"]["grid"]["display"] is False
+        zl = conf["options"]["plugins"]["zeroLine"]
+        assert zl["axis"] == "y"
+        assert zl["lineWidth"] == 1
+        assert zl["color"]
+        # Live shell must register the paint plugin (mutation: drop id → fail).
+        html = (tmp_path / "out" / "presentation.html").read_text(encoding="utf-8")
+        assert "id: 'zeroLine'" in html or 'id: "zeroLine"' in html
+        assert "plugins.zeroLine" in html
+
+    def test_all_positive_skips_zero_line(self, tmp_path):
+        s = _slide("grouped_bar_chart", [{"label": "Q1", "value": 7}, {"label": "Q2", "value": 9}])
+        path = _write(tmp_path, _handoff([s]))
+        out = tmp_path / "out_pos"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        assert "zeroLine" not in conf["options"].get("plugins", {})
+
+    def test_zero_line_across_chartjs_families(self, tmp_path):
+        # Mixed-sign data on every Chart.js family → independent zeroLine axis.
+        cases = [
+            ("grouped_bar_chart", [{"label": "Q1", "value": -4}, {"label": "Q2", "value": 6}], "y"),
+            ("stacked_bar_chart", [{"label": "Q1", "values": {"A": 10, "B": -3}}], "y"),
+            ("line_chart", [{"label": "Q1", "value": -1}, {"label": "Q2", "value": 4}], "y"),
+            (
+                "horizontal_bar_chart",
+                [{"label": "A", "value": -5}, {"label": "B", "value": 8}],
+                "x",
+            ),
+        ]
+        for layout, data, axis in cases:
+            s = _slide(layout, data)
+            path = _write(tmp_path, _handoff([s]))
+            out = tmp_path / f"out_{layout}"
+            render_deck(path, out, strict=False)
+            conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+            assert conf["options"]["scales"]["x"]["grid"]["display"] is False
+            assert conf["options"]["scales"]["y"]["grid"]["display"] is False
+            assert conf["options"]["plugins"]["zeroLine"]["axis"] == axis, layout
+
+        # Combo with a negative bar value
+        combo = {
+            **COMBO_HANDOFF_SLIDE,
+            "visual_spec": {
+                **COMBO_HANDOFF_SLIDE["visual_spec"],
+                "primary_visual": {
+                    "type": "combo_chart",
+                    "steps_or_data": [
+                        {"label": "A", "value": -2},
+                        {"label": "B", "value": 5},
+                    ],
+                },
+            },
+        }
+        path = _write(tmp_path, _handoff([combo]))
+        out = tmp_path / "out_combo"
+        render_deck(path, out, strict=False)
+        conf = _chartjs_cfg((out / "presentation.html").read_text(encoding="utf-8"))
+        assert conf["options"]["plugins"]["zeroLine"]["axis"] == "y"
 
     def test_hide_y_axis(self, tmp_path):
         conf = self._deck(tmp_path, {"show_y_axis": False})
@@ -2598,14 +2671,6 @@ class TestAxisChromeSuppression:
     def test_hide_x_axis(self, tmp_path):
         conf = self._deck(tmp_path, {"show_x_axis": False})
         assert conf["options"]["scales"]["x"]["display"] is False
-
-    def test_hide_gridlines_keeps_ticks(self, tmp_path):
-        conf = self._deck(tmp_path, {"show_gridlines": False})
-        scales = conf["options"]["scales"]
-        assert scales["x"]["grid"]["display"] is False
-        assert scales["y"]["grid"]["display"] is False
-        assert "display" not in scales["y"]  # ticks stay
-        assert "ticks" in scales["y"]
 
     def test_explicit_total_labels_override_computed(self, tmp_path):
         # PDF funding board: segments are %, totals are $B — different unit

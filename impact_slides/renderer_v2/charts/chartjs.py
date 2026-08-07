@@ -58,18 +58,71 @@ def _next_chart_id() -> str:
 
 
 
-def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    """Calm Boardroom defaults: no animation, readable axes.
+def _numeric_dataset_values(datasets: list[dict[str, Any]]) -> list[float]:
+    """Flatten Chart.js dataset data entries to floats (skip non-numerics)."""
+    out: list[float] = []
+    for ds in datasets:
+        for v in ds.get("data") or []:
+            if isinstance(v, bool):
+                continue
+            if isinstance(v, (int, float)):
+                out.append(float(v))
+            elif isinstance(v, Mapping):
+                for key in ("y", "x"):
+                    n = v.get(key)
+                    if isinstance(n, (int, float)) and not isinstance(n, bool):
+                        out.append(float(n))
+                        break
+    return out
 
-    Optional axis-chrome suppression (F11+, v4 sim): IR 100%-stack boards
-    carry values in-segment, so the PDF drops gridlines and often the whole
-    y axis. All three keys default to True (current Boardroom chrome), so
-    existing handoffs are unaffected (SC-COMPAT-1):
-      show_gridlines: False  -> hide x+y grid lines, keep ticks
+
+
+def _apply_semantic_zero_line(
+    options: dict[str, Any],
+    datasets: list[dict[str, Any]],
+    *,
+    axis: str = "y",
+) -> None:
+    """Enable shell zeroLine plugin when zero is a semantic interior baseline.
+
+    Independent of scale grids (issue 152). Fires when data includes a negative
+    value, or when an explicit scale domain straddles zero. No-op otherwise so
+    all-positive charts keep only the axis edge.
+    """
+    vals = _numeric_dataset_values(datasets)
+    needs = any(v < 0 for v in vals)
+    if not needs:
+        scale = (options.get("scales") or {}).get(axis) or {}
+        lo, hi = scale.get("min"), scale.get("max")
+        needs = (
+            isinstance(lo, (int, float))
+            and isinstance(hi, (int, float))
+            and not isinstance(lo, bool)
+            and not isinstance(hi, bool)
+            and float(lo) < 0 < float(hi)
+        )
+    if not needs:
+        return
+    options.setdefault("plugins", {})["zeroLine"] = {
+        "axis": axis,
+        "color": _NAVY,
+        "lineWidth": 1,
+    }
+
+
+
+def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Calm Boardroom defaults: no animation, readable axes, no plot gridlines.
+
+    Plot gridlines are off by default (issue 152). Axis baselines, ticks, and
+    semantic zero lines stay. Legacy show_gridlines / gridlines keys are
+    ignored — there is no force-on hatch.
+
+    Optional axis-chrome suppression (F11+, v4 sim):
       show_y_axis / show_x_axis: False -> hide that scale entirely
       show_legend: False -> hide the legend (recipes set this when a pane
         heading already carries a single series' name, so the swatch would
-        only restate it). Defaults to True (Chart.js default, SC-COMPAT-1).
+        only restate it). Defaults to True (Chart.js default).
     """
     typo = resolve_typography(cfg or {})
     x_size = int(typo.get("x_tick_font_size", LEGACY_X_TICK))
@@ -97,23 +150,20 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
                     "color": "#00175a",
                     "font": {"family": "'Source Sans 3', sans-serif", "size": x_size},
                 },
-                "grid": {"color": "rgba(224, 228, 234, 0.8)"},
+                "grid": {"display": False},
             },
             "y": {
                 "ticks": {
                     "color": "#00175a",
                     "font": y_font,
                 },
-                "grid": {"color": "rgba(224, 228, 234, 0.8)"},
+                "grid": {"display": False},
             },
         },
     }
     if cfg:
         if cfg.get("show_legend") is False:
             options["plugins"]["legend"]["display"] = False
-        if cfg.get("show_gridlines") is False:
-            options["scales"]["x"]["grid"]["display"] = False
-            options["scales"]["y"]["grid"]["display"] = False
         if cfg.get("show_y_axis") is False:
             options["scales"]["y"]["display"] = False
         if cfg.get("show_x_axis") is False:
@@ -258,6 +308,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
+    _apply_semantic_zero_line(options, datasets, axis="y")
     if stacked and (cfg.get("stack_totals") or cfg.get("point_labels") or cfg.get("show_point_labels")):
         # #101/N3: per-category signed totals painted above each stack via
         # the top segment's datalabel; negatives render parenthesized (IR).
@@ -506,6 +557,7 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             anchor=dl_anchor, align=dl_align, offset=dl_offset, color=_WHITE,
             size=dl_size, labels=label_matrix,
         )
+    _apply_semantic_zero_line(options, datasets, axis="x")
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -626,6 +678,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=dl_size,
             labels=label_matrix,
         )
+    _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "line",
         "data": {"labels": labels, "datasets": datasets},
@@ -680,6 +733,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     cfg = _chart_config(slide)
     _apply_bar_density_knobs(datasets, cfg)
     options = _chartjs_common_options(cfg)
+    _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "bar",
         "data": {"labels": bar_labels, "datasets": datasets},

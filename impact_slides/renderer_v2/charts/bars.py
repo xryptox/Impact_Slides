@@ -191,7 +191,6 @@ def _vbar_frame(
     *,
     pad_r: float | None = None,
 ) -> list[str]:
-    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
     pad_l, default_pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
@@ -219,13 +218,9 @@ def _vbar_frame(
         f'xmlns="http://www.w3.org/2000/svg" '
         f'style="width:100%;height:auto">'
     ]
+    # Tick labels only — plot gridlines default off (#152).
     for tick in y_ticks:
         ty = y_pos(tick)
-        if show_grid:
-            parts.append(
-                f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
-                f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
-            )
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
@@ -275,7 +270,6 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No bar chart data</p>'
 
     cfg = _chart_config(slide)
-    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
@@ -384,7 +378,6 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No stacked bar data</p>'
 
     cfg = _chart_config(slide)
-    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
     side_plan = _resolve_side_callout(cfg, "stacked_bar_chart")

@@ -1037,6 +1037,9 @@ is inlined for **grouped bar**, **stacked bar**, **horizontal bar**, **line**,
 and **combo** layouts. Suppressing
 `charts` falls back to the existing SVG painters. waterfall /
 heatmap / icon_grid stay on the SVG/pack path. Animation defaults off.
+Plot gridlines default off on Chart.js and SVG painters; axis baselines, ticks,
+and a semantic zero line (mixed negative/positive domains) remain. Legacy
+`show_gridlines` / `gridlines` keys are ignored — no force-on hatch.
 Spec: `wiki/SPEC_renderer_v2_p3_chartjs.md`. Pin: `assets/libs/chart.umd.min.js`.
 
 **Native disclosure (P5).** Additive handoff field `disclosure` (also under

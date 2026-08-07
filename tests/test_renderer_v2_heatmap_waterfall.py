@@ -137,8 +137,9 @@ def test_waterfall_zero_and_negative():
     assert html.count("<rect") == 3
     assert "chart-bar-ink" in html
     assert "chart-bar-blue" in html
-    # Zero line present when range crosses 0.
+    # Semantic zero line when range crosses 0 (not a plot gridline).
     assert "chart-gridline" in html
+    assert 'stroke-dasharray="4 4"' in html
 
 
 @pytest.mark.parametrize("lt", ["heatmap", "waterfall_chart"])

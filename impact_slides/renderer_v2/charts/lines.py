@@ -153,7 +153,6 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 12
     )
     dl_set = bool(typo.get("datalabel_font_size_set"))
-    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("line_chart", n=len(points))
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 40, 60
@@ -223,14 +222,9 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         '<defs></defs>',
     ]
 
-    # Y-axis gridlines and tick labels
+    # Y-axis tick labels only — plot gridlines default off (#152).
     for tick in y_ticks:
         ty = y_pos(tick)
-        if show_grid:
-            parts.append(
-                f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
-                f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
-            )
         tick_label = _fmtu(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
@@ -481,7 +475,6 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     x_tick_fs = (
         int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 14
     )
-    show_grid = bool(cfg.get("gridlines", True))
     geom = chart_geometry("combo_chart", has_overlay=bool(line_points))
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 56 if stacked else 40, 60
@@ -526,7 +519,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         f'style="width:100%;height:auto">',
     ]
 
-    # Y-axis gridlines (based on bar axis)
+    # Y-axis tick labels only (bar axis) — plot gridlines default off (#152).
     bar_ticks = cfg.get("y_axis_ticks")
     if bar_ticks is None:
         step = bar_max / 4
@@ -535,11 +528,6 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         bar_ticks = [bar_min + i * step for i in range(5)]
     for tick in bar_ticks:
         ty = bar_y(float(tick))
-        if show_grid:
-            parts.append(
-                f'<line x1="{pad_l}" y1="{ty:.1f}" x2="{W - pad_r}" y2="{ty:.1f}" '
-                f'stroke="var(--panel-border, #d8dce3)" stroke-width="0.5"/>'
-            )
         tick_label = _fmtb(float(tick))
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
