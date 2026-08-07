@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class VisualSpec(BaseModel):
     model_config = ConfigDict(extra="allow")
     primary_visual: Optional[Dict[str, Any]] = None
+    secondary_visual: Optional[Dict[str, Any]] = None  # dual_chart / chart_hero_dual
     grid: Optional[Dict[str, Any]] = None
 
 

@@ -19,7 +19,13 @@ from ..regions import gl_card, insight_strip, notes_aside, slide_shell, source_s
 
 from .shared import _content, _hero_stack, _so_what, _source_names, _visual_series_names, _vs_steps
 from .metrics import render_metric
-from ...charts.typography import chart_host_size, chart_pane_title_html
+from ...charts.typography import (
+    chart_host_size,
+    chart_pane_headings_html,
+    chart_pane_title_html,
+    resolve_pane_heading,
+    resolve_pane_subtitle,
+)
 
 # #136/#149: Chart.js runtime re-pitch for plot-aligned support tables.
 # Emitted inline only next to an aligned table (byte-inert when absent).
@@ -443,11 +449,11 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
     """Two charts side by side (PDF p17: bar chart left, line chart right).
 
     visual_spec.primary_visual and visual_spec.secondary_visual each carry
-    their own ``type`` + ``steps_or_data`` + optional per-pane ``label`` /
-    ``chart_config`` / ``line_overlay``. Each pane is built through the
-    standard chart pipeline; pane ``label`` (else single series name) renders
-    as ``gl-chart-pane-title`` (issue 139), and a redundant single-series legend is
-    suppressed.
+    their own ``type`` + ``steps_or_data`` + optional per-pane ``heading`` /
+    ``label`` / ``chart_config`` / ``line_overlay``. Each pane is built through
+    the standard chart pipeline; heading precedence is heading > label >
+    chart_config.title > single series via ``resolve_pane_heading`` (issues 139/147).
+    HTML-owned ``gl-chart-pane-title``; redundant single-series legend suppressed.
     """
     from ...charts import build_chart_html
 
@@ -461,21 +467,13 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         if not isinstance(visual, dict) or not visual:
             continue
         vt = str(visual.get("type") or "grouped_bar_chart").lower()
-        # Pane heading (R5-F/T11): the PDF draws each pane's title as a
-        # heading inside the card, above the plot. Source it from an
-        # explicit per-pane ``label`` when authored, else from the pane's
-        # single series name. Multi-series panes keep their Chart.js
-        # legend (it distinguishes series — information, not chrome); a
-        # single-series legend only restates the heading, so suppress it.
+        # Pane heading (R5-F/T11 + #139/#147): in-card title above the plot.
+        # resolve_pane_heading: heading > label > chart_config.title > single
+        # series. Multi-series panes keep Chart.js legend (series info, not
+        # chrome); single-series legend only restates the heading — suppress.
         names = _visual_series_names(visual)
         pane_cfg = dict(visual.get("chart_config") or {})
-        # #139: recipe label wins; chart_config.title is fallback; single
-        # series name last. One HTML-owned title — never duplicate internals.
-        heading = strip_eids(str(visual.get("label") or ""))
-        if not heading:
-            heading = strip_eids(str(pane_cfg.get("title") or ""))
-        if not heading and len(names) == 1:
-            heading = names[0]
+        heading = resolve_pane_heading(visual, series_names=names)
         if heading and len(names) <= 1 and not visual.get("line_overlay"):
             pane_cfg["show_legend"] = False
         sub_vs: dict[str, Any] = {
@@ -537,37 +535,58 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     Hosts a Chart.js chart (charts feature) on the left and large hero-KPI
     callouts (from content.key_stats) on the right — the IR acquisitions
     pattern. Falls back to the SVG painter when charts are suppressed.
+
+    #147: each pane accepts explicit ``heading`` / ``subtitle``. Precedence
+    for the heading is heading > label > chart_config.title > single series.
+    Right heading/subtitle sit above the hero facts inside the peer card.
     """
     from ...charts import build_chart_html
 
     vs = slide.get("visual_spec") or {}
-    pv = vs.get("primary_visual") or {}
+    pv = vs.get("primary_visual") if isinstance(vs.get("primary_visual"), dict) else {}
+    sv = vs.get("secondary_visual") if isinstance(vs.get("secondary_visual"), dict) else {}
     chart_html = ""
-    if isinstance(pv, dict) and pv.get("type"):
+    if pv.get("type"):
         chart_html = build_chart_html(slide, str(pv.get("type")), use_chartjs=use_chartjs)
     hero = _hero_stack(_sv_content(slide).get("key_stats") or [])
     if not chart_html and not hero:
         return render_metric(slide, total, notes, active=active)
-    # R4 (v8): the PDF chart panel carries an in-card title. Source it from an
-    # explicit primary_visual label when authored (T11 convention); absent a
-    # label nothing renders, so decks without one are unchanged.
-    chart_title = ""
-    if isinstance(pv, dict):
-        chart_title = strip_eids(str(pv.get("label") or ""))
-        if not chart_title:
-            pv_cfg = pv.get("chart_config") if isinstance(pv.get("chart_config"), dict) else {}
-            chart_title = strip_eids(str(pv_cfg.get("title") or ""))
-    # #139: fixed hero chart-column host size for remaining-canvas check.
+
+    # Left pane heading/subtitle (#147 / #139 host geometry).
+    # One combined title+subtitle reservation against remaining-canvas 320×240.
+    left_names = _visual_series_names(pv) if pv else []
+    left_heading = resolve_pane_heading(pv, series_names=left_names)
+    left_sub = resolve_pane_subtitle(pv)
     aw, ah = chart_host_size("chart_hero_dual")
-    title_html = (
-        chart_pane_title_html(chart_title, available_w=aw, available_h=ah)
-        if chart_title
-        else ""
+    left_chrome_html = chart_pane_headings_html(
+        left_heading,
+        left_sub,
+        available_w=aw,
+        available_h=ah,
     )
+
+    # Right peer-card heading/subtitle above hero facts (not per-KPI).
+    # No chart canvas — shared chrome without remaining-canvas geometry.
+    right_heading = resolve_pane_heading(sv, series_names=[])
+    right_sub = resolve_pane_subtitle(sv)
+    right_chrome_html = chart_pane_headings_html(right_heading, right_sub)
+    _open = '<div class="gl-hero-stack">'
+    if hero.startswith(_open):
+        hero_html = f"{_open}{right_chrome_html}{hero[len(_open):]}"
+    elif right_chrome_html:
+        hero_html = f"{_open}{right_chrome_html}</div>"
+    else:
+        hero_html = hero
+
     main = (
         f'<div class="gl-areas-chart-hero">'
-        f'<div class="gl-chart-hero-chart">{title_html}{chart_html or "<div class=\"chart-empty\">No chart</div>"}</div>'
-        f'<div class="gl-chart-hero-stack">{hero}</div>'
+        f'<div class="gl-chart-hero-chart">'
+        f"{left_chrome_html}"
+        f'{chart_html or "<div class=\"chart-empty\">No chart</div>"}'
+        f"</div>"
+        f'<div class="gl-chart-hero-stack">'
+        f"{hero_html}"
+        f"</div>"
         f"</div>" + insight_strip(_so_what(slide))
     )
     return slide_shell(

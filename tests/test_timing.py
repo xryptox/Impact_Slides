@@ -243,7 +243,7 @@ class TestSummaryReport:
         original = p.extract_spreadsheet
 
         def slow_named(path, item):
-            # Key off filename — discovery order is not creation order.
+            # Sleep by name, not call order — filesystem walk order is not stable.
             if Path(path).name == "slow.xlsx":
                 time.sleep(0.3)
             return original(path, item)

@@ -1,4 +1,4 @@
-"""Opt-in chart_config.typography + shared chart-pane title (#139 / R6-A)."""
+"""Opt-in chart_config.typography + shared chart-pane title/subtitle (#139/#147)."""
 from __future__ import annotations
 
 import contextvars
@@ -99,6 +99,23 @@ _PANE_TITLE_STYLE = (
 )
 _PANE_TITLE_LEGACY_STYLE = (
     "white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+)
+# Pane subtitle / dek treatment (#147) — emission-scoped like the title.
+PANE_SUBTITLE_FS = 22
+PANE_SUBTITLE_LH = 1.3
+PANE_SUBTITLE_MAX_LINES = 2
+# Estimated reserved height for a 2-line subtitle + gap (only when subtitle present).
+PANE_SUBTITLE_RESERVE_PX = (
+    int(PANE_SUBTITLE_FS * PANE_SUBTITLE_LH * PANE_SUBTITLE_MAX_LINES) + PANE_TITLE_GAP_PX
+)
+_PANE_SUBTITLE_STYLE = (
+    "font-family:var(--font-body,'Source Sans 3',sans-serif);"
+    f"font-size:var(--fs-sub,{PANE_SUBTITLE_FS}px);font-weight:600;"
+    f"color:var(--ink-muted,#53565a);line-height:{PANE_SUBTITLE_LH};"
+    f"margin:0 0 {PANE_TITLE_GAP_PX}px 0;"
+    "display:-webkit-box;-webkit-box-orient:vertical;"
+    f"-webkit-line-clamp:{PANE_SUBTITLE_MAX_LINES};"
+    "overflow:hidden;text-overflow:ellipsis;flex:none"
 )
 
 # Collision: only when datalabel_font_size supplied.
@@ -224,6 +241,88 @@ def uses_ordinary_datalabels(layout: str, chart_cfg: Mapping[str, Any] | None) -
     return layout in ("grouped_bar_chart", "line_chart")
 
 
+def _optional_str_field(
+    visual: Mapping[str, Any] | None,
+    key: str,
+    *,
+    strict: bool | None = None,
+) -> str | None:
+    """Return stripped string, None if absent, raise/warn on non-string.
+
+    None → field absent (caller may fall through). "" → present but empty.
+    """
+    if not isinstance(visual, Mapping) or key not in visual:
+        return None
+    val = visual[key]
+    if val is None:
+        return None
+    if not isinstance(val, str):
+        msg = f"{key} must be a string"
+        if strict is None:
+            strict = _RENDER_STRICT.get()
+        if strict:
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    from ..strip import strip_eids
+
+    return strip_eids(val).strip()
+
+
+def resolve_pane_heading(
+    visual: Mapping[str, Any] | None,
+    *,
+    series_names: Sequence[str] | None = None,
+    strict: bool | None = None,
+) -> str:
+    """heading > label > chart_config.title > single series name (#147)."""
+    if not isinstance(visual, Mapping):
+        return ""
+    for key in ("heading", "label"):
+        got = _optional_str_field(visual, key, strict=strict)
+        if got:
+            return got
+    cfg = visual.get("chart_config") if isinstance(visual.get("chart_config"), Mapping) else {}
+    title = cfg.get("title") if isinstance(cfg, Mapping) else None
+    if title is not None and not isinstance(title, str):
+        msg = "chart_config.title must be a string"
+        if strict is None:
+            strict = _RENDER_STRICT.get()
+        if strict:
+            raise ValueError(msg)
+        _warn(msg)
+    elif isinstance(title, str):
+        from ..strip import strip_eids
+
+        t = strip_eids(title).strip()
+        if t:
+            return t
+    names = list(series_names or [])
+    if len(names) == 1 and names[0]:
+        return str(names[0]).strip()
+    return ""
+
+
+def resolve_pane_subtitle(
+    visual: Mapping[str, Any] | None,
+    *,
+    strict: bool | None = None,
+) -> str:
+    """Explicit pane subtitle only; empty when absent/invalid (#147)."""
+    got = _optional_str_field(visual, "subtitle", strict=strict)
+    return got or ""
+
+
+def _pane_chrome_reserve_px(*, title: str, subtitle: str) -> int:
+    """Combined title+subtitle height reserved from the plot host."""
+    n = 0
+    if title:
+        n += PANE_TITLE_RESERVE_PX
+    if subtitle:
+        n += PANE_SUBTITLE_RESERVE_PX
+    return n
+
+
 def chart_pane_title_html(
     text: str,
     *,
@@ -235,20 +334,59 @@ def chart_pane_title_html(
 
     Large title is default. If remaining canvas would fall under 320x240,
     strict fails; non-strict falls back to legacy one-line tile-label class.
+    Title-only path — use chart_pane_headings_html when a subtitle is present.
+    """
+    return chart_pane_headings_html(
+        text,
+        "",
+        available_w=available_w,
+        available_h=available_h,
+        strict=strict,
+    )
+
+
+def chart_pane_subtitle_html(text: str) -> str:
+    """HTML-owned pane subtitle (dek treatment). Empty when text absent."""
+    from ..strip import esc
+
+    sub = (text or "").strip()
+    if not sub:
+        return ""
+    return (
+        f'<div class="gl-chart-pane-subtitle" style="{_PANE_SUBTITLE_STYLE}">'
+        f"{esc(sub)}</div>"
+    )
+
+
+def chart_pane_headings_html(
+    title: str = "",
+    subtitle: str = "",
+    *,
+    available_w: float | None = None,
+    available_h: float | None = None,
+    strict: bool | None = None,
+) -> str:
+    """Title + optional subtitle with one remaining-canvas decision (#147).
+
+    Reserves title and/or subtitle height together before the 320×240 check.
+    Empty fields reserve nothing. Strict fails when remaining canvas is short;
+    non-strict falls the title back to legacy tile-label and still emits the
+    subtitle (when present).
     """
     from ..strip import esc
 
-    title = (text or "").strip()
-    if not title:
+    head = (title or "").strip()
+    sub = (subtitle or "").strip()
+    if not head and not sub:
         return ""
     if strict is None:
         strict = _RENDER_STRICT.get()
 
-    # Remaining canvas after title reservation (when host sizes known).
     legacy = False
     if available_w is not None and available_h is not None:
+        reserve = _pane_chrome_reserve_px(title=head, subtitle=sub)
         remain_w = float(available_w)
-        remain_h = float(available_h) - PANE_TITLE_RESERVE_PX
+        remain_h = float(available_h) - reserve
         if remain_w < MIN_CANVAS_W or remain_h < MIN_CANVAS_H:
             msg = (
                 f"pane title would leave canvas {remain_w:.0f}x{remain_h:.0f} "
@@ -259,15 +397,24 @@ def chart_pane_title_html(
             _warn(msg)
             legacy = True
 
-    if legacy:
-        return (
-            f'<div class="gl-tile-label gl-chart-pane-title-legacy" '
-            f'style="{_PANE_TITLE_LEGACY_STYLE}">{esc(title)}</div>'
+    parts: list[str] = []
+    if head:
+        if legacy:
+            parts.append(
+                f'<div class="gl-tile-label gl-chart-pane-title-legacy" '
+                f'style="{_PANE_TITLE_LEGACY_STYLE}">{esc(head)}</div>'
+            )
+        else:
+            parts.append(
+                f'<div class="gl-chart-pane-title" style="{_PANE_TITLE_STYLE}">'
+                f"{esc(head)}</div>"
+            )
+    if sub:
+        parts.append(
+            f'<div class="gl-chart-pane-subtitle" style="{_PANE_SUBTITLE_STYLE}">'
+            f"{esc(sub)}</div>"
         )
-    return (
-        f'<div class="gl-chart-pane-title" style="{_PANE_TITLE_STYLE}">'
-        f"{esc(title)}</div>"
-    )
+    return "".join(parts)
 
 
 def estimate_label_box(
