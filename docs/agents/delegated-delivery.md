@@ -28,7 +28,7 @@ PEW's native child runtime resolves models before dynamically registered provide
 
 When that applies, use PEW for orchestration and isolated worktrees, but launch a full interactive Pi process in a visible Herdr tab for each implementer. Do not use `pi --print`: progress must remain observable. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
 
-Do not depend on scripts stored in `%TEMP%`; they are session helpers, not project contracts. A workflow may create disposable wrappers, but this document and the role files are the durable source of behavior.
+The durable visible repair launcher is `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1`. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on a temporary copy of the launcher.
 
 ## Delivery sequence
 
@@ -122,6 +122,7 @@ After merges:
 
 - PEW journal persistence can fail with `EPERM` during atomic rename after an external merge succeeded. Query the PR before retrying; never assume exactly-once external effects.
 - PowerShell native stderr can be promoted to an exception. Classify using exit code and authoritative state, not stderr text alone.
+- Herdr marks a completed interactive Pi as `done`; `herdr wait agent-status --status idle` does not accept/observe that terminal state. Poll `herdr pane list` for `done` or `idle`, then collect the report and close the tab.
 - Quote Git revision ranges as one normal argument (`base..head`); malformed nested quoting can make Git treat the range as a filename.
 - PEW workflow JavaScript is sandboxed: do not assume `Date.now()` or Bash shell syntax is available; `shell()` uses the host Windows shell.
 - A local branch deletion may fail while its linked worktree exists even though the GitHub merge and remote branch deletion succeeded.
