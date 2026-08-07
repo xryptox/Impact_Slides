@@ -153,7 +153,7 @@ _JS = r"""
         }
       });
     } catch (e) { /* plugin registration is best-effort */ }
-    // #152: semantic zero line independent of scale grids. Config-driven
+    // issue 152: semantic zero line independent of scale grids. Config-driven
     // (options.plugins.zeroLine = {axis, color, lineWidth}); only present when
     // the chart domain needs an interior baseline. No-op without config.
     try {
