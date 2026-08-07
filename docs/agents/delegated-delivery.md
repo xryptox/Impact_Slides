@@ -28,10 +28,11 @@ PEW's native child runtime resolves models before dynamically registered provide
 
 When that applies, use PEW for orchestration and isolated worktrees, but launch a full interactive Pi process in a visible Herdr tab for each implementer. Do not use `pi --print`: progress must remain observable. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
 
-Durable launchers:
+Durable workflow scripts:
 
 - `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — starts the lean interactive Pi child
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — repair/report lifecycle built on that launcher
+- `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
 
 The lean child starts with `--no-extensions --no-skills` and explicitly loads only SuperGrok, the skill-command extension, Ponytail, CodeMapper, and the `implement` skill. Its tool allowlist is `read,bash,edit,write,map,search,outline,expand,path`. Observational memory, RTK, fork/subagent, handoff, TSCG, and PEW are excluded from the child. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
@@ -120,8 +121,8 @@ After merges:
 - fetch and fast-forward/reconcile the root checkout without discarding local commits;
 - confirm linked issues closed;
 - let no-mistakes monitors reach terminal state;
-- delete merged remote/local branches and return/remove worktrees only when clean;
-- prune worktrees;
+- run `cleanup-merged-workflow.ps1` without `-Apply`, review its exact plan, then rerun with `-Apply`; pass safety refs explicitly because unrelated or non-ancestor refs are rejected;
+- delete the terminal run from `/workflow` after script cleanup to remove persisted metadata;
 - report merge SHAs, unresolved PRs, and any cleanup intentionally deferred.
 
 ## Windows failure modes
