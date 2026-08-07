@@ -100,6 +100,13 @@ _PANE_TITLE_STYLE = (
 _PANE_TITLE_LEGACY_STYLE = (
     "white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
 )
+# Pane subtitle / dek treatment (#147) — emission-scoped like the title.
+_PANE_SUBTITLE_STYLE = (
+    "font-family:var(--font-body,'Source Sans 3',sans-serif);"
+    "font-size:var(--fs-sub,22px);font-weight:600;"
+    "color:var(--ink-muted,#53565a);line-height:1.3;"
+    f"margin:0 0 {PANE_TITLE_GAP_PX}px 0;flex:none"
+)
 
 # Collision: only when datalabel_font_size supplied.
 COLLISION_MARGIN_PX = 2
@@ -224,6 +231,78 @@ def uses_ordinary_datalabels(layout: str, chart_cfg: Mapping[str, Any] | None) -
     return layout in ("grouped_bar_chart", "line_chart")
 
 
+def _optional_str_field(
+    visual: Mapping[str, Any] | None,
+    key: str,
+    *,
+    strict: bool | None = None,
+) -> str | None:
+    """Return stripped string, None if absent, raise/warn on non-string.
+
+    None → field absent (caller may fall through). "" → present but empty.
+    """
+    if not isinstance(visual, Mapping) or key not in visual:
+        return None
+    val = visual[key]
+    if val is None:
+        return None
+    if not isinstance(val, str):
+        msg = f"{key} must be a string"
+        if strict is None:
+            strict = _RENDER_STRICT.get()
+        if strict:
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    from ..strip import strip_eids
+
+    return strip_eids(val).strip()
+
+
+def resolve_pane_heading(
+    visual: Mapping[str, Any] | None,
+    *,
+    series_names: Sequence[str] | None = None,
+    strict: bool | None = None,
+) -> str:
+    """heading > label > chart_config.title > single series name (#147)."""
+    if not isinstance(visual, Mapping):
+        return ""
+    for key in ("heading", "label"):
+        got = _optional_str_field(visual, key, strict=strict)
+        if got:
+            return got
+    cfg = visual.get("chart_config") if isinstance(visual.get("chart_config"), Mapping) else {}
+    title = cfg.get("title") if isinstance(cfg, Mapping) else None
+    if title is not None and not isinstance(title, str):
+        msg = "chart_config.title must be a string"
+        if strict is None:
+            strict = _RENDER_STRICT.get()
+        if strict:
+            raise ValueError(msg)
+        _warn(msg)
+    elif isinstance(title, str):
+        from ..strip import strip_eids
+
+        t = strip_eids(title).strip()
+        if t:
+            return t
+    names = list(series_names or [])
+    if len(names) == 1 and names[0]:
+        return str(names[0]).strip()
+    return ""
+
+
+def resolve_pane_subtitle(
+    visual: Mapping[str, Any] | None,
+    *,
+    strict: bool | None = None,
+) -> str:
+    """Explicit pane subtitle only; empty when absent/invalid (#147)."""
+    got = _optional_str_field(visual, "subtitle", strict=strict)
+    return got or ""
+
+
 def chart_pane_title_html(
     text: str,
     *,
@@ -267,6 +346,19 @@ def chart_pane_title_html(
     return (
         f'<div class="gl-chart-pane-title" style="{_PANE_TITLE_STYLE}">'
         f"{esc(title)}</div>"
+    )
+
+
+def chart_pane_subtitle_html(text: str) -> str:
+    """HTML-owned pane subtitle (dek treatment). Empty when text absent."""
+    from ..strip import esc
+
+    sub = (text or "").strip()
+    if not sub:
+        return ""
+    return (
+        f'<div class="gl-chart-pane-subtitle" style="{_PANE_SUBTITLE_STYLE}">'
+        f"{esc(sub)}</div>"
     )
 
 
