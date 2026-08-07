@@ -1,10 +1,16 @@
-"""Contract tests for scripts/simulation_probe.py (#137).
+"""Contract tests for scripts/simulation_probe.py (#137, #146).
 
 Catches the four bad-probe mutations from the v9 simulation:
 1. off-by-one / missing data-slide-number target
 2. wrong expected data-layout
 3. zero-match selector treated as successful absence
 4. pre-bind options.plugins.datalabels instead of painted model lines
+
+Plus paint-ready Chart.js geometry (#146):
+5. Chart object present with a 0×0 canvas
+6. nonzero canvas with degenerate chartArea
+7. degenerate dataset element geometry
+8. capture before the next animation frame settles
 
 Playwright is optional in CI (importorskip); must run locally when installed.
 """
@@ -27,6 +33,7 @@ from simulation_probe import (  # noqa: E402
     activate_slide,
     count_in_slide,
     painted_datalabel_lines,
+    wait_for_paint_ready_charts,
 )
 
 # Runtime-assembled so gen_layout_index word-boundary search does not treat
@@ -56,6 +63,27 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
 <section class="slide" data-slide-number="22" data-layout="late_chart">
   <canvas id="c22" width="200" height="100"></canvas>
 </section>
+<section class="slide" data-slide-number="30" data-layout="geom_zero">
+  <canvas id="c30" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="31" data-layout="geom_area">
+  <canvas id="c31" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="32" data-layout="geom_elements">
+  <canvas id="c32" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="33" data-layout="geom_raf">
+  <canvas id="c33" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="34" data-layout="geom_late">
+  <canvas id="c34" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="35" data-layout="geom_dead">
+  <canvas id="c35" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="36" data-layout="geom_ready">
+  <canvas id="c36" width="200" height="100"></canvas>
+</section>
 <script>
 // Fake Chart registry: options.plugins.datalabels is display-only (pre-bind
 // trap), while $datalabels._labels[*].model().lines holds painted strings.
@@ -64,17 +92,45 @@ window.Chart = {{
     return canvas && canvas.__fakeChart ? canvas.__fakeChart : null;
   }}
 }};
-(function () {{
-  var canvas = document.getElementById('c12');
-  canvas.__fakeChart = {{
+function __paintMeta(hidden, elements) {{
+  return {{
+    hidden: !!hidden,
+    data: elements,
+  }};
+}}
+function __paintChart(opts) {{
+  opts = opts || {{}};
+  var w = ('width' in opts) ? opts.width : 200;
+  var h = ('height' in opts) ? opts.height : 100;
+  var area = opts.chartArea || {{ left: 10, top: 10, right: 190, bottom: 90, width: 180, height: 80 }};
+  var elements = opts.elements || [{{ x: 20, y: 40, skip: false, width: 12, height: 30 }}];
+  var hidden = !!opts.hidden;
+  return {{
+    width: w,
+    height: h,
+    chartArea: area,
+    data: {{ datasets: [{{ data: [1, 2] }}] }},
+    getDatasetMeta: function () {{ return __paintMeta(hidden, elements); }},
     options: {{ plugins: {{ datalabels: {{ display: true }} }} }},
-    $datalabels: {{
+    $datalabels: opts.$datalabels || {{
       _labels: [
         {{ model: function () {{ return {{ lines: ['$0.9'] }}; }} }},
         {{ model: function () {{ return {{ lines: ['$1.1'] }}; }} }}
       ]
     }}
   }};
+}}
+(function () {{
+  var canvas = document.getElementById('c12');
+  canvas.__fakeChart = __paintChart({{}});
+  // Permanent degenerate: Chart object exists, geometry never settles.
+  document.getElementById('c35').__fakeChart = __paintChart({{
+    width: 0, height: 0,
+    chartArea: {{ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }},
+    elements: [{{ x: 0, y: 0, skip: false }}]
+  }});
+  // Already paint-ready multi-check baseline.
+  document.getElementById('c36').__fakeChart = __paintChart({{}});
 }})();
 </script>
 </body></html>
@@ -151,3 +207,118 @@ def test_painted_datalabels_timeout_is_probe_error(page):
     """Readiness wait must fail clearly when Chart labels never appear."""
     with pytest.raises(ProbeError, match=r"painted labels did not become ready on slide 21.*chart_index=0"):
         painted_datalabel_lines(page, 21, "bare_canvas", timeout_ms=300)
+
+
+def test_paint_ready_rejects_zero_geometry(page):
+    """#146 mutation: Chart instance alone with 0×0 canvas is not ready.
+
+    chartArea + elements stay non-degenerate so only the width/height
+    predicate rejects (mutation A).
+    """
+    page.evaluate(
+        """() => {
+          document.getElementById('c30').__fakeChart = __paintChart({
+            width: 0, height: 0,
+            chartArea: {left:10,top:10,right:190,bottom:90,width:180,height:80},
+            elements: [{x:20,y:40,skip:false,width:12,height:30}]
+          });
+        }"""
+    )
+    with pytest.raises(ProbeError, match=r"paint-ready.*slide 30.*geom_zero"):
+        wait_for_paint_ready_charts(page, 30, "geom_zero", timeout_ms=300)
+
+
+def test_paint_ready_rejects_degenerate_chart_area(page):
+    """#146 mutation: nonzero canvas with degenerate chartArea is not ready."""
+    page.evaluate(
+        """() => {
+          document.getElementById('c31').__fakeChart = __paintChart({
+            width: 200, height: 100,
+            chartArea: {left:5,top:5,right:5,bottom:5,width:0,height:0},
+            elements: [{x:5,y:5,skip:false,width:10,height:20}]
+          });
+        }"""
+    )
+    with pytest.raises(ProbeError, match=r"paint-ready.*slide 31.*geom_area"):
+        wait_for_paint_ready_charts(page, 31, "geom_area", timeout_ms=300)
+
+
+def test_paint_ready_rejects_degenerate_dataset_elements(page):
+    """#146 mutation: visible dataset with only degenerate elements is not ready."""
+    page.evaluate(
+        """() => {
+          document.getElementById('c32').__fakeChart = __paintChart({
+            width: 200, height: 100,
+            chartArea: {left:10,top:10,right:190,bottom:90,width:180,height:80},
+            elements: [{x:20,y:40,skip:false,width:0,height:0}]
+          });
+        }"""
+    )
+    with pytest.raises(ProbeError, match=r"paint-ready.*slide 32.*geom_elements"):
+        wait_for_paint_ready_charts(page, 32, "geom_elements", timeout_ms=300)
+
+
+def test_paint_ready_requires_animation_frame_settle(page):
+    """#146 mutation D: readiness must hold across one animation frame.
+
+    Chart looks ready on the first synchronous observation of each poll, then
+    collapses on the rAF recheck. A single-check waiter would falsely succeed;
+    the real helper must keep failing / time out.
+    """
+    page.evaluate(
+        """() => {
+          var chart = __paintChart({});
+          var good = chart.chartArea;
+          var bad = {left:0,top:0,right:0,bottom:0,width:0,height:0};
+          // First chartArea read in a turn is good; subsequent reads are bad
+          // until the next macrotask. Sync check passes, rAF recheck fails.
+          var seen = 0;
+          Object.defineProperty(chart, 'chartArea', {
+            configurable: true,
+            get: function () {
+              seen += 1;
+              return (seen % 2 === 1) ? good : bad;
+            }
+          });
+          document.getElementById('c33').__fakeChart = chart;
+        }"""
+    )
+    with pytest.raises(ProbeError, match=r"paint-ready.*slide 33.*geom_raf"):
+        wait_for_paint_ready_charts(page, 33, "geom_raf", timeout_ms=600)
+
+
+def test_paint_ready_waits_for_delayed_geometry(page):
+    """Delayed 0×0 → settled geometry must transition to ready."""
+    page.evaluate(
+        """() => {
+          document.getElementById('c34').__fakeChart = __paintChart({
+            width: 0, height: 0,
+            chartArea: {left:0,top:0,right:0,bottom:0,width:0,height:0},
+            elements: [{x:0,y:0,skip:false}]
+          });
+          setTimeout(() => {
+            document.getElementById('c34').__fakeChart = __paintChart({});
+          }, 120);
+        }"""
+    )
+    row = wait_for_paint_ready_charts(page, 34, "geom_late", timeout_ms=2000)
+    assert row["slide_number"] == 34
+    assert row["layout"] == "geom_late"
+    assert row["charts"][0]["width"] > 0
+    assert row["charts"][0]["height"] > 0
+    assert row["charts"][0]["chart_area"]["width"] > 0
+
+
+def test_paint_ready_timeout_includes_identity(page):
+    """Permanently degenerate chart times out with identity-rich ProbeError."""
+    with pytest.raises(ProbeError, match=r"paint-ready.*slide 35.*geom_dead"):
+        wait_for_paint_ready_charts(page, 35, "geom_dead", timeout_ms=300)
+
+
+def test_paint_ready_happy_includes_identity(page):
+    row = wait_for_paint_ready_charts(page, 36, "geom_ready")
+    assert row["slide_number"] == 36
+    assert row["layout"] == "geom_ready"
+    assert row["chart_count"] == 1
+    assert row["charts"][0]["width"] > 0
+    assert row["charts"][0]["chart_area"]["width"] > 0
