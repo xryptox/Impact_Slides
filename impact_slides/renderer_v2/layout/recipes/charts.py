@@ -457,6 +457,13 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     right_heading = resolve_pane_heading(sv, series_names=[])
     right_sub = resolve_pane_subtitle(sv)
     right_chrome_html = chart_pane_headings_html(right_heading, right_sub)
+    _open = '<div class="gl-hero-stack">'
+    if hero.startswith(_open):
+        hero_html = f"{_open}{right_chrome_html}{hero[len(_open):]}"
+    elif right_chrome_html:
+        hero_html = f"{_open}{right_chrome_html}</div>"
+    else:
+        hero_html = hero
 
     main = (
         f'<div class="gl-areas-chart-hero">'
@@ -465,7 +472,7 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
         f'{chart_html or "<div class=\"chart-empty\">No chart</div>"}'
         f"</div>"
         f'<div class="gl-chart-hero-stack">'
-        f"{right_chrome_html}{hero}"
+        f"{hero_html}"
         f"</div>"
         f"</div>" + insight_strip(_so_what(slide))
     )

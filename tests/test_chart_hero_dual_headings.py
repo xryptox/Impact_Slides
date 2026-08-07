@@ -161,12 +161,14 @@ def test_amex_four_strings_no_duplicate_internal_title():
     )
     # right heading once — not repeated per KPI row
     assert html.count(_RIGHT_H) == 1
-    # right header sits above hero facts inside the peer card (outer stack)
-    right = html.split('class="gl-chart-hero-stack"', 1)[1]
-    assert _RIGHT_H in right
-    # heading appears before first hero card
-    assert right.index(_RIGHT_H) < right.index("gl-hero card")
-    assert right.index(_RIGHT_S) < right.index("gl-hero card")
+    # right header sits above hero facts inside the peer card (.gl-hero-stack)
+    outer = html.split('class="gl-chart-hero-stack"', 1)[1]
+    before_peer = outer.split('class="gl-hero-stack"', 1)[0]
+    assert _RIGHT_H not in before_peer
+    assert _RIGHT_S not in before_peer
+    peer = outer.split('class="gl-hero-stack"', 1)[1]
+    assert peer.index(_RIGHT_H) < peer.index("gl-hero card")
+    assert peer.index(_RIGHT_S) < peer.index("gl-hero card")
 
 
 def test_right_heading_not_inside_kpi_rows():
@@ -206,6 +208,11 @@ def test_secondary_only_heading_subtitle():
     # only right title
     assert html.count("gl-chart-pane-title") == 1
     assert "gl-hero-stack" in html
+    outer = html.split('class="gl-chart-hero-stack"', 1)[1]
+    before_peer = outer.split('class="gl-hero-stack"', 1)[0]
+    assert _RIGHT_H not in before_peer
+    peer = outer.split('class="gl-hero-stack"', 1)[1]
+    assert peer.index(_RIGHT_H) < peer.index("gl-hero card")
 
 
 def test_absent_fields_reserve_no_space_and_compat():
