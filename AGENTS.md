@@ -94,6 +94,7 @@ When the user requests a durable behavior change, record it here or in the relev
 
 - Delegated ticket implementers must run the full `no-mistakes axi` gate after implementation, let the pipeline correct actionable findings, and report its findings, fixes, run ID, push/PR/CI outcome, and any unresolved decisions to the supervising workflow. Escalate `ask-user` findings instead of deciding them without explicit standing consent.
 - Parallel ticket workflows must run full interactive Pi sessions in visible Herdr tabs so progress text is observable; do not use `pi --print`. Close each temporary tab only after collecting its implementation and no-mistakes report.
+- Follow `docs/agents/delegated-delivery.md` for the reusable PEW → visible Herdr implementer → no-mistakes → host verification → approval-gated cheap merger workflow.
 
 ## Child DOX Index
 

@@ -6,7 +6,7 @@ Agent-facing operating docs and durable engineering notes outside the code tree.
 
 ## Ownership
 
-- `docs/agents/` — issue tracker, triage labels, domain-doc consumption rules
+- `docs/agents/` — issue tracker, triage labels, domain-doc consumption rules, delegated delivery workflow
 - `docs/adr/` — architectural decision records when present
 - `docs/images/` — diagrams referenced by docs
 
@@ -15,6 +15,7 @@ Agent-facing operating docs and durable engineering notes outside the code tree.
 - Tracker: GitHub Issues via `gh` on `xryptox/Impact_Slides` — see `agents/issue-tracker.md`
 - Triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — see `agents/triage-labels.md`
 - Domain intake: root `CONTEXT.md` + `docs/adr/`; do not invent parallel context files — see `agents/domain.md`
+- Delegated delivery: PEW orchestration, visible Herdr implementers, no-mistakes custody, host verification, and approval-gated merger — see `agents/delegated-delivery.md`
 - PRs are **not** a request surface unless `issue-tracker.md` flips that flag
 
 ## Work Guidance
