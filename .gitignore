@@ -47,3 +47,6 @@ treehouse.toml
 # They are scratch instructions, not repo docs.
 TASK_*.md
 Impact_Slides-*/
+
+# Disposable local/CI scratch (do not commit)
+.tmp/
