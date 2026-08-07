@@ -1,0 +1,106 @@
+{
+  "presentation": {
+    "title": "American Express Earnings Conference Call Q1'26",
+    "subtitle": "Issue #148 corrected slides 13-14 — vertical bars, PDF pane order"
+  },
+  "slides": [
+    {
+      "layout_type": "grouped_bar_chart",
+      "packing_mode": "chart-led",
+      "title": "Total Balances and Billed Business",
+      "section": "Balances",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted)",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "grouped_bar_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "values": {"Total Balances": 7, "Billed Business": 6}
+            },
+            {
+              "label": "Q2'25",
+              "values": {"Total Balances": 6, "Billed Business": 7}
+            },
+            {
+              "label": "Q3'25",
+              "values": {"Total Balances": 7, "Billed Business": 8}
+            },
+            {
+              "label": "Q4'25",
+              "values": {"Total Balances": 7, "Billed Business": 8}
+            },
+            {
+              "label": "Q1'26",
+              "values": {"Total Balances": 7, "Billed Business": 9}
+            }
+          ],
+          "chart_config": {
+            "series_names": ["Total Balances", "Billed Business"],
+            "series_colors": ["#00175A", "#006FCF"],
+            "y_axis_min": 0,
+            "y_axis_max": 15,
+            "y_axis_ticks": [0, 5, 10, 15],
+            "y_axis_unit": "%",
+            "y_axis_label": "%"
+          }
+        }
+      },
+      "speaker_notes": "Grouped vertical bars: balances vs billed business.",
+      "slide_number": 13
+    },
+    {
+      "layout_type": "dual_chart",
+      "packing_mode": "chart-led",
+      "title": "Credit Metrics",
+      "section": "Credit",
+      "content": {
+        "subtitle": "30+ days past due and net write-off rates",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "grouped_bar_chart",
+          "heading": "30+ Days Past Due",
+          "steps_or_data": [
+            {"label": "Q1'25", "value": 1.3},
+            {"label": "Q2'25", "value": 1.3},
+            {"label": "Q3'25", "value": 1.3},
+            {"label": "Q4'25", "value": 1.3},
+            {"label": "Q1'26", "value": 1.3}
+          ],
+          "chart_config": {
+            "series_names": ["30+ Days Past Due"],
+            "series_colors": ["#00175A"],
+            "y_axis_min": 0,
+            "y_axis_max": 3,
+            "y_axis_unit": "%"
+          }
+        },
+        "secondary_visual": {
+          "type": "grouped_bar_chart",
+          "heading": "Net Write-Off Rates",
+          "steps_or_data": [
+            {"label": "Q1'25", "value": 2.1},
+            {"label": "Q2'25", "value": 2.0},
+            {"label": "Q3'25", "value": 1.9},
+            {"label": "Q4'25", "value": 2.1},
+            {"label": "Q1'26", "value": 2.0}
+          ],
+          "chart_config": {
+            "series_names": ["Net Write-Off Rates"],
+            "series_colors": ["#006FCF"],
+            "y_axis_min": 0,
+            "y_axis_max": 3,
+            "y_axis_unit": "%"
+          }
+        }
+      },
+      "speaker_notes": "PDF pane order: 30+ DPD left (~1.3%), net write-offs right (~2%).",
+      "slide_number": 14
+    }
+  ]
+}

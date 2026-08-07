@@ -20,6 +20,7 @@ Regression suite and fixtures for preprocessor + renderer_v2.
 ## Work Guidance
 
 - Fixtures for renderer: `tests/fixtures/renderer_v2/`
+- Amex #148 handoff contract: `test_amex_s13_s14_handoff_contract.py` + fixtures `amex_s13_s14_v10_broken.json` / `amex_s13_s14_corrected.json` (mutation via `scripts/amex_handoff_mutations.py`; no renderer production change)
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
 - Do not reintroduce legacy preprocessor baseline harnesses; see `LEGACY_MIGRATION.md`
 
