@@ -21,7 +21,7 @@ from .shared import _content, _hero_stack, _so_what, _source_names, _visual_seri
 from .metrics import render_metric
 from ...charts.typography import (
     chart_host_size,
-    chart_pane_subtitle_html,
+    chart_pane_headings_html,
     chart_pane_title_html,
     resolve_pane_heading,
     resolve_pane_subtitle,
@@ -557,33 +557,32 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
         return render_metric(slide, total, notes, active=active)
 
     # Left pane heading/subtitle (#147 / #139 host geometry).
+    # One combined title+subtitle reservation against remaining-canvas 320×240.
     left_names = _visual_series_names(pv) if pv else []
     left_heading = resolve_pane_heading(pv, series_names=left_names)
     left_sub = resolve_pane_subtitle(pv)
     aw, ah = chart_host_size("chart_hero_dual")
-    left_title_html = (
-        chart_pane_title_html(left_heading, available_w=aw, available_h=ah)
-        if left_heading
-        else ""
+    left_chrome_html = chart_pane_headings_html(
+        left_heading,
+        left_sub,
+        available_w=aw,
+        available_h=ah,
     )
-    left_sub_html = chart_pane_subtitle_html(left_sub)
 
     # Right peer-card heading/subtitle above hero facts (not per-KPI).
+    # No chart canvas — shared chrome without remaining-canvas geometry.
     right_heading = resolve_pane_heading(sv, series_names=[])
     right_sub = resolve_pane_subtitle(sv)
-    # Right card has no chart canvas — still use shared title chrome; skip
-    # remaining-canvas geometry (no plot to protect).
-    right_title_html = chart_pane_title_html(right_heading) if right_heading else ""
-    right_sub_html = chart_pane_subtitle_html(right_sub)
+    right_chrome_html = chart_pane_headings_html(right_heading, right_sub)
 
     main = (
         f'<div class="gl-areas-chart-hero">'
         f'<div class="gl-chart-hero-chart">'
-        f"{left_title_html}{left_sub_html}"
+        f"{left_chrome_html}"
         f'{chart_html or "<div class=\"chart-empty\">No chart</div>"}'
         f"</div>"
         f'<div class="gl-chart-hero-stack">'
-        f"{right_title_html}{right_sub_html}{hero}"
+        f"{right_chrome_html}{hero}"
         f"</div>"
         f"</div>" + insight_strip(_so_what(slide))
     )
