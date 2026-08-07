@@ -185,7 +185,14 @@ def build() -> str:
             bound = " " + ", ".join(f"`{k}={v}`" for k, v in fn.keywords.items())
         tests = _rg_files(lt, "tests")
         tests = [t for t in tests if "/fixtures/" not in t]
-        fixtures = _rg_files(lt, "tests/fixtures")
+        # Full presentation .html baselines embed every `.layout-*` CSS class
+        # (and other layout names), so word-search falsely associates one deck
+        # with dozens of layouts. Handoff JSON remains the fixture signal.
+        fixtures = [
+            f
+            for f in _rg_files(lt, "tests/fixtures")
+            if not f.endswith((".html", ".htm"))
+        ]
         rows.append(
             f"| `{lt}` | `{base.__name__}`{bound} | {_location(fn)} "
             f"| {_fmt_refs(fixtures, '')} | {_fmt_refs(tests, 'test_')} |"

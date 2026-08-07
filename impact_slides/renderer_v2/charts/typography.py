@@ -1,4 +1,4 @@
-"""Opt-in chart_config.typography + shared chart-pane title (#139 / R6-A)."""
+"""Opt-in chart_config.typography + shared chart-pane title/subtitle (#139/#147)."""
 from __future__ import annotations
 
 import contextvars
