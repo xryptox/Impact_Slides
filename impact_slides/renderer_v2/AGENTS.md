@@ -22,6 +22,7 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
 - Delivery default: self-contained (`DeliveryMode.SELF_CONTAINED`)
 - Chart pane titles: HTML-owned `.gl-chart-pane-title` via `charts/typography.chart_pane_title_html` (recipe label → `chart_config.title` → single series name). Hosts pass `chart_host_size(kind)` so remaining-canvas 320×240 is enforced (strict fail / non-strict legacy). Ordinary non-chart `.gl-tile-label` stays 13px gray
 - Opt-in `chart_config.typography` (`x_tick_font_size` 8–24, `y_tick_font_size` 8–28, `datalabel_font_size` 8–32): absent → legacy Chart.js 13/13/11. Invalid group: strict raises; non-strict drops whole group + warns. Tick sizes honored on Chart.js + SVG painters (grouped/stacked/line/combo/hbar). `datalabel_font_size` + collision only on ordinary-label layouts (`grouped_bar_chart` / `line_chart` with `point_labels`) — not stacked in-segment/totals or hbar chips (`charts/typography.py`)
+- Plot gridlines default **off** (Chart.js `scales.*.grid.display: false` + SVG painters omit tick grid strokes). Axis baselines, tick labels, legends, measure rules, connectors, support-row borders, heatmap cell boundaries stay. Mixed negative/positive Chart.js charts get `options.plugins.zeroLine` (shell `beforeDatasetsDraw` paints `getPixelForValue(0)`); all-positive omit it. SVG negative domains keep their zero baseline. Legacy `show_gridlines` / `gridlines` keys are ignored — no public force-on. Waterfall/heatmap remain SVG/HTML, not Chart.js (`charts/chartjs.py`, `shell.py`, #152)
 
 ## Work Guidance
 
