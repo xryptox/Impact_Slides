@@ -21,14 +21,16 @@ from .shared import _content, _hero_stack, _so_what, _source_names, _visual_seri
 from .metrics import render_metric
 from ...charts.typography import chart_host_size, chart_pane_title_html
 
-# #136: Chart.js runtime re-pitch for plot-aligned support tables. Emitted
-# inline only next to an aligned table (byte-inert when absent — #138 lesson).
-# Static SVG contract attrs stay; this no-ops when Chart.js is not on the page.
+# #136/#149: Chart.js runtime re-pitch for plot-aligned support tables.
+# Emitted inline only next to an aligned table (byte-inert when absent).
+# Outlined rows reserve a non-overlapping label lane (min 200px + 8px gap);
+# the wrap may extend left of .chart-col so value cells stay under bars.
 _CHART_TABLE_ALIGN_JS = """
 <script data-rv2-chart-table-align="1">
 (function () {
   if (window.__rv2ChartTableAlignInstalled) return;
   window.__rv2ChartTableAlignInstalled = 1;
+  var LABEL_MIN = 200, LABEL_GAP = 8, BOX_FRAC = 0.4, MAX_EXT = 400;
   function pageX(canvas, chart, tickX) {
     var r = canvas.getBoundingClientRect();
     var k = r.width / (chart.width || r.width || 1);
@@ -66,16 +68,45 @@ _CHART_TABLE_ALIGN_JS = """
     if (!(pitch > 0)) return;
     var leftEdge = first - pitch / 2;
     var rightEdge = last + pitch / 2;
-    var labelW = Math.max(0, leftEdge - colR.left);
-    var wrapW = Math.max(pitch, rightEdge - colR.left);
-    if (n > 1) wrapW = labelW + pitch * n;
-    if (!(wrapW > 0)) return;
-    wrap.style.width = (wrapW / colR.width * 100).toFixed(4) + '%';
     if (isOutlined) {
       var lab = wrap.querySelector('.chart-outlined-label');
+      var hasLabel = !!(lab && (lab.textContent || '').trim());
+      var leftPx = leftEdge - colR.left;
+      var sep = (1 - BOX_FRAC) / 2 * pitch;
+      var wantMin = hasLabel ? LABEL_MIN : 0;
+      var labelColW = wantMin > 0 ? Math.max(leftPx, wantMin) : Math.max(0, leftPx);
+      var shift = Math.max(0, labelColW - leftPx);
+      var wrapW = labelColW + pitch * n;
+      var ok = shift <= MAX_EXT + 1e-6
+        && wrapW <= colR.width + MAX_EXT + 1e-6
+        && (!hasLabel || wantMin <= 0 || sep + 1e-6 >= LABEL_GAP);
+      if (!ok) {
+        // Avoid class thrash: MutationObserver watches class and would loop.
+        if (!wrap.classList.contains('chart-outlined-stacked')) {
+          wrap.classList.add('chart-outlined-stacked');
+        }
+        if (wrap.classList.contains('chart-table-aligned')) {
+          wrap.classList.remove('chart-table-aligned');
+        }
+        wrap.style.width = '';
+        wrap.style.marginLeft = '';
+        if (lab) { lab.style.flex = ''; lab.style.width = ''; }
+        var cellsFail = wrap.querySelectorAll('.chart-outlined-cell');
+        for (var f = 0; f < cellsFail.length; f++) {
+          cellsFail[f].style.flex = '';
+          cellsFail[f].style.width = '';
+        }
+        return;
+      }
+      // Do not toggle classes on the happy path (MO watches class attrs).
+      // margin-left % is relative to .chart-col (same base as width %).
+      wrap.style.marginLeft = shift > 0
+        ? (-shift / colR.width * 100).toFixed(4) + '%'
+        : '0%';
+      wrap.style.width = (wrapW / colR.width * 100).toFixed(4) + '%';
       if (lab) {
         lab.style.flex = 'none';
-        lab.style.width = (labelW / wrapW * 100).toFixed(4) + '%';
+        lab.style.width = (labelColW / wrapW * 100).toFixed(4) + '%';
       }
       var cells = wrap.querySelectorAll('.chart-outlined-cell');
       var cw = (pitch / wrapW * 100).toFixed(4) + '%';
@@ -83,13 +114,18 @@ _CHART_TABLE_ALIGN_JS = """
         cells[c].style.flex = 'none';
         cells[c].style.width = cw;
       }
-    } else {
-      var cg = wrap.querySelectorAll('colgroup col');
-      if (cg.length >= n + 1) {
-        cg[0].style.width = (labelW / wrapW * 100).toFixed(4) + '%';
-        var tw = (pitch / wrapW * 100).toFixed(4) + '%';
-        for (var j = 1; j <= n; j++) cg[j].style.width = tw;
-      }
+      return;
+    }
+    var labelW = Math.max(0, leftEdge - colR.left);
+    var wrapW = Math.max(pitch, rightEdge - colR.left);
+    if (n > 1) wrapW = labelW + pitch * n;
+    if (!(wrapW > 0)) return;
+    wrap.style.width = (wrapW / colR.width * 100).toFixed(4) + '%';
+    var cg = wrap.querySelectorAll('colgroup col');
+    if (cg.length >= n + 1) {
+      cg[0].style.width = (labelW / wrapW * 100).toFixed(4) + '%';
+      var tw = (pitch / wrapW * 100).toFixed(4) + '%';
+      for (var j = 1; j <= n; j++) cg[j].style.width = tw;
     }
   }
   function alignAll() {
@@ -208,12 +244,15 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
                 and all(len(r) == n + 1 for r in table_rows)
                 and [c.strip() for c in header[1:]] == labels
             )
+            skin = str(secondary.get("skin") or "").strip()
+            is_outlined = skin == "outlined_boxes"
+            outlined_stacked = False
+            lane_shift_px = 0.0
             if aligned:
                 left, right, width = chart_column_interval(layout, n)
-                # colgroup percentages of the table's own width; the table
+                # Ordinary support tables: colgroup % of table width. The table
                 # spans [0, right] of the shared SVG width context, so an
-                # absolute column center (pct * table_w) must equal the
-                # category point's cx / width — the alignment invariant.
+                # absolute column center (pct * table_w) equals cx / width.
                 table_w = right / width * 100
                 label_w = left / right * 100  # label col as % of table width
                 col_w = (right - left) / n / right * 100
@@ -223,25 +262,69 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
                     + f'<col style="width:{col_w:.2f}%">' * n
                     + "</colgroup>"
                 )
-                # expose the mapped SVG interval for geometric verification
                 align_attrs = (
                     f' data-align-left="{left:.1f}" data-align-right="{right:.1f}"'
                     f' data-align-width="{width:.1f}"'
                 )
+                if is_outlined:
+                    # #149: reserve a readable label lane; may extend left of
+                    # the chart column so value cells stay under bar centers.
+                    from ...charts.geometry import (
+                        OUTLINED_HOST_WIDTH_PX,
+                        outlined_lane_layout,
+                    )
+                    from ...charts.typography import _RENDER_STRICT, _warn
+
+                    label_text = ""
+                    if body and body[0]:
+                        label_text = str(body[0][0] or "").strip()
+                    lane = outlined_lane_layout(
+                        left, right, width, n, has_label=bool(label_text)
+                    )
+                    if not lane["ok"]:
+                        msg = (
+                            "outlined support row cannot reserve label lane "
+                            f"for n={n} (host too narrow)"
+                        )
+                        if _RENDER_STRICT.get():
+                            raise ValueError(msg)
+                        _warn(msg)
+                        outlined_stacked = True
+                        aligned = False
+                        colgroup = ""
+                        align_attrs = ""
+                    else:
+                        shift = float(lane["shift_px"])
+                        wrap_w = float(lane["wrap_w_px"])
+                        lab_col = float(lane["label_col_w_px"])
+                        pitch = float(lane["pitch_px"])
+                        host_px = OUTLINED_HOST_WIDTH_PX
+                        table_w = wrap_w / host_px * 100
+                        label_w = lab_col / wrap_w * 100 if wrap_w else 0.0
+                        col_w = pitch / wrap_w * 100 if wrap_w else 0.0
+                        lane_shift_px = shift
+                        align_attrs += (
+                            f' data-label-shift="{shift:.1f}"'
+                            f' data-label-col="{lab_col:.1f}"'
+                        )
             else:
                 colgroup = ""
                 align_attrs = ""
+                table_w = 0.0
+                label_w = 0.0
+                col_w = 0.0
 
             # N6: opt-in outlined-box skin (PDF provision boards: gray-stroked,
             # unfilled reserve-rate cells under each period column, period labels
             # already on the chart axis so the header row is dropped).
             # Declarative via secondary_visual.skin; absent -> today's table.
-            skin = str(secondary.get("skin") or "").strip()
-            if skin == "outlined_boxes":
+            if is_outlined:
                 cells_html = ""
                 for row in body:
                     for ci, c in enumerate(row):
-                        cls_name = "chart-outlined-label" if ci == 0 else "chart-outlined-cell"
+                        cls_name = (
+                            "chart-outlined-label" if ci == 0 else "chart-outlined-cell"
+                        )
                         # outer slot carries the pitch-matched alignment width;
                         # the visible stroked box sits inside (PDF p15: cells
                         # are ~40% of the column pitch, centered, separated).
@@ -256,13 +339,29 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
                                 f'<div class="{cls_name}">'
                                 f'<span class="chart-outlined-box">{esc(c)}</span></div>'
                             )
-                box_cls = "chart-support-outlined" + (" chart-table-aligned" if aligned else "")
-                box_style = f' style="width:{table_w:.2f}%"' if aligned else ""
+                box_cls = "chart-support-outlined"
+                if aligned:
+                    box_cls += " chart-table-aligned"
+                elif outlined_stacked:
+                    box_cls += " chart-outlined-stacked"
+                style_bits = []
+                if aligned:
+                    style_bits.append(f"width:{table_w:.2f}%")
+                    if lane_shift_px > 0:
+                        # % of .chart-col (containing block) — same base as width.
+                        shift_pct = lane_shift_px / OUTLINED_HOST_WIDTH_PX * 100
+                        style_bits.append(f"margin-left:{-shift_pct:.2f}%")
+                box_style = f' style="{";".join(style_bits)}"' if style_bits else ""
                 tbl = f'<div class="{box_cls}"{box_style}{align_attrs}>{cells_html}</div>'
             else:
-                tbl_cls = "chart-support-table" + (" chart-table-aligned" if aligned else "")
+                tbl_cls = "chart-support-table" + (
+                    " chart-table-aligned" if aligned else ""
+                )
                 tbl_style = f' style="width:{table_w:.2f}%"' if aligned else ""
-                tbl = f'<table class="{tbl_cls}"{tbl_style}{align_attrs}>{colgroup}<thead><tr>'
+                tbl = (
+                    f'<table class="{tbl_cls}"{tbl_style}{align_attrs}>'
+                    f"{colgroup}<thead><tr>"
+                )
                 tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
                 tbl += "</tr></thead><tbody>"
                 for row in body:
@@ -274,7 +373,9 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
             # (colgroup) remains conditional on the header/category match.
             # #136: Chart.js runtime re-pitch only when this table is aligned.
             align_js = _CHART_TABLE_ALIGN_JS if aligned else ""
-            cls = " ".join(wrap_classes + (["chart-align-table"] if aligned else []))
+            cls = " ".join(
+                wrap_classes + (["chart-align-table"] if aligned else [])
+            )
             main = (
                 f'<div class="chart-svg-wrap {cls}">'
                 f'<div class="chart-col">{chart_html}{tbl}{align_js}</div></div>'

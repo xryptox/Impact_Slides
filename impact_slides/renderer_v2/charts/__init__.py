@@ -8,7 +8,15 @@ from __future__ import annotations
 
 from .format import _BOARDROOM_SERIES, _NAVY, _NAVY_SOFT, _WHITE, _series_color, _BAR_SERIES_COLORS, _series_colors, _fmt_unit, _bar_num, _fmt_value_label, _fmt_bar, _fmt_chart_num, _nice_max, _nice_step
 from .callouts import _align_overlay_to_labels, _CALLOUT_TYPES, _value_anchor_pct, _merge_callout_bands, _elbow_stem_html, _build_callout_overlays, _build_side_callout_html, _build_side_callout_svg, _resolve_side_callout, side_callout_active
-from .geometry import _CHART_GEOMETRY, chart_geometry, chart_column_interval
+from .geometry import (
+    _CHART_GEOMETRY,
+    OUTLINED_HOST_WIDTH_PX,
+    OUTLINED_LABEL_GAP_PX,
+    OUTLINED_LABEL_MIN_PX,
+    chart_column_interval,
+    chart_geometry,
+    outlined_lane_layout,
+)
 from .core import is_chart_layout, _icon_svg, _steps, _chart_config, build_icon_grid_html, _fallback_icon_grid, _svg_fallback_for_layout, build_chart_html
 from .bars import _bar_matrix, _bar_axes, _vbar_pad_t, _bar_group_brackets, _vbar_frame, _build_grouped_bar_svg, _build_stacked_bar_svg, _build_hbar_svg
 from .lines import _line_data, _combo_bar_data, _combo_line_data, _build_line_chart_svg, _build_combo_chart_svg
@@ -73,8 +81,12 @@ __all__ = [
     '_vbar_pad_t',
     'build_chart_html',
     'build_icon_grid_html',
+    'OUTLINED_HOST_WIDTH_PX',
+    'OUTLINED_LABEL_GAP_PX',
+    'OUTLINED_LABEL_MIN_PX',
     'chart_column_interval',
     'chart_geometry',
     'is_chart_layout',
+    'outlined_lane_layout',
     'side_callout_active',
 ]

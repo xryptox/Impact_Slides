@@ -8,14 +8,26 @@ central test parses actual SVG point coordinates and colgroup widths and
 compares them numerically.
 """
 
+import json
 import re
 from pathlib import Path
 
+import pytest
+
 from impact_slides.renderer_v2 import render_deck
 from impact_slides.renderer_v2.charts import (
+    OUTLINED_LABEL_GAP_PX,
+    OUTLINED_LABEL_MIN_PX,
     _build_line_chart_svg,
     chart_column_interval,
     chart_geometry,
+    outlined_lane_layout,
+)
+from impact_slides.renderer_v2.charts.typography import (
+    begin_render_warnings,
+    reset_render_strict,
+    set_render_strict,
+    take_render_warnings,
 )
 from impact_slides.renderer_v2.layout.dispatch import render_slide
 
@@ -358,3 +370,268 @@ def test_golden_mvp1_byte_inert_no_align_script(tmp_path):
     html = (out / "presentation.html").read_text(encoding="utf-8")
     assert _ALIGN_JS_MARKER not in html
     assert "__rv2ChartTableAlignInstalled" not in html
+
+
+# ------------------------------------------- #149 label-lane reservation
+
+
+def _quarters(n: int) -> list[str]:
+    # Synthetic labels that still match primary/secondary 1:1.
+    return [f"P{i}" for i in range(n)]
+
+
+def _outlined_n(n: int, *, label: str = "Reserve Rate for Total Balances"):
+    cats = _quarters(n)
+    primary = [["Quarter", "A", "B"]] + [[c, "100", "-10"] for c in cats]
+    secondary = {
+        "type": "data_table",
+        "skin": "outlined_boxes",
+        "steps_or_data": [["", *cats], [label, *(["2.8%"] * n)]],
+    }
+    return _outlined_slide(primary, secondary)
+
+
+def test_outlined_lane_layout_reserves_min_label():
+    left, right, width = chart_column_interval("stacked_bar_chart", 5)
+    lane = outlined_lane_layout(left, right, width, 5)
+    assert lane["ok"] is True
+    assert lane["label_col_w_px"] >= OUTLINED_LABEL_MIN_PX - 1e-6
+    assert lane["sep_px"] >= OUTLINED_LABEL_GAP_PX - 1e-6
+    assert lane["shift_px"] > 0  # natural gutter < 200px on chart-split host
+
+
+@pytest.mark.parametrize("n", [1, 2, 5, 12])
+def test_outlined_lane_ok_for_common_counts(n):
+    left, right, width = chart_column_interval("stacked_bar_chart", n)
+    lane = outlined_lane_layout(left, right, width, n)
+    assert lane["ok"] is True
+    assert lane["label_col_w_px"] >= OUTLINED_LABEL_MIN_PX - 1e-6
+
+
+def test_outlined_lane_very_dense_fails_sep():
+    # pitch shrinks with n; cell-box side pad eventually < 8px gap.
+    left, right, width = chart_column_interval("stacked_bar_chart", 40)
+    lane = outlined_lane_layout(left, right, width, 40)
+    assert lane["ok"] is False
+    assert lane["sep_px"] < OUTLINED_LABEL_GAP_PX
+
+
+def test_outlined_lane_missing_label_no_min():
+    left, right, width = chart_column_interval("stacked_bar_chart", 5)
+    lane = outlined_lane_layout(left, right, width, 5, has_label=False)
+    assert lane["ok"] is True
+    assert lane["shift_px"] == 0.0
+    assert lane["label_col_w_px"] == pytest.approx(lane["left_px"])
+
+
+def test_outlined_lane_dense_or_narrow_fails_closed():
+    left, right, width = chart_column_interval("stacked_bar_chart", 5)
+    # Force an impossible host: cannot fit 200px label + 5 pitches.
+    lane = outlined_lane_layout(
+        left, right, width, 5, host_px=120.0, max_left_extend_px=10.0
+    )
+    assert lane["ok"] is False
+    assert lane["mode"] == "stacked"
+
+
+def test_outlined_static_emits_label_shift_attrs():
+    html = _render(_outlined_n(5))
+    assert "chart-support-outlined chart-table-aligned" in html
+    assert 'data-label-shift="' in html
+    assert 'data-label-col="' in html
+    shift = float(re.search(r'data-label-shift="([\d.]+)"', html).group(1))
+    lab_col = float(re.search(r'data-label-col="([\d.]+)"', html).group(1))
+    assert shift > 0
+    assert lab_col >= OUTLINED_LABEL_MIN_PX - 1.0
+    # label slot is the reserved lane, not the collapsed y-gutter
+    lab_pct = float(
+        re.search(
+            r'<div class="chart-outlined-label" style="width:([\d.]+)%"',
+            html,
+        ).group(1)
+    )
+    assert lab_pct > 15.0
+
+
+def test_outlined_long_label_still_aligned():
+    html = _render(
+        _outlined_n(5, label="Reserve Rate for Total Card Member Loans and Balances")
+    )
+    assert "chart-table-aligned" in html
+    assert "Reserve Rate for Total Card Member Loans and Balances" in html
+
+
+def test_outlined_missing_label_still_aligns_cells():
+    html = _render(_outlined_n(5, label=""))
+    assert "chart-table-aligned" in html
+    assert html.count('<div class="chart-outlined-cell" style="width:') == 5
+    # empty label slot present
+    assert '<div class="chart-outlined-label"' in html
+
+
+def test_outlined_mapping_primary_label_lane():
+    cats = ["Q1'25", "Q2'25", "Q3'25", "Q4'25", "Q1'26"]
+    primary = [{"label": c, "values": {"NCO": 1, "RR": -1}} for c in cats]
+    secondary = {
+        "type": "data_table",
+        "skin": "outlined_boxes",
+        "steps_or_data": [
+            ["", *cats],
+            ["Reserve Rate for Total Balances", *(["2.8%"] * 5)],
+        ],
+    }
+    html = _render(_outlined_slide(primary, secondary))
+    assert "chart-support-outlined chart-table-aligned" in html
+    assert 'data-label-shift="' in html
+
+
+def test_outlined_narrow_host_strict_raises(monkeypatch):
+    from impact_slides.renderer_v2.charts import geometry as geom
+
+    monkeypatch.setattr(geom, "OUTLINED_HOST_WIDTH_PX", 80.0)
+    monkeypatch.setattr(geom, "OUTLINED_MAX_LEFT_EXTEND_PX", 5.0)
+    tok = set_render_strict(True)
+    try:
+        with pytest.raises(ValueError, match="label lane"):
+            _render(_outlined_n(5))
+    finally:
+        reset_render_strict(tok)
+
+
+def test_outlined_narrow_host_nonstrict_stacks_and_warns(monkeypatch):
+    from impact_slides.renderer_v2.charts import geometry as geom
+
+    monkeypatch.setattr(geom, "OUTLINED_HOST_WIDTH_PX", 80.0)
+    monkeypatch.setattr(geom, "OUTLINED_MAX_LEFT_EXTEND_PX", 5.0)
+    st = set_render_strict(False)
+    wt = begin_render_warnings()
+    try:
+        html = _render(_outlined_n(5))
+    finally:
+        warnings = take_render_warnings(wt)
+        reset_render_strict(st)
+    assert "chart-outlined-stacked" in html
+    assert "chart-table-aligned" not in html
+    assert _ALIGN_JS_MARKER not in html
+    assert any("label lane" in w for w in warnings)
+
+
+def test_runtime_js_contains_label_lane_constants():
+    html = _render(_outlined_n(5))
+    assert "LABEL_MIN = 200" in html
+    assert "LABEL_GAP = 8" in html
+    assert "chart-outlined-stacked" in html  # class name referenced for fallback
+
+
+def test_outlined_geometry_playwright_center_and_separation(tmp_path):
+    """#149: bar/cell centers AND label/first-cell separation together."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    slide = _outlined_n(5)
+    handoff = {
+        "meta": {"deck_title": "t", "source": "t"},
+        "slides": [slide],
+    }
+    hp = tmp_path / "h.json"
+    hp.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(hp, out, strict=False)
+    html_path = out / "presentation.html"
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.resolve().as_uri(), wait_until="domcontentloaded")
+        # render_deck may inject a title slide; activate the outlined row's slide.
+        page.evaluate(
+            """() => {
+              const target = document.querySelector('.chart-support-outlined')
+                ?.closest('.slide');
+              document.querySelectorAll('.slide').forEach(s => {
+                const on = s === target;
+                s.classList.toggle('active', on);
+                s.style.display = on ? 'block' : 'none';
+              });
+            }"""
+        )
+        page.wait_for_timeout(1000)
+        measured = page.evaluate(
+            """() => {
+              const box = el => {
+                const b = el.getBoundingClientRect();
+                return {l:b.left, r:b.right, cx:(b.left+b.right)/2, w:b.width, t:b.top, btm:b.bottom};
+              };
+              const root = document.querySelector('.slide.active') || document;
+              const lab = root.querySelector('.chart-outlined-label .chart-outlined-box');
+              const cells = [...root.querySelectorAll(
+                '.chart-outlined-cell .chart-outlined-box')];
+              const canvas = root.querySelector('canvas');
+              const chart = canvas && typeof Chart !== 'undefined' && Chart.getChart(canvas);
+              if (!lab || !cells.length || !chart || !chart.scales || !chart.scales.x) {
+                return {err: 'no chart', hasLab: !!lab, nCells: cells.length};
+              }
+              const cr = canvas.getBoundingClientRect();
+              const k = cr.width / (chart.width || cr.width || 1);
+              const bars = cells.map((_, i) => {
+                const tx = chart.scales.x.getPixelForTick(i);
+                return cr.left + tx * k;
+              });
+              const stage = root.getBoundingClientRect();
+              return {
+                lab: box(lab),
+                cells: cells.map(box),
+                bars,
+                sep: cells[0].getBoundingClientRect().left - lab.getBoundingClientRect().right,
+                labText: lab.textContent || '',
+                stage: {l: stage.left, r: stage.right, t: stage.top, b: stage.bottom},
+                wrapBottom: root.querySelector('.chart-support-outlined')
+                  .getBoundingClientRect().bottom,
+              };
+            }"""
+        )
+        browser.close()
+
+    assert "err" not in measured
+    assert measured["sep"] >= 8.0 - 0.5
+    assert measured["lab"]["w"] >= 199.0
+    for bar, cell in zip(measured["bars"], measured["cells"]):
+        assert abs(cell["cx"] - bar) <= 12.0
+    # label fully visible on stage; support row within stage bottom
+    assert measured["lab"]["l"] >= measured["stage"]["l"] - 1
+    assert measured["lab"]["r"] <= measured["stage"]["r"] + 1
+    assert measured["wrapBottom"] <= measured["stage"]["b"] + 1
+    assert measured["labText"].strip()
+
+
+def test_outlined_svg_path_lane_invariants():
+    """Static SVG path shares the same lane model as Chart.js (#149)."""
+    html_body = render_slide(
+        _outlined_n(5), total=1, notes="", active=True, use_chartjs=False
+    )
+    left = float(re.search(r'data-align-left="([\d.]+)"', html_body).group(1))
+    right = float(re.search(r'data-align-right="([\d.]+)"', html_body).group(1))
+    width = float(re.search(r'data-align-width="([\d.]+)"', html_body).group(1))
+    shift = float(re.search(r'data-label-shift="([\d.]+)"', html_body).group(1))
+    lab_col = float(re.search(r'data-label-col="([\d.]+)"', html_body).group(1))
+    cell_pcts = [
+        float(m)
+        for m in re.findall(
+            r'<div class="chart-outlined-cell" style="width:([\d.]+)%"', html_body
+        )
+    ]
+    assert len(cell_pcts) == 5
+    assert lab_col >= OUTLINED_LABEL_MIN_PX - 1.0
+    assert shift > 0
+    lane = outlined_lane_layout(left, right, width, 5)
+    assert lane["ok"]
+    assert abs(lane["shift_px"] - shift) < 1.0
+    assert abs(lane["label_col_w_px"] - lab_col) < 1.0
+    for i in range(5):
+        bar_cx = lane["left_px"] + (i + 0.5) * lane["pitch_px"]
+        cell_left = (
+            -lane["shift_px"] + lane["label_col_w_px"] + i * lane["pitch_px"]
+        )
+        cell_cx = cell_left + lane["pitch_px"] / 2
+        assert abs(cell_cx - bar_cx) < 0.5
+    assert lane["sep_px"] >= OUTLINED_LABEL_GAP_PX - 1e-6

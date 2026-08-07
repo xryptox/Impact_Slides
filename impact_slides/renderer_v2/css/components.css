@@ -1024,6 +1024,12 @@
   align-items: center;
   margin-top: var(--size-3);
   background: transparent;
+  /* #149: label lane may extend left of .chart-col via negative margin */
+  overflow: visible;
+  box-sizing: border-box;
+}
+.chart-svg-wrap.chart-align-table .chart-col {
+  overflow: visible; /* allow outlined label lane left of column */
 }
 .chart-outlined-label,
 .chart-outlined-cell {
@@ -1031,6 +1037,7 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  min-width: 0;
 }
 .chart-outlined-label {
   flex: none;
@@ -1053,15 +1060,46 @@
 }
 .chart-outlined-label .chart-outlined-box {
   width: 100%;
-  min-width: 200px; /* keeps a two-line label readable in a narrow chart gutter */
-  min-height: 105px; /* PDF p15: 245x105 two-line label block */
+  max-width: 100%; /* #149: box stays inside reserved label lane */
+  min-width: 0;
+  min-height: 105px; /* PDF p15: two-line label block */
   font-weight: 600;
+  line-height: 1.2;
+  /* at most two lines (#149) */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
 }
 .chart-outlined-cell .chart-outlined-box {
-  width: 40%; /* PDF p15: cell 115px at 282px pitch (~41%) */
-  min-width: 96px;
-  min-height: 58px; /* PDF p15: 115x58 period cells */
+  width: 40%; /* PDF p15: cell ~40% of column pitch, centered */
+  min-width: 0;
+  min-height: 58px; /* PDF p15: period cells */
   font-variant-numeric: tabular-nums;
+}
+/* #149 non-strict fallback when host cannot fit label min + N pitches */
+.chart-support-outlined.chart-outlined-stacked {
+  flex-wrap: wrap;
+  width: 100% !important;
+  margin-left: 0 !important;
+  row-gap: var(--size-2, 8px);
+}
+.chart-support-outlined.chart-outlined-stacked .chart-outlined-label {
+  flex: 1 0 100%;
+  width: 100% !important;
+  max-width: 100%;
+  justify-content: flex-start;
+}
+.chart-support-outlined.chart-outlined-stacked .chart-outlined-label .chart-outlined-box {
+  width: auto;
+  max-width: 100%;
+  min-width: min(200px, 100%);
+}
+.chart-support-outlined.chart-outlined-stacked .chart-outlined-cell {
+  flex: 1 1 0;
+  width: auto !important;
+  min-width: 0;
 }
 
 /* Dual chart layout: two charts side by side (Fidelity T7/#35).
