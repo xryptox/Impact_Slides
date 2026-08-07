@@ -88,7 +88,8 @@ def _write_presentation(
     out: Path, html: str, features_list: list[str]
 ) -> tuple[Path, int]:
     html_path = out / "presentation.html"
-    html_path.write_text(html, encoding="utf-8")
+    # newline="\n": keep LF so vendored JS banners stay byte-stable cross-OS.
+    html_path.write_text(html, encoding="utf-8", newline="\n")
     html_bytes = html_path.stat().st_size
     if html_bytes >= features_mod.ADVISORY_HTML_BYTES:
         print(
