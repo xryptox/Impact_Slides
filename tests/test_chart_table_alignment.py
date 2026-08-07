@@ -521,6 +521,9 @@ def test_runtime_js_contains_label_lane_constants():
     assert "LABEL_MIN = 200" in html
     assert "LABEL_GAP = 8" in html
     assert "chart-outlined-stacked" in html  # class name referenced for fallback
+    # Runtime live-geometry stack must diagnose (parity with static non-strict).
+    assert "cannot reserve label lane" in html
+    assert "console.warn" in html
 
 
 def test_outlined_geometry_playwright_center_and_separation(tmp_path):

@@ -84,6 +84,12 @@ _CHART_TABLE_ALIGN_JS = """
         // Avoid class thrash: MutationObserver watches class and would loop.
         if (!wrap.classList.contains('chart-outlined-stacked')) {
           wrap.classList.add('chart-outlined-stacked');
+          // Match static non-strict path: diagnose once on first stack.
+          try {
+            console.warn(
+              '[chart-table-align] outlined support row cannot reserve label lane; stacking'
+            );
+          } catch (e) {}
         }
         if (wrap.classList.contains('chart-table-aligned')) {
           wrap.classList.remove('chart-table-aligned');
