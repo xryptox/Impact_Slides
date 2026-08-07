@@ -69,3 +69,99 @@ def chart_column_interval(
         slot = (plot_r - plot_l) / (n - 1)
         return plot_l - slot / 2, plot_r + slot / 2, float(w)
     return plot_l, plot_r, float(w)
+
+
+# Outlined support-row lane contract (#149). CSS twin: .chart-outlined-label
+# min-width 200px and .chart-outlined-cell box at 40% of pitch. Shared by the
+# static SVG path and the Chart.js runtime re-pitch script.
+OUTLINED_LABEL_MIN_PX = 200.0
+OUTLINED_LABEL_GAP_PX = 8.0
+OUTLINED_CELL_BOX_FRAC = 0.4
+# 1920×1080 stage, gl-main inset 96/side, chart-frame pad 22/side, chart-split 55%.
+OUTLINED_HOST_WIDTH_PX = (1920.0 - 2 * 96.0 - 2 * 22.0) * 0.55  # 926.2
+# How far the wrap may extend left of .chart-col into the frame (measured ~400).
+OUTLINED_MAX_LEFT_EXTEND_PX = 400.0
+
+
+def outlined_lane_layout(
+    plot_left: float,
+    plot_right: float,
+    svg_width: float,
+    n: int,
+    *,
+    host_px: float | None = None,
+    label_min_px: float | None = None,
+    gap_px: float | None = None,
+    box_frac: float | None = None,
+    max_left_extend_px: float | None = None,
+    has_label: bool = True,
+) -> dict[str, float | bool | str]:
+    """Pixel lane model for an outlined support row under a chart column.
+
+    Coordinates are px relative to the chart-col left edge (0). Value slots
+    still start at the plot-scaled left edge so cell centers track bar
+    centers; the label lane grows left when the natural y-axis gutter is
+    narrower than ``label_min_px``.
+
+    Separation: label box is contained in the label column; first value box
+    sits at ``box_frac`` of the pitch centered in slot 0, so clear space is
+    ``(1 - box_frac) / 2 * pitch`` (must be >= gap_px).
+    """
+    # Resolve module constants at call time so tests can monkeypatch them.
+    if host_px is None:
+        host_px = OUTLINED_HOST_WIDTH_PX
+    if label_min_px is None:
+        label_min_px = OUTLINED_LABEL_MIN_PX
+    if gap_px is None:
+        gap_px = OUTLINED_LABEL_GAP_PX
+    if box_frac is None:
+        box_frac = OUTLINED_CELL_BOX_FRAC
+    if max_left_extend_px is None:
+        max_left_extend_px = OUTLINED_MAX_LEFT_EXTEND_PX
+
+    empty = {
+        "ok": False,
+        "mode": "stacked",
+        "shift_px": 0.0,
+        "wrap_w_px": 0.0,
+        "label_col_w_px": 0.0,
+        "label_box_w_px": 0.0,
+        "pitch_px": 0.0,
+        "left_px": 0.0,
+        "right_px": 0.0,
+        "sep_px": 0.0,
+    }
+    if n < 1 or host_px <= 0 or svg_width <= 0 or plot_right <= plot_left:
+        return empty
+
+    scale = host_px / svg_width
+    left_px = float(plot_left) * scale
+    right_px = float(plot_right) * scale
+    pitch = (right_px - left_px) / n
+    if not (pitch > 0):
+        return empty
+
+    # Cell box centered in slot → left padding inside the first value slot.
+    sep = (1.0 - float(box_frac)) / 2.0 * pitch
+    want_min = float(label_min_px) if has_label else 0.0
+    label_col_w = max(left_px, want_min) if want_min > 0 else max(0.0, left_px)
+    shift = max(0.0, label_col_w - left_px)
+    wrap_w = label_col_w + pitch * n
+
+    ok = (
+        shift <= max_left_extend_px + 1e-6
+        and wrap_w <= host_px + max_left_extend_px + 1e-6
+        and (not has_label or want_min <= 0 or sep + 1e-6 >= float(gap_px))
+    )
+    return {
+        "ok": bool(ok),
+        "mode": "aligned" if ok else "stacked",
+        "shift_px": float(shift),
+        "wrap_w_px": float(wrap_w),
+        "label_col_w_px": float(label_col_w),
+        "label_box_w_px": float(want_min if want_min > 0 else label_col_w),
+        "pitch_px": float(pitch),
+        "left_px": float(left_px),
+        "right_px": float(right_px),
+        "sep_px": float(sep),
+    }
