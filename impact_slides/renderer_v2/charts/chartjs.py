@@ -59,17 +59,17 @@ def _next_chart_id() -> str:
 
 
 def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    """Calm Boardroom defaults: no animation, readable axes.
+    """Calm Boardroom defaults: no animation, readable axes, no plot gridlines.
 
-    Optional axis-chrome suppression (F11+, v4 sim): IR 100%-stack boards
-    carry values in-segment, so the PDF drops gridlines and often the whole
-    y axis. All three keys default to True (current Boardroom chrome), so
-    existing handoffs are unaffected (SC-COMPAT-1):
-      show_gridlines: False  -> hide x+y grid lines, keep ticks
+    Plot gridlines are off by default (issue 152). Axis baselines, ticks, and
+    semantic zero lines stay. Legacy show_gridlines / gridlines keys are
+    ignored — there is no force-on hatch.
+
+    Optional axis-chrome suppression (F11+, v4 sim):
       show_y_axis / show_x_axis: False -> hide that scale entirely
       show_legend: False -> hide the legend (recipes set this when a pane
         heading already carries a single series' name, so the swatch would
-        only restate it). Defaults to True (Chart.js default, SC-COMPAT-1).
+        only restate it). Defaults to True (Chart.js default).
     """
     typo = resolve_typography(cfg or {})
     x_size = int(typo.get("x_tick_font_size", LEGACY_X_TICK))
@@ -97,23 +97,20 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
                     "color": "#00175a",
                     "font": {"family": "'Source Sans 3', sans-serif", "size": x_size},
                 },
-                "grid": {"color": "rgba(224, 228, 234, 0.8)"},
+                "grid": {"display": False},
             },
             "y": {
                 "ticks": {
                     "color": "#00175a",
                     "font": y_font,
                 },
-                "grid": {"color": "rgba(224, 228, 234, 0.8)"},
+                "grid": {"display": False},
             },
         },
     }
     if cfg:
         if cfg.get("show_legend") is False:
             options["plugins"]["legend"]["display"] = False
-        if cfg.get("show_gridlines") is False:
-            options["scales"]["x"]["grid"]["display"] = False
-            options["scales"]["y"]["grid"]["display"] = False
         if cfg.get("show_y_axis") is False:
             options["scales"]["y"]["display"] = False
         if cfg.get("show_x_axis") is False:

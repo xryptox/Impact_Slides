@@ -142,14 +142,12 @@ class TestLineChartSvg:
         assert "Q1&#x27;25" in svg or "Q1'25" in svg
         assert "Q1&#x27;26" in svg or "Q1'26" in svg
 
-    def test_has_y_axis_gridlines(self):
+    def test_has_axes_without_plot_gridlines(self):
         svg = _build_line_chart_svg(_slide())
+        # X + Y axis baselines only (plot gridlines default off, #152).
         lines = re.findall(r"<line\s", svg)
-        assert len(lines) >= 5  # At least Y gridlines + X/Y axes
-
-    def test_has_axes(self):
-        svg = _build_line_chart_svg(_slide())
-        # X and Y axis lines
+        assert len(lines) == 2
+        assert 'stroke="var(--panel-border, #d8dce3)"' not in svg
         assert 'stroke-width="1"' in svg
 
     def test_empty_data_returns_empty_message(self):

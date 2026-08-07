@@ -209,11 +209,13 @@ def test_annotation_newlines_survive_normalize_handoff():
     assert "\n" in s["visual_spec"]["chart_config"]["annotation"]["text"]
 
 
-# ------------------------------------------------------- gridlines toggle (T10/#38)
+# ------------------------------------------------------- plot gridlines default off (#152)
 
-from impact_slides.renderer_v2.charts import _build_stacked_bar_svg
+from impact_slides.renderer_v2.charts import _build_hbar_svg, _build_stacked_bar_svg
 
-GRID = 'stroke="var(--panel-border, #d8dce3)"'
+# Plot gridlines only — axes/zero use navy stroke-width 1, not panel-border 0.5.
+PLOT_GRID = 'stroke="var(--panel-border, #d8dce3)"'
+AXIS = 'stroke="var(--navy, #00175a)" stroke-width="1"'
 
 
 def _grid_slide(layout, data, **cfg):
@@ -231,34 +233,52 @@ def _grid_slide(layout, data, **cfg):
     return slide
 
 
-def test_line_chart_gridlines_default_on():
+def test_line_chart_plot_gridlines_default_off():
     slide = _grid_slide("line_chart", [{"label": "Q1", "value": 9}, {"label": "Q2", "value": 10}])
-    assert GRID in _build_line_chart_svg(slide)
-
-
-def test_line_chart_gridlines_off():
-    slide = _grid_slide("line_chart", [{"label": "Q1", "value": 9}, {"label": "Q2", "value": 10}], gridlines=False)
     svg = _build_line_chart_svg(slide)
-    assert GRID not in svg
-    assert "<polyline" in svg            # chart intact
-    assert "text-anchor=\"end\"" in svg  # tick labels still render
+    assert PLOT_GRID not in svg
+    assert "<polyline" in svg
+    assert 'text-anchor="end"' in svg  # tick labels
+    assert AXIS in svg                 # axis baselines
 
 
-def test_bar_chart_gridlines_off():
-    slide = _grid_slide("grouped_bar_chart", [{"label": "Q1", "value": 7}], gridlines=False)
-    assert GRID not in _build_grouped_bar_svg(slide)
-
-
-def test_stacked_bar_gridlines_off():
-    slide = _grid_slide("stacked_bar_chart", [{"label": "Q1", "values": {"A": 100, "B": -20}}], gridlines=False)
-    assert GRID not in _build_stacked_bar_svg(slide)
-
-
-def test_combo_gridlines_off():
-    slide = _grid_slide("combo_chart", [{"label": "Q1", "value": 1.6}], gridlines=False)
-    assert GRID not in _build_combo_chart_svg(slide)
-
-
-def test_bar_chart_gridlines_default_on():
+def test_bar_chart_plot_gridlines_default_off():
     slide = _grid_slide("grouped_bar_chart", [{"label": "Q1", "value": 7}])
-    assert GRID in _build_grouped_bar_svg(slide)
+    svg = _build_grouped_bar_svg(slide)
+    assert PLOT_GRID not in svg
+    assert AXIS in svg
+
+
+def test_stacked_bar_plot_gridlines_default_off_keeps_zero():
+    # Negative domain: zero baseline stays; plot gridlines do not.
+    slide = _grid_slide(
+        "stacked_bar_chart",
+        [{"label": "Q1", "values": {"A": 100, "B": -20}}],
+    )
+    svg = _build_stacked_bar_svg(slide)
+    assert PLOT_GRID not in svg
+    assert AXIS in svg
+    assert "vbar-neg" in svg
+
+
+def test_combo_plot_gridlines_default_off():
+    slide = _grid_slide("combo_chart", [{"label": "Q1", "value": 1.6}])
+    assert PLOT_GRID not in _build_combo_chart_svg(slide)
+
+
+def test_hbar_has_no_plot_gridlines():
+    slide = _grid_slide("horizontal_bar_chart", [{"label": "A", "value": 7}])
+    svg = _build_hbar_svg(slide)
+    assert PLOT_GRID not in svg
+    assert "hbar-zero" in svg
+
+
+def test_stale_gridlines_true_key_ignored():
+    # No public force-on hatch; absent or truthy legacy keys both mean off.
+    slide = _grid_slide(
+        "line_chart",
+        [{"label": "Q1", "value": 9}, {"label": "Q2", "value": 10}],
+        gridlines=True,
+        show_gridlines=True,
+    )
+    assert PLOT_GRID not in _build_line_chart_svg(slide)

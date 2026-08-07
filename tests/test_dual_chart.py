@@ -6,9 +6,26 @@ bar chart left, YoY% line chart right).
 """
 from __future__ import annotations
 
+import json
+import re
+
 from impact_slides.renderer_v2.layout.dispatch import render_slide
 from impact_slides.renderer_v2.layout.recipes import render_dual_chart
 from impact_slides.renderer_v2.schemas import validate_slide
+
+
+def _legend_displays(html: str) -> list[bool | None]:
+    """Legend.display per embedded Chart.js config (None = Chart.js default on)."""
+    out: list[bool | None] = []
+    for m in re.finditer(
+        r'<script type="application/json" class="chartjs-config"[^>]*>(.*?)</script>',
+        html,
+        re.S,
+    ):
+        conf = json.loads(m.group(1))
+        leg = (conf.get("options") or {}).get("plugins", {}).get("legend", {})
+        out.append(leg.get("display"))
+    return out
 
 
 def _slide(**over):
@@ -99,7 +116,7 @@ def test_single_series_pane_gets_heading_and_legend_suppressed():
     ]
     html = render_dual_chart(slide, 1, "", use_chartjs=True)
     assert 'class="gl-chart-pane-title"' in html and ">Net Card Fees $B</div>" in html
-    assert '"display": false' in html or '"display":false' in html
+    assert False in _legend_displays(html)
 
 
 def test_multi_series_pane_keeps_legend_and_no_heading():
@@ -116,7 +133,7 @@ def test_multi_series_pane_keeps_legend_and_no_heading():
     html = render_dual_chart(slide, 1, "", use_chartjs=True)
     assert "gl-chart-pane-title" not in html
     assert "gl-tile-label" not in html
-    assert '"display": false' not in html and '"display":false' not in html
+    assert False not in _legend_displays(html)
 
 
 def test_value_plus_series_n_keeps_legend_with_pane_label():
@@ -133,7 +150,7 @@ def test_value_plus_series_n_keeps_legend_with_pane_label():
     }
     html = render_dual_chart(slide, 1, "", use_chartjs=True)
     assert 'class="gl-chart-pane-title"' in html and ">Unemployment</div>" in html
-    assert '"display": false' not in html and '"display":false' not in html
+    assert False not in _legend_displays(html)
 
 
 def test_explicit_pane_label_renders_as_heading():

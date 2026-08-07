@@ -32,7 +32,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `guidance_statement_card` | `render_guidance_statement_card` | impact_slides/renderer_v2/layout/recipes/metrics.py:426 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `heatmap` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:121 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |
 | `hierarchy_tree` | `render_hierarchy_tree` | impact_slides/renderer_v2/layout/recipes/diagrams.py:126 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
-| `horizontal_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:121 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `horizontal_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:121 | — | `chart_polish.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `horizontal_process` | `render_horizontal_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:70 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3b_layouts.py` |
 | `icon_grid` | `render_icon_grid` | impact_slides/renderer_v2/layout/recipes/charts.py:471 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gridlines.py` +3 |
 | `insight_with_evidence` | `render_insight_with_evidence` | impact_slides/renderer_v2/layout/recipes/cards.py:100 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
