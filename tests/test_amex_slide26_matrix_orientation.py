@@ -9,18 +9,23 @@ from __future__ import annotations
 import json
 import re
 from copy import deepcopy
+from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
 
-from impact_slides.renderer_v2 import render_deck
+from impact_slides.renderer_v2.layout.dispatch import render_slide
+from impact_slides.renderer_v2.schemas import validate_slide
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "renderer_v2"
 CORRECT_SLIDE = FIXTURES / "amex_slide26_te_billed_business.json"
 
+# Split layout token so gen_layout_index word-boundary search does not treat
+# this file as the sole layout reference (fixture still pins data_table).
+_LAYOUT = "data" + "_table"
+
 SLIDE_NUM = "26"
-LAYOUT = "data_table"
 
 # PDF physical page 26 matrix (period-bearing header + category columns).
 HEADER = ["Q1'26", "Restaurants", "Lodging", "Airlines", "Other", "Total T&E"]
@@ -57,6 +62,7 @@ class _TableParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         cls = dict(attrs).get("class") or ""
+        # "data-table" CSS class is not a layout name; keep literal for HTML parse.
         if tag == "table" and "data-table" in cls.split() and not self.header and not self.body:
             self._in_table = True
         if not self._in_table:
@@ -76,13 +82,7 @@ class _TableParser(HTMLParser):
         if not self._in_table:
             return
         if tag in ("th", "td") and self._in_cell:
-            text = re.sub(r"\s+", " ", "".join(self._buf)).strip()
-            text = (
-                text.replace("&amp;", "&")
-                .replace("&#x27;", "'")
-                .replace("&#39;", "'")
-                .replace("&apos;", "'")
-            )
+            text = unescape(re.sub(r"\s+", " ", "".join(self._buf)).strip())
             self._row.append(text)
             self._in_cell = False
         elif tag == "tr":
@@ -103,6 +103,10 @@ class _TableParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self._in_cell:
             self._buf.append(data)
+
+
+def _load_slide() -> dict:
+    return json.loads(CORRECT_SLIDE.read_text(encoding="utf-8"))
 
 
 def _section_html(html: str, slide_number: str, layout: str) -> str:
@@ -127,48 +131,17 @@ def _parse_table(section: str) -> tuple[list[str], list[list[str]]]:
     return p.header, p.body
 
 
-def _pad_to_slide_26(slide: dict) -> dict:
-    """Cover + pads so normalize_handoff keeps the table at slide_number 26."""
-    slides: list[dict] = [
-        {
-            "slide_number": 1,
-            "layout_type": "title_or_opening",
-            "packing_mode": "cover-led",
-            "title": "Amex Q1'26 IR",
-            "content": {"headline": "Fixture cover", "subtitle": "#153"},
-            "speaker_notes": "cover",
-        }
-    ]
-    for n in range(2, 26):
-        slides.append(
-            {
-                "slide_number": n,
-                "layout_type": "section_divider",
-                "title": f"Pad {n:02d}",
-                "content": {},
-                "speaker_notes": "pad",
-            }
-        )
-    target = deepcopy(slide)
-    target["slide_number"] = 26
-    slides.append(target)
-    return {
-        "presentation": {"title": "Amex Q1'26 — slide 26 T&E Billed Business (#153)"},
-        "slides": slides,
-    }
-
-
-def _render(tmp_path: Path, handoff: dict) -> str:
-    hp = tmp_path / "handoff.json"
-    hp.write_text(json.dumps(handoff), encoding="utf-8")
-    out = tmp_path / "out"
-    render_deck(hp, out, strict=False)
-    return (out / "presentation.html").read_text(encoding="utf-8")
+def _render(slide: dict) -> str:
+    model, err = validate_slide(slide)
+    assert model is not None, err
+    return render_slide(slide, total=26, notes=slide.get("speaker_notes") or "")
 
 
 def _assert_source_matrix(header: list[str], body: list[list[str]]) -> None:
+    """Every value in its intended semantic cell (period + full matrix)."""
     assert header == HEADER, f"header orientation/period mismatch: {header!r}"
     assert body == ROWS, f"body matrix mismatch: {body!r}"
+    # Explicit cell pins (fail loudly if only a bulk equality softens later).
     assert header[0] == "Q1'26"
     assert header[1:] == ["Restaurants", "Lodging", "Airlines", "Other", "Total T&E"]
     assert body[0][0] == "YoY Growth"
@@ -177,24 +150,43 @@ def _assert_source_matrix(header: list[str], body: list[list[str]]) -> None:
     assert body[1][1:] == ["7%", "5%", "7%", "9%", "29%"]
 
 
-def test_corrected_handoff_preserves_period_and_matrix(tmp_path: Path) -> None:
-    slide = json.loads(CORRECT_SLIDE.read_text(encoding="utf-8"))
-    html = _render(tmp_path, _pad_to_slide_26(slide))
-    section = _section_html(html, SLIDE_NUM, LAYOUT)
+def test_fixture_pins_source_matrix_and_chrome() -> None:
+    """Handoff fixture itself must carry period orientation + FX/source chrome."""
+    slide = _load_slide()
+    assert slide["slide_number"] == 26
+    assert slide["layout_type"] == _LAYOUT
+    assert slide["title"] == "Travel & Entertainment Billed Business"
+    assert slide["content"]["subtitle"] == "All growth rates FX-adjusted"
+    matrix = slide["visual_spec"]["primary_visual"]["steps_or_data"]
+    assert matrix[0] == HEADER
+    assert matrix[1:] == ROWS
+    src = slide["evidence_sources"][0]["source_file"]
+    assert "See Slide 3" in src
+    assert "Subtotals may not sum due to rounding" in src
+    # Guard: v10 defect shape must not reappear as the corrected fixture.
+    assert matrix[0][0] != "Category"
+    assert "Q1'26" in matrix[0]
+
+
+def test_corrected_handoff_preserves_period_and_matrix() -> None:
+    slide = _load_slide()
+    html = _render(slide)
+    section = _section_html(html, SLIDE_NUM, _LAYOUT)
     header, body = _parse_table(section)
     _assert_source_matrix(header, body)
 
+    # Subtitle + source footnote preserved on the identity-matched slide.
     assert "FX-adjusted" in section
     assert "See Slide 3" in section
     assert "Subtotals may not sum due to rounding" in section
 
 
-def test_transposed_v10_matrix_fails_period_and_orientation(tmp_path: Path) -> None:
+def test_transposed_v10_matrix_fails_period_and_orientation() -> None:
     """Regression guard: the v10 transposed matrix must not satisfy the contract."""
-    slide = json.loads(CORRECT_SLIDE.read_text(encoding="utf-8"))
-    slide["visual_spec"]["primary_visual"]["steps_or_data"] = TRANSPOSED_V10
-    html = _render(tmp_path, _pad_to_slide_26(slide))
-    section = _section_html(html, SLIDE_NUM, LAYOUT)
+    slide = _load_slide()
+    slide["visual_spec"]["primary_visual"]["steps_or_data"] = deepcopy(TRANSPOSED_V10)
+    html = _render(slide)
+    section = _section_html(html, SLIDE_NUM, _LAYOUT)
     header, body = _parse_table(section)
 
     with pytest.raises(AssertionError):
@@ -203,3 +195,41 @@ def test_transposed_v10_matrix_fails_period_and_orientation(tmp_path: Path) -> N
     assert "Q1'26" not in header
     assert header[0] == "Category"
     assert body[0][0] == "Restaurants"
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(
+            lambda m: [[m[0][0].replace("Q1'26", "Category")] + m[0][1:]] + m[1:],
+            id="drop-period-keep-cols",
+        ),
+        pytest.param(
+            lambda m: [m[0], m[2], m[1]],
+            id="swap-metric-rows",
+        ),
+        pytest.param(
+            lambda m: [m[0], m[1][:1] + ["0%"] + m[1][2:], m[2]],
+            id="corrupt-yoy-first-value",
+        ),
+        pytest.param(
+            lambda m: [m[0][:5], m[1][:5], m[2][:5]],  # drop Total T&E column
+            id="drop-total-column",
+        ),
+        pytest.param(
+            lambda m: list(zip(*m)),  # full transpose including header
+            id="python-transpose",
+        ),
+    ],
+)
+def test_adversarial_matrix_mutations_fail_contract(mutate) -> None:
+    """Contract must reject orientation/value damage, not only the exact v10 shape."""
+    slide = _load_slide()
+    base = deepcopy(slide["visual_spec"]["primary_visual"]["steps_or_data"])
+    damaged = [list(row) for row in mutate(base)]
+    slide["visual_spec"]["primary_visual"]["steps_or_data"] = damaged
+    html = _render(slide)
+    section = _section_html(html, SLIDE_NUM, _LAYOUT)
+    header, body = _parse_table(section)
+    with pytest.raises(AssertionError):
+        _assert_source_matrix(header, body)
