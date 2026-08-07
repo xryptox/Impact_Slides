@@ -1061,7 +1061,8 @@
 .chart-outlined-label .chart-outlined-box {
   width: 100%;
   max-width: 100%; /* #149: box stays inside reserved label lane */
-  min-width: 0;
+  /* Readable floor for unaligned/ordinary rows; aligned lane owns width. */
+  min-width: min(200px, 100%);
   min-height: 105px; /* PDF p15: two-line label block */
   font-weight: 600;
   line-height: 1.2;
@@ -1071,6 +1072,9 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
   white-space: normal;
+}
+.chart-support-outlined.chart-table-aligned .chart-outlined-label .chart-outlined-box {
+  min-width: 0; /* reserved lane width is the contract */
 }
 .chart-outlined-cell .chart-outlined-box {
   width: 40%; /* PDF p15: cell ~40% of column pitch, centered */

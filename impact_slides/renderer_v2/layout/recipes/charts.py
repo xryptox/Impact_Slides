@@ -254,6 +254,7 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
             is_outlined = skin == "outlined_boxes"
             outlined_stacked = False
             lane_shift_px = 0.0
+            host_px = 0.0  # set for outlined aligned path
             if aligned:
                 left, right, width = chart_column_interval(layout, n)
                 # Ordinary support tables: colgroup % of table width. The table
@@ -284,8 +285,18 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
                     label_text = ""
                     if body and body[0]:
                         label_text = str(body[0][0] or "").strip()
+                    # Match CSS host fraction: chart-split=55%, +stats=44%.
+                    # Scale from OUTLINED_HOST_WIDTH_PX so monkeypatches stick.
+                    host_px = OUTLINED_HOST_WIDTH_PX
+                    if "chart-with-stats" in wrap_classes:
+                        host_px = OUTLINED_HOST_WIDTH_PX * (0.44 / 0.55)
                     lane = outlined_lane_layout(
-                        left, right, width, n, has_label=bool(label_text)
+                        left,
+                        right,
+                        width,
+                        n,
+                        host_px=host_px,
+                        has_label=bool(label_text),
                     )
                     if not lane["ok"]:
                         msg = (
@@ -304,7 +315,6 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
                         wrap_w = float(lane["wrap_w_px"])
                         lab_col = float(lane["label_col_w_px"])
                         pitch = float(lane["pitch_px"])
-                        host_px = OUTLINED_HOST_WIDTH_PX
                         table_w = wrap_w / host_px * 100
                         label_w = lab_col / wrap_w * 100 if wrap_w else 0.0
                         col_w = pitch / wrap_w * 100 if wrap_w else 0.0
@@ -355,7 +365,7 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
                     style_bits.append(f"width:{table_w:.2f}%")
                     if lane_shift_px > 0:
                         # % of .chart-col (containing block) — same base as width.
-                        shift_pct = lane_shift_px / OUTLINED_HOST_WIDTH_PX * 100
+                        shift_pct = lane_shift_px / host_px * 100
                         style_bits.append(f"margin-left:{-shift_pct:.2f}%")
                 box_style = f' style="{";".join(style_bits)}"' if style_bits else ""
                 tbl = f'<div class="{box_cls}"{box_style}{align_attrs}>{cells_html}</div>'
