@@ -16,11 +16,11 @@ This process depends on user-global tools and configuration, not files vendored 
 Expected roles:
 
 - `implementer` — implements one issue in an isolated feature worktree
-- `gate-driver` — drives an existing no-mistakes run to PR/CI
-- `reviewer` — read-only correctness and data-loss review
-- `merger` — cheap-model, approval-gated merge of one exact PR head
+- `gate-driver` — recovery-only driver for an existing no-mistakes run; Kimi `review` model, `bash` only, all skills/extensions disabled (the role invokes the installed `no-mistakes` CLI directly)
+- `reviewer` — Kimi read-only correctness/data-loss review with project/cwd DOX context, CodeMapper only, and no unrelated extensions
+- `merger` — cheap-model, approval-gated merge of one exact PR head; `bash` only with all skills/extensions disabled
 
-The current aliases use `dev` for implementation/review work and `cheap` for merging. Inspect the live settings rather than copying remembered provider names.
+The current aliases use `dev` for implementation work, `review` for Kimi review, and `cheap` for merging. Inspect the live settings rather than copying remembered provider names.
 
 ## Why Herdr wraps implementation
 
@@ -28,7 +28,12 @@ PEW's native child runtime resolves models before dynamically registered provide
 
 When that applies, use PEW for orchestration and isolated worktrees, but launch a full interactive Pi process in a visible Herdr tab for each implementer. Do not use `pi --print`: progress must remain observable. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
 
-The durable visible repair launcher is `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1`. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on a temporary copy of the launcher.
+Durable launchers:
+
+- `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — starts the lean interactive Pi child
+- `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — repair/report lifecycle built on that launcher
+
+The lean child starts with `--no-extensions --no-skills` and explicitly loads only SuperGrok, the skill-command extension, Ponytail, CodeMapper, and the `implement` skill. Its tool allowlist is `read,bash,edit,write,map,search,outline,expand,path`. Observational memory, RTK, fork/subagent, handoff, TSCG, and PEW are excluded from the child. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
 ## Delivery sequence
 
@@ -44,6 +49,7 @@ The durable visible repair launcher is `~/.pi/agent/pi-extensible-workflows/scri
 
 Each implementer must:
 
+- launch through `launch-visible-implementer.ps1` (directly or through the repair orchestrator), not a bare full-profile `pi` command;
 - invoke/read the `implement` skill explicitly;
 - use TDD where practical and perform the required code review;
 - change only its issue scope;
