@@ -15,6 +15,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 ## Local Contracts
 
 - Layout index search is pure Python over `git ls-files` (no ripgrep dependency)
+- Fixture column ignores `.html`/`.htm` (full-deck baselines embed every `.layout-*` class and false-hit many layouts); handoff JSON is the fixture signal
 - `--check` must stay CI-green; regenerate when registry, recipes, or test references change
 - Do not commit `TASK_*.md` briefs (gitignored)
 - Simulation probes address slides by `data-slide-number` + expected `data-layout` only (via `simulation_probe.py`); zero selector matches and missing painted Chart.js `$datalabels` models are probe failures, never successful empty observations. Both Amex launcher prompts carry the same contract.

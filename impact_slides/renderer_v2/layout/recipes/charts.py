@@ -332,11 +332,11 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
     """Two charts side by side (PDF p17: bar chart left, line chart right).
 
     visual_spec.primary_visual and visual_spec.secondary_visual each carry
-    their own ``type`` + ``steps_or_data`` + optional per-pane ``label`` /
-    ``chart_config`` / ``line_overlay``. Each pane is built through the
-    standard chart pipeline; pane ``label`` (else single series name) renders
-    as ``gl-chart-pane-title`` (issue 139), and a redundant single-series legend is
-    suppressed.
+    their own ``type`` + ``steps_or_data`` + optional per-pane ``heading`` /
+    ``label`` / ``chart_config`` / ``line_overlay``. Each pane is built through
+    the standard chart pipeline; heading precedence is heading > label >
+    chart_config.title > single series via ``resolve_pane_heading`` (#139/#147).
+    HTML-owned ``gl-chart-pane-title``; redundant single-series legend suppressed.
     """
     from ...charts import build_chart_html
 
@@ -350,16 +350,12 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         if not isinstance(visual, dict) or not visual:
             continue
         vt = str(visual.get("type") or "grouped_bar_chart").lower()
-        # Pane heading (R5-F/T11): the PDF draws each pane's title as a
-        # heading inside the card, above the plot. Source it from an
-        # explicit per-pane ``label`` when authored, else from the pane's
-        # single series name. Multi-series panes keep their Chart.js
-        # legend (it distinguishes series — information, not chrome); a
-        # single-series legend only restates the heading, so suppress it.
+        # Pane heading (R5-F/T11 + #139/#147): in-card title above the plot.
+        # resolve_pane_heading: heading > label > chart_config.title > single
+        # series. Multi-series panes keep Chart.js legend (series info, not
+        # chrome); single-series legend only restates the heading — suppress.
         names = _visual_series_names(visual)
         pane_cfg = dict(visual.get("chart_config") or {})
-        # #139/#147: heading > label > chart_config.title > single series.
-        # One HTML-owned title — never duplicate internals.
         heading = resolve_pane_heading(visual, series_names=names)
         if heading and len(names) <= 1 and not visual.get("line_overlay"):
             pane_cfg["show_legend"] = False
