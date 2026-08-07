@@ -153,6 +153,43 @@ _JS = r"""
         }
       });
     } catch (e) { /* plugin registration is best-effort */ }
+    // #152: semantic zero line independent of scale grids. Config-driven
+    // (options.plugins.zeroLine = {axis, color, lineWidth}); only present when
+    // the chart domain needs an interior baseline. No-op without config.
+    try {
+      Chart.register({
+        id: 'zeroLine',
+        beforeDatasetsDraw: function (chart) {
+          var opts = chart.config.options.plugins && chart.config.options.plugins.zeroLine;
+          if (!opts) return;
+          var axis = opts.axis === 'x' ? 'x' : 'y';
+          var scale = chart.scales && chart.scales[axis];
+          var area = chart.chartArea;
+          if (!scale || !area) return;
+          var lo = typeof scale.min === 'number' ? scale.min : null;
+          var hi = typeof scale.max === 'number' ? scale.max : null;
+          if (lo == null || hi == null || !(lo < 0 && hi > 0)) return;
+          var z = scale.getPixelForValue(0);
+          if (typeof z !== 'number' || isNaN(z)) return;
+          var ctx = chart.ctx;
+          ctx.save();
+          ctx.beginPath();
+          ctx.strokeStyle = opts.color || '#00175a';
+          ctx.lineWidth = typeof opts.lineWidth === 'number' ? opts.lineWidth : 1;
+          if (axis === 'y') {
+            if (z < area.top || z > area.bottom) { ctx.restore(); return; }
+            ctx.moveTo(area.left, z);
+            ctx.lineTo(area.right, z);
+          } else {
+            if (z < area.left || z > area.right) { ctx.restore(); return; }
+            ctx.moveTo(z, area.top);
+            ctx.lineTo(z, area.bottom);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+      });
+    } catch (e) { /* plugin registration is best-effort */ }
     // R2/T1 (+ T6/T7/T9): overlay geometry in chartArea pixels. The server
     // emits overlays as % of the wrap (close, JS-off-safe); this plugin
     // overwrites left/top/width/height in exact pixels from the live chart.

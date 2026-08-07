@@ -58,6 +58,59 @@ def _next_chart_id() -> str:
 
 
 
+def _numeric_dataset_values(datasets: list[dict[str, Any]]) -> list[float]:
+    """Flatten Chart.js dataset data entries to floats (skip non-numerics)."""
+    out: list[float] = []
+    for ds in datasets:
+        for v in ds.get("data") or []:
+            if isinstance(v, bool):
+                continue
+            if isinstance(v, (int, float)):
+                out.append(float(v))
+            elif isinstance(v, Mapping):
+                for key in ("y", "x"):
+                    n = v.get(key)
+                    if isinstance(n, (int, float)) and not isinstance(n, bool):
+                        out.append(float(n))
+                        break
+    return out
+
+
+
+def _apply_semantic_zero_line(
+    options: dict[str, Any],
+    datasets: list[dict[str, Any]],
+    *,
+    axis: str = "y",
+) -> None:
+    """Enable shell zeroLine plugin when zero is a semantic interior baseline.
+
+    Independent of scale grids (issue 152). Fires when data includes a negative
+    value, or when an explicit scale domain straddles zero. No-op otherwise so
+    all-positive charts keep only the axis edge.
+    """
+    vals = _numeric_dataset_values(datasets)
+    needs = any(v < 0 for v in vals)
+    if not needs:
+        scale = (options.get("scales") or {}).get(axis) or {}
+        lo, hi = scale.get("min"), scale.get("max")
+        needs = (
+            isinstance(lo, (int, float))
+            and isinstance(hi, (int, float))
+            and not isinstance(lo, bool)
+            and not isinstance(hi, bool)
+            and float(lo) < 0 < float(hi)
+        )
+    if not needs:
+        return
+    options.setdefault("plugins", {})["zeroLine"] = {
+        "axis": axis,
+        "color": _NAVY,
+        "lineWidth": 1,
+    }
+
+
+
 def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Calm Boardroom defaults: no animation, readable axes, no plot gridlines.
 
@@ -255,6 +308,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
+    _apply_semantic_zero_line(options, datasets, axis="y")
     if stacked and (cfg.get("stack_totals") or cfg.get("point_labels") or cfg.get("show_point_labels")):
         # #101/N3: per-category signed totals painted above each stack via
         # the top segment's datalabel; negatives render parenthesized (IR).
@@ -503,6 +557,7 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             anchor=dl_anchor, align=dl_align, offset=dl_offset, color=_WHITE,
             size=dl_size, labels=label_matrix,
         )
+    _apply_semantic_zero_line(options, datasets, axis="x")
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -623,6 +678,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=dl_size,
             labels=label_matrix,
         )
+    _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "line",
         "data": {"labels": labels, "datasets": datasets},
@@ -677,6 +733,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     cfg = _chart_config(slide)
     _apply_bar_density_knobs(datasets, cfg)
     options = _chartjs_common_options(cfg)
+    _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "bar",
         "data": {"labels": bar_labels, "datasets": datasets},
