@@ -138,9 +138,16 @@ reinvent raw slide selectors.
 - Use `painted_datalabel_lines` for all Chart.js label evidence. It waits for
   the Chart instance plus nonempty painted `$datalabels._labels`; do not read
   pre-bind options.plugins.datalabels or sleep blindly after activation.
-- At the fixed 1920×1080 stage, wait for layout/Chart.js readiness after each
-  activation before screenshotting. Capture console warnings and run_meta
-  warnings with the relevant slide identity.
+- Before every screenshot of a chart slide, call
+  `wait_for_paint_ready_charts(page, slide_number, expected_layout)`. A Chart.js
+  canvas is ready only when the instance exists, `chart.width`/`height` are
+  nonzero, `chart.chartArea` is non-degenerate, every visible dataset has
+  painted element geometry, and readiness holds across one animation frame.
+  Do not treat `Chart.getChart(canvas)` alone as ready and do not substitute a
+  fixed sleep (#146).
+- At the fixed 1920×1080 stage, wait for layout/Chart.js paint-ready geometry
+  after each activation before screenshotting. Capture console warnings and
+  run_meta warnings with the relevant slide identity.
 
 === PASS 01 — CLOSED-TICKET REVALIDATION ===
 

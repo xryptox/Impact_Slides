@@ -50,7 +50,6 @@ def main() -> int:
     if args.full_deck:
         deck_path = work / "handoff.json"
         deck_path.write_text(json.dumps(handoff), encoding="utf-8")
-        slide_idx = slides.index(target)
     else:
         cover = {
             "slide_number": 1,
@@ -64,7 +63,6 @@ def main() -> int:
         deck_path.write_text(
             json.dumps({**handoff, "slides": [cover, single]}), encoding="utf-8"
         )
-        slide_idx = 1
 
     out_dir = work / "out"
     render_deck(deck_path, out_dir, strict=False)
@@ -73,23 +71,24 @@ def main() -> int:
     args.out_png.parent.mkdir(parents=True, exist_ok=True)
     from playwright.sync_api import sync_playwright
 
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from simulation_probe import activate_slide, wait_for_paint_ready_charts  # noqa: E402
+
+    sn = int(target.get("slide_number") or args.slide_number)
+    layout = str(target.get("layout_type") or "")
+    # In single-slide mode the deck wrapper renumbers the target to slide 2.
+    shot_sn = sn if args.full_deck else 2
+
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": VIEW_W, "height": VIEW_H})
         page.goto(html_path.resolve().as_uri(), wait_until="networkidle")
-        page.wait_for_timeout(1200)
-        # Deck chrome hides inactive slides — force-activate the target.
-        page.evaluate(
-            """(idx) => {
-              const all = document.querySelectorAll('.slide');
-              all.forEach((s,j) => { s.classList.toggle('active', j===idx); });
-              if (window.JumpToSlide) { try { window.JumpToSlide(idx); } catch(e){} }
-              if (window.deck && window.deck.slide) { try { window.deck.slide(idx); } catch(e){} }
-            }""",
-            slide_idx,
+        # Identity + paint-ready Chart.js geometry (#137 / #146) — no fixed sleep.
+        activate_slide(page, shot_sn, layout)
+        wait_for_paint_ready_charts(page, shot_sn, layout)
+        page.locator(f'section.slide[data-slide-number="{shot_sn}"]').screenshot(
+            path=str(args.out_png)
         )
-        page.wait_for_timeout(500)
-        page.locator(".slide").nth(slide_idx).screenshot(path=str(args.out_png))
         browser.close()
 
     if args.pdf and args.pdf.exists():

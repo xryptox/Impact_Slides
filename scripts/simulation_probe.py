@@ -2,18 +2,27 @@
 
 Address slides only by ``data-slide-number`` + expected ``data-layout``.
 Zero selector matches and missing painted Chart.js labels are probe failures,
-never successful empty observations.
+never successful empty observations. Screenshot callers must wait for
+**paint-ready** Chart.js geometry via :func:`wait_for_paint_ready_charts`
+(instance + nonzero size + chartArea + dataset elements, held across one rAF).
 
 Usage (from a Playwright page that already loaded a deck HTML)::
 
-    from simulation_probe import activate_slide, count_in_slide, painted_datalabel_lines
+    from simulation_probe import (
+        activate_slide,
+        count_in_slide,
+        painted_datalabel_lines,
+        wait_for_paint_ready_charts,
+    )
 
     activate_slide(page, 12, "chart_hero_dual")
+    wait_for_paint_ready_charts(page, 12, "chart_hero_dual")
     row = count_in_slide(page, 12, "chart_hero_dual", ".gl-hero-stack")
     labels = painted_datalabel_lines(page, 12, "chart_hero_dual")
 """
 from __future__ import annotations
 
+import time
 from typing import Any
 
 # JS body shared by readiness wait + measurement (resolves Chart on a canvas).
@@ -25,6 +34,72 @@ _CHART_FROM_CANVAS = """
       if (c) return c;
     }
     return canvas.__chart || canvas.chart || canvas.__fakeChart || null;
+  }
+"""
+
+# Paint-ready predicates (#146). Each clause is mutation-tested in
+# tests/test_simulation_probe_contract.py — do not collapse them.
+_CHART_PAINT_READY = """
+  function chartAreaSize(area) {
+    if (!area) return {w: 0, h: 0};
+    const w = (typeof area.width === 'number')
+      ? area.width
+      : (Number(area.right) - Number(area.left));
+    const h = (typeof area.height === 'number')
+      ? area.height
+      : (Number(area.bottom) - Number(area.top));
+    return {w: w, h: h};
+  }
+  function elementPainted(el) {
+    if (!el || el.skip) return false;
+    if (!Number.isFinite(el.x) || !Number.isFinite(el.y)) return false;
+    const hasBox = (typeof el.width === 'number') || (typeof el.height === 'number');
+    if (hasBox) {
+      const w = Math.abs(Number(el.width) || 0);
+      const h = Math.abs(Number(el.height) || 0);
+      if (w <= 0 && h <= 0) return false;
+    }
+    return true;
+  }
+  function visibleDatasetsPainted(chart) {
+    const datasets = (chart.data && chart.data.datasets) || [];
+    if (!datasets.length) return false;
+    for (let di = 0; di < datasets.length; di++) {
+      if (typeof chart.isDatasetVisible === 'function') {
+        if (!chart.isDatasetVisible(di)) continue;
+      }
+      const meta = chart.getDatasetMeta
+        ? chart.getDatasetMeta(di)
+        : null;
+      if (!meta || meta.hidden) continue;
+      const els = meta.data || [];
+      let painted = 0;
+      for (let i = 0; i < els.length; i++) {
+        if (elementPainted(els[i])) painted += 1;
+      }
+      if (painted === 0) return false;
+    }
+    return true;
+  }
+  function chartPaintReady(chart) {
+    if (!chart) return false;
+    // Predicate A: nonzero chart bitmap size
+    if (!(chart.width > 0 && chart.height > 0)) return false;
+    // Predicate B: non-degenerate chartArea
+    const area = chartAreaSize(chart.chartArea);
+    if (!(area.w > 0 && area.h > 0)) return false;
+    // Predicate C: every visible dataset has painted element geometry
+    if (!visibleDatasetsPainted(chart)) return false;
+    return true;
+  }
+  function slideChartsPaintReady(slide) {
+    const canvases = slide.querySelectorAll('canvas');
+    if (!canvases.length) return true; // non-chart slide
+    for (let i = 0; i < canvases.length; i++) {
+      const chart = chartFromCanvas(canvases[i]);
+      if (!chartPaintReady(chart)) return false;
+    }
+    return true;
   }
 """
 
@@ -263,4 +338,112 @@ def painted_datalabel_lines(
     out["chart_index"] = idx
     out["lines"] = list(result["lines"])
     out["options_datalabels_keys"] = list(result.get("options_datalabels_keys") or [])
+    return out
+
+
+def wait_for_paint_ready_charts(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+    *,
+    timeout_ms: int = 8000,
+) -> dict[str, Any]:
+    """Activate slide and wait until every Chart.js canvas is paint-ready.
+
+    A canvas is paint-ready only when all hold:
+
+    - a Chart instance exists;
+    - ``chart.width`` / ``chart.height`` are nonzero;
+    - ``chart.chartArea`` has non-degenerate width and height;
+    - every visible dataset has at least one non-degenerate painted element;
+    - the above remains true across at least one ``requestAnimationFrame``.
+
+    Slides with no ``canvas`` succeed immediately after identity activation.
+    Timeouts raise :class:`ProbeError` carrying ``slide_number`` and layout.
+    """
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    layout = identity["layout"]
+
+    # Predicate D: readiness must survive one animation frame (no fixed sleep).
+    # Playwright wait_for_function treats any resolved Promise as success — even
+    # Promise.resolve(false) — so poll via evaluate, which returns the boolean.
+    ready_js = (
+        "({sn}) => new Promise((resolve) => {"
+        + _CHART_FROM_CANVAS
+        + _CHART_PAINT_READY
+        + """
+        const slide = document.querySelector(
+          'section.slide[data-slide-number="' + sn + '"]'
+        );
+        if (!slide) { resolve(false); return; }
+        if (!slideChartsPaintReady(slide)) { resolve(false); return; }
+        requestAnimationFrame(() => {
+          resolve(!!slideChartsPaintReady(slide));
+        });
+      })"""
+    )
+    deadline = time.monotonic() + (int(timeout_ms) / 1000.0)
+    settled = False
+    while time.monotonic() < deadline:
+        try:
+            if page.evaluate(ready_js, {"sn": sn}):
+                settled = True
+                break
+        except Exception:
+            pass
+        # Yield to the browser event loop so rAF / layout can progress.
+        page.evaluate("() => new Promise((r) => requestAnimationFrame(() => r()))")
+    if not settled:
+        raise ProbeError(
+            f"paint-ready charts did not settle on slide {sn} "
+            f"layout={layout!r} within {int(timeout_ms)}ms"
+        )
+
+    # Measurement only — settle loop already enforced paint-ready predicates.
+    measure_js = (
+        "({sn}) => {"
+        + _CHART_FROM_CANVAS
+        + _CHART_PAINT_READY
+        + """
+        const slide = document.querySelector(
+          'section.slide[data-slide-number="' + sn + '"]'
+        );
+        if (!slide) {
+          return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+        }
+        const canvases = slide.querySelectorAll('canvas');
+        const charts = [];
+        for (let i = 0; i < canvases.length; i++) {
+          const chart = chartFromCanvas(canvases[i]);
+          if (!chart) {
+            return {ok: false, err: 'no Chart on canvas ' + i + ' of slide ' + sn};
+          }
+          const ca = chart.chartArea || {};
+          const area = chartAreaSize(ca);
+          charts.push({
+            index: i,
+            width: Number(chart.width) || 0,
+            height: Number(chart.height) || 0,
+            chart_area: {
+              width: area.w,
+              height: area.h,
+              left: ca.left,
+              top: ca.top,
+              right: ca.right,
+              bottom: ca.bottom,
+            },
+          });
+        }
+        return {ok: true, charts};
+      }"""
+    )
+    result = page.evaluate(measure_js, {"sn": sn})
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "wait_for_paint_ready_charts failed"
+        raise ProbeError(err)
+    out = dict(identity)
+    charts = list(result.get("charts") or [])
+    out["charts"] = charts
+    out["chart_count"] = len(charts)
     return out
