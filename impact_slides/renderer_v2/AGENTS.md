@@ -35,7 +35,7 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
   - `rv2-chart-[0-9a-f-]+`
   - `gl-tabs-[0-9a-f]{6,}`
   - `data-tabs-id="..."`
-- Cross-worktree HTML diffs are unreliable (CRLF on vendored Chart.js); toggle sources in one worktree
+- Self-contained HTML is LF-stable across OS: `lib_inliner` normalizes vendored Chart.js newlines; `cli._write_presentation` uses `newline="\n"`
 - `render_deck` sets typography strict/warnings contextvars; SVG collision warnings land in `run_meta.json` `warnings`
 
 ## Verification
