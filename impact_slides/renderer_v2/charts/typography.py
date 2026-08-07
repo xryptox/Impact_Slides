@@ -101,11 +101,21 @@ _PANE_TITLE_LEGACY_STYLE = (
     "white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
 )
 # Pane subtitle / dek treatment (#147) — emission-scoped like the title.
+PANE_SUBTITLE_FS = 22
+PANE_SUBTITLE_LH = 1.3
+PANE_SUBTITLE_MAX_LINES = 2
+# Estimated reserved height for a 2-line subtitle + gap (only when subtitle present).
+PANE_SUBTITLE_RESERVE_PX = (
+    int(PANE_SUBTITLE_FS * PANE_SUBTITLE_LH * PANE_SUBTITLE_MAX_LINES) + PANE_TITLE_GAP_PX
+)
 _PANE_SUBTITLE_STYLE = (
     "font-family:var(--font-body,'Source Sans 3',sans-serif);"
-    "font-size:var(--fs-sub,22px);font-weight:600;"
-    "color:var(--ink-muted,#53565a);line-height:1.3;"
-    f"margin:0 0 {PANE_TITLE_GAP_PX}px 0;flex:none"
+    f"font-size:var(--fs-sub,{PANE_SUBTITLE_FS}px);font-weight:600;"
+    f"color:var(--ink-muted,#53565a);line-height:{PANE_SUBTITLE_LH};"
+    f"margin:0 0 {PANE_TITLE_GAP_PX}px 0;"
+    "display:-webkit-box;-webkit-box-orient:vertical;"
+    f"-webkit-line-clamp:{PANE_SUBTITLE_MAX_LINES};"
+    "overflow:hidden;text-overflow:ellipsis;flex:none"
 )
 
 # Collision: only when datalabel_font_size supplied.
@@ -303,6 +313,16 @@ def resolve_pane_subtitle(
     return got or ""
 
 
+def _pane_chrome_reserve_px(*, title: str, subtitle: str) -> int:
+    """Combined title+subtitle height reserved from the plot host."""
+    n = 0
+    if title:
+        n += PANE_TITLE_RESERVE_PX
+    if subtitle:
+        n += PANE_SUBTITLE_RESERVE_PX
+    return n
+
+
 def chart_pane_title_html(
     text: str,
     *,
@@ -314,38 +334,14 @@ def chart_pane_title_html(
 
     Large title is default. If remaining canvas would fall under 320x240,
     strict fails; non-strict falls back to legacy one-line tile-label class.
+    Title-only path — use chart_pane_headings_html when a subtitle is present.
     """
-    from ..strip import esc
-
-    title = (text or "").strip()
-    if not title:
-        return ""
-    if strict is None:
-        strict = _RENDER_STRICT.get()
-
-    # Remaining canvas after title reservation (when host sizes known).
-    legacy = False
-    if available_w is not None and available_h is not None:
-        remain_w = float(available_w)
-        remain_h = float(available_h) - PANE_TITLE_RESERVE_PX
-        if remain_w < MIN_CANVAS_W or remain_h < MIN_CANVAS_H:
-            msg = (
-                f"pane title would leave canvas {remain_w:.0f}x{remain_h:.0f} "
-                f"(min {MIN_CANVAS_W}x{MIN_CANVAS_H}); using legacy title"
-            )
-            if strict:
-                raise ValueError(msg)
-            _warn(msg)
-            legacy = True
-
-    if legacy:
-        return (
-            f'<div class="gl-tile-label gl-chart-pane-title-legacy" '
-            f'style="{_PANE_TITLE_LEGACY_STYLE}">{esc(title)}</div>'
-        )
-    return (
-        f'<div class="gl-chart-pane-title" style="{_PANE_TITLE_STYLE}">'
-        f"{esc(title)}</div>"
+    return chart_pane_headings_html(
+        text,
+        "",
+        available_w=available_w,
+        available_h=available_h,
+        strict=strict,
     )
 
 
@@ -360,6 +356,65 @@ def chart_pane_subtitle_html(text: str) -> str:
         f'<div class="gl-chart-pane-subtitle" style="{_PANE_SUBTITLE_STYLE}">'
         f"{esc(sub)}</div>"
     )
+
+
+def chart_pane_headings_html(
+    title: str = "",
+    subtitle: str = "",
+    *,
+    available_w: float | None = None,
+    available_h: float | None = None,
+    strict: bool | None = None,
+) -> str:
+    """Title + optional subtitle with one remaining-canvas decision (#147).
+
+    Reserves title and/or subtitle height together before the 320×240 check.
+    Empty fields reserve nothing. Strict fails when remaining canvas is short;
+    non-strict falls the title back to legacy tile-label and still emits the
+    subtitle (when present).
+    """
+    from ..strip import esc
+
+    head = (title or "").strip()
+    sub = (subtitle or "").strip()
+    if not head and not sub:
+        return ""
+    if strict is None:
+        strict = _RENDER_STRICT.get()
+
+    legacy = False
+    if available_w is not None and available_h is not None:
+        reserve = _pane_chrome_reserve_px(title=head, subtitle=sub)
+        remain_w = float(available_w)
+        remain_h = float(available_h) - reserve
+        if remain_w < MIN_CANVAS_W or remain_h < MIN_CANVAS_H:
+            msg = (
+                f"pane title would leave canvas {remain_w:.0f}x{remain_h:.0f} "
+                f"(min {MIN_CANVAS_W}x{MIN_CANVAS_H}); using legacy title"
+            )
+            if strict:
+                raise ValueError(msg)
+            _warn(msg)
+            legacy = True
+
+    parts: list[str] = []
+    if head:
+        if legacy:
+            parts.append(
+                f'<div class="gl-tile-label gl-chart-pane-title-legacy" '
+                f'style="{_PANE_TITLE_LEGACY_STYLE}">{esc(head)}</div>'
+            )
+        else:
+            parts.append(
+                f'<div class="gl-chart-pane-title" style="{_PANE_TITLE_STYLE}">'
+                f"{esc(head)}</div>"
+            )
+    if sub:
+        parts.append(
+            f'<div class="gl-chart-pane-subtitle" style="{_PANE_SUBTITLE_STYLE}">'
+            f"{esc(sub)}</div>"
+        )
+    return "".join(parts)
 
 
 def estimate_label_box(

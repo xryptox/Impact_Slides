@@ -9,6 +9,11 @@ import pytest
 
 from impact_slides.renderer_v2 import render_deck
 from impact_slides.renderer_v2.charts.typography import (
+    MIN_CANVAS_H,
+    MIN_CANVAS_W,
+    PANE_SUBTITLE_RESERVE_PX,
+    PANE_TITLE_RESERVE_PX,
+    chart_pane_headings_html,
     chart_pane_subtitle_html,
     chart_pane_title_html,
     set_render_strict,
@@ -132,6 +137,8 @@ def test_subtitle_helper_uses_dek_treatment():
     # dek-ish: muted, not 40px navy title weight
     assert "40px" not in html
     assert "font-weight:700" not in html or "font-size:40px" not in html
+    # long/two-line subtitles clamp like the title chrome
+    assert "-webkit-line-clamp:2" in html
 
 
 # ---------------------------------------------------------------------------
@@ -316,6 +323,81 @@ def test_long_heading_emits_two_line_clamp():
     assert long_h in html
 
 
+def test_long_subtitle_emits_two_line_clamp():
+    long_s = (
+        "in millions of proprietary new cards acquired across every "
+        "customer segment worldwide this quarter"
+    )
+    html = chart_pane_headings_html("Title", long_s)
+    assert "gl-chart-pane-subtitle" in html
+    assert "-webkit-line-clamp:2" in html
+    assert long_s in html
+
+
+def _title_only_exact_boundary_h() -> float:
+    """Host height where remain after title reserve is exactly MIN_CANVAS_H."""
+    return float(MIN_CANVAS_H + PANE_TITLE_RESERVE_PX)
+
+
+def test_title_only_exact_boundary_succeeds():
+    """#139 pin: title alone at remain_h == 240 keeps the large title."""
+    h = _title_only_exact_boundary_h()
+    html = chart_pane_headings_html(
+        "Title",
+        "",
+        available_w=float(MIN_CANVAS_W),
+        available_h=h,
+        strict=True,
+    )
+    assert "gl-chart-pane-title" in html
+    assert "gl-chart-pane-title-legacy" not in html
+    assert "gl-chart-pane-subtitle" not in html
+
+
+def test_title_plus_subtitle_at_title_boundary_strict_raises():
+    """Subtitle must join the reservation — title-only boundary is too short."""
+    h = _title_only_exact_boundary_h()
+    with pytest.raises(ValueError, match="canvas"):
+        chart_pane_headings_html(
+            "Title",
+            "in millions",
+            available_w=float(MIN_CANVAS_W),
+            available_h=h,
+            strict=True,
+        )
+
+
+def test_title_plus_subtitle_at_title_boundary_nonstrict_legacy(capsys):
+    h = _title_only_exact_boundary_h()
+    html = chart_pane_headings_html(
+        "Title",
+        "in millions",
+        available_w=float(MIN_CANVAS_W),
+        available_h=h,
+        strict=False,
+    )
+    assert "gl-chart-pane-title-legacy" in html
+    assert "gl-chart-pane-subtitle" in html
+    assert "in millions" in html
+    err = capsys.readouterr().err.lower()
+    assert "legacy" in err or "canvas" in err
+
+
+def test_title_plus_subtitle_exact_combined_boundary_succeeds():
+    """Combined reserve that leaves exactly 240px still emits large title."""
+    h = float(MIN_CANVAS_H + PANE_TITLE_RESERVE_PX + PANE_SUBTITLE_RESERVE_PX)
+    html = chart_pane_headings_html(
+        "Title",
+        "in millions",
+        available_w=float(MIN_CANVAS_W),
+        available_h=h,
+        strict=True,
+    )
+    assert "gl-chart-pane-title" in html
+    assert "gl-chart-pane-title-legacy" not in html
+    assert "gl-chart-pane-subtitle" in html
+
+
 def test_tight_host_strict_raises(monkeypatch):
     import impact_slides.renderer_v2.layout.recipes.charts as recipes_charts
 
@@ -336,6 +418,28 @@ def test_tight_host_strict_raises(monkeypatch):
         reset_render_strict(tok)
 
 
+def test_tight_host_with_subtitle_strict_raises(monkeypatch):
+    """Recipe must not bypass combined reservation by splitting helpers."""
+    import impact_slides.renderer_v2.layout.recipes.charts as recipes_charts
+
+    # Width OK; height is exact title-only boundary — subtitle must fail.
+    monkeypatch.setattr(
+        recipes_charts,
+        "chart_host_size",
+        lambda kind, cols=2: (float(MIN_CANVAS_W + 100), _title_only_exact_boundary_h()),
+    )
+    tok = set_render_strict(True)
+    try:
+        with pytest.raises(ValueError, match="canvas"):
+            render_chart_hero_dual(
+                _hero_slide(primary={"heading": "Title", "subtitle": "in millions"}),
+                1,
+                "",
+            )
+    finally:
+        reset_render_strict(tok)
+
+
 def test_tight_host_nonstrict_legacy(monkeypatch, capsys):
     import impact_slides.renderer_v2.layout.recipes.charts as recipes_charts
 
@@ -347,13 +451,14 @@ def test_tight_host_nonstrict_legacy(monkeypatch, capsys):
     tok = set_render_strict(False)
     try:
         html = render_chart_hero_dual(
-            _hero_slide(primary={"heading": "Title"}),
+            _hero_slide(primary={"heading": "Title", "subtitle": "in millions"}),
             1,
             "",
         )
     finally:
         reset_render_strict(tok)
     assert "gl-chart-pane-title-legacy" in html
+    assert "gl-chart-pane-subtitle" in html
     err = capsys.readouterr().err.lower()
     assert "legacy" in err or "canvas" in err
 
@@ -431,16 +536,28 @@ def test_chartjs_and_svg_share_html_headings():
 # ---------------------------------------------------------------------------
 
 
-def test_golden_fixture_byte_identical_without_new_fields(tmp_path):
-    a = tmp_path / "a"
-    b = tmp_path / "b"
-    render_deck(GOLDEN, a, strict=True)
-    render_deck(GOLDEN, b, strict=True)
-    ha = _norm_ids((a / "presentation.html").read_text(encoding="utf-8"))
-    hb = _norm_ids((b / "presentation.html").read_text(encoding="utf-8"))
-    assert ha == hb
-    # no pane-subtitle chrome introduced on golden (no chart_hero_dual there)
-    assert "gl-chart-pane-subtitle" not in ha
+def _norm_newlines(html: str) -> str:
+    return html.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def test_absent_fields_match_pinned_parent_baseline(tmp_path):
+    """No-heading chart_hero_dual stays byte-identical to pre-#147 parent.
+
+    Baseline is a normalized parent render (random IDs + newlines), not a
+    same-implementation double render.
+    """
+    baseline = FIXTURES / "chart_hero_dual_no_headings.baseline.html"
+    assert baseline.is_file(), f"missing pinned baseline: {baseline}"
+    path = _write(tmp_path, _handoff([_hero_slide()]))
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False)
+    got = _norm_newlines(
+        _norm_ids((out / "presentation.html").read_text(encoding="utf-8"))
+    )
+    want = _norm_newlines(baseline.read_text(encoding="utf-8"))
+    assert got == want
+    assert "gl-chart-pane-subtitle" not in got
+    assert "gl-chart-pane-title" not in got
 
 
 def test_absent_fields_render_deck_matches_baseline_shape(tmp_path):
