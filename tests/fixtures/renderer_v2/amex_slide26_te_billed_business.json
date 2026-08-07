@@ -1,0 +1,28 @@
+{
+  "layout_type": "data_table",
+  "packing_mode": "stat-led",
+  "title": "Travel & Entertainment Billed Business",
+  "section": "Appendix",
+  "content": {
+    "subtitle": "All growth rates FX-adjusted",
+    "so_what": ""
+  },
+  "visual_spec": {
+    "primary_visual": {
+      "type": "data_table",
+      "steps_or_data": [
+        ["Q1'26", "Restaurants", "Lodging", "Airlines", "Other", "Total T&E"],
+        ["YoY Growth", "9%", "6%", "8%", "13%", "9%"],
+        ["% of Total Billed Business", "7%", "5%", "7%", "9%", "29%"]
+      ]
+    }
+  },
+  "evidence_sources": [
+    {
+      "id": "E0261",
+      "source_file": "See Slide 3 for an explanation of FX-adjusted information. Subtotals may not sum due to rounding."
+    }
+  ],
+  "speaker_notes": "T&E breakdown table.",
+  "slide_number": 26
+}
