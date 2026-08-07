@@ -239,10 +239,14 @@ def build_head_assets(
                 )
             raw = chart_path.read_bytes()
             # Inline as classic scripts so Chart (then ChartDataLabels) globals
-            # are available before deck JS.
-            head_parts.append(
-                "<script>\n" + raw.decode("utf-8") + "\n</script>"
+            # are available before deck JS. Normalize newlines so Windows CRLF
+            # checkouts don't double-break when write_text translates \n.
+            js = (
+                raw.decode("utf-8")
+                .replace("\r\n", "\n")
+                .replace("\r", "\n")
             )
+            head_parts.append("<script>\n" + js + "\n</script>")
             total += len(raw)
         inlined = list(inlined) + ["charts", "charts-datalabels"]
 

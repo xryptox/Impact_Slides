@@ -241,15 +241,14 @@ class TestSummaryReport:
         make_excel(df=pd.DataFrame({"M": [1, 2], "V": [10, 20]}), name="fast.xlsx")
         make_excel(df=pd.DataFrame({"M": [3, 4], "V": [30, 40]}), name="slow.xlsx")
         original = p.extract_spreadsheet
-        state = {"n": 0}
 
-        def slow_second(path, item):
-            state["n"] += 1
-            if state["n"] == 2:
+        def slow_named(path, item):
+            # Sleep by name, not call order — filesystem walk order is not stable.
+            if Path(path).name == "slow.xlsx":
                 time.sleep(0.3)
             return original(path, item)
 
-        monkeypatch.setattr(p, "extract_spreadsheet", slow_second)
+        monkeypatch.setattr(p, "extract_spreadsheet", slow_named)
         p.run()
         summary = (out / "preprocessor_summary.md").read_text(encoding="utf-8")
         # slow.xlsx row should appear before fast.xlsx row in the table
