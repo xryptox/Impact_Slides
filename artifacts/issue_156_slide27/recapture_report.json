@@ -1,0 +1,40 @@
+{
+  "viewport": [
+    1920,
+    1080
+  ],
+  "source_handoff": "C:\\Users\\Ag1Le\\Documents\\Impact_Slides-gnhf-worktrees\\objective-produce-an-74065a\\simulation\\amex_q1_2026\\passes\\pass_01\\handoff.json",
+  "source_sha256": "237b353085707f380b892575bb55ff68d6c9e0d1bb64c70baf4302cfbca8265f",
+  "mutation": "apply_issue_156_slide27_scenarios",
+  "slide": 27,
+  "layout": "dual_chart",
+  "charts": [
+    {
+      "index": 0,
+      "width": 806,
+      "height": 635,
+      "chart_area": {
+        "width": 757.398193359375,
+        "height": 571.4,
+        "left": 28.4599609375,
+        "top": 34,
+        "right": 785.858154296875,
+        "bottom": 605.4
+      }
+    },
+    {
+      "index": 1,
+      "width": 806,
+      "height": 635,
+      "chart_area": {
+        "width": 758.8711700439453,
+        "height": 571.4,
+        "left": 26.986984252929688,
+        "top": 34,
+        "right": 785.858154296875,
+        "bottom": 605.4
+      }
+    }
+  ],
+  "png": "artifacts/issue_156_slide27/corrected_slide27_paint_ready.png"
+}

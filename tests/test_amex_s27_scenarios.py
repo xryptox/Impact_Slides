@@ -61,6 +61,9 @@ def _assert_source_contract(slide: dict) -> None:
     disclosure = slide["disclosure"]["panels"][0]
     assert disclosure["title"] == "Scenario note"
     assert "SAAR" in disclosure["body"]
+    assert slide["evidence_sources"] == [
+        {"id": "E0270", "source_file": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"}
+    ]
 
 
 def test_broken_fixture_documents_the_v10_truncation():
@@ -131,6 +134,7 @@ def test_rendered_slide_is_identity_safe_and_paint_ready(tmp_path: Path):
     html = (out / "presentation.html").read_text(encoding="utf-8")
     assert html.count(">U.S. Unemployment Rate %</div>") == 1
     assert html.count(">U.S. GDP Growth* %</div>") == 1
+    assert "Real GDP QoQ % Change Seasonally Adjusted to Annualized Rates (SAAR)." in html
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
