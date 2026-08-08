@@ -20,13 +20,12 @@
   },
   "slides": [
     {
-      "slide_number": 33,
       "layout_type": "annex_table",
       "packing_mode": "stat-led",
       "title": "Annex 2 Total Balances — Reported & FX-Adjusted",
       "section": "Annex",
       "content": {
-        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "subtitle": "$ in billions · % Increase/(decrease) vs. Prior year",
         "so_what": "",
         "body_text": "$ in billions"
       },
@@ -137,16 +136,16 @@
           }
         ]
       },
-      "speaker_notes": "Annex slide 33 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+      "speaker_notes": "Annex slide 33 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved.",
+      "slide_number": 33
     },
     {
-      "slide_number": 34,
       "layout_type": "annex_table",
       "packing_mode": "stat-led",
       "title": "Annex 3 Revenue — Reported & FX-Adjusted",
       "section": "Annex",
       "content": {
-        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "subtitle": "$ in millions · % Increase/(decrease) vs. Prior year",
         "so_what": "",
         "body_text": "$ in millions"
       },
@@ -232,16 +231,16 @@
           }
         ]
       },
-      "speaker_notes": "Annex slide 34 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+      "speaker_notes": "Annex slide 34 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved.",
+      "slide_number": 34
     },
     {
-      "slide_number": 35,
       "layout_type": "annex_table",
       "packing_mode": "stat-led",
       "title": "Annex 4 Net Card Fees — Reported & FX-Adjusted",
       "section": "Annex",
       "content": {
-        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "subtitle": "$ in billions · % Increase/(decrease) vs. Prior year",
         "so_what": "",
         "body_text": "$ in billions"
       },
@@ -380,16 +379,16 @@
           }
         ]
       },
-      "speaker_notes": "Annex slide 35 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+      "speaker_notes": "Annex slide 35 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved.",
+      "slide_number": 35
     },
     {
-      "slide_number": 36,
       "layout_type": "annex_table",
       "packing_mode": "stat-led",
       "title": "Annex 5 Net Interest Income — Reported & FX-Adjusted",
       "section": "Annex",
       "content": {
-        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "subtitle": "$ in billions · % Increase/(decrease) vs. Prior year",
         "so_what": "",
         "body_text": "$ in billions"
       },
@@ -500,16 +499,16 @@
           }
         ]
       },
-      "speaker_notes": "Annex slide 36 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+      "speaker_notes": "Annex slide 36 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved.",
+      "slide_number": 36
     },
     {
-      "slide_number": 37,
       "layout_type": "annex_table",
       "packing_mode": "stat-led",
       "title": "Annex 6 Revenues Net of Interest Expense — Reported & FX-Adjusted",
       "section": "Annex",
       "content": {
-        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "subtitle": "$ in billions · % Increase/(decrease) vs. Prior year",
         "so_what": "",
         "body_text": "$ in billions"
       },
@@ -589,7 +588,8 @@
           }
         ]
       },
-      "speaker_notes": "Annex slide 37 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+      "speaker_notes": "Annex slide 37 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved.",
+      "slide_number": 37
     }
   ]
 }

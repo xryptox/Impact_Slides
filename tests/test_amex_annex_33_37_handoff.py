@@ -593,8 +593,12 @@ class TestRestoredAnnexMatrices:
             panels = disc.get("panels") or []
             bodies = " ".join(str(p.get("body") or "") for p in panels)
             assert "FX-adjusted" in bodies, f"slide {sn}: missing FX footnote"
-            units = (s.get("content") or {}).get("body_text") or ""
+            content = s.get("content") or {}
+            units = content.get("body_text") or ""
             assert units == _UNITS[sn], f"slide {sn}: units {units!r}"
+            # annex_table paints subtitle/dek, not body_text — units must live there.
+            sub = content.get("subtitle") or ""
+            assert _UNITS[sn] in sub, f"slide {sn}: units missing from painted subtitle {sub!r}"
 
     def test_mutation_matches_restored_fixture(self):
         broken = _load(BROKEN_V10)
@@ -605,6 +609,7 @@ class TestRestoredAnnexMatrices:
             assert g["layout_type"] == _ANNEX == e["layout_type"]
             assert _matrix(g) == _matrix(e) == SOURCE_MATRICES[sn]
             assert (g.get("content") or {}).get("body_text") == _UNITS[sn]
+            assert _UNITS[sn] in ((g.get("content") or {}).get("subtitle") or "")
             assert g["title"] == e["title"]
 
     def test_mutation_is_idempotent(self):
@@ -639,14 +644,27 @@ class TestAnnexRenderSurface:
         handoff = apply_issue_157_annex_matrices(copy.deepcopy(_load(BROKEN_V10)))
         evidence: list[dict] = []
         painted_tokens = {
-            33: ("FX-Adjusted Total Balances*", "$140", "$209", "8%"),
-            34: ("Discount Revenue", "$9,512", "$18,907", "$17,210"),
-            35: ("GAAP Net Card Fees", "$2.8", "18%"),
-            36: ("GAAP Net Interest Income", "$4.7", "13%"),
+            33: (
+                "FX-Adjusted Total Balances*",
+                "$140",
+                "$209",
+                "8%",
+                "$ in billions",
+            ),
+            34: (
+                "Discount Revenue",
+                "$9,512",
+                "$18,907",
+                "$17,210",
+                "$ in millions",
+            ),
+            35: ("GAAP Net Card Fees", "$2.8", "18%", "$ in billions"),
+            36: ("GAAP Net Interest Income", "$4.7", "13%", "$ in billions"),
             37: (
                 "FX-Adjusted Revenues Net of Interest Expense*",
                 "$15.7",
                 "$18.9",
+                "$ in billions",
             ),
         }
         for sn in (33, 34, 35, 36, 37):
@@ -659,12 +677,20 @@ class TestAnnexRenderSurface:
             evidence.append(attrs)
             for token in painted_tokens[sn]:
                 assert token in html, f"slide {sn}: missing painted token {token!r}"
+            # Units must appear in the painted dek (not only handoff JSON).
+            assert _UNITS[sn] in html, f"slide {sn}: units not painted"
+            if sn == 34:
+                assert "$ in millions" in html
+                assert "$ in billions" not in html
+            else:
+                assert "$ in billions" in html
             stubs = re.findall(r'<td class="gl-annex-stub">([^<]*)</td>', html)
             period_only = [
                 s for s in stubs if re.fullmatch(r"Q[1-4]'?\d{2}", s.strip())
             ]
             assert not period_only, f"slide {sn} period-token stubs: {period_only}"
             assert "annex-table" in html
+            assert "FX-adjusted" in html or "FX-Adjusted" in html
         assert evidence == [
             {"data-slide-number": str(n), "data-layout": _ANNEX}
             for n in (33, 34, 35, 36, 37)
@@ -690,6 +716,8 @@ class TestAnnexRenderSurface:
             "FX-Adjusted Revenues Net of Interest Expense*",
             "$15.7",
             "$18.9",
+            "$ in billions",
+            "$ in millions",
             "gl-annex-stub",
             "annex-table",
         ):
