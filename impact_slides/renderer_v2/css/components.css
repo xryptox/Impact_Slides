@@ -1435,13 +1435,13 @@
   line-height: 1;
   color: var(--navy);
 }
-.gl-driver-tone--positive .gl-driver-value,
-.gl-driver-tone--positive .gl-driver-dir { color: var(--color-accent-2, #0a7d55); }
-.gl-driver-tone--negative .gl-driver-value,
-.gl-driver-tone--negative .gl-driver-dir { color: var(--color-warn, #b35900); }
-.gl-driver-tone--accent .gl-driver-value,
-.gl-driver-tone--accent .gl-driver-dir { color: var(--blue, #006fcf); }
-.gl-driver-tone--neutral .gl-driver-value { color: var(--navy); }
+.gl-driver-row.gl-driver-tone--positive .gl-driver-value,
+.gl-driver-row.gl-driver-tone--positive .gl-driver-dir { color: var(--color-accent-2, #0a7d55); }
+.gl-driver-row.gl-driver-tone--negative .gl-driver-value,
+.gl-driver-row.gl-driver-tone--negative .gl-driver-dir { color: var(--color-warn, #b35900); }
+.gl-driver-row.gl-driver-tone--accent .gl-driver-value,
+.gl-driver-row.gl-driver-tone--accent .gl-driver-dir { color: var(--blue, #006fcf); }
+.gl-driver-row.gl-driver-tone--neutral .gl-driver-value { color: var(--navy); }
 
 /* Direction via shape (no embedded arrow characters). */
 .gl-driver-dir {

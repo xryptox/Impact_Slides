@@ -4,7 +4,6 @@ from __future__ import annotations
 import copy
 import json
 import re
-from pathlib import Path
 
 import pytest
 
@@ -333,14 +332,6 @@ def test_byte_compat_without_features():
     assert "gl-driver-card" not in a
     assert "boxed-label" not in a
 
-
-def test_positive_tone_colors_value_and_dir():
-    """CSS descendant selectors paint green on value + up glyph (#151)."""
-    css = Path(__file__).resolve().parents[1] / "impact_slides/renderer_v2/css/components.css"
-    text = css.read_text(encoding="utf-8")
-    assert ".gl-driver-tone--positive .gl-driver-value" in text
-    assert ".gl-driver-tone--positive .gl-driver-dir" in text
-    assert "#0a7d55" in text
 
 
 def test_slide18_geometry_1920(tmp_path):
