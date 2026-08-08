@@ -585,8 +585,9 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                 step = int(step)
             line_ticks = [line_min + i * step for i in range(5)]
         line_unit = overlay_cfg.get("y_axis_unit", "")
-        line_tick_view = [(float(tick), f"{float(tick):g}{line_unit}" if line_unit else f"{float(tick):g}") for tick in line_ticks]
-        if auto_plan is not None and auto_plan.secondary_y_ticks_reduced:
+        line_unit_pos = overlay_cfg.get("y_axis_unit_position", "suffix")
+        line_tick_view = [(float(tick), _fmt_unit(float(tick), line_unit, line_unit_pos)) for tick in line_ticks]
+        if auto_plan is not None and auto_plan.secondary_y_tick_values:
             line_tick_view = list(zip(auto_plan.secondary_y_tick_values, auto_plan.secondary_y_tick_labels))
         for tick, tick_label in line_tick_view:
             ty = line_y(tick)

@@ -280,6 +280,32 @@ def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, ro
         assert estimated_h <= bounds["height"] + max(bounds["height"] * 0.05, 2), (font, size, rotation, text, estimated_h, bounds)
 
 
+def test_auto_chartjs_uses_complete_formatted_tick_plan_and_reserves_default_legend(tmp_path):
+    pane = _pane("line_chart", ["Q1", "Q2"], typography={"mode": "auto"})
+    pane["chart_config"].update({"y_axis_unit": "USD", "y_axis_unit_position": "prefix"})
+    slide = {
+        "slide_number": 1, "title": "Auto", "layout_type": "line_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False)
+    config = _configs((out / "presentation.html").read_text(encoding="utf-8"))[0]
+    ticks = config["options"]["scales"]["y"]["ticks"]
+    plan = compute_auto_plan_for_slide(slide, "line_chart", host_w=900, host_h=480)
+    assert plan is not None
+    assert ticks["_rv2Values"] == plan.y_tick_values
+    assert ticks["_rv2Labels"] == plan.y_tick_labels
+    assert all(label.startswith("USD") for label in ticks["_rv2Labels"])
+    assert config["options"]["plugins"]["legend"].get("display") is False
+    explicit = json.loads(json.dumps(slide))
+    explicit["visual_spec"]["primary_visual"]["chart_config"]["series_names"] = ["Revenue", "Margin"]
+    explicit_plan = compute_auto_plan_for_slide(explicit, "line_chart", host_w=900, host_h=480)
+    assert explicit_plan is not None
+    assert plan.plot_h == explicit_plan.plot_h
+
+
 def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
     """The archived v10 handoff renders every opted-in pane with contained text."""
     from playwright.sync_api import sync_playwright
@@ -305,7 +331,7 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
             if kind in supported:
                 pane.setdefault("chart_config", {}).setdefault("typography", {})["mode"] = "auto"
                 expected += 1
-        expected_by_slide[slide["slide_number"]] = expected
+        expected_by_slide[slide["slide_number"]] = expected if slide.get("layout_type") != "metric_row_with_breakdown" else 0
     assert sum(expected_by_slide.values()) > 0
     path = tmp_path / "v10.json"
     path.write_text(json.dumps(handoff), encoding="utf-8")
@@ -324,34 +350,95 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": 1920, "height": 1080})
+            if name == "chartjs":
+                page.add_init_script(
+                    """(() => {
+                      const original = CanvasRenderingContext2D.prototype.fillText;
+                      const clear = CanvasRenderingContext2D.prototype.clearRect;
+                      window.__rv2ChartText = [];
+                      CanvasRenderingContext2D.prototype.clearRect = function() {
+                        window.__rv2ChartText = window.__rv2ChartText.filter(item => item.canvas !== this.canvas.id);
+                        return clear.apply(this, arguments);
+                      };
+                      CanvasRenderingContext2D.prototype.fillText = function(text, x, y, maxWidth) {
+                        const metrics = this.measureText(String(text));
+                        const m = this.getTransform();
+                        window.__rv2ChartText.push({canvas: this.canvas.id, text: String(text), x, y,
+                          width: metrics.width, ascent: metrics.actualBoundingBoxAscent || 12,
+                          descent: metrics.actualBoundingBoxDescent || 4, align: this.textAlign,
+                          matrix: [m.a, m.b, m.c, m.d, m.e, m.f]});
+                        return original.call(this, text, x, y, maxWidth);
+                      };
+                    })()"""
+                )
             page.goto((out / "presentation.html").resolve().as_uri(), wait_until="networkidle")
+            page.evaluate("""async () => {
+              for (const slide of document.querySelectorAll('.slide')) {
+                slide.classList.add('active');
+                await new Promise(resolve => requestAnimationFrame(resolve));
+              }
+              if (window.__rv2ChartText) {
+                window.__rv2ChartText = [];
+                Object.values(Chart.instances).forEach(chart => { chart.resize(); chart.update('none'); });
+                await new Promise(resolve => requestAnimationFrame(resolve));
+              }
+            }""")
             audit = page.evaluate(
-                """() => [...document.querySelectorAll('.slide')].map((slide, index) => {
-                    slide.classList.add('active');
-                    const within = (r, outer) => r.width >= 1 && r.height >= 1 &&
-                      r.left >= outer.left - 1 && r.top >= outer.top - 1 &&
-                      r.right <= outer.right + 1 && r.bottom <= outer.bottom + 1;
+                """(chartjs) => {
+                  const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 &&
+                    a.top < b.bottom - 1 && a.bottom > b.top + 1;
+                  const within = (r, outer) => r.width >= 1 && r.height >= 1 &&
+                    r.left >= outer.left - 1 && r.top >= outer.top - 1 &&
+                    r.right <= outer.right + 1 && r.bottom <= outer.bottom + 1;
+                  const chartBox = (canvas, item) => {
+                    const r = canvas.getBoundingClientRect(), sx = r.width / canvas.width, sy = r.height / canvas.height;
+                    const left = item.align === 'right' || item.align === 'end' ? item.x - item.width :
+                      item.align === 'center' ? item.x - item.width / 2 : item.x;
+                    const top = item.y - item.ascent, bottom = item.y + item.descent;
+                    const [a, b, c, d, e, f] = item.matrix;
+                    const points = [[left, top], [left + item.width, top], [left, bottom], [left + item.width, bottom]]
+                      .map(([x, y]) => [a * x + c * y + e, b * x + d * y + f]);
+                    const xs = points.map(p => r.left + p[0] * sx), ys = points.map(p => r.top + p[1] * sy);
+                    return {left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys),
+                      width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys)};
+                  };
+                  return [...document.querySelectorAll('.slide')].map((slide, index) => {
                     const outer = slide.getBoundingClientRect();
-                    const texts = [...slide.querySelectorAll('svg text')];
-                    const canvases = [...slide.querySelectorAll('canvas')];
-                    const badText = texts.some(text => !within(text.getBoundingClientRect(), outer));
-                    const canvasEvidence = canvases.every(canvas => {
-                      const r = canvas.getBoundingClientRect();
-                      if (!within(r, outer) || canvas.width < 2 || canvas.height < 2) return false;
-                      const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
-                      return data.some((value, pixel) => pixel % 4 === 3 && value > 0);
-                    });
-                    slide.classList.remove('active');
-                    return {slide_number: index + 1, clipped: badText, text_count: texts.length,
-                      canvas_count: canvases.length, canvas_evidence: canvasEvidence};
-                })"""
+                    const panes = chartjs
+                      ? [...slide.querySelectorAll('.chartjs-wrap[data-auto-typo="1"]')].map(wrap => {
+                          const canvas = wrap.querySelector('canvas');
+                          const raw = canvas ? (window.__rv2ChartText || []).filter(item => item.canvas === canvas.id) : [];
+                          const boxes = raw.map(item => chartBox(canvas, item)).filter(box => box.width >= 1 && box.height >= 1);
+                          const chart = canvas && Chart.getChart(canvas), rect = canvas && canvas.getBoundingClientRect();
+                          const x = chart && chart.scales.x, y = chart && chart.scales.y;
+                          const xBoxes = x && rect ? boxes.filter(box => box.top >= rect.top + x.top * rect.height / canvas.height - 1) : [];
+                          const yBoxes = y && rect ? boxes.filter(box => box.right <= rect.left + y.left * rect.width / canvas.width + 1) : [];
+                          const axisBoxes = xBoxes.concat(yBoxes);
+                          return {text_count: axisBoxes.length, raw_text_count: raw.length, clipped: axisBoxes.some(box => !within(box, outer)),
+                            overlap: [xBoxes, yBoxes].some(group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other))))};
+                        })
+                      : [...slide.querySelectorAll('.chart-svg-wrap[data-auto-typo="1"]')].map(wrap => {
+                          const boxes = [...wrap.querySelectorAll('svg text')].map(text => text.getBoundingClientRect());
+                          const categoryBoxes = [...wrap.querySelectorAll('svg text.auto-x-label')].map(text => text.getBoundingClientRect());
+                          const rows = categoryBoxes.reduce((rows, box) => {
+                            const row = rows.find(row => Math.abs(row[0].top - box.top) < 1);
+                            (row || rows[rows.push([]) - 1]).push(box);
+                            return rows;
+                          }, []);
+                          return {text_count: categoryBoxes.length, clipped: boxes.some(box => !within(box, outer)),
+                            overlap: rows.some(row => row.some((box, i) => row.slice(i + 1).some(other => overlap(box, other))))};
+                        });
+                    return {slide_number: index + 1, panes};
+                  });
+                }""",
+                name == "chartjs",
             )
             browser.close()
         for row in audit:
             if expected_by_slide[row["slide_number"]]:
-                assert row["canvas_count"] and row["canvas_evidence"] if name == "chartjs" else row["text_count"], (name, row)
+                assert len(row["panes"]) == expected_by_slide[row["slide_number"]], (name, row)
+                assert all(pane["text_count"] and not pane["clipped"] and not pane["overlap"] for pane in row["panes"]), (name, row)
         (out / "auto_typography_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
-        assert not any(row["clipped"] for row in audit), (name, audit)
 
 
 def test_unknown_font_uses_reduced_confidence_metrics():

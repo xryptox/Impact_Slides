@@ -1284,12 +1284,12 @@ def apply_plan_to_chartjs_options(
         cat_ticks["_rv2DisplayLabels"] = display
         cat_ticks["_rv2FullLabels"] = list(xl.full_texts)
 
-    if plan.y_ticks_reduced and plan.y_tick_values:
+    if plan.y_tick_values:
         val_scale = x if horizontal else y
         val_ticks = val_scale.setdefault("ticks", {})
         val_ticks["_rv2Values"] = list(plan.y_tick_values)
         val_ticks["_rv2Labels"] = list(plan.y_tick_labels)
-    if plan.secondary_y_ticks_reduced and plan.secondary_y_tick_values:
+    if plan.secondary_y_tick_values:
         secondary = scales.get("y1")
         if isinstance(secondary, dict):
             secondary_ticks = secondary.setdefault("ticks", {})
@@ -1318,7 +1318,7 @@ def _extract_categories_and_shorts(
     """categories, shorts, series count, primary/secondary ticks, datalabels."""
     from .bars import _bar_axes, _bar_matrix
     from .core import _chart_config
-    from .format import _fmt_bar, _fmt_value_label
+    from .format import _fmt_unit, _fmt_value_label
     from .lines import _combo_bar_data, _combo_line_data, _line_data
 
     cfg = _chart_config(slide)
@@ -1433,7 +1433,8 @@ def _extract_categories_and_shorts(
         _y_max, _y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
     else:
         y_ticks = list(cfg.get("y_axis_ticks") or [0, 1])
-    y_labs = [_fmt_bar(v, unit) for v in y_ticks]
+    unit_pos = str(cfg.get("y_axis_unit_position") or "suffix")
+    y_labs = [_fmt_unit(v, unit, unit_pos) for v in y_ticks]
     secondary_y_ticks: list[float] = []
     secondary_y_labs: list[str] = []
 
@@ -1448,7 +1449,7 @@ def _extract_categories_and_shorts(
             if overlay.get("dual_axis", True) is False:
                 values_flat.extend(line_values)
                 _y_max, _y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
-                y_labs = [_fmt_bar(v, unit) for v in y_ticks]
+                y_labs = [_fmt_unit(v, unit, unit_pos) for v in y_ticks]
             else:
                 line_min = float(overlay.get("y_axis_min", 0))
                 line_max = float(overlay.get("y_axis_max", max(line_values) * 1.15))
@@ -1457,13 +1458,14 @@ def _extract_categories_and_shorts(
                     step = (line_max - line_min) / 4
                     line_ticks = [line_min + i * step for i in range(5)]
                 overlay_unit = str(overlay.get("y_axis_unit") or "")
+                overlay_unit_pos = str(overlay.get("y_axis_unit_position") or "suffix")
                 for tick in line_ticks:
                     try:
                         value = float(tick)
                     except (TypeError, ValueError):
                         continue
                     secondary_y_ticks.append(value)
-                    secondary_y_labs.append(f"{value:g}{overlay_unit}")
+                    secondary_y_labs.append(_fmt_unit(value, overlay_unit, overlay_unit_pos))
 
     dl_texts: list[str] = []
     want = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))
@@ -1537,7 +1539,7 @@ def compute_auto_plan_for_slide(
     cats, shorts, series_count, y_vals, y_labs, secondary_y_vals, secondary_y_labs, dl_texts = _extract_categories_and_shorts(
         slide, ct
     )
-    has_legend = cfg.get("show_legend") is not False and series_count > 1
+    has_legend = cfg.get("show_legend") is not False
     want_dl = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))
     # Ordinary datalabels only on grouped_bar / line (uses_ordinary_datalabels).
     if ct not in ("grouped_bar_chart", "line_chart"):
