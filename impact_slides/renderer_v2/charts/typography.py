@@ -25,7 +25,13 @@ _TYPO_BOUNDS = {
     "y_tick_font_size": (8, 28),
     "datalabel_font_size": (8, 32),
 }
-_SUPPORTED_TYPO_FIELDS = frozenset(_TYPO_BOUNDS)
+# Under mode=auto, explicit channel floors rise (#150).
+_AUTO_TYPO_BOUNDS = {
+    "x_tick_font_size": (12, 24),
+    "y_tick_font_size": (12, 28),
+    "datalabel_font_size": (11, 32),
+}
+_SUPPORTED_TYPO_FIELDS = frozenset(_TYPO_BOUNDS) | frozenset({"mode"})
 
 # Pane title geometry (#139).
 PANE_TITLE_FS = 40
@@ -166,6 +172,11 @@ def resolve_typography(
 
     Absent/invalid group → legacy 13/13/11. Invalid under strict raises.
     Unsupported keys warn and are ignored (supported keys still apply).
+
+    ``mode: "auto"`` marks the group for the shared auto resolver;
+    explicit channel overrides remain optional and are never silently resized.
+    Without a density context this returns legacy defaults for unset channels
+    plus ``auto_mode=1`` so painters can run ``resolve_auto_typography``.
     """
     if strict is None:
         strict = _RENDER_STRICT.get()
@@ -177,9 +188,21 @@ def resolve_typography(
         "x_tick_font_size_set": 0,
         "y_tick_font_size_set": 0,
         "datalabel_font_size_set": 0,
+        "auto_mode": 0,
     }
     if not isinstance(chart_cfg, Mapping):
         return out
+    # Internal renderer handoff from the shared #150 resolver. It is never a
+    # public chart_config key and lets all SVG painters consume the same plan.
+    stashed = chart_cfg.get("_auto_typo_plan")
+    if stashed is not None:
+        try:
+            from .auto_typography import AutoTypoPlan, merge_plan_into_typo
+
+            if isinstance(stashed, AutoTypoPlan):
+                return merge_plan_into_typo(out, stashed)
+        except ImportError:
+            pass
     raw = chart_cfg.get("typography")
     if raw is None:
         return out
@@ -195,9 +218,26 @@ def resolve_typography(
         if key not in _SUPPORTED_TYPO_FIELDS:
             _warn(f"unsupported field ignored: {key}")
 
-    # Validate supported fields; one bad field drops the WHOLE group (non-strict).
+    mode_raw = raw.get("mode")
+    auto_mode = False
+    if mode_raw is not None:
+        if not isinstance(mode_raw, str) or mode_raw.strip().lower() not in {
+            "auto",
+            "manual",
+            "legacy",
+        }:
+            msg = "mode must be 'auto' (or omitted)"
+            if strict:
+                raise ValueError(f"chart_config.typography: {msg}")
+            _warn(f"ignored entire group: {msg}")
+            return out
+        auto_mode = mode_raw.strip().lower() == "auto"
+
+    bounds = _AUTO_TYPO_BOUNDS if auto_mode else _TYPO_BOUNDS
+
+    # Validate supported size fields; one bad field drops the WHOLE group (non-strict).
     resolved: dict[str, int] = {}
-    for field, (lo, hi) in _TYPO_BOUNDS.items():
+    for field, (lo, hi) in bounds.items():
         if field not in raw:
             continue
         value = raw[field]
@@ -212,6 +252,8 @@ def resolve_typography(
     out.update(resolved)
     for field in resolved:
         out[f"{field}_set"] = 1
+    if auto_mode:
+        out["auto_mode"] = 1
     return out
 
 

@@ -105,8 +105,21 @@ from .matrix import _build_heatmap_html, _build_waterfall_svg, _fallback_matrix_
 
 
 
-def _svg_fallback_for_layout(slide: Mapping[str, Any], layout: str) -> str:
+def _svg_fallback_for_layout(
+    slide: Mapping[str, Any], layout: str, *, record_diagnostic: bool = True
+) -> str:
     """Static SVG painter for a Chart.js MVP layout (JS-off / noscript path)."""
+    from .auto_typography import compute_auto_plan_for_slide, record_auto_diagnostic
+
+    cfg = _chart_config(slide)
+    plan = compute_auto_plan_for_slide(slide, layout, chart_cfg=cfg)
+    if plan is not None:
+        cfg["_auto_typo_plan"] = plan
+        visual_spec = dict(slide.get("visual_spec") or {})
+        visual_spec["chart_config"] = cfg
+        slide = {**slide, "visual_spec": visual_spec}
+        if record_diagnostic:
+            record_auto_diagnostic(plan.diagnostic_dict())
     if layout == "line_chart":
         return _build_line_chart_svg(slide)
     if layout == "combo_chart":

@@ -25,6 +25,7 @@ from ...charts.typography import (
     chart_pane_title_html,
     resolve_pane_heading,
     resolve_pane_subtitle,
+    resolve_typography,
 )
 
 # #136/#149: Chart.js runtime re-pitch for plot-aligned support tables.
@@ -459,59 +460,58 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
 
     vs = slide.get("visual_spec") or {}
     from ...charts import _chart_config  # late import: charts -> layout cycle
+    from ...charts.auto_typography import compute_auto_plan_for_slide, sync_sibling_plans
 
     top_cfg = _chart_config(slide)
-    panes: list[str] = []
+    aw, ah = chart_host_size("dual_chart")
+    pane_specs: list[tuple[Mapping[str, Any], str, dict[str, Any], str, list[str]]] = []
+    plans = []
     for key in ("primary_visual", "secondary_visual"):
         visual = vs.get(key)
         if not isinstance(visual, dict) or not visual:
             continue
         vt = str(visual.get("type") or "grouped_bar_chart").lower()
-        # Pane heading (R5-F/T11 + #139/#147): in-card title above the plot.
-        # resolve_pane_heading: heading > label > chart_config.title > single
-        # series. Multi-series panes keep Chart.js legend (series info, not
-        # chrome); single-series legend only restates the heading — suppress.
         names = _visual_series_names(visual)
         pane_cfg = dict(visual.get("chart_config") or {})
         heading = resolve_pane_heading(visual, series_names=names)
         if heading and len(names) <= 1 and not visual.get("line_overlay"):
             pane_cfg["show_legend"] = False
-        sub_vs: dict[str, Any] = {
-            "primary_visual": visual,
-            "chart_config": pane_cfg,
-        }
-        if visual.get("line_overlay"):
-            sub_vs["line_overlay"] = visual["line_overlay"]
-        if visual.get("annotation"):
-            sub_vs["annotation"] = visual["annotation"]
         sub_slide = {
             "slide_number": slide.get("slide_number", 1),
             "title": slide.get("title", ""),
             "layout_type": vt,
             "content": {},
-            "visual_spec": sub_vs,
+            "visual_spec": {"primary_visual": visual, "chart_config": pane_cfg},
             "evidence_sources": slide.get("evidence_sources") or [],
         }
-        # #139: HTML-owned chart pane title (recipe heading wins).
-        # Pass fixed dual-pane host geometry so remaining-canvas 320×240 runs.
-        aw, ah = chart_host_size("dual_chart")
-        lbl = (
-            chart_pane_title_html(heading, available_w=aw, available_h=ah)
-            if heading
-            else ""
-        )
-        # N10: each pane is its own rounded card (the PDF draws two separate
-        # panels, not one shared enclosure). surface/stage modifiers apply
-        # per pane, falling back to the slide-level chart_config.
+        if visual.get("line_overlay"):
+            sub_slide["visual_spec"]["line_overlay"] = visual["line_overlay"]
+        plans.append(compute_auto_plan_for_slide(sub_slide, vt, host_w=aw, host_h=ah, chart_cfg=pane_cfg))
+        pane_specs.append((visual, vt, pane_cfg, heading, names))
+
+    synced = iter(sync_sibling_plans([p for p in plans if p is not None]))
+    panes: list[str] = []
+    for visual, vt, pane_cfg, heading, names in pane_specs:
+        plan = next(synced, None) if resolve_typography(pane_cfg).get("auto_mode") else None
+        if plan is not None:
+            pane_cfg["_auto_typo_plan"] = plan
+        sub_vs: dict[str, Any] = {"primary_visual": visual, "chart_config": pane_cfg}
+        if visual.get("line_overlay"):
+            sub_vs["line_overlay"] = visual["line_overlay"]
+        if visual.get("annotation"):
+            sub_vs["annotation"] = visual["annotation"]
+        sub_slide = {
+            "slide_number": slide.get("slide_number", 1), "title": slide.get("title", ""),
+            "layout_type": vt, "content": {}, "visual_spec": sub_vs,
+            "evidence_sources": slide.get("evidence_sources") or [],
+        }
+        lbl = chart_pane_title_html(heading, available_w=aw, available_h=ah) if heading else ""
         pane_cls = "dual-chart-pane chart-frame gl-card"
         if pane_cfg.get("surface", top_cfg.get("surface")) == "white":
             pane_cls += " chart-surface-white"
         if pane_cfg.get("stage", top_cfg.get("stage")) == "flat":
             pane_cls += " chart-frame-flat"
-        panes.append(
-            f'<div class="{pane_cls}">'
-            f"{lbl}{build_chart_html(sub_slide, vt, use_chartjs=use_chartjs)}</div>"
-        )
+        panes.append(f'<div class="{pane_cls}">{lbl}{build_chart_html(sub_slide, vt, use_chartjs=use_chartjs)}</div>')
     main = f'<div class="gl-grid gl-grid-2 dual-chart">{"".join(panes)}</div>'
     main += insight_strip(_so_what(slide))
     return slide_shell(

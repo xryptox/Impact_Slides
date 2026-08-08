@@ -1,0 +1,1509 @@
+"""Deterministic density-aware auto chart typography (#150).
+
+Shared resolver for Chart.js + SVG. Opt-in via chart_config.typography.mode=auto.
+Does not expose heuristic weights/floors/ceilings as public config.
+"""
+from __future__ import annotations
+
+import math
+import re
+import sys
+from dataclasses import asdict, dataclass, field
+from typing import Any, Mapping, Sequence
+
+# Auto candidate ranges (inclusive, whole px). Not public config.
+AUTO_X_LO, AUTO_X_HI = 12, 24
+AUTO_Y_LO, AUTO_Y_HI = 12, 28
+AUTO_DL_LO, AUTO_DL_HI = 11, 32
+
+# Explicit overrides under mode=auto use raised floors.
+AUTO_EXPLICIT_AXIS_LO = 12
+AUTO_EXPLICIT_DL_LO = 11
+
+# Supported chart types for auto v1.
+AUTO_CHART_TYPES = frozenset(
+    {
+        "line_chart",
+        "grouped_bar_chart",
+        "stacked_bar_chart",
+        "horizontal_bar_chart",
+        "combo_chart",
+        "waterfall_chart",
+    }
+)
+
+# Plot furniture reservations (px) subtracted before fitting.
+_LEGEND_H = 28.0
+_X_AXIS_GAP = 6.0
+_Y_AXIS_GAP = 8.0
+_DL_GAP = 4.0
+_ROT_PAD = 4.0
+
+# Conservative host when recipe cannot provide reliable dimensions.
+CONSERVATIVE_PLOT_W = 420.0
+CONSERVATIVE_PLOT_H = 280.0
+
+# Wrap: at most two lines, whitespace/punctuation boundaries only.
+_WRAP_SPLIT_RE = re.compile(r"(\s+|(?<=[/\-–,;:·])|(?=[/\-–,;:·]))")
+
+# Context for diagnostics collected during a render.
+_AUTO_DIAG: list[dict[str, Any]] = []
+
+
+def begin_auto_diagnostics() -> None:
+    _AUTO_DIAG.clear()
+
+
+def take_auto_diagnostics() -> list[dict[str, Any]]:
+    out = list(_AUTO_DIAG)
+    _AUTO_DIAG.clear()
+    return out
+
+
+def record_auto_diagnostic(entry: Mapping[str, Any]) -> None:
+    _AUTO_DIAG.append(dict(entry))
+
+
+def _warn(msg: str) -> None:
+    """Stderr only for information loss / reduced confidence (#150)."""
+    print(f"[auto-typography] {msg}", file=sys.stderr)
+    try:
+        from .typography import _warn as typo_warn
+
+        typo_warn(msg)
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
+# Font metrics (normalized advances, calibrated for boardroom fonts)
+# ---------------------------------------------------------------------------
+
+# Advances are fractions of em. Tuned so estimated bounds conservatively
+# contain real rendered bounds within max(5%, 2px) for representative glyphs.
+_FONT_METRICS: dict[str, dict[str, float]] = {
+    "source_sans_3": {
+        "digit": 0.56,
+        "upper": 0.64,
+        "lower": 0.50,
+        "space": 0.24,
+        "punct": 0.28,
+        "other": 0.58,
+        "avg": 0.52,
+        "ascender": 0.92,
+        "descender": 0.22,
+        "line_gap": 0.12,
+    },
+    "ibm_plex_sans": {
+        "digit": 0.58,
+        "upper": 0.66,
+        "lower": 0.52,
+        "space": 0.26,
+        "punct": 0.30,
+        "other": 0.60,
+        "avg": 0.54,
+        "ascender": 0.94,
+        "descender": 0.24,
+        "line_gap": 0.12,
+    },
+    # Unknown theme fonts — conservative (wider) fallback.
+    "_fallback": {
+        "digit": 0.62,
+        "upper": 0.72,
+        "lower": 0.58,
+        "space": 0.30,
+        "punct": 0.36,
+        "other": 0.66,
+        "avg": 0.60,
+        "ascender": 1.00,
+        "descender": 0.28,
+        "line_gap": 0.16,
+    },
+}
+
+_FONT_ALIASES = {
+    "source sans 3": "source_sans_3",
+    "source sans": "source_sans_3",
+    "sourcesans3": "source_sans_3",
+    "ibm plex sans": "ibm_plex_sans",
+    "ibm plex": "ibm_plex_sans",
+    "ibmplexsans": "ibm_plex_sans",
+}
+
+
+def normalize_font_key(name: str | None) -> tuple[str, bool]:
+    """Return (metrics_key, is_fallback)."""
+    if not name:
+        return "source_sans_3", False
+    raw = str(name).strip().lower().replace('"', "").replace("'", "")
+    # First family in a CSS stack.
+    first = raw.split(",")[0].strip()
+    key = _FONT_ALIASES.get(first)
+    if key:
+        return key, False
+    if first in _FONT_METRICS:
+        return first, False
+    return "_fallback", True
+
+
+def _char_class(ch: str) -> str:
+    if ch.isspace():
+        return "space"
+    if ch.isdigit():
+        return "digit"
+    if ch.isupper():
+        return "upper"
+    if ch.islower():
+        return "lower"
+    # Common punctuation / currency
+    if ch in ".,;:!?%/+-–—()[]{}'\"$€£¥#@*&_=<>|\\":
+        return "punct"
+    return "other"
+
+
+def measure_text_width(
+    text: str,
+    font_size: float,
+    *,
+    font: str | None = "source_sans_3",
+    weight: str | int | None = None,
+) -> float:
+    """Estimated advance width in px (conservative)."""
+    key, _ = normalize_font_key(font)
+    m = _FONT_METRICS[key]
+    if not text:
+        return 0.0
+    total = 0.0
+    for ch in text:
+        total += m[_char_class(ch)]
+    # Bold ≈ +4% advance (Plex/Source).
+    bold = False
+    if isinstance(weight, str):
+        bold = weight.lower() in {"bold", "700", "600", "semibold"}
+    elif isinstance(weight, (int, float)):
+        bold = int(weight) >= 600
+    if bold:
+        total *= 1.04
+    # 2% safety pad so estimates contain real bounds.
+    return total * float(font_size) * 1.02
+
+
+def measure_text_height(
+    font_size: float,
+    *,
+    font: str | None = "source_sans_3",
+    lines: int = 1,
+) -> float:
+    key, _ = normalize_font_key(font)
+    m = _FONT_METRICS[key]
+    line_h = (m["ascender"] + m["descender"] + m["line_gap"]) * float(font_size)
+    return line_h * max(int(lines), 1)
+
+
+def measure_label_box(
+    text: str,
+    font_size: float,
+    *,
+    font: str | None = "source_sans_3",
+    weight: str | int | None = None,
+    lines: Sequence[str] | None = None,
+    rotation_deg: float = 0.0,
+) -> tuple[float, float]:
+    """Return (width, height) of the axis-aligned bounding box after rotation."""
+    if lines is None:
+        segs = [text] if text else [""]
+    else:
+        segs = list(lines) or [""]
+    w = max(measure_text_width(s, font_size, font=font, weight=weight) for s in segs)
+    h = measure_text_height(font_size, font=font, lines=len(segs))
+    rot = abs(float(rotation_deg)) % 180.0
+    if rot > 90.0:
+        rot = 180.0 - rot
+    if rot < 0.5:
+        return w, h
+    rad = math.radians(rot)
+    # AABB of rotated rectangle.
+    aw = abs(w * math.cos(rad)) + abs(h * math.sin(rad))
+    ah = abs(w * math.sin(rad)) + abs(h * math.cos(rad))
+    return aw, ah
+
+
+# ---------------------------------------------------------------------------
+# Label adaptation helpers
+# ---------------------------------------------------------------------------
+
+
+def wrap_label(text: str, *, max_lines: int = 2) -> list[str]:
+    """Wrap at whitespace/punctuation; never split words; ≤ max_lines."""
+    text = (text or "").strip()
+    if not text or max_lines <= 1:
+        return [text] if text else [""]
+    # Prefer natural break near midpoint.
+    tokens = [t for t in re.split(r"(\s+)", text) if t != ""]
+    if len(tokens) == 1:
+        # Try punctuation soft-break without eating the char into both sides.
+        parts = re.split(r"(?<=[/\-–,;:·])", text)
+        parts = [p for p in parts if p]
+        if len(parts) >= 2:
+            mid = max(1, len(parts) // 2)
+            left = "".join(parts[:mid]).strip()
+            right = "".join(parts[mid:]).strip()
+            if left and right:
+                return [left, right]
+        return [text]
+    # Greedy pack into two lines by char budget ≈ half.
+    budget = max(1, (len(text) + 1) // 2)
+    line1: list[str] = []
+    n = 0
+    i = 0
+    while i < len(tokens):
+        t = tokens[i]
+        add = len(t)
+        if line1 and n + add > budget and not t.isspace():
+            break
+        line1.append(t)
+        n += add
+        i += 1
+    left = "".join(line1).strip()
+    right = "".join(tokens[i:]).strip()
+    if not right:
+        return [left] if left else [text]
+    if not left:
+        return [right]
+    return [left, right]
+
+
+def ellipsize(text: str, font_size: float, max_width: float, *, font: str | None = None) -> str:
+    """Final axis-label resort: truncate with ellipsis to fit max_width."""
+    text = text or ""
+    if measure_text_width(text, font_size, font=font) <= max_width:
+        return text
+    ell = "…"
+    if measure_text_width(ell, font_size, font=font) > max_width:
+        return ""
+    lo, hi = 0, len(text)
+    best = ell
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        cand = text[:mid].rstrip() + ell
+        if measure_text_width(cand, font_size, font=font) <= max_width:
+            best = cand
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return best
+
+
+def skip_indices(n: int, keep_step: int) -> list[int]:
+    """Evenly skip ticks; always retain first and last. keep_step≥1 shows every k-th."""
+    if n <= 0:
+        return []
+    if keep_step <= 1 or n <= 2:
+        return list(range(n))
+    kept = {0, n - 1}
+    for i in range(0, n, keep_step):
+        kept.add(i)
+    return sorted(kept)
+
+
+def _x_slot_width(plot_w: float, n: int) -> float:
+    if n <= 0:
+        return plot_w
+    return plot_w / n
+
+
+@dataclass
+class AxisLabelPlan:
+    """Per-category display plan for the category (x) axis."""
+
+    texts: list[str]  # display text (may be short/ellipsized); "" = skipped
+    full_texts: list[str]  # accessibility / diagnostics full labels
+    lines: list[list[str]]  # wrapped lines per category (display)
+    rotation_deg: float = 0.0
+    used_short: bool = False
+    used_wrap: bool = False
+    used_skip: bool = False
+    used_ellipsis: bool = False
+    skipped_count: int = 0
+    short_count: int = 0
+    ellipsis_count: int = 0
+
+
+@dataclass
+class AutoTypoPlan:
+    """Resolved auto typography for one chart pane."""
+
+    enabled: bool = False
+    chart_type: str = ""
+    x_tick_font_size: int = 13
+    y_tick_font_size: int = 13
+    datalabel_font_size: int = 11
+    x_tick_font_size_set: int = 0  # 1 if explicit override
+    y_tick_font_size_set: int = 0
+    datalabel_font_size_set: int = 0
+    x_explicit: bool = False
+    y_explicit: bool = False
+    dl_explicit: bool = False
+    plot_w: float = 0.0
+    plot_h: float = 0.0
+    host_w: float = 0.0
+    host_h: float = 0.0
+    used_fallback_dims: bool = False
+    used_fallback_font: bool = False
+    x_labels: AxisLabelPlan | None = None
+    y_tick_values: list[float] = field(default_factory=list)
+    y_tick_labels: list[str] = field(default_factory=list)
+    y_ticks_reduced: bool = False
+    datalabels_suppressed: bool = False
+    datalabel_suppress_count: int = 0
+    warnings: list[str] = field(default_factory=list)
+    confidence: str = "high"  # high | reduced
+
+    def to_typo_dict(self) -> dict[str, int]:
+        return {
+            "x_tick_font_size": int(self.x_tick_font_size),
+            "y_tick_font_size": int(self.y_tick_font_size),
+            "datalabel_font_size": int(self.datalabel_font_size),
+            "x_tick_font_size_set": 1 if (self.enabled or self.x_explicit) else 0,
+            "y_tick_font_size_set": 1 if (self.enabled or self.y_explicit) else 0,
+            "datalabel_font_size_set": 1
+            if (self.enabled and not self.datalabels_suppressed) or self.dl_explicit
+            else 0,
+        }
+
+    def diagnostic_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {
+            "mode": "auto" if self.enabled else "off",
+            "chart_type": self.chart_type,
+            "x_tick_font_size": self.x_tick_font_size,
+            "y_tick_font_size": self.y_tick_font_size,
+            "datalabel_font_size": (
+                0 if self.datalabels_suppressed else self.datalabel_font_size
+            ),
+            "plot_w": round(self.plot_w, 1),
+            "plot_h": round(self.plot_h, 1),
+            "host_w": round(self.host_w, 1),
+            "host_h": round(self.host_h, 1),
+            "x_explicit": self.x_explicit,
+            "y_explicit": self.y_explicit,
+            "dl_explicit": self.dl_explicit,
+            "used_fallback_dims": self.used_fallback_dims,
+            "used_fallback_font": self.used_fallback_font,
+            "y_ticks_reduced": self.y_ticks_reduced,
+            "y_tick_count": len(self.y_tick_values),
+            "datalabels_suppressed": self.datalabels_suppressed,
+            "datalabel_suppress_count": self.datalabel_suppress_count,
+            "confidence": self.confidence,
+        }
+        if self.x_labels is not None:
+            xl = self.x_labels
+            d.update(
+                {
+                    "x_rotation_deg": xl.rotation_deg,
+                    "x_used_wrap": xl.used_wrap,
+                    "x_used_short": xl.used_short,
+                    "x_used_skip": xl.used_skip,
+                    "x_used_ellipsis": xl.used_ellipsis,
+                    "x_skipped_count": xl.skipped_count,
+                    "x_short_count": xl.short_count,
+                    "x_ellipsis_count": xl.ellipsis_count,
+                    "x_display_labels": list(xl.texts),
+                    "x_full_labels": list(xl.full_texts),
+                }
+            )
+        if self.warnings:
+            d["warnings"] = list(self.warnings)
+        return d
+
+
+def _try_x_fit(
+    labels: Sequence[str],
+    font_size: int,
+    plot_w: float,
+    bottom_budget: float,
+    *,
+    font: str,
+    rotation: float,
+    wrap: bool,
+) -> tuple[bool, list[list[str]], float]:
+    """Return (fits, lines_per_label, used_height)."""
+    n = len(labels)
+    if n == 0:
+        return True, [], 0.0
+    slot = _x_slot_width(plot_w, n)
+    # Unrotated labels may use ~0.95 of slot; rotated share more via stagger.
+    max_w = slot * (1.35 if rotation >= 30 else 0.95)
+    lines_out: list[list[str]] = []
+    max_h = 0.0
+    for lab in labels:
+        segs = wrap_label(lab, max_lines=2) if wrap else [lab]
+        if not wrap:
+            segs = [lab]
+        # If wrap produced 2 lines, each line must fit slot width.
+        ok_lines = True
+        for s in segs:
+            bw, bh = measure_label_box(
+                s, font_size, font=font, rotation_deg=rotation if len(segs) == 1 else 0.0
+            )
+            # Multi-line unrotated: width is max line; height sums.
+            if rotation < 0.5:
+                if measure_text_width(s, font_size, font=font) > max_w:
+                    ok_lines = False
+                    break
+            else:
+                if bw > max_w * 1.1 and measure_text_width(s, font_size, font=font) > max_w:
+                    # Allow tall rotated labels; width along baseline limited by slot diagonal.
+                    baseline_w = measure_text_width(s, font_size, font=font)
+                    # Projected horizontal footprint.
+                    rad = math.radians(rotation)
+                    foot = baseline_w * math.cos(rad) + measure_text_height(font_size, font=font) * math.sin(rad)
+                    if foot > slot * 1.25:
+                        ok_lines = False
+                        break
+        if not ok_lines:
+            return False, [], 0.0
+        if rotation < 0.5:
+            h = measure_text_height(font_size, font=font, lines=len(segs))
+            w = max(measure_text_width(s, font_size, font=font) for s in segs)
+            if w > max_w:
+                return False, [], 0.0
+        else:
+            # Single-line rotated only in our stages.
+            segs = [lab]
+            w, h = measure_label_box(lab, font_size, font=font, rotation_deg=rotation)
+            if w > plot_w and n == 1:
+                return False, [], 0.0
+            # Neighbor overlap: projected half-widths must fit half-slot with pad.
+            rad = math.radians(rotation)
+            baseline_w = measure_text_width(lab, font_size, font=font)
+            half_foot = 0.5 * (
+                baseline_w * math.cos(rad)
+                + measure_text_height(font_size, font=font) * math.sin(rad)
+            )
+            if half_foot + _ROT_PAD > slot * 0.55 and n > 2:
+                return False, [], 0.0
+        lines_out.append(segs)
+        max_h = max(max_h, h if rotation >= 0.5 else measure_text_height(font_size, font=font, lines=len(segs)))
+    used_h = max_h + _X_AXIS_GAP
+    if used_h > bottom_budget + 1e-6:
+        return False, [], 0.0
+    # Adjacent unrotated overlap check.
+    if rotation < 0.5 and n >= 2:
+        for i, segs in enumerate(lines_out):
+            w = max(measure_text_width(s, font_size, font=font) for s in segs)
+            if w > slot - 2.0:
+                return False, [], 0.0
+    return True, lines_out, used_h
+
+
+def _fit_x_labels(
+    full_labels: Sequence[str],
+    short_labels: Sequence[str | None],
+    font_size: int,
+    plot_w: float,
+    bottom_budget: float,
+    *,
+    font: str = "source_sans_3",
+) -> AxisLabelPlan | None:
+    """Adaptation order from the issue. Returns plan or None if nothing fits."""
+    n = len(full_labels)
+    if n == 0:
+        return AxisLabelPlan(texts=[], full_texts=[], lines=[])
+
+    def attempt(labels: Sequence[str], *, rotation: float, wrap: bool) -> AxisLabelPlan | None:
+        ok, lines, _h = _try_x_fit(
+            labels, font_size, plot_w, bottom_budget, font=font, rotation=rotation, wrap=wrap
+        )
+        if not ok:
+            return None
+        return AxisLabelPlan(
+            texts=list(labels),
+            full_texts=list(full_labels),
+            lines=lines,
+            rotation_deg=float(rotation),
+            used_wrap=wrap and any(len(L) > 1 for L in lines),
+        )
+
+    # Stages 1–3: full labels
+    for wrap, rotation in (
+        (False, 0.0),
+        (True, 0.0),
+        (False, 30.0),
+        (False, 45.0),
+    ):
+        plan = attempt(full_labels, rotation=rotation, wrap=wrap)
+        if plan is not None:
+            return plan
+
+    # Stage 4: short_label, repeat 1–3
+    shorts = []
+    any_short = False
+    for i, full in enumerate(full_labels):
+        s = short_labels[i] if i < len(short_labels) else None
+        if s is not None and str(s).strip():
+            shorts.append(str(s).strip())
+            any_short = True
+        else:
+            shorts.append(full)
+    if any_short:
+        for wrap, rotation in (
+            (False, 0.0),
+            (True, 0.0),
+            (False, 30.0),
+            (False, 45.0),
+        ):
+            plan = attempt(shorts, rotation=rotation, wrap=wrap)
+            if plan is not None:
+                plan.used_short = True
+                plan.short_count = sum(
+                    1
+                    for i, s in enumerate(shorts)
+                    if short_labels[i] is not None
+                    and str(short_labels[i] or "").strip()
+                    and s != full_labels[i]
+                )
+                return plan
+
+    # Stage 5: evenly skip (full labels preferred, then short), try rotations
+    for use_short in (False, True) if any_short else (False,):
+        base = shorts if use_short else list(full_labels)
+        for step in range(2, n):
+            kept = set(skip_indices(n, step))
+            trial = [base[i] if i in kept else "" for i in range(n)]
+            for wrap, rotation in (
+                (False, 0.0),
+                (True, 0.0),
+                (False, 30.0),
+                (False, 45.0),
+            ):
+                # Fit only kept labels with expanded slots.
+                kept_labs = [trial[i] for i in range(n) if trial[i]]
+                if not kept_labs:
+                    continue
+                # Effective slot grows with skip.
+                ok, lines_kept, _h = _try_x_fit(
+                    kept_labs,
+                    font_size,
+                    plot_w,
+                    bottom_budget,
+                    font=font,
+                    rotation=rotation,
+                    wrap=wrap,
+                )
+                if not ok:
+                    continue
+                lines_full: list[list[str]] = []
+                ki = 0
+                texts: list[str] = []
+                for i in range(n):
+                    if trial[i]:
+                        lines_full.append(lines_kept[ki])
+                        texts.append(trial[i])
+                        ki += 1
+                    else:
+                        lines_full.append([])
+                        texts.append("")
+                return AxisLabelPlan(
+                    texts=texts,
+                    full_texts=list(full_labels),
+                    lines=lines_full,
+                    rotation_deg=float(rotation),
+                    used_wrap=wrap and any(len(L) > 1 for L in lines_kept),
+                    used_short=use_short,
+                    used_skip=True,
+                    skipped_count=n - len(kept),
+                    short_count=sum(
+                        1
+                        for i, t in enumerate(texts)
+                        if t
+                        and use_short
+                        and short_labels[i] is not None
+                        and str(short_labels[i] or "").strip()
+                    ),
+                )
+
+    # Stage 6: ellipsis as final axis resort (unrotated, no skip first)
+    slot = _x_slot_width(plot_w, n) * 0.95
+    ellipsed = [ellipsize(full_labels[i], font_size, slot, font=font) for i in range(n)]
+    plan = attempt(ellipsed, rotation=0.0, wrap=False)
+    if plan is not None:
+        plan.used_ellipsis = True
+        plan.ellipsis_count = sum(
+            1 for i, t in enumerate(ellipsed) if t != full_labels[i]
+        )
+        return plan
+
+    # Last ditch: skip + ellipsis
+    for step in range(2, n + 1):
+        kept = set(skip_indices(n, step))
+        slot_k = _x_slot_width(plot_w, max(len(kept), 1)) * 0.95
+        texts = []
+        for i in range(n):
+            if i in kept:
+                texts.append(ellipsize(full_labels[i], font_size, slot_k, font=font))
+            else:
+                texts.append("")
+        kept_labs = [t for t in texts if t]
+        ok, lines_kept, _h = _try_x_fit(
+            kept_labs,
+            font_size,
+            plot_w,
+            bottom_budget,
+            font=font,
+            rotation=0.0,
+            wrap=False,
+        )
+        if not ok:
+            continue
+        lines_full = []
+        ki = 0
+        for t in texts:
+            if t:
+                lines_full.append(lines_kept[ki])
+                ki += 1
+            else:
+                lines_full.append([])
+        return AxisLabelPlan(
+            texts=texts,
+            full_texts=list(full_labels),
+            lines=lines_full,
+            rotation_deg=0.0,
+            used_skip=True,
+            used_ellipsis=True,
+            skipped_count=n - len(kept),
+            ellipsis_count=sum(
+                1 for i, t in enumerate(texts) if t and t != full_labels[i]
+            ),
+        )
+    return None
+
+
+def _fit_y_ticks(
+    tick_labels: Sequence[str],
+    tick_values: Sequence[float],
+    font_size: int,
+    plot_h: float,
+    left_budget: float,
+    *,
+    font: str = "source_sans_3",
+    weight: str | int = "bold",
+) -> tuple[bool, list[float], list[str], bool]:
+    """Return (fits, values, labels, reduced); may drop interior ticks at the floor."""
+    if not tick_labels:
+        return True, [], [], False
+
+    def fits(vals: Sequence[float], labs: Sequence[str]) -> bool:
+        if not labs:
+            return True
+        max_w = max(
+            measure_text_width(s, font_size, font=font, weight=weight) for s in labs
+        )
+        if max_w + _Y_AXIS_GAP > left_budget + 1e-6:
+            return False
+        h = measure_text_height(font_size, font=font, lines=1)
+        # Vertical: labels centered on ticks must not overlap.
+        if len(vals) >= 2:
+            # Assume ticks span full plot_h uniformly in index space via values domain.
+            ymin, ymax = min(vals), max(vals)
+            span = ymax - ymin or 1.0
+            positions = [plot_h * (1.0 - (v - ymin) / span) for v in vals]
+            positions_sorted = sorted(positions)
+            for a, b in zip(positions_sorted, positions_sorted[1:]):
+                if abs(b - a) < h + 2.0:
+                    return False
+        return True
+
+    vals = list(tick_values)
+    labs = list(tick_labels)
+    if fits(vals, labs):
+        return True, vals, labs, False
+
+    # Only reduce count at the floor (caller enforces).
+    if font_size > AUTO_Y_LO:
+        return False, vals, labs, False
+
+    # Preserve endpoints + zero if in domain.
+    if len(vals) <= 2:
+        return fits(vals, labs), vals, labs, False
+
+    ymin, ymax = vals[0], vals[-1]
+    # Keep order of original list.
+    zero_in = any(abs(v) < 1e-12 for v in vals) and ymin < 0 < ymax
+    # Try progressively fewer interior ticks.
+    for keep_total in range(len(vals) - 1, 1, -1):
+        if keep_total == 2:
+            new_vals = [vals[0], vals[-1]]
+        else:
+            # Evenly sample including ends.
+            idxs = [round(i * (len(vals) - 1) / (keep_total - 1)) for i in range(keep_total)]
+            idxs = sorted(set(idxs))
+            new_vals = [vals[i] for i in idxs]
+            if zero_in and not any(abs(v) < 1e-12 for v in new_vals):
+                # Insert zero, drop nearest interior.
+                new_vals.append(0.0)
+                new_vals = sorted(set(new_vals))
+                while len(new_vals) > keep_total:
+                    # Drop interior non-zero closest to another tick.
+                    interior = [v for v in new_vals if v not in (new_vals[0], new_vals[-1]) and abs(v) > 1e-12]
+                    if not interior:
+                        break
+                    victim = interior[len(interior) // 2]
+                    new_vals = [v for v in new_vals if v != victim]
+        new_labs = []
+        for v in new_vals:
+            # Map back to original label if present else format.
+            lab = None
+            for ov, ol in zip(vals, labs):
+                if abs(ov - v) < 1e-9:
+                    lab = ol
+                    break
+            new_labs.append(lab if lab is not None else f"{v:g}")
+        if fits(new_vals, new_labs):
+            return True, new_vals, new_labs, True
+    return False, vals, labs, False
+
+
+def _fit_datalabels(
+    label_texts: Sequence[str],
+    font_size: int,
+    plot_w: float,
+    plot_h: float,
+    n_cats: int,
+    n_series: int,
+    *,
+    font: str = "ibm_plex_sans",
+    weight: str | int = "bold",
+) -> tuple[bool, int]:
+    """Ordinary datalabel fit. Returns (fits, suppress_count estimate)."""
+    if not label_texts:
+        return True, 0
+    n_cats = max(n_cats, 1)
+    n_series = max(n_series, 1)
+    slot_w = plot_w / n_cats / max(n_series, 1)
+    slot_h = max(plot_h / max(n_cats * 2, 1), font_size * 2)
+    h = measure_text_height(font_size, font=font, lines=1)
+    suppress = 0
+    for t in label_texts:
+        w = measure_text_width(t, font_size, font=font, weight=weight)
+        if w + _DL_GAP > slot_w or h + _DL_GAP > slot_h:
+            suppress += 1
+    # Fit if majority of labels fit; collision path can suppress the rest.
+    if suppress == 0:
+        return True, 0
+    if suppress < len(label_texts):
+        # Partial — still accept size; painter/collision suppresses.
+        return True, suppress
+    return False, suppress
+
+
+def estimate_plot_box(
+    *,
+    host_w: float,
+    host_h: float,
+    chart_type: str,
+    has_legend: bool,
+    has_title: bool = False,
+    title_reserve: float = 0.0,
+    exterior_lane: float = 0.0,
+    pad_l: float | None = None,
+    pad_r: float | None = None,
+    pad_t: float | None = None,
+    pad_b: float | None = None,
+) -> tuple[float, float, float, float, float, float]:
+    """Return (plot_w, plot_h, pad_l, pad_r, pad_t, pad_b) inside host."""
+    # Default pads mirror geometry.py / painters (scaled to host, not SVG units).
+    defaults = {
+        "line_chart": (0.09, 0.04, 0.08, 0.12),
+        "grouped_bar_chart": (0.08, 0.03, 0.08, 0.12),
+        "stacked_bar_chart": (0.08, 0.03, 0.08, 0.12),
+        "combo_chart": (0.09, 0.04, 0.08, 0.12),
+        "horizontal_bar_chart": (0.16, 0.03, 0.04, 0.08),
+        "waterfall_chart": (0.06, 0.04, 0.08, 0.14),
+    }
+    fr = defaults.get(chart_type, (0.08, 0.04, 0.08, 0.12))
+    pl = float(pad_l if pad_l is not None else host_w * fr[0])
+    pr = float(pad_r if pad_r is not None else host_w * fr[1])
+    pt = float(pad_t if pad_t is not None else host_h * fr[2])
+    pb = float(pad_b if pad_b is not None else host_h * fr[3])
+    if has_legend:
+        pt += _LEGEND_H
+    if title_reserve > 0:
+        # Title already outside plot host in dual panes; only subtract if included.
+        pass
+    if exterior_lane > 0:
+        pr += exterior_lane
+    plot_w = max(0.0, host_w - pl - pr)
+    plot_h = max(0.0, host_h - pt - pb)
+    return plot_w, plot_h, pl, pr, pt, pb
+
+
+def resolve_auto_typography(
+    *,
+    chart_type: str,
+    host_w: float | None,
+    host_h: float | None,
+    categories: Sequence[str],
+    short_labels: Sequence[str | None] | None = None,
+    series_count: int = 1,
+    y_tick_values: Sequence[float] | None = None,
+    y_tick_labels: Sequence[str] | None = None,
+    datalabel_texts: Sequence[str] | None = None,
+    has_legend: bool = False,
+    want_datalabels: bool = False,
+    x_explicit: int | None = None,
+    y_explicit: int | None = None,
+    dl_explicit: int | None = None,
+    font_x: str | None = "source_sans_3",
+    font_y: str | None = "ibm_plex_sans",
+    font_dl: str | None = "ibm_plex_sans",
+    horizontal: bool | None = None,
+) -> AutoTypoPlan:
+    """Largest whole-px sizes that fit; axes beat ordinary datalabels."""
+    ct = (chart_type or "").lower().strip()
+    plan = AutoTypoPlan(enabled=True, chart_type=ct)
+    if ct not in AUTO_CHART_TYPES:
+        plan.enabled = False
+        plan.confidence = "reduced"
+        plan.warnings.append(f"auto typography skipped for unsupported type {ct!r}")
+        return plan
+
+    is_hbar = horizontal if horizontal is not None else ct == "horizontal_bar_chart"
+    used_fb = False
+    if host_w is None or host_h is None or host_w <= 0 or host_h <= 0:
+        host_w = CONSERVATIVE_PLOT_W
+        host_h = CONSERVATIVE_PLOT_H
+        used_fb = True
+        plan.warnings.append(
+            f"fallback dimensions {CONSERVATIVE_PLOT_W:.0f}x{CONSERVATIVE_PLOT_H:.0f}"
+        )
+        _warn(plan.warnings[-1])
+
+    plan.host_w = float(host_w)
+    plan.host_h = float(host_h)
+    plan.used_fallback_dims = used_fb
+
+    fx, fb_x = normalize_font_key(font_x)
+    fy, fb_y = normalize_font_key(font_y)
+    fd, fb_d = normalize_font_key(font_dl)
+    if fb_x or fb_y or fb_d:
+        plan.used_fallback_font = True
+        plan.confidence = "reduced"
+        plan.warnings.append("unknown font metrics; using conservative fallback")
+        _warn(plan.warnings[-1])
+
+    plot_w, plot_h, pad_l, pad_r, pad_t, pad_b = estimate_plot_box(
+        host_w=plan.host_w,
+        host_h=plan.host_h,
+        chart_type=ct,
+        has_legend=has_legend,
+    )
+    plan.plot_w = plot_w
+    plan.plot_h = plot_h
+
+    cats = [str(c) for c in categories]
+    shorts = list(short_labels) if short_labels is not None else [None] * len(cats)
+    if len(shorts) < len(cats):
+        shorts = list(shorts) + [None] * (len(cats) - len(shorts))
+
+    y_vals = list(y_tick_values or [])
+    y_labs = list(y_tick_labels or [])
+    if y_vals and not y_labs:
+        y_labs = [f"{v:g}" for v in y_vals]
+    dl_texts = list(datalabel_texts or [])
+
+    # Explicit channels are never silently resized.
+    plan.x_explicit = x_explicit is not None
+    plan.y_explicit = y_explicit is not None
+    plan.dl_explicit = dl_explicit is not None
+    if plan.x_explicit:
+        plan.x_tick_font_size = int(x_explicit)  # type: ignore[arg-type]
+        plan.x_tick_font_size_set = 1
+    if plan.y_explicit:
+        plan.y_tick_font_size = int(y_explicit)  # type: ignore[arg-type]
+        plan.y_tick_font_size_set = 1
+    if plan.dl_explicit:
+        plan.datalabel_font_size = int(dl_explicit)  # type: ignore[arg-type]
+        plan.datalabel_font_size_set = 1
+
+    bottom_budget = pad_b
+    left_budget = pad_l
+
+    # --- X ticks (category axis; for hbar categories sit on Y visually but
+    #     still use x_tick channel naming per chart_config / issue scope) ---
+    # Spec channels: x_tick_font_size, y_tick_font_size, ordinary datalabel.
+    # For hbar: category labels use y_tick in SVG painters historically; auto
+    # keeps semantic channels: category density → x channel for vertical charts
+    # and y channel for horizontal charts' category side.
+    cat_is_x = not is_hbar
+
+    def choose_cat_size(explicit: int | None) -> tuple[int, AxisLabelPlan | None]:
+        if explicit is not None:
+            size = int(explicit)
+            # Still compute adaptation at fixed size.
+            # Category axis budget: bottom for vertical, left for hbar.
+            if cat_is_x:
+                p = _fit_x_labels(
+                    cats, shorts, size, plot_w, bottom_budget, font=fx
+                )
+            else:
+                # Reuse x fitter with plot_h as "width" analogy for vertical packing
+                # of horizontal category labels: width limit is left_budget.
+                p = _fit_x_labels(
+                    cats,
+                    shorts,
+                    size,
+                    plot_h,  # vertical span acts as category strip length
+                    left_budget,  # label width budget
+                    font=fx,
+                )
+            if p is None:
+                # Force ellipsis plan
+                p = AxisLabelPlan(
+                    texts=[ellipsize(c, size, max(left_budget, bottom_budget) * 0.9, font=fx) for c in cats],
+                    full_texts=list(cats),
+                    lines=[[ellipsize(c, size, max(left_budget, bottom_budget) * 0.9, font=fx)] for c in cats],
+                    used_ellipsis=True,
+                )
+                plan.warnings.append("category labels ellipsized under explicit size")
+                _warn(plan.warnings[-1])
+            return size, p
+        lo, hi = (AUTO_X_LO, AUTO_X_HI) if cat_is_x else (AUTO_Y_LO, AUTO_Y_HI)
+        best: tuple[int, AxisLabelPlan | None] = (lo, None)
+        for size in range(hi, lo - 1, -1):
+            if cat_is_x:
+                p = _fit_x_labels(cats, shorts, size, plot_w, bottom_budget, font=fx)
+            else:
+                p = _fit_x_labels(cats, shorts, size, plot_h, left_budget, font=fy)
+            if p is not None:
+                best = (size, p)
+                break
+        if best[1] is None:
+            # Floor with whatever adaptation we can.
+            size = lo
+            p = _fit_x_labels(
+                cats,
+                shorts,
+                size,
+                plot_w if cat_is_x else plot_h,
+                bottom_budget if cat_is_x else left_budget,
+                font=fx if cat_is_x else fy,
+            )
+            if p is None:
+                p = AxisLabelPlan(
+                    texts=list(cats),
+                    full_texts=list(cats),
+                    lines=[[c] for c in cats],
+                )
+                plan.warnings.append("unresolved category label overflow at floor")
+                _warn(plan.warnings[-1])
+                plan.confidence = "reduced"
+            best = (size, p)
+        return best
+
+    def choose_val_size(
+        explicit: int | None,
+        labels: Sequence[str],
+        values: Sequence[float],
+    ) -> tuple[int, list[float], list[str], bool]:
+        if explicit is not None:
+            size = int(explicit)
+            ok, vv, ll, red = _fit_y_ticks(
+                labels, values, size, plot_h if cat_is_x else plot_w,
+                left_budget if cat_is_x else bottom_budget,
+                font=fy if cat_is_x else fx,
+            )
+            return size, vv, ll, red
+        lo, hi = (AUTO_Y_LO, AUTO_Y_HI) if cat_is_x else (AUTO_X_LO, AUTO_X_HI)
+        best = (lo, list(values), list(labels), False)
+        for size in range(hi, lo - 1, -1):
+            ok, vv, ll, red = _fit_y_ticks(
+                labels,
+                values,
+                size,
+                plot_h if cat_is_x else plot_w,
+                left_budget if cat_is_x else bottom_budget,
+                font=fy if cat_is_x else fx,
+            )
+            if ok:
+                best = (size, vv, ll, red)
+                break
+        return best
+
+    cat_size, cat_plan = choose_cat_size(x_explicit if cat_is_x else y_explicit)
+    val_size, vv, ll, red = choose_val_size(
+        y_explicit if cat_is_x else x_explicit, y_labs, y_vals
+    )
+
+    if cat_is_x:
+        plan.x_tick_font_size = cat_size
+        plan.y_tick_font_size = val_size
+        plan.x_labels = cat_plan
+    else:
+        plan.y_tick_font_size = cat_size
+        plan.x_tick_font_size = val_size
+        plan.x_labels = cat_plan  # category plan still stored here
+
+    plan.y_tick_values = vv
+    plan.y_tick_labels = ll
+    plan.y_ticks_reduced = red
+    if red:
+        plan.warnings.append("y tick count reduced at floor to preserve endpoints")
+        _warn(plan.warnings[-1])
+
+    if cat_plan is not None:
+        if cat_plan.used_skip:
+            plan.warnings.append(
+                f"category ticks skipped: {cat_plan.skipped_count}"
+            )
+            _warn(plan.warnings[-1])
+        if cat_plan.used_short:
+            plan.warnings.append(
+                f"short_label substituted: {cat_plan.short_count}"
+            )
+            _warn(plan.warnings[-1])
+        if cat_plan.used_ellipsis:
+            plan.warnings.append(
+                f"category labels ellipsized: {cat_plan.ellipsis_count}"
+            )
+            _warn(plan.warnings[-1])
+
+    # --- Ordinary datalabels (priority below axes) ---
+    if plan.dl_explicit:
+        size = int(dl_explicit)  # type: ignore[arg-type]
+        ok, sup = _fit_datalabels(
+            dl_texts,
+            size,
+            plot_w,
+            plot_h,
+            len(cats),
+            series_count,
+            font=fd,
+        )
+        plan.datalabel_font_size = size
+        if not ok:
+            plan.datalabels_suppressed = True
+            plan.datalabel_suppress_count = len(dl_texts)
+            plan.warnings.append("ordinary datalabels suppressed under explicit size")
+            _warn(plan.warnings[-1])
+        elif sup:
+            plan.datalabel_suppress_count = sup
+    elif want_datalabels and dl_texts:
+        chosen = AUTO_DL_LO
+        suppressed = False
+        sup_count = 0
+        for size in range(AUTO_DL_HI, AUTO_DL_LO - 1, -1):
+            ok, sup = _fit_datalabels(
+                dl_texts, size, plot_w, plot_h, len(cats), series_count, font=fd
+            )
+            if ok:
+                chosen = size
+                sup_count = sup
+                break
+        else:
+            # Floor still overflows → suppress ordinary datalabels (axes win).
+            suppressed = True
+            sup_count = len(dl_texts)
+            plan.warnings.append("ordinary datalabels suppressed to preserve axes")
+            _warn(plan.warnings[-1])
+        plan.datalabel_font_size = chosen
+        plan.datalabels_suppressed = suppressed
+        plan.datalabel_suppress_count = sup_count
+        if not suppressed:
+            plan.datalabel_font_size_set = 1
+    else:
+        # No ordinary datalabels requested — leave size at legacy default marker.
+        plan.datalabel_font_size = AUTO_DL_LO
+        plan.datalabel_font_size_set = 0
+
+    if not plan.x_explicit:
+        plan.x_tick_font_size_set = 1  # auto chose a real size
+    if not plan.y_explicit:
+        plan.y_tick_font_size_set = 1
+
+    return plan
+
+
+def sync_sibling_plans(plans: Sequence[AutoTypoPlan]) -> list[AutoTypoPlan]:
+    """Largest common auto size per channel across sibling panes.
+
+    Explicit overrides stay local and are excluded from that channel's sync.
+    """
+    items = list(plans)
+    if len(items) <= 1:
+        return items
+
+    def common(attr: str, explicit_attr: str, lo: int) -> int | None:
+        auto_sizes = [
+            int(getattr(p, attr))
+            for p in items
+            if p.enabled and not getattr(p, explicit_attr)
+        ]
+        if not auto_sizes:
+            return None
+        return max(lo, min(auto_sizes))
+
+    cx = common("x_tick_font_size", "x_explicit", AUTO_X_LO)
+    cy = common("y_tick_font_size", "y_explicit", AUTO_Y_LO)
+    cd = common("datalabel_font_size", "dl_explicit", AUTO_DL_LO)
+
+    out: list[AutoTypoPlan] = []
+    for p in items:
+        if not p.enabled:
+            out.append(p)
+            continue
+        # Re-fit adaptation at the synced sizes when this channel is auto.
+        new = AutoTypoPlan(**{**p.__dict__})
+        if cx is not None and not p.x_explicit:
+            new.x_tick_font_size = cx
+        if cy is not None and not p.y_explicit:
+            new.y_tick_font_size = cy
+        if cd is not None and not p.dl_explicit and not p.datalabels_suppressed:
+            new.datalabel_font_size = cd
+        # Note: per-pane rotation/skip/wrap stay independent (already on plan).
+        # If synced size is smaller, existing adaptation still fits; if we ever
+        # synced upward (we don't — min of sizes), we'd re-fit.
+        out.append(new)
+    return out
+
+
+def plan_to_data_attrs(plan: AutoTypoPlan) -> str:
+    """Compact data-* attribute string for chart wrappers."""
+    if not plan.enabled:
+        return ""
+    d = plan.diagnostic_dict()
+    # Compact subset for DOM.
+    keys = (
+        ("data-auto-typo", "1"),
+        ("data-auto-x-tick", str(d["x_tick_font_size"])),
+        ("data-auto-y-tick", str(d["y_tick_font_size"])),
+        ("data-auto-datalabel", str(d["datalabel_font_size"])),
+        ("data-auto-plot", f"{d['plot_w']}x{d['plot_h']}"),
+        ("data-auto-x-rot", str(d.get("x_rotation_deg", 0))),
+        ("data-auto-x-skip", str(d.get("x_skipped_count", 0))),
+        ("data-auto-x-short", str(d.get("x_short_count", 0))),
+        ("data-auto-x-ellipsis", str(d.get("x_ellipsis_count", 0))),
+        ("data-auto-dl-suppress", str(d.get("datalabel_suppress_count", 0))),
+        ("data-auto-confidence", str(d.get("confidence", "high"))),
+    )
+    return "".join(f' {k}="{v}"' for k, v in keys)
+
+
+def apply_plan_to_chartjs_options(
+    options: dict[str, Any],
+    plan: AutoTypoPlan,
+    *,
+    labels: Sequence[str] | None = None,
+    horizontal: bool = False,
+) -> dict[str, Any]:
+    """Mutate Chart.js options with resolved sizes + axis adaptation."""
+    if not plan.enabled:
+        return options
+    options["_rv2AutoTypography"] = True
+    scales = options.setdefault("scales", {})
+    x = scales.setdefault("x", {})
+    y = scales.setdefault("y", {})
+    x_ticks = x.setdefault("ticks", {})
+    y_ticks = y.setdefault("ticks", {})
+
+    x_font = x_ticks.setdefault("font", {})
+    y_font = y_ticks.setdefault("font", {})
+    if isinstance(x_font, dict):
+        x_font["size"] = plan.x_tick_font_size
+    if isinstance(y_font, dict):
+        y_font["size"] = plan.y_tick_font_size
+        if plan.y_tick_font_size != 13:
+            y_font["weight"] = "bold"
+
+    # Category axis adaptation.
+    cat_scale = y if horizontal else x
+    cat_ticks = cat_scale.setdefault("ticks", {})
+    xl = plan.x_labels
+    if xl is not None:
+        rot = float(xl.rotation_deg or 0.0)
+        if not horizontal:
+            cat_ticks["maxRotation"] = rot
+            cat_ticks["minRotation"] = rot
+        cat_ticks["autoSkip"] = False
+        display = []
+        for i, t in enumerate(xl.texts):
+            if not t:
+                display.append("")
+            elif xl.lines and i < len(xl.lines) and len(xl.lines[i]) > 1:
+                display.append("\n".join(xl.lines[i]))
+            else:
+                display.append(t)
+        # Chart.js callback can't be a Python callable in JSON — emit parallel
+        # label array via afterBuildTicks-unfriendly path: replace data labels.
+        cat_ticks["_rv2DisplayLabels"] = display
+        cat_ticks["_rv2FullLabels"] = list(xl.full_texts)
+
+    if plan.y_ticks_reduced and plan.y_tick_values:
+        val_scale = x if horizontal else y
+        val_scale["afterBuildTicks"] = {
+            "_rv2TickValues": list(plan.y_tick_values),
+        }
+        # Also set suggested min/max via ticks callback values list for static JSON:
+        val_ticks = val_scale.setdefault("ticks", {})
+        val_ticks["_rv2Values"] = list(plan.y_tick_values)
+
+    return options
+
+
+def merge_plan_into_typo(base: Mapping[str, int], plan: AutoTypoPlan) -> dict[str, int]:
+    """Overlay auto plan onto resolve_typography output."""
+    out = dict(base)
+    if not plan.enabled:
+        return out
+    td = plan.to_typo_dict()
+    out.update(td)
+    if plan.datalabels_suppressed:
+        out["datalabel_font_size_set"] = 0
+    return out
+
+
+def _extract_categories_and_shorts(
+    slide: Mapping[str, Any],
+    chart_type: str,
+) -> tuple[list[str], list[str | None], int, list[float], list[str], list[str]]:
+    """categories, shorts, series_count, y_vals, y_labs, datalabel_texts."""
+    from .bars import _bar_axes, _bar_matrix
+    from .core import _chart_config
+    from .format import _fmt_bar, _fmt_value_label
+    from .lines import _combo_bar_data, _line_data
+
+    cfg = _chart_config(slide)
+    ct = (chart_type or "").lower().strip()
+    cats: list[str] = []
+    shorts: list[str | None] = []
+    series_count = 1
+    values_flat: list[float] = []
+
+    raw_steps = []
+    vs = slide.get("visual_spec") or {}
+    pv = vs.get("primary_visual") if isinstance(vs, Mapping) else None
+    if isinstance(pv, Mapping):
+        raw_steps = list(pv.get("steps_or_data") or [])
+    if not raw_steps:
+        from .core import _steps
+
+        raw_steps = list(_steps(slide))
+
+    def _short_of(item: Any) -> str | None:
+        if isinstance(item, Mapping):
+            s = item.get("short_label")
+            if s is None:
+                return None
+            t = str(s).strip()
+            return t or None
+        return None
+
+    if ct in {
+        "grouped_bar_chart",
+        "stacked_bar_chart",
+        "horizontal_bar_chart",
+        "waterfall_chart",
+    }:
+        labels, series, rows, _pc = _bar_matrix(slide)
+        cats = list(labels)
+        series_count = max(len(series), 1)
+        for r in rows:
+            for v in r:
+                if v is not None:
+                    values_flat.append(float(v))
+        for i, item in enumerate(raw_steps):
+            if i >= len(cats):
+                break
+            shorts.append(_short_of(item))
+        while len(shorts) < len(cats):
+            shorts.append(None)
+    elif ct == "line_chart":
+        pts = _line_data(slide)
+        # _line_data returns list of series dicts or points — support both shapes.
+        if pts and isinstance(pts[0], dict) and "points" in pts[0]:
+            # multi-series form
+            series_count = len(pts)
+            first_pts = pts[0].get("points") or []
+            cats = [str(p.get("label") or "") for p in first_pts if isinstance(p, dict)]
+            for p in first_pts:
+                if isinstance(p, dict):
+                    shorts.append(_short_of(p))
+                    v = p.get("value")
+                    if isinstance(v, (int, float)):
+                        values_flat.append(float(v))
+            for s in pts[1:]:
+                for p in s.get("points") or []:
+                    if isinstance(p, dict) and isinstance(p.get("value"), (int, float)):
+                        values_flat.append(float(p["value"]))
+        else:
+            cats = [
+                str(p.get("label") or p.get("category") or "")
+                for p in pts
+                if isinstance(p, dict)
+            ]
+            for p in pts:
+                if not isinstance(p, dict):
+                    continue
+                shorts.append(_short_of(p))
+                v = p.get("value")
+                if isinstance(v, (int, float)):
+                    values_flat.append(float(v))
+            # multi-series via series key
+            if pts and isinstance(pts[0], dict) and pts[0].get("series"):
+                series_count = 1
+        while len(shorts) < len(cats):
+            shorts.append(None)
+    elif ct == "combo_chart":
+        labels, series, rows, _pc = _combo_bar_data(slide)
+        cats = list(labels)
+        series_count = max(len(series), 1)
+        for r in rows:
+            for v in r:
+                if v is not None:
+                    values_flat.append(float(v))
+        for i, item in enumerate(raw_steps):
+            if i >= len(cats):
+                break
+            shorts.append(_short_of(item))
+        while len(shorts) < len(cats):
+            shorts.append(None)
+    else:
+        return [], [], 1, [], [], []
+
+    unit = str(cfg.get("y_axis_unit") or "")
+    if values_flat:
+        y_max, y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
+    else:
+        y_ticks = list(cfg.get("y_axis_ticks") or [0, 1])
+        y_max = max(y_ticks) if y_ticks else 1.0
+        y_min = min(y_ticks) if y_ticks else 0.0
+    y_labs = [_fmt_bar(v, unit) for v in y_ticks]
+
+    dl_texts: list[str] = []
+    want = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))
+    if want and values_flat:
+        pos = str(cfg.get("y_axis_unit_position") or "")
+        # One label per plotted value (ordinary path).
+        for v in values_flat:
+            dl_texts.append(_fmt_value_label(v, unit, pos))
+
+    return cats, shorts, series_count, list(y_ticks), y_labs, dl_texts
+
+
+def compute_auto_plan_for_slide(
+    slide: Mapping[str, Any],
+    chart_type: str,
+    *,
+    host_w: float | None = None,
+    host_h: float | None = None,
+    chart_cfg: Mapping[str, Any] | None = None,
+) -> AutoTypoPlan | None:
+    """Build an AutoTypoPlan when typography.mode=auto; else None.
+
+    Honours a pre-stashed ``chart_cfg['_auto_typo_plan']`` (sibling sync).
+    """
+    from .core import _chart_config
+    from .typography import resolve_typography
+
+    cfg = dict(chart_cfg) if isinstance(chart_cfg, Mapping) else dict(_chart_config(slide))
+    stashed = cfg.get("_auto_typo_plan")
+    if isinstance(stashed, AutoTypoPlan):
+        return stashed
+    if isinstance(stashed, Mapping) and stashed.get("enabled"):
+        # Rehydrate minimal plan from diagnostic dict (tests / sync).
+        p = AutoTypoPlan(
+            enabled=True,
+            chart_type=str(stashed.get("chart_type") or chart_type),
+            x_tick_font_size=int(stashed.get("x_tick_font_size") or AUTO_X_LO),
+            y_tick_font_size=int(stashed.get("y_tick_font_size") or AUTO_Y_LO),
+            datalabel_font_size=int(stashed.get("datalabel_font_size") or AUTO_DL_LO),
+            x_explicit=bool(stashed.get("x_explicit")),
+            y_explicit=bool(stashed.get("y_explicit")),
+            dl_explicit=bool(stashed.get("dl_explicit")),
+            plot_w=float(stashed.get("plot_w") or 0),
+            plot_h=float(stashed.get("plot_h") or 0),
+            host_w=float(stashed.get("host_w") or 0),
+            host_h=float(stashed.get("host_h") or 0),
+            datalabels_suppressed=bool(stashed.get("datalabels_suppressed")),
+            datalabel_suppress_count=int(stashed.get("datalabel_suppress_count") or 0),
+            confidence=str(stashed.get("confidence") or "high"),
+        )
+        p.x_tick_font_size_set = 1
+        p.y_tick_font_size_set = 1
+        if not p.datalabels_suppressed:
+            p.datalabel_font_size_set = 1
+        return p
+
+    typo = resolve_typography(cfg)
+    if not typo.get("auto_mode"):
+        return None
+
+    ct = (chart_type or slide.get("layout_type") or "").lower().strip()
+    if ct not in AUTO_CHART_TYPES:
+        return None
+
+    cats, shorts, series_count, y_vals, y_labs, dl_texts = _extract_categories_and_shorts(
+        slide, ct
+    )
+    has_legend = cfg.get("show_legend") is not False and series_count > 1
+    want_dl = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))
+    # Ordinary datalabels only on grouped_bar / line (uses_ordinary_datalabels).
+    if ct not in ("grouped_bar_chart", "line_chart"):
+        want_dl = False
+        dl_texts = []
+
+    x_ex = int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else None
+    y_ex = int(typo["y_tick_font_size"]) if typo.get("y_tick_font_size_set") else None
+    dl_ex = int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else None
+
+    # Host size: prefer caller, then chart_cfg stash, else conservative.
+    hw = host_w if host_w is not None else cfg.get("_auto_host_w")
+    hh = host_h if host_h is not None else cfg.get("_auto_host_h")
+    try:
+        hw_f = float(hw) if hw is not None else None
+    except (TypeError, ValueError):
+        hw_f = None
+    try:
+        hh_f = float(hh) if hh is not None else None
+    except (TypeError, ValueError):
+        hh_f = None
+
+    plan = resolve_auto_typography(
+        chart_type=ct,
+        host_w=hw_f,
+        host_h=hh_f,
+        categories=cats,
+        short_labels=shorts,
+        series_count=series_count,
+        y_tick_values=y_vals,
+        y_tick_labels=y_labs,
+        datalabel_texts=dl_texts,
+        has_legend=has_legend,
+        want_datalabels=want_dl,
+        x_explicit=x_ex,
+        y_explicit=y_ex,
+        dl_explicit=dl_ex,
+        horizontal=(ct == "horizontal_bar_chart"),
+    )
+    return plan
+
+
+def typography_with_auto(
+    slide: Mapping[str, Any],
+    chart_type: str,
+    *,
+    chart_cfg: Mapping[str, Any] | None = None,
+    host_w: float | None = None,
+    host_h: float | None = None,
+) -> tuple[dict[str, int], AutoTypoPlan | None]:
+    """resolve_typography + optional auto plan overlay (shared Chart.js/SVG entry)."""
+    from .core import _chart_config
+    from .typography import resolve_typography
+
+    cfg = chart_cfg if isinstance(chart_cfg, Mapping) else _chart_config(slide)
+    base = resolve_typography(cfg)
+    plan = compute_auto_plan_for_slide(
+        slide, chart_type, host_w=host_w, host_h=host_h, chart_cfg=cfg
+    )
+    if plan is None:
+        return base, None
+    return merge_plan_into_typo(base, plan), plan

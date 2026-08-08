@@ -6,7 +6,8 @@ from ..strip import esc, strip_eids
 
 from .format import _fmt_chart_num
 from .bars import _bar_matrix
-from .core import _steps
+from .core import _chart_config, _steps
+from .typography import resolve_typography
 
 
 
@@ -106,6 +107,10 @@ def _build_heatmap_html(slide: Mapping[str, Any]) -> str:
 
 def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
     """In-repo waterfall: running-total bridge bars (pack geometry parity)."""
+    cfg = _chart_config(slide)
+    typo = resolve_typography(cfg)
+    x_tick_fs = int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 16
+    dl_fs = int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 18
     labels, series, rows, _pc = _bar_matrix(slide)
     if not labels or not series or not rows:
         return '<p class="chart-empty">No chart data for waterfall_chart</p>'
@@ -200,12 +205,12 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             vlab = "+" + vlab
         parts.append(
             f'<text class="chart-value" x="{cx:.1f}" y="{y_top - 8:.1f}" '
-            f'text-anchor="middle" fill="{navy}" font-size="18" '
+            f'text-anchor="middle" fill="{navy}" font-size="{dl_fs}" '
             f'font-weight="700">{esc(vlab)}</text>'
         )
         parts.append(
             f'<text class="chart-axis-label" x="{cx:.1f}" y="{height - 28}" '
-            f'text-anchor="middle" fill="{ink}" font-size="16">'
+            f'text-anchor="middle" fill="{ink}" font-size="{x_tick_fs}">'
             f"{esc(lab[:16])}</text>"
         )
 

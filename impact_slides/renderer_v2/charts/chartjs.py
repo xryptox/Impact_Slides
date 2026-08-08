@@ -19,6 +19,12 @@ from .callouts import (
 from .bars import _bar_matrix
 from .lines import _combo_bar_data, _combo_line_data, _line_data
 from .core import _chart_config, _svg_fallback_for_layout
+from .auto_typography import (
+    apply_plan_to_chartjs_options,
+    plan_to_data_attrs,
+    record_auto_diagnostic,
+    typography_with_auto,
+)
 from .typography import (
     DATALABEL_COLLISION_JS,
     LEGACY_X_TICK,
@@ -112,7 +118,13 @@ def _apply_semantic_zero_line(
 
 
 
-def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def _chartjs_common_options(
+    cfg: Mapping[str, Any] | None = None,
+    *,
+    typo: Mapping[str, int] | None = None,
+    auto_plan: Any | None = None,
+    horizontal: bool = False,
+) -> dict[str, Any]:
     """Calm Boardroom defaults: no animation, readable axes, no plot gridlines.
 
     Plot gridlines are off by default (issue 152). Axis baselines, ticks, and
@@ -124,8 +136,12 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
       show_legend: False -> hide the legend (recipes set this when a pane
         heading already carries a single series' name, so the swatch would
         only restate it). Defaults to True (Chart.js default).
+
+    ``typo`` / ``auto_plan`` let callers inject the shared auto-resolved
+    sizes so Chart.js and SVG share one plan.
     """
-    typo = resolve_typography(cfg or {})
+    if typo is None:
+        typo = resolve_typography(cfg or {})
     x_size = int(typo.get("x_tick_font_size", LEGACY_X_TICK))
     y_size = int(typo.get("y_tick_font_size", LEGACY_Y_TICK))
     y_weight = "bold" if y_size != LEGACY_Y_TICK else None
@@ -169,6 +185,8 @@ def _chartjs_common_options(cfg: Mapping[str, Any] | None = None) -> dict[str, A
             options["scales"]["y"]["display"] = False
         if cfg.get("show_x_axis") is False:
             options["scales"]["x"]["display"] = False
+    if auto_plan is not None and getattr(auto_plan, "enabled", False):
+        apply_plan_to_chartjs_options(options, auto_plan, horizontal=horizontal)
     return options
 
 
@@ -222,7 +240,10 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             ]
         datasets.append(ds)
     _apply_bar_density_knobs(datasets, cfg)
-    options = _chartjs_common_options(cfg)
+    typo, auto_plan = typography_with_auto(
+        slide, "stacked_bar_chart" if stacked else "grouped_bar_chart", chart_cfg=cfg
+    )
+    options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
     if stacked:
         options["scales"]["x"]["stacked"] = True
         options["scales"]["y"]["stacked"] = True
@@ -507,7 +528,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             ]
             for si in range(len(series))
         ]
-        dl_size = ordinary_datalabel_size(resolve_typography(cfg))
+        dl_size = ordinary_datalabel_size(typo)
         options["plugins"]["datalabels"] = _datalabels_cfg(
             anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=dl_size,
             labels=label_matrix,
@@ -548,7 +569,8 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             }
         )
     _apply_bar_density_knobs(datasets, cfg)
-    options = _chartjs_common_options(cfg)
+    typo, auto_plan = typography_with_auto(slide, "horizontal_bar_chart", chart_cfg=cfg)
+    options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan, horizontal=True)
     options["indexAxis"] = "y"
     x_scale = options["scales"]["x"]
     y_break = cfg.get("y_axis_break")
@@ -675,7 +697,8 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             )
         datasets.append(ds)
 
-    options = _chartjs_common_options(cfg)
+    typo, auto_plan = typography_with_auto(slide, "line_chart", chart_cfg=cfg)
+    options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
     y_scale = options["scales"]["y"]
     # Axis domain: explicit min/max, or forced ticks (0/5/10/15 rails).
     # A y_axis_break {from, to} (#79/F10) renders a discontinuous axis by
@@ -702,7 +725,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             y_scale["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
     if point_labels:
-        dl_size = ordinary_datalabel_size(resolve_typography(cfg))
+        dl_size = ordinary_datalabel_size(typo)
         options["plugins"]["datalabels"] = _datalabels_cfg(
             anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=dl_size,
             labels=label_matrix,
@@ -761,7 +784,8 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         )
     cfg = _chart_config(slide)
     _apply_bar_density_knobs(datasets, cfg)
-    options = _chartjs_common_options(cfg)
+    typo, auto_plan = typography_with_auto(slide, "combo_chart", chart_cfg=cfg)
+    options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
     _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "bar",
@@ -821,7 +845,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         if cfg.get("options", {}).get("plugins", {}).get("barGroups")
         else ""
     )
-    svg_fb = _svg_fallback_for_layout(slide, layout)
+    svg_fb = _svg_fallback_for_layout(slide, layout, record_diagnostic=False)
     noscript = (
         f'<noscript>{"<style>[data-side-callout-html=wrap]{display:none}</style>" if side_callout_html else ""}{svg_fb}</noscript>'
         if svg_fb
@@ -874,15 +898,18 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     fill = " chartjs-fill" if chart_cfg.get("fill_tile") else ""
     # #139: collision only on ordinary-label layouts when datalabel_font_size
     # is set; stacked/in-segment and named value sets stay untouched.
-    typo = resolve_typography(chart_cfg)
+    typo, auto_plan = typography_with_auto(slide, layout, chart_cfg=chart_cfg)
     collision = bool(typo.get("datalabel_font_size_set")) and uses_ordinary_datalabels(
         layout, chart_cfg
     )
     coll_attr = ' data-rv2-collision="1"' if collision else ""
     coll_js = DATALABEL_COLLISION_JS if collision else ""
+    auto_attrs = plan_to_data_attrs(auto_plan) if auto_plan is not None else ""
+    if auto_plan is not None:
+        record_auto_diagnostic(auto_plan.diagnostic_dict())
     return (
         f'<div class="chartjs-wrap{flat}{fill}" data-chartjs="1" '
-        f'data-chart-layout="{esc(layout)}"{coll_attr}>'
+        f'data-chart-layout="{esc(layout)}"{coll_attr}{auto_attrs}>'
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
