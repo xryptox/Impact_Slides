@@ -76,10 +76,14 @@ def _assert_semantics(slide: dict) -> None:
         ["", *_CATEGORIES],
         ["% of Total Network Volumes", *_SUPPORT],
     ]
-    assert "$486B" in slide["content"]["subtitle"]
+    assert "$486B Total Network Volumes" in slide["content"]["subtitle"]
+    assert slide["content"]["key_stats"] == []
     assert "FX-adjusted" in slide["content"]["subtitle"]
     assert "9%" in slide["content"]["subtitle"]
-    assert "FX-adjusted" in slide["speaker_notes"]
+    assert "Processed Volumes 12%" in slide["speaker_notes"]
+    assert slide["disclosure"]["title"] == "FX-adjusted reporting note"
+    assert slide["disclosure"]["default_open"] is True
+    assert "See Annex 1 for reported rates" in slide["disclosure"]["body"]
 
 
 def test_broken_fixture_still_documents_the_data_table_defect():
@@ -110,8 +114,16 @@ def test_render_paints_exactly_six_growth_bars_and_support_context(use_chartjs: 
     assert f'data-layout="{_GROUPED}"' in html
     assert _TABLE not in html
     painted = html_module.unescape(html)
-    for token in [*_CATEGORIES, *_SUPPORT, "$486B", "9%", "FX-adjusted"]:
+    for token in [
+        *_CATEGORIES,
+        *_SUPPORT,
+        "$486B Total Network Volumes",
+        "9% FX-adjusted growth",
+        "FX-adjusted reporting note",
+        "See Annex 1 for reported rates",
+    ]:
         assert token in painted
+    assert '<details open>' in html
     for name, _, _ in _GROUPS:
         assert html.count(name) == 1
     assert html.count("bar-group-bracket") == 3

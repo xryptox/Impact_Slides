@@ -593,9 +593,10 @@ def apply_issue_154_slide24_growth(handoff: dict[str, Any]) -> dict[str, Any]:
     slide["packing_mode"] = "chart-led"
     slide["content"] = {
         **(slide.get("content") or {}),
+        "key_stats": [],
         "subtitle": (
             "% Increase/(decrease) vs. Prior Year (FX-adjusted) · "
-            "$486B Processed Volumes · 9% FX-adjusted growth"
+            "$486B Total Network Volumes · 9% FX-adjusted growth"
         ),
     }
     slide["visual_spec"] = {
@@ -629,8 +630,19 @@ def apply_issue_154_slide24_growth(handoff: dict[str, Any]) -> dict[str, Any]:
     }
     slide["speaker_notes"] = (
         "Six FX-adjusted growth bars: 10%, 4%, 4%, 13%, 12%, and 9%. "
-        "$486B Processed Volumes; 12% support value is distinct from 9% growth."
+        "$486B Total Network Volumes; Processed Volumes 12% support value is "
+        "distinct from 9% growth."
     )
+    slide["disclosure"] = {
+        "pattern": "detail",
+        "title": "FX-adjusted reporting note",
+        "default_open": True,
+        "body": (
+            "All growth rates reflect FX-adjusted rates except for U.S. Consumer "
+            "and U.S. SME. See Annex 1 for reported rates. "
+            "Subtotals may not sum due to rounding."
+        ),
+    }
     return out
 
 
