@@ -41,6 +41,24 @@ _S14_RIGHT_STEPS = [
     {"label": "Q1'26", "value": 2.0},
 ]
 
+# Issue #156 — PDF page / deck slide 27 macroeconomic scenarios.
+_S27 = 27
+_S27_PERIODS = [
+    "Q1'25", "Q2'25", "Q3'25", "Q4'25", "Q1'26", "Q2'26", "Q3'26",
+    "Q4'26", "Q1'27", "Q2'27", "Q3'27", "Q4'27", "Q1'28",
+]
+_S27_SERIES = ["Q1 Upside Scenario", "Q1 Baseline Scenario", "Q1 Downside Scenario"]
+_S27_UNEMPLOYMENT = [
+    [4.1, 4.2, 4.3, 4.5, 4.5, 4.0, 3.6, 3.5, 3.4, 3.4, 3.5, 3.7, 3.8],
+    [4.1, 4.2, 4.3, 4.5, 4.5, 4.5, 4.5, 4.5, 4.4, 4.4, 4.4, 4.4, 4.4],
+    [4.1, 4.2, 4.3, 4.5, 4.5, 6.1, 7.2, 8.0, 8.4, 8.4, 8.3, 8.0, 7.6],
+]
+_S27_GDP = [
+    [-0.6, 3.9, 4.4, 2.9, 3.1, 4.8, 3.3, 3.2, 3.2, 2.6, 1.8, 2.2, 1.6],
+    [-0.6, 3.9, 4.4, 2.9, 3.1, 2.6, 2.0, 1.8, 1.7, 1.7, 1.8, 1.9, 1.9],
+    [-0.6, 3.9, 4.4, 2.9, 3.1, -3.5, -3.2, -3.8, 0.5, 1.0, 1.3, 1.6, 1.6],
+]
+
 # Issue #157 — PDF pages / deck slides 33–37 annex matrices.
 # v10 handoff lost FX rows, value cells, and period associations.
 _FX_NOTE = "* See Slide 3 for an explanation of FX-adjusted information."
@@ -543,6 +561,70 @@ def apply_issue_148_bar_semantics(handoff: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _s27_steps(values: list[list[float]]) -> list[dict[str, float | str]]:
+    return [
+        {"label": label, "value": values[0][i], "series_2": values[1][i], "series_3": values[2][i]}
+        for i, label in enumerate(_S27_PERIODS)
+    ]
+
+
+def apply_issue_156_slide27_scenarios(handoff: dict[str, Any]) -> dict[str, Any]:
+    """Restore slide 27's PDF periods, scenarios, pane headings, and note.
+
+    Type (A) handoff fix only. The paint-ready capture guard is already shared
+    in ``simulation_probe`` (#146); no renderer behavior changes here.
+    """
+    out = handoff
+    try:
+        slide = _slide(out, _S27)
+    except KeyError:
+        return out
+    slide["layout_type"] = "dual_chart"
+    slide["packing_mode"] = "chart-led"
+    slide["content"] = {"subtitle": "", "so_what": ""}
+    slide["visual_spec"] = {
+        "primary_visual": {
+            "type": "line_chart",
+            "heading": "U.S. Unemployment Rate %",
+            "steps_or_data": _s27_steps(_S27_UNEMPLOYMENT),
+            "chart_config": {
+                "series_names": list(_S27_SERIES),
+                "series_colors": ["#7F7F7F", "#006FCF", "#002060"],
+                "series_styles": ["solid", "solid", "solid"],
+                "y_axis_min": 0,
+                "y_axis_max": 10,
+                "y_axis_unit": "%",
+            },
+        },
+        "secondary_visual": {
+            "type": "line_chart",
+            "heading": "U.S. GDP Growth* %",
+            "steps_or_data": _s27_steps(_S27_GDP),
+            "chart_config": {
+                "series_names": list(_S27_SERIES),
+                "series_colors": ["#7F7F7F", "#006FCF", "#002060"],
+                "series_styles": ["solid", "solid", "solid"],
+                "y_axis_min": -5,
+                "y_axis_max": 6,
+                "y_axis_unit": "%",
+            },
+        },
+    }
+    slide["disclosure"] = {
+        "pattern": "detail",
+        "panels": [{
+            "title": "Scenario note",
+            "body": "Reflects the range of variables available as of March 31, 2026. "
+            "Forecast assumptions are from an independent third party and represent the range "
+            "of forecasts from the macroeconomic scenarios used during the quarter without "
+            "applying a weight to those scenarios. * Real GDP QoQ % Change Seasonally Adjusted "
+            "to Annualized Rates (SAAR).",
+        }],
+    }
+    slide["speaker_notes"] = "PDF scenario paths restored for all three Q1 scenarios through Q1'28 (#156)."
+    return out
+
+
 # Issue #158 — PDF physical page / deck slide 28 multi_panel pane titles.
 # v10 handoff put dollar stack totals in tile top_total pseudo-titles.
 _S28 = 28
@@ -645,6 +727,7 @@ def apply_issue_157_annex_matrices(handoff: dict[str, Any]) -> dict[str, Any]:
 def apply_all(handoff: dict[str, Any]) -> dict[str, Any]:
     """Apply every bounded Amex handoff mutation known to this module."""
     out = apply_issue_148_bar_semantics(handoff)
+    out = apply_issue_156_slide27_scenarios(out)
     out = apply_issue_157_annex_matrices(out)
     return apply_issue_158_slide28_pane_titles(out)
 
