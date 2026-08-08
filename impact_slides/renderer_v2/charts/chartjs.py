@@ -127,6 +127,7 @@ def _chartjs_common_options(
     typo: Mapping[str, int] | None = None,
     auto_plan: Any | None = None,
     horizontal: bool = False,
+    category_offset: bool = False,
 ) -> dict[str, Any]:
     """Calm Boardroom defaults: no animation, readable axes, no plot gridlines.
 
@@ -189,7 +190,12 @@ def _chartjs_common_options(
         if cfg.get("show_x_axis") is False:
             options["scales"]["x"]["display"] = False
     if auto_plan is not None and getattr(auto_plan, "enabled", False):
-        apply_plan_to_chartjs_options(options, auto_plan, horizontal=horizontal)
+        apply_plan_to_chartjs_options(
+            options,
+            auto_plan,
+            horizontal=horizontal,
+            category_offset=category_offset,
+        )
     return options
 
 
@@ -250,7 +256,9 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         host_w=900,
         host_h=480,
     )
-    options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
+    options = _chartjs_common_options(
+        cfg, typo=typo, auto_plan=auto_plan, category_offset=True
+    )
     if stacked:
         options["scales"]["x"]["stacked"] = True
         options["scales"]["y"]["stacked"] = True
@@ -741,7 +749,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             y_scale["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
     if auto_plan is not None:
-        apply_plan_to_chartjs_options(options, auto_plan)
+        apply_plan_to_chartjs_options(options, auto_plan, category_offset=False)
     if point_labels and not (auto_plan is not None and auto_plan.datalabels_suppressed):
         dl_size = ordinary_datalabel_size(typo)
         options["plugins"]["datalabels"] = _datalabels_cfg(
@@ -805,7 +813,9 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     typo, auto_plan = typography_with_auto(
         slide, "combo_chart", chart_cfg=cfg, host_w=900, host_h=480
     )
-    options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
+    options = _chartjs_common_options(
+        cfg, typo=typo, auto_plan=auto_plan, category_offset=True
+    )
     if line_points:
         vs = slide.get("visual_spec") or {}
         overlay = vs.get("line_overlay") or {}

@@ -1321,6 +1321,7 @@ def apply_plan_to_chartjs_options(
     *,
     labels: Sequence[str] | None = None,
     horizontal: bool = False,
+    category_offset: bool = False,
 ) -> dict[str, Any]:
     """Mutate Chart.js options with resolved sizes + axis adaptation."""
     if not plan.enabled:
@@ -1350,7 +1351,8 @@ def apply_plan_to_chartjs_options(
         if not horizontal:
             cat_ticks["maxRotation"] = rot
             cat_ticks["minRotation"] = rot
-            cat_scale["offset"] = True
+            if category_offset:
+                cat_scale["offset"] = True
         cat_ticks["autoSkip"] = False
         display = []
         for i, t in enumerate(xl.texts):

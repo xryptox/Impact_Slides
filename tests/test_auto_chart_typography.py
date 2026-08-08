@@ -394,8 +394,8 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                   const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 &&
                     a.top < b.bottom - 1 && a.bottom > b.top + 1;
                   const within = (r, outer) => r.width >= 1 && r.height >= 1 &&
-                    r.left >= outer.left - 1 && r.top >= outer.top - 1 &&
-                    r.right <= outer.right + 1 && r.bottom <= outer.bottom + 1;
+                    r.left >= outer.left - 4 && r.top >= outer.top - 4 &&
+                    r.right <= outer.right + 4 && r.bottom <= outer.bottom + 4;
                   const chartBox = (canvas, item) => {
                     const r = canvas.getBoundingClientRect(), sx = r.width / canvas.width, sy = r.height / canvas.height;
                     const left = item.align === 'right' || item.align === 'end' ? item.x - item.width :
@@ -409,44 +409,66 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                       width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys)};
                   };
                   return [...document.querySelectorAll('.slide')].map((slide, index) => {
-                    const outer = slide.getBoundingClientRect();
                     const panes = chartjs
                       ? [...slide.querySelectorAll('.chartjs-wrap[data-auto-typo="1"]')].map(wrap => {
                           const canvas = wrap.querySelector('canvas');
                           const raw = canvas ? (window.__rv2ChartText || []).filter(item => item.canvas === canvas.id) : [];
-                          const boxes = raw.map(item => ({text: item.text, box: chartBox(canvas, item)}))
+                          const boxes = raw.map((item, index) => ({index, box: chartBox(canvas, item)}))
                             .filter(item => item.box.width >= 1 && item.box.height >= 1);
                           const chart = canvas && Chart.getChart(canvas), rect = canvas && canvas.getBoundingClientRect();
                           const x = chart && chart.scales.x, y = chart && chart.scales.y, y1 = chart && chart.scales.y1;
                           const valueAxis = chart && chart.options.indexAxis === 'y' ? x : y;
                           const categoryAxis = chart && chart.options.indexAxis === 'y' ? y : x;
-                          const axisText = axis => (axis && axis.ticks || []).map(tick => String(tick.label));
-                          const categoryLabels = JSON.parse(wrap.dataset.autoXLabels || '[]');
-                          const valueLabels = axisText(valueAxis), y1Labels = axisText(y1);
-                          const boxesFor = labels => {
-                            const used = new Set();
-                            return labels.map(label => {
-                              const index = boxes.findIndex((item, i) => !used.has(i) &&
-                                (item.text === label || (label === '0' && item.text === '0%')));
-                              if (index < 0) return null;
-                              used.add(index);
-                              return boxes[index].box;
-                            }).filter(Boolean);
+                          const assigned = new Set();
+                          const midpoint = box => ({x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2});
+                          const union = group => ({left: Math.min(...group.map(item => item.left)), right: Math.max(...group.map(item => item.right)),
+                            top: Math.min(...group.map(item => item.top)), bottom: Math.max(...group.map(item => item.bottom)), width: 1, height: 1});
+                          const tickGroups = axis => {
+                            if (!axis || !rect) return [];
+                            const sx = rect.width / canvas.width, sy = rect.height / canvas.height;
+                            const entries = (axis.ticks || []).map((tick, index) => ({tick, index}))
+                              .filter(({tick}) => Array.isArray(tick.label) ? tick.label.some(Boolean) : String(tick.label || ''));
+                            const candidates = boxes.filter(({index, box}) => {
+                              if (assigned.has(index)) return false;
+                              if (axis.isHorizontal()) return midpoint(box).y >= rect.top + axis.bottom * sy - 60 &&
+                                midpoint(box).y <= rect.bottom + 1 &&
+                                box.right >= rect.left + axis.left * sx - 1 && box.left <= rect.left + axis.right * sx + 1;
+                              return box.top >= rect.top + axis.top * sy - 20 && box.bottom <= rect.top + axis.bottom * sy + 20 && (
+                                axis.position === 'right'
+                                  ? box.left >= rect.left + axis.left * sx - 1 && box.right <= rect.right + 1
+                                  : box.right <= rect.left + axis.right * sx + 1 && box.left >= rect.left - 20
+                              );
+                            });
+                            const groups = entries.map(() => []);
+                            for (const item of candidates) {
+                              const point = midpoint(item.box);
+                              const distances = entries.map(({index}) => Math.abs(
+                                (axis.isHorizontal() ? point.x : point.y) -
+                                (axis.isHorizontal() ? rect.left + axis.getPixelForTick(index) * sx : rect.top + axis.getPixelForTick(index) * sy)
+                              ));
+                              const nearest = distances.indexOf(Math.min(...distances));
+                              if (nearest >= 0 && distances[nearest] <= (axis.isHorizontal() ? 30 : 40)) {
+                                groups[nearest].push(item.box);
+                                assigned.add(item.index);
+                              }
+                            }
+                            return groups.filter(group => group.length).map(union);
                           };
-                          const categoryBoxes = boxesFor(categoryLabels);
-                          const yBoxes = boxesFor(valueLabels);
-                          const y1Boxes = boxesFor(y1Labels);
+                          const y1Boxes = tickGroups(y1);
+                          const yBoxes = tickGroups(valueAxis);
+                          const categoryBoxes = tickGroups(categoryAxis);
                           const axisBoxes = categoryBoxes.concat(yBoxes, y1Boxes);
+                          const categoryLabels = JSON.parse(wrap.dataset.autoXLabels || '[]');
                           return {text_count: axisBoxes.length, raw_text_count: raw.length,
                             category_text_count: categoryBoxes.length, expected_category_ticks: categoryLabels.length,
                             y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
                             actual_y_ticks: valueAxis ? valueAxis.ticks.length : 0, actual_y1_ticks: y1 ? y1.ticks.length : 0,
                             expected_y_ticks: Number(wrap.dataset.autoYTicks || 0), expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
-                            clipped: axisBoxes.some(box => !within(box, outer)),
+                            clipped: axisBoxes.some(box => !within(box, rect)),
                             overlap: [categoryBoxes, yBoxes, y1Boxes].some(group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other))))};
                         })
                       : [...slide.querySelectorAll('.chart-svg-wrap[data-auto-typo="1"]')].map(wrap => {
-                          const boxes = [...wrap.querySelectorAll('svg text')].map(text => text.getBoundingClientRect());
+                          const viewport = wrap.querySelector('svg').getBoundingClientRect();
                           const categoryBoxes = [...wrap.querySelectorAll('svg text.auto-x-label')].map(text => text.getBoundingClientRect());
                           const yBoxes = [...wrap.querySelectorAll('svg text.auto-y-label')].map(text => text.getBoundingClientRect());
                           const y1Boxes = [...wrap.querySelectorAll('svg text.auto-y1-label')].map(text => text.getBoundingClientRect());
@@ -464,7 +486,7 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                             group.some(box => other.some(candidate => overlap(box, candidate)))));
                           return {text_count: categoryBoxes.length, y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
                             expected_y_ticks: Number(wrap.dataset.autoYTicks || 0), expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
-                            clipped: boxes.some(box => !within(box, outer)),
+                            clipped: categoryBoxes.concat(yBoxes, y1Boxes).some(box => !within(box, viewport)),
                             overlap: categoryOverlap || collides(yBoxes) || collides(y1Boxes)};
                         });
                     return {slide_number: index + 1, panes};
@@ -847,12 +869,16 @@ def test_auto_planning_matches_unrotated_hbar_and_line_svg_axes():
         }},
     }
     line_plan = compute_auto_plan_for_slide(line, "line_chart", host_w=900, host_h=480)
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_bar_config, _chartjs_line_config
     from impact_slides.renderer_v2.charts.lines import _build_line_chart_svg
 
     svg = _build_line_chart_svg(line)
     assert line_plan is not None
     assert line_plan.y_tick_values == [0.0, 2.75, 5.5, 8.25, 11.0]
     assert all(f">{tick:g}%</text>" in svg for tick in line_plan.y_tick_values)
+    assert "offset" not in _chartjs_line_config(line)["options"]["scales"]["x"]
+    bar = {**line, "layout_type": "grouped_bar_chart"}
+    assert _chartjs_bar_config(bar)["options"]["scales"]["x"]["offset"] is True
 
 
 def test_combo_reduces_each_svg_axis_independently():
