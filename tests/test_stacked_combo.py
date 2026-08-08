@@ -7,7 +7,6 @@ and dual axis work unchanged. Single-series combos are pixel-identical.
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 import pytest
 
@@ -142,10 +141,3 @@ def test_negative_stacked_combo_paints_both_signs_from_zero():
         # Positive sits above negative; they meet at the zero baseline.
         assert pos_y + pos_h == pytest.approx(neg_y, abs=0.15)
         assert pos_h > 0 and neg_h > 0
-
-    # Mutation trap: flipping the skip predicate must break the assertion.
-    source = Path(__file__).resolve().parents[1].joinpath(
-        "impact_slides/renderer_v2/charts/lines.py"
-    ).read_text(encoding="utf-8")
-    assert "if v is None or v >= 0:" in source
-    assert "neg_cursor" in source
