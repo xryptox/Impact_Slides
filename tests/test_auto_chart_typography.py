@@ -175,14 +175,37 @@ def test_x_adaptation_stage_order_mutation_traps(labels, short_labels, plot_w, b
 
 def test_sibling_sync_mutation_trap_uses_smallest_non_explicit_size():
     wide = resolve_auto_typography(
-        chart_type="line_chart", host_w=900, host_h=480, categories=["Q1", "Q2"]
+        chart_type="line_chart", host_w=900, host_h=480, categories=["Q1", "Q2"],
+        y_tick_values=[0, 50, 100], y_tick_labels=["0", "50", "100"],
+        datalabel_texts=["100"], want_datalabels=True,
     )
     dense = resolve_auto_typography(
         chart_type="line_chart", host_w=220, host_h=180,
         categories=["Long reporting period alpha beta"] * 8,
+        y_tick_values=[0, 50, 100], y_tick_labels=["0", "50", "100"],
+        datalabel_texts=["100"], want_datalabels=True,
     )
     synced = sync_sibling_plans([wide, dense])
     assert synced[0].x_tick_font_size == synced[1].x_tick_font_size == dense.x_tick_font_size
+    assert synced[0].y_tick_font_size == synced[1].y_tick_font_size == dense.y_tick_font_size
+    assert synced[0].datalabel_font_size == synced[1].datalabel_font_size == dense.datalabel_font_size
+
+
+def test_plan_suppresses_chartjs_and_svg_ordinary_datalabels(tmp_path):
+    pane = _pane("grouped_bar_chart", [f"Category {i}" for i in range(40)], typography={"mode": "auto"})
+    slide = {
+        "slide_number": 1, "title": "Auto", "layout_type": "grouped_bar_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    chartjs_out, svg_out = tmp_path / "chartjs", tmp_path / "svg"
+    render_deck(path, chartjs_out, strict=False)
+    render_deck(path, svg_out, strict=False, suppress_features=["charts"])
+    config = _configs((chartjs_out / "presentation.html").read_text(encoding="utf-8"))[0]
+    assert "datalabels" not in config["options"]["plugins"]
+    svg = (svg_out / "presentation.html").read_text(encoding="utf-8")
+    assert not re.search(r'<text x="[^>]+ font-weight="600"[^>]*>\d+</text>', svg)
 
 
 def test_svg_receives_adapted_labels_and_datalabel_suppression(tmp_path):

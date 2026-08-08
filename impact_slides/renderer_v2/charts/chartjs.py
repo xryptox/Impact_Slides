@@ -514,7 +514,11 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             }
         else:
             options["plugins"]["datalabels"] = value_set
-    elif not stacked and (cfg.get("point_labels") or cfg.get("show_point_labels")):
+    elif (
+        not stacked
+        and (cfg.get("point_labels") or cfg.get("show_point_labels"))
+        and not (auto_plan is not None and auto_plan.datalabels_suppressed)
+    ):
         # T14: grouped/plain bars honour point_labels too — above-bar value
         # labels (line-path recipe), same unit formatter as stacked/line.
         unit = str(cfg.get("y_axis_unit") or "")
@@ -724,7 +728,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         if cfg.get("y_axis_max") is not None:
             y_scale["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
-    if point_labels:
+    if point_labels and not (auto_plan is not None and auto_plan.datalabels_suppressed):
         dl_size = ordinary_datalabel_size(typo)
         options["plugins"]["datalabels"] = _datalabels_cfg(
             anchor="end", align="top", offset=2, color=_NAVY_SOFT, size=dl_size,

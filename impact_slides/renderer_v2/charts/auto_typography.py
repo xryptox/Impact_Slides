@@ -964,19 +964,8 @@ def resolve_auto_typography(
                 _warn(plan.warnings[-1])
             return size, p
         lo, hi = (AUTO_X_LO, AUTO_X_HI) if cat_is_x else (AUTO_Y_LO, AUTO_Y_HI)
-        best: tuple[int, AxisLabelPlan | None] = (lo, None)
-        for size in range(hi, lo - 1, -1):
-            if cat_is_x:
-                p = _fit_x_labels(cats, shorts, size, plot_w, bottom_budget, font=fx)
-            else:
-                p = _fit_x_labels(cats, shorts, size, plot_h, left_budget, font=fy)
-            if p is not None:
-                best = (size, p)
-                break
-        if best[1] is None:
-            # Floor with whatever adaptation we can.
-            size = lo
-            p = _fit_x_labels(
+        def fit_at(size: int) -> AxisLabelPlan | None:
+            return _fit_x_labels(
                 cats,
                 shorts,
                 size,
@@ -984,6 +973,25 @@ def resolve_auto_typography(
                 bottom_budget if cat_is_x else left_budget,
                 font=fx if cat_is_x else fy,
             )
+
+        # Information outranks point size: exhaust the largest full-label
+        # candidates (wrap/rotation allowed) before accepting short/skip/ellipsis.
+        best: tuple[int, AxisLabelPlan | None] = (lo, None)
+        for size in range(hi, lo - 1, -1):
+            p = fit_at(size)
+            if p is not None and not (p.used_short or p.used_skip or p.used_ellipsis):
+                best = (size, p)
+                break
+        if best[1] is None:
+            for size in range(hi, lo - 1, -1):
+                p = fit_at(size)
+                if p is not None:
+                    best = (size, p)
+                    break
+        if best[1] is None:
+            # Floor with whatever adaptation we can.
+            size = lo
+            p = fit_at(size)
             if p is None:
                 p = AxisLabelPlan(
                     texts=list(cats),
@@ -1294,16 +1302,15 @@ def _extract_categories_and_shorts(
 
     cfg = _chart_config(slide)
     ct = (chart_type or "").lower().strip()
+    from ..slide_view import primary_visual
+
     cats: list[str] = []
     shorts: list[str | None] = []
     series_count = 1
     values_flat: list[float] = []
 
-    raw_steps = []
-    vs = slide.get("visual_spec") or {}
-    pv = vs.get("primary_visual") if isinstance(vs, Mapping) else None
-    if isinstance(pv, Mapping):
-        raw_steps = list(pv.get("steps_or_data") or [])
+    pv = primary_visual(slide)
+    raw_steps = list(pv.get("steps_or_data") or [])
     if not raw_steps:
         from .core import _steps
 
