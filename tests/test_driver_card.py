@@ -332,3 +332,76 @@ def test_byte_compat_without_features():
     assert a == b
     assert "gl-driver-card" not in a
     assert "boxed-label" not in a
+
+
+def test_positive_tone_colors_value_and_dir():
+    """CSS descendant selectors paint green on value + up glyph (#151)."""
+    css = Path(__file__).resolve().parents[1] / "impact_slides/renderer_v2/css/components.css"
+    text = css.read_text(encoding="utf-8")
+    assert ".gl-driver-tone--positive .gl-driver-value" in text
+    assert ".gl-driver-tone--positive .gl-driver-dir" in text
+    assert "#0a7d55" in text
+
+
+def test_slide18_geometry_1920(tmp_path):
+    """At 1920x1080, slide 18 keeps two-pane hierarchy + four driver rows."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    from impact_slides.renderer_v2 import render_deck
+
+    handoff = {
+        "meta": {"title": "t", "client": "c", "date": "2026-01-01"},
+        "presentation": {"title": "t"},
+        "slides": [_slide()],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=True)
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        measured = page.evaluate(
+            """() => {
+              const slide = document.querySelector('.slide[data-layout="chart_hero_dual"]')
+                || document.querySelector('.slide.active')
+                || document.querySelector('.slide');
+              slide.classList.add('active');
+              const stage = document.querySelector('.deck-stage');
+              if (stage) stage.style.transform = 'none';
+              const chart = slide.querySelector('.gl-chart-hero-chart');
+              const stack = slide.querySelector('.gl-chart-hero-stack');
+              const card = slide.querySelector('.gl-driver-card');
+              const rows = [...slide.querySelectorAll('.gl-driver-row')];
+              const titles = [...slide.querySelectorAll('.gl-chart-pane-title')].map(n => n.textContent.trim());
+              const val = getComputedStyle(rows[0].querySelector('.gl-driver-value')).color;
+              const box = el => { const r = el.getBoundingClientRect(); return {w:r.width,h:r.height,l:r.left,t:r.top}; };
+              return {
+                slide: box(slide),
+                chart: box(chart),
+                stack: box(stack),
+                cardOk: !!card,
+                rowCount: rows.length,
+                titles,
+                valueColor: val,
+                hasUp: !!rows[0].querySelector('.gl-driver-dir--up'),
+                labels: rows.map(r => r.getAttribute('aria-label')),
+                title: (slide.querySelector('.gl-title, h1, .slide-title') || {}).textContent || '',
+              };
+            }"""
+        )
+        browser.close()
+    assert measured["slide"]["w"] == 1920
+    assert measured["slide"]["h"] == 1080
+    assert measured["chart"]["w"] > measured["stack"]["w"] > 200
+    assert measured["chart"]["l"] < measured["stack"]["l"]
+    assert measured["cardOk"]
+    assert measured["rowCount"] == 4
+    assert "Net Interest Income" in measured["titles"]
+    assert any("Volume" in t and "Margin" in t for t in measured["titles"])
+    assert measured["hasUp"]
+    # green-ish accent-2
+    assert "10, 125, 85" in measured["valueColor"] or "0a7d55" in measured["valueColor"]
+    assert any("Margin" in (lab or "") and "5%" in (lab or "") for lab in measured["labels"])

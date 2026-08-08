@@ -606,11 +606,7 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     driver_html = _driver_card_html(sv) if isinstance(sv, dict) else ""
     hero = ""
     if not driver_html:
-        # Fall back when type is driver_card but rows invalid (non-strict),
-        # or when secondary is the legacy hero-stats shape.
-        if isinstance(sv, dict) and sv.get("type") == "driver_card":
-            # normalize already warned; try key_stats fallback
-            pass
+        # Missing/invalid driver_card (non-strict) falls back to key_stats hero stack.
         hero = _hero_stack(_sv_content(slide).get("key_stats") or [])
     if not chart_html and not hero and not driver_html:
         return render_metric(slide, total, notes, active=active)

@@ -656,21 +656,13 @@ def normalize_driver_card(visual: Mapping[str, Any] | None) -> dict[str, Any] | 
 
 def _driver_card_html(visual: Mapping[str, Any] | None) -> str:
     """Render a normalized driver_card as right-pane HTML (#151)."""
+    from ...charts.typography import chart_pane_headings_html
+
     card = normalize_driver_card(visual)
     if not card:
         return ""
-    heading = _driver_fit_text(
-        card["heading"], font_size=_DRIVER_HEADING_FS, max_width=_DRIVER_HEADING_MAX_W, field="heading"
-    )
-    sub = card.get("subtitle") or ""
-    sub_html = ""
-    if sub:
-        sub_fit = _driver_fit_text(
-            sub, font_size=14.0, max_width=_DRIVER_HEADING_MAX_W, field="subtitle"
-        )
-        sub_html = (
-            f'<div class="gl-driver-subtitle">{esc(sub_fit).replace(chr(10), "<br>")}</div>'
-        )
+    # Reuse #147 pane chrome for heading/subtitle (no duplicate title module).
+    chrome = chart_pane_headings_html(card["heading"], card.get("subtitle") or "")
     row_html: list[str] = []
     for row in card["rows"]:
         label = _driver_fit_text(
@@ -702,6 +694,7 @@ def _driver_card_html(visual: Mapping[str, Any] | None) -> str:
             + (f': {detail}' if detail else "")
             + f' {row["value"]}{aria_dir}'
         )
+        # value then direction (right metric column reading order)
         row_html.append(
             f'<div class="gl-driver-row{tone_cls}" role="listitem" aria-label="{esc(aria)}">'
             f'<div class="gl-driver-copy">'
@@ -709,19 +702,19 @@ def _driver_card_html(visual: Mapping[str, Any] | None) -> str:
             f"{detail_html}"
             f"</div>"
             f'<div class="gl-driver-metric">'
-            f'{dir_html}'
             f'<span class="gl-driver-value">{esc(row["value"])}</span>'
+            f"{dir_html}"
             f"</div>"
             f"</div>"
         )
     return (
         f'<div class="gl-driver-card" role="group" '
         f'aria-label="{esc(card["heading"])}">'
-        f'<div class="gl-driver-heading">{esc(heading).replace(chr(10), "<br>")}</div>'
-        f"{sub_html}"
+        f"{chrome}"
         f'<div class="gl-driver-rows" role="list">{"".join(row_html)}</div>'
         f"</div>"
     )
+
 
 
 def _sequential_grid(

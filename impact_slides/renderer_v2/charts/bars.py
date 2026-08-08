@@ -152,9 +152,10 @@ def _paint_boxed_labels_svg(
             )
             _warn(f"boxed_labels outside placement category={i} label={text!r}")
         box_x = cx - box_w / 2
+        aria = f'{boxed.get("label") or "boxed label"}: {text}'
         parts.append(
             f'<g class="boxed-label" data-boxed-placement="{placement}" '
-            f'data-boxed-index="{i}">'
+            f'data-boxed-index="{i}" role="img" aria-label="{esc(aria)}">'
             f"{connector}"
             f'<rect class="boxed-label-box" x="{box_x:.1f}" y="{box_y:.1f}" '
             f'width="{box_w:.1f}" height="{box_h:.1f}" rx="3" '

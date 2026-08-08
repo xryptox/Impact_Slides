@@ -96,7 +96,7 @@ def test_svg_short_bar_outside_with_connector():
     )
     assert 'data-boxed-placement="outside"' in svg
     assert "boxed-label-connector" in svg
-    assert svg.count("11%") == 5
+    assert svg.count('data-boxed-placement="outside"') == 5
 
 
 def test_chartjs_plugin_payload():
