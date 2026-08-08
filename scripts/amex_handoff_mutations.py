@@ -596,7 +596,7 @@ def apply_issue_154_slide24_growth(handoff: dict[str, Any]) -> dict[str, Any]:
         "key_stats": [],
         "subtitle": (
             "% Increase/(decrease) vs. Prior Year (FX-adjusted) · "
-            "86B Total Network Volumes · 9% FX-adjusted growth"
+            "$486B Total Network Volumes · 9% FX-adjusted growth"
         ),
     }
     slide["visual_spec"] = {
@@ -625,13 +625,13 @@ def apply_issue_154_slide24_growth(handoff: dict[str, Any]) -> dict[str, Any]:
             "skin": "outlined_boxes",
             "steps_or_data": [
                 ["", *_S24_CATEGORIES],
-                ["86B Total Network Volumes · % of Total Network Volumes", *_S24_SUPPORT],
+                ["$486B Total Network Volumes · % of Total Network Volumes", *_S24_SUPPORT],
             ],
         },
     }
     slide["speaker_notes"] = (
         "Six FX-adjusted growth bars: 10%, 4%, 4%, 13%, 12%, and 9%. "
-        "86B Total Network Volumes; Processed Volumes 12% support value is "
+        "$486B Total Network Volumes; Processed Volumes 12% support value is "
         "distinct from 9% growth."
     )
     slide["disclosure"] = {
