@@ -119,9 +119,6 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
     )
     if auto_plan is not None:
         x_tick_fs = auto_plan.x_tick_font_size
-    label_lines, _value_ticks = svg_auto_axis_view(
-        auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
-    )
     if not labels or not series or not rows:
         return '<p class="chart-empty">No chart data for waterfall_chart</p>'
 
@@ -141,6 +138,12 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
         bridges.append((i, str(lab), float(v), kind))
     if not bridges:
         return '<p class="chart-empty">No chart data for waterfall_chart</p>'
+    label_lines, _value_ticks = svg_auto_axis_view(
+        auto_plan,
+        labels=[label for _index, label, _value, _kind in bridges],
+        ticks=[],
+        format_tick=lambda _tick: "",
+    )
 
     # Running total: up/down float from prior level; total is absolute from 0.
     level = 0.0
@@ -219,7 +222,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             f'font-weight="700">{esc(vlab)}</text>'
         )
         if cfg.get("show_x_axis") is not False:
-            lines = label_lines[category_index] if category_index < len(label_lines) else [lab]
+            lines = label_lines[i] if i < len(label_lines) else [lab]
             for line_i, line in enumerate(lines):
                 y = height - 28 - (len(lines) - 1 - line_i) * x_tick_fs
                 parts.append(

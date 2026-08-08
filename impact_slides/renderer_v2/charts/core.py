@@ -125,7 +125,8 @@ def _svg_fallback_for_layout(
     cfg = _chart_config(slide)
     default_w, default_h = chart_host_dimensions(layout)
     width = default_w if host_w is None else host_w
-    height = default_h if host_h is None else host_h
+    height = width * default_h / default_w
+    cfg.pop("_auto_typo_plan", None)
     cfg["_auto_host_w"] = width
     cfg["_auto_host_h"] = height
     plan = compute_auto_plan_for_slide(

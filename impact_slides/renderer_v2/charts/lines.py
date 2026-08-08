@@ -147,6 +147,13 @@ def _line_axis(
     if isinstance(forced_ticks, (list, tuple)) and len(forced_ticks) >= 2:
         try:
             forced = [float(tick) for tick in forced_ticks]
+            lo = float(cfg["y_axis_min"]) if cfg.get("y_axis_min") is not None else None
+            hi = float(cfg["y_axis_max"]) if cfg.get("y_axis_max") is not None else None
+            bounded = [tick for tick in forced if (lo is None or tick >= lo) and (hi is None or tick <= hi)]
+            if bounded:
+                return min(bounded), max(bounded), bounded
+            if lo is not None and hi is not None:
+                return lo, hi, [lo, hi]
             return min(forced), max(forced), forced
         except (TypeError, ValueError):
             pass

@@ -470,6 +470,7 @@ def _try_x_fit(
         return min(pos[i] + 0.5, slots - pos[i] - 0.5) * slot
 
     lines_out: list[list[str]] = []
+    rotated_half_widths: list[float] = []
     max_h = 0.0
     for label_i, lab in enumerate(labels):
         label_max_w = nearest_gap(label_i) * (1.35 if rotation >= 30 else 0.95)
@@ -520,16 +521,21 @@ def _try_x_fit(
                 baseline_w * math.cos(rad)
                 + measure_text_height(font_size, font=font) * math.sin(rad)
             )
-            if half_foot + _ROT_PAD > nearest_gap(label_i) * 0.55 and n > 2:
-                return False, [], 0.0
+            rotated_half_widths.append(half_foot)
         lines_out.append(segs)
         max_h = max(max_h, h if rotation >= 0.5 else measure_text_height(font_size, font=font, lines=len(segs)))
+    if rotation >= 0.5:
+        for i, (left, right) in enumerate(zip(rotated_half_widths, rotated_half_widths[1:])):
+            if left + right + _ROT_PAD > (pos[i + 1] - pos[i]) * slot:
+                return False, [], 0.0
     used_h = max_h + _X_AXIS_GAP
     if used_h > bottom_budget + 1e-6:
         return False, [], 0.0
     # Adjacent unrotated overlap check.
     if rotation < 0.5 and n >= 2:
         for i, segs in enumerate(lines_out):
+            if not segs:
+                continue
             w = max(measure_text_width(s, font_size, font=font) for s in segs)
             if w > min(nearest_gap(i) - 2.0, edge_clearance(i) * 2):
                 return False, [], 0.0
@@ -1488,6 +1494,14 @@ def _extract_categories_and_shorts(
         labels, series, rows, _pc = _bar_matrix(slide)
         cats = list(labels)
         series_count = max(len(series), 1)
+        if ct == "waterfall_chart":
+            renderable = [
+                i for i, row in enumerate(rows)
+                if row and row[0] is not None
+            ]
+            cats = [cats[i] for i in renderable]
+            rows = [rows[i] for i in renderable]
+            raw_steps = [raw_steps[i] for i in renderable if i < len(raw_steps)]
         if ct == "stacked_bar_chart":
             values_flat = [
                 value

@@ -156,11 +156,11 @@ def test_svg_and_chartjs_receive_the_same_auto_sizes(tmp_path):
     ("labels", "short_labels", "plot_w", "bottom", "expected"),
     [
         (["Q1 2026"] * 2, [None] * 2, 300, 80, (False, 0, False, False, False)),
-        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (False, 0, False, True, False)), 
-        (["AlphaBeta"] * 2, [None] * 2, 130, 70, (False, 30, False, False, False)),
-        (["Long alpha beta"] * 2, [None] * 2, 140, 110, (False, 45, False, False, False)),
+        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (False, 0, False, False, True)),
+        (["AlphaBeta"] * 2, [None] * 2, 130, 70, (False, 0, False, False, True)),
+        (["Long alpha beta"] * 2, [None] * 2, 140, 110, (False, 0, False, False, True)),
         (["Long alpha beta gamma"] * 8, [f"Q{i}" for i in range(8)], 160, 80, (False, 0, True, False, False)),
-        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (False, 0, False, True, False)),
+        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (False, 0, False, False, True)),
         (["Supercalifragilisticexpialidocious"] * 8, [None] * 8, 100, 80, (False, 0, False, False, True)),
     ],
 )
@@ -755,7 +755,7 @@ def test_waterfall_auto_uses_renderable_category_label_and_legacy_value_typograp
         html,
     )
     value_size = re.search(r'class="chart-value"[^>]*font-size="(\d+)"', html)
-    assert labels == [("8", "Long reporting period alpha beta")]
+    assert labels == [(str(i), f"Q{i}") for i in range(1, 9)]
     assert value_size and value_size.group(1) == "18"
 
     explicit = {**slide, "visual_spec": {"primary_visual": {
@@ -923,14 +923,27 @@ def test_auto_skip_uses_actual_retained_tick_spacing():
     )[0]
 
 
-def test_auto_skip_fits_labels_inside_plot_edges():
+def test_two_category_rotated_labels_use_neighbor_spacing():
     from impact_slides.renderer_v2.charts.auto_typography import _try_x_fit
 
     assert not _try_x_fit(
-        ["Processed Volumes"], 24, 440.6, 56,
-        font="source_sans_3", rotation=0, wrap=False,
-        positions=[5], total_slots=6,
+        ["AlphaBetaGamma"] * 2, 12, 158, 150,
+        font="source_sans_3", rotation=30, wrap=False,
     )[0]
+
+
+def test_svg_auto_plan_uses_fixed_aspect_viewport_height():
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    slide = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [{"label": "Q1", "value": 1}, {"label": "Q2", "value": 2}],
+        }},
+    }
+    svg = _svg_fallback_for_layout(slide, "line_chart", host_w=495, host_h=480)
+    assert 'data-auto-plot="430.6x183.2"' in svg
 
 
 def test_auto_full_labels_are_retained_in_chart_accessibility(tmp_path):
