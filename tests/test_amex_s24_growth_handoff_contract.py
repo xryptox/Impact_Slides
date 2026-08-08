@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import html as html_module
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -156,7 +157,12 @@ def test_chartjs_bar_groups_are_opt_in():
         [{"label": "bad", "start": 3, "end": 2}],
         [{"label": "bad", "start": -1, "end": 2}],
         [{"label": "bad", "start": 0, "end": len(_CATEGORIES)}],
-    ):
+        [{"label": "bad", "start": math.inf, "end": 2}],
+        [
+            {"label": "valid", "start": 0, "end": 0},
+            {"label": "bad", "start": True, "end": False},
+        ],
+    ): 
         malformed["visual_spec"]["primary_visual"]["chart_config"]["bar_groups"] = malformed_groups
         ignored = _chartjs_bar_config(malformed)
         assert ignored is not None

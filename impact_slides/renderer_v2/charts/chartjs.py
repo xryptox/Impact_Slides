@@ -310,18 +310,22 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             items = []
             for group in groups:
                 if not isinstance(group, Mapping):
-                    continue
+                    items = []
+                    break
                 raw_start = group.get("start", 0)
                 raw_end = group.get("end", raw_start)
                 if isinstance(raw_start, bool) or isinstance(raw_end, bool):
-                    continue
+                    items = []
+                    break
                 try:
                     start = int(raw_start)
                     end = int(raw_end)
-                except (TypeError, ValueError):
-                    continue
+                except (OverflowError, TypeError, ValueError):
+                    items = []
+                    break
                 if start < 0 or end < start or end >= len(labels):
-                    continue
+                    items = []
+                    break
                 items.append({"label": str(group.get("label") or ""), "start": start, "end": end})
             if items:
                 padding = options.setdefault("layout", {}).setdefault("padding", {})
