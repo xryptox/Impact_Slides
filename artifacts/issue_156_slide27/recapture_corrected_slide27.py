@@ -16,11 +16,7 @@ from amex_handoff_mutations import apply_issue_156_slide27_scenarios  # noqa: E4
 from simulation_probe import wait_for_paint_ready_charts  # noqa: E402
 from impact_slides.renderer_v2 import render_deck  # noqa: E402
 
-SOURCE = Path(
-    r"C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/"
-    r"objective-produce-an-74065a/simulation/amex_q1_2026/"
-    r"passes/pass_01/handoff.json"
-)
+SOURCE = Path(__file__).with_name("archived_v10_handoff.json")
 OUT = Path(__file__).resolve().parent
 
 
