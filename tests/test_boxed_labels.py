@@ -122,23 +122,37 @@ def test_chartjs_plugin_has_outside_path():
 def test_chartjs_html_embeds_plugin_not_collision():
     html = _build_chartjs_html(_slide(), "grouped_bar_chart")
     assert "boxedLabels" in html
-    assert "rv2BoxedLabels" in html or "boxedLabels" in html
-    # ordinary collision path not required for boxed furniture
-    assert "data-rv2-collision" not in html or "boxedLabels" in html
-
+    assert "rv2BoxedLabels" in html
+    # Plugin is dedicated furniture, not the ordinary datalabel collision helper.
+    assert "suppress_colliding_labels" not in html
+    assert "rv2BoxedLabelsOutside" in html  # outside diagnose channel
 
 def test_independent_of_ordinary_collision_suppression():
     """Boxed labels still paint when ordinary datalabels would be suppressed."""
+    from impact_slides.renderer_v2.charts import bars as bars_mod
+
     slide = _slide(
         extra_cfg={
             "point_labels": True,
             "typography": {"datalabel_font_size": 32},
         }
     )
-    svg = _build_grouped_bar_svg(slide)
-    assert "boxed-label" in svg
-    assert svg.count("11%") + svg.count("12%") >= 5
+    real = bars_mod.suppress_colliding_labels
 
+    def _drop_all(labels, **kwargs):
+        # suppress every ordinary label index; boxed furniture is separate.
+        n = len(labels) if labels is not None else 0
+        return list(range(n)), [{"series": 0, "category": i, "label": "x", "reason": "forced"} for i in range(n)]
+
+    bars_mod.suppress_colliding_labels = _drop_all  # type: ignore[assignment]
+    try:
+        svg = _build_grouped_bar_svg(slide)
+    finally:
+        bars_mod.suppress_colliding_labels = real  # type: ignore[assignment]
+    assert "boxed-label" in svg
+    assert svg.count("boxed-label-box") == 5
+    for v in ("11%", "12%"):
+        assert v in svg
 
 def test_readable_floor_constant():
     from impact_slides.renderer_v2.charts.bars import BOXED_LABEL_MIN_FS

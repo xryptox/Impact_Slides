@@ -335,21 +335,21 @@ def test_byte_compat_without_features():
     assert a == b
     assert "gl-driver-card" not in a
     assert "boxed-label" not in a
-    # Fixture captured without driver_card/boxed_labels; must stay stable.
+    assert "gl-hero-stack" in a
     baseline_path = (
         Path(__file__).resolve().parent
         / "fixtures"
         / "renderer_v2"
         / "chart_hero_dual_no_headings.baseline.html"
     )
-    if baseline_path.is_file():
-        baseline = baseline_path.read_text(encoding="utf-8")
-        baseline = re.sub(r"rv2-chart-[0-9a-f-]+", "ID", baseline)
-        # Baseline is the full no-headings dual body; compare structure markers.
-        assert "gl-hero-stack" in a
-        assert "gl-driver-card" not in baseline or "gl-driver-card" not in a
-
-
+    baseline = baseline_path.read_text(encoding="utf-8")
+    baseline = re.sub(r"rv2-chart-[0-9a-f-]+", "ID", baseline)
+    # Baseline may be a full deck (shared CSS always includes driver_card rules).
+    assert "gl-hero-stack" in baseline
+    assert "gl-hero-stack" in a and "gl-driver-card" not in a and "boxed-label" not in a
+    # When baseline is a recipe fragment, normalized bodies must match.
+    if "<!DOCTYPE" not in baseline and "gl-driver-card {" not in baseline:
+        assert a == baseline
 
 def test_slide18_geometry_1920(tmp_path):
     """At 1920x1080, slide 18 keeps two-pane hierarchy + four driver rows."""
@@ -371,34 +371,72 @@ def test_slide18_geometry_1920(tmp_path):
         browser = pw.chromium.launch()
         page = browser.new_page(viewport={"width": 1920, "height": 1080})
         page.goto(html_path.as_uri(), wait_until="networkidle")
-        measured = page.evaluate(
+        # Activate the dual slide so Chart.js paints (title slide is active by default).
+        page.evaluate(
             """() => {
-              const slide = document.querySelector('.slide[data-layout="chart_hero_dual"]')
-                || document.querySelector('.slide.active')
-                || document.querySelector('.slide');
+              const slide = document.querySelector('.slide[data-layout="chart_hero_dual"]');
+              if (!slide) return;
+              document.querySelectorAll('.slide.active').forEach(s => s.classList.remove('active'));
               slide.classList.add('active');
               const stage = document.querySelector('.deck-stage');
               if (stage) stage.style.transform = 'none';
-              const chart = slide.querySelector('.gl-chart-hero-chart');
-              const stack = slide.querySelector('.gl-chart-hero-stack');
-              const card = slide.querySelector('.gl-driver-card');
-              const rows = [...slide.querySelectorAll('.gl-driver-row')];
-              const titles = [...slide.querySelectorAll('.gl-chart-pane-title')].map(n => n.textContent.trim());
-              const val = getComputedStyle(rows[0].querySelector('.gl-driver-value')).color;
-              const box = el => { const r = el.getBoundingClientRect(); return {w:r.width,h:r.height,l:r.left,t:r.top}; };
-              return {
-                slide: box(slide),
-                chart: box(chart),
-                stack: box(stack),
-                cardOk: !!card,
-                rowCount: rows.length,
-                titles,
-                valueColor: val,
-                hasUp: !!rows[0].querySelector('.gl-driver-dir--up'),
-                labels: rows.map(r => r.getAttribute('aria-label')),
-                title: (slide.querySelector('.gl-title, h1, .slide-title') || {}).textContent || '',
-              };
             }"""
+        )
+        page.wait_for_function(
+            """() => {
+              const slide = document.querySelector('.slide[data-layout="chart_hero_dual"]');
+              if (!slide) return false;
+              const c = slide.querySelector('canvas');
+              const svg = slide.querySelector('.boxed-label');
+              return (c && c.dataset && c.dataset.rv2BoxedLabelsPainted === '5') || !!svg;
+            }""",
+            timeout=15000,
+        )
+        measured = page.evaluate(
+            """() => {
+            const slide = document.querySelector('.slide[data-layout="chart_hero_dual"]')
+              || document.querySelector('.slide.active')
+              || document.querySelector('.slide');
+            slide.classList.add('active');
+            const stage = document.querySelector('.deck-stage');
+            if (stage) stage.style.transform = 'none';
+            const chart = slide.querySelector('.gl-chart-hero-chart');
+            const stack = slide.querySelector('.gl-chart-hero-stack');
+            const card = slide.querySelector('.gl-driver-card');
+            const rows = [...slide.querySelectorAll('.gl-driver-row')];
+            const titles = [...slide.querySelectorAll('.gl-chart-pane-title')].map(n => n.textContent.trim());
+            const val = getComputedStyle(rows[0].querySelector('.gl-driver-value')).color;
+            const dir = rows[0].querySelector('.gl-driver-dir');
+            const dirColor = dir ? getComputedStyle(dir).color : '';
+            const box = el => { const r = el.getBoundingClientRect(); return {w:r.width,h:r.height,l:r.left,t:r.top}; };
+            const canvas = slide.querySelector('canvas');
+            const cfgEl = slide.querySelector('script.chartjs-config');
+            let boxed = null; let labels = []; let data = [];
+            try {
+              const cfg = cfgEl ? JSON.parse(cfgEl.textContent) : null;
+              boxed = cfg && cfg.options && cfg.options.plugins && cfg.options.plugins.boxedLabels;
+              labels = (cfg && cfg.data && cfg.data.labels) || [];
+              data = (cfg && cfg.data && cfg.data.datasets && cfg.data.datasets[0] && cfg.data.datasets[0].data) || [];
+            } catch (e) { boxed = null; }
+            return {
+              slide: box(slide),
+              chart: box(chart),
+              stack: box(stack),
+              cardOk: !!card,
+              rowCount: rows.length,
+              titles,
+              valueColor: val,
+              dirColor,
+              hasUp: !!rows[0].querySelector('.gl-driver-dir--up'),
+              aria: rows.map(r => r.getAttribute('aria-label')),
+              title: (slide.querySelector('.slide-title, h1.slide-title, .gl-title') || {}).textContent || '',
+              boxedValues: (boxed && boxed.values) || [],
+              chartLabels: labels,
+              chartData: data,
+              boxedPainted: canvas ? (canvas.dataset.rv2BoxedLabelsPainted || '') : '',
+              svgBoxed: slide.querySelectorAll('.boxed-label').length,
+            };
+        }"""
         )
         browser.close()
     assert measured["slide"]["w"] == 1920
@@ -407,9 +445,19 @@ def test_slide18_geometry_1920(tmp_path):
     assert measured["chart"]["l"] < measured["stack"]["l"]
     assert measured["cardOk"]
     assert measured["rowCount"] == 4
+    assert "Premium Lending" in (measured["title"] or "")
     assert "Net Interest Income" in measured["titles"]
     assert any("Volume" in t and "Margin" in t for t in measured["titles"])
     assert measured["hasUp"]
-    # green-ish accent-2
-    assert "10, 125, 85" in measured["valueColor"] or "0a7d55" in measured["valueColor"]
-    assert any("Margin" in (lab or "") and "5%" in (lab or "") for lab in measured["labels"])
+    # green-ish accent-2 on value AND direction glyph
+    def _green(c: str) -> bool:
+        return "10, 125, 85" in c or "0a7d55" in c
+
+    assert _green(measured["valueColor"]), measured["valueColor"]
+    assert _green(measured["dirColor"]), measured["dirColor"]
+    assert any("Margin" in (lab or "") and "5%" in (lab or "") for lab in measured["aria"])
+    # five categories + five boxed YoY labels + five bar values
+    assert measured["boxedValues"] == ["11%", "12%", "12%", "12%", "12%"] or measured.get("svgBoxed") == 5
+    assert len(measured["chartLabels"]) == 5 or measured.get("svgBoxed") == 5
+    assert measured["chartData"] == [4.2, 4.2, 4.5, 4.5, 4.7] or measured.get("svgBoxed") == 5
+    assert measured["boxedPainted"] == "5" or measured.get("svgBoxed") == 5
