@@ -34,6 +34,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 - `pytest -q tests/test_gen_layout_index.py`
 - `pytest -q tests/test_simulation_probe_contract.py` (Playwright; skipped in CI when not installed)
 - `pytest -q tests/test_amex_s13_s14_handoff_contract.py` (#148 handoff bar/pane contract)
+- `pytest -q tests/test_amex_s21_capital_handoff_contract.py` (#155 capital-return combo + ROE support + right KPIs)
 - `pytest -q tests/test_amex_s24_growth_handoff_contract.py` (#154 growth-bar + support-row contract)
 - `pytest -q tests/test_amex_s27_scenarios.py` (#156 slide-27 source scenarios / paint-ready contract)
 - `pytest -q tests/test_amex_annex_33_37_handoff.py` (#157 annex matrix restore contract)

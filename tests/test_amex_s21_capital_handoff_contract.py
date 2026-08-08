@@ -197,9 +197,48 @@ def test_mismatched_support_row_skips_alignment_without_crash():
     slide = copy.deepcopy(_corrected())
     slide["visual_spec"]["secondary_visual"]["steps_or_data"][1].pop()  # drop final ROE
     # Non-strict path: render must not raise; alignment is skipped.
-    html = render_slide(slide, total=44, notes="", active=True, use_chartjs=False)
+    from impact_slides.renderer_v2.charts.typography import (
+        reset_render_strict,
+        set_render_strict,
+    )
+
+    tok = set_render_strict(False)
+    try:
+        html = render_slide(slide, total=44, notes="", active=True, use_chartjs=False)
+    finally:
+        reset_render_strict(tok)
     assert "chart-support" in html
     # Cardinality mismatch → not plot-aligned.
+    assert "chart-table-aligned" not in html or "chart-outlined-stacked" in html
+
+
+def test_strict_mismatched_line_and_support_do_not_raise():
+    """Strict render tolerates mismatched line/support cardinality (no pad/crash)."""
+    from impact_slides.renderer_v2.charts.typography import (
+        reset_render_strict,
+        set_render_strict,
+    )
+
+    # Line: short overlay still paints under strict (last category None, not padded).
+    line_slide = {**_corrected(), "layout_type": _COMBO}
+    line_slide["visual_spec"] = copy.deepcopy(line_slide["visual_spec"])
+    line_slide["visual_spec"]["line_overlay"]["data"] = line_slide["visual_spec"][
+        "line_overlay"
+    ]["data"][:-1]
+    tok = set_render_strict(True)
+    try:
+        cfg = _chartjs_combo_config(line_slide)
+        svg = _build_combo_chart_svg(line_slide)
+        support = copy.deepcopy(_corrected())
+        support["visual_spec"]["secondary_visual"]["steps_or_data"][1].pop()
+        html = render_slide(support, total=44, notes="", active=True, use_chartjs=False)
+    finally:
+        reset_render_strict(tok)
+    assert cfg is not None
+    line = next(d for d in cfg["data"]["datasets"] if d.get("type") == "line")
+    assert line["data"][-1] is None
+    assert "combo-chart" in svg
+    assert "chart-support" in html
     assert "chart-table-aligned" not in html or "chart-outlined-stacked" in html
 
 

@@ -951,7 +951,7 @@ def apply_issue_155_slide21_capital(handoff: dict[str, Any]) -> dict[str, Any]:
         "completed-stack totals $1.6/$1.3/$2.0/$2.9/$1.5/$2.3; Common Shares "
         "Outstanding line 702→682; ROE support row 35%/34%/36%/36%/34%/35%. "
         "Right summary: 58% dividend/share growth, 74% NI returned, 10.5% CET1 "
-        "vs 10–11% target."
+        "ratio vs 10–11% CET1 target band (regulatory minimum/target context)."
     )
     return out
 
