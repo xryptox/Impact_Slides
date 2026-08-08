@@ -85,6 +85,12 @@ def test_mutation_is_idempotent():
     assert _slide(once) == _slide(twice)
 
 
+def test_mutation_preserves_other_content_keys():
+    handoff = copy.deepcopy(_load(BROKEN))
+    _slide(handoff)["content"]["headline"] = "Retained source context"
+    assert apply_issue_156_slide27_scenarios(handoff)["slides"][0]["content"]["headline"] == "Retained source context"
+
+
 def test_apply_all_includes_slide_27():
     slide = _slide(apply_all(copy.deepcopy(_load(BROKEN))))
     _assert_source_contract(slide)
