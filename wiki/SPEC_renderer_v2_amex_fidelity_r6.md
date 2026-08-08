@@ -46,12 +46,10 @@ Synthetic #139 audit note (not full archived-v9): `artifacts/r6a_typography_v9_a
    `.gl-tile-label` stays 13px gray. Hosts pass `chart_host_size(...)`; if
    remaining canvas would fall under 320×240, `strict=True` fails and
    `strict=False` keeps legacy one-line title + warning.
-2. **Opt-in `chart_config.typography`** (`x_tick_font_size` 8–24,
-   `y_tick_font_size` 8–28, `datalabel_font_size` 8–32). Absent group → legacy
-   Chart.js 13/13/11 (SC-COMPAT-1). Invalid group: strict raises; non-strict
-   drops whole group + warns. Ticks on Chart.js + SVG painters;
-   `datalabel_font_size` + collision only on ordinary-label layouts
-   (`grouped_bar_chart` / `line_chart` with `point_labels`).
+2. **Opt-in `chart_config.typography`** (explicit size channels + later #150
+   `mode: "auto"`). Live bounds, waterfall datalabel rejection, combo stack
+   cursors, font-metric band, and painter coverage: owner
+   `impact_slides/renderer_v2/AGENTS.md` — do not restate here.
 3. **Opt-in collision suppression** when `datalabel_font_size` is set: keep
    earlier series then category; 2px margin; Chart.js actual bounds +
    `data-datalabel-suppressed`; SVG estimated boxes + stderr/`run_meta.warnings`.
@@ -59,7 +57,9 @@ Synthetic #139 audit note (not full archived-v9): `artifacts/r6a_typography_v9_a
 ### Acceptance (locked)
 
 - Pane hosts emit 40px/700/navy `.gl-chart-pane-title` (legacy fallback path covered).
-- Opt-in typography bounds/invalid/unsupported + both painter paths covered by tests.
+- Opt-in typography (explicit + `mode: "auto"`) bounds/invalid/unsupported +
+  both painter paths covered by tests (`test_chart_typography_r6a.py`,
+  `test_auto_chart_typography.py`).
 - Collision ordering/diagnostics covered; boot only when `datalabel_font_size` set.
 - Full suite + `gen_layout_index.py --check` green.
 - **Outstanding (explicit):** full 44-slide **archived v9** audit on real Amex
