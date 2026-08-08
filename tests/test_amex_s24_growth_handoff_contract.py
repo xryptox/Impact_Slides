@@ -165,7 +165,7 @@ def test_chartjs_bar_groups_are_opt_in():
             {"label": "valid", "start": 0, "end": 0},
             {"label": "bad", "start": True, "end": False},
         ],
-    ): 
+    ):
         malformed["visual_spec"]["primary_visual"]["chart_config"]["bar_groups"] = malformed_groups
         ignored = _chartjs_bar_config(malformed)
         assert ignored is not None
