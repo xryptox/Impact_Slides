@@ -182,7 +182,7 @@ def resolve_typography(
     Without a density context this returns legacy defaults for unset channels
     plus ``auto_mode=1`` so painters can run ``resolve_auto_typography``.
 
-    Waterfall value labels stay legacy 18px (auto sizes axes only). An authored
+    Waterfall value labels stay legacy size 18 (auto sizes axes only). An authored
     ``datalabel_font_size`` is rejected at this boundary when
     ``chart_type == "waterfall_chart"``: strict raises; non-strict drops only
     that field, keeps mode/axis overrides, and records a warning.
@@ -233,7 +233,7 @@ def resolve_typography(
     if ct == "waterfall_chart" and "datalabel_font_size" in raw:
         msg = (
             "datalabel_font_size is not supported for waterfall_chart "
-            "(value labels stay legacy 18px; auto sizes axes only)"
+            "(value labels stay legacy size 18; auto sizes axes only)"
         )
         if strict:
             raise ValueError(f"chart_config.typography: {msg}")

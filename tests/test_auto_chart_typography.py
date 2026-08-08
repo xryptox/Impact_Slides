@@ -256,7 +256,8 @@ def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, ro
         browser = pw.chromium.launch()
         page = browser.new_page()
         page.set_content(
-            f'<style>@font-face{{font-family:{face};src:url(data:font/woff2;base64,{font_data}) format("woff2")}}</style>'
+            f'<style>@font-face{{font-family:{face};src:url(data:font/woff2;base64,{font_data}) format("woff2");'
+            f'font-weight:400 700;font-style:normal}}</style>'
         )
         actual = page.evaluate(
             """async ({face, size, rotation, samples}) => {
