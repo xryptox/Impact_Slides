@@ -447,13 +447,21 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
                 f'<rect class="vbar-seg vbar-neg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
                 f'height="{max(y_bottom - y_top, 0):.1f}" fill="{color}"/>'
             )
-        # Net total above the positive stack (or above zero)
-        net = pos_sums[i] + neg_sums[i]
+        # Net total above the positive stack (or above zero).
+        # #158 / Chart.js parity: explicit stack_total_labels win over computed
+        # net (IR 100%-mix boards: percents inside, $ totals above).
+        explicit = cfg.get("stack_total_labels")
+        if isinstance(explicit, (list, tuple)) and i < len(explicit) and explicit[i] not in (None, ""):
+            total_txt = str(explicit[i])
+        else:
+            net = pos_sums[i] + neg_sums[i]
+            total_txt = _fmt_bar(net, unit)
         total_y = y_pos(pos_sums[i]) - 8 if pos_sums[i] > 0 else zero_y - 8
         parts.append(
-            f'<text x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" text-anchor="middle" '
+            f'<text class="vbar-stack-total" x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" '
+            f'text-anchor="middle" '
             f'fill="var(--navy, #00175a)" font-size="14" font-weight="700" '
-            f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(net, unit))}</text>'
+            f'font-family="var(--font-body, sans-serif)">{esc(total_txt)}</text>'
         )
         # Negative total below the negative stack, in parentheses; clamped
         # so it never collides with the category label row.
