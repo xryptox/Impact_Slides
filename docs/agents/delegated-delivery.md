@@ -85,7 +85,8 @@ A live no-mistakes pipeline owns unpublished correction commits.
 - Inspect with `no-mistakes axi status`.
 - If local and pipeline heads differ, use `no-mistakes axi sync`; use `sync --recover` only when AXI explicitly reports recoverable divergence.
 - Preserve pipeline commits and rerun affected checks after reconciliation.
-- The CI stage normally remains active until its PR is merged or closed.
+- The CI stage normally remains active until its PR is merged or closed. A green PR plus `all CI checks passed - still monitoring until merged or closed` is the correct implementer handoff state, not a stuck run.
+- The implementer must report that monitoring state and end its Pi turn without stopping the monitor. Never run `no-mistakes axi abort` merely because the implementer is forbidden to merge; abort only on an explicit user instruction or an authoritative no-mistakes recovery instruction.
 
 Treat update notices on stderr as notices, not task failures. Verify GitHub, Git, and `no-mistakes axi status` directly when a wrapper reports `BLOCKED`.
 
