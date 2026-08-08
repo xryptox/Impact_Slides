@@ -469,13 +469,18 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
 
     vs = slide.get("visual_spec") or {}
     from ...charts import _chart_config  # late import: charts -> layout cycle
-    from ...charts.auto_typography import compute_auto_plan_for_slide, sync_sibling_plans
+    from ...charts.auto_typography import (
+        compute_auto_plan_for_slide,
+        svg_viewport_dimensions,
+        sync_sibling_plans,
+    )
 
     top_cfg = _chart_config(slide)
     aw, ah = chart_host_size("dual_chart")
     pane_specs: list[tuple[Mapping[str, Any], str, dict[str, Any], str, list[str]]] = []
     plans = []
-    for key in ("primary_visual", "secondary_visual"):
+    svg_plans = []
+    for key in ("primary_visual", "secondary_visual"): 
         visual = vs.get(key)
         if not isinstance(visual, dict) or not visual:
             continue
@@ -502,14 +507,22 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         plans.append(compute_auto_plan_for_slide(
             sub_slide, vt, host_w=canvas_w, host_h=canvas_h, chart_cfg=pane_cfg
         ))
+        svg_w, svg_h = svg_viewport_dimensions(vt, canvas_w)
+        svg_plans.append(compute_auto_plan_for_slide(
+            sub_slide, vt, host_w=svg_w, host_h=svg_h, chart_cfg=pane_cfg
+        ))
         pane_specs.append((visual, vt, pane_cfg, heading, subtitle, names, canvas_w, canvas_h))
 
     synced = iter(sync_sibling_plans([p for p in plans if p is not None]))
     resolved_plans = [next(synced, None) if plan is not None else None for plan in plans]
+    synced_svg = iter(sync_sibling_plans([p for p in svg_plans if p is not None]))
+    resolved_svg_plans = [next(synced_svg, None) if plan is not None else None for plan in svg_plans]
     panes: list[str] = []
-    for (visual, vt, pane_cfg, heading, subtitle, names, canvas_w, canvas_h), plan in zip(pane_specs, resolved_plans):
+    for (visual, vt, pane_cfg, heading, subtitle, names, canvas_w, canvas_h), plan, svg_plan in zip(pane_specs, resolved_plans, resolved_svg_plans):
         if plan is not None:
             pane_cfg["_auto_typo_plan"] = plan
+        if svg_plan is not None:
+            pane_cfg["_auto_svg_typo_plan"] = svg_plan
         sub_vs: dict[str, Any] = {"primary_visual": visual, "chart_config": pane_cfg}
         if visual.get("line_overlay"):
             sub_vs["line_overlay"] = visual["line_overlay"]
@@ -666,12 +679,18 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
     cols = 2 if tile_count <= 4 else 3
     tile_width = (1920 - 2 * 96 - (cols - 1) * 18) / cols - 2 * 17
     aw, ah = chart_host_size("multi_panel", cols=cols)
-    from ...charts.auto_typography import compute_auto_plan_for_slide, sync_sibling_plans
+    from ...charts.auto_typography import (
+        compute_auto_plan_for_slide,
+        svg_viewport_dimensions,
+        sync_sibling_plans,
+    )
 
     tile_plans = []
+    tile_svg_plans = []
     for tile in tiles:
         if not isinstance(tile, dict) or str(tile.get("kind") or "metric") != "chart":
             tile_plans.append(None)
+            tile_svg_plans.append(None)
             continue
         chart_type = str(tile.get("chart_type") or "grouped_bar_chart")
         tile_cfg = tile.get("chart_config") or {}
@@ -696,10 +715,18 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 sub_slide, chart_type, host_w=canvas_w, host_h=canvas_h, chart_cfg=tile_cfg
             )
         )
+        svg_w, svg_h = svg_viewport_dimensions(chart_type, canvas_w)
+        tile_svg_plans.append(
+            compute_auto_plan_for_slide(
+                sub_slide, chart_type, host_w=svg_w, host_h=svg_h, chart_cfg=tile_cfg
+            )
+        )
     synced = iter(sync_sibling_plans([plan for plan in tile_plans if plan is not None]))
     tile_plans = [next(synced, None) if plan is not None else None for plan in tile_plans]
+    synced_svg = iter(sync_sibling_plans([plan for plan in tile_svg_plans if plan is not None]))
+    tile_svg_plans = [next(synced_svg, None) if plan is not None else None for plan in tile_svg_plans]
     parts = []
-    for tile, auto_plan in zip(tiles, tile_plans):
+    for tile, auto_plan, svg_auto_plan in zip(tiles, tile_plans, tile_svg_plans):
         if not isinstance(tile, dict):
             continue
         kind = str(tile.get("kind") or "metric")
@@ -735,6 +762,8 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             )
             if auto_plan is not None:
                 paint_cfg = {**paint_cfg, "_auto_typo_plan": auto_plan}
+            if svg_auto_plan is not None:
+                paint_cfg = {**paint_cfg, "_auto_svg_typo_plan": svg_auto_plan}
             sub_slide = {
                 **slide,
                 "layout_type": chart_type,

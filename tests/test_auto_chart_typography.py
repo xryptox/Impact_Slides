@@ -124,6 +124,12 @@ def test_dual_chart_applies_synced_auto_plan_to_chartjs_svg_and_metadata(tmp_pat
     y_sizes = [c["options"]["scales"]["y"]["ticks"]["font"]["size"] for c in configs]
     assert x_sizes[0] == x_sizes[1] and x_sizes[0] >= AUTO_X_LO
     assert y_sizes[0] == y_sizes[1] and y_sizes[0] >= AUTO_Y_LO
+    svg_sizes = re.findall(
+        r'<div class="chart-svg-wrap"[^>]*data-auto-x-tick="(\d+)"[^>]*data-auto-y-tick="(\d+)"',
+        html,
+    )
+    assert len(svg_sizes) == 2
+    assert len(set(svg_sizes)) == 1
     assert html.count('data-auto-typo="1"') == 4  # Chart.js wrappers + SVG fallbacks
     meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
     assert len(meta["auto_typography"]) == 2

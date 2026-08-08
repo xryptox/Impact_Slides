@@ -116,22 +116,21 @@ def _svg_fallback_for_layout(
     """Static SVG painter for a Chart.js MVP layout (JS-off / noscript path)."""
     from ..slide_view import primary_visual
     from .auto_typography import (
-        chart_host_dimensions,
         compute_auto_plan_for_slide,
         plan_to_data_attrs,
         record_auto_diagnostic,
+        svg_viewport_dimensions,
     )
 
     cfg = _chart_config(slide)
-    default_w, default_h = chart_host_dimensions(layout)
-    width = default_w if host_w is None else host_w
-    height = width * default_h / default_w
-    cfg.pop("_auto_typo_plan", None)
-    cfg["_auto_host_w"] = width
-    cfg["_auto_host_h"] = height
-    plan = compute_auto_plan_for_slide(
-        slide, layout, host_w=width, host_h=height, chart_cfg=cfg
-    )
+    width, height = svg_viewport_dimensions(layout, host_w)
+    plan = cfg.get("_auto_svg_typo_plan", cfg.get("_auto_typo_plan"))
+    if plan is None:
+        cfg["_auto_host_w"] = width
+        cfg["_auto_host_h"] = height
+        plan = compute_auto_plan_for_slide(
+            slide, layout, host_w=width, host_h=height, chart_cfg=cfg
+        )
     if plan is not None:
         cfg["_auto_typo_plan"] = plan
         primary = {**primary_visual(slide), "chart_config": cfg}

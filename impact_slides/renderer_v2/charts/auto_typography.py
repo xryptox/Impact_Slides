@@ -1277,6 +1277,15 @@ def chart_host_dimensions(layout: str) -> tuple[int, int]:
     }.get(layout, (900, 480))
 
 
+def svg_viewport_dimensions(
+    layout: str, host_w: float | None = None
+) -> tuple[float, float]:
+    """Rendered dimensions for a fixed-aspect SVG fallback."""
+    default_w, default_h = chart_host_dimensions(layout)
+    width = float(default_w if host_w is None else host_w)
+    return width, width * default_h / default_w
+
+
 def svg_label_transform(plan: AutoTypoPlan | None, x: float, y: float) -> str:
     """SVG equivalent of the plan's Chart.js category-axis rotation."""
     rotation = plan.x_labels.rotation_deg if plan and plan.x_labels else 0.0
