@@ -700,6 +700,7 @@ def _fit_y_ticks(
     plot_h: float,
     left_budget: float,
     *,
+    domain: tuple[float | None, float | None] | None = None,
     font: str = "source_sans_3",
     weight: str | int = "bold",
 ) -> tuple[bool, list[float], list[str], bool]:
@@ -718,8 +719,9 @@ def _fit_y_ticks(
         h = measure_text_height(font_size, font=font, lines=1)
         # Vertical: labels centered on ticks must not overlap.
         if len(vals) >= 2:
-            # Assume ticks span full plot_h uniformly in index space via values domain.
-            ymin, ymax = min(vals), max(vals)
+            ymin, ymax = domain or (min(vals), max(vals))
+            ymin = min(vals) if ymin is None else ymin
+            ymax = max(vals) if ymax is None else ymax
             span = ymax - ymin or 1.0
             positions = [plot_h * (1.0 - (v - ymin) / span) for v in vals]
             positions_sorted = sorted(positions)
@@ -859,6 +861,8 @@ def resolve_auto_typography(
     y_tick_labels: Sequence[str] | None = None,
     secondary_y_tick_values: Sequence[float] | None = None,
     secondary_y_tick_labels: Sequence[str] | None = None,
+    y_domain: tuple[float | None, float | None] | None = None,
+    secondary_y_domain: tuple[float | None, float | None] | None = None,
     datalabel_texts: Sequence[str] | None = None,
     has_legend: bool = False,
     want_datalabels: bool = False,
@@ -1034,12 +1038,19 @@ def resolve_auto_typography(
             return _fit_y_ticks(
                 labs, vals, size, plot_h if cat_is_x else plot_w,
                 left_budget if cat_is_x else bottom_budget,
+                domain=y_domain,
                 font=fy if cat_is_x else fx,
             )
 
         def at(size: int):
             ok, vv, ll, red = fit(size, labels, values)
-            ok2, vv2, ll2, red2 = fit(size, secondary_y_labs, secondary_y_vals)
+            ok2, vv2, ll2, red2 = _fit_y_ticks(
+                secondary_y_labs, secondary_y_vals, size,
+                plot_h if cat_is_x else plot_w,
+                left_budget if cat_is_x else bottom_budget,
+                domain=secondary_y_domain,
+                font=fy if cat_is_x else fx,
+            )
             return ok and ok2, vv, ll, red, vv2, ll2, red2
 
         if explicit is not None:
@@ -1073,6 +1084,10 @@ def resolve_auto_typography(
     plan.secondary_y_tick_labels = ll2
     plan.y_ticks_reduced = red
     plan.secondary_y_ticks_reduced = red2
+    if y_domain is not None:
+        plan.y_domain_min, plan.y_domain_max = y_domain
+    if secondary_y_domain is not None:
+        plan.secondary_y_domain_min, plan.secondary_y_domain_max = secondary_y_domain
     if red or red2:
         plan.warnings.append("y tick count reduced at floor to preserve endpoints")
         _warn(plan.warnings[-1])
@@ -1367,6 +1382,7 @@ def apply_plan_to_chartjs_options(
             secondary_ticks["_rv2Values"] = list(plan.secondary_y_tick_values)
             secondary_ticks["_rv2Labels"] = list(plan.secondary_y_tick_labels)
             secondary_ticks["autoSkip"] = False
+            secondary_ticks.pop("stepSize", None)
             if plan.secondary_y_domain_min is not None:
                 secondary["min"] = plan.secondary_y_domain_min
             if plan.secondary_y_domain_max is not None:
@@ -1390,8 +1406,8 @@ def merge_plan_into_typo(base: Mapping[str, int], plan: AutoTypoPlan) -> dict[st
 def _extract_categories_and_shorts(
     slide: Mapping[str, Any],
     chart_type: str,
-) -> tuple[list[str], list[str | None], int, list[float], list[str], list[float], list[str], list[str]]:
-    """categories, shorts, series count, primary/secondary ticks, datalabels."""
+) -> tuple[list[str], list[str | None], int, list[float], list[str], list[float], list[str], list[str], tuple[float | None, float | None], tuple[float | None, float | None]]:
+    """Categories, ticks, data labels, and the painters' effective domains."""
     from .bars import _bar_axes, _bar_matrix
     from .core import _chart_config
     from .format import _fmt_unit, _fmt_value_label
@@ -1405,6 +1421,8 @@ def _extract_categories_and_shorts(
     shorts: list[str | None] = []
     series_count = 1
     values_flat: list[float] = []
+    primary_domain: tuple[float | None, float | None] = (None, None)
+    secondary_domain: tuple[float | None, float | None] = (None, None)
 
     from ..slide_view import steps
 
@@ -1506,7 +1524,7 @@ def _extract_categories_and_shorts(
         while len(shorts) < len(cats):
             shorts.append(None)
     else:
-        return [], [], 1, [], [], [], [], []
+        return [], [], 1, [], [], [], [], [], (None, None), (None, None)
 
     unit = str(cfg.get("y_axis_unit") if cfg.get("y_axis_unit") is not None else ("%" if ct == "line_chart" else ""))
     if ct == "line_chart":
@@ -1514,14 +1532,17 @@ def _extract_categories_and_shorts(
         _y_min, _y_max, y_ticks = _line_axis(
             axis_config_after_break(cfg, break_overrides_min=True), values_flat
         )
+        primary_domain = (_y_min, _y_max)
     elif values_flat:
         axis_cfg = axis_config_after_break(cfg) if ct == "horizontal_bar_chart" else cfg
         _y_max, _y_min, y_ticks = _bar_axes(
             axis_cfg, max(values_flat), min(values_flat),
             nonzero_min_ticks=ct == "horizontal_bar_chart",
         )
+        primary_domain = (_y_min, _y_max)
     else:
         y_ticks = list(cfg.get("y_axis_ticks") or [0, 1])
+        primary_domain = _plan_domain(cfg, y_ticks)
     unit_pos = str(cfg.get("y_axis_unit_position") or "suffix")
     y_labs = [_fmt_unit(v, unit, unit_pos) for v in y_ticks]
     secondary_y_ticks: list[float] = []
@@ -1538,6 +1559,7 @@ def _extract_categories_and_shorts(
             if overlay.get("dual_axis", True) is False:
                 values_flat.extend(line_values)
                 _y_max, _y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
+                primary_domain = (_y_min, _y_max)
                 y_labs = [_fmt_unit(v, unit, unit_pos) for v in y_ticks]
             else:
                 line_min = float(overlay.get("y_axis_min", 0))
@@ -1546,6 +1568,7 @@ def _extract_categories_and_shorts(
                 if line_ticks is None:
                     step = (line_max - line_min) / 4
                     line_ticks = [line_min + i * step for i in range(5)]
+                secondary_domain = (line_min, line_max)
                 overlay_unit = str(overlay.get("y_axis_unit") or "")
                 overlay_unit_pos = str(overlay.get("y_axis_unit_position") or "suffix")
                 for tick in line_ticks:
@@ -1564,7 +1587,7 @@ def _extract_categories_and_shorts(
         for v in values_flat:
             dl_texts.append(_fmt_value_label(v, unit, pos))
 
-    return cats, shorts, series_count, list(y_ticks), y_labs, secondary_y_ticks, secondary_y_labs, dl_texts
+    return cats, shorts, series_count, list(y_ticks), y_labs, secondary_y_ticks, secondary_y_labs, dl_texts, primary_domain, secondary_domain
 
 
 def _plan_domain(cfg: Mapping[str, Any], ticks: Sequence[float]) -> tuple[float | None, float | None]:
@@ -1652,7 +1675,7 @@ def compute_auto_plan_for_slide(
     if ct not in AUTO_CHART_TYPES:
         return None
 
-    cats, shorts, series_count, y_vals, y_labs, secondary_y_vals, secondary_y_labs, dl_texts = _extract_categories_and_shorts(
+    cats, shorts, series_count, y_vals, y_labs, secondary_y_vals, secondary_y_labs, dl_texts, primary_domain, secondary_domain = _extract_categories_and_shorts(
         slide, ct
     )
     has_legend = cfg.get("show_legend") is not False
@@ -1682,9 +1705,9 @@ def compute_auto_plan_for_slide(
 
     unit = str(cfg.get("y_axis_unit") if cfg.get("y_axis_unit") is not None else ("%" if ct == "line_chart" else ""))
     unit_pos = str(cfg.get("y_axis_unit_position") or "suffix")
-    domain_cfg = axis_config_after_break(cfg, break_overrides_min=ct == "line_chart") if ct in {"line_chart", "horizontal_bar_chart"} else cfg
-    primary_domain = _plan_domain(domain_cfg, y_vals)
-    if ct in {"grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart"}:
+    if ct in {"grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart"} or (
+        ct == "line_chart" and isinstance(cfg.get("y_axis_break"), Mapping)
+    ):
         y_vals, y_labs = _bound_tick_view(
             y_vals, y_labs, *primary_domain,
             lambda value: _fmt_unit(value, unit, unit_pos),
@@ -1700,6 +1723,8 @@ def compute_auto_plan_for_slide(
         y_tick_labels=y_labs,
         secondary_y_tick_values=secondary_y_vals,
         secondary_y_tick_labels=secondary_y_labs,
+        y_domain=primary_domain,
+        secondary_y_domain=secondary_domain,
         datalabel_texts=dl_texts,
         has_legend=has_legend,
         want_datalabels=want_dl,
@@ -1709,9 +1734,6 @@ def compute_auto_plan_for_slide(
         horizontal=(ct == "horizontal_bar_chart"),
         allow_y_tick_reduction=True,
     )
-    plan.y_domain_min, plan.y_domain_max = primary_domain
-    if secondary_y_vals:
-        plan.secondary_y_domain_min, plan.secondary_y_domain_max = min(secondary_y_vals), max(secondary_y_vals)
     return plan
 
 

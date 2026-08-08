@@ -874,9 +874,10 @@ def test_combo_reduces_each_svg_axis_independently():
     from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
 
     svg = _svg_fallback_for_layout(combo, "combo_chart")
-    assert plan is not None and plan.y_ticks_reduced and plan.secondary_y_ticks_reduced
-    assert plan.y_tick_values[0] == plan.secondary_y_tick_values[0] == 0
-    assert plan.y_tick_values[-1] == plan.secondary_y_tick_values[-1] == 39
+    assert plan is not None and plan.secondary_y_ticks_reduced
+    assert plan.y_tick_values[0] == 0
+    assert plan.secondary_y_tick_values[0] == 0
+    assert plan.secondary_y_tick_values[-1] == 39
     assert svg.count('font-size="12"') < len(ticks) * 2
 
 
@@ -930,7 +931,7 @@ def test_auto_tick_view_preserves_authored_axis_domain():
     assert config is not None
     scale = config["options"]["scales"]["y"]
     assert (scale["min"], scale["max"]) == (0.0, 100.0)
-    assert scale["ticks"]["_rv2Values"] == [45.0, 50.0, 55.0]
+    assert scale["ticks"]["_rv2Values"] == [45.0, 55.0]
 
 
 def test_auto_combo_primary_domain_includes_negative_bar_totals():
@@ -950,6 +951,64 @@ def test_auto_combo_primary_domain_includes_negative_bar_totals():
     assert config is not None
     scale = config["options"]["scales"]["y"]
     assert scale["min"] <= -100
+
+
+def test_auto_y_ticks_fit_against_their_scale_domain():
+    slide = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {
+                "typography": {"mode": "auto"}, "y_axis_min": 0,
+                "y_axis_max": 100, "y_axis_ticks": [45, 50, 55],
+            },
+            "steps_or_data": [{"label": "Q1", "value": 0}, {"label": "Q2", "value": 100}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.auto_typography import compute_auto_plan_for_slide
+
+    plan = compute_auto_plan_for_slide(slide, "line_chart", host_w=900, host_h=480)
+    assert plan is not None
+    assert plan.y_domain_min == 0 and plan.y_domain_max == 100
+    assert plan.y_tick_font_size < 28
+
+
+def test_auto_bar_ticks_stay_in_the_svg_scale_domain():
+    slide = {
+        "layout_type": "grouped_bar_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [{"label": "Q1", "value": -60}, {"label": "Q2", "value": 60}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.auto_typography import compute_auto_plan_for_slide
+
+    plan = compute_auto_plan_for_slide(slide, "grouped_bar_chart", host_w=900, host_h=480)
+    assert plan is not None
+    assert (plan.y_domain_min, plan.y_domain_max) == (-80, 80)
+    assert all(-80 <= tick <= 80 for tick in plan.y_tick_values)
+
+
+def test_auto_combo_secondary_ticks_preserve_overlay_domain():
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [{"label": "Q1", "value": 1}, {"label": "Q2", "value": 2}],
+            },
+            "line_overlay": {
+                "data": [{"label": "Q1", "value": 0}, {"label": "Q2", "value": 100}],
+                "y_axis_min": 0, "y_axis_max": 100, "y_axis_ticks": [45, 50, 55],
+            },
+        },
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_combo_config
+
+    config = _chartjs_combo_config(combo)
+    assert config is not None
+    scale = config["options"]["scales"]["y1"]
+    assert (scale["min"], scale["max"]) == (0, 100)
+    assert scale["ticks"]["_rv2Values"] == [45.0, 55.0]
 
 
 def test_auto_bar_ticks_include_explicit_nonround_domain_bound():
