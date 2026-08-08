@@ -24,9 +24,10 @@ skipped**):
 **Type B (renderer capability). Priority P1. Locked on issue #139; implemented.**
 
 Live operating contract: `impact_slides/renderer_v2/AGENTS.md` (pane titles +
-`chart_config.typography`). Owner module: `charts/typography.py`. Tests:
-`tests/test_chart_typography_r6a.py`. Synthetic audit note (not full archived-v9):
-`artifacts/r6a_typography_v9_audit.md`.
+`chart_config.typography`, including later #150 `mode: "auto"`). Owner modules:
+`charts/typography.py`, `charts/auto_typography.py` (#150). Tests:
+`tests/test_chart_typography_r6a.py`, `tests/test_auto_chart_typography.py` (#150).
+Synthetic #139 audit note (not full archived-v9): `artifacts/r6a_typography_v9_audit.md`.
 
 ### Pre-fix measured residual (PDF p16 / deck slide 17)
 
