@@ -292,34 +292,76 @@ _GROUPED_ANNEX_STYLE = """
 """
 
 
+def _annex_table_html(
+    headers: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    *,
+    header_groups: Sequence[Mapping[str, Any]] | None = None,
+    labelled_by: str | None = None,
+    row_styles: Sequence[tuple[str, int]] | None = None,
+    scoped_headers: bool = False,
+) -> str:
+    """Render the shared annex table surface used by ordinary and grouped blocks."""
+    if header_groups:
+        top_cells = ['<th class="gl-annex-stub" rowspan="2"></th>']
+        for group in header_groups:
+            # R5-H/T13: no index-parity banding — the PDF annex band is
+            # uniformly navy; gl-annex-group-alt stays available for a
+            # future semantic banding handoff, not column parity.
+            top_cells.append(
+                f'<th class="gl-annex-group" colspan="{int(group.get("span") or 1)}">'
+                f'{esc(strip_eids(group.get("label") or ""))}</th>'
+            )
+        thead = "<tr>" + "".join(top_cells) + "</tr>"
+        thead += "<tr>" + "".join(
+            f'<th class="gl-annex-head">{esc(header)}</th>' for header in headers[1:]
+        ) + "</tr>"
+    else:
+        scope = ' scope="col"' if scoped_headers else ""
+        thead = "<tr>" + "".join(
+            f'<th{scope} class="{"gl-annex-stub" if column == 0 else "gl-annex-head"}">{esc(header)}</th>'
+            for column, header in enumerate(headers)
+        ) + "</tr>"
+
+    trs = []
+    for row_index, row in enumerate(rows):
+        style = row_styles[row_index] if row_styles else None
+        role, indent = style if style else (None, 0)
+        tds = []
+        for column, cell in enumerate(row):
+            if column == 0:
+                cls = "gl-annex-stub" + (f" gl-annex-indent-{indent}" if style else "")
+            else:
+                cls = "gl-annex-cell num" if re.search(r"[\d$%]", cell or "") else "gl-annex-cell"
+            tds.append(f'<td class="{cls}">{esc(cell)}</td>')
+        while len(tds) < len(headers):
+            tds.append('<td class="gl-annex-cell"></td>')
+        row_class = f' class="gl-annex-row gl-annex-row-{esc(role)}"' if style else ""
+        trs.append(f"<tr{row_class}>{''.join(tds)}</tr>")
+
+    aria = f' aria-labelledby="{labelled_by}"' if labelled_by else ""
+    return (
+        f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
+        f'<table class="data-table annex-table"{aria}><thead>{thead}</thead>'
+        f'<tbody>{"".join(trs)}</tbody></table></div>'
+    )
+
+
 def _grouped_annex_table(group: Mapping[str, Any], index: int) -> str:
     heading = strip_eids(group.get("heading") or "")
-    headers = group.get("headers") or []
     rows = group.get("rows") or []
     heading_id = f"gl-grouped-annex-heading-{index}"
-    th = "".join(f'<th scope="col">{esc(header)}</th>' for header in headers)
-    body = []
-    for row in rows:
-        cells = row.get("cells") or []
-        role = row.get("role") or "child"
-        indent = int(row.get("indent") or 0)
-        tds = []
-        for column, cell in enumerate(cells):
-            if column == 0:
-                cls = f"gl-annex-stub gl-annex-indent-{indent}"
-            else:
-                numeric = re.search(r"[\d$%]", str(cell or ""))
-                cls = "gl-annex-cell num" if numeric else "gl-annex-cell"
-            tds.append(f'<td class="{cls}">{esc(cell)}</td>')
-        body.append(
-            f'<tr class="gl-annex-row gl-annex-row-{esc(role)}">{"".join(tds)}</tr>'
-        )
+    table = _annex_table_html(
+        group.get("headers") or [],
+        [row.get("cells") or [] for row in rows],
+        labelled_by=heading_id,
+        row_styles=[(row.get("role") or "child", int(row.get("indent") or 0)) for row in rows],
+        scoped_headers=True,
+    )
     return (
         f'<section class="gl-grouped-annex-block">'
         f'<h3 class="gl-grouped-annex-heading" id="{heading_id}">{esc(heading)}</h3>'
-        f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
-        f'<table class="data-table annex-table" aria-labelledby="{heading_id}">'
-        f'<thead><tr>{th}</tr></thead><tbody>{"".join(body)}</tbody></table></div></section>'
+        f"{table}</section>"
     )
 
 
@@ -367,45 +409,9 @@ def render_annex_table(slide, total, notes, active=False):
     body = rows[1:] if len(rows) > 1 else []
     # Multi-level headers (#81/F12): visual_spec.primary_visual.header_groups is
     # [{label, span}] spanning the data columns (stub is a rowspan=2 cell).
-    vs = slide.get("visual_spec") or {}
-    pv = vs.get("primary_visual") or {}
+    pv = _sv_primary_visual(slide)
     header_groups = pv.get("header_groups") if isinstance(pv, dict) else None
-    thead_rows = []
-    if isinstance(header_groups, list) and header_groups:
-        top_cells = [f'<th class="gl-annex-stub" rowspan="2"></th>']
-        for g in header_groups:
-            if isinstance(g, dict):
-                # R5-H/T13: no index-parity banding — the PDF annex band is
-                # uniformly navy; gl-annex-group-alt stays available for a
-                # future semantic banding handoff, not column parity.
-                top_cells.append(
-                    f'<th class="gl-annex-group" colspan="{int(g.get("span") or 1)}">{esc(strip_eids(g.get("label") or ""))}</th>'
-                )
-        thead_rows.append("<tr>" + "".join(top_cells) + "</tr>")
-        sub_cells = "".join(
-            f'<th class="gl-annex-head">{esc(h)}</th>' for h in head[1:]
-        )
-        thead_rows.append("<tr>" + sub_cells + "</tr>")
-        thead = "".join(thead_rows)
-    else:
-        thead = "<tr>" + "".join(
-            f'<th class="{"gl-annex-stub" if i == 0 else "gl-annex-head"}">{esc(h)}</th>'
-            for i, h in enumerate(head)
-        ) + "</tr>"
-    trs = []
-    for r in body:
-        tds = []
-        for i, cell in enumerate(r):
-            cls = "gl-annex-stub" if i == 0 else ("gl-annex-cell num" if re.search(r"[\d$%]", cell or "") else "gl-annex-cell")
-            tds.append(f'<td class="{cls}">{esc(cell)}</td>')
-        while len(tds) < len(head):
-            tds.append('<td class="gl-annex-cell"></td>')
-        trs.append("<tr>" + "".join(tds) + "</tr>")
-    table = (
-        f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
-        f'<table class="data-table annex-table"><thead>{thead}</thead>'
-        f'<tbody>{"".join(trs)}</tbody></table></div>'
-    )
+    table = _annex_table_html(head, body, header_groups=header_groups)
     main = table + insight_strip(_so_what(slide))
     return slide_shell(
         number=int(slide["slide_number"]),

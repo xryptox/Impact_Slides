@@ -91,8 +91,8 @@ def test_group_schema_accepts_a_long_heading() -> None:
     assert "very long commercial-services heading" in _render(slide)
 
 
-def test_default_annex_table_remains_the_same_surface() -> None:
-    slide = {
+def _ordinary_annex_slide() -> dict:
+    return {
         "slide_number": 1,
         "layout_type": "annex_table",
         "title": "Legacy annex",
@@ -104,10 +104,37 @@ def test_default_annex_table_remains_the_same_surface() -> None:
             }
         },
     }
-    html = render_slide(slide, total=1, notes="")
+
+
+def test_default_annex_table_remains_the_same_surface() -> None:
+    html = render_slide(_ordinary_annex_slide(), total=1, notes="")
     assert 'data-layout="annex_table"' in html
     assert "gl-grouped-annex" not in html
     assert "Revenue" in html and "$1" in html
+
+
+def test_ordinary_annex_table_markup_is_unchanged() -> None:
+    html = render_slide(_ordinary_annex_slide(), total=1, notes="")
+    assert (
+        '<div class="gl-annex table-frame gl-card gl-annex-micro">'
+        '<table class="data-table annex-table"><thead><tr>'
+        '<th class="gl-annex-stub">Metric</th><th class="gl-annex-head">Q1</th>'
+        '</tr></thead><tbody><tr><td class="gl-annex-stub">Revenue</td>'
+        '<td class="gl-annex-cell num">$1</td></tr></tbody></table></div>'
+    ) in html
+
+
+def test_grouped_and_ordinary_annexes_use_the_shared_table_seam(monkeypatch) -> None:
+    import impact_slides.renderer_v2.layout.recipes.metrics as metrics
+
+    def sentinel(*_args, **_kwargs) -> str:
+        return '<table data-shared-annex-seam="1"></table>'
+
+    monkeypatch.setattr(metrics, "_annex_table_html", sentinel)
+    ordinary = render_slide(_ordinary_annex_slide(), total=1, notes="")
+    grouped = _render(_slide())
+    assert ordinary.count('data-shared-annex-seam="1"') == 1
+    assert grouped.count('data-shared-annex-seam="1"') == 2
 
 
 def test_strict_narrow_host_fails_and_nonstrict_stacks_with_warning(monkeypatch) -> None:
