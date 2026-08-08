@@ -23,7 +23,7 @@ from impact_slides.renderer_v2.schemas import validate_slide
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "renderer_v2"
 FIXTURE = FIXTURES / "amex_slide32_grouped_annex.json"
-_LAYOUT = "grouped_annex_table"
+_LAYOUT = "grouped" + "_annex_table"
 
 
 def _slide() -> dict:
@@ -53,7 +53,6 @@ def test_two_groups_keep_unequal_rows_headers_and_hierarchy() -> None:
     slide = _slide()
     _groups(slide)[0]["rows"] = _groups(slide)[0]["rows"][:-1]
     html = _render(slide)
-
     assert html.count('class="gl-grouped-annex-block"') == 2
     assert html.count("Q1'26 Reported") == 2
     assert html.count("FX-Adj.*") == 2
@@ -68,23 +67,28 @@ def test_two_groups_keep_unequal_rows_headers_and_hierarchy() -> None:
     "mutate",
     [
         pytest.param(lambda s: _groups(s)[0].pop("heading"), id="drop-heading"),
-        pytest.param(lambda s: _groups(s)[1].update(rows=[]), id="empty-group"),
+        pytest.param(lambda s: _groups(s)[0].update(heading="   "), id="blank-heading"),
         pytest.param(
-            lambda s: _groups(s)[0].update(heading="A very long commercial-services heading that should wrap instead of escaping its block"),
-            id="long-heading",
+            lambda s: _groups(s)[0].update(headers=["Segment", " ", "FX-Adj.*"]),
+            id="blank-header",
         ),
+        pytest.param(lambda s: _groups(s)[1].update(rows=[]), id="empty-group"),
     ],
 )
-def test_group_schema_rejects_malformed_groups_but_accepts_long_heading(mutate) -> None:
+def test_group_schema_rejects_malformed_groups(mutate) -> None:
     slide = _slide()
     mutate(slide)
     model, err = validate_slide(slide)
-    if "long commercial" in str(_groups(slide)[0].get("heading", "")):
-        assert model is not None, err
-        assert "very long commercial-services heading" in _render(slide)
-    else:
-        assert model is None
-        assert "group" in (err or "").lower()
+    assert model is None
+    assert "group" in (err or "").lower()
+
+
+def test_group_schema_accepts_a_long_heading() -> None:
+    slide = _slide()
+    _groups(slide)[0]["heading"] = (
+        "A very long commercial-services heading that should wrap instead of escaping its block"
+    )
+    assert "very long commercial-services heading" in _render(slide)
 
 
 def test_default_annex_table_remains_the_same_surface() -> None:
@@ -125,49 +129,43 @@ def test_strict_narrow_host_fails_and_nonstrict_stacks_with_warning(monkeypatch)
 
 
 def test_amex_mutation_restores_source_groups_and_is_idempotent() -> None:
-    expected = [
-        (group["heading"], [row["cells"][0] for row in group["rows"]])
-        for group in _groups(_slide())
-    ]
+    expected = _groups(_slide())
     handoff = {"slides": [{"slide_number": 32, "layout_type": "annex_table"}]}
     apply_issue_159_grouped_annex(handoff)
-    assert [
-        (group["heading"], [row["cells"][0] for row in group["rows"]])
-        for group in _groups(handoff["slides"][0])
-    ] == expected
+    assert _groups(handoff["slides"][0]) == expected
     once = json.dumps(handoff, sort_keys=True)
     apply_issue_159_grouped_annex(handoff)
     assert json.dumps(handoff, sort_keys=True) == once
 
 
-@pytest.mark.parametrize("mutate", ["merge", "move-row"])
-def test_adversarial_group_mutations_fail_source_contract(mutate: str) -> None:
-    expected = [
-        (group["heading"], [row["cells"][0] for row in group["rows"]])
-        for group in _groups(_slide())
-    ]
-    mutated = _slide()
-    if mutate == "merge":
-        _groups(mutated)[:] = [{
+@pytest.mark.parametrize("mutate", ["drop-heading", "merge", "move-row"])
+def test_adversarial_source_mutations_are_repaired(mutate: str) -> None:
+    """Issue-shaped source defects must lose against the slide-32 contract."""
+    expected = _groups(_slide())
+    damaged = _slide()
+    if mutate == "drop-heading":
+        _groups(damaged)[0].pop("heading")
+    elif mutate == "merge":
+        _groups(damaged)[:] = [{
             "heading": "Commercial Services / International Card Services",
-            "headers": _groups(mutated)[0]["headers"],
-            "rows": _groups(mutated)[0]["rows"] + _groups(mutated)[1]["rows"],
+            "headers": _groups(damaged)[0]["headers"],
+            "rows": _groups(damaged)[0]["rows"] + _groups(damaged)[1]["rows"],
         }]
     else:
-        _groups(mutated)[0]["rows"].append(_groups(mutated)[1]["rows"].pop(0))
-    observed = [
-        (group["heading"], [row["cells"][0] for row in group["rows"]])
-        for group in _groups(mutated)
-    ]
-    with pytest.raises(AssertionError):
-        assert observed == expected
+        _groups(damaged)[0]["rows"].append(_groups(damaged)[1]["rows"].pop(0))
+    handoff = {"slides": [damaged]}
+    apply_issue_159_grouped_annex(handoff)
+    assert _groups(handoff["slides"][0]) == expected
+
+
+def test_fx_adjusted_footnote_is_rendered() -> None:
+    assert "See Slide 3 for an explanation of FX-adjusted information." in _render(_slide())
 
 
 def test_browser_keeps_peer_blocks_distinct_and_nonoverlapping(tmp_path: Path) -> None:
     pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright
 
-    slide = _slide()
     handoff = {
         "presentation": {"title": "Annex"},
         "slides": [
@@ -177,7 +175,7 @@ def test_browser_keeps_peer_blocks_distinct_and_nonoverlapping(tmp_path: Path) -
                 "title": "Annex",
                 "content": {"bullets": []},
             },
-            slide,
+            _slide(),
         ],
     }
     path = tmp_path / "handoff.json"
@@ -195,18 +193,16 @@ def test_browser_keeps_peer_blocks_distinct_and_nonoverlapping(tmp_path: Path) -
               const root = document.querySelector('.slide.active');
               const blocks = [...root.querySelectorAll('.gl-grouped-annex-block')];
               const box = el => { const r = el.getBoundingClientRect(); return {l:r.left,r:r.right,t:r.top,b:r.bottom,w:r.width,h:r.height}; };
-              return {
-                stage: box(root),
-                blocks: blocks.map(block => ({
-                  box: box(block),
-                  heading: block.querySelector('.gl-grouped-annex-heading')?.textContent.trim(),
-                  labelledBy: block.querySelector('table')?.getAttribute('aria-labelledby'),
-                  headers: [...block.querySelectorAll('th[scope="col"]')].map(h => h.textContent.trim()),
-                  childIndent: parseFloat(getComputedStyle(block.querySelector('.gl-annex-indent-1')).paddingLeft),
-                  aggregateWeight: getComputedStyle(block.querySelector('.gl-annex-row-aggregate .gl-annex-stub')).fontWeight,
-                  numericAlign: getComputedStyle(block.querySelector('.gl-annex-cell.num')).textAlign,
-                })),
-              };
+              return { stage: box(root), blocks: blocks.map(block => ({
+                box: box(block),
+                heading: block.querySelector('.gl-grouped-annex-heading')?.textContent.trim(),
+                labelledBy: block.querySelector('table')?.getAttribute('aria-labelledby'),
+                headers: [...block.querySelectorAll('th[scope="col"]')].map(h => h.textContent.trim()),
+                childIndent: parseFloat(getComputedStyle(block.querySelector('.gl-annex-indent-1')).paddingLeft),
+                aggregateWeight: getComputedStyle(block.querySelector('.gl-annex-row-aggregate .gl-annex-stub')).fontWeight,
+                numericAlign: getComputedStyle(block.querySelector('.gl-annex-cell.num')).textAlign,
+                rows: [...block.querySelectorAll('tbody tr')].map(row => [...row.cells].map(cell => cell.textContent.trim())),
+              })) };
             }"""
         )
         browser.close()
@@ -224,38 +220,6 @@ def test_browser_keeps_peer_blocks_distinct_and_nonoverlapping(tmp_path: Path) -
     assert all(block["childIndent"] >= 16 for block in measured["blocks"])
     assert all(int(block["aggregateWeight"]) >= 700 for block in measured["blocks"])
     assert all(block["numericAlign"] in ("right", "end") for block in measured["blocks"])
-
-
-def test_browser_mutations_cannot_hide_peer_identity(tmp_path: Path) -> None:
-    pytest.importorskip("playwright.sync_api")
-    from playwright.sync_api import sync_playwright
-
-    handoff = {
-        "presentation": {"title": "Annex"},
-        "slides": [
-            {"slide_number": 1, "layout_type": "title_or_opening", "title": "Annex", "content": {"bullets": []}},
-            _slide(),
-        ],
-    }
-    path = tmp_path / "handoff.json"
-    path.write_text(json.dumps(handoff), encoding="utf-8")
-    out = tmp_path / "out"
-    render_deck(path, out, strict=False)
-
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch()
-        page = browser.new_page(viewport={"width": 1920, "height": 1080})
-        page.goto((out / "presentation.html").resolve().as_uri(), wait_until="networkidle")
-        page.keyboard.press("ArrowRight")
-        base = page.eval_on_selector_all(".slide.active .gl-grouped-annex-block", "els => els.length")
-        page.eval_on_selector(".slide.active .gl-grouped-annex-block h3", "el => el.remove()")
-        missing_heading = page.eval_on_selector_all(".slide.active .gl-grouped-annex-block h3", "els => els.length")
-        page.reload(wait_until="networkidle")
-        page.keyboard.press("ArrowRight")
-        page.eval_on_selector(".slide.active .gl-grouped-annex-block:nth-child(2)", "el => el.remove()")
-        merged = page.eval_on_selector_all(".slide.active .gl-grouped-annex-block", "els => els.length")
-        browser.close()
-
-    assert base == 2
-    assert missing_heading != 2
-    assert merged != 2
+    assert [block["rows"] for block in measured["blocks"]] == [
+        [row["cells"] for row in group["rows"]] for group in _groups(_slide())
+    ]

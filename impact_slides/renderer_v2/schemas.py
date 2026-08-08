@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -226,6 +226,20 @@ class GroupedAnnexGroup(BaseModel):
     heading: str = Field(min_length=1)
     headers: List[str] = Field(min_length=2)
     rows: List[GroupedAnnexRow] = Field(min_length=1)
+
+    @field_validator("heading")
+    @classmethod
+    def heading_is_semantic(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("grouped annex heading must not be blank")
+        return value
+
+    @field_validator("headers")
+    @classmethod
+    def headers_are_semantic(cls, values: List[str]) -> List[str]:
+        if any(not value.strip() for value in values):
+            raise ValueError("grouped annex headers must not be blank")
+        return values
 
     @model_validator(mode="after")
     def rows_match_headers(self) -> "GroupedAnnexGroup":

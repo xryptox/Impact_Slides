@@ -5,6 +5,7 @@ import re
 from typing import Any, Mapping, Sequence
 
 from ...slide_view import content as _sv_content
+from ...slide_view import primary_visual as _sv_primary_visual
 from ...slide_view import steps as _sv_steps
 from ...charts.typography import _RENDER_STRICT, _warn
 from ...strip import (
@@ -324,8 +325,7 @@ def _grouped_annex_table(group: Mapping[str, Any], index: int) -> str:
 
 def render_grouped_annex_table(slide, total, notes, active=False):
     """Render one or two peer annex matrices without flattening their identity."""
-    pv = (slide.get("visual_spec") or {}).get("primary_visual") or {}
-    groups = pv.get("groups") if isinstance(pv, Mapping) else []
+    groups = _sv_primary_visual(slide).get("groups")
     groups = groups if isinstance(groups, list) else []
     group_count = len(groups)
     required_width = GROUPED_ANNEX_READABLE_BLOCK_WIDTH * group_count
