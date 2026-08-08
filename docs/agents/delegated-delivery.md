@@ -31,7 +31,8 @@ When that applies, use PEW for orchestration and isolated worktrees, but launch 
 
 Durable workflow scripts:
 
-- `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — creates a tab in the supplied current Herdr workspace and starts a genuine interactive Pi TUI
+- `~/.pi/agent/pi-extensible-workflows/scripts/create-run-owned-worktree.ps1` — creates an issue worktree on the cleanup-compatible branch `pi-extensible-workflows/<RunId>/issue-<N>`
+- `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — verifies that run-owned branch, creates a tab in the supplied current Herdr workspace, and starts a genuine interactive Pi TUI
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-implement-visible.ps1` — writes the implementation contract and launches the visible implementer
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — writes the host-repair contract and launches the visible repair session
 - `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — supervising workflow watcher that returns idle/done/blocked pane output and no-mistakes gate state to the host session
@@ -41,12 +42,13 @@ The launcher deliberately uses the user's normal Pi settings plus the configured
 
 ### Canonical launch and supervision
 
-1. Determine the supervising session's current Herdr workspace; pass that existing workspace ID to the orchestrator.
-2. Launch new work with `orchestrate-herdr-implement-visible.ps1`; launch returned host findings with `orchestrate-herdr-repair-visible.ps1`. Do not substitute direct `herdr pane run`, RPC, `pi --print`, or a newly created workspace.
-3. Collect each launcher's returned issue, tab, pane, and worktree IDs into a JSON target file with objects shaped as `{ "issue": N, "pane": "w2:pN", "worktree": "C:/..." }`.
-4. Start a background PEW workflow that invokes `watch-visible-implementers.ps1 -WorkspaceId <current> -TargetsPath <json>`. The watcher is one-shot: it returns the first pane that becomes `idle`, `done`, or `blocked`, together with recent output and authoritative `no-mistakes axi status`.
-5. Treat a watcher completion as the host notification. If it surfaces `ask-user`, present the finding verbatim, send the user's decision back to the same pane, and start a fresh watcher for the remaining active panes. Do not rely on Herdr status or observational memory to notify the host.
-6. After collecting a final report and checking Git/no-mistakes/PR state, close that tab. Keep tabs open while a decision or pipeline action remains outstanding.
+1. Allocate one delivery RunId for the wave and create every ticket checkout with `create-run-owned-worktree.ps1 -RunId <id> -Issue <N>`; branches must be `pi-extensible-workflows/<RunId>/issue-<N>`. Never create new delivery branches as `fix/*`, `feat/*`, or another manual namespace.
+2. Determine the supervising session's current Herdr workspace; pass that existing workspace ID to the orchestrator.
+3. Launch new work with `orchestrate-herdr-implement-visible.ps1 -RunId <same-id>`; launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -RunId <same-id>`. Both launch paths reject a worktree whose branch is not owned by that RunId. Do not substitute direct `herdr pane run`, RPC, `pi --print`, or a newly created workspace.
+4. Collect each launcher's returned issue, tab, pane, and worktree IDs into a JSON target file with objects shaped as `{ "issue": N, "pane": "w2:pN", "worktree": "C:/..." }`.
+5. Start a background PEW workflow that invokes `watch-visible-implementers.ps1 -WorkspaceId <current> -TargetsPath <json>`. The watcher is one-shot: it returns the first pane that becomes `idle`, `done`, or `blocked`, together with recent output and authoritative `no-mistakes axi status`.
+6. Treat a watcher completion as the host notification. If it surfaces `ask-user`, present the finding verbatim, send the user's decision back to the same pane, and start a fresh watcher for the remaining active panes. Do not rely on Herdr status or observational memory to notify the host.
+7. After collecting a final report and checking Git/no-mistakes/PR state, close that tab. Keep tabs open while a decision or pipeline action remains outstanding.
 
 A deliberately stopped or superseded watcher may report `CANCELLED`; verify the replacement run ID and implementation state, then treat that notification as expected rather than an implementation failure.
 
@@ -57,8 +59,8 @@ A deliberately stopped or superseded watcher may report `CANCELLED`; verify the 
 - Read the root and applicable child `AGENTS.md` files.
 - Fetch each issue and its comments/labels.
 - Group only independent tickets in the same parallel wave.
-- Give every ticket its own branch and worktree.
-- Record the starting SHA, issue number, worktree, branch, and expected changed paths.
+- Give every ticket its own run-owned branch and worktree via `create-run-owned-worktree.ps1`; use one shared RunId for a cleanup batch.
+- Record the RunId, starting SHA, issue number, worktree, branch, and expected changed paths.
 
 ### 2. Implement in visible tabs
 
