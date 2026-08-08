@@ -93,7 +93,7 @@ Default section order:
 When the user requests a durable behavior change, record it here or in the relevant child AGENTS.md.
 
 - Delegated ticket implementers must run the `code-review` skill's parallel Standards and Spec subagents before the full `no-mistakes axi` gate, let the pipeline correct actionable findings, and report both review axes plus no-mistakes findings, fixes, run ID, push/PR/CI outcome, and unresolved decisions to the supervising workflow. Escalate `ask-user` findings instead of deciding them without explicit standing consent.
-- Parallel ticket workflows must run full interactive Pi sessions in visible Herdr tabs so progress text is observable; do not use `pi --print`. Close each temporary tab only after collecting its implementation and no-mistakes report.
+- Parallel ticket workflows must run full interactive Pi sessions in visible Herdr tabs in the supervising session's current workspace so progress text is observable; do not create a separate Herdr workspace or use `pi --print`. Close each temporary tab only after collecting its implementation and no-mistakes report.
 - Follow `docs/agents/delegated-delivery.md` for the reusable PEW → visible Herdr implementer → no-mistakes → host verification → approval-gated cheap merger workflow.
 
 ## Child DOX Index

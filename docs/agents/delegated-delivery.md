@@ -27,7 +27,7 @@ The current aliases use `dev` for implementation work, `review` for Kimi review,
 
 PEW's native child runtime resolves models before dynamically registered providers are loaded. A provider registered by an extension, such as SuperGrok, may therefore work in normal Pi but fail in native `agent(...)` calls with `UNKNOWN_MODEL`.
 
-When that applies, use PEW for orchestration and isolated worktrees, but launch a full interactive Pi process in a visible Herdr tab for each implementer. Do not use `pi --print`: progress must remain observable. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
+When that applies, use PEW for orchestration and isolated worktrees, but launch each full interactive Pi implementer in a visible tab in the supervising session's current Herdr workspace. Do not create a separate workspace or use `pi --print`: progress must remain observable alongside the supervisor. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
 
 Durable workflow scripts:
 
@@ -51,7 +51,7 @@ The lean child starts with `--no-extensions --no-skills` and explicitly loads on
 
 Each implementer must:
 
-- launch through `launch-visible-implementer.ps1` (directly or through the repair orchestrator), not a bare full-profile `pi` command;
+- launch through `launch-visible-implementer.ps1` (directly or through the repair orchestrator) into the supervising session's current Herdr workspace, not a new workspace or a bare full-profile `pi` command;
 - invoke/read the `implement` skill explicitly;
 - use TDD where practical and run the `code-review` skill's parallel Standards and Spec subagents before no-mistakes;
 - change only its issue scope;
