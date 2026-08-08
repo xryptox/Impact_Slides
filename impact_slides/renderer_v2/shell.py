@@ -11,6 +11,10 @@ from .strip import esc
 
 _CSS_DIR = Path(__file__).resolve().parent / "css"
 
+# Opt-in chart-local registration keeps unchanged decks byte-identical while
+# the renderer's shared shell owns the Chart.js bracket painter.
+_BAR_GROUP_PLUGIN_HTML = """<script>(function(){if(typeof Chart==='undefined'||Chart.__rv2BarGroups)return;Chart.__rv2BarGroups=1;Chart.register({id:'rv2BarGroups',afterDraw:function(chart){var opts=chart.config.options.plugins.barGroups,items=opts&&opts.items,xs=chart.scales.x,area=chart.chartArea,count=chart.data.labels.length;if(!items||!items.length||!xs||!area||chart.options.indexAxis==='y')return;var ctx=chart.ctx,painted=0;ctx.save();ctx.strokeStyle=opts.color||'#63666a';ctx.fillStyle=opts.labelColor||'#00175a';ctx.lineWidth=opts.lineWidth||1.5;ctx.font=\"600 14\"+\"px 'Source Sans 3', sans-serif\";ctx.textAlign='center';ctx.textBaseline='bottom';try{items.forEach(function(item){var start=Math.max(0,Math.min(count-1,Number(item.start)||0)),end=Math.max(start,Math.min(count-1,Number(item.end)||start)),first=xs.getPixelForTick(start),last=xs.getPixelForTick(end);if(!Number.isFinite(first)||!Number.isFinite(last))return;var slot=count>1?Math.abs(xs.getPixelForTick(1)-first):area.right-area.left,x1=Math.max(area.left,first-slot/2+6),x2=Math.min(area.right,last+slot/2-6),y=area.top-8;if(x2<x1)return;ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.moveTo(x1,y);ctx.lineTo(x1,y+6);ctx.moveTo(x2,y);ctx.lineTo(x2,y+6);ctx.stroke();ctx.fillText(String(item.label||''),(x1+x2)/2,y-6);painted++})}finally{ctx.restore()}chart.canvas.dataset.rv2BarGroupsPainted=String(painted)}})})()</script>"""
+
 
 def load_css(*, debug: bool = False) -> str:
     parts = []

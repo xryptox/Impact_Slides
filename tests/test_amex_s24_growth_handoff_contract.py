@@ -75,7 +75,7 @@ def _assert_semantics(slide: dict) -> None:
     assert support["skin"] == "outlined_boxes"
     assert support["steps_or_data"] == [
         ["", *_CATEGORIES],
-        ["% of Total Network Volumes", *_SUPPORT],
+        ["$486B Total Network Volumes · % of Total Network Volumes", *_SUPPORT],
     ]
     assert "$486B Total Network Volumes" in slide["content"]["subtitle"]
     assert slide["content"]["key_stats"] == []
@@ -256,8 +256,9 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
               const row = slide.querySelector('.chart-support-outlined');
               const label = row && row.querySelector('.chart-outlined-label');
               const cells = row && [...row.querySelectorAll('.chart-outlined-cell')];
-              if (!row || !label || !cells || cells.length !== 6)
-                return {ok:false, reason:'support row missing'};
+              if (!row || !label || !cells || cells.length !== 6 ||
+                  !label.textContent.includes('$486B Total Network Volumes'))
+                return {ok:false, reason:'support row missing total or cells'};
               const labelBox = label.querySelector('.chart-outlined-box');
               const cellBoxes = cells.map(c => c.querySelector('.chart-outlined-box'));
               const canvas = slide.querySelector('canvas');

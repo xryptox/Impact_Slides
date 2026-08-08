@@ -624,7 +624,7 @@ def apply_issue_154_slide24_growth(handoff: dict[str, Any]) -> dict[str, Any]:
             "skin": "outlined_boxes",
             "steps_or_data": [
                 ["", *_S24_CATEGORIES],
-                ["% of Total Network Volumes", *_S24_SUPPORT],
+                ["$486B Total Network Volumes · % of Total Network Volumes", *_S24_SUPPORT],
             ],
         },
     }
