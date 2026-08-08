@@ -1013,7 +1013,7 @@ remote fetch URL in self-contained output. Third-party inventory lives in
 | `presentation.html` | Self-contained Boardroom deck (`gl-*` Grid primitives) |
 | `slide_notes.md` | Presenter-deliverable prose notes |
 | `evidence_manifest.json` | Slide→evidence map (`style_preset: BoardroomEarnings`) |
-| `run_meta.json` | Generator version + layout inventory + `delivery` + `features_enabled` + `html_bytes` |
+| `run_meta.json` | Generator version + layout inventory + `delivery` + `features_enabled` + `html_bytes`; optional `warnings` and `auto_typography` (mode:auto plan diagnostics) when present |
 
 **Feature gating.** Optional JS capabilities are **auto-enabled from the handoff**
 (e.g. chart layouts → `charts`). Reserved ids: `charts`, `mermaid`, `alpine`,

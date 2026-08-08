@@ -6,8 +6,16 @@ from ..strip import esc, strip_eids
 
 from .format import _fmt_unit, _series_colors
 from .geometry import chart_geometry
-from .bars import _bar_matrix
+from .bars import _bar_axes, _bar_matrix
 from .core import _chart_config, _steps
+from .auto_typography import (
+    axis_config_after_break,
+    combo_overlay_domain,
+    compute_auto_plan_for_slide,
+    full_label_aria_suffix,
+    svg_auto_axis_view,
+    svg_label_transform,
+)
 from .typography import (
     estimate_label_box,
     resolve_typography,
@@ -33,6 +41,8 @@ def _line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
             except (ValueError, TypeError):
                 continue
             pt: dict[str, Any] = {"label": label, "value": value}
+            if item.get("short_label") is not None:
+                pt["short_label"] = item["short_label"]
             # Multi-series keys
             for k, v in item.items():
                 if k.startswith("series_") and k != "series_1":
@@ -127,6 +137,49 @@ def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 
+def _line_axis(
+    cfg: Mapping[str, Any], values: list[float]
+) -> tuple[float, float, list[float]]:
+    """Return the line painter's domain and ticks."""
+    cfg = axis_config_after_break(cfg, break_overrides_min=True)
+    y_max = cfg.get("y_axis_max")
+    forced_ticks = cfg.get("y_axis_ticks") if cfg.get("force_ticks") else None
+    if isinstance(forced_ticks, (list, tuple)) and len(forced_ticks) >= 2:
+        try:
+            forced = [float(tick) for tick in forced_ticks]
+            lo = float(cfg["y_axis_min"]) if cfg.get("y_axis_min") is not None else None
+            hi = float(cfg["y_axis_max"]) if cfg.get("y_axis_max") is not None else None
+            bounded = [tick for tick in forced if (lo is None or tick >= lo) and (hi is None or tick <= hi)]
+            if bounded:
+                return min(bounded), max(bounded), bounded
+            if lo is not None and hi is not None:
+                return lo, hi, [lo, hi]
+            return min(forced), max(forced), forced
+        except (TypeError, ValueError):
+            pass
+    if y_max is None:
+        raw_max = max(values) if values else 10
+        if raw_max <= 5:
+            y_max = 5
+        elif raw_max <= 10:
+            y_max = int(raw_max) + 2
+        elif raw_max <= 20:
+            y_max = 20
+        elif raw_max <= 50:
+            y_max = int(raw_max) + 5
+        else:
+            y_max = int(raw_max * 1.15)
+    y_min = float(cfg.get("y_axis_min", 0))
+    y_max = float(y_max)
+    y_ticks = cfg.get("y_axis_ticks")
+    if y_ticks is None:
+        step = (y_max - y_min) / 4
+        if step >= 5:
+            step = int(step)
+        y_ticks = [y_min + i * step for i in range(5)]
+    return y_min, y_max, [float(t) for t in y_ticks]
+
+
 def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     """Build an SVG line chart for the given slide.
 
@@ -167,31 +220,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     for k in series_keys:
         values.extend(p[k] for p in points if k in p)
 
-    y_max = cfg.get("y_axis_max")
-    if y_max is None:
-        raw_max = max(values) if values else 10
-        # Round up to next nice number
-        if raw_max <= 5:
-            y_max = 5
-        elif raw_max <= 10:
-            y_max = int(raw_max) + 2
-        elif raw_max <= 20:
-            y_max = 20
-        elif raw_max <= 50:
-            y_max = int(raw_max) + 5
-        else:
-            y_max = int(raw_max * 1.15)
-    y_max = float(y_max)
-    y_min = float(cfg.get("y_axis_min", 0))
-
-    y_ticks = cfg.get("y_axis_ticks")
-    if y_ticks is None:
-        # Auto-generate ~5 ticks
-        step = (y_max - y_min) / 4
-        if step >= 5:
-            step = int(step)
-        y_ticks = [y_min + i * step for i in range(5)]
-    y_ticks = [float(t) for t in y_ticks]
+    y_min, y_max, y_ticks = _line_axis(cfg, values)
 
     y_unit = cfg.get("y_axis_unit", "%")
     y_label = cfg.get("y_axis_label", "")
@@ -214,46 +243,61 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
             return pad_t + plot_h / 2
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
+    auto_plan = compute_auto_plan_for_slide(
+        slide, "line_chart", host_w=W, host_h=H, chart_cfg=cfg
+    )
     parts: list[str] = [
         f'<svg class="chart-svg line-chart" viewBox="0 0 {W} {H}" '
         f'xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="Line chart{esc(full_label_aria_suffix(auto_plan))}" '
         f'style="width:100%;height:auto">',
-        # Marker def for potential future use
         '<defs></defs>',
     ]
 
-    # Y-axis tick labels only — plot gridlines default off (#152).
-    for tick in y_ticks:
-        ty = y_pos(tick)
-        tick_label = _fmtu(tick)
-        parts.append(
-            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
-            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
-        )
-
-    # Y-axis line
-    parts.append(
-        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+    if auto_plan is not None:
+        x_tick_fs = auto_plan.x_tick_font_size
+        y_tick_fs = auto_plan.y_tick_font_size
+        y_tick_wt = "700"
+        if auto_plan.datalabel_font_size_set:
+            dl_fs_primary = auto_plan.datalabel_font_size
+            dl_fs_secondary = auto_plan.datalabel_font_size
+            dl_set = True
+    label_lines, value_ticks = svg_auto_axis_view(
+        auto_plan, labels=[str(p["label"]) for p in points], ticks=y_ticks, format_tick=_fmtu
     )
-
-    # X-axis line
-    parts.append(
-        f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
-
-    # X-axis labels
-    for i, p in enumerate(points):
+    show_y_axis = cfg.get("show_y_axis") is not False
+    show_x_axis = cfg.get("show_x_axis") is not False
+    if show_y_axis:
+        # Y-axis tick labels only — plot gridlines default off (#152).
+        for tick, tick_label in value_ticks:
+            ty = y_pos(tick)
+            parts.append(
+                f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+                f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
+                f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+            )
         parts.append(
-            f'<text x="{x_pos(i):.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
-            f'font-family="var(--font-body, sans-serif)">{esc(p["label"])}</text>'
+            f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
         )
+    if show_x_axis:
+        parts.append(
+            f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+        )
+        for i, p in enumerate(points):
+            lines = label_lines[i] if i < len(label_lines) else [str(p["label"])]
+            for line_i, line in enumerate(lines):
+                parts.append(
+                    f'<text class="auto-x-label" data-auto-label-index="{i}" '
+                    f'x="{x_pos(i):.1f}" y="{H - pad_b + 25 + line_i * x_tick_fs}"'
+                    f'{svg_label_transform(auto_plan, x_pos(i), H - pad_b + 25 + line_i * x_tick_fs)} text-anchor="middle" '
+                    f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
+                    f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+                )
 
     # Y-axis label (rotated)
-    if y_label:
+    if show_y_axis and y_label:
         parts.append(
             f'<text x="20" y="{pad_t + plot_h / 2:.0f}" text-anchor="middle" '
             f'transform="rotate(-90 20 {pad_t + plot_h / 2:.0f})" '
@@ -382,7 +426,9 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
                     f'font-family="var(--font-body, sans-serif)">{esc(txt)}</text>'
                 )
 
-    if dl_set and label_items:
+    if auto_plan is not None and auto_plan.datalabels_suppressed:
+        pass
+    elif dl_set and label_items:
         suppressed, details = suppress_colliding_labels(label_items)
         keep = set(range(len(label_items))) - set(suppressed)
         for i in sorted(keep):
@@ -399,7 +445,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         parts.extend(label_markup)
 
     # -- Legend -------------------------------------------------------------
-    if len(all_series) > 1 and series_names:
+    if len(all_series) > 1 and series_names and cfg.get("show_legend") is not False:
         legend_x = W - pad_r - 10
         legend_y = pad_t + 10
         for li, s_entry in enumerate(all_series):
@@ -457,8 +503,9 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     if not bar_rows:
         return '<p class="chart-empty">No combo chart data</p>'
     stacked = len(bar_series) > 1
-    # Per-category totals drive the bar axis (single-series rows have 1 cell)
+    # Per-category signed stack extents drive the shared bar axis.
     bar_totals = [sum(v for v in row if v is not None and v > 0) for row in bar_rows]
+    bar_minimums = [sum(v for v in row if v is not None and v < 0) for row in bar_rows]
 
     vs = slide.get("visual_spec") or {}
     overlay_cfg = vs.get("line_overlay") or {}
@@ -479,13 +526,13 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 56 if stacked else 40, 60
 
-    bar_max = float(cfg.get("y_axis_max", max(bar_totals) * 1.15 if bar_totals else 10))
-    bar_min = 0.0
-
     line_values = [p["value"] for p in line_points] if line_points else []
-    line_max = float(overlay_cfg.get("y_axis_max", max(line_values) * 1.15 if line_values else 10))
-    line_min = float(overlay_cfg.get("y_axis_min", 0))
     use_dual_axis = bool(line_points) and overlay_cfg.get("dual_axis", True)
+    shared_values = [*bar_totals, *bar_minimums, *line_values] if not use_dual_axis else [*bar_totals, *bar_minimums]
+    bar_max, bar_min, planned_bar_ticks = _bar_axes(
+        cfg, max(shared_values, default=0.0), min(shared_values, default=0.0)
+    )
+    line_min, line_max = combo_overlay_domain(overlay_cfg, line_values)
 
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
@@ -513,36 +560,42 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     def _fmtb(v: float) -> str:
         return _fmt_unit(v, bar_unit, bar_unit_pos)
 
+    auto_plan = compute_auto_plan_for_slide(
+        slide, "combo_chart", host_w=W, host_h=H, chart_cfg=cfg
+    )
     parts: list[str] = [
         f'<svg class="chart-svg combo-chart" viewBox="0 0 {W} {H}" '
         f'xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="Combo chart{esc(full_label_aria_suffix(auto_plan))}" '
         f'style="width:100%;height:auto">',
     ]
 
+    if auto_plan is not None:
+        x_tick_fs = auto_plan.x_tick_font_size
+        y_tick_fs = auto_plan.y_tick_font_size
+        y_tick_wt = "700"
+    show_y_axis = cfg.get("show_y_axis") is not False
+    show_x_axis = cfg.get("show_x_axis") is not False
     # Y-axis tick labels only (bar axis) — plot gridlines default off (#152).
-    bar_ticks = cfg.get("y_axis_ticks")
-    if bar_ticks is None:
-        step = bar_max / 4
-        if step >= 5:
-            step = int(step)
-        bar_ticks = [bar_min + i * step for i in range(5)]
-    for tick in bar_ticks:
-        ty = bar_y(float(tick))
-        tick_label = _fmtb(float(tick))
+    bar_ticks = planned_bar_ticks
+    label_lines, bar_tick_view = svg_auto_axis_view(
+        auto_plan, labels=bar_labels, ticks=bar_ticks, format_tick=_fmtb
+    )
+    if show_y_axis:
+        for tick, tick_label in bar_tick_view:
+            ty = bar_y(tick)
+            parts.append(
+                f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+                f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
+                f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+            )
         parts.append(
-            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
-            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+            f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
         )
 
-    # Left Y-axis
-    parts.append(
-        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
-
     # Right Y-axis (dual axis)
-    if use_dual_axis and line_points:
+    if use_dual_axis and line_points and show_y_axis:
         parts.append(
             f'<line x1="{W - pad_r}" y1="{pad_t}" x2="{W - pad_r}" y2="{H - pad_b}" '
             f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
@@ -554,23 +607,27 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                 step = int(step)
             line_ticks = [line_min + i * step for i in range(5)]
         line_unit = overlay_cfg.get("y_axis_unit", "")
-        for tick in line_ticks:
-            ty = line_y(float(tick))
-            tick_label = f"{tick:g}{line_unit}" if line_unit else f"{tick:g}"
+        line_unit_pos = overlay_cfg.get("y_axis_unit_position", "suffix")
+        line_tick_view = [(float(tick), _fmt_unit(float(tick), line_unit, line_unit_pos)) for tick in line_ticks]
+        if auto_plan is not None and auto_plan.secondary_y_tick_values:
+            line_tick_view = list(zip(auto_plan.secondary_y_tick_values, auto_plan.secondary_y_tick_labels))
+        for tick, tick_label in line_tick_view:
+            ty = line_y(tick)
             parts.append(
-                f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
+                f'<text class="auto-y1-label" x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
                 f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
                 f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
             )
 
     # X-axis line
-    parts.append(
-        f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
+    if show_x_axis:
+        parts.append(
+            f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+        )
 
     # Bar legend (multi-series stacked mode only)
-    if stacked:
+    if stacked and cfg.get("show_legend") is not False:
         combo_palette = _series_colors(cfg)
         lx = pad_l + 4
         for si, name in enumerate(bar_series):
@@ -590,14 +647,15 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     for i, lab in enumerate(bar_labels):
         x = pad_l + i * bar_slot + (bar_slot - bar_w) / 2
         if stacked:
-            cursor = 0.0
+            # Positive stack grows up from zero; negative grows down (parity with stacked bars).
+            pos_cursor = 0.0
             for si in range(len(bar_series)):
                 v = bar_rows[i][si] if si < len(bar_rows[i]) else None
                 if v is None or v <= 0:
                     continue
-                y_bottom = bar_y(cursor)
-                cursor += v
-                y_top = bar_y(cursor)
+                y_bottom = bar_y(pos_cursor)
+                pos_cursor += v
+                y_top = bar_y(pos_cursor)
                 seg_color = bar_colors[i] or combo_palette[si % len(combo_palette)]
                 parts.append(
                     f'<rect class="combo-seg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
@@ -609,32 +667,60 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                         f'text-anchor="middle" fill="#fff" font-size="13" font-weight="600" '
                         f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(v))}</text>'
                     )
-            total = bar_totals[i]
+            neg_cursor = 0.0
+            for si in range(len(bar_series)):
+                v = bar_rows[i][si] if si < len(bar_rows[i]) else None
+                if v is None or v >= 0:
+                    continue
+                y_top = bar_y(neg_cursor)
+                neg_cursor += v
+                y_bottom = bar_y(neg_cursor)
+                seg_color = bar_colors[i] or combo_palette[si % len(combo_palette)]
+                parts.append(
+                    f'<rect class="combo-seg combo-seg-neg" x="{x:.1f}" y="{y_top:.1f}" '
+                    f'width="{bar_w:.1f}" height="{max(y_bottom - y_top, 0):.1f}" fill="{seg_color}"/>'
+                )
+            # Net total above the positive stack (or above zero).
+            net = bar_totals[i] + bar_minimums[i]
+            total_y = (
+                bar_y(bar_totals[i]) - 8
+                if bar_totals[i] > 0
+                else bar_y(0.0) - 8
+            )
             parts.append(
-                f'<text x="{x + bar_w / 2:.1f}" y="{bar_y(total) - 8:.1f}" text-anchor="middle" '
+                f'<text x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" text-anchor="middle" '
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="700" '
-                f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(total))}</text>'
+                f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(net))}</text>'
             )
         else:
             val = bar_rows[i][0] or 0.0
             y = bar_y(val)
-            bh = H - pad_b - y
+            zero_y = bar_y(min(max(0.0, bar_min), bar_max))
+            rect_y = min(y, zero_y)
+            bh = abs(zero_y - y)
             bar_color = bar_colors[i] or default_bar_color
             parts.append(
-                f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
+                f'<rect x="{x:.1f}" y="{rect_y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
                 f'fill="{bar_color}" rx="2"/>'
             )
             val_text = _fmtb(val)
+            label_y = y - 8 if val >= 0 else y + 18
             parts.append(
-                f'<text x="{x + bar_w/2:.1f}" y="{y - 8:.1f}" text-anchor="middle" '
+                f'<text x="{x + bar_w/2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(val_text)}</text>'
             )
-        parts.append(
-            f'<text x="{x + bar_w/2:.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
-            f'font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
-        )
+        lines = label_lines[i] if i < len(label_lines) else [lab]
+        for line_i, line in enumerate(lines):
+            if not show_x_axis:
+                continue
+            parts.append(
+                f'<text class="auto-x-label" data-auto-label-index="{i}" '
+                f'x="{x + bar_w/2:.1f}" y="{H - pad_b + 25 + line_i * x_tick_fs}"'
+                f'{svg_label_transform(auto_plan, x + bar_w / 2, H - pad_b + 25 + line_i * x_tick_fs)} text-anchor="middle" '
+                f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+            )
 
     # Line overlay
     if line_points:

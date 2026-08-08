@@ -13,7 +13,7 @@
 # NOT listed, deliberately:
 #   sentence-transformers -- only reached by optional semantic-dedup paths, which the
 #                            suite skips. Multi-hundred-MB torch install for no coverage.
-#   playwright            -- screenshot tooling in scripts/, not exercised by tests.
+# Playwright is required for renderer audits.
 
 pytest
 pydantic
@@ -30,6 +30,7 @@ pdfplumber
 pymupdf
 pillow
 pytesseract
+playwright
 openpyxl
 xlrd
 structlog

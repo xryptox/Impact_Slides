@@ -6,7 +6,9 @@ from ..strip import esc, strip_eids
 
 from .format import _fmt_chart_num
 from .bars import _bar_matrix
-from .core import _steps
+from .core import _chart_config, _steps
+from .auto_typography import compute_auto_plan_for_slide, full_label_aria_suffix, svg_auto_axis_view, svg_label_transform
+from .typography import resolve_typography
 
 
 
@@ -106,13 +108,21 @@ def _build_heatmap_html(slide: Mapping[str, Any]) -> str:
 
 def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
     """In-repo waterfall: running-total bridge bars (pack geometry parity)."""
+    cfg = _chart_config(slide)
+    # Waterfall value labels stay legacy 18px; auto typography sizes axes only (#150).
+    typo = resolve_typography(cfg, chart_type="waterfall_chart")
+    x_tick_fs = int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 16
     labels, series, rows, _pc = _bar_matrix(slide)
+    auto_plan = compute_auto_plan_for_slide(slide, "waterfall_chart", chart_cfg=cfg)
+    dl_fs = 18
+    if auto_plan is not None:
+        x_tick_fs = auto_plan.x_tick_font_size
     if not labels or not series or not rows:
         return '<p class="chart-empty">No chart data for waterfall_chart</p>'
 
     # Single-series bridges from first column; optional kind on steps_or_data.
     raw = _steps(slide)
-    bridges: list[tuple[str, float, str]] = []  # label, value, kind
+    bridges: list[tuple[int, str, float, str]] = []
     for i, lab in enumerate(labels):
         row = rows[i] if i < len(rows) else []
         v = row[0] if row else None
@@ -123,28 +133,34 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             kind = str(raw[i].get("kind") or "").lower().strip()
         if not kind:
             kind = "up" if v >= 0 else "down"
-        bridges.append((str(lab), float(v), kind))
+        bridges.append((i, str(lab), float(v), kind))
     if not bridges:
         return '<p class="chart-empty">No chart data for waterfall_chart</p>'
+    label_lines, _value_ticks = svg_auto_axis_view(
+        auto_plan,
+        labels=[label for _index, label, _value, _kind in bridges],
+        ticks=[],
+        format_tick=lambda _tick: "",
+    )
 
     # Running total: up/down float from prior level; total is absolute from 0.
     level = 0.0
-    centers: list[tuple[str, float, float, str, float]] = []
-    for lab, val, kind in bridges:
+    centers: list[tuple[int, str, float, float, str, float]] = []
+    for category_index, lab, val, kind in bridges:
         if kind == "total":
             if abs(val) < 1e-9 and level:
                 val = level
             y0, y1 = (0.0, val) if val >= 0 else (val, 0.0)
-            centers.append((lab, y0, y1 - y0, "total", val))
+            centers.append((category_index, lab, y0, y1 - y0, "total", val))
             level = val
         else:
             start = level
             level = level + val
             y0, y1 = min(start, level), max(start, level)
             k = "up" if val >= 0 else "down"
-            centers.append((lab, y0, y1 - y0, k, val))
+            centers.append((category_index, lab, y0, y1 - y0, k, val))
 
-    vals_ext = [c[1] for c in centers] + [c[1] + c[2] for c in centers] + [0.0]
+    vals_ext = [c[2] for c in centers] + [c[2] + c[3] for c in centers] + [0.0]
     vmin, vmax = min(vals_ext), max(vals_ext)
     if abs(vmax - vmin) < 1e-6:
         vmax = vmin + 1.0
@@ -173,7 +189,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
 
     parts = [
         f'<svg class="chart-svg" viewBox="0 0 {width} {height}" '
-        f'role="img" aria-label="Waterfall chart">'
+        f'role="img" aria-label="Waterfall chart{esc(full_label_aria_suffix(auto_plan))}">'
     ]
     if vmin < 0 < vmax:
         yz = y_scale(0.0)
@@ -183,7 +199,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             f'stroke-width="1" stroke-dasharray="4 4"/>'
         )
 
-    for i, (lab, y0, h, kind, val) in enumerate(centers):
+    for i, (category_index, lab, y0, h, kind, val) in enumerate(centers):
         cx = left + slot * i + slot / 2
         x = cx - bar_w / 2
         y_top = y_scale(y0 + h)
@@ -200,14 +216,20 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             vlab = "+" + vlab
         parts.append(
             f'<text class="chart-value" x="{cx:.1f}" y="{y_top - 8:.1f}" '
-            f'text-anchor="middle" fill="{navy}" font-size="18" '
+            f'text-anchor="middle" fill="{navy}" font-size="{dl_fs}" '
             f'font-weight="700">{esc(vlab)}</text>'
         )
-        parts.append(
-            f'<text class="chart-axis-label" x="{cx:.1f}" y="{height - 28}" '
-            f'text-anchor="middle" fill="{ink}" font-size="16">'
-            f"{esc(lab[:16])}</text>"
-        )
+        if cfg.get("show_x_axis") is not False:
+            lines = label_lines[i] if i < len(label_lines) else [lab]
+            for line_i, line in enumerate(lines):
+                y = height - 28 - (len(lines) - 1 - line_i) * x_tick_fs
+                parts.append(
+                    f'<text class="chart-axis-label auto-x-label" data-auto-label-index="{category_index}" '
+                    f'x="{cx:.1f}" y="{y:.1f}"'
+                    f'{svg_label_transform(auto_plan, cx, y)} '
+                    f'text-anchor="middle" fill="{ink}" font-size="{x_tick_fs}">'
+                    f"{esc(line)}</text>"
+                )
 
     parts.append("</svg>")
     legend = (
@@ -216,5 +238,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
         '<span><i class="swatch swatch-blue"></i>Increase</span>'
         '<span><i class="swatch swatch-ink"></i>Decrease</span>'
         "</div>"
+        if cfg.get("show_legend") is not False
+        else ""
     )
     return '<div class="chart-frame">' + ''.join(parts) + legend + '</div>'

@@ -25,7 +25,13 @@ _TYPO_BOUNDS = {
     "y_tick_font_size": (8, 28),
     "datalabel_font_size": (8, 32),
 }
-_SUPPORTED_TYPO_FIELDS = frozenset(_TYPO_BOUNDS)
+# Under mode=auto, explicit channel floors rise (#150).
+_AUTO_TYPO_BOUNDS = {
+    "x_tick_font_size": (12, 24),
+    "y_tick_font_size": (12, 28),
+    "datalabel_font_size": (11, 32),
+}
+_SUPPORTED_TYPO_FIELDS = frozenset(_TYPO_BOUNDS) | frozenset({"mode"})
 
 # Pane title geometry (#139).
 PANE_TITLE_FS = 40
@@ -52,6 +58,9 @@ _HERO_GAP = 18  # --gap-md
 _TILE_GAP = 18
 _TILE_PAD = 17
 _CHARTJS_WRAP_H = 480  # components.css .chartjs-wrap height
+# .chart-frame { padding: 18px 22px } — dual panes use this card chrome.
+CHART_FRAME_PAD_X = 22
+CHART_FRAME_PAD_Y = 18
 
 
 def _main_band_h() -> float:
@@ -161,11 +170,22 @@ def resolve_typography(
     chart_cfg: Mapping[str, Any] | None,
     *,
     strict: bool | None = None,
+    chart_type: str | None = None,
 ) -> dict[str, int]:
     """Return effective tick/datalabel sizes.
 
     Absent/invalid group → legacy 13/13/11. Invalid under strict raises.
     Unsupported keys warn and are ignored (supported keys still apply).
+
+    ``mode: "auto"`` marks the group for the shared auto resolver;
+    explicit channel overrides remain optional and are never silently resized.
+    Without a density context this returns legacy defaults for unset channels
+    plus ``auto_mode=1`` so painters can run ``resolve_auto_typography``.
+
+    Waterfall value labels stay legacy size 18 (auto sizes axes only). An authored
+    ``datalabel_font_size`` is rejected at this boundary when
+    ``chart_type == "waterfall_chart"``: strict raises; non-strict drops only
+    that field, keeps mode/axis overrides, and records a warning.
     """
     if strict is None:
         strict = _RENDER_STRICT.get()
@@ -177,27 +197,66 @@ def resolve_typography(
         "x_tick_font_size_set": 0,
         "y_tick_font_size_set": 0,
         "datalabel_font_size_set": 0,
+        "auto_mode": 0,
     }
     if not isinstance(chart_cfg, Mapping):
         return out
-    raw = chart_cfg.get("typography")
-    if raw is None:
+    # Internal renderer handoff from the shared #150 resolver. It is never a
+    # public chart_config key and lets all SVG painters consume the same plan.
+    stashed = chart_cfg.get("_auto_typo_plan")
+    if stashed is not None:
+        try:
+            from .auto_typography import AutoTypoPlan, merge_plan_into_typo
+
+            if isinstance(stashed, AutoTypoPlan):
+                return merge_plan_into_typo(out, stashed)
+        except ImportError as exc:
+            raise RuntimeError("auto typography resolver is unavailable") from exc
+    raw_in = chart_cfg.get("typography")
+    if raw_in is None:
         return out
-    if not isinstance(raw, Mapping):
+    if not isinstance(raw_in, Mapping):
         msg = "typography must be an object"
         if strict:
             raise ValueError(f"chart_config.typography: {msg}")
         _warn(f"ignored entire group: {msg}")
         return out
+    raw = dict(raw_in)
 
     # Unsupported keys → warn, continue.
     for key in raw:
         if key not in _SUPPORTED_TYPO_FIELDS:
             _warn(f"unsupported field ignored: {key}")
 
-    # Validate supported fields; one bad field drops the WHOLE group (non-strict).
+    # Waterfall: value labels are not ordinary datalabels (#150).
+    ct = (chart_type or "").lower().strip()
+    if ct == "waterfall_chart" and "datalabel_font_size" in raw:
+        msg = (
+            "datalabel_font_size is not supported for waterfall_chart "
+            "(value labels stay legacy size 18; auto sizes axes only)"
+        )
+        if strict:
+            raise ValueError(f"chart_config.typography: {msg}")
+        _warn(msg)
+        # Drop only the unsupported field on the local copy; keep mode/axis overrides.
+        raw.pop("datalabel_font_size", None)
+
+    mode_raw = raw.get("mode")
+    auto_mode = False
+    if mode_raw is not None:
+        if not isinstance(mode_raw, str) or mode_raw.strip().lower() != "auto":
+            msg = "mode must be 'auto' (or omitted)"
+            if strict:
+                raise ValueError(f"chart_config.typography: {msg}")
+            _warn(f"ignored entire group: {msg}")
+            return out
+        auto_mode = mode_raw.strip().lower() == "auto"
+
+    bounds = _AUTO_TYPO_BOUNDS if auto_mode else _TYPO_BOUNDS
+
+    # Validate supported size fields; one bad field drops the WHOLE group (non-strict).
     resolved: dict[str, int] = {}
-    for field, (lo, hi) in _TYPO_BOUNDS.items():
+    for field, (lo, hi) in bounds.items():
         if field not in raw:
             continue
         value = raw[field]
@@ -212,13 +271,16 @@ def resolve_typography(
     out.update(resolved)
     for field in resolved:
         out[f"{field}_set"] = 1
+    if auto_mode:
+        out["auto_mode"] = 1
     return out
 
 
 def typography_from_slide(slide: Mapping[str, Any], *, strict: bool | None = None) -> dict[str, int]:
     from .core import _chart_config
 
-    return resolve_typography(_chart_config(slide), strict=strict)
+    layout = str(slide.get("layout_type") or "").lower().strip() or None
+    return resolve_typography(_chart_config(slide), strict=strict, chart_type=layout)
 
 
 def ordinary_datalabel_size(typo: Mapping[str, int], *, default: int = LEGACY_DATALABEL) -> int:
@@ -321,6 +383,31 @@ def _pane_chrome_reserve_px(*, title: str, subtitle: str) -> int:
     if subtitle:
         n += PANE_SUBTITLE_RESERVE_PX
     return n
+
+
+def chart_frame_content_box(host_w: float, host_h: float) -> tuple[float, float]:
+    """Inner box of a .chart-frame pane after CSS padding (22x / 18y)."""
+    return (
+        max(0.0, float(host_w) - 2 * CHART_FRAME_PAD_X),
+        max(0.0, float(host_h) - 2 * CHART_FRAME_PAD_Y),
+    )
+
+
+def chart_pane_canvas_size(
+    host_w: float,
+    host_h: float,
+    *,
+    title: str = "",
+    subtitle: str = "",
+    frame_padded: bool = False,
+) -> tuple[float, float]:
+    """Return a chart pane's plot host after frame pad (opt) + heading chrome."""
+    w, h = float(host_w), float(host_h)
+    if frame_padded:
+        w, h = chart_frame_content_box(w, h)
+    return w, max(0.0, h - _pane_chrome_reserve_px(
+        title=title.strip(), subtitle=subtitle.strip()
+    ))
 
 
 def chart_pane_title_html(

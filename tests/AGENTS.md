@@ -12,7 +12,7 @@ Regression suite and fixtures for preprocessor + renderer_v2.
 ## Local Contracts
 
 - Runner: `pytest` via root `pytest.ini` (`testpaths=tests`)
-- CI install set: root `requirements-ci.txt` (includes `structlog`; excludes playwright/sentence-transformers)
+- CI install set: root `requirements-ci.txt` (includes `structlog` and Playwright; excludes sentence-transformers); CI provisions Chromium for mandatory renderer audits
 - Some real-world fixtures are machine-local — CI shows extra skips; local pass count can be higher
 - Renderer layout index tests must not embed bare layout-name literals or search probes that match the test file itself (`test_gen_layout_index.py` pattern)
 - Prefer tests that fail under mutation of the production guard they claim to pin

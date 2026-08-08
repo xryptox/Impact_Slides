@@ -387,7 +387,28 @@ _JS = r"""
           Object.keys(dl.labels).forEach(function (name) {
             if (dl.labels[name] && dl.labels[name]._labels) bindMatrix(dl.labels[name]);
           });
-        }
+        }/*__RV2_AUTO_TYPO_RUNTIME__*/
+        Object.keys(cfg.options.scales || {}).forEach(function (axis) {
+          var scale = cfg.options.scales[axis], ticks = scale && scale.ticks;
+          if (!ticks) return;
+          var display = ticks._rv2DisplayLabels, values = ticks._rv2Values, labels = ticks._rv2Labels || [];
+          delete ticks._rv2DisplayLabels;
+          delete ticks._rv2FullLabels;
+          delete ticks._rv2Values;
+          delete ticks._rv2Labels;
+          if (display) ticks.callback = function (value, index) { return display[index] || ''; };
+          if (values) {
+            ticks.callback = function (value) {
+              for (var i = 0; i < values.length; i++) {
+                if (Math.abs(Number(value) - Number(values[i])) < 1e-8) return labels[i] == null ? value : labels[i];
+              }
+              return '';
+            };
+            scale.afterBuildTicks = function (chartScale) {
+              chartScale.ticks = values.map(function (value) { return {value: value}; });
+            };
+          }
+        });
         new Chart(canvas.getContext('2d'), cfg);
       } catch (err) {
         console.warn('chart init failed', id, err);
@@ -445,6 +466,10 @@ def wrap_deck(
     css = "\n\n".join(p for p in (bundle.font_css, load_css(debug=debug)) if p)
     theme_block = _theme_style(theme)
     slides = "\n".join(slide_html)
+    auto_runtime = "" if "data-auto-typo=\"1\"" not in slides else """
+        if (cfg.options._rv2AutoTypography) delete cfg.options._rv2AutoTypography;
+        """
+    js = _JS.replace("/*__RV2_AUTO_TYPO_RUNTIME__*/", auto_runtime)
     # Minimal chrome omits the deck-controls markup entirely (not just CSS-hide),
     # so stage-only decks carry no product control chrome in the DOM (#83/F14).
     controls_html = (
@@ -479,7 +504,7 @@ def wrap_deck(
 {controls_html}
 <script type="application/json" id="DECK_META">{json.dumps(deck_meta, ensure_ascii=False)}</script>
 <script>
-{_JS}
+{js}
 </script>
 </body>
 </html>
