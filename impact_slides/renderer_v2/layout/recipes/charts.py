@@ -501,8 +501,9 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         if visual.get("line_overlay"):
             sub_slide["visual_spec"]["line_overlay"] = visual["line_overlay"]
         subtitle = resolve_pane_subtitle(visual)
+        # dual-chart-pane is .chart-frame: plan against content box, then chrome.
         canvas_w, canvas_h = chart_pane_canvas_size(
-            aw, ah, title=heading, subtitle=subtitle
+            aw, ah, title=heading, subtitle=subtitle, frame_padded=True
         )
         plans.append(compute_auto_plan_for_slide(
             sub_slide, vt, host_w=canvas_w, host_h=canvas_h, chart_cfg=pane_cfg

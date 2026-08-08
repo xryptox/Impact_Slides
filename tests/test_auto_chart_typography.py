@@ -490,10 +490,17 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                           const groups = [...categoryGroups.values()];
                           const categoryOverlap = groups.some((group, i) => groups.slice(i + 1).some(other =>
                             group.some(box => other.some(candidate => overlap(box, candidate)))));
-                          return {text_count: categoryBoxes.length, y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
+                          const categoryLabels = JSON.parse(wrap.dataset.autoXLabels || '[]');
+                          return {
+                            text_count: categoryBoxes.length,
+                            category_group_count: categoryGroups.size,
+                            category_text_count: categoryGroups.size,
+                            expected_category_ticks: categoryLabels.length,
+                            y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
                             expected_y_ticks: Number(wrap.dataset.autoYTicks || 0), expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
                             clipped: categoryBoxes.concat(yBoxes, y1Boxes).some(box => !within(box, viewport)),
-                            overlap: categoryOverlap || collides(yBoxes) || collides(y1Boxes)};
+                            overlap: categoryOverlap || collides(yBoxes) || collides(y1Boxes)
+                          };
                         });
                     return {slide_number: index + 1, panes};
                   });
@@ -506,7 +513,10 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                 assert len(row["panes"]) == expected_by_slide[row["slide_number"]], (name, row)
                 if name == "svg":
                     assert all(
-                        pane["text_count"] and pane["y_text_count"] == pane["expected_y_ticks"]
+                        pane["text_count"]
+                        and pane["category_group_count"] == pane["expected_category_ticks"]
+                        and pane["category_text_count"] == pane["expected_category_ticks"]
+                        and pane["y_text_count"] == pane["expected_y_ticks"]
                         and pane["y1_text_count"] == pane["expected_y1_ticks"]
                         and not pane["clipped"] and not pane["overlap"]
                         for pane in row["panes"]
@@ -1354,3 +1364,100 @@ def test_auto_mode_does_not_change_legacy_output(tmp_path):
     render_deck(path, out, strict=False)
     cfg = _configs((out / "presentation.html").read_text(encoding="utf-8"))[0]
     assert cfg["options"]["scales"]["x"]["ticks"]["font"]["size"] == 13
+
+
+def test_dual_pane_plans_against_chart_frame_content_box():
+    """#150 residual: dual-pane auto plan uses .chart-frame content box then heading chrome."""
+    import re
+
+    from impact_slides.renderer_v2.charts.typography import (
+        CHART_FRAME_PAD_X,
+        CHART_FRAME_PAD_Y,
+        chart_host_size,
+        chart_pane_canvas_size,
+    )
+    from impact_slides.renderer_v2.layout.recipes import render_dual_chart
+
+    labels = [f"Category {i}" for i in range(6)]
+    slide = {
+        "slide_number": 1,
+        "title": "Dual",
+        "layout_type": "dual_chart",
+        "content": {"so_what": "x", "bullets": [], "key_stats": []},
+        "visual_spec": {
+            "primary_visual": {
+                "type": "line_chart",
+                "heading": "Left pane title",
+                "chart_config": {
+                    "typography": {"mode": "auto"},
+                    "point_labels": True,
+                    "series_names": ["A"],
+                },
+                "steps_or_data": [
+                    {"label": lab, "value": i + 1} for i, lab in enumerate(labels)
+                ],
+            },
+            "secondary_visual": {
+                "type": "grouped_bar_chart",
+                "heading": "Right pane title",
+                "chart_config": {
+                    "typography": {"mode": "auto"},
+                    "series_names": ["B"],
+                },
+                "steps_or_data": [
+                    {"label": lab, "value": i + 2} for i, lab in enumerate(labels)
+                ],
+            },
+        },
+        "evidence_sources": [],
+    }
+    html = render_dual_chart(slide, 1, "", use_chartjs=True)
+    assert 'data-auto-typo="1"' in html
+    aw, ah = chart_host_size("dual_chart")
+    expect_w, expect_h = chart_pane_canvas_size(
+        aw, ah, title="Left pane title", subtitle="", frame_padded=True
+    )
+    bare_w, bare_h = chart_pane_canvas_size(aw, ah, title="Left pane title", subtitle="")
+    assert expect_w == bare_w - 2 * CHART_FRAME_PAD_X
+    assert expect_h == bare_h - 2 * CHART_FRAME_PAD_Y
+    plots = re.findall(r'data-auto-plot="([^"]+)"', html)
+    assert plots, "auto plan diagnostics missing"
+    widths = [float(p.split("x", 1)[0]) for p in plots]
+    # Planner plot_w is interior of host; host itself must be content-box sized.
+    # data-auto-plot is plot_w x plot_h (after axis pads), so host shrink shows as
+    # smaller plot than outer-pane planning would allow.
+    outer_w, outer_h = chart_pane_canvas_size(aw, ah, title="Left pane title", subtitle="")
+    assert expect_w < outer_w
+    assert max(widths) <= expect_w + 0.5
+
+
+def test_svg_audit_requires_indexed_category_groups():
+    """#150 residual: SVG audit counts data-auto-label-index groups, not any text."""
+    import re
+
+    from impact_slides.renderer_v2.charts.auto_typography import compute_auto_plan_for_slide
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    labels = ["Alpha", "Beta", "Gamma"]
+    slide = {
+        "slide_number": 1,
+        "title": "t",
+        "layout_type": "line_chart",
+        "content": {},
+        "visual_spec": {
+            "primary_visual": {
+                "type": "line_chart",
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [
+                    {"label": lab, "value": i + 1} for i, lab in enumerate(labels)
+                ],
+            }
+        },
+    }
+    plan = compute_auto_plan_for_slide(slide, "line_chart", host_w=900, host_h=480)
+    assert plan is not None and plan.x_labels is not None
+    expected = len([lines for lines in plan.x_labels.lines if lines])
+    assert expected == len(labels)
+    svg_html = _svg_fallback_for_layout(slide, "line_chart")
+    idxs = set(re.findall(r'data-auto-label-index="(\d+)"', svg_html))
+    assert len(idxs) == expected

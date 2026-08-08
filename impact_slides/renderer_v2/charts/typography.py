@@ -58,6 +58,9 @@ _HERO_GAP = 18  # --gap-md
 _TILE_GAP = 18
 _TILE_PAD = 17
 _CHARTJS_WRAP_H = 480  # components.css .chartjs-wrap height
+# .chart-frame { padding: 18px 22px } — dual panes use this card chrome.
+CHART_FRAME_PAD_X = 22
+CHART_FRAME_PAD_Y = 18
 
 
 def _main_band_h() -> float:
@@ -361,15 +364,27 @@ def _pane_chrome_reserve_px(*, title: str, subtitle: str) -> int:
     return n
 
 
+def chart_frame_content_box(host_w: float, host_h: float) -> tuple[float, float]:
+    """Inner box of a .chart-frame pane after CSS padding (22x / 18y)."""
+    return (
+        max(0.0, float(host_w) - 2 * CHART_FRAME_PAD_X),
+        max(0.0, float(host_h) - 2 * CHART_FRAME_PAD_Y),
+    )
+
+
 def chart_pane_canvas_size(
     host_w: float,
     host_h: float,
     *,
     title: str = "",
     subtitle: str = "",
+    frame_padded: bool = False,
 ) -> tuple[float, float]:
-    """Return a chart pane's plot host after emitted heading chrome."""
-    return float(host_w), max(0.0, float(host_h) - _pane_chrome_reserve_px(
+    """Return a chart pane's plot host after frame pad (opt) + heading chrome."""
+    w, h = float(host_w), float(host_h)
+    if frame_padded:
+        w, h = chart_frame_content_box(w, h)
+    return w, max(0.0, h - _pane_chrome_reserve_px(
         title=title.strip(), subtitle=subtitle.strip()
     ))
 
