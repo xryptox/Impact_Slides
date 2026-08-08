@@ -3440,7 +3440,9 @@ class TestSideCallout:
         html = (out / "presentation.html").read_text(encoding="utf-8")
         assert 'data-side-callout-anchor="tile"' in html
         assert "top:49.8px" in html
-        assert 'class="gl-tile gl-tile-chart gl-tile-tall"' not in html
+        # #158: side_callout alone keeps tall-card geometry (PDF p28 deposit).
+        assert "gl-tile-tall" in html
+        assert 'style="position:relative"' in html
         assert '<foreignObject x="772" y="49.8" width="128"' not in html
 
     def test_three_column_multi_panel_omits_unfit_callout(self, tmp_path, capsys):
@@ -3537,7 +3539,7 @@ class TestSideCallout:
         out = tmp_path / "out"
         render_deck(path, out, strict=False)
         html = (out / "presentation.html").read_text(encoding="utf-8")
-        assert '<div class="gl-tile gl-tile-chart gl-tile-tall">' in html
+        assert "gl-tile-tall" in html
         assert 'class="gl-tile-badge"' not in html
         assert "92% of deposits FDIC insured*" not in html
         assert '<aside class="chart-side-callout' in html

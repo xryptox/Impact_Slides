@@ -55,66 +55,134 @@ def apply_issue_148_bar_semantics(handoff: dict[str, Any]) -> dict[str, Any]:
     - Slide 13: grouped vertical bar chart (Total Balances / Billed Business).
     - Slide 14: dual_chart of vertical bars; left = 30+ Days Past Due (~1.3%),
       right = Net Write-Off Rates (~2%).
+    Missing either slide is a no-op for that slide (partial handoffs ok).
     """
     out = handoff  # caller may pass an already-copied dict
-    s13 = _slide(out, _S13)
-    s13["layout_type"] = "grouped_bar_chart"
-    s13["visual_spec"] = {
-        "primary_visual": {
-            "type": "grouped_bar_chart",
-            "steps_or_data": deepcopy(_S13_STEPS),
-            "chart_config": {
-                "series_names": ["Total Balances", "Billed Business"],
-                "series_colors": ["#00175A", "#006FCF"],
-                "y_axis_min": 0,
-                "y_axis_max": 15,
-                "y_axis_ticks": [0, 5, 10, 15],
-                "y_axis_unit": "%",
-                "y_axis_label": "%",
+    try:
+        s13 = _slide(out, _S13)
+    except KeyError:
+        s13 = None
+    if s13 is not None:
+        s13["layout_type"] = "grouped_bar_chart"
+        s13["visual_spec"] = {
+            "primary_visual": {
+                "type": "grouped_bar_chart",
+                "steps_or_data": deepcopy(_S13_STEPS),
+                "chart_config": {
+                    "series_names": ["Total Balances", "Billed Business"],
+                    "series_colors": ["#00175A", "#006FCF"],
+                    "y_axis_min": 0,
+                    "y_axis_max": 15,
+                    "y_axis_ticks": [0, 5, 10, 15],
+                    "y_axis_unit": "%",
+                    "y_axis_label": "%",
+                },
+            }
+        }
+        s13["speaker_notes"] = "Grouped vertical bars: balances vs billed business."
+
+    try:
+        s14 = _slide(out, _S14)
+    except KeyError:
+        s14 = None
+    if s14 is not None:
+        s14["layout_type"] = "dual_chart"
+        s14["content"] = dict(s14.get("content") or {})
+        s14["content"]["subtitle"] = "30+ days past due and net write-off rates"
+        s14["visual_spec"] = {
+            "primary_visual": {
+                "type": "grouped_bar_chart",
+                "heading": "30+ Days Past Due",
+                "steps_or_data": deepcopy(_S14_LEFT_STEPS),
+                "chart_config": {
+                    "series_names": ["30+ Days Past Due"],
+                    "series_colors": ["#00175A"],
+                    "y_axis_min": 0,
+                    "y_axis_max": 3,
+                    "y_axis_unit": "%",
+                },
+            },
+            "secondary_visual": {
+                "type": "grouped_bar_chart",
+                "heading": "Net Write-Off Rates",
+                "steps_or_data": deepcopy(_S14_RIGHT_STEPS),
+                "chart_config": {
+                    "series_names": ["Net Write-Off Rates"],
+                    "series_colors": ["#006FCF"],
+                    "y_axis_min": 0,
+                    "y_axis_max": 3,
+                    "y_axis_unit": "%",
+                },
             },
         }
-    }
-    s13["speaker_notes"] = "Grouped vertical bars: balances vs billed business."
+        s14["speaker_notes"] = (
+            "PDF pane order: 30+ DPD left (~1.3%), net write-offs right (~2%)."
+        )
+    return out
 
-    s14 = _slide(out, _S14)
-    s14["layout_type"] = "dual_chart"
-    s14["content"] = dict(s14.get("content") or {})
-    s14["content"]["subtitle"] = "30+ days past due and net write-off rates"
-    s14["visual_spec"] = {
-        "primary_visual": {
-            "type": "grouped_bar_chart",
-            "heading": "30+ Days Past Due",
-            "steps_or_data": deepcopy(_S14_LEFT_STEPS),
-            "chart_config": {
-                "series_names": ["30+ Days Past Due"],
-                "series_colors": ["#00175A"],
-                "y_axis_min": 0,
-                "y_axis_max": 3,
-                "y_axis_unit": "%",
-            },
-        },
-        "secondary_visual": {
-            "type": "grouped_bar_chart",
-            "heading": "Net Write-Off Rates",
-            "steps_or_data": deepcopy(_S14_RIGHT_STEPS),
-            "chart_config": {
-                "series_names": ["Net Write-Off Rates"],
-                "series_colors": ["#006FCF"],
-                "y_axis_min": 0,
-                "y_axis_max": 3,
-                "y_axis_unit": "%",
-            },
-        },
-    }
-    s14["speaker_notes"] = (
-        "PDF pane order: 30+ DPD left (~1.3%), net write-offs right (~2%)."
-    )
+
+# Issue #158 — PDF physical page / deck slide 28 multi_panel pane titles.
+# v10 handoff put dollar stack totals in tile top_total pseudo-titles.
+_S28 = 28
+_S28_SUBTITLE = "$ in billions"
+_S28_TILES = (
+    ("Funding Mix", ["$210", "$219"]),
+    ("Deposit Programs", ["$151", "$157"]),
+)
+
+
+def apply_issue_158_slide28_pane_titles(handoff: dict[str, Any]) -> dict[str, Any]:
+    """Drop slide-28 top_total pseudo-titles; add pane subtitles.
+
+    Keeps Funding Mix / Deposit Programs as pane headings (via label),
+    explicit stack_total_labels as the only dollar totals, and the #138
+    FDIC side_callout + exterior segment names unchanged. Does not remove
+    legitimate top_total on other slides.
+    """
+    out = handoff
+    try:
+        s28 = _slide(out, _S28)
+    except KeyError:
+        return out
+    if str(s28.get("layout_type") or "") != "multi_panel":
+        return out
+    vs = s28.get("visual_spec") or {}
+    pv = vs.get("primary_visual") if isinstance(vs, dict) else None
+    tiles = pv.get("tiles") if isinstance(pv, dict) else None
+    if not isinstance(tiles, list):
+        return out
+    known = {name for name, _ in _S28_TILES}
+    for tile in tiles:
+        if not isinstance(tile, dict) or str(tile.get("kind") or "") != "chart":
+            continue
+        heading = str(tile.get("heading") or "").strip()
+        label = str(tile.get("label") or heading or "").strip()
+        # Only the two funding board panes; leave unrelated multi_panel tiles.
+        if label not in known and heading not in known:
+            continue
+        tile.pop("top_total", None)
+        tile["subtitle"] = _S28_SUBTITLE
+        # Prefer stable label heading; do not invent parallel keys if label set.
+        if not str(tile.get("label") or "").strip() and heading:
+            tile["label"] = heading
+        cfg = tile.get("chart_config")
+        if not isinstance(cfg, dict):
+            cfg = {}
+            tile["chart_config"] = cfg
+        # Preserve existing stack_total_labels when present; fill known defaults.
+        if not cfg.get("stack_total_labels"):
+            for name, totals in _S28_TILES:
+                if label == name or heading == name:
+                    cfg["stack_totals"] = True
+                    cfg["stack_total_labels"] = list(totals)
+                    break
     return out
 
 
 def apply_all(handoff: dict[str, Any]) -> dict[str, Any]:
     """Apply every bounded Amex handoff mutation known to this module."""
-    return apply_issue_148_bar_semantics(handoff)
+    out = apply_issue_148_bar_semantics(handoff)
+    return apply_issue_158_slide28_pane_titles(out)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -125,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
         "--output",
         type=Path,
         required=True,
-        help="Destination handoff JSON (issue #148 bars applied)",
+        help="Destination handoff JSON (issues #148/#158 mutations applied)",
     )
     args = p.parse_args(argv)
     data = json.loads(args.input.read_text(encoding="utf-8"))

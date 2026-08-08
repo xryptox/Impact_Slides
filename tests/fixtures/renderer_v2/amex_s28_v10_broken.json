@@ -1,0 +1,200 @@
+{
+  "presentation": {
+    "title": "American Express Earnings Conference Call Q1'26",
+    "subtitle": "Issue #158 contract fixture — v10 broken slide 28 titles"
+  },
+  "slides": [
+    {
+      "slide_number": 28,
+      "layout_type": "multi_panel",
+      "packing_mode": "chart-led",
+      "title": "Funding and Deposits",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "$ in billions",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "FDIC insured (Q1'26)",
+            "value": "92%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "multi_panel",
+          "tiles": [
+            {
+              "kind": "chart",
+              "chart_type": "stacked_bar_chart",
+              "label": "Funding Mix",
+              "top_total": "$210B · $219B",
+              "badge": "",
+              "steps_or_data": [
+                [
+                  "Quarter",
+                  "Deposits",
+                  "Unsecured Funding**",
+                  "Short-term Funding / Card ABS*"
+                ],
+                [
+                  "Q4'25",
+                  "72",
+                  "21",
+                  "7"
+                ],
+                [
+                  "Q1'26",
+                  "72",
+                  "21",
+                  "7"
+                ]
+              ],
+              "chart_config": {
+                "stacked": true,
+                "y_axis_min": 0,
+                "y_axis_max": 100,
+                "y_axis_ticks": [
+                  0,
+                  25,
+                  50,
+                  75,
+                  100
+                ],
+                "y_axis_unit": "%",
+                "force_ticks": true,
+                "show_point_labels": true,
+                "point_labels": true,
+                "stage": "flat",
+                "series_names": [
+                  "Deposits",
+                  "Unsecured Funding**",
+                  "Short-term Funding / Card ABS*"
+                ],
+                "series_colors": [
+                  "#00175A",
+                  "#006FCF",
+                  "#B8BFC9"
+                ],
+                "exterior_segment_names": true,
+                "stack_totals": true,
+                "stack_total_labels": [
+                  "$210",
+                  "$219"
+                ],
+                "segment_name_font_size": 16,
+                "segment_name_line_height": 20,
+                "segment_name_wrap_chars": 16,
+                "segment_name_max_lines": 4,
+                "segment_name_offset": 22,
+                "segment_name_gutter": 150,
+                "show_gridlines": false,
+                "show_y_axis": false,
+                "show_legend": false,
+                "bar_percentage": 0.58,
+                "category_percentage": 1.0,
+                "fill_tile": true
+              }
+            },
+            {
+              "kind": "chart",
+              "chart_type": "stacked_bar_chart",
+              "label": "Deposit Programs",
+              "top_total": "$151B · $157B",
+              "badge": "92% of deposits FDIC insured*",
+              "steps_or_data": [
+                [
+                  "Quarter",
+                  "Savings and Direct CDs",
+                  "Third Party CDs",
+                  "Third Party Sweep",
+                  "Checking"
+                ],
+                [
+                  "Q4'25",
+                  "81",
+                  "10",
+                  "7",
+                  "2"
+                ],
+                [
+                  "Q1'26",
+                  "82",
+                  "10",
+                  "6",
+                  "2"
+                ]
+              ],
+              "chart_config": {
+                "stacked": true,
+                "y_axis_min": 0,
+                "y_axis_max": 100,
+                "y_axis_ticks": [
+                  0,
+                  25,
+                  50,
+                  75,
+                  100
+                ],
+                "y_axis_unit": "%",
+                "force_ticks": true,
+                "show_point_labels": true,
+                "point_labels": true,
+                "stage": "flat",
+                "series_names": [
+                  "Savings and Direct CDs",
+                  "Third Party CDs",
+                  "Third Party Sweep",
+                  "Checking"
+                ],
+                "series_colors": [
+                  "#00175A",
+                  "#006FCF",
+                  "#5B6B9A",
+                  "#B8BFC9"
+                ],
+                "exterior_segment_names": true,
+                "stack_totals": true,
+                "stack_total_labels": [
+                  "$151",
+                  "$157"
+                ],
+                "segment_name_font_size": 16,
+                "segment_name_line_height": 20,
+                "segment_name_wrap_chars": 16,
+                "segment_name_max_lines": 4,
+                "segment_name_offset": 22,
+                "segment_name_gutter": 150,
+                "show_gridlines": false,
+                "show_y_axis": false,
+                "show_legend": false,
+                "bar_percentage": 0.58,
+                "category_percentage": 1.0,
+                "fill_tile": true,
+                "side_callout": {
+                  "value": "92% FDIC",
+                  "label": [
+                    "insured at",
+                    "Q1'26"
+                  ],
+                  "placement": "right",
+                  "skin": "tall"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Funding footnotes",
+            "body": "* Face amount of Card ABS, net of securities retained; includes ABS facility draws. ** Face amount of unsecured term debt."
+          }
+        ]
+      },
+      "speaker_notes": "pass_03: FDIC text moved to Deposit Programs tile badge."
+    }
+  ]
+}

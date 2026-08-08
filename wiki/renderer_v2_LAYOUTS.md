@@ -41,9 +41,9 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `line_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | `amex_s13_s14_v10_broken.json`, `golden_mvp1_handoff.json` | `amex_s13_s14_handoff_contract.py`, `chart_polish.py`, `chart_styling.py` +9 |
 | `metric_dashboard` | `render_metric` | impact_slides/renderer_v2/layout/recipes/metrics.py:23 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +5 |
 | `metric_row_with_breakdown` | `render_metric_row_with_breakdown` | impact_slides/renderer_v2/layout/recipes/metrics.py:136 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
-| `multi_panel` | `render_multi_panel` | impact_slides/renderer_v2/layout/recipes/charts.py:626 | — | `chart_typography_r6a.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `multi_panel` | `render_multi_panel` | impact_slides/renderer_v2/layout/recipes/charts.py:626 | `amex_s28_corrected.json`, `amex_s28_v10_broken.json` | `AGENTS.md`, `amex_s28_handoff_contract.py`, `chart_typography_r6a.py` +3 |
 | `pill_comparison` | `render_pill_comparison` | impact_slides/renderer_v2/layout/recipes/comparison.py:24 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
-| `priority_matrix` | `render_priority_matrix` | impact_slides/renderer_v2/layout/recipes/charts.py:819 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
+| `priority_matrix` | `render_priority_matrix` | impact_slides/renderer_v2/layout/recipes/charts.py:830 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1b_layouts.py` |
 | `process_with_decisions` | `render_process_with_decisions` | impact_slides/renderer_v2/layout/recipes/timeline.py:143 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4b_layouts.py` |
 | `quote_card` | `render_quote` | impact_slides/renderer_v2/layout/recipes/covers.py:145 | `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gates.py` +3 |
 | `recommendation_with_rationale` | `render_recommendation_with_rationale` | impact_slides/renderer_v2/layout/recipes/cards.py:215 | `golden_mvp1_handoff.json` | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3a_layouts.py` |
@@ -52,11 +52,11 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `section_divider` | `render_section_divider` | impact_slides/renderer_v2/layout/recipes/covers.py:117 | — | `intent.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +3 |
 | `source_deep_dive` | `render_source_deep_dive` | impact_slides/renderer_v2/layout/recipes/cards.py:246 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4b_layouts.py` |
 | `split_text_visual` | `render_split` | impact_slides/renderer_v2/layout/recipes/comparison.py:293 | `disclosure_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` +6 |
-| `stacked_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | — | `bar_group_brackets.py`, `chart_polish.py`, `chart_styling.py` +6 |
+| `stacked_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | `amex_s28_corrected.json`, `amex_s28_v10_broken.json` | `bar_group_brackets.py`, `chart_polish.py`, `chart_styling.py` +6 |
 | `system_architecture` | `render_system_architecture` | impact_slides/renderer_v2/layout/recipes/diagrams.py:23 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
 | `three_column_comparison` | `render_three_column_comparison` | impact_slides/renderer_v2/layout/recipes/comparison.py:183 | — | `circle_pair.py`, `layout_dispatch_parity.py`, `visual_regression_deck.py` +1 |
 | `timeline` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gates.py` +3 |
-| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes/covers.py:25 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `circle_pair.py`, `combo_chart.py`, `layout_dispatch_parity.py` +12 |
+| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes/covers.py:25 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `amex_s28_handoff_contract.py`, `circle_pair.py`, `combo_chart.py` +14 |
 | `waterfall_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |
 
 ## Layouts with no direct test reference

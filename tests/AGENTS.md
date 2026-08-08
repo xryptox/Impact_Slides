@@ -20,8 +20,9 @@ Regression suite and fixtures for preprocessor + renderer_v2.
 ## Work Guidance
 
 - Fixtures for renderer: `tests/fixtures/renderer_v2/`
-- Amex #148 handoff contract: `test_amex_s13_s14_handoff_contract.py` + fixtures `amex_s13_s14_v10_broken.json` / `amex_s13_s14_corrected.json` (mutation via `scripts/amex_handoff_mutations.py`; no renderer production change)
+- Amex #148 handoff contract: `test_amex_s13_s14_handoff_contract.py` + fixtures `amex_s13_s14_v10_broken.json` / `amex_s13_s14_corrected.json` (mutation via `scripts/amex_handoff_mutations.py`)
 - Amex #153 handoff contract: `test_amex_slide26_matrix_orientation.py` + fixture `amex_slide26_te_billed_business.json` (Q1'26 period header + category-column matrix; identity-safe cell asserts + adversarial mutations; no renderer production change)
+- Amex #158 handoff + multi_panel pane titles: `test_amex_s28_handoff_contract.py` + `test_multi_panel_pane_headings.py` + fixtures `amex_s28_v10_broken.json` / `amex_s28_corrected.json` (mutation drops slide-28 `top_total` pseudo-titles; renderer multi_panel tiles share #147 heading/subtitle chrome; SVG honors `stack_total_labels`)
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
 - Do not reintroduce legacy preprocessor baseline harnesses; see `LEGACY_MIGRATION.md`
 

@@ -703,17 +703,21 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 if callout_requested and not has_side_legend
                 else ""
             )
-            # #139: chart tile heading uses shared pane-title class; metric
-            # tiles below keep ordinary gl-tile-label. Host size from tile cols.
+            # #139/#147/#158: chart tile heading/subtitle use shared pane chrome;
+            # metric tiles below keep ordinary gl-tile-label. Host size from cols.
+            # heading > label > chart_config.title > single series; explicit subtitle.
             aw, ah = chart_host_size("multi_panel", cols=cols)
-            lbl = (
-                chart_pane_title_html(label, available_w=aw, available_h=ah)
-                if label
-                else ""
+            heading = resolve_pane_heading(
+                tile, series_names=_visual_series_names(tile)
+            )
+            subtitle = resolve_pane_subtitle(tile)
+            lbl = chart_pane_headings_html(
+                heading, subtitle, available_w=aw, available_h=ah
             )
             # IR dual tall-card slots (#90/F11+): freestanding top total,
             # exterior side legend, badge callout. Only engaged when present,
-            # so legacy tiles keep their existing chrome.
+            # so legacy tiles keep their existing chrome. #158: side_callout
+            # alone also keeps tall geometry (PDF p28 deposit tile).
             top_total = strip_eids(tile.get("top_total") or "")
             # #138: side_callout supersedes the pill badge chrome on the same
             # tile, but the tile keeps its existing tall-card geometry.
@@ -738,7 +742,10 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     items.append(f'<li class="gl-tile-legend-item">{sw}{esc(txt)}</li>')
                 if items:
                     legend_html = f'<ul class="gl-tile-legend">{"".join(items)}</ul>'
-            if top_total or badge or legend_html or badge_text:
+            tall = bool(
+                top_total or badge or legend_html or badge_text or callout_on_tile
+            )
+            if tall:
                 badge_html = (
                     f'<span class="gl-tile-badge">{esc(badge)}</span>' if badge else ""
                 )
@@ -759,9 +766,10 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                         if top_total
                         else ""
                     )
+                    # IR head still uses the resolved heading text (label path).
                     head_lbl = (
-                        f'<span class="gl-tile-ir-title">{esc(label)}</span>'
-                        if label
+                        f'<span class="gl-tile-ir-title">{esc(heading)}</span>'
+                        if heading
                         else ""
                     )
                     parts.append(
@@ -776,8 +784,11 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                         if top_total
                         else ""
                     )
+                    tile_style = (
+                        ' style="position:relative"' if callout_on_tile else ""
+                    )
                     parts.append(
-                        f'<div class="gl-tile gl-tile-chart gl-tile-tall">'
+                        f'<div class="gl-tile gl-tile-chart gl-tile-tall"{tile_style}>'
                         f"{badge_html}{side_html}{total_html}{lbl}{body}"
                         f"</div>"
                     )
