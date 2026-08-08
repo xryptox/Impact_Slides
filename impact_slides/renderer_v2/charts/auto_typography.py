@@ -1313,7 +1313,7 @@ def _extract_categories_and_shorts(
     from .bars import _bar_axes, _bar_matrix
     from .core import _chart_config
     from .format import _fmt_bar, _fmt_value_label
-    from .lines import _combo_bar_data, _line_data
+    from .lines import _combo_bar_data, _combo_line_data, _line_data
 
     cfg = _chart_config(slide)
     ct = (chart_type or "").lower().strip()
@@ -1381,16 +1381,18 @@ def _extract_categories_and_shorts(
                 for p in pts
                 if isinstance(p, dict)
             ]
+            series_keys: set[str] = set()
             for p in pts:
                 if not isinstance(p, dict):
                     continue
                 shorts.append(_short_of(p))
-                v = p.get("value")
-                if isinstance(v, (int, float)):
-                    values_flat.append(float(v))
-            # multi-series via series key
-            if pts and isinstance(pts[0], dict) and pts[0].get("series"):
-                series_count = 1
+                for key, v in p.items():
+                    if key == "value" or key.startswith("series_"):
+                        if isinstance(v, (int, float)):
+                            values_flat.append(float(v))
+                        if key.startswith("series_"):
+                            series_keys.add(key)
+            series_count += len(series_keys)
         while len(shorts) < len(cats):
             shorts.append(None)
     elif ct == "combo_chart":
@@ -1418,6 +1420,28 @@ def _extract_categories_and_shorts(
         y_max = max(y_ticks) if y_ticks else 1.0
         y_min = min(y_ticks) if y_ticks else 0.0
     y_labs = [_fmt_bar(v, unit) for v in y_ticks]
+
+    if ct == "combo_chart":
+        line_points = _combo_line_data(slide)
+        vs = slide.get("visual_spec") or {}
+        overlay = vs.get("line_overlay") if isinstance(vs, Mapping) else None
+        if line_points and isinstance(overlay, Mapping):
+            line_values = [float(p["value"]) for p in line_points]
+            line_min = float(overlay.get("y_axis_min", 0))
+            line_max = float(overlay.get("y_axis_max", max(line_values) * 1.15))
+            line_ticks = overlay.get("y_axis_ticks")
+            if line_ticks is None:
+                step = (line_max - line_min) / 4
+                line_ticks = [line_min + i * step for i in range(5)]
+            overlay_unit = str(overlay.get("y_axis_unit") or "")
+            for tick in line_ticks:
+                try:
+                    value = float(tick)
+                except (TypeError, ValueError):
+                    continue
+                y_ticks.append(value)
+                y_labs.append(f"{value:g}{overlay_unit}")
+                values_flat.append(value)
 
     dl_texts: list[str] = []
     want = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))

@@ -34,6 +34,8 @@ def _line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
             except (ValueError, TypeError):
                 continue
             pt: dict[str, Any] = {"label": label, "value": value}
+            if item.get("short_label") is not None:
+                pt["short_label"] = item["short_label"]
             # Multi-series keys
             for k, v in item.items():
                 if k.startswith("series_") and k != "series_1":
@@ -223,7 +225,17 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         '<defs></defs>',
     ]
 
-    auto_plan = compute_auto_plan_for_slide(slide, "line_chart", chart_cfg=cfg)
+    auto_plan = compute_auto_plan_for_slide(
+        slide, "line_chart", host_w=W, host_h=H, chart_cfg=cfg
+    )
+    if auto_plan is not None:
+        x_tick_fs = auto_plan.x_tick_font_size
+        y_tick_fs = auto_plan.y_tick_font_size
+        y_tick_wt = "700"
+        if auto_plan.datalabel_font_size_set:
+            dl_fs_primary = auto_plan.datalabel_font_size
+            dl_fs_secondary = auto_plan.datalabel_font_size
+            dl_set = True
     label_lines, value_ticks = svg_auto_axis_view(
         auto_plan, labels=[str(p["label"]) for p in points], ticks=y_ticks, format_tick=_fmtu
     )
@@ -529,7 +541,13 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         f'style="width:100%;height:auto">',
     ]
 
-    auto_plan = compute_auto_plan_for_slide(slide, "combo_chart", chart_cfg=cfg)
+    auto_plan = compute_auto_plan_for_slide(
+        slide, "combo_chart", host_w=W, host_h=H, chart_cfg=cfg
+    )
+    if auto_plan is not None:
+        x_tick_fs = auto_plan.x_tick_font_size
+        y_tick_fs = auto_plan.y_tick_font_size
+        y_tick_wt = "700"
     label_lines, _value_ticks = svg_auto_axis_view(
         auto_plan, labels=bar_labels, ticks=[], format_tick=lambda _tick: ""
     )

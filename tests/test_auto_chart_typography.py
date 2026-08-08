@@ -13,12 +13,14 @@ from impact_slides.renderer_v2.charts.auto_typography import (
     AUTO_X_LO,
     AUTO_Y_LO,
     _fit_x_labels,
+    compute_auto_plan_for_slide,
     measure_label_box,
     resolve_auto_typography,
     sync_sibling_plans,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures" / "renderer_v2"
+from impact_slides.renderer_v2.charts.lines import _line_data
 from impact_slides.renderer_v2.charts.typography import resolve_typography
 
 
@@ -425,7 +427,56 @@ def test_waterfall_auto_uses_renderable_category_label_and_legacy_value_typograp
     explicit_value_size = re.search(
         r'class="chart-value"[^>]*font-size="(\d+)"', explicit_html
     )
-    assert explicit_value_size and explicit_value_size.group(1) == "22"
+    assert explicit_value_size and explicit_value_size.group(1) == "18"
+
+
+def test_auto_plan_includes_line_series_and_combo_overlay_axes():
+    line = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [
+                {
+                    "label": "Long reporting period alpha beta",
+                    "short_label": f"Q{i}",
+                    "value": i,
+                    "series_2": i * 1000,
+                }
+                for i in range(1, 9)
+            ],
+        }},
+    }
+    points = _line_data(line)
+    short_plan = _fit_x_labels(
+        [point["label"] for point in points],
+        [point.get("short_label") for point in points],
+        12,
+        160,
+        80,
+    )
+    line_plan = compute_auto_plan_for_slide(line, "line_chart", host_w=200, host_h=240)
+    assert short_plan is not None and short_plan.used_short
+    assert line_plan is not None and line_plan.x_labels is not None
+    assert line_plan.x_labels.used_short and max(line_plan.y_tick_values) >= 2000
+
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [{"label": "Q1", "value": 1}, {"label": "Q2", "value": 2}],
+            },
+            "line_overlay": {
+                "data": [{"label": "Q1", "value": 10000}, {"label": "Q2", "value": 20000}],
+                "y_axis_max": 20000,
+                "y_axis_unit": " users",
+            },
+        },
+    }
+    combo_plan = compute_auto_plan_for_slide(combo, "combo_chart", host_w=900, host_h=480)
+    assert combo_plan is not None
+    assert 20000 in combo_plan.y_tick_values
+    assert "20000 users" in combo_plan.y_tick_labels
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):
