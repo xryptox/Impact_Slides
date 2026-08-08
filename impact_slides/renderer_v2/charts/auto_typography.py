@@ -1188,13 +1188,23 @@ def plan_to_data_attrs(plan: AutoTypoPlan) -> str:
         ("data-auto-datalabel", str(d["datalabel_font_size"])),
         ("data-auto-plot", f"{d['plot_w']}x{d['plot_h']}"),
         ("data-auto-x-rot", str(d.get("x_rotation_deg", 0))),
+        ("data-auto-x-wrap", str(int(bool(d.get("x_used_wrap"))))),
         ("data-auto-x-skip", str(d.get("x_skipped_count", 0))),
+        ("data-auto-y-reduced", str(int(bool(d.get("y_ticks_reduced"))))),
         ("data-auto-x-short", str(d.get("x_short_count", 0))),
         ("data-auto-x-ellipsis", str(d.get("x_ellipsis_count", 0))),
         ("data-auto-dl-suppress", str(d.get("datalabel_suppress_count", 0))),
         ("data-auto-confidence", str(d.get("confidence", "high"))),
     )
     return "".join(f' {k}="{v}"' for k, v in keys)
+
+
+def chart_host_dimensions(layout: str) -> tuple[int, int]:
+    """Canonical canvas dimensions for direct Chart.js/SVG chart layouts."""
+    return {
+        "horizontal_bar_chart": (960, 540),
+        "waterfall_chart": (1200, 520),
+    }.get(layout, (900, 480))
 
 
 def svg_label_transform(plan: AutoTypoPlan | None, x: float, y: float) -> str:
@@ -1314,12 +1324,10 @@ def _extract_categories_and_shorts(
     series_count = 1
     values_flat: list[float] = []
 
-    pv = primary_visual(slide)
-    raw_steps = list(pv.get("steps_or_data") or [])
-    if not raw_steps:
-        from .core import _steps
+    from ..slide_view import steps
 
-        raw_steps = list(_steps(slide))
+    pv = primary_visual(slide)
+    raw_steps = steps(slide)
 
     def _short_of(item: Any) -> str | None:
         if isinstance(item, Mapping):

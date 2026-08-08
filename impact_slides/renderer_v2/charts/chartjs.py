@@ -21,6 +21,7 @@ from .lines import _combo_bar_data, _combo_line_data, _line_data
 from .core import _chart_config, _svg_fallback_for_layout
 from .auto_typography import (
     apply_plan_to_chartjs_options,
+    chart_host_dimensions,
     plan_to_data_attrs,
     record_auto_diagnostic,
     typography_with_auto,
@@ -912,10 +913,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     fill = " chartjs-fill" if chart_cfg.get("fill_tile") else ""
     # #139: collision only on ordinary-label layouts when datalabel_font_size
     # is set; stacked/in-segment and named value sets stay untouched.
-    host_w, host_h = {
-        "horizontal_bar_chart": (960, 540),
-        "waterfall_chart": (1200, 520),
-    }.get(layout, (900, 480))
+    host_w, host_h = chart_host_dimensions(layout)
     typo, auto_plan = typography_with_auto(
         slide, layout, chart_cfg=chart_cfg, host_w=host_w, host_h=host_h
     )

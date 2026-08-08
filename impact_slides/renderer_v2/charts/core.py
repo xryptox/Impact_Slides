@@ -111,16 +111,14 @@ def _svg_fallback_for_layout(
     """Static SVG painter for a Chart.js MVP layout (JS-off / noscript path)."""
     from ..slide_view import primary_visual
     from .auto_typography import (
+        chart_host_dimensions,
         compute_auto_plan_for_slide,
         plan_to_data_attrs,
         record_auto_diagnostic,
     )
 
     cfg = _chart_config(slide)
-    host_w, host_h = {
-        "horizontal_bar_chart": (960, 540),
-        "waterfall_chart": (1200, 520),
-    }.get(layout, (900, 480))
+    host_w, host_h = chart_host_dimensions(layout)
     plan = compute_auto_plan_for_slide(
         slide, layout, host_w=host_w, host_h=host_h, chart_cfg=cfg
     )
