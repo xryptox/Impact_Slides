@@ -928,6 +928,10 @@ def apply_issue_155_slide21_capital(handoff: dict[str, Any]) -> dict[str, Any]:
             "label": "Common Shares Outstanding",
             "dual_axis": True,
             "y_axis_unit": "",
+            # Nice dual-axis domain so SVG y1 ticks stay short (pad_r=80).
+            "y_axis_min": 670,
+            "y_axis_max": 710,
+            "y_axis_ticks": [670, 680, 690, 700, 710],
             "data": [
                 {"label": q, "value": v}
                 for q, v in zip(_S21_QUARTERS, _S21_SHARES)

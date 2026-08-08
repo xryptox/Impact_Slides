@@ -73,6 +73,9 @@ def _assert_semantics(slide: dict) -> None:
     assert cfg["stack_total_labels"] == _STACK_TOTALS
     overlay = slide["visual_spec"]["line_overlay"]
     assert overlay["label"] == "Common Shares Outstanding"
+    assert overlay["y_axis_min"] == 670
+    assert overlay["y_axis_max"] == 710
+    assert overlay["y_axis_ticks"] == [670, 680, 690, 700, 710]
     assert [p["value"] for p in overlay["data"]] == _SHARES
     assert [p["label"] for p in overlay["data"]] == _QUARTERS
     support = slide["visual_spec"]["secondary_visual"]
