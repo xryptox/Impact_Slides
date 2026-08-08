@@ -1288,10 +1288,13 @@ def apply_plan_to_chartjs_options(
         val_scale = x if horizontal else y
         val_ticks = val_scale.setdefault("ticks", {})
         val_ticks["_rv2Values"] = list(plan.y_tick_values)
+        val_ticks["_rv2Labels"] = list(plan.y_tick_labels)
     if plan.secondary_y_ticks_reduced and plan.secondary_y_tick_values:
         secondary = scales.get("y1")
         if isinstance(secondary, dict):
-            secondary.setdefault("ticks", {})["_rv2Values"] = list(plan.secondary_y_tick_values)
+            secondary_ticks = secondary.setdefault("ticks", {})
+            secondary_ticks["_rv2Values"] = list(plan.secondary_y_tick_values)
+            secondary_ticks["_rv2Labels"] = list(plan.secondary_y_tick_labels)
 
     return options
 
@@ -1438,22 +1441,29 @@ def _extract_categories_and_shorts(
         line_points = _combo_line_data(slide)
         vs = slide.get("visual_spec") or {}
         overlay = vs.get("line_overlay") if isinstance(vs, Mapping) else None
+        if line_points:
+            series_count += 1
         if line_points and isinstance(overlay, Mapping):
             line_values = [float(p["value"]) for p in line_points]
-            line_min = float(overlay.get("y_axis_min", 0))
-            line_max = float(overlay.get("y_axis_max", max(line_values) * 1.15))
-            line_ticks = overlay.get("y_axis_ticks")
-            if line_ticks is None:
-                step = (line_max - line_min) / 4
-                line_ticks = [line_min + i * step for i in range(5)]
-            overlay_unit = str(overlay.get("y_axis_unit") or "")
-            for tick in line_ticks:
-                try:
-                    value = float(tick)
-                except (TypeError, ValueError):
-                    continue
-                secondary_y_ticks.append(value)
-                secondary_y_labs.append(f"{value:g}{overlay_unit}")
+            if overlay.get("dual_axis", True) is False:
+                values_flat.extend(line_values)
+                _y_max, _y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
+                y_labs = [_fmt_bar(v, unit) for v in y_ticks]
+            else:
+                line_min = float(overlay.get("y_axis_min", 0))
+                line_max = float(overlay.get("y_axis_max", max(line_values) * 1.15))
+                line_ticks = overlay.get("y_axis_ticks")
+                if line_ticks is None:
+                    step = (line_max - line_min) / 4
+                    line_ticks = [line_min + i * step for i in range(5)]
+                overlay_unit = str(overlay.get("y_axis_unit") or "")
+                for tick in line_ticks:
+                    try:
+                        value = float(tick)
+                    except (TypeError, ValueError):
+                        continue
+                    secondary_y_ticks.append(value)
+                    secondary_y_labs.append(f"{value:g}{overlay_unit}")
 
     dl_texts: list[str] = []
     want = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))

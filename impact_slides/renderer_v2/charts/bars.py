@@ -580,22 +580,29 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
         return '<p class="chart-empty">No bar chart data</p>'
     cfg = _chart_config(slide)
     palette = _series_colors(cfg)
+    W, H = 960, 540
+    auto_plan = compute_auto_plan_for_slide(
+        slide, "horizontal_bar_chart", host_w=W, host_h=H, chart_cfg=cfg
+    )
     typo = resolve_typography(cfg)
     # indexAxis=y: category labels sit on y; value ticks on x.
-    cat_fs = (
+    cat_fs = auto_plan.y_tick_font_size if auto_plan else (
         int(typo["y_tick_font_size"]) if typo.get("y_tick_font_size_set") else 13
     )
-    cat_wt = "700" if typo.get("y_tick_font_size_set") else "600"
-    x_tick_fs = (
+    cat_wt = "700" if auto_plan or typo.get("y_tick_font_size_set") else "600"
+    x_tick_fs = auto_plan.x_tick_font_size if auto_plan else (
         int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 13
     )
-    x_tick_wt = "700" if typo.get("x_tick_font_size_set") else "600"
-    W, H = 960, 540
+    x_tick_wt = "700" if auto_plan or typo.get("x_tick_font_size_set") else "600"
     pad_l, pad_r, pad_t, pad_b = 140.0, 24.0, 16.0, 40.0
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
-    x_max = _nice_max(max(vals) * 1.05)
-    x_min = min(0.0, min(vals))
+    if auto_plan:
+        x_max, x_min, x_ticks = _bar_axes(cfg, max(vals), min(vals))
+    else:
+        x_max = _nice_max(max(vals) * 1.05)
+        x_min = min(0.0, min(vals))
+        x_ticks = [x_min + (x_max - x_min) * i / 4 for i in range(5)]
     rng = (x_max - x_min) or 1.0
 
     def x_pos(v: float) -> float:
@@ -610,25 +617,20 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
         f'<svg class="chart-svg hbar" viewBox="0 0 {W} {H}" '
         f'xmlns="http://www.w3.org/2000/svg" role="img">'
     ]
-    # Value-axis tick labels (x) when opt-in typography is set.
-    if typo.get("x_tick_font_size_set"):
-        n_ticks = 5
-        for ti in range(n_ticks):
-            tv = x_min + (rng * ti / (n_ticks - 1))
+    label_lines, value_ticks = svg_auto_axis_view(
+        auto_plan, labels=labels, ticks=x_ticks, format_tick=lambda tick: _fmt_bar(tick, "")
+    )
+    # Value-axis tick labels are legacy opt-in and always rendered for auto mode.
+    if auto_plan or typo.get("x_tick_font_size_set"):
+        for tv, tick_label in value_ticks:
             tx = x_pos(tv)
             parts.append(
                 f'<text class="hbar-xtick" x="{tx:.1f}" y="{H - pad_b + 18:.1f}" '
                 f'text-anchor="middle" fill="var(--navy, #00175a)" '
                 f'font-size="{x_tick_fs}" font-weight="{x_tick_wt}" '
                 f'font-family="var(--font-body, sans-serif)">'
-                f'{esc(_fmt_bar(tv, ""))}</text>'
+                f'{esc(tick_label)}</text>'
             )
-    auto_plan = compute_auto_plan_for_slide(
-        slide, "horizontal_bar_chart", host_w=W, host_h=H, chart_cfg=cfg
-    )
-    label_lines, _value_ticks = svg_auto_axis_view(
-        auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
-    )
     for i, lab in enumerate(labels):
         cy = pad_t + row_h * i + row_h / 2
         lines = label_lines[i] if i < len(label_lines) else [lab]

@@ -6,7 +6,7 @@ from ..strip import esc, strip_eids
 
 from .format import _fmt_unit, _series_colors
 from .geometry import chart_geometry
-from .bars import _bar_matrix
+from .bars import _bar_axes, _bar_matrix
 from .core import _chart_config, _steps
 from .auto_typography import compute_auto_plan_for_slide, svg_auto_axis_view, svg_label_transform
 from .typography import (
@@ -505,13 +505,14 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     W, H = geom["width"], geom["height"]
     pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], 56 if stacked else 40, 60
 
-    bar_max = float(cfg.get("y_axis_max", max(bar_totals) * 1.15 if bar_totals else 10))
-    bar_min = 0.0
-
     line_values = [p["value"] for p in line_points] if line_points else []
+    use_dual_axis = bool(line_points) and overlay_cfg.get("dual_axis", True)
+    shared_values = [*bar_totals, *line_values] if not use_dual_axis else bar_totals
+    bar_max, bar_min, planned_bar_ticks = _bar_axes(
+        cfg, max(shared_values, default=0.0), min(shared_values, default=0.0)
+    )
     line_max = float(overlay_cfg.get("y_axis_max", max(line_values) * 1.15 if line_values else 10))
     line_min = float(overlay_cfg.get("y_axis_min", 0))
-    use_dual_axis = bool(line_points) and overlay_cfg.get("dual_axis", True)
 
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
@@ -553,12 +554,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         y_tick_fs = auto_plan.y_tick_font_size
         y_tick_wt = "700"
     # Y-axis tick labels only (bar axis) — plot gridlines default off (#152).
-    bar_ticks = cfg.get("y_axis_ticks")
-    if bar_ticks is None:
-        step = bar_max / 4
-        if step >= 5:
-            step = int(step)
-        bar_ticks = [bar_min + i * step for i in range(5)]
+    bar_ticks = planned_bar_ticks
     label_lines, bar_tick_view = svg_auto_axis_view(
         auto_plan, labels=bar_labels, ticks=bar_ticks, format_tick=_fmtb
     )

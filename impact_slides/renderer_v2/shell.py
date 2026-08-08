@@ -391,12 +391,19 @@ _JS = r"""
         Object.keys(cfg.options.scales || {}).forEach(function (axis) {
           var scale = cfg.options.scales[axis], ticks = scale && scale.ticks;
           if (!ticks) return;
-          var display = ticks._rv2DisplayLabels, values = ticks._rv2Values;
+          var display = ticks._rv2DisplayLabels, values = ticks._rv2Values, labels = ticks._rv2Labels || [];
           delete ticks._rv2DisplayLabels;
           delete ticks._rv2FullLabels;
           delete ticks._rv2Values;
+          delete ticks._rv2Labels;
           if (display) ticks.callback = function (value, index) { return display[index] || ''; };
           if (values) {
+            ticks.callback = function (value) {
+              for (var i = 0; i < values.length; i++) {
+                if (Math.abs(Number(value) - Number(values[i])) < 1e-8) return labels[i] == null ? value : labels[i];
+              }
+              return '';
+            };
             scale.afterBuildTicks = function (chartScale) {
               chartScale.ticks = values.map(function (value) { return {value: value}; });
             };
@@ -460,27 +467,7 @@ def wrap_deck(
     theme_block = _theme_style(theme)
     slides = "\n".join(slide_html)
     auto_runtime = "" if "data-auto-typo=\"1\"" not in slides else """
-        if (cfg.options._rv2AutoTypography) {
-          Object.keys(cfg.options.scales || {}).forEach(function (axis) {
-            var scale = cfg.options.scales[axis], ticks = scale && scale.ticks;
-            if (!ticks) return;
-            if (Array.isArray(ticks._rv2DisplayLabels)) {
-              cfg.data.labels = ticks._rv2DisplayLabels;
-              canvas.setAttribute('data-auto-full-labels', JSON.stringify(ticks._rv2FullLabels || ticks._rv2DisplayLabels));
-              delete ticks._rv2DisplayLabels;
-              delete ticks._rv2FullLabels;
-            }
-            if (Array.isArray(ticks._rv2Values)) {
-              var allowed = ticks._rv2Values;
-              ticks.callback = function (value) {
-                return allowed.some(function (v) { return Math.abs(Number(value) - Number(v)) < 1e-8; }) ? value : '';
-              };
-              delete ticks._rv2Values;
-            }
-            delete scale.afterBuildTicks;
-          });
-          delete cfg.options._rv2AutoTypography;
-        }
+        if (cfg.options._rv2AutoTypography) delete cfg.options._rv2AutoTypography;
         """
     js = _JS.replace("/*__RV2_AUTO_TYPO_RUNTIME__*/", auto_runtime)
     # Minimal chrome omits the deck-controls markup entirely (not just CSS-hide),

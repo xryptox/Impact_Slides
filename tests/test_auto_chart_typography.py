@@ -281,31 +281,32 @@ def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, ro
 
 
 def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
-    """The archived v10 handoff renders both paths with recorded decisions and no viewport clips."""
+    """The archived v10 handoff renders every opted-in pane with contained text."""
     from playwright.sync_api import sync_playwright
     from scripts.amex_handoff_mutations import apply_all
 
     handoff = json.loads((FIXTURES / "amex_v10_44_slide_handoff.json").read_text(encoding="utf-8"))
     handoff = apply_all(handoff)
-    slide_17 = next(slide for slide in handoff["slides"] if slide["slide_number"] == 17)
-    assert all(
-        pane["chart_config"]["typography"].get("mode") == "auto"
-        for pane in (slide_17["visual_spec"]["primary_visual"], slide_17["visual_spec"]["secondary_visual"])
-    )
     supported = {
         "line_chart", "grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart", "waterfall_chart",
     }
+    expected_by_slide = {}
     for slide in handoff["slides"]:
         visual = slide.get("visual_spec") or {}
-        for key in ("primary_visual", "secondary_visual"):
-            pane = visual.get(key)
-            if isinstance(pane, dict) and pane.get("type") in supported:
-                pane.setdefault("chart_config", {}).setdefault("typography", {})["mode"] = "auto"
+        panes = [visual.get(key) for key in ("primary_visual", "secondary_visual")]
         primary = visual.get("primary_visual")
         if isinstance(primary, dict):
-            for tile in primary.get("tiles") or []:
-                if isinstance(tile, dict) and tile.get("kind") == "chart" and tile.get("chart_type") in supported:
-                    tile.setdefault("chart_config", {}).setdefault("typography", {})["mode"] = "auto"
+            panes.extend(tile for tile in primary.get("tiles") or [] if isinstance(tile, dict) and tile.get("kind") == "chart")
+        expected = 0
+        for pane in panes:
+            if not isinstance(pane, dict):
+                continue
+            kind = pane.get("type") or pane.get("chart_type")
+            if kind in supported:
+                pane.setdefault("chart_config", {}).setdefault("typography", {})["mode"] = "auto"
+                expected += 1
+        expected_by_slide[slide["slide_number"]] = expected
+    assert sum(expected_by_slide.values()) > 0
     path = tmp_path / "v10.json"
     path.write_text(json.dumps(handoff), encoding="utf-8")
     for name, suppress in (("chartjs", []), ("svg", ["charts"])):
@@ -314,41 +315,43 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
         html = (out / "presentation.html").read_text(encoding="utf-8")
         meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
         assert len(re.findall(r'<section class="slide[^>]*data-slide-number="', html)) == 44
-        assert meta["auto_typography"], name
+        decisions = meta["auto_typography"]
+        assert sum(len([d for d in decisions if d.get("slide_number") == number]) for number in expected_by_slide) == sum(expected_by_slide.values()), name
+        assert all(
+            len([d for d in decisions if d.get("slide_number") == number]) == expected
+            for number, expected in expected_by_slide.items()
+        ), (name, decisions)
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": 1920, "height": 1080})
             page.goto((out / "presentation.html").resolve().as_uri(), wait_until="networkidle")
-            clip = page.evaluate(
-                """() => [...document.querySelectorAll('.slide')].map(slide => {
+            audit = page.evaluate(
+                """() => [...document.querySelectorAll('.slide')].map((slide, index) => {
                     slide.classList.add('active');
-                    const bad = [...slide.querySelectorAll('svg text, .chartjs-wrap, canvas')].some(el => {
-                      const r = el.getBoundingClientRect();
-                      return r.width < 1 || r.height < 1 || r.left < -1 || r.top < -1 || r.right > 1921 || r.bottom > 1081;
+                    const within = (r, outer) => r.width >= 1 && r.height >= 1 &&
+                      r.left >= outer.left - 1 && r.top >= outer.top - 1 &&
+                      r.right <= outer.right + 1 && r.bottom <= outer.bottom + 1;
+                    const outer = slide.getBoundingClientRect();
+                    const texts = [...slide.querySelectorAll('svg text')];
+                    const canvases = [...slide.querySelectorAll('canvas')];
+                    const badText = texts.some(text => !within(text.getBoundingClientRect(), outer));
+                    const canvasEvidence = canvases.every(canvas => {
+                      const r = canvas.getBoundingClientRect();
+                      if (!within(r, outer) || canvas.width < 2 || canvas.height < 2) return false;
+                      const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+                      return data.some((value, pixel) => pixel % 4 === 3 && value > 0);
                     });
                     slide.classList.remove('active');
-                    return bad;
+                    return {slide_number: index + 1, clipped: badText, text_count: texts.length,
+                      canvas_count: canvases.length, canvas_evidence: canvasEvidence};
                 })"""
             )
             browser.close()
-        audit = [
-            {
-                "slide_number": index + 1,
-                "clipped": clipped,
-                "decisions": [
-                    decision for decision in meta["auto_typography"]
-                    if decision.get("slide_number") == index + 1
-                ],
-                "warnings": [
-                    warning for decision in meta["auto_typography"]
-                    if decision.get("slide_number") == index + 1
-                    for warning in decision.get("warnings", [])
-                ],
-            }
-            for index, clipped in enumerate(clip)
-        ]
+        for row in audit:
+            if expected_by_slide[row["slide_number"]]:
+                assert row["canvas_count"] and row["canvas_evidence"] if name == "chartjs" else row["text_count"], (name, row)
         (out / "auto_typography_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
-        assert len(audit) == 44 and not any(row["clipped"] for row in audit), (name, audit)
+        assert not any(row["clipped"] for row in audit), (name, audit)
 
 
 def test_unknown_font_uses_reduced_confidence_metrics():

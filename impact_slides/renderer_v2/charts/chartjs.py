@@ -782,19 +782,19 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         # CSS vars not valid in canvas — coerce common Boardroom vars
         if line_color.startswith("var("):
             line_color = "#00175a"
-        datasets.append(
-            {
-                "type": "line",
-                "label": line_label,
-                "data": line_data,
-                "borderColor": line_color,
-                "backgroundColor": line_color,
-                "tension": 0.15,
-                "pointRadius": 4,
-                "order": 1,
-                "yAxisID": "y1",
-            }
-        )
+        line_dataset: dict[str, Any] = {
+            "type": "line",
+            "label": line_label,
+            "data": line_data,
+            "borderColor": line_color,
+            "backgroundColor": line_color,
+            "tension": 0.15,
+            "pointRadius": 4,
+            "order": 1,
+        }
+        if not isinstance(overlay, Mapping) or overlay.get("dual_axis", True) is not False:
+            line_dataset["yAxisID"] = "y1"
+        datasets.append(line_dataset)
     cfg = _chart_config(slide)
     _apply_bar_density_knobs(datasets, cfg)
     typo, auto_plan = typography_with_auto(
@@ -804,27 +804,28 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     if line_points:
         vs = slide.get("visual_spec") or {}
         overlay = vs.get("line_overlay") or {}
-        y1: dict[str, Any] = {
-            "position": "right",
-            "grid": {"display": False},
-            "ticks": {
-                "color": "#00175a",
-                "font": {"family": "'Source Sans 3', sans-serif", "size": typo["y_tick_font_size"]},
-            },
-        }
-        if isinstance(overlay, Mapping):
-            if overlay.get("y_axis_min") is not None:
-                y1["min"] = float(overlay["y_axis_min"])
-            if overlay.get("y_axis_max") is not None:
-                y1["max"] = float(overlay["y_axis_max"])
-            if isinstance(overlay.get("y_axis_ticks"), list) and len(overlay["y_axis_ticks"]) >= 2:
-                ticks = [float(tick) for tick in overlay["y_axis_ticks"]]
-                y1["min"] = ticks[0]
-                y1["max"] = ticks[-1]
-                y1["ticks"]["stepSize"] = ticks[1] - ticks[0]
-        options["scales"]["y1"] = y1
-        if auto_plan is not None and auto_plan.secondary_y_ticks_reduced:
-            y1["ticks"]["_rv2Values"] = list(auto_plan.secondary_y_tick_values)
+        if not isinstance(overlay, Mapping) or overlay.get("dual_axis", True) is not False:
+            y1: dict[str, Any] = {
+                "position": "right",
+                "grid": {"display": False},
+                "ticks": {
+                    "color": "#00175a",
+                    "font": {"family": "'Source Sans 3', sans-serif", "size": typo["y_tick_font_size"]},
+                },
+            }
+            if isinstance(overlay, Mapping):
+                if overlay.get("y_axis_min") is not None:
+                    y1["min"] = float(overlay["y_axis_min"])
+                if overlay.get("y_axis_max") is not None:
+                    y1["max"] = float(overlay["y_axis_max"])
+                if isinstance(overlay.get("y_axis_ticks"), list) and len(overlay["y_axis_ticks"]) >= 2:
+                    ticks = [float(tick) for tick in overlay["y_axis_ticks"]]
+                    y1["min"] = ticks[0]
+                    y1["max"] = ticks[-1]
+                    y1["ticks"]["stepSize"] = ticks[1] - ticks[0]
+            options["scales"]["y1"] = y1
+            if auto_plan is not None:
+                apply_plan_to_chartjs_options(options, auto_plan)
     _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "bar",
