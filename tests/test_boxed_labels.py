@@ -108,15 +108,66 @@ def test_chartjs_plugin_payload():
     assert boxed["minFontSize"] >= 11
 
 
-def test_chartjs_plugin_has_outside_path():
-    """Chart.js boxedLabels plugin must paint outside+connector for short bars."""
-    from impact_slides.renderer_v2.shell import _BOXED_LABELS_PLUGIN_HTML
+def test_chartjs_short_bar_outside_runtime(tmp_path):
+    """Short bars: Chart.js paints outside boxed labels (dataset diagnose attrs)."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    from impact_slides.renderer_v2 import render_deck
 
-    src = _BOXED_LABELS_PLUGIN_HTML
-    assert "outside" in src
-    assert "lineTo" in src  # connector stroke
-    assert "minBar" in src or "minBar=28" in src
-    assert "rv2BoxedLabelsOutside" in src
+    handoff = {
+        "meta": {"title": "t", "client": "c", "date": "2026-01-01"},
+        "presentation": {"title": "t"},
+        "slides": [
+            _slide(
+                bar_vals=[0.05, 0.05, 0.05, 0.05, 0.05],
+                values=["11%"] * 5,
+            )
+        ],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=True)
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 720})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        page.evaluate(
+            """() => {
+              const slide = document.querySelector('.slide[data-layout="grouped_bar_chart"]');
+              if (!slide) return;
+              document.querySelectorAll('.slide.active').forEach(s => s.classList.remove('active'));
+              slide.classList.add('active');
+              const stage = document.querySelector('.deck-stage');
+              if (stage) stage.style.transform = 'none';
+            }"""
+        )
+        page.wait_for_function(
+            """() => {
+              const slide = document.querySelector('.slide[data-layout="grouped_bar_chart"]');
+              const c = slide && slide.querySelector('canvas');
+              return !!(c && c.dataset && c.dataset.rv2BoxedLabels === '1');
+            }""",
+            timeout=15000,
+        )
+        stats = page.evaluate(
+            """() => {
+              const slide = document.querySelector('.slide[data-layout="grouped_bar_chart"]');
+              const c = slide && slide.querySelector('canvas');
+              if (!c) return null;
+              return {
+                painted: c.dataset.rv2BoxedLabelsPainted,
+                outside: c.dataset.rv2BoxedLabelsOutside,
+                attrOutside: c.getAttribute('data-boxed-outside'),
+              };
+            }"""
+        )
+        browser.close()
+    assert stats is not None
+    assert int(stats["painted"] or 0) == 5
+    assert int(stats["outside"] or 0) == 5
+    assert int(stats["attrOutside"] or 0) == 5
 
 
 def test_chartjs_html_embeds_plugin_not_collision():
@@ -125,7 +176,6 @@ def test_chartjs_html_embeds_plugin_not_collision():
     assert "rv2BoxedLabels" in html
     # Plugin is dedicated furniture, not the ordinary datalabel collision helper.
     assert "suppress_colliding_labels" not in html
-    assert "rv2BoxedLabelsOutside" in html  # outside diagnose channel
 
 def test_independent_of_ordinary_collision_suppression():
     """Boxed labels still paint when ordinary datalabels would be suppressed."""
