@@ -25,28 +25,18 @@ _COVER = "title_or_opening"
 
 
 def _handoff(slides: list[dict]) -> dict:
-    """Deck with a cover so normalize_handoff keeps authored slide_number."""
+    """Deck with a cover so normalize_handoff does not rewrite body layouts."""
     cover = {
         "slide_number": 1,
         "layout_type": _COVER,
         "title": "Cover",
         "content": {"headline": "Cover", "subtitle": ""},
     }
-    # Keep caller slide numbers; ensure cover is first and unique numbering.
-    body = []
-    for s in slides:
-        body.append(dict(s))
-    # If body starts at 28 (Amex), leave it; normalize renumbers only when
-    # injecting cover. Prepend cover and renumber body after cover when needed.
+    body = [dict(s) for s in slides]
     out_slides = [cover]
     for i, s in enumerate(body, start=2):
-        s = dict(s)
-        # Preserve explicit high numbers only when sole content is Amex 28 —
-        # normalize_handoff renumbers everything after cover injection.
-        s["slide_number"] = i if s.get("slide_number") != 28 else 28
+        s["slide_number"] = i
         out_slides.append(s)
-    # When Amex 28 is present alone, force numbers 1(cover)+28 would renumber
-    # to 1+2. Prefer identity via layout + heading content; still assert layout.
     return {
         "presentation": {"title": "multi_panel pane headings #158"},
         "slides": out_slides if body else [cover],

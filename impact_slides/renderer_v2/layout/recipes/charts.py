@@ -707,13 +707,9 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             # metric tiles below keep ordinary gl-tile-label. Host size from cols.
             # heading > label > chart_config.title > single series; explicit subtitle.
             aw, ah = chart_host_size("multi_panel", cols=cols)
-            names = _visual_series_names(tile) if tile.get("steps_or_data") is not None else []
-            # Tiles carry series_names on chart_config, not always via steps helper.
-            if not names:
-                cfg_names = tile_cfg.get("series_names")
-                if isinstance(cfg_names, list):
-                    names = [str(n) for n in cfg_names if n]
-            heading = resolve_pane_heading(tile, series_names=names)
+            heading = resolve_pane_heading(
+                tile, series_names=_visual_series_names(tile)
+            )
             subtitle = resolve_pane_subtitle(tile)
             lbl = chart_pane_headings_html(
                 heading, subtitle, available_w=aw, available_h=ah

@@ -155,17 +155,16 @@ def apply_issue_158_slide28_pane_titles(handoff: dict[str, Any]) -> dict[str, An
     for tile in tiles:
         if not isinstance(tile, dict) or str(tile.get("kind") or "") != "chart":
             continue
-        label = str(tile.get("label") or tile.get("heading") or "").strip()
+        heading = str(tile.get("heading") or "").strip()
+        label = str(tile.get("label") or heading or "").strip()
         # Only the two funding board panes; leave unrelated multi_panel tiles.
-        if label not in known and str(tile.get("heading") or "").strip() not in known:
+        if label not in known and heading not in known:
             continue
         tile.pop("top_total", None)
         tile["subtitle"] = _S28_SUBTITLE
         # Prefer stable label heading; do not invent parallel keys if label set.
-        if not str(tile.get("label") or "").strip() and str(
-            tile.get("heading") or ""
-        ).strip():
-            tile["label"] = str(tile["heading"]).strip()
+        if not str(tile.get("label") or "").strip() and heading:
+            tile["label"] = heading
         cfg = tile.get("chart_config")
         if not isinstance(cfg, dict):
             cfg = {}
@@ -173,7 +172,7 @@ def apply_issue_158_slide28_pane_titles(handoff: dict[str, Any]) -> dict[str, An
         # Preserve existing stack_total_labels when present; fill known defaults.
         if not cfg.get("stack_total_labels"):
             for name, totals in _S28_TILES:
-                if label == name or str(tile.get("heading") or "").strip() == name:
+                if label == name or heading == name:
                     cfg["stack_totals"] = True
                     cfg["stack_total_labels"] = list(totals)
                     break
