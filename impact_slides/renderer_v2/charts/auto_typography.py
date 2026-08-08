@@ -1403,6 +1403,25 @@ def merge_plan_into_typo(base: Mapping[str, int], plan: AutoTypoPlan) -> dict[st
     return out
 
 
+def combo_overlay_domain(
+    overlay: Mapping[str, Any], values: Sequence[float],
+) -> tuple[float, float]:
+    """Return a non-empty overlay axis domain containing its values."""
+    numeric = [float(value) for value in values]
+    low = min(numeric, default=0.0)
+    high = max(numeric, default=10.0)
+    try:
+        line_min = float(overlay["y_axis_min"]) if overlay.get("y_axis_min") is not None else min(0.0, low * 1.15)
+        line_max = float(overlay["y_axis_max"]) if overlay.get("y_axis_max") is not None else max(0.0, high * 1.15)
+    except (TypeError, ValueError):
+        line_min, line_max = min(0.0, low * 1.15), max(0.0, high * 1.15)
+    line_min, line_max = min(line_min, low), max(line_max, high)
+    if line_min == line_max:
+        padding = max(abs(line_min), 1.0) * 0.15
+        return line_min - padding, line_max + padding
+    return line_min, line_max
+
+
 def _extract_categories_and_shorts(
     slide: Mapping[str, Any],
     chart_type: str,
@@ -1562,8 +1581,7 @@ def _extract_categories_and_shorts(
                 primary_domain = (_y_min, _y_max)
                 y_labs = [_fmt_unit(v, unit, unit_pos) for v in y_ticks]
             else:
-                line_min = float(overlay.get("y_axis_min", 0))
-                line_max = float(overlay.get("y_axis_max", max(line_values) * 1.15))
+                line_min, line_max = combo_overlay_domain(overlay, line_values)
                 line_ticks = overlay.get("y_axis_ticks")
                 if line_ticks is None:
                     step = (line_max - line_min) / 4

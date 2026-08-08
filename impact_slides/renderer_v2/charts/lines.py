@@ -10,6 +10,7 @@ from .bars import _bar_axes, _bar_matrix
 from .core import _chart_config, _steps
 from .auto_typography import (
     axis_config_after_break,
+    combo_overlay_domain,
     compute_auto_plan_for_slide,
     full_label_aria_suffix,
     svg_auto_axis_view,
@@ -517,8 +518,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     bar_max, bar_min, planned_bar_ticks = _bar_axes(
         cfg, max(shared_values, default=0.0), min(shared_values, default=0.0)
     )
-    line_max = float(overlay_cfg.get("y_axis_max", max(line_values) * 1.15 if line_values else 10))
-    line_min = float(overlay_cfg.get("y_axis_min", 0))
+    line_min, line_max = combo_overlay_domain(overlay_cfg, line_values)
 
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b

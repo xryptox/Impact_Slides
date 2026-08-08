@@ -683,10 +683,11 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
                 f'width="{w:.1f}" height="{bar_h - 3:.1f}" '
                 f'fill="{color}" rx="2"/>'
             )
-    parts.append(
-        f'<line class="hbar-zero" x1="{zero_x:.1f}" y1="{pad_t:.1f}" '
-        f'x2="{zero_x:.1f}" y2="{H - pad_b:.1f}" '
-        f'stroke="var(--ink, #53565a)" stroke-width="1"/>'
-    )
+    if cfg.get("show_x_axis") is not False:
+        parts.append(
+            f'<line class="hbar-zero" x1="{zero_x:.1f}" y1="{pad_t:.1f}" '
+            f'x2="{zero_x:.1f}" y2="{H - pad_b:.1f}" '
+            f'stroke="var(--ink, #53565a)" stroke-width="1"/>'
+        )
     parts.append("</svg>")
     return "".join(parts)

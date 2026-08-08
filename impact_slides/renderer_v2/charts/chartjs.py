@@ -22,6 +22,7 @@ from .core import _chart_config, _svg_fallback_for_layout
 from .auto_typography import (
     apply_plan_to_chartjs_options,
     chart_host_dimensions,
+    combo_overlay_domain,
     full_label_aria_suffix,
     plan_to_data_attrs,
     record_auto_diagnostic,
@@ -811,6 +812,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         if not isinstance(overlay, Mapping) or overlay.get("dual_axis", True) is not False:
             y1: dict[str, Any] = {
                 "position": "right",
+                "display": cfg.get("show_y_axis") is not False,
                 "grid": {"display": False},
                 "ticks": {
                     "color": "#00175a",
@@ -818,10 +820,9 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 },
             }
             if isinstance(overlay, Mapping):
-                if overlay.get("y_axis_min") is not None:
-                    y1["min"] = float(overlay["y_axis_min"])
-                if overlay.get("y_axis_max") is not None:
-                    y1["max"] = float(overlay["y_axis_max"])
+                y1["min"], y1["max"] = combo_overlay_domain(
+                    overlay, [float(point["value"]) for point in line_points]
+                )
                 if isinstance(overlay.get("y_axis_ticks"), list) and len(overlay["y_axis_ticks"]) >= 2:
                     ticks = [float(tick) for tick in overlay["y_axis_ticks"]]
                     y1["min"] = ticks[0]

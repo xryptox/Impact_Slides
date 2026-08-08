@@ -1085,6 +1085,61 @@ def test_auto_svg_honors_hidden_axis_contract_and_hbar_diagnostics():
     assert 'data-auto-y-ticks="0"' in hbar_svg
 
 
+def test_auto_combo_negative_overlay_uses_valid_secondary_domain():
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [{"label": "Q1", "value": 1}, {"label": "Q2", "value": 2}],
+            },
+            "line_overlay": {"data": [{"label": "Q1", "value": -100}, {"label": "Q2", "value": -50}]},
+        },
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_combo_config
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    config = _chartjs_combo_config(combo)
+    assert config is not None
+    scale = config["options"]["scales"]["y1"]
+    assert scale["min"] < -100 < scale["max"]
+    assert scale["min"] < -50 < scale["max"]
+    svg = _svg_fallback_for_layout(combo, "combo_chart")
+    points = re.findall(r'<circle cx="[^"]+" cy="([^"]+)"', svg)
+    assert points and all(0 < float(y) < 480 for y in points)
+
+
+def test_combo_secondary_axis_honors_hidden_value_axis():
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}, "show_y_axis": False},
+                "steps_or_data": [{"label": "Q1", "value": 1}],
+            },
+            "line_overlay": {"data": [{"label": "Q1", "value": 2}]},
+        },
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_combo_config
+
+    config = _chartjs_combo_config(combo)
+    assert config is not None
+    assert config["options"]["scales"]["y1"]["display"] is False
+
+
+def test_hbar_hidden_value_axis_omits_baseline():
+    hbar = {
+        "layout_type": "horizontal_bar_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}, "show_x_axis": False},
+            "steps_or_data": [{"label": "Q1", "value": 1}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    assert 'class="hbar-zero"' not in _svg_fallback_for_layout(hbar, "horizontal_bar_chart")
+
+
 def test_auto_mode_does_not_change_legacy_output(tmp_path):
     slide = {
         "slide_number": 1, "title": "Legacy", "layout_type": "grouped_bar_chart", "content": {},
