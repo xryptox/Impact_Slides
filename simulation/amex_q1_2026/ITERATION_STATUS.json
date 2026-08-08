@@ -1,0 +1,150 @@
+{
+  "iteration_focus": "GAP_ANALYSIS + two allowed commits",
+  "done": [
+    "handoff.pre_mutations.json from canonical fixture",
+    "handoff.json via amex_handoff_mutations.py (no hand edits)",
+    "mutation changed slides recorded",
+    "render pass_01 presentation.html 44 slides",
+    "page_slide_mapping.json identity HOLD (8 known recipe aliases)",
+    "44 PDF + 44 HTML + 44 SBS @1920x1080",
+    "contact_sheet.png + comparison_manifest.json all_artifacts_present",
+    "paint-ready capture via simulation_probe on every slide",
+    "closed-ticket probes #136-#159 via probes/v11_closed_ticket_probes.py",
+    "closed_tickets/closed_ticket_results_v11.json + scorecard_136_159.json",
+    "focused ticket pytest supporting evidence",
+    "qualitative 44-row ledger (comparison/qualitative_ledger_v11.json)",
+    "GAP_ANALYSIS.md written from fresh evidence",
+    "wiki/baseline_v11_GAP_ANALYSIS.md byte copy (pending commit 2)"
+  ],
+  "mutation_changed_slides": [
+    13,
+    14,
+    21,
+    24,
+    27,
+    28,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37
+  ],
+  "contract_observations": {
+    "slide_12_pane_headings": false,
+    "slide_17_typography_auto": true,
+    "slide_18_driver_card_boxed_labels": true,
+    "slide_26_q1_26_matrix": false
+  },
+  "contract_notes": {
+    "slide_12": "canonical fixture lacks #147 left/right pane headings; mutations do not add them",
+    "slide_26": "canonical fixture still v10 transposed matrix; mutations lack #153"
+  },
+  "next": [
+    "commit 1: sim artifacts force-add",
+    "commit 2: wiki report only"
+  ],
+  "not_done_yet": [
+    "two allowed commits"
+  ],
+  "scorecard_summary": {
+    "#136/#149": {
+      "result": "pass",
+      "n_pass": 16,
+      "n_checks": 16,
+      "residuals": []
+    },
+    "#137/#146": {
+      "result": "pass",
+      "n_pass": 13,
+      "n_checks": 13,
+      "residuals": []
+    },
+    "#138/#158": {
+      "result": "pass",
+      "n_pass": 10,
+      "n_checks": 10,
+      "residuals": []
+    },
+    "#139/#150": {
+      "result": "pass",
+      "n_pass": 6,
+      "n_checks": 6,
+      "residuals": []
+    },
+    "#140": {
+      "result": "pass",
+      "n_pass": 14,
+      "n_checks": 14,
+      "residuals": []
+    },
+    "#147": {
+      "result": "partial",
+      "n_pass": 2,
+      "n_checks": 4,
+      "residuals": [
+        "handoff"
+      ]
+    },
+    "#148": {
+      "result": "pass",
+      "n_pass": 7,
+      "n_checks": 7,
+      "residuals": []
+    },
+    "#151": {
+      "result": "pass",
+      "n_pass": 8,
+      "n_checks": 8,
+      "residuals": []
+    },
+    "#152": {
+      "result": "pass",
+      "n_pass": 10,
+      "n_checks": 10,
+      "residuals": []
+    },
+    "#153": {
+      "result": "fail",
+      "n_pass": 0,
+      "n_checks": 4,
+      "residuals": [
+        "handoff"
+      ]
+    },
+    "#154": {
+      "result": "pass",
+      "n_pass": 10,
+      "n_checks": 10,
+      "residuals": []
+    },
+    "#155": {
+      "result": "pass",
+      "n_pass": 7,
+      "n_checks": 7,
+      "residuals": []
+    },
+    "#156": {
+      "result": "pass",
+      "n_pass": 9,
+      "n_checks": 9,
+      "residuals": []
+    },
+    "#157": {
+      "result": "pass",
+      "n_pass": 30,
+      "n_checks": 30,
+      "residuals": []
+    },
+    "#159": {
+      "result": "pass",
+      "n_pass": 6,
+      "n_checks": 6,
+      "residuals": []
+    }
+  },
+  "scorecard_evidence_backed_residuals": {
+    "#147": "handoff \u2014 slide 12 lacks explicit left/right pane headings in canonical fixture; mutations do not add them",
+    "#153": "handoff \u2014 slide 26 still category-row matrix without Q1'26 period columns; mutations lack #153"
+  }
+}

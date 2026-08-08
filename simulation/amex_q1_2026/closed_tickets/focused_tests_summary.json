@@ -1,0 +1,8 @@
+{
+  "summary_line": "279 passed in 28.75s",
+  "n_passed": 279,
+  "n_failed": 0,
+  "n_skipped": 0,
+  "note": "Supporting unit/integration evidence only; scorecard uses closed_ticket_results_v11.json rendered probes.",
+  "evidence": "closed_tickets/focused_tests_stdout.txt"
+}

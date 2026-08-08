@@ -1,0 +1,414 @@
+{
+  "source_handoff": "handoff.json",
+  "style_preset": "BoardroomEarnings",
+  "presentation_title": "American Express Earnings Conference Call Q1'26",
+  "total_slides": 44,
+  "readiness_score": 70,
+  "quality_flags": [
+    "simulation",
+    "amex_q1_2026",
+    "pass_03",
+    "v2_post_fixes",
+    "type_a_tuning"
+  ],
+  "slides": [
+    {
+      "slide_number": 1,
+      "title": "American Express Earnings Conference Call",
+      "section": "Cover",
+      "layout_type": "brand_cover",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 2,
+      "title": "Business Highlights",
+      "section": "Highlights",
+      "layout_type": "ir_bullet_sheet",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 3,
+      "title": "Summary Financial Performance",
+      "section": "Financials",
+      "layout_type": "pill_comparison",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 4,
+      "title": "Total Billed Business",
+      "section": "Billings",
+      "layout_type": "line_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 5,
+      "title": "U.S. Consumer Services Billed Business",
+      "section": "Billings",
+      "layout_type": "line_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 6,
+      "title": "U.S. Consumer Platinum Performance",
+      "section": "US Consumer",
+      "layout_type": "multi_panel",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 7,
+      "title": "U.S. Consumer: Membership Model Engagement",
+      "section": "US Consumer",
+      "layout_type": "three_column_comparison",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 8,
+      "title": "Membership Model Engagement: Proprietary Lodging Assets",
+      "section": "US Consumer",
+      "layout_type": "metric_row_with_breakdown",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 9,
+      "title": "Commercial Services Billed Business",
+      "section": "Billings",
+      "layout_type": "line_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 10,
+      "title": "International Card Services Billed Business",
+      "section": "Billings",
+      "layout_type": "line_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 11,
+      "title": "Transaction Growth",
+      "section": "Volumes",
+      "layout_type": "line_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 12,
+      "title": "New Acquisitions",
+      "section": "Acquisitions",
+      "layout_type": "chart_hero_dual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 13,
+      "title": "Total Balances and Billed Business",
+      "section": "Balances",
+      "layout_type": "grouped_bar_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 14,
+      "title": "Credit Metrics",
+      "section": "Credit",
+      "layout_type": "dual_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 15,
+      "title": "Total Provision",
+      "section": "Credit",
+      "layout_type": "stacked_bar_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 16,
+      "title": "Revenue Performance",
+      "section": "Revenue",
+      "layout_type": "data_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 17,
+      "title": "Net Card Fees",
+      "section": "Revenue",
+      "layout_type": "dual_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 18,
+      "title": "Premium Lending",
+      "section": "Revenue",
+      "layout_type": "chart_hero_dual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 19,
+      "title": "Total Revenues Net of Interest Expense",
+      "section": "Revenue",
+      "layout_type": "line_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 20,
+      "title": "Expense Performance",
+      "section": "Expenses",
+      "layout_type": "pill_comparison",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 21,
+      "title": "Capital",
+      "section": "Capital",
+      "layout_type": "chart_hero_dual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 22,
+      "title": "2026 Guidance",
+      "section": "Guidance",
+      "layout_type": "guidance_statement_card",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 23,
+      "title": "Appendix",
+      "section": "Appendix",
+      "layout_type": "brand_divider",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 24,
+      "title": "Q1'26 Network Volumes Growth by Customer Type",
+      "section": "Appendix",
+      "layout_type": "grouped_bar_chart",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 25,
+      "title": "FX Impact on Billed Business",
+      "section": "Appendix",
+      "layout_type": "data_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 26,
+      "title": "Travel & Entertainment Billed Business",
+      "section": "Appendix",
+      "layout_type": "data_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 27,
+      "title": "Credit Reserve Macroeconomic Scenarios: Select Variables",
+      "section": "Appendix",
+      "layout_type": "dual_chart",
+      "evidence_ids": [
+        "E0026"
+      ],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 28,
+      "title": "Funding and Deposits",
+      "section": "Appendix",
+      "layout_type": "multi_panel",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 29,
+      "title": "Additional Commentary — Variance Analysis",
+      "section": "Appendix",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 30,
+      "title": "Additional Commentary — Variance Analysis (cont.)",
+      "section": "Appendix",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 31,
+      "title": "Annex 1 (1 of 2) Billed Business and Processed Volumes — Reported & FX-Adjusted",
+      "section": "Annex",
+      "layout_type": "annex_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 32,
+      "title": "Annex 1 (2 of 2) Billed Business — Reported & FX-Adjusted",
+      "section": "Annex",
+      "layout_type": "grouped_annex_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 33,
+      "title": "Annex 2 Total Balances — Reported & FX-Adjusted",
+      "section": "Annex",
+      "layout_type": "annex_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 34,
+      "title": "Annex 3 Revenue — Reported & FX-Adjusted",
+      "section": "Annex",
+      "layout_type": "annex_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 35,
+      "title": "Annex 4 Net Card Fees — Reported & FX-Adjusted",
+      "section": "Annex",
+      "layout_type": "annex_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 36,
+      "title": "Annex 5 Net Interest Income — Reported & FX-Adjusted",
+      "section": "Annex",
+      "layout_type": "annex_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 37,
+      "title": "Annex 6 Revenues Net of Interest Expense — Reported & FX-Adjusted",
+      "section": "Annex",
+      "layout_type": "annex_table",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 38,
+      "title": "Cautionary Note Regarding Forward-Looking Statements",
+      "section": "Legal",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 39,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 40,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 41,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 42,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 43,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "section": "Legal",
+      "layout_type": "split_text_visual",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    },
+    {
+      "slide_number": 44,
+      "title": "American Express",
+      "section": "End",
+      "layout_type": "brand_divider",
+      "evidence_ids": [],
+      "synthesized": false,
+      "confidence": "medium"
+    }
+  ]
+}

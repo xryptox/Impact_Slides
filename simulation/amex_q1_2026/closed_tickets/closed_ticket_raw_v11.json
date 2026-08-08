@@ -1,0 +1,1847 @@
+{
+  "modes": {
+    "chartjs": {
+      "136_149": {
+        "mode": "chartjs",
+        "data": {
+          "labelBox": {
+            "x": 379.84375,
+            "y": 817.703125,
+            "w": 199.984375,
+            "h": 105,
+            "right": 579.828125,
+            "bottom": 922.703125,
+            "cx": 479.8359375,
+            "cy": 870.203125,
+            "text": "Reserve Rate for Total Balances"
+          },
+          "cells": [
+            {
+              "x": 579.828125,
+              "y": 841.203125,
+              "w": 122.046875,
+              "h": 58,
+              "right": 701.875,
+              "bottom": 899.203125,
+              "cx": 640.8515625,
+              "cy": 870.203125,
+              "text": "2.9%"
+            },
+            {
+              "x": 701.875,
+              "y": 841.203125,
+              "w": 122.046875,
+              "h": 58,
+              "right": 823.921875,
+              "bottom": 899.203125,
+              "cx": 762.8984375,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 823.921875,
+              "y": 841.203125,
+              "w": 122.046875,
+              "h": 58,
+              "right": 945.96875,
+              "bottom": 899.203125,
+              "cx": 884.9453125,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 945.96875,
+              "y": 841.203125,
+              "w": 122.046875,
+              "h": 58,
+              "right": 1068.015625,
+              "bottom": 899.203125,
+              "cx": 1006.9921875,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1068.015625,
+              "y": 841.203125,
+              "w": 122.046875,
+              "h": 58,
+              "right": 1190.0625,
+              "bottom": 899.203125,
+              "cx": 1129.0390625,
+              "cy": 870.203125,
+              "text": "2.8%"
+            }
+          ],
+          "boxes": [
+            {
+              "x": 616.4375,
+              "y": 841.203125,
+              "w": 48.8125,
+              "h": 58,
+              "right": 665.25,
+              "bottom": 899.203125,
+              "cx": 640.84375,
+              "cy": 870.203125,
+              "text": "2.9%"
+            },
+            {
+              "x": 738.484375,
+              "y": 841.203125,
+              "w": 48.8125,
+              "h": 58,
+              "right": 787.296875,
+              "bottom": 899.203125,
+              "cx": 762.890625,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 860.53125,
+              "y": 841.203125,
+              "w": 48.8125,
+              "h": 58,
+              "right": 909.34375,
+              "bottom": 899.203125,
+              "cx": 884.9375,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 982.578125,
+              "y": 841.203125,
+              "w": 48.8125,
+              "h": 58,
+              "right": 1031.390625,
+              "bottom": 899.203125,
+              "cx": 1006.984375,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1104.625,
+              "y": 841.203125,
+              "w": 48.8125,
+              "h": 58,
+              "right": 1153.4375,
+              "bottom": 899.203125,
+              "cx": 1129.03125,
+              "cy": 870.203125,
+              "text": "2.8%"
+            }
+          ],
+          "bars": [
+            {
+              "cx": 640.84375
+            },
+            {
+              "cx": 762.84375
+            },
+            {
+              "cx": 884.84375
+            },
+            {
+              "cx": 1006.84375
+            },
+            {
+              "cx": 1128.84375
+            }
+          ],
+          "svgBars": [],
+          "aligned": true,
+          "nOutlined": 6,
+          "hasSupport": true
+        },
+        "paint_err": null
+      },
+      "137_146": {
+        "targets": {
+          "9": {
+            "identity_ok": true,
+            "n_canvas": 1,
+            "paint_err": null
+          },
+          "12": {
+            "identity_ok": true,
+            "n_canvas": 1,
+            "paint_err": null
+          },
+          "27": {
+            "identity_ok": true,
+            "n_canvas": 2,
+            "paint_err": null
+          }
+        }
+      },
+      "138_158": {
+        "mode": "chartjs",
+        "data": {
+          "titles": [
+            "Funding Mix",
+            "Deposit Programs"
+          ],
+          "subs": [
+            "$ in billions",
+            "$ in billions"
+          ],
+          "callouts": [
+            {
+              "x": 1691.234375,
+              "y": 251.984375,
+              "w": 116.75,
+              "h": 87,
+              "right": 1807.984375,
+              "bottom": 338.984375,
+              "cx": 1749.609375,
+              "cy": 295.484375,
+              "text": "92% FDIC insured at Q1'26",
+              "lines": [
+                "92% FDIC",
+                "insured at",
+                "Q1'26"
+              ],
+              "cls": "chart-side-callout chart-side-callout--tall chart-side-callout--right"
+            }
+          ],
+          "badges": [],
+          "text": "28 / 44 Funding and Deposits $ in billions Funding Mix $ in billions 92% FDIC insured at Q1'26 Deposit Programs $ in billions Funding footnotes",
+          "topTotalPseudo": false,
+          "charts": [
+            {
+              "i": 0,
+              "labels": [
+                "Q4'25",
+                "Q1'26"
+              ],
+              "ds": [
+                {
+                  "label": "Deposits",
+                  "data": [
+                    72,
+                    72
+                  ],
+                  "stack": null
+                },
+                {
+                  "label": "Unsecured Funding**",
+                  "data": [
+                    21,
+                    21
+                  ],
+                  "stack": null
+                },
+                {
+                  "label": "Short-term Funding / Card ABS*",
+                  "data": [
+                    7,
+                    7
+                  ],
+                  "stack": null
+                }
+              ]
+            },
+            {
+              "i": 1,
+              "labels": [
+                "Q4'25",
+                "Q1'26"
+              ],
+              "ds": [
+                {
+                  "label": "Savings and Direct CDs",
+                  "data": [
+                    81,
+                    82
+                  ],
+                  "stack": null
+                },
+                {
+                  "label": "Third Party CDs",
+                  "data": [
+                    10,
+                    10
+                  ],
+                  "stack": null
+                },
+                {
+                  "label": "Third Party Sweep",
+                  "data": [
+                    7,
+                    6
+                  ],
+                  "stack": null
+                },
+                {
+                  "label": "Checking",
+                  "data": [
+                    2,
+                    2
+                  ],
+                  "stack": null
+                }
+              ]
+            }
+          ],
+          "nsHasCallout": false
+        },
+        "paint_err": null
+      },
+      "139_150": {
+        "mode": "chartjs",
+        "data": {
+          "paneTitles": [
+            {
+              "x": 119,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 925,
+              "bottom": 262.1875,
+              "cx": 522,
+              "cy": 241.1875,
+              "text": "Net Card Fees ($B)",
+              "fontSize": 40,
+              "fontWeight": "700"
+            },
+            {
+              "x": 995,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 1801,
+              "bottom": 262.1875,
+              "cx": 1398,
+              "cy": 241.1875,
+              "text": "YoY Growth %",
+              "fontSize": 40,
+              "fontWeight": "700"
+            }
+          ],
+          "charts": [
+            {
+              "i": 0,
+              "yTick": 24,
+              "xRot": 0,
+              "titlePlugin": false,
+              "titleText": null,
+              "nPainted": 8
+            },
+            {
+              "i": 1,
+              "yTick": 24,
+              "xRot": 0,
+              "titlePlugin": false,
+              "titleText": null,
+              "nPainted": 9
+            }
+          ],
+          "text": "17 / 44\nNet Card Fees\n\n$ in billions \u2014 % Increase/(decrease) vs. Prior year & CAGR (FX-adjusted)\n\nNet Card Fees ($B)\n17%\n% CAGR\nYoY Growth %"
+        },
+        "paint_err": null
+      },
+      "140": {
+        "mode": "chartjs",
+        "data": {
+          "board": {
+            "x": 127.296875,
+            "y": 262.671875,
+            "w": 1564.90625,
+            "h": 624.625,
+            "right": 1692.203125,
+            "bottom": 887.296875,
+            "cx": 909.75,
+            "cy": 574.984375,
+            "text": "Total Revenues Net of Interest Expense FX-Adjusted* Net Income Diluted EPS** Average Diluted Shares Outstanding Q1'26 $1"
+          },
+          "boardCls": "gl-pill gl-pill-free gl-card",
+          "nStubs": 5,
+          "stubs": [
+            {
+              "x": 127.296875,
+              "y": 377.859375,
+              "w": 624.828125,
+              "h": 101.875,
+              "right": 752.125,
+              "bottom": 479.734375,
+              "cx": 439.7109375,
+              "cy": 428.796875,
+              "text": "Total Revenues Net of Interest Expense"
+            },
+            {
+              "x": 127.296875,
+              "y": 479.734375,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 581.625,
+              "cx": 439.7109375,
+              "cy": 530.6796875,
+              "text": "FX-Adjusted*"
+            },
+            {
+              "x": 127.296875,
+              "y": 581.625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 683.515625,
+              "cx": 439.7109375,
+              "cy": 632.5703125,
+              "text": "Net Income"
+            },
+            {
+              "x": 127.296875,
+              "y": 683.515625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 785.40625,
+              "cx": 439.7109375,
+              "cy": 734.4609375,
+              "text": "Diluted EPS**"
+            },
+            {
+              "x": 127.296875,
+              "y": 785.40625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 887.296875,
+              "cx": 439.7109375,
+              "cy": 836.3515625,
+              "text": "Average Diluted Shares Outstanding"
+            }
+          ],
+          "shells": [
+            {
+              "x": 769.5625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1065.46875,
+              "bottom": 887.296875,
+              "cx": 917.515625,
+              "cy": 574.984375,
+              "text": "Q1'26 $18,907 $2,971 $4.28 686"
+            },
+            {
+              "x": 1082.90625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1378.8125,
+              "bottom": 887.296875,
+              "cx": 1230.859375,
+              "cy": 574.984375,
+              "text": "Q1'25 $16,967 $17,210 $2,584 $3.64 702"
+            },
+            {
+              "x": 1396.25,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1692.15625,
+              "bottom": 887.296875,
+              "cx": 1544.203125,
+              "cy": 574.984375,
+              "text": "YoY% Inc/(Dec) 11% 10% 15% 18% (2%)"
+            }
+          ],
+          "caps": [
+            {
+              "x": 770.5625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1064.46875,
+              "bottom": 378.859375,
+              "cx": 917.515625,
+              "cy": 321.265625,
+              "text": "Q1'26"
+            },
+            {
+              "x": 1083.90625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1377.8125,
+              "bottom": 378.859375,
+              "cx": 1230.859375,
+              "cy": 321.265625,
+              "text": "Q1'25"
+            },
+            {
+              "x": 1397.25,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1691.15625,
+              "bottom": 378.859375,
+              "cx": 1544.203125,
+              "cy": 321.265625,
+              "text": "YoY% Inc/(Dec)"
+            }
+          ],
+          "fixedGeometryCandidate": true
+        }
+      },
+      "147": {
+        "mode": "chartjs",
+        "data": {
+          "paneTitles": [],
+          "subs": [],
+          "titlePlugin": false,
+          "heroes": [
+            "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+            "of Global New Accounts Acquired on Fee-Paying Products*"
+          ],
+          "text": "12 / 44 New Acquisitions 66% of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers 73% of Global New Accounts Acquired on Fee-Paying Products* NCA / NAA definitions"
+        },
+        "paint_err": null
+      },
+      "148": {
+        "13": {
+          "indexAxis": "x",
+          "type": "bar",
+          "labels": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "ds": [
+            "Total Balances",
+            "Billed Business"
+          ],
+          "svgVertical": true,
+          "title": "Total Balances and Billed Business"
+        },
+        "14": {
+          "titles": [
+            "30+ Days Past Due",
+            "Net Write-Off Rates"
+          ],
+          "charts": [
+            {
+              "i": 0,
+              "indexAxis": "x",
+              "type": "bar",
+              "labels": [
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ]
+            },
+            {
+              "i": 1,
+              "indexAxis": "x",
+              "type": "bar",
+              "labels": [
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ]
+            }
+          ]
+        }
+      },
+      "151": {
+        "mode": "chartjs",
+        "data": {
+          "titles": [
+            "Net Interest Income",
+            "NII: Volume & Margin Drivers"
+          ],
+          "driverRows": [
+            {
+              "label": "Billed Business",
+              "value": "8%",
+              "detail": ""
+            },
+            {
+              "label": "Net Interest Income",
+              "value": "13%",
+              "detail": ""
+            },
+            {
+              "label": "Volume",
+              "value": "7%",
+              "detail": "Total Balances"
+            },
+            {
+              "label": "Margin",
+              "value": "5%",
+              "detail": "Net Interest Income / Average Total Balances"
+            }
+          ],
+          "boxed": {
+            "painted": "5",
+            "flag": "1",
+            "values": [
+              "11%",
+              "12%",
+              "12%",
+              "12%",
+              "12%"
+            ]
+          },
+          "nDS": 1,
+          "dsTypes": [
+            "bar"
+          ],
+          "comboLine": false,
+          "svgBoxed": 6,
+          "liveBoxed": 0,
+          "htmlBoxed": 18,
+          "hasDriver": true
+        },
+        "paint_err": null
+      },
+      "152": {
+        "9": {
+          "charts": [
+            {
+              "i": 0,
+              "yGrid": false,
+              "xGrid": false,
+              "yBorder": true
+            }
+          ],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        },
+        "13": {
+          "charts": [
+            {
+              "i": 0,
+              "yGrid": false,
+              "xGrid": false,
+              "yBorder": true
+            }
+          ],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        },
+        "15": {
+          "charts": [
+            {
+              "i": 0,
+              "yGrid": false,
+              "xGrid": false,
+              "yBorder": true
+            }
+          ],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        },
+        "18": {
+          "charts": [
+            {
+              "i": 0,
+              "yGrid": false,
+              "xGrid": false,
+              "yBorder": true
+            }
+          ],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        }
+      },
+      "153": {
+        "mode": "chartjs",
+        "data": {
+          "heads": [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ],
+          "rows": [
+            [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ],
+            [
+              "Restaurants",
+              "9%",
+              "7%"
+            ],
+            [
+              "Lodging",
+              "6%",
+              "5%"
+            ],
+            [
+              "Airlines",
+              "8%",
+              "7%"
+            ],
+            [
+              "Other",
+              "13%",
+              "9%"
+            ],
+            [
+              "Total T&E",
+              "9%",
+              "29%"
+            ]
+          ],
+          "text": "26 / 44 Travel & Entertainment Billed Business All growth rates FX-adjusted Category YoY Growth % of Total Billed Business Restaurants 9% 7% Lodging 6% 5% Airlines 8% 7% Other 13% 9% Total T&E 9% 29%",
+          "hasQ126": false
+        }
+      },
+      "154": {
+        "mode": "chartjs",
+        "data": {
+          "text": "24 / 44 Q1'26 Network Volumes Growth by Customer Type % Increase/(decrease) vs. Prior Year (FX-adjusted) \u00b7 $486B Total Network Volumes \u00b7 9% FX-adjusted growth $486B Total Network Volumes \u00b7 % of Total Network Volumes 37% 22% 5% 15% 8% 12% FX-adjusted reporting note All growth rates reflect FX-adjusted rates except for U.S. Consumer and U.S. SME. See Annex 1 for reported rates. Subtotals may not sum due to rounding.",
+          "support": [
+            "$486B Total Network Volumes \u00b7 % of Total Network Volumes",
+            "37%",
+            "22%",
+            "5%",
+            "15%",
+            "8%",
+            "12%"
+          ],
+          "chart": {
+            "nBars": 6,
+            "labels": [
+              "U.S. Consumer",
+              "U.S. SME",
+              "U.S. Large & Global Corp.",
+              "Int'l Consumer",
+              "Int'l SME & Large Corp.",
+              "Processed Volumes"
+            ],
+            "barGroupsPainted": "3",
+            "barGroups": {
+              "items": [
+                {
+                  "label": "U.S. Consumer Services",
+                  "start": 0,
+                  "end": 0
+                },
+                {
+                  "label": "Commercial Services",
+                  "start": 1,
+                  "end": 2
+                },
+                {
+                  "label": "International Card Services",
+                  "start": 3,
+                  "end": 4
+                }
+              ]
+            }
+          },
+          "nBrackets": 3,
+          "liveBrackets": 0,
+          "htmlBrackets": 3,
+          "has486": true,
+          "hasFX": true
+        },
+        "paint_err": null
+      },
+      "155": {
+        "mode": "chartjs",
+        "data": {
+          "roe": [
+            "Return on Average Equity",
+            "35%",
+            "34%",
+            "36%",
+            "36%",
+            "34%",
+            "35%"
+          ],
+          "kpis": [
+            "58% Dividend/share \u2191 (3yr)",
+            "74% NI Returned (3yr)",
+            "10.5% CET1 Ratio Q1'26",
+            "10\u201311% CET1 Target"
+          ],
+          "chart": {
+            "ds": [
+              {
+                "label": "Dividends",
+                "type": "bar",
+                "stack": "combo",
+                "data": [
+                  0.5,
+                  0.6,
+                  0.6,
+                  0.6,
+                  0.6,
+                  0.7
+                ]
+              },
+              {
+                "label": "Share Repurchases",
+                "type": "bar",
+                "stack": "combo",
+                "data": [
+                  1.1,
+                  0.7,
+                  1.4,
+                  2.3,
+                  0.9,
+                  1.6
+                ]
+              },
+              {
+                "label": "Common Shares Outstanding",
+                "type": "line",
+                "stack": null,
+                "data": [
+                  702,
+                  701,
+                  696,
+                  689,
+                  686,
+                  682
+                ]
+              }
+            ],
+            "labels": [
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ]
+          },
+          "text": "21 / 44 Capital $ in billions; Common Shares Outstanding in millions Capital Return & Common Shares Outstanding $ in billions; Common Shares Outstanding in millions Return on Average Equity 35% 34% 36% 36% 34% 35% 58% Dividend/share \u2191 (3yr) 74% NI Returned (3yr) 10.5% CET1 Ratio Q1'26 10\u201311% CET1 Target"
+        },
+        "paint_err": null
+      },
+      "156": {
+        "mode": "chartjs",
+        "data": {
+          "titles": [
+            "U.S. Unemployment Rate %",
+            "U.S. GDP Growth* %"
+          ],
+          "source": "Q1-2026-Earnings-Presentation.pdf, PDF page 27",
+          "text": "27 / 44\nCredit Reserve Macroeconomic Scenarios: Select Variables\nU.S. Unemployment Rate %\nU.S. GDP Growth* %\nScenario note\nQ1-2026-Earnings-Presentation.pdf, PDF page 27",
+          "charts": [
+            {
+              "i": 0,
+              "labels": [
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26",
+                "Q2'26",
+                "Q3'26",
+                "Q4'26",
+                "Q1'27",
+                "Q2'27",
+                "Q3'27",
+                "Q4'27",
+                "Q1'28"
+              ],
+              "ds": [
+                "Q1 Upside Scenario",
+                "Q1 Baseline Scenario",
+                "Q1 Downside Scenario"
+              ],
+              "n": 3
+            },
+            {
+              "i": 1,
+              "labels": [
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26",
+                "Q2'26",
+                "Q3'26",
+                "Q4'26",
+                "Q1'27",
+                "Q2'27",
+                "Q3'27",
+                "Q4'27",
+                "Q1'28"
+              ],
+              "ds": [
+                "Q1 Upside Scenario",
+                "Q1 Baseline Scenario",
+                "Q1 Downside Scenario"
+              ],
+              "n": 3
+            }
+          ],
+          "nCanvas": 2
+        },
+        "paint_err": null
+      },
+      "157": {
+        "33": {
+          "title": "Annex 2 Total Balances \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Total Balances",
+            "FX-Adjusted Total Balances*",
+            "YoY% Inc/(Dec) in GAAP Total Balances",
+            "YoY% Inc/(Dec) in FX-Adjusted Total Balances*",
+            "GAAP Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR",
+            "FX-Adjusted Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'19",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 66,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "34": {
+          "title": "Annex 3 Revenue \u2014 Reported & FX-Adjusted",
+          "sub": "$ in millions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "Discount Revenue",
+            "FX-Adjusted*",
+            "Net Card Fees",
+            "FX-Adjusted*",
+            "Service Fees and Other Revenue",
+            "FX-Adjusted*",
+            "Net Interest Income",
+            "FX-Adjusted*",
+            "Revenues Net of Interest Expense",
+            "FX-Adjusted*"
+          ],
+          "heads": [
+            "Item",
+            "Q1'26",
+            "Q1'25",
+            "YoY% Inc/(Dec)"
+          ],
+          "nCells": 40,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "35": {
+          "title": "Annex 4 Net Card Fees \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Net Card Fees",
+            "FX-Adjusted Net Card Fees*",
+            "YoY% Inc/(Dec) in GAAP Net Card Fees",
+            "YoY% Inc/(Dec) in FX-Adjusted Net Card Fees*",
+            "GAAP Net Card Fees Q1'19 - Q1'26 CAGR",
+            "FX-Adjusted Net Card Fees Q1'19 - Q1'26 CAGR*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'19",
+            "Q1'23",
+            "Q2'23",
+            "Q3'23",
+            "Q4'23",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 90,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "36": {
+          "title": "Annex 5 Net Interest Income \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Net Interest Income",
+            "FX-Adjusted Net Interest Income*",
+            "YoY% Inc/(Dec) in GAAP Net Interest Income",
+            "YoY% Inc/(Dec) in FX-Adjusted Net Interest Income*",
+            "GAAP Net Interest Income Q1'19 - Q1'26 CAGR",
+            "FX-Adjusted Net Interest Income Q1'19 - Q1'26 CAGR*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'19",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 66,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "37": {
+          "title": "Annex 6 Revenues Net of Interest Expense \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Revenues Net of Interest Expense",
+            "FX-Adjusted Revenues Net of Interest Expense*",
+            "YoY% Inc/(Dec) in GAAP Revenues Net of Interest Expense",
+            "YoY% Inc/(Dec) in FX-Adjusted Revenues Net of Interest Expense*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 40,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        }
+      },
+      "159": {
+        "mode": "chartjs",
+        "data": {
+          "headings": [
+            {
+              "t": "Commercial Services",
+              "id": "gl-grouped-annex-heading-32-0"
+            },
+            {
+              "t": "International Card Services",
+              "id": "gl-grouped-annex-heading-32-1"
+            }
+          ],
+          "myIds": [
+            "gl-grouped-annex-heading-32-0",
+            "gl-grouped-annex-heading-32-1"
+          ],
+          "dup": [],
+          "nTables": 2,
+          "stubs": [
+            "U.S. Large and Global Corp.",
+            "Total Billed Business",
+            "G&S",
+            "T&E",
+            "International Consumer",
+            "International SME & Large Corp.",
+            "Total Billed Business",
+            "G&S",
+            "T&E"
+          ]
+        }
+      }
+    },
+    "svg": {
+      "136_149": {
+        "mode": "svg",
+        "data": {
+          "labelBox": {
+            "x": 433.796875,
+            "y": 817.703125,
+            "w": 205.1875,
+            "h": 105,
+            "right": 638.984375,
+            "bottom": 922.703125,
+            "cx": 536.390625,
+            "cy": 870.203125,
+            "text": "Reserve Rate for Total Balances"
+          },
+          "cells": [
+            {
+              "x": 638.984375,
+              "y": 841.203125,
+              "w": 135.171875,
+              "h": 58,
+              "right": 774.15625,
+              "bottom": 899.203125,
+              "cx": 706.5703125,
+              "cy": 870.203125,
+              "text": "2.9%"
+            },
+            {
+              "x": 774.15625,
+              "y": 841.203125,
+              "w": 135.171875,
+              "h": 58,
+              "right": 909.328125,
+              "bottom": 899.203125,
+              "cx": 841.7421875,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 909.328125,
+              "y": 841.203125,
+              "w": 135.171875,
+              "h": 58,
+              "right": 1044.5,
+              "bottom": 899.203125,
+              "cx": 976.9140625,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1044.5,
+              "y": 841.203125,
+              "w": 135.171875,
+              "h": 58,
+              "right": 1179.671875,
+              "bottom": 899.203125,
+              "cx": 1112.0859375,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1179.671875,
+              "y": 841.203125,
+              "w": 135.171875,
+              "h": 58,
+              "right": 1314.84375,
+              "bottom": 899.203125,
+              "cx": 1247.2578125,
+              "cy": 870.203125,
+              "text": "2.8%"
+            }
+          ],
+          "boxes": [
+            {
+              "x": 679.53125,
+              "y": 841.203125,
+              "w": 54.0625,
+              "h": 58,
+              "right": 733.59375,
+              "bottom": 899.203125,
+              "cx": 706.5625,
+              "cy": 870.203125,
+              "text": "2.9%"
+            },
+            {
+              "x": 814.703125,
+              "y": 841.203125,
+              "w": 54.0625,
+              "h": 58,
+              "right": 868.765625,
+              "bottom": 899.203125,
+              "cx": 841.734375,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 949.875,
+              "y": 841.203125,
+              "w": 54.0625,
+              "h": 58,
+              "right": 1003.9375,
+              "bottom": 899.203125,
+              "cx": 976.90625,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1085.046875,
+              "y": 841.203125,
+              "w": 54.0625,
+              "h": 58,
+              "right": 1139.109375,
+              "bottom": 899.203125,
+              "cx": 1112.078125,
+              "cy": 870.203125,
+              "text": "2.8%"
+            },
+            {
+              "x": 1220.21875,
+              "y": 841.203125,
+              "w": 54.0625,
+              "h": 58,
+              "right": 1274.28125,
+              "bottom": 899.203125,
+              "cx": 1247.25,
+              "cy": 870.203125,
+              "text": "2.8%"
+            }
+          ],
+          "bars": [],
+          "svgBars": [
+            {
+              "cx": 706.5625
+            },
+            {
+              "cx": 841.7291666666667
+            },
+            {
+              "cx": 976.8958333333334
+            },
+            {
+              "cx": 1112.0625
+            },
+            {
+              "cx": 1247.2291666666665
+            }
+          ],
+          "aligned": true,
+          "nOutlined": 6,
+          "hasSupport": true
+        },
+        "paint_err": null
+      },
+      "137_146": {
+        "targets": {
+          "9": {
+            "identity_ok": true,
+            "n_canvas": 1,
+            "paint_err": null
+          },
+          "12": {
+            "identity_ok": true,
+            "n_canvas": 1,
+            "paint_err": null
+          },
+          "27": {
+            "identity_ok": true,
+            "n_canvas": 2,
+            "paint_err": null
+          }
+        }
+      },
+      "138_158": {
+        "mode": "svg",
+        "data": {
+          "titles": [
+            "Funding Mix",
+            "Deposit Programs"
+          ],
+          "subs": [
+            "$ in billions",
+            "$ in billions"
+          ],
+          "callouts": [
+            {
+              "x": 1690.234375,
+              "y": 251.984375,
+              "w": 116.75,
+              "h": 87,
+              "right": 1806.984375,
+              "bottom": 338.984375,
+              "cx": 1748.609375,
+              "cy": 295.484375,
+              "text": "92% FDIC insured at Q1'26",
+              "lines": [
+                "92% FDIC",
+                "insured at",
+                "Q1'26"
+              ],
+              "cls": "chart-side-callout chart-side-callout--tall chart-side-callout--right"
+            }
+          ],
+          "badges": [],
+          "text": "28 / 44 Funding and Deposits $ in billions Funding Mix $ in billions 72% 21% 7% $210 Q4'25 72% 21% 7% $219 Q1'26 92% FDIC insured at Q1'26 Deposit Programs $ in billions 81% 10% 7% $151 Q4'25 82% 10% 6% $157 Q1'26 Checking Third Party Sweep Third Party CDs Savings and Direct CDs Funding footnotes",
+          "topTotalPseudo": false,
+          "charts": [],
+          "nsHasCallout": false
+        },
+        "paint_err": null
+      },
+      "139_150": {
+        "mode": "svg",
+        "data": {
+          "paneTitles": [
+            {
+              "x": 119,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 925,
+              "bottom": 262.1875,
+              "cx": 522,
+              "cy": 241.1875,
+              "text": "Net Card Fees ($B)",
+              "fontSize": 40,
+              "fontWeight": "700"
+            },
+            {
+              "x": 995,
+              "y": 220.1875,
+              "w": 806,
+              "h": 42,
+              "right": 1801,
+              "bottom": 262.1875,
+              "cx": 1398,
+              "cy": 241.1875,
+              "text": "YoY Growth %",
+              "fontSize": 40,
+              "fontWeight": "700"
+            }
+          ],
+          "charts": [],
+          "text": "17 / 44\nNet Card Fees\n\n$ in billions \u2014 % Increase/(decrease) vs. Prior year & CAGR (FX-adjusted)\n\nNet Card Fees ($B)\n17%\n% CAGR\n$0\n$1\n$2\n$3\nQ1'19\nQ1'20\nQ1'21\nQ1'22\nQ1'23\nQ1'24\nQ1'25\nQ1'26\n$0.9\n$1.1\n$1.3\n$1.4\n$1.7\n$2\n$2.3\n$2.8\nYoY Growth %\n0%\n6%\n12%\n18%\n24%\nQ1'24\nQ2'24\nQ3'24\nQ4'24\nQ1'25\nQ2'25\nQ3'25\nQ"
+        },
+        "paint_err": null
+      },
+      "140": {
+        "mode": "svg",
+        "data": {
+          "board": {
+            "x": 127.296875,
+            "y": 262.671875,
+            "w": 1564.90625,
+            "h": 624.625,
+            "right": 1692.203125,
+            "bottom": 887.296875,
+            "cx": 909.75,
+            "cy": 574.984375,
+            "text": "Total Revenues Net of Interest Expense FX-Adjusted* Net Income Diluted EPS** Average Diluted Shares Outstanding Q1'26 $1"
+          },
+          "boardCls": "gl-pill gl-pill-free gl-card",
+          "nStubs": 5,
+          "stubs": [
+            {
+              "x": 127.296875,
+              "y": 377.859375,
+              "w": 624.828125,
+              "h": 101.875,
+              "right": 752.125,
+              "bottom": 479.734375,
+              "cx": 439.7109375,
+              "cy": 428.796875,
+              "text": "Total Revenues Net of Interest Expense"
+            },
+            {
+              "x": 127.296875,
+              "y": 479.734375,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 581.625,
+              "cx": 439.7109375,
+              "cy": 530.6796875,
+              "text": "FX-Adjusted*"
+            },
+            {
+              "x": 127.296875,
+              "y": 581.625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 683.515625,
+              "cx": 439.7109375,
+              "cy": 632.5703125,
+              "text": "Net Income"
+            },
+            {
+              "x": 127.296875,
+              "y": 683.515625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 785.40625,
+              "cx": 439.7109375,
+              "cy": 734.4609375,
+              "text": "Diluted EPS**"
+            },
+            {
+              "x": 127.296875,
+              "y": 785.40625,
+              "w": 624.828125,
+              "h": 101.890625,
+              "right": 752.125,
+              "bottom": 887.296875,
+              "cx": 439.7109375,
+              "cy": 836.3515625,
+              "text": "Average Diluted Shares Outstanding"
+            }
+          ],
+          "shells": [
+            {
+              "x": 769.5625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1065.46875,
+              "bottom": 887.296875,
+              "cx": 917.515625,
+              "cy": 574.984375,
+              "text": "Q1'26 $18,907 $2,971 $4.28 686"
+            },
+            {
+              "x": 1082.90625,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1378.8125,
+              "bottom": 887.296875,
+              "cx": 1230.859375,
+              "cy": 574.984375,
+              "text": "Q1'25 $16,967 $17,210 $2,584 $3.64 702"
+            },
+            {
+              "x": 1396.25,
+              "y": 262.671875,
+              "w": 295.90625,
+              "h": 624.625,
+              "right": 1692.15625,
+              "bottom": 887.296875,
+              "cx": 1544.203125,
+              "cy": 574.984375,
+              "text": "YoY% Inc/(Dec) 11% 10% 15% 18% (2%)"
+            }
+          ],
+          "caps": [
+            {
+              "x": 770.5625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1064.46875,
+              "bottom": 378.859375,
+              "cx": 917.515625,
+              "cy": 321.265625,
+              "text": "Q1'26"
+            },
+            {
+              "x": 1083.90625,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1377.8125,
+              "bottom": 378.859375,
+              "cx": 1230.859375,
+              "cy": 321.265625,
+              "text": "Q1'25"
+            },
+            {
+              "x": 1397.25,
+              "y": 263.671875,
+              "w": 293.90625,
+              "h": 115.1875,
+              "right": 1691.15625,
+              "bottom": 378.859375,
+              "cx": 1544.203125,
+              "cy": 321.265625,
+              "text": "YoY% Inc/(Dec)"
+            }
+          ],
+          "fixedGeometryCandidate": true
+        }
+      },
+      "147": {
+        "mode": "svg",
+        "data": {
+          "paneTitles": [],
+          "subs": [],
+          "titlePlugin": null,
+          "heroes": [
+            "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+            "of Global New Accounts Acquired on Fee-Paying Products*"
+          ],
+          "text": "12 / 44 New Acquisitions 0 1 2 3 4 U.S. Consumer Services Commercial Services International Card Services 1.5 0.8 1.1 3.4 Q1'25 1.5 0.7 0.9 3.1 Q2'25 1.5 0.7 1 3.2 Q3'25 1.3 0.7 0.9 2.9 Q4'25 1.3 0.8 1 3.1 Q1'26 66% of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers 73% of "
+        },
+        "paint_err": null
+      },
+      "148": {
+        "13": {
+          "indexAxis": null,
+          "type": null,
+          "labels": [],
+          "ds": [],
+          "svgVertical": true,
+          "title": "Total Balances and Billed Business"
+        },
+        "14": {
+          "titles": [
+            "30+ Days Past Due",
+            "Net Write-Off Rates"
+          ],
+          "charts": []
+        }
+      },
+      "151": {
+        "mode": "svg",
+        "data": {
+          "titles": [
+            "Net Interest Income",
+            "NII: Volume & Margin Drivers"
+          ],
+          "driverRows": [
+            {
+              "label": "Billed Business",
+              "value": "8%",
+              "detail": ""
+            },
+            {
+              "label": "Net Interest Income",
+              "value": "13%",
+              "detail": ""
+            },
+            {
+              "label": "Volume",
+              "value": "7%",
+              "detail": "Total Balances"
+            },
+            {
+              "label": "Margin",
+              "value": "5%",
+              "detail": "Net Interest Income / Average Total Balances"
+            }
+          ],
+          "boxed": null,
+          "nDS": null,
+          "dsTypes": [],
+          "comboLine": false,
+          "svgBoxed": 5,
+          "liveBoxed": 5,
+          "htmlBoxed": 15,
+          "hasDriver": true
+        },
+        "paint_err": null
+      },
+      "152": {
+        "9": {
+          "charts": [],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        },
+        "13": {
+          "charts": [],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        },
+        "15": {
+          "charts": [],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        },
+        "18": {
+          "charts": [],
+          "svgGrid": 0,
+          "svgZero": 0,
+          "svgAxis": 0,
+          "liveGrid": 0
+        }
+      },
+      "153": {
+        "mode": "svg",
+        "data": {
+          "heads": [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ],
+          "rows": [
+            [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ],
+            [
+              "Restaurants",
+              "9%",
+              "7%"
+            ],
+            [
+              "Lodging",
+              "6%",
+              "5%"
+            ],
+            [
+              "Airlines",
+              "8%",
+              "7%"
+            ],
+            [
+              "Other",
+              "13%",
+              "9%"
+            ],
+            [
+              "Total T&E",
+              "9%",
+              "29%"
+            ]
+          ],
+          "text": "26 / 44 Travel & Entertainment Billed Business All growth rates FX-adjusted Category YoY Growth % of Total Billed Business Restaurants 9% 7% Lodging 6% 5% Airlines 8% 7% Other 13% 9% Total T&E 9% 29%",
+          "hasQ126": false
+        }
+      },
+      "154": {
+        "mode": "svg",
+        "data": {
+          "text": "24 / 44 Q1'26 Network Volumes Growth by Customer Type % Increase/(decrease) vs. Prior Year (FX-adjusted) \u00b7 $486B Total Network Volumes \u00b7 9% FX-adjusted growth 0% 5% 10% 15% U.S. Consumer Services Commercial Services International Card Services U.S. Consumer U.S. SME U.S. Large & Global Corp. Int'l Consumer Int'l SME & Large Corp. Processed Volumes 10% 4% 4% 13% 12% 9% $486B Total Network Volumes \u00b7 % of Total Network Volumes 37% 22% 5% 15% 8% 12% FX-adjusted reporting note All growth rates reflect FX-adjusted rates except for U.S. Consumer and U.S. SME. See Annex 1 for reported rates. Subtotals may not sum due to rounding.",
+          "support": [
+            "$486B Total Network Volumes \u00b7 % of Total Network Volumes",
+            "37%",
+            "22%",
+            "5%",
+            "15%",
+            "8%",
+            "12%"
+          ],
+          "chart": null,
+          "nBrackets": 3,
+          "liveBrackets": 3,
+          "htmlBrackets": 3,
+          "has486": true,
+          "hasFX": true
+        },
+        "paint_err": null
+      },
+      "155": {
+        "mode": "svg",
+        "data": {
+          "roe": [
+            "Return on Average Equity",
+            "35%",
+            "34%",
+            "36%",
+            "36%",
+            "34%",
+            "35%"
+          ],
+          "kpis": [
+            "58% Dividend/share \u2191 (3yr)",
+            "74% NI Returned (3yr)",
+            "10.5% CET1 Ratio Q1'26",
+            "10\u201311% CET1 Target"
+          ],
+          "chart": null,
+          "text": "21 / 44 Capital $ in billions; Common Shares Outstanding in millions Capital Return & Common Shares Outstanding $ in billions; Common Shares Outstanding in millions $0 $1 $2 $3 $4 670 680 690 700 710 Dividends Share Repurchases $0.5 $1.1 $1.6 Q4'24 $0.6 $0.7 $1.3 Q1'25 $0.6 $1.4 $2.0 Q2'25 $0.6 $2.3 $2.9 Q3'25 $0.6 $0.9 $1.5 Q4'25 $0.7 $1.6 $2.3 Q1'26 702 701 696 689 686 682 Common Shares Outstand"
+        },
+        "paint_err": null
+      },
+      "156": {
+        "mode": "svg",
+        "data": {
+          "titles": [
+            "U.S. Unemployment Rate %",
+            "U.S. GDP Growth* %"
+          ],
+          "source": "Q1-2026-Earnings-Presentation.pdf, PDF page 27",
+          "text": "27 / 44\nCredit Reserve Macroeconomic Scenarios: Select Variables\nU.S. Unemployment Rate %\n0%\n2.5%\n5%\n7.5%\n10%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nQ2'26\nQ3'26\nQ4'26\nQ1'27\nQ2'27\nQ3'27\nQ4'27\nQ1'28\n4.1%\n4.2%\n4.3%\n4.5%\n4.5%\n4%\n3.6%\n3.5%\n3.4%\n3.4%\n3.5%\n3.7%\n3.8%\n4.1%\n4.2%\n4.3%\n4.5%\n4.5%\n4.5%\n4.5%\n4.5%\n4.4%\n4.4%\n4.4%\n4.4%\n4.4%\n4.1%\n4.2%\n4.3%\n4.5%\n4.5%\n6.1%\n7.2%\n8%\n8.4%\n8.4%\n8.3%\n8%\n7.6%\nQ1 Upside Scenario\nQ1 Baseline Scenario\nQ1 Downside Scenario\nU.S. GDP Growth* %\n-5%\n-2.25%\n0.5%\n3.25%\n6%\nQ1'25\nQ2'25\nQ3'25\nQ4'25\nQ1'26\nQ2'26\nQ3'26\nQ4'26\nQ1'27\nQ2'27\nQ3'27\nQ4'27\nQ1'28\n-0.6%\n3.9%\n4.4%\n2.9%\n3.1%\n4.8%\n3.3%\n3.2%\n3.2%\n2.6%\n1.8%\n2.2%\n1.6%\n-0.6%\n3.9%\n4.4%\n2.9%\n3.1%\n2.6%\n2%\n1.8%\n1.7%\n1.7%\n1.8%\n1.9%\n1.9%\n-0.6%\n3.9%\n4.4%\n2.9%\n3.1%\n-3.5%\n-3.2%\n-3.8%\n0.5%\n1%\n1.3%\n1.6%\n1.6%\nQ1 Upside Scenario\nQ1 Baseline Scenario\nQ1 Downside Scenario\nScenario note\nQ1-2026-Earnings-Presentation.pdf, PDF page 27",
+          "charts": [],
+          "nCanvas": 2
+        },
+        "paint_err": null
+      },
+      "157": {
+        "33": {
+          "title": "Annex 2 Total Balances \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Total Balances",
+            "FX-Adjusted Total Balances*",
+            "YoY% Inc/(Dec) in GAAP Total Balances",
+            "YoY% Inc/(Dec) in FX-Adjusted Total Balances*",
+            "GAAP Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR",
+            "FX-Adjusted Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'19",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 66,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "34": {
+          "title": "Annex 3 Revenue \u2014 Reported & FX-Adjusted",
+          "sub": "$ in millions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "Discount Revenue",
+            "FX-Adjusted*",
+            "Net Card Fees",
+            "FX-Adjusted*",
+            "Service Fees and Other Revenue",
+            "FX-Adjusted*",
+            "Net Interest Income",
+            "FX-Adjusted*",
+            "Revenues Net of Interest Expense",
+            "FX-Adjusted*"
+          ],
+          "heads": [
+            "Item",
+            "Q1'26",
+            "Q1'25",
+            "YoY% Inc/(Dec)"
+          ],
+          "nCells": 40,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "35": {
+          "title": "Annex 4 Net Card Fees \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Net Card Fees",
+            "FX-Adjusted Net Card Fees*",
+            "YoY% Inc/(Dec) in GAAP Net Card Fees",
+            "YoY% Inc/(Dec) in FX-Adjusted Net Card Fees*",
+            "GAAP Net Card Fees Q1'19 - Q1'26 CAGR",
+            "FX-Adjusted Net Card Fees Q1'19 - Q1'26 CAGR*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'19",
+            "Q1'23",
+            "Q2'23",
+            "Q3'23",
+            "Q4'23",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 90,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "36": {
+          "title": "Annex 5 Net Interest Income \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Net Interest Income",
+            "FX-Adjusted Net Interest Income*",
+            "YoY% Inc/(Dec) in GAAP Net Interest Income",
+            "YoY% Inc/(Dec) in FX-Adjusted Net Interest Income*",
+            "GAAP Net Interest Income Q1'19 - Q1'26 CAGR",
+            "FX-Adjusted Net Interest Income Q1'19 - Q1'26 CAGR*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'19",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 66,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        },
+        "37": {
+          "title": "Annex 6 Revenues Net of Interest Expense \u2014 Reported & FX-Adjusted",
+          "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+          "stubs": [
+            "GAAP Revenues Net of Interest Expense",
+            "FX-Adjusted Revenues Net of Interest Expense*",
+            "YoY% Inc/(Dec) in GAAP Revenues Net of Interest Expense",
+            "YoY% Inc/(Dec) in FX-Adjusted Revenues Net of Interest Expense*"
+          ],
+          "heads": [
+            "Metric",
+            "Q1'24",
+            "Q2'24",
+            "Q3'24",
+            "Q4'24",
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ],
+          "nCells": 40,
+          "nTables": 1,
+          "hasFX": true,
+          "hasFoot": true
+        }
+      },
+      "159": {
+        "mode": "svg",
+        "data": {
+          "headings": [
+            {
+              "t": "Commercial Services",
+              "id": "gl-grouped-annex-heading-32-0"
+            },
+            {
+              "t": "International Card Services",
+              "id": "gl-grouped-annex-heading-32-1"
+            }
+          ],
+          "myIds": [
+            "gl-grouped-annex-heading-32-0",
+            "gl-grouped-annex-heading-32-1"
+          ],
+          "dup": [],
+          "nTables": 2,
+          "stubs": [
+            "U.S. Large and Global Corp.",
+            "Total Billed Business",
+            "G&S",
+            "T&E",
+            "International Consumer",
+            "International SME & Large Corp.",
+            "Total Billed Business",
+            "G&S",
+            "T&E"
+          ]
+        }
+      }
+    }
+  }
+}

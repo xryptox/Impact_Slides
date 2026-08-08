@@ -1,0 +1,725 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "source_pdf": "C:\\Users\\Ag1Le\\Downloads\\Q1-2026-Earnings-Presentation.pdf",
+  "html": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html",
+  "n_slides": 44,
+  "all_artifacts_present": true,
+  "contact_sheet": "comparison/contact_sheet.png",
+  "warnings": [],
+  "rows": [
+    {
+      "slide_number": 1,
+      "expected_layout": "brand_cover",
+      "handoff_layout": "brand_cover",
+      "pdf_page_index": 0,
+      "pdf_physical_page": 1,
+      "title": "American Express\nEarnings Conference Call",
+      "pdf_path": "comparison/pdf/pdf_p01_idx00_slide01.png",
+      "html_path": "comparison/html/html_slide01_layout-brand_cover_pdfidx00.png",
+      "sbs_path": "comparison/sbs/sbs_slide01_P01_idx00_brand_cover.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 2,
+      "expected_layout": "ir_bullet_sheet",
+      "handoff_layout": "ir_bullet_sheet",
+      "pdf_page_index": 1,
+      "pdf_physical_page": 2,
+      "title": "Business Highlights",
+      "pdf_path": "comparison/pdf/pdf_p02_idx01_slide02.png",
+      "html_path": "comparison/html/html_slide02_layout-ir_bullet_sheet_pdfidx01.png",
+      "sbs_path": "comparison/sbs/sbs_slide02_P02_idx01_ir_bullet_sheet.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 3,
+      "expected_layout": "pill_comparison",
+      "handoff_layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "title": "Summary Financial Performance",
+      "pdf_path": "comparison/pdf/pdf_p03_idx02_slide03.png",
+      "html_path": "comparison/html/html_slide03_layout-pill_comparison_pdfidx02.png",
+      "sbs_path": "comparison/sbs/sbs_slide03_P03_idx02_pill_comparison.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 4,
+      "expected_layout": "line_chart",
+      "handoff_layout": "line_chart",
+      "pdf_page_index": 3,
+      "pdf_physical_page": 4,
+      "title": "Total Billed Business",
+      "pdf_path": "comparison/pdf/pdf_p04_idx03_slide04.png",
+      "html_path": "comparison/html/html_slide04_layout-line_chart_pdfidx03.png",
+      "sbs_path": "comparison/sbs/sbs_slide04_P04_idx03_line_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 5,
+      "expected_layout": "line_chart",
+      "handoff_layout": "line_chart",
+      "pdf_page_index": 4,
+      "pdf_physical_page": 5,
+      "title": "U.S. Consumer Services Billed Business",
+      "pdf_path": "comparison/pdf/pdf_p05_idx04_slide05.png",
+      "html_path": "comparison/html/html_slide05_layout-line_chart_pdfidx04.png",
+      "sbs_path": "comparison/sbs/sbs_slide05_P05_idx04_line_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 6,
+      "expected_layout": "multi_panel",
+      "handoff_layout": "multi_panel",
+      "pdf_page_index": 5,
+      "pdf_physical_page": 6,
+      "title": "U.S. Consumer Platinum Performance",
+      "pdf_path": "comparison/pdf/pdf_p06_idx05_slide06.png",
+      "html_path": "comparison/html/html_slide06_layout-multi_panel_pdfidx05.png",
+      "sbs_path": "comparison/sbs/sbs_slide06_P06_idx05_multi_panel.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 2
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 7,
+      "expected_layout": "three_column_comparison",
+      "handoff_layout": "three_column_comparison",
+      "pdf_page_index": 6,
+      "pdf_physical_page": 7,
+      "title": "U.S. Consumer: Membership Model Engagement",
+      "pdf_path": "comparison/pdf/pdf_p07_idx06_slide07.png",
+      "html_path": "comparison/html/html_slide07_layout-three_column_comparison_pdfidx06.png",
+      "sbs_path": "comparison/sbs/sbs_slide07_P07_idx06_three_column_comparison.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 8,
+      "expected_layout": "metric_row_with_breakdown",
+      "handoff_layout": "metric_row_with_breakdown",
+      "pdf_page_index": 7,
+      "pdf_physical_page": 8,
+      "title": "Membership Model Engagement: Proprietary Lodging Assets",
+      "pdf_path": "comparison/pdf/pdf_p08_idx07_slide08.png",
+      "html_path": "comparison/html/html_slide08_layout-metric_row_with_breakdown_pdfidx07.png",
+      "sbs_path": "comparison/sbs/sbs_slide08_P08_idx07_metric_row_with_breakdown.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 9,
+      "expected_layout": "line_chart",
+      "handoff_layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "title": "Commercial Services Billed Business",
+      "pdf_path": "comparison/pdf/pdf_p09_idx08_slide09.png",
+      "html_path": "comparison/html/html_slide09_layout-line_chart_pdfidx08.png",
+      "sbs_path": "comparison/sbs/sbs_slide09_P09_idx08_line_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 10,
+      "expected_layout": "line_chart",
+      "handoff_layout": "line_chart",
+      "pdf_page_index": 9,
+      "pdf_physical_page": 10,
+      "title": "International Card Services Billed Business",
+      "pdf_path": "comparison/pdf/pdf_p10_idx09_slide10.png",
+      "html_path": "comparison/html/html_slide10_layout-line_chart_pdfidx09.png",
+      "sbs_path": "comparison/sbs/sbs_slide10_P10_idx09_line_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 11,
+      "expected_layout": "line_chart",
+      "handoff_layout": "line_chart",
+      "pdf_page_index": 10,
+      "pdf_physical_page": 11,
+      "title": "Transaction Growth",
+      "pdf_path": "comparison/pdf/pdf_p11_idx10_slide11.png",
+      "html_path": "comparison/html/html_slide11_layout-line_chart_pdfidx10.png",
+      "sbs_path": "comparison/sbs/sbs_slide11_P11_idx10_line_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 12,
+      "expected_layout": "chart_hero_dual",
+      "handoff_layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "title": "New Acquisitions",
+      "pdf_path": "comparison/pdf/pdf_p12_idx11_slide12.png",
+      "html_path": "comparison/html/html_slide12_layout-chart_hero_dual_pdfidx11.png",
+      "sbs_path": "comparison/sbs/sbs_slide12_P12_idx11_chart_hero_dual.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 13,
+      "expected_layout": "grouped_bar_chart",
+      "handoff_layout": "grouped_bar_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "title": "Total Balances and Billed Business",
+      "pdf_path": "comparison/pdf/pdf_p13_idx12_slide13.png",
+      "html_path": "comparison/html/html_slide13_layout-grouped_bar_chart_pdfidx12.png",
+      "sbs_path": "comparison/sbs/sbs_slide13_P13_idx12_grouped_bar_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 14,
+      "expected_layout": "dual_chart",
+      "handoff_layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14,
+      "title": "Credit Metrics",
+      "pdf_path": "comparison/pdf/pdf_p14_idx13_slide14.png",
+      "html_path": "comparison/html/html_slide14_layout-dual_chart_pdfidx13.png",
+      "sbs_path": "comparison/sbs/sbs_slide14_P14_idx13_dual_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 2
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 15,
+      "expected_layout": "stacked_bar_chart",
+      "handoff_layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "title": "Total Provision",
+      "pdf_path": "comparison/pdf/pdf_p15_idx14_slide15.png",
+      "html_path": "comparison/html/html_slide15_layout-stacked_bar_chart_pdfidx14.png",
+      "sbs_path": "comparison/sbs/sbs_slide15_P15_idx14_stacked_bar_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 16,
+      "expected_layout": "data_table",
+      "handoff_layout": "data_table",
+      "pdf_page_index": 15,
+      "pdf_physical_page": 16,
+      "title": "Revenue Performance",
+      "pdf_path": "comparison/pdf/pdf_p16_idx15_slide16.png",
+      "html_path": "comparison/html/html_slide16_layout-data_table_pdfidx15.png",
+      "sbs_path": "comparison/sbs/sbs_slide16_P16_idx15_data_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 17,
+      "expected_layout": "dual_chart",
+      "handoff_layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "title": "Net Card Fees",
+      "pdf_path": "comparison/pdf/pdf_p17_idx16_slide17.png",
+      "html_path": "comparison/html/html_slide17_layout-dual_chart_pdfidx16.png",
+      "sbs_path": "comparison/sbs/sbs_slide17_P17_idx16_dual_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 2
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 18,
+      "expected_layout": "chart_hero_dual",
+      "handoff_layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "title": "Premium Lending",
+      "pdf_path": "comparison/pdf/pdf_p18_idx17_slide18.png",
+      "html_path": "comparison/html/html_slide18_layout-chart_hero_dual_pdfidx17.png",
+      "sbs_path": "comparison/sbs/sbs_slide18_P18_idx17_chart_hero_dual.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 19,
+      "expected_layout": "line_chart",
+      "handoff_layout": "line_chart",
+      "pdf_page_index": 18,
+      "pdf_physical_page": 19,
+      "title": "Total Revenues Net of Interest Expense",
+      "pdf_path": "comparison/pdf/pdf_p19_idx18_slide19.png",
+      "html_path": "comparison/html/html_slide19_layout-line_chart_pdfidx18.png",
+      "sbs_path": "comparison/sbs/sbs_slide19_P19_idx18_line_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 20,
+      "expected_layout": "pill_comparison",
+      "handoff_layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "title": "Expense Performance",
+      "pdf_path": "comparison/pdf/pdf_p20_idx19_slide20.png",
+      "html_path": "comparison/html/html_slide20_layout-pill_comparison_pdfidx19.png",
+      "sbs_path": "comparison/sbs/sbs_slide20_P20_idx19_pill_comparison.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 21,
+      "expected_layout": "chart_hero_dual",
+      "handoff_layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "title": "Capital",
+      "pdf_path": "comparison/pdf/pdf_p21_idx20_slide21.png",
+      "html_path": "comparison/html/html_slide21_layout-chart_hero_dual_pdfidx20.png",
+      "sbs_path": "comparison/sbs/sbs_slide21_P21_idx20_chart_hero_dual.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 22,
+      "expected_layout": "guidance_statement_card",
+      "handoff_layout": "guidance_statement_card",
+      "pdf_page_index": 21,
+      "pdf_physical_page": 22,
+      "title": "2026 Guidance",
+      "pdf_path": "comparison/pdf/pdf_p22_idx21_slide22.png",
+      "html_path": "comparison/html/html_slide22_layout-guidance_statement_card_pdfidx21.png",
+      "sbs_path": "comparison/sbs/sbs_slide22_P22_idx21_guidance_statement_card.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 23,
+      "expected_layout": "brand_divider",
+      "handoff_layout": "brand_divider",
+      "pdf_page_index": 22,
+      "pdf_physical_page": 23,
+      "title": "Appendix",
+      "pdf_path": "comparison/pdf/pdf_p23_idx22_slide23.png",
+      "html_path": "comparison/html/html_slide23_layout-brand_divider_pdfidx22.png",
+      "sbs_path": "comparison/sbs/sbs_slide23_P23_idx22_brand_divider.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 24,
+      "expected_layout": "grouped_bar_chart",
+      "handoff_layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "title": "Q1'26 Network Volumes Growth by Customer Type",
+      "pdf_path": "comparison/pdf/pdf_p24_idx23_slide24.png",
+      "html_path": "comparison/html/html_slide24_layout-grouped_bar_chart_pdfidx23.png",
+      "sbs_path": "comparison/sbs/sbs_slide24_P24_idx23_grouped_bar_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 1
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 25,
+      "expected_layout": "data_table",
+      "handoff_layout": "data_table",
+      "pdf_page_index": 24,
+      "pdf_physical_page": 25,
+      "title": "FX Impact on Billed Business",
+      "pdf_path": "comparison/pdf/pdf_p25_idx24_slide25.png",
+      "html_path": "comparison/html/html_slide25_layout-data_table_pdfidx24.png",
+      "sbs_path": "comparison/sbs/sbs_slide25_P25_idx24_data_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 26,
+      "expected_layout": "data_table",
+      "handoff_layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26,
+      "title": "Travel & Entertainment Billed Business",
+      "pdf_path": "comparison/pdf/pdf_p26_idx25_slide26.png",
+      "html_path": "comparison/html/html_slide26_layout-data_table_pdfidx25.png",
+      "sbs_path": "comparison/sbs/sbs_slide26_P26_idx25_data_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 27,
+      "expected_layout": "dual_chart",
+      "handoff_layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "title": "Credit Reserve Macroeconomic Scenarios: Select Variables",
+      "pdf_path": "comparison/pdf/pdf_p27_idx26_slide27.png",
+      "html_path": "comparison/html/html_slide27_layout-dual_chart_pdfidx26.png",
+      "sbs_path": "comparison/sbs/sbs_slide27_P27_idx26_dual_chart.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 2
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 28,
+      "expected_layout": "multi_panel",
+      "handoff_layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "title": "Funding and Deposits",
+      "pdf_path": "comparison/pdf/pdf_p28_idx27_slide28.png",
+      "html_path": "comparison/html/html_slide28_layout-multi_panel_pdfidx27.png",
+      "sbs_path": "comparison/sbs/sbs_slide28_P28_idx27_multi_panel.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 2
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 29,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 28,
+      "pdf_physical_page": 29,
+      "title": "Additional Commentary \u2014 Variance Analysis",
+      "pdf_path": "comparison/pdf/pdf_p29_idx28_slide29.png",
+      "html_path": "comparison/html/html_slide29_layout-freeform_grid_pdfidx28.png",
+      "sbs_path": "comparison/sbs/sbs_slide29_P29_idx28_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 30,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 29,
+      "pdf_physical_page": 30,
+      "title": "Additional Commentary \u2014 Variance Analysis (cont.)",
+      "pdf_path": "comparison/pdf/pdf_p30_idx29_slide30.png",
+      "html_path": "comparison/html/html_slide30_layout-freeform_grid_pdfidx29.png",
+      "sbs_path": "comparison/sbs/sbs_slide30_P30_idx29_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 31,
+      "expected_layout": "annex_table",
+      "handoff_layout": "annex_table",
+      "pdf_page_index": 30,
+      "pdf_physical_page": 31,
+      "title": "Annex 1 (1 of 2) Billed Business and Processed Volumes \u2014 Reported & FX-Adjusted",
+      "pdf_path": "comparison/pdf/pdf_p31_idx30_slide31.png",
+      "html_path": "comparison/html/html_slide31_layout-annex_table_pdfidx30.png",
+      "sbs_path": "comparison/sbs/sbs_slide31_P31_idx30_annex_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 32,
+      "expected_layout": "grouped_annex_table",
+      "handoff_layout": "grouped_annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "title": "Annex 1 (2 of 2) Billed Business \u2014 Reported & FX-Adjusted",
+      "pdf_path": "comparison/pdf/pdf_p32_idx31_slide32.png",
+      "html_path": "comparison/html/html_slide32_layout-grouped_annex_table_pdfidx31.png",
+      "sbs_path": "comparison/sbs/sbs_slide32_P32_idx31_grouped_annex_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 33,
+      "expected_layout": "annex_table",
+      "handoff_layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "title": "Annex 2 Total Balances \u2014 Reported & FX-Adjusted",
+      "pdf_path": "comparison/pdf/pdf_p33_idx32_slide33.png",
+      "html_path": "comparison/html/html_slide33_layout-annex_table_pdfidx32.png",
+      "sbs_path": "comparison/sbs/sbs_slide33_P33_idx32_annex_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 34,
+      "expected_layout": "annex_table",
+      "handoff_layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "title": "Annex 3 Revenue \u2014 Reported & FX-Adjusted",
+      "pdf_path": "comparison/pdf/pdf_p34_idx33_slide34.png",
+      "html_path": "comparison/html/html_slide34_layout-annex_table_pdfidx33.png",
+      "sbs_path": "comparison/sbs/sbs_slide34_P34_idx33_annex_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 35,
+      "expected_layout": "annex_table",
+      "handoff_layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "title": "Annex 4 Net Card Fees \u2014 Reported & FX-Adjusted",
+      "pdf_path": "comparison/pdf/pdf_p35_idx34_slide35.png",
+      "html_path": "comparison/html/html_slide35_layout-annex_table_pdfidx34.png",
+      "sbs_path": "comparison/sbs/sbs_slide35_P35_idx34_annex_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 36,
+      "expected_layout": "annex_table",
+      "handoff_layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "title": "Annex 5 Net Interest Income \u2014 Reported & FX-Adjusted",
+      "pdf_path": "comparison/pdf/pdf_p36_idx35_slide36.png",
+      "html_path": "comparison/html/html_slide36_layout-annex_table_pdfidx35.png",
+      "sbs_path": "comparison/sbs/sbs_slide36_P36_idx35_annex_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 37,
+      "expected_layout": "annex_table",
+      "handoff_layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "title": "Annex 6 Revenues Net of Interest Expense \u2014 Reported & FX-Adjusted",
+      "pdf_path": "comparison/pdf/pdf_p37_idx36_slide37.png",
+      "html_path": "comparison/html/html_slide37_layout-annex_table_pdfidx36.png",
+      "sbs_path": "comparison/sbs/sbs_slide37_P37_idx36_annex_table.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 38,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 37,
+      "pdf_physical_page": 38,
+      "title": "Cautionary Note Regarding Forward-Looking Statements",
+      "pdf_path": "comparison/pdf/pdf_p38_idx37_slide38.png",
+      "html_path": "comparison/html/html_slide38_layout-freeform_grid_pdfidx37.png",
+      "sbs_path": "comparison/sbs/sbs_slide38_P38_idx37_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 39,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 38,
+      "pdf_physical_page": 39,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "pdf_path": "comparison/pdf/pdf_p39_idx38_slide39.png",
+      "html_path": "comparison/html/html_slide39_layout-freeform_grid_pdfidx38.png",
+      "sbs_path": "comparison/sbs/sbs_slide39_P39_idx38_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 40,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 39,
+      "pdf_physical_page": 40,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "pdf_path": "comparison/pdf/pdf_p40_idx39_slide40.png",
+      "html_path": "comparison/html/html_slide40_layout-freeform_grid_pdfidx39.png",
+      "sbs_path": "comparison/sbs/sbs_slide40_P40_idx39_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 41,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 40,
+      "pdf_physical_page": 41,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "pdf_path": "comparison/pdf/pdf_p41_idx40_slide41.png",
+      "html_path": "comparison/html/html_slide41_layout-freeform_grid_pdfidx40.png",
+      "sbs_path": "comparison/sbs/sbs_slide41_P41_idx40_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 42,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 41,
+      "pdf_physical_page": 42,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "pdf_path": "comparison/pdf/pdf_p42_idx41_slide42.png",
+      "html_path": "comparison/html/html_slide42_layout-freeform_grid_pdfidx41.png",
+      "sbs_path": "comparison/sbs/sbs_slide42_P42_idx41_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 43,
+      "expected_layout": "freeform_grid",
+      "handoff_layout": "split_text_visual",
+      "pdf_page_index": 42,
+      "pdf_physical_page": 43,
+      "title": "Cautionary Note Regarding Forward-Looking Statements (cont.)",
+      "pdf_path": "comparison/pdf/pdf_p43_idx42_slide43.png",
+      "html_path": "comparison/html/html_slide43_layout-freeform_grid_pdfidx42.png",
+      "sbs_path": "comparison/sbs/sbs_slide43_P43_idx42_freeform_grid.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    },
+    {
+      "slide_number": 44,
+      "expected_layout": "brand_divider",
+      "handoff_layout": "brand_divider",
+      "pdf_page_index": 43,
+      "pdf_physical_page": 44,
+      "title": "American Express",
+      "pdf_path": "comparison/pdf/pdf_p44_idx43_slide44.png",
+      "html_path": "comparison/html/html_slide44_layout-brand_divider_pdfidx43.png",
+      "sbs_path": "comparison/sbs/sbs_slide44_P44_idx43_brand_divider.png",
+      "paint_ready": {
+        "ok": true,
+        "n_charts": 0
+      },
+      "artifacts_exist": true
+    }
+  ],
+  "no_image_scoring": true,
+  "capture_contract": {
+    "activate_slide": true,
+    "wait_for_paint_ready_charts": true,
+    "no_nth_selectors": true,
+    "no_fixed_sleeps": true
+  }
+}

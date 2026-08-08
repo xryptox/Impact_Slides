@@ -1,0 +1,433 @@
+[
+  {
+    "ticket": "#136/#149",
+    "title": "slide 15 outlined support + label lane",
+    "result": "pass",
+    "n_pass": 16,
+    "n_fail": 0,
+    "n_checks": 16,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      15
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#137/#146",
+    "title": "identity-safe paint-ready capture",
+    "result": "pass",
+    "n_pass": 13,
+    "n_fail": 0,
+    "n_checks": 13,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      9,
+      12,
+      27
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#138/#158",
+    "title": "slide 28 FDIC callout + pane titles",
+    "result": "pass",
+    "n_pass": 10,
+    "n_fail": 0,
+    "n_checks": 10,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      28
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#139/#150",
+    "title": "slide 17 typography + auto sizes",
+    "result": "pass",
+    "n_pass": 6,
+    "n_fail": 0,
+    "n_checks": 6,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      17
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#140",
+    "title": "slide 3 pill board + neg controls",
+    "result": "pass",
+    "n_pass": 14,
+    "n_fail": 0,
+    "n_checks": 14,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      3,
+      20,
+      24
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#147",
+    "title": "slide 12 pane headings",
+    "result": "partial",
+    "n_pass": 2,
+    "n_fail": 2,
+    "n_checks": 4,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      12
+    ],
+    "residuals": [
+      "handoff"
+    ],
+    "failed_checks": [
+      {
+        "ticket": "#147",
+        "mode": "chartjs",
+        "slide": 12,
+        "check": "explicit left/right pane headings",
+        "measured": {
+          "paneTitles": [],
+          "subs": [],
+          "heroes": [
+            "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+            "of Global New Accounts Acquired on Fee-Paying Products*"
+          ]
+        },
+        "residual": "handoff",
+        "note": "canonical fixture lacks #147 headings; mutations do not add them"
+      },
+      {
+        "ticket": "#147",
+        "mode": "svg",
+        "slide": 12,
+        "check": "explicit left/right pane headings",
+        "measured": {
+          "paneTitles": [],
+          "subs": [],
+          "heroes": [
+            "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+            "of Global New Accounts Acquired on Fee-Paying Products*"
+          ]
+        },
+        "residual": "handoff",
+        "note": "canonical fixture lacks #147 headings; mutations do not add them"
+      }
+    ],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#148",
+    "title": "slides 13-14 vertical bars + pane order",
+    "result": "pass",
+    "n_pass": 7,
+    "n_fail": 0,
+    "n_checks": 7,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      13,
+      14
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#151",
+    "title": "slide 18 boxed labels + driver card",
+    "result": "pass",
+    "n_pass": 8,
+    "n_fail": 0,
+    "n_checks": 8,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      18
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#152",
+    "title": "gridlines default off",
+    "result": "pass",
+    "n_pass": 10,
+    "n_fail": 0,
+    "n_checks": 10,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      9,
+      13,
+      15,
+      18
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#153",
+    "title": "slide 26 Q1'26 matrix orientation",
+    "result": "fail",
+    "n_pass": 0,
+    "n_fail": 4,
+    "n_checks": 4,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      26
+    ],
+    "residuals": [
+      "handoff"
+    ],
+    "failed_checks": [
+      {
+        "ticket": "#153",
+        "mode": "chartjs",
+        "slide": 26,
+        "check": "visible Q1'26 period context",
+        "measured": {
+          "heads": [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ],
+          "hasQ126": false,
+          "sampleRows": [
+            [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ],
+            [
+              "Restaurants",
+              "9%",
+              "7%"
+            ],
+            [
+              "Lodging",
+              "6%",
+              "5%"
+            ]
+          ]
+        },
+        "residual": "handoff",
+        "note": "canonical fixture still v10 category-row matrix; mutations lack #153"
+      },
+      {
+        "ticket": "#153",
+        "mode": "chartjs",
+        "slide": 26,
+        "check": "source matrix orientation (periods as columns)",
+        "measured": {
+          "heads": [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ]
+        },
+        "residual": "handoff",
+        "note": ""
+      },
+      {
+        "ticket": "#153",
+        "mode": "svg",
+        "slide": 26,
+        "check": "visible Q1'26 period context",
+        "measured": {
+          "heads": [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ],
+          "hasQ126": false,
+          "sampleRows": [
+            [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ],
+            [
+              "Restaurants",
+              "9%",
+              "7%"
+            ],
+            [
+              "Lodging",
+              "6%",
+              "5%"
+            ]
+          ]
+        },
+        "residual": "handoff",
+        "note": "canonical fixture still v10 category-row matrix; mutations lack #153"
+      },
+      {
+        "ticket": "#153",
+        "mode": "svg",
+        "slide": 26,
+        "check": "source matrix orientation (periods as columns)",
+        "measured": {
+          "heads": [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ]
+        },
+        "residual": "handoff",
+        "note": ""
+      }
+    ],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#154",
+    "title": "slide 24 growth brackets + $486B",
+    "result": "pass",
+    "n_pass": 10,
+    "n_fail": 0,
+    "n_checks": 10,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      24
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#155",
+    "title": "slide 21 capital return composition",
+    "result": "pass",
+    "n_pass": 7,
+    "n_fail": 0,
+    "n_checks": 7,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      21
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#156",
+    "title": "slide 27 macro scenarios",
+    "result": "pass",
+    "n_pass": 9,
+    "n_fail": 0,
+    "n_checks": 9,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      27
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#157",
+    "title": "slides 33-37 annex matrices",
+    "result": "pass",
+    "n_pass": 30,
+    "n_fail": 0,
+    "n_checks": 30,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      33,
+      34,
+      35,
+      36,
+      37
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  },
+  {
+    "ticket": "#159",
+    "title": "slide 32 grouped annex heading IDs",
+    "result": "pass",
+    "n_pass": 6,
+    "n_fail": 0,
+    "n_checks": 6,
+    "modes": [
+      "chartjs",
+      "svg"
+    ],
+    "slides": [
+      32
+    ],
+    "residuals": [],
+    "failed_checks": [],
+    "evidence": "closed_tickets/closed_ticket_results_v11.json",
+    "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+  }
+]

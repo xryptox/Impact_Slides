@@ -1,0 +1,3833 @@
+{
+  "contract": "#137 activate_slide + wait_for_paint_ready_charts + painted markers",
+  "html": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html",
+  "run_meta_warnings": [],
+  "n_checks": 154,
+  "n_pass": 148,
+  "n_fail": 6,
+  "scorecard": [
+    {
+      "ticket": "#136/#149",
+      "title": "slide 15 outlined support + label lane",
+      "result": "pass",
+      "n_pass": 16,
+      "n_fail": 0,
+      "n_checks": 16,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        15
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#137/#146",
+      "title": "identity-safe paint-ready capture",
+      "result": "pass",
+      "n_pass": 13,
+      "n_fail": 0,
+      "n_checks": 13,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        9,
+        12,
+        27
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#138/#158",
+      "title": "slide 28 FDIC callout + pane titles",
+      "result": "pass",
+      "n_pass": 10,
+      "n_fail": 0,
+      "n_checks": 10,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        28
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#139/#150",
+      "title": "slide 17 typography + auto sizes",
+      "result": "pass",
+      "n_pass": 6,
+      "n_fail": 0,
+      "n_checks": 6,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        17
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#140",
+      "title": "slide 3 pill board + neg controls",
+      "result": "pass",
+      "n_pass": 14,
+      "n_fail": 0,
+      "n_checks": 14,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        3,
+        20,
+        24
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#147",
+      "title": "slide 12 pane headings",
+      "result": "partial",
+      "n_pass": 2,
+      "n_fail": 2,
+      "n_checks": 4,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        12
+      ],
+      "residuals": [
+        "handoff"
+      ],
+      "failed_checks": [
+        {
+          "ticket": "#147",
+          "mode": "chartjs",
+          "slide": 12,
+          "check": "explicit left/right pane headings",
+          "measured": {
+            "paneTitles": [],
+            "subs": [],
+            "heroes": [
+              "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+              "of Global New Accounts Acquired on Fee-Paying Products*"
+            ]
+          },
+          "residual": "handoff",
+          "note": "canonical fixture lacks #147 headings; mutations do not add them"
+        },
+        {
+          "ticket": "#147",
+          "mode": "svg",
+          "slide": 12,
+          "check": "explicit left/right pane headings",
+          "measured": {
+            "paneTitles": [],
+            "subs": [],
+            "heroes": [
+              "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+              "of Global New Accounts Acquired on Fee-Paying Products*"
+            ]
+          },
+          "residual": "handoff",
+          "note": "canonical fixture lacks #147 headings; mutations do not add them"
+        }
+      ],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#148",
+      "title": "slides 13-14 vertical bars + pane order",
+      "result": "pass",
+      "n_pass": 7,
+      "n_fail": 0,
+      "n_checks": 7,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        13,
+        14
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#151",
+      "title": "slide 18 boxed labels + driver card",
+      "result": "pass",
+      "n_pass": 8,
+      "n_fail": 0,
+      "n_checks": 8,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        18
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#152",
+      "title": "gridlines default off",
+      "result": "pass",
+      "n_pass": 10,
+      "n_fail": 0,
+      "n_checks": 10,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        9,
+        13,
+        15,
+        18
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#153",
+      "title": "slide 26 Q1'26 matrix orientation",
+      "result": "fail",
+      "n_pass": 0,
+      "n_fail": 4,
+      "n_checks": 4,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        26
+      ],
+      "residuals": [
+        "handoff"
+      ],
+      "failed_checks": [
+        {
+          "ticket": "#153",
+          "mode": "chartjs",
+          "slide": 26,
+          "check": "visible Q1'26 period context",
+          "measured": {
+            "heads": [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ],
+            "hasQ126": false,
+            "sampleRows": [
+              [
+                "Category",
+                "YoY Growth",
+                "% of Total Billed Business"
+              ],
+              [
+                "Restaurants",
+                "9%",
+                "7%"
+              ],
+              [
+                "Lodging",
+                "6%",
+                "5%"
+              ]
+            ]
+          },
+          "residual": "handoff",
+          "note": "canonical fixture still v10 category-row matrix; mutations lack #153"
+        },
+        {
+          "ticket": "#153",
+          "mode": "chartjs",
+          "slide": 26,
+          "check": "source matrix orientation (periods as columns)",
+          "measured": {
+            "heads": [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ]
+          },
+          "residual": "handoff",
+          "note": ""
+        },
+        {
+          "ticket": "#153",
+          "mode": "svg",
+          "slide": 26,
+          "check": "visible Q1'26 period context",
+          "measured": {
+            "heads": [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ],
+            "hasQ126": false,
+            "sampleRows": [
+              [
+                "Category",
+                "YoY Growth",
+                "% of Total Billed Business"
+              ],
+              [
+                "Restaurants",
+                "9%",
+                "7%"
+              ],
+              [
+                "Lodging",
+                "6%",
+                "5%"
+              ]
+            ]
+          },
+          "residual": "handoff",
+          "note": "canonical fixture still v10 category-row matrix; mutations lack #153"
+        },
+        {
+          "ticket": "#153",
+          "mode": "svg",
+          "slide": 26,
+          "check": "source matrix orientation (periods as columns)",
+          "measured": {
+            "heads": [
+              "Category",
+              "YoY Growth",
+              "% of Total Billed Business"
+            ]
+          },
+          "residual": "handoff",
+          "note": ""
+        }
+      ],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#154",
+      "title": "slide 24 growth brackets + $486B",
+      "result": "pass",
+      "n_pass": 10,
+      "n_fail": 0,
+      "n_checks": 10,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        24
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#155",
+      "title": "slide 21 capital return composition",
+      "result": "pass",
+      "n_pass": 7,
+      "n_fail": 0,
+      "n_checks": 7,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        21
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#156",
+      "title": "slide 27 macro scenarios",
+      "result": "pass",
+      "n_pass": 9,
+      "n_fail": 0,
+      "n_checks": 9,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        27
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#157",
+      "title": "slides 33-37 annex matrices",
+      "result": "pass",
+      "n_pass": 30,
+      "n_fail": 0,
+      "n_checks": 30,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        33,
+        34,
+        35,
+        36,
+        37
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    },
+    {
+      "ticket": "#159",
+      "title": "slide 32 grouped annex heading IDs",
+      "result": "pass",
+      "n_pass": 6,
+      "n_fail": 0,
+      "n_checks": 6,
+      "modes": [
+        "chartjs",
+        "svg"
+      ],
+      "slides": [
+        32
+      ],
+      "residuals": [],
+      "failed_checks": [],
+      "evidence": "closed_tickets/closed_ticket_results_v11.json",
+      "input": "simulation/amex_q1_2026/passes/pass_01/output/presentation.html"
+    }
+  ],
+  "rows": [
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined support present",
+      "measured": {
+        "hasSupport": true,
+        "nBoxes": 6,
+        "aligned": true
+      },
+      "expected": {
+        "hasSupport": true,
+        "nBoxes>=": 6,
+        "aligned": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[0] cx vs bar[0] cx",
+      "measured": {
+        "cell_cx": 640.84375,
+        "bar_cx": 640.84375
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.0,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[1] cx vs bar[1] cx",
+      "measured": {
+        "cell_cx": 762.890625,
+        "bar_cx": 762.84375
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.047,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[2] cx vs bar[2] cx",
+      "measured": {
+        "cell_cx": 884.9375,
+        "bar_cx": 884.84375
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.094,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[3] cx vs bar[3] cx",
+      "measured": {
+        "cell_cx": 1006.984375,
+        "bar_cx": 1006.84375
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.141,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[4] cx vs bar[4] cx",
+      "measured": {
+        "cell_cx": 1129.03125,
+        "bar_cx": 1128.84375
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.188,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "max |cell-bar| over 5",
+      "measured": {
+        "max_abs": 0.188,
+        "deltas": [
+          0.0,
+          0.047,
+          0.094,
+          0.141,
+          0.188
+        ]
+      },
+      "expected": "<=12",
+      "delta_px": 0.188,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#149",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "label lane no overlap first value cell",
+      "measured": {
+        "label_right": 579.828125,
+        "first_x": 579.828125,
+        "gap_px": 0.0
+      },
+      "expected": "gap >= 0",
+      "delta_px": 0.0,
+      "pass": true,
+      "note": "label column right edge vs first value cell left",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "chartjs",
+      "slide_number": 0,
+      "layout": "deck",
+      "pdf_page_index": -1,
+      "pdf_physical_page": 0,
+      "check": "44 unique data-slide-number 1..44",
+      "measured": {
+        "n": 44,
+        "min": 1,
+        "max": 44,
+        "unique": 44
+      },
+      "expected": {
+        "n": 44,
+        "range": "1..44"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "chartjs",
+      "slide_number": 9,
+      "layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "check": "identity activate_slide",
+      "measured": {
+        "ok": true,
+        "err": null
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#146",
+      "mode": "chartjs",
+      "slide_number": 9,
+      "layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "check": "paint-ready charts (ex-blank)",
+      "measured": {
+        "n_canvas": 1,
+        "paint_err": null
+      },
+      "expected": {
+        "n_canvas>=": 1,
+        "paint_err": null
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "chartjs",
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "check": "identity activate_slide",
+      "measured": {
+        "ok": true,
+        "err": null
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#146",
+      "mode": "chartjs",
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "check": "paint-ready charts (ex-blank)",
+      "measured": {
+        "n_canvas": 1,
+        "paint_err": null
+      },
+      "expected": {
+        "n_canvas>=": 1,
+        "paint_err": null
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "identity activate_slide",
+      "measured": {
+        "ok": true,
+        "err": null
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#146",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "paint-ready charts (ex-blank)",
+      "measured": {
+        "n_canvas": 2,
+        "paint_err": null
+      },
+      "expected": {
+        "n_canvas>=": 1,
+        "paint_err": null
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "chartjs",
+      "slide_number": 0,
+      "layout": "deck",
+      "pdf_page_index": -1,
+      "pdf_physical_page": 0,
+      "check": "console diagnostics recorded",
+      "measured": {
+        "n_warn_error": 0,
+        "sample": []
+      },
+      "expected": "recorded",
+      "delta_px": null,
+      "pass": true,
+      "note": "non-blocking record",
+      "residual": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "one shared-column FDIC callout",
+      "measured": {
+        "n": 1,
+        "lines": [
+          [
+            "92% FDIC",
+            "insured at",
+            "Q1'26"
+          ]
+        ],
+        "badges": []
+      },
+      "expected": {
+        "n": 1,
+        "text~": "92% FDIC"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "no pseudo top_total / duplicate badge",
+      "measured": {
+        "topTotalPseudo": false,
+        "badges": []
+      },
+      "expected": false,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#158",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "pane titles Funding Mix + Deposit Programs",
+      "measured": [
+        "Funding Mix",
+        "Deposit Programs"
+      ],
+      "expected": [
+        "Funding Mix",
+        "Deposit Programs"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#158",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "pane subtitles present",
+      "measured": [
+        "$ in billions",
+        "$ in billions"
+      ],
+      "expected": ">=1 each pane",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "chartjs",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "two independent pane charts",
+      "measured": {
+        "nCharts": 2,
+        "textSample": "28 / 44 Funding and Deposits $ in billions Funding Mix $ in billions 92% FDIC insured at Q1'26 Deposit Programs $ in billions Funding footnotes"
+      },
+      "expected": 2,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "semantic pane titles (2)",
+      "measured": [
+        {
+          "text": "Net Card Fees ($B)",
+          "fontSize": 40
+        },
+        {
+          "text": "YoY Growth %",
+          "fontSize": 40
+        }
+      ],
+      "expected": 2,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "no internal Chart.js title plugin duplicate",
+      "measured": [
+        {
+          "i": 0,
+          "yTick": 24,
+          "xRot": 0,
+          "titlePlugin": false,
+          "titleText": null,
+          "nPainted": 8
+        },
+        {
+          "i": 1,
+          "yTick": 24,
+          "xRot": 0,
+          "titlePlugin": false,
+          "titleText": null,
+          "nPainted": 9
+        }
+      ],
+      "expected": "titlePlugin false",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#150",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "auto typography settled (y ticks + paint)",
+      "measured": [
+        {
+          "i": 0,
+          "yTick": 24,
+          "xRot": 0,
+          "titlePlugin": false,
+          "titleText": null,
+          "nPainted": 8
+        },
+        {
+          "i": 1,
+          "yTick": 24,
+          "xRot": 0,
+          "titlePlugin": false,
+          "titleText": null,
+          "nPainted": 9
+        }
+      ],
+      "expected": "charts present, y ticks set",
+      "delta_px": null,
+      "pass": true,
+      "note": "handoff typography.mode=auto both panes; record chosen sizes",
+      "residual": ""
+    },
+    {
+      "ticket": "#150",
+      "mode": "chartjs",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "no pane clipping",
+      "measured": {
+        "clipping": false
+      },
+      "expected": false,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "five-row pill board",
+      "measured": {
+        "nStubs": 5,
+        "boardCls": "gl-pill gl-pill-free gl-card",
+        "board": {
+          "x": 127.296875,
+          "y": 262.671875,
+          "w": 1564.90625,
+          "h": 624.625,
+          "right": 1692.203125,
+          "bottom": 887.296875,
+          "cx": 909.75,
+          "cy": 574.984375,
+          "text": "Total Revenues Net of Interest Expense FX-Adjusted* Net Income Diluted EPS** Average Diluted Shares Outstanding Q1'26 $1"
+        }
+      },
+      "expected": {
+        "nStubs": 5,
+        "geometry": "PDF targets \u00b14"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "class may include gl-pill-free; geometry contract is authoritative",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.x vs PDF target \u00b14",
+      "measured": 127.296875,
+      "expected": 127.312,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.y vs PDF target \u00b14",
+      "measured": 262.671875,
+      "expected": 262.68,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.w vs PDF target \u00b14",
+      "measured": 1564.90625,
+      "expected": 1564.911,
+      "delta_px": -0.005,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.h vs PDF target \u00b14",
+      "measured": 624.625,
+      "expected": 624.64,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "check": "slide20 not slide3 fixed five-row PDF geometry",
+      "measured": {
+        "ctrl": {
+          "hasBoard": true,
+          "fixed": false,
+          "nStubs": 8,
+          "layout": "pill_comparison",
+          "cls": "gl-pill gl-pill-free gl-card"
+        },
+        "s20": {
+          "x": 96,
+          "y": 201.1875,
+          "w": 1510,
+          "h": 478,
+          "right": 1606,
+          "bottom": 679.1875,
+          "cx": 851,
+          "cy": 440.1875,
+          "text": "Card Member Rewards Business Development Card Member Services Variable Customer Engagement Expenses Marketing Operating "
+        },
+        "s3": {
+          "x": 127.296875,
+          "y": 262.671875,
+          "w": 1564.90625,
+          "h": 624.625,
+          "right": 1692.203125,
+          "bottom": 887.296875,
+          "cx": 909.75,
+          "cy": 574.984375,
+          "text": "Total Revenues Net of Interest Expense FX-Adjusted* Net Income Diluted EPS** Average Diluted Shares Outstanding Q1'26 $1"
+        },
+        "same_geom": false
+      },
+      "expected": "geometry must not match slide3 board targets",
+      "delta_px": null,
+      "pass": true,
+      "note": "pill layout may exist; must not share slide3 fixed-board geometry",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "slide24 not pill_comparison fixed board",
+      "measured": {
+        "hasBoard": false,
+        "fixed": false,
+        "nStubs": 0,
+        "layout": "grouped_bar_chart",
+        "cls": null
+      },
+      "expected": {
+        "layout": "grouped_bar_chart",
+        "fixedBoard": false
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#147",
+      "mode": "chartjs",
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "check": "explicit left/right pane headings",
+      "measured": {
+        "paneTitles": [],
+        "subs": [],
+        "heroes": [
+          "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+          "of Global New Accounts Acquired on Fee-Paying Products*"
+        ]
+      },
+      "expected": "exactly one semantic title per pane (left+right)",
+      "delta_px": null,
+      "pass": false,
+      "note": "canonical fixture lacks #147 headings; mutations do not add them",
+      "residual": "handoff"
+    },
+    {
+      "ticket": "#147",
+      "mode": "chartjs",
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "check": "no duplicate internal chart title",
+      "measured": {
+        "titlePlugin": false
+      },
+      "expected": false,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#147",
+      "mode": "chartjs",
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "check": "paint-ready",
+      "measured": null,
+      "expected": null,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#148",
+      "mode": "chartjs",
+      "slide_number": 13,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "check": "vertical bars (indexAxis=x)",
+      "measured": {
+        "indexAxis": "x",
+        "type": "bar",
+        "labels": [
+          "Q1'25",
+          "Q2'25",
+          "Q3'25",
+          "Q4'25",
+          "Q1'26"
+        ],
+        "ds": [
+          "Total Balances",
+          "Billed Business"
+        ],
+        "svgVertical": true,
+        "title": "Total Balances and Billed Business"
+      },
+      "expected": {
+        "indexAxis": "x",
+        "type": "bar"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#148",
+      "mode": "chartjs",
+      "slide_number": 13,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "check": "series Total Balances + Billed Business",
+      "measured": [
+        "Total Balances",
+        "Billed Business"
+      ],
+      "expected": [
+        "Total Balances",
+        "Billed Business"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#148",
+      "mode": "chartjs",
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14,
+      "check": "pane order 30+ Days Past Due then Net Write-Off Rates",
+      "measured": [
+        "30+ Days Past Due",
+        "Net Write-Off Rates"
+      ],
+      "expected": [
+        "30+ Days Past Due",
+        "Net Write-Off Rates"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#148",
+      "mode": "chartjs",
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14,
+      "check": "both panes vertical bars",
+      "measured": [
+        {
+          "i": 0,
+          "indexAxis": "x",
+          "type": "bar",
+          "labels": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ]
+        },
+        {
+          "i": 1,
+          "indexAxis": "x",
+          "type": "bar",
+          "labels": [
+            "Q1'25",
+            "Q2'25",
+            "Q3'25",
+            "Q4'25",
+            "Q1'26"
+          ]
+        }
+      ],
+      "expected": "indexAxis=x",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#148",
+      "mode": "chartjs",
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14,
+      "check": "paint-ready 13+14",
+      "measured": {
+        "13": null,
+        "14": null
+      },
+      "expected": null,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "chartjs",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "chart_hero_dual + driver_card",
+      "measured": {
+        "titles": [
+          "Net Interest Income",
+          "NII: Volume & Margin Drivers"
+        ],
+        "hasDriver": true,
+        "nRows": 4
+      },
+      "expected": {
+        "hasDriver": true,
+        "nRows": 4
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "chartjs",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "driver card includes Margin 5%",
+      "measured": {
+        "Billed Business": "8%",
+        "Net Interest Income": "13%",
+        "Volume": "7%",
+        "Margin": "5%"
+      },
+      "expected": {
+        "Margin": "5%"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "chartjs",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "five boxed YoY labels painted",
+      "measured": {
+        "painted": "5",
+        "flag": "1",
+        "values": [
+          "11%",
+          "12%",
+          "12%",
+          "12%",
+          "12%"
+        ]
+      },
+      "expected": {
+        "painted": 5,
+        "values": [
+          "11%",
+          "12%",
+          "12%",
+          "12%",
+          "12%"
+        ]
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "chartjs",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "no synthetic combo YoY line",
+      "measured": {
+        "nDS": 1,
+        "dsTypes": [
+          "bar"
+        ],
+        "comboLine": false
+      },
+      "expected": {
+        "nDS": 1,
+        "comboLine": false
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "chartjs",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "paint-ready",
+      "measured": null,
+      "expected": null,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "chartjs",
+      "slide_number": 9,
+      "layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "check": "plot gridlines off (Chart.js)",
+      "measured": [
+        {
+          "i": 0,
+          "yGrid": false,
+          "xGrid": false,
+          "yBorder": true
+        }
+      ],
+      "expected": "xGrid/yGrid false",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "chartjs",
+      "slide_number": 13,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "check": "plot gridlines off (Chart.js)",
+      "measured": [
+        {
+          "i": 0,
+          "yGrid": false,
+          "xGrid": false,
+          "yBorder": true
+        }
+      ],
+      "expected": "xGrid/yGrid false",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "plot gridlines off (Chart.js)",
+      "measured": [
+        {
+          "i": 0,
+          "yGrid": false,
+          "xGrid": false,
+          "yBorder": true
+        }
+      ],
+      "expected": "xGrid/yGrid false",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "chartjs",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "plot gridlines off (Chart.js)",
+      "measured": [
+        {
+          "i": 0,
+          "yGrid": false,
+          "xGrid": false,
+          "yBorder": true
+        }
+      ],
+      "expected": "xGrid/yGrid false",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "chartjs",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "mixed-sign domain retains zero context",
+      "measured": {
+        "ok": true,
+        "yMin": -80.30000000000001,
+        "yMax": 1600,
+        "includesZero": true
+      },
+      "expected": "domain crosses or records zero",
+      "delta_px": null,
+      "pass": true,
+      "note": "axes/zero remain; ordinary plot gridlines stay off",
+      "residual": ""
+    },
+    {
+      "ticket": "#153",
+      "mode": "chartjs",
+      "slide_number": 26,
+      "layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26,
+      "check": "visible Q1'26 period context",
+      "measured": {
+        "heads": [
+          "Category",
+          "YoY Growth",
+          "% of Total Billed Business"
+        ],
+        "hasQ126": false,
+        "sampleRows": [
+          [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ],
+          [
+            "Restaurants",
+            "9%",
+            "7%"
+          ],
+          [
+            "Lodging",
+            "6%",
+            "5%"
+          ]
+        ]
+      },
+      "expected": "Q1'26 period column/context present",
+      "delta_px": null,
+      "pass": false,
+      "note": "canonical fixture still v10 category-row matrix; mutations lack #153",
+      "residual": "handoff"
+    },
+    {
+      "ticket": "#153",
+      "mode": "chartjs",
+      "slide_number": 26,
+      "layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26,
+      "check": "source matrix orientation (periods as columns)",
+      "measured": {
+        "heads": [
+          "Category",
+          "YoY Growth",
+          "% of Total Billed Business"
+        ]
+      },
+      "expected": "period columns including Q1'26",
+      "delta_px": null,
+      "pass": false,
+      "note": "",
+      "residual": "handoff"
+    },
+    {
+      "ticket": "#154",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "six bars",
+      "measured": {
+        "nBars": 6,
+        "labels": [
+          "U.S. Consumer",
+          "U.S. SME",
+          "U.S. Large & Global Corp.",
+          "Int'l Consumer",
+          "Int'l SME & Large Corp.",
+          "Processed Volumes"
+        ]
+      },
+      "expected": 6,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "three visible semantic group brackets",
+      "measured": {
+        "painted": "3",
+        "cfg": {
+          "items": [
+            {
+              "label": "U.S. Consumer Services",
+              "start": 0,
+              "end": 0
+            },
+            {
+              "label": "Commercial Services",
+              "start": 1,
+              "end": 2
+            },
+            {
+              "label": "International Card Services",
+              "start": 3,
+              "end": 4
+            }
+          ]
+        }
+      },
+      "expected": 3,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "paint-ready",
+      "measured": null,
+      "expected": null,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "exact $486B Total Network Volumes",
+      "measured": {
+        "has486": true,
+        "support": [
+          "$486B Total Network Volumes \u00b7 % of Total Network Volumes",
+          "37%",
+          "22%",
+          "5%",
+          "15%",
+          "8%",
+          "12%"
+        ]
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "FX-adjusted note present",
+      "measured": true,
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "chartjs",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "aligned support row (% of total cells)",
+      "measured": [
+        "$486B Total Network Volumes \u00b7 % of Total Network Volumes",
+        "37%",
+        "22%",
+        "5%",
+        "15%",
+        "8%",
+        "12%"
+      ],
+      "expected": "label + 6 pct cells",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#155",
+      "mode": "chartjs",
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "check": "stacked Dividends + Share Repurchases",
+      "measured": {
+        "div": {
+          "label": "Dividends",
+          "type": "bar",
+          "stack": "combo",
+          "data": [
+            0.5,
+            0.6,
+            0.6,
+            0.6,
+            0.6,
+            0.7
+          ]
+        },
+        "rep": {
+          "label": "Share Repurchases",
+          "type": "bar",
+          "stack": "combo",
+          "data": [
+            1.1,
+            0.7,
+            1.4,
+            2.3,
+            0.9,
+            1.6
+          ]
+        }
+      },
+      "expected": {
+        "stack": "combo",
+        "both present": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#155",
+      "mode": "chartjs",
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "check": "shares line 702\u2192682",
+      "measured": [
+        702,
+        701,
+        696,
+        689,
+        686,
+        682
+      ],
+      "expected": [
+        702,
+        "...",
+        682
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#155",
+      "mode": "chartjs",
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "check": "paint-ready",
+      "measured": null,
+      "expected": null,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#155",
+      "mode": "chartjs",
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "check": "ROE 35/34/36/36/34/35%",
+      "measured": [
+        "35%",
+        "34%",
+        "36%",
+        "36%",
+        "34%",
+        "35%"
+      ],
+      "expected": [
+        "35%",
+        "34%",
+        "36%",
+        "36%",
+        "34%",
+        "35%"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#155",
+      "mode": "chartjs",
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "check": "right-side KPIs present (4)",
+      "measured": [
+        "58% Dividend/share \u2191 (3yr)",
+        "74% NI Returned (3yr)",
+        "10.5% CET1 Ratio Q1'26",
+        "10\u201311% CET1 Target"
+      ],
+      "expected": 4,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "two paint-ready panes",
+      "measured": {
+        "nCanvas": 2,
+        "paint_err": null,
+        "nCharts": 2
+      },
+      "expected": 2,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "pane0 Q1'25\u2013Q1'28 + 3 scenarios",
+      "measured": {
+        "labels": [
+          "Q1'25",
+          "Q2'25",
+          "Q3'25",
+          "Q4'25",
+          "Q1'26",
+          "Q2'26",
+          "Q3'26",
+          "Q4'26",
+          "Q1'27",
+          "Q2'27",
+          "Q3'27",
+          "Q4'27",
+          "Q1'28"
+        ],
+        "ds": [
+          "Q1 Upside Scenario",
+          "Q1 Baseline Scenario",
+          "Q1 Downside Scenario"
+        ]
+      },
+      "expected": {
+        "first": "Q1'25",
+        "last": "Q1'28",
+        "nDS": 3
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "pane1 Q1'25\u2013Q1'28 + 3 scenarios",
+      "measured": {
+        "labels": [
+          "Q1'25",
+          "Q2'25",
+          "Q3'25",
+          "Q4'25",
+          "Q1'26",
+          "Q2'26",
+          "Q3'26",
+          "Q4'26",
+          "Q1'27",
+          "Q2'27",
+          "Q3'27",
+          "Q4'27",
+          "Q1'28"
+        ],
+        "ds": [
+          "Q1 Upside Scenario",
+          "Q1 Baseline Scenario",
+          "Q1 Downside Scenario"
+        ]
+      },
+      "expected": {
+        "first": "Q1'25",
+        "last": "Q1'28",
+        "nDS": 3
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "pane titles Unemployment + GDP",
+      "measured": [
+        "U.S. Unemployment Rate %",
+        "U.S. GDP Growth* %"
+      ],
+      "expected": [
+        "U.S. Unemployment Rate %",
+        "U.S. GDP Growth* %"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "E0026 / PDF page 27 source citation",
+      "measured": {
+        "source": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"
+      },
+      "expected": "PDF page 27 reference",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "chartjs",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "SAAR note on slide (visible or disclosure HTML)",
+      "measured": {
+        "text": false,
+        "html": true
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "disclosure-panel SAAR counts; above-fold not required by ticket wording",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 6,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'19",
+          "Q1'24",
+          "Q2'24",
+          "Q3'24",
+          "Q4'24"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 10,
+        "nTables": 1,
+        "heads": [
+          "Item",
+          "Q1'26",
+          "Q1'25",
+          "YoY% Inc/(Dec)"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "check": "units include $ in millions",
+      "measured": "$ in millions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in millions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in millions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 6,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'19",
+          "Q1'23",
+          "Q2'23",
+          "Q3'23",
+          "Q4'23"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 6,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'19",
+          "Q1'24",
+          "Q2'24",
+          "Q3'24",
+          "Q4'24"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 4,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'24",
+          "Q2'24",
+          "Q3'24",
+          "Q4'24",
+          "Q1'25"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "chartjs",
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#159",
+      "mode": "chartjs",
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "check": "two peer grouped annex tables",
+      "measured": {
+        "nTables": 2,
+        "headings": [
+          {
+            "t": "Commercial Services",
+            "id": "gl-grouped-annex-heading-32-0"
+          },
+          {
+            "t": "International Card Services",
+            "id": "gl-grouped-annex-heading-32-1"
+          }
+        ]
+      },
+      "expected": {
+        "nTables": 2,
+        "nHeadings": 2
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#159",
+      "mode": "chartjs",
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "check": "deck-unique heading IDs",
+      "measured": {
+        "ids": [
+          "gl-grouped-annex-heading-32-0",
+          "gl-grouped-annex-heading-32-1"
+        ],
+        "dups": []
+      },
+      "expected": "unique non-empty ids",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#159",
+      "mode": "chartjs",
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "check": "heading labels Commercial + International",
+      "measured": [
+        "Commercial Services",
+        "International Card Services"
+      ],
+      "expected": [
+        "Commercial Services",
+        "International Card Services"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "outlined support present",
+      "measured": {
+        "hasSupport": true,
+        "nBoxes": 6,
+        "aligned": true
+      },
+      "expected": {
+        "hasSupport": true,
+        "nBoxes>=": 6,
+        "aligned": true
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[0] cx vs bar[0] cx",
+      "measured": {
+        "cell_cx": 706.5625,
+        "bar_cx": 706.5625
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.0,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[1] cx vs bar[1] cx",
+      "measured": {
+        "cell_cx": 841.734375,
+        "bar_cx": 841.7291666666667
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.005,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[2] cx vs bar[2] cx",
+      "measured": {
+        "cell_cx": 976.90625,
+        "bar_cx": 976.8958333333334
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.01,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[3] cx vs bar[3] cx",
+      "measured": {
+        "cell_cx": 1112.078125,
+        "bar_cx": 1112.0625
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.016,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "cell[4] cx vs bar[4] cx",
+      "measured": {
+        "cell_cx": 1247.25,
+        "bar_cx": 1247.2291666666665
+      },
+      "expected": "abs<=12",
+      "delta_px": 0.021,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#136",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "max |cell-bar| over 5",
+      "measured": {
+        "max_abs": 0.021,
+        "deltas": [
+          0.0,
+          0.005,
+          0.01,
+          0.016,
+          0.021
+        ]
+      },
+      "expected": "<=12",
+      "delta_px": 0.021,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#149",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "label lane no overlap first value cell",
+      "measured": {
+        "label_right": 638.984375,
+        "first_x": 638.984375,
+        "gap_px": 0.0
+      },
+      "expected": "gap >= 0",
+      "delta_px": 0.0,
+      "pass": true,
+      "note": "label column right edge vs first value cell left",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "svg",
+      "slide_number": 0,
+      "layout": "deck",
+      "pdf_page_index": -1,
+      "pdf_physical_page": 0,
+      "check": "44 unique data-slide-number 1..44",
+      "measured": {
+        "n": 44,
+        "min": 1,
+        "max": 44,
+        "unique": 44
+      },
+      "expected": {
+        "n": 44,
+        "range": "1..44"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "svg",
+      "slide_number": 9,
+      "layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "check": "identity activate_slide",
+      "measured": {
+        "ok": true,
+        "err": null
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "svg",
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "check": "identity activate_slide",
+      "measured": {
+        "ok": true,
+        "err": null
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "svg",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "identity activate_slide",
+      "measured": {
+        "ok": true,
+        "err": null
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#137",
+      "mode": "svg",
+      "slide_number": 0,
+      "layout": "deck",
+      "pdf_page_index": -1,
+      "pdf_physical_page": 0,
+      "check": "console diagnostics recorded",
+      "measured": {
+        "n_warn_error": 0,
+        "sample": []
+      },
+      "expected": "recorded",
+      "delta_px": null,
+      "pass": true,
+      "note": "non-blocking record",
+      "residual": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "one shared-column FDIC callout",
+      "measured": {
+        "n": 1,
+        "lines": [
+          [
+            "92% FDIC",
+            "insured at",
+            "Q1'26"
+          ]
+        ],
+        "badges": []
+      },
+      "expected": {
+        "n": 1,
+        "text~": "92% FDIC"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "no pseudo top_total / duplicate badge",
+      "measured": {
+        "topTotalPseudo": false,
+        "badges": []
+      },
+      "expected": false,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#158",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "pane titles Funding Mix + Deposit Programs",
+      "measured": [
+        "Funding Mix",
+        "Deposit Programs"
+      ],
+      "expected": [
+        "Funding Mix",
+        "Deposit Programs"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#158",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "pane subtitles present",
+      "measured": [
+        "$ in billions",
+        "$ in billions"
+      ],
+      "expected": ">=1 each pane",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#138",
+      "mode": "svg",
+      "slide_number": 28,
+      "layout": "multi_panel",
+      "pdf_page_index": 27,
+      "pdf_physical_page": 28,
+      "check": "two independent pane charts",
+      "measured": {
+        "nCharts": "svg-mode",
+        "textSample": "28 / 44 Funding and Deposits $ in billions Funding Mix $ in billions 72% 21% 7% $210 Q4'25 72% 21% 7% $219 Q1'26 92% FDIC insured at Q1'26 Deposit Programs $ in billions 81% 10% 7%"
+      },
+      "expected": 2,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#139",
+      "mode": "svg",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "semantic pane titles (2)",
+      "measured": [
+        {
+          "text": "Net Card Fees ($B)",
+          "fontSize": 40
+        },
+        {
+          "text": "YoY Growth %",
+          "fontSize": 40
+        }
+      ],
+      "expected": 2,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#150",
+      "mode": "svg",
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "pdf_page_index": 16,
+      "pdf_physical_page": 17,
+      "check": "JS-off pane titles retained",
+      "measured": [
+        {
+          "x": 119,
+          "y": 220.1875,
+          "w": 806,
+          "h": 42,
+          "right": 925,
+          "bottom": 262.1875,
+          "cx": 522,
+          "cy": 241.1875,
+          "text": "Net Card Fees ($B)",
+          "fontSize": 40,
+          "fontWeight": "700"
+        },
+        {
+          "x": 995,
+          "y": 220.1875,
+          "w": 806,
+          "h": 42,
+          "right": 1801,
+          "bottom": 262.1875,
+          "cx": 1398,
+          "cy": 241.1875,
+          "text": "YoY Growth %",
+          "fontSize": 40,
+          "fontWeight": "700"
+        }
+      ],
+      "expected": 2,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "five-row pill board",
+      "measured": {
+        "nStubs": 5,
+        "boardCls": "gl-pill gl-pill-free gl-card",
+        "board": {
+          "x": 127.296875,
+          "y": 262.671875,
+          "w": 1564.90625,
+          "h": 624.625,
+          "right": 1692.203125,
+          "bottom": 887.296875,
+          "cx": 909.75,
+          "cy": 574.984375,
+          "text": "Total Revenues Net of Interest Expense FX-Adjusted* Net Income Diluted EPS** Average Diluted Shares Outstanding Q1'26 $1"
+        }
+      },
+      "expected": {
+        "nStubs": 5,
+        "geometry": "PDF targets \u00b14"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "class may include gl-pill-free; geometry contract is authoritative",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.x vs PDF target \u00b14",
+      "measured": 127.296875,
+      "expected": 127.312,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.y vs PDF target \u00b14",
+      "measured": 262.671875,
+      "expected": 262.68,
+      "delta_px": -0.008,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.w vs PDF target \u00b14",
+      "measured": 1564.90625,
+      "expected": 1564.911,
+      "delta_px": -0.005,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 3,
+      "layout": "pill_comparison",
+      "pdf_page_index": 2,
+      "pdf_physical_page": 3,
+      "check": "board.h vs PDF target \u00b14",
+      "measured": 624.625,
+      "expected": 624.64,
+      "delta_px": -0.015,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 20,
+      "layout": "pill_comparison",
+      "pdf_page_index": 19,
+      "pdf_physical_page": 20,
+      "check": "slide20 not slide3 fixed five-row PDF geometry",
+      "measured": {
+        "ctrl": {
+          "hasBoard": true,
+          "fixed": false,
+          "nStubs": 8,
+          "layout": "pill_comparison",
+          "cls": "gl-pill gl-pill-free gl-card"
+        },
+        "s20": {
+          "x": 96,
+          "y": 201.1875,
+          "w": 1510,
+          "h": 478,
+          "right": 1606,
+          "bottom": 679.1875,
+          "cx": 851,
+          "cy": 440.1875,
+          "text": "Card Member Rewards Business Development Card Member Services Variable Customer Engagement Expenses Marketing Operating "
+        },
+        "s3": {
+          "x": 127.296875,
+          "y": 262.671875,
+          "w": 1564.90625,
+          "h": 624.625,
+          "right": 1692.203125,
+          "bottom": 887.296875,
+          "cx": 909.75,
+          "cy": 574.984375,
+          "text": "Total Revenues Net of Interest Expense FX-Adjusted* Net Income Diluted EPS** Average Diluted Shares Outstanding Q1'26 $1"
+        },
+        "same_geom": false
+      },
+      "expected": "geometry must not match slide3 board targets",
+      "delta_px": null,
+      "pass": true,
+      "note": "pill layout may exist; must not share slide3 fixed-board geometry",
+      "residual": ""
+    },
+    {
+      "ticket": "#140",
+      "mode": "svg",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "slide24 not pill_comparison fixed board",
+      "measured": {
+        "hasBoard": false,
+        "fixed": false,
+        "nStubs": 0,
+        "layout": "grouped_bar_chart",
+        "cls": null
+      },
+      "expected": {
+        "layout": "grouped_bar_chart",
+        "fixedBoard": false
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#147",
+      "mode": "svg",
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 11,
+      "pdf_physical_page": 12,
+      "check": "explicit left/right pane headings",
+      "measured": {
+        "paneTitles": [],
+        "subs": [],
+        "heroes": [
+          "of Global Consumer New Accounts Acquired from Millennial and Gen Z Customers",
+          "of Global New Accounts Acquired on Fee-Paying Products*"
+        ]
+      },
+      "expected": "exactly one semantic title per pane (left+right)",
+      "delta_px": null,
+      "pass": false,
+      "note": "canonical fixture lacks #147 headings; mutations do not add them",
+      "residual": "handoff"
+    },
+    {
+      "ticket": "#148",
+      "mode": "svg",
+      "slide_number": 13,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "check": "SVG vertical bars",
+      "measured": true,
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "null when noscript not hydrated as live svg",
+      "residual": ""
+    },
+    {
+      "ticket": "#148",
+      "mode": "svg",
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "pdf_page_index": 13,
+      "pdf_physical_page": 14,
+      "check": "pane order 30+ Days Past Due then Net Write-Off Rates",
+      "measured": [
+        "30+ Days Past Due",
+        "Net Write-Off Rates"
+      ],
+      "expected": [
+        "30+ Days Past Due",
+        "Net Write-Off Rates"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "svg",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "chart_hero_dual + driver_card",
+      "measured": {
+        "titles": [
+          "Net Interest Income",
+          "NII: Volume & Margin Drivers"
+        ],
+        "hasDriver": true,
+        "nRows": 4
+      },
+      "expected": {
+        "hasDriver": true,
+        "nRows": 4
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "svg",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "driver card includes Margin 5%",
+      "measured": {
+        "Billed Business": "8%",
+        "Net Interest Income": "13%",
+        "Volume": "7%",
+        "Margin": "5%"
+      },
+      "expected": {
+        "Margin": "5%"
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#151",
+      "mode": "svg",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "SVG boxed-label groups present",
+      "measured": {
+        "svgBoxed": 5
+      },
+      "expected": ">=5",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "svg",
+      "slide_number": 9,
+      "layout": "line_chart",
+      "pdf_page_index": 8,
+      "pdf_physical_page": 9,
+      "check": "plot gridlines absent (SVG)",
+      "measured": {
+        "svgGrid": 0,
+        "liveGrid": 0
+      },
+      "expected": 0,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "svg",
+      "slide_number": 13,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 12,
+      "pdf_physical_page": 13,
+      "check": "plot gridlines absent (SVG)",
+      "measured": {
+        "svgGrid": 0,
+        "liveGrid": 0
+      },
+      "expected": 0,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "plot gridlines absent (SVG)",
+      "measured": {
+        "svgGrid": 0,
+        "liveGrid": 0
+      },
+      "expected": 0,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "svg",
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 17,
+      "pdf_physical_page": 18,
+      "check": "plot gridlines absent (SVG)",
+      "measured": {
+        "svgGrid": 0,
+        "liveGrid": 0
+      },
+      "expected": 0,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#152",
+      "mode": "svg",
+      "slide_number": 15,
+      "layout": "stacked_bar_chart",
+      "pdf_page_index": 14,
+      "pdf_physical_page": 15,
+      "check": "mixed-sign domain retains zero context",
+      "measured": {
+        "ok": true,
+        "svgHasZero": false
+      },
+      "expected": "domain crosses or records zero",
+      "delta_px": null,
+      "pass": true,
+      "note": "axes/zero remain; ordinary plot gridlines stay off",
+      "residual": ""
+    },
+    {
+      "ticket": "#153",
+      "mode": "svg",
+      "slide_number": 26,
+      "layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26,
+      "check": "visible Q1'26 period context",
+      "measured": {
+        "heads": [
+          "Category",
+          "YoY Growth",
+          "% of Total Billed Business"
+        ],
+        "hasQ126": false,
+        "sampleRows": [
+          [
+            "Category",
+            "YoY Growth",
+            "% of Total Billed Business"
+          ],
+          [
+            "Restaurants",
+            "9%",
+            "7%"
+          ],
+          [
+            "Lodging",
+            "6%",
+            "5%"
+          ]
+        ]
+      },
+      "expected": "Q1'26 period column/context present",
+      "delta_px": null,
+      "pass": false,
+      "note": "canonical fixture still v10 category-row matrix; mutations lack #153",
+      "residual": "handoff"
+    },
+    {
+      "ticket": "#153",
+      "mode": "svg",
+      "slide_number": 26,
+      "layout": "data_table",
+      "pdf_page_index": 25,
+      "pdf_physical_page": 26,
+      "check": "source matrix orientation (periods as columns)",
+      "measured": {
+        "heads": [
+          "Category",
+          "YoY Growth",
+          "% of Total Billed Business"
+        ]
+      },
+      "expected": "period columns including Q1'26",
+      "delta_px": null,
+      "pass": false,
+      "note": "",
+      "residual": "handoff"
+    },
+    {
+      "ticket": "#154",
+      "mode": "svg",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "SVG three bar-group-bracket groups",
+      "measured": {
+        "nBrackets": 3
+      },
+      "expected": 3,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "svg",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "exact $486B Total Network Volumes",
+      "measured": {
+        "has486": true,
+        "support": [
+          "$486B Total Network Volumes \u00b7 % of Total Network Volumes",
+          "37%",
+          "22%",
+          "5%",
+          "15%",
+          "8%",
+          "12%"
+        ]
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "svg",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "FX-adjusted note present",
+      "measured": true,
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#154",
+      "mode": "svg",
+      "slide_number": 24,
+      "layout": "grouped_bar_chart",
+      "pdf_page_index": 23,
+      "pdf_physical_page": 24,
+      "check": "aligned support row (% of total cells)",
+      "measured": [
+        "$486B Total Network Volumes \u00b7 % of Total Network Volumes",
+        "37%",
+        "22%",
+        "5%",
+        "15%",
+        "8%",
+        "12%"
+      ],
+      "expected": "label + 6 pct cells",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#155",
+      "mode": "svg",
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "check": "ROE 35/34/36/36/34/35%",
+      "measured": [
+        "35%",
+        "34%",
+        "36%",
+        "36%",
+        "34%",
+        "35%"
+      ],
+      "expected": [
+        "35%",
+        "34%",
+        "36%",
+        "36%",
+        "34%",
+        "35%"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#155",
+      "mode": "svg",
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "pdf_page_index": 20,
+      "pdf_physical_page": 21,
+      "check": "right-side KPIs present (4)",
+      "measured": [
+        "58% Dividend/share \u2191 (3yr)",
+        "74% NI Returned (3yr)",
+        "10.5% CET1 Ratio Q1'26",
+        "10\u201311% CET1 Target"
+      ],
+      "expected": 4,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "svg",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "pane titles Unemployment + GDP",
+      "measured": [
+        "U.S. Unemployment Rate %",
+        "U.S. GDP Growth* %"
+      ],
+      "expected": [
+        "U.S. Unemployment Rate %",
+        "U.S. GDP Growth* %"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "svg",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "E0026 / PDF page 27 source citation",
+      "measured": {
+        "source": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"
+      },
+      "expected": "PDF page 27 reference",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#156",
+      "mode": "svg",
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "pdf_page_index": 26,
+      "pdf_physical_page": 27,
+      "check": "SAAR note on slide (visible or disclosure HTML)",
+      "measured": {
+        "text": false,
+        "html": true
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "disclosure-panel SAAR counts; above-fold not required by ticket wording",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 6,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'19",
+          "Q1'24",
+          "Q2'24",
+          "Q3'24",
+          "Q4'24"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 33,
+      "layout": "annex_table",
+      "pdf_page_index": 32,
+      "pdf_physical_page": 33,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 10,
+        "nTables": 1,
+        "heads": [
+          "Item",
+          "Q1'26",
+          "Q1'25",
+          "YoY% Inc/(Dec)"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "check": "units include $ in millions",
+      "measured": "$ in millions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in millions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 34,
+      "layout": "annex_table",
+      "pdf_page_index": 33,
+      "pdf_physical_page": 34,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in millions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 6,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'19",
+          "Q1'23",
+          "Q2'23",
+          "Q3'23",
+          "Q4'23"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 35,
+      "layout": "annex_table",
+      "pdf_page_index": 34,
+      "pdf_physical_page": 35,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 6,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'19",
+          "Q1'24",
+          "Q2'24",
+          "Q3'24",
+          "Q4'24"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 36,
+      "layout": "annex_table",
+      "pdf_page_index": 35,
+      "pdf_physical_page": 36,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "check": "annex matrix present with stubs",
+      "measured": {
+        "nStubs": 4,
+        "nTables": 1,
+        "heads": [
+          "Metric",
+          "Q1'24",
+          "Q2'24",
+          "Q3'24",
+          "Q4'24",
+          "Q1'25"
+        ]
+      },
+      "expected": {
+        "nStubs>=": 4,
+        "nTables": 1
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "check": "units include $ in billions",
+      "measured": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year",
+      "expected": "$ in billions",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#157",
+      "mode": "svg",
+      "slide_number": 37,
+      "layout": "annex_table",
+      "pdf_page_index": 36,
+      "pdf_physical_page": 37,
+      "check": "FX footnote/context present",
+      "measured": {
+        "hasFX": true,
+        "sub": "$ in billions \u00b7 % Increase/(decrease) vs. Prior year"
+      },
+      "expected": true,
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#159",
+      "mode": "svg",
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "check": "two peer grouped annex tables",
+      "measured": {
+        "nTables": 2,
+        "headings": [
+          {
+            "t": "Commercial Services",
+            "id": "gl-grouped-annex-heading-32-0"
+          },
+          {
+            "t": "International Card Services",
+            "id": "gl-grouped-annex-heading-32-1"
+          }
+        ]
+      },
+      "expected": {
+        "nTables": 2,
+        "nHeadings": 2
+      },
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#159",
+      "mode": "svg",
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "check": "deck-unique heading IDs",
+      "measured": {
+        "ids": [
+          "gl-grouped-annex-heading-32-0",
+          "gl-grouped-annex-heading-32-1"
+        ],
+        "dups": []
+      },
+      "expected": "unique non-empty ids",
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    },
+    {
+      "ticket": "#159",
+      "mode": "svg",
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "pdf_page_index": 31,
+      "pdf_physical_page": 32,
+      "check": "heading labels Commercial + International",
+      "measured": [
+        "Commercial Services",
+        "International Card Services"
+      ],
+      "expected": [
+        "Commercial Services",
+        "International Card Services"
+      ],
+      "delta_px": null,
+      "pass": true,
+      "note": "",
+      "residual": ""
+    }
+  ]
+}
