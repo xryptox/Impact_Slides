@@ -118,6 +118,35 @@ The August 2026 automation pass added and smoke-tested:
 
 Smoke coverage includes PowerShell 5.1 parsing, queued follow-up delivery, stale-event suppression, two-event automatic rearming, exact-branch run selection, repair-prompt precedence, closing-reference boundaries, already-merged merge rejection, selected-ticket cleanup, preservation of another active worktree, and cleanup with an already-absent origin branch.
 
+## Comparison with default pi-extensible-workflows usage
+
+### What we built
+
+A manifest-driven delivery layer around **pi-extensible-workflows (PEW)**:
+
+```text
+GitHub issues → run-owned worktrees → visible Herdr Pi implementers → parallel Standards/Spec review → no-mistakes → PR/CI → exact-head approved merge → verified cleanup
+```
+
+`wave.json` is the source of truth. Scripts derive branches, worktrees, panes, gate runs, PRs, CI state, watcher events, repairs, and cleanup rather than requiring the supervisor to relay identifiers manually.
+
+### Better than default PEW usage
+
+- **Visible implementation:** full interactive Pi TUI tabs instead of opaque workflow agents.
+- **Stronger delivery controls:** exact-head approval, branch-bound no-mistakes state, PR-closing checks, and pipeline-custody rules.
+- **Operational supervision:** automatic watcher rearming, chat/desktop notifications, `ask-user` escalation, and loop/time/stall limits.
+- **Safer cleanup:** run-owned artifacts, dry-run verification, partial-wave cleanup, and protection against deleting unrelated worktrees.
+- **Human control where needed:** product decisions, scope changes, recovery, and merge approval remain explicit.
+
+### Worse than default PEW usage
+
+- **More machinery:** PowerShell scripts, Herdr, no-mistakes, an extension, manifests, and multiple state stores.
+- **Less natively resumable:** visible Herdr/no-mistakes subprocesses sit outside PEW's normal `agent()` journal, budgets, retries, and worktree lifecycle.
+- **More integration risk:** depends on Herdr, GitHub, no-mistakes, SQLite, CLI output formats, and Windows process behavior.
+- **Higher maintenance cost:** the custom control plane must evolve when any underlying tool changes.
+
+In short: default PEW is simpler and better for self-contained agent workflows; this project-specific layer is heavier but substantially better for visible, approval-gated, multi-ticket software delivery.
+
 ## Current limitations
 
 - The inner watcher still returns after one unseen event, but `watch-ticket-wave.ps1` now rearms it automatically; `watcher-state.json` prevents duplicate delivery and the append-only follow-up file prevents event overwrite.
