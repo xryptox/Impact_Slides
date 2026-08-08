@@ -258,12 +258,13 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         )
         # #96: domain clamps belong at scale ROOT — Chart.js 4 ignores
         # ticks.min/max. (Auto-domain previously masked this for negatives.)
-        if cfg.get("y_axis_min") is not None:
-            options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
-        elif neg_min is not None:
-            options["scales"]["y"]["min"] = float(neg_min) * 1.1
-        if cfg.get("y_axis_max") is not None:
-            options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
+        if auto_plan is None:
+            if cfg.get("y_axis_min") is not None:
+                options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
+            elif neg_min is not None:
+                options["scales"]["y"]["min"] = float(neg_min) * 1.1
+            if cfg.get("y_axis_max") is not None:
+                options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
         column = _side_column_geometry(cfg, strict="side_callout" in cfg)
         if cfg.get("exterior_segment_names") and column:
             # N5 (v4 sim): exterior segment-name column — series names in

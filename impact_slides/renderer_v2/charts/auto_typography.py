@@ -5,6 +5,8 @@ Does not expose heuristic weights/floors/ceilings as public config.
 """
 from __future__ import annotations
 
+import html
+import json
 import math
 import re
 import sys
@@ -1196,6 +1198,7 @@ def plan_to_data_attrs(plan: AutoTypoPlan, *, value_axis_visible: bool = True) -
         ("data-auto-y-reduced", str(int(bool(d.get("y_ticks_reduced"))))),
         ("data-auto-y-ticks", str(0 if plan.chart_type == "waterfall_chart" or not value_axis_visible else len(plan.y_tick_values))),
         ("data-auto-y1-ticks", str(len(plan.secondary_y_tick_values))),
+        ("data-auto-x-labels", html.escape(json.dumps([text for text in plan.x_labels.texts if text] if plan.x_labels else []), quote=True)),
         ("data-auto-x-short", str(d.get("x_short_count", 0))),
         ("data-auto-x-ellipsis", str(d.get("x_ellipsis_count", 0))),
         ("data-auto-dl-suppress", str(d.get("datalabel_suppress_count", 0))),

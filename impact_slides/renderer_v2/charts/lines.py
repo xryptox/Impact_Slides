@@ -431,7 +431,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         parts.extend(label_markup)
 
     # -- Legend -------------------------------------------------------------
-    if len(all_series) > 1 and series_names:
+    if len(all_series) > 1 and series_names and cfg.get("show_legend") is not False:
         legend_x = W - pad_r - 10
         legend_y = pad_t + 10
         for li, s_entry in enumerate(all_series):
@@ -610,7 +610,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     )
 
     # Bar legend (multi-series stacked mode only)
-    if stacked:
+    if stacked and cfg.get("show_legend") is not False:
         combo_palette = _series_colors(cfg)
         lx = pad_l + 4
         for si, name in enumerate(bar_series):
@@ -658,15 +658,18 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         else:
             val = bar_rows[i][0] or 0.0
             y = bar_y(val)
-            bh = H - pad_b - y
+            zero_y = bar_y(min(max(0.0, bar_min), bar_max))
+            rect_y = min(y, zero_y)
+            bh = abs(zero_y - y)
             bar_color = bar_colors[i] or default_bar_color
             parts.append(
-                f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
+                f'<rect x="{x:.1f}" y="{rect_y:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
                 f'fill="{bar_color}" rx="2"/>'
             )
             val_text = _fmtb(val)
+            label_y = y - 8 if val >= 0 else y + 18
             parts.append(
-                f'<text x="{x + bar_w/2:.1f}" y="{y - 8:.1f}" text-anchor="middle" '
+                f'<text x="{x + bar_w/2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(val_text)}</text>'
             )

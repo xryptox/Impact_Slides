@@ -235,5 +235,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
         '<span><i class="swatch swatch-blue"></i>Increase</span>'
         '<span><i class="swatch swatch-ink"></i>Decrease</span>'
         "</div>"
+        if cfg.get("show_legend") is not False
+        else ""
     )
     return '<div class="chart-frame">' + ''.join(parts) + legend + '</div>'

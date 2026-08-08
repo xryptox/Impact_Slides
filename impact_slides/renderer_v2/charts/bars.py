@@ -142,7 +142,7 @@ def _bar_axes(
 
 def _vbar_pad_t(cfg: Mapping[str, Any], series: list[str]) -> int:
     """Top padding for internal bar charts: room for legend + bar_groups."""
-    base = 56 if len(series) > 1 else 40
+    base = 56 if len(series) > 1 and cfg.get("show_legend") is not False else 40
     if cfg.get("bar_groups"):
         base += 28
     return base
@@ -267,7 +267,7 @@ def _vbar_frame(
         f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
     )
     # Legend (multi-series only)
-    if len(series) > 1:
+    if len(series) > 1 and cfg.get("show_legend") is not False:
         palette = _series_colors(cfg)
         lx = pad_l + 4
         for i, name in enumerate(series):
@@ -637,7 +637,7 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
         auto_plan, labels=labels, ticks=x_ticks, format_tick=lambda tick: _fmt_bar(tick, "")
     )
     # Value-axis tick labels are legacy opt-in and always rendered for auto mode.
-    if auto_plan or typo.get("x_tick_font_size_set"):
+    if cfg.get("show_x_axis") is not False and (auto_plan or typo.get("x_tick_font_size_set")):
         for tv, tick_label in value_ticks:
             tx = x_pos(tv)
             parts.append(

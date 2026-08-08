@@ -420,15 +420,26 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                           const x = chart && chart.scales.x, y = chart && chart.scales.y, y1 = chart && chart.scales.y1;
                           const valueAxis = chart && chart.options.indexAxis === 'y' ? x : y;
                           const categoryAxis = chart && chart.options.indexAxis === 'y' ? y : x;
-                          const axisText = axis => new Set((axis && axis.ticks || []).map(tick => String(tick.label)));
-                          const categoryLabels = axisText(categoryAxis), valueLabels = axisText(valueAxis), y1Labels = axisText(y1);
-                          const boxesFor = labels => [...labels].map(label =>
-                            boxes.find(item => item.text === label || (label === '0' && item.text === '0%'))).filter(Boolean).map(item => item.box);
+                          const axisText = axis => (axis && axis.ticks || []).map(tick => String(tick.label));
+                          const categoryLabels = JSON.parse(wrap.dataset.autoXLabels || '[]');
+                          const valueLabels = axisText(valueAxis), y1Labels = axisText(y1);
+                          const boxesFor = labels => {
+                            const used = new Set();
+                            return labels.map(label => {
+                              const index = boxes.findIndex((item, i) => !used.has(i) &&
+                                (item.text === label || (label === '0' && item.text === '0%')));
+                              if (index < 0) return null;
+                              used.add(index);
+                              return boxes[index].box;
+                            }).filter(Boolean);
+                          };
                           const categoryBoxes = boxesFor(categoryLabels);
                           const yBoxes = boxesFor(valueLabels);
                           const y1Boxes = boxesFor(y1Labels);
                           const axisBoxes = categoryBoxes.concat(yBoxes, y1Boxes);
-                          return {text_count: axisBoxes.length, raw_text_count: raw.length, y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
+                          return {text_count: axisBoxes.length, raw_text_count: raw.length,
+                            category_text_count: categoryBoxes.length, expected_category_ticks: categoryLabels.length,
+                            y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
                             actual_y_ticks: valueAxis ? valueAxis.ticks.length : 0, actual_y1_ticks: y1 ? y1.ticks.length : 0,
                             expected_y_ticks: Number(wrap.dataset.autoYTicks || 0), expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
                             clipped: axisBoxes.some(box => !within(box, outer)),
@@ -474,7 +485,7 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                     ), (name, row)
                 else:
                     assert all(
-                        pane["text_count"] and (
+                        pane["text_count"] and pane["category_text_count"] == pane["expected_category_ticks"] and (
                             pane["expected_y_ticks"] == 0 or (
                                 pane["actual_y_ticks"] == pane["expected_y_ticks"]
                                 and pane["y_text_count"] >= pane["actual_y_ticks"]
@@ -520,6 +531,88 @@ def test_auto_axis_break_plans_and_renders_only_effective_domain(tmp_path):
     svg = (svg_out / "presentation.html").read_text(encoding="utf-8")
     assert ">0%</text>" not in svg
     assert ">0</text>" not in svg
+
+
+def test_auto_stacked_chartjs_preserves_stack_total_domain():
+    pane = {
+        "type": "stacked_bar_chart",
+        "chart_config": {"typography": {"mode": "auto"}},
+        "steps_or_data": [{"label": "Q1", "values": {"A": -60, "B": -60}}],
+    }
+    slide = {
+        "slide_number": 1, "title": "Stacked", "layout_type": "stacked_bar_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_bar_config
+
+    config = _chartjs_bar_config(slide, stacked=True)
+    assert config is not None
+    scale = config["options"]["scales"]["y"]
+    assert scale["min"] == scale["ticks"]["_rv2Values"][0] <= -120
+
+
+def test_svg_show_legend_false_omits_multiseries_legend(tmp_path):
+    pane = _pane("grouped_bar_chart", ["Q1", "Q2"], typography={"mode": "auto"})
+    pane["chart_config"].update({"show_legend": False, "series_names": ["Revenue", "Margin"]})
+    for point in pane["steps_or_data"]:
+        point["values"] = {"Revenue": point.pop("value"), "Margin": 2}
+    slide = {
+        "slide_number": 1, "title": "Bars", "layout_type": "grouped_bar_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False, suppress_features=["charts"])
+    assert "vbar-legend-item" not in (out / "presentation.html").read_text(encoding="utf-8")
+
+
+def test_svg_waterfall_honors_hidden_legend(tmp_path):
+    pane = _pane("waterfall_chart", ["Q1", "Q2"], typography={"mode": "auto"})
+    pane["chart_config"]["show_legend"] = False
+    slide = {
+        "slide_number": 1, "title": "Waterfall", "layout_type": "waterfall_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False, suppress_features=["charts"])
+    assert '<div class="chart-legend">' not in (out / "presentation.html").read_text(encoding="utf-8")
+
+
+def test_shared_axis_combo_svg_bars_start_at_zero_baseline():
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [{"label": "Q1", "value": 10}],
+            },
+            "line_overlay": {"dual_axis": False, "data": [{"label": "Q1", "value": -100}]},
+        },
+    }
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    svg = _svg_fallback_for_layout(combo, "combo_chart")
+    match = re.search(r'<rect x="[\d.]+" y="([\d.]+)" width="[\d.]+" height="([\d.]+)"[^>]*fill="', svg)
+    assert match is not None
+    y, height = map(float, match.groups())
+    assert y >= 40 and 0 < height < 100
+
+
+def test_hbar_svg_honors_hidden_value_axis(tmp_path):
+    pane = _pane("horizontal_bar_chart", ["Q1", "Q2"], typography={"mode": "auto"})
+    pane["chart_config"]["show_x_axis"] = False
+    slide = {
+        "slide_number": 1, "title": "Bars", "layout_type": "horizontal_bar_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False, suppress_features=["charts"])
+    assert "hbar-xtick" not in (out / "presentation.html").read_text(encoding="utf-8")
 
 
 def test_hbar_broken_axis_svg_bars_use_effective_domain_baseline(tmp_path):
