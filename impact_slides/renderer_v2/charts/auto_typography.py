@@ -82,30 +82,31 @@ def _warn(msg: str) -> None:
 # Font metrics (normalized advances, calibrated for boardroom fonts)
 # ---------------------------------------------------------------------------
 
-# Advances are fractions of em. Per-class maxima come from Chromium canvas
-# measurement of the vendored variable WOFF2 faces at 12/18/24px; the 2% pad
-# in measure_text_width makes each estimate conservative within 5% or 2px.
+# Advances are fractions of em from Chromium canvas of the vendored WOFF2
+# faces. Class values are fallbacks for unlisted glyphs (not class maxima —
+# maxima over-estimate ordinary labels). Additive pad in measure_text_width
+# covers FreeType vs DirectWrite DOM-box drift on CI hosts.
 _FONT_METRICS: dict[str, dict[str, float]] = {
     "source_sans_3": {
-        "digit": 0.54,
-        "upper": 0.80,
-        "lower": 0.82,
+        "digit": 0.513,
+        "upper": 0.58,
+        "lower": 0.50,
         "space": 0.20,
-        "punct": 0.81,
-        "other": 0.82,
-        "avg": 0.64,
+        "punct": 0.40,
+        "other": 0.60,
+        "avg": 0.55,
         "ascender": 1.05,
         "descender": 0.28,
         "line_gap": 0.14,
     },
     "ibm_plex_sans": {
-        "digit": 0.63,
-        "upper": 0.93,
-        "lower": 0.855,
+        "digit": 0.600,
+        "upper": 0.66,
+        "lower": 0.54,
         "space": 0.236,
-        "punct": 0.925,
-        "other": 0.94,
-        "avg": 0.70,
+        "punct": 0.45,
+        "other": 0.65,
+        "avg": 0.60,
         "ascender": 0.95,
         "descender": 0.26,
         "line_gap": 0.13,
@@ -126,14 +127,38 @@ _FONT_METRICS: dict[str, dict[str, float]] = {
 }
 
 _GLYPH_ADVANCES = {
-    "source_sans_3": {"W": .80, "m": .843, "i": .262, "l": .271, "R": .592,
-        "e": .507, "v": .495, "n": .56, "u": .556, "Q": .674, "M": .745,
-        "A": .558, "F": .51, "Y": .501, "&": .639, "/": .344, "-": .322,
-        ".": .275, ",": .275, "%": .841},
-    "ibm_plex_sans": {"W": .949, "m": .888, "i": .275, "l": .294, "R": .664,
-        "e": .558, "v": .524, "n": .588, "u": .588, "Q": .712, "M": .817,
-        "A": .672, "F": .577, "Y": .632, "&": .713, "/": .437, "-": .402,
-        ".": .299, ",": .299, "%": .96},
+    "source_sans_3": {
+        " ": .200, "!": .315, "%": .841, "&": .639, "'": .275, "+": .513,
+        ",": .275, "-": .322, ".": .275, "/": .344, "0": .513, "1": .513,
+        "2": .513, "3": .513, "4": .513, "5": .513, "6": .513, "7": .513,
+        "8": .513, "9": .513, ":": .275, ";": .275, "?": .444,
+        "A": .558, "B": .597, "C": .576, "D": .625, "E": .538, "F": .510,
+        "G": .628, "H": .663, "I": .282, "J": .494, "K": .597, "L": .502,
+        "M": .745, "N": .657, "O": .674, "P": .582, "Q": .674, "R": .592,
+        "S": .545, "T": .546, "U": .655, "V": .536, "W": .800, "X": .541,
+        "Y": .501, "Z": .540,
+        "a": .516, "b": .563, "c": .462, "d": .564, "e": .507, "f": .317,
+        "g": .520, "h": .558, "i": .262, "j": .263, "k": .522, "l": .271,
+        "m": .843, "n": .560, "o": .549, "p": .564, "q": .564, "r": .373,
+        "s": .431, "t": .361, "u": .556, "v": .495, "w": .748, "x": .481,
+        "y": .495, "z": .443,
+    },
+    "ibm_plex_sans": {
+        " ": .236, "!": .309, "%": .960, "&": .713, "'": .260, "+": .600,
+        ",": .299, "-": .402, ".": .299, "/": .437, "0": .600, "1": .600,
+        "2": .600, "3": .600, "4": .600, "5": .600, "6": .600, "7": .600,
+        "8": .600, "9": .600, ":": .319, ";": .319, "?": .493,
+        "A": .672, "B": .663, "C": .642, "D": .689, "E": .600, "F": .577,
+        "G": .712, "H": .719, "I": .423, "J": .545, "K": .678, "L": .521,
+        "M": .817, "N": .719, "O": .712, "P": .641, "Q": .712, "R": .664,
+        "S": .611, "T": .580, "U": .689, "V": .638, "W": .949, "X": .655,
+        "Y": .632, "Z": .599,
+        "a": .559, "b": .600, "c": .513, "d": .600, "e": .558, "f": .350,
+        "g": .545, "h": .588, "i": .275, "j": .275, "k": .562, "l": .294,
+        "m": .888, "n": .588, "o": .563, "p": .600, "q": .600, "r": .393,
+        "s": .499, "t": .374, "u": .588, "v": .524, "w": .819, "x": .544,
+        "y": .524, "z": .502,
+    },
 }
 
 _FONT_ALIASES = {
@@ -192,7 +217,9 @@ def measure_text_width(
     for ch in text:
         total += _GLYPH_ADVANCES.get(key, {}).get(ch, m[_char_class(ch)])
     # Tables are calibrated at the renderer's 600 axis-label weight.
-    return total * float(font_size) * 1.003
+    # +2px absorbs FreeType/DirectWrite DOM-box drift without inflating
+    # long-label advances the way a flat percentage pad does.
+    return total * float(font_size) + 2.0
 
 
 def measure_text_height(
@@ -1022,14 +1049,21 @@ def resolve_auto_typography(
                 allow_rotation=cat_is_x,
             )
 
-        # Information outranks point size: exhaust the largest full-label
-        # candidates (wrap/rotation allowed) before accepting short/skip/ellipsis.
+        # Adaptation order outranks point size: full (wrap/rot) first, then
+        # short/skip, and only then ellipsis — a 24px ellipsis must not beat a
+        # 12px short_label that keeps readable text.
         best: tuple[int, AxisLabelPlan | None] = (lo, None)
         for size in range(hi, lo - 1, -1):
             p = fit_at(size)
             if p is not None and not (p.used_short or p.used_skip or p.used_ellipsis):
                 best = (size, p)
                 break
+        if best[1] is None:
+            for size in range(hi, lo - 1, -1):
+                p = fit_at(size)
+                if p is not None and not p.used_ellipsis:
+                    best = (size, p)
+                    break
         if best[1] is None:
             for size in range(hi, lo - 1, -1):
                 p = fit_at(size)
