@@ -35,7 +35,9 @@ def _capture(handoff: dict, name: str) -> dict:
             png = OUT / name
             page.screenshot(path=str(png), full_page=False)
             browser.close()
-    return {"charts": row["charts"], "png": png.relative_to(ROOT).as_posix()}
+    charts = row["charts"]
+    assert len(charts) == 2, charts
+    return {"charts": charts, "png": png.relative_to(ROOT).as_posix()}
 
 
 def main() -> int:
@@ -53,7 +55,7 @@ def main() -> int:
         json.dumps(
             {
                 "viewport": [1920, 1080],
-                "source_handoff": str(SOURCE),
+                "source_handoff": SOURCE.relative_to(ROOT).as_posix(),
                 "source_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
                 "slide": 27,
                 "layout": "dual_chart",
