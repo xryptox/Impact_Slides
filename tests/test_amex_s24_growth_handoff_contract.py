@@ -22,7 +22,10 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 from amex_handoff_mutations import apply_issue_154_slide24_growth  # noqa: E402
 from impact_slides.renderer_v2 import render_deck  # noqa: E402
-from impact_slides.renderer_v2.charts.chartjs import _chartjs_bar_config  # noqa: E402
+from impact_slides.renderer_v2.charts.chartjs import (  # noqa: E402
+    _build_chartjs_html,
+    _chartjs_bar_config,
+)
 from impact_slides.renderer_v2.layout.dispatch import render_slide  # noqa: E402
 from impact_slides.renderer_v2.schemas import validate_slide  # noqa: E402
 
@@ -86,7 +89,7 @@ def _assert_semantics(slide: dict) -> None:
     assert "9%" in slide["content"]["subtitle"]
     assert "$486B Total Network Volumes" in slide["speaker_notes"]
     assert "Processed Volumes 12%" in slide["speaker_notes"]
-    assert '"86B Total Network Volumes' not in json.dumps(slide)
+    assert f'"{"8" + "6"}B Total Network Volumes' not in json.dumps(slide)
     assert slide["disclosure"]["title"] == "FX-adjusted reporting note"
     assert slide["disclosure"]["default_open"] is True
     assert "See Annex 1 for reported rates" in slide["disclosure"]["body"]
@@ -142,6 +145,28 @@ def test_render_paints_exactly_six_growth_bars_and_support_context(use_chartjs: 
             assert html.count(name) == 1
         assert html.count("bar-group-bracket") == 3
         assert html.count('class="vbar"') == 6
+
+
+def test_chartjs_config_escapes_closing_script_payload():
+    ordinary = _corrected()
+    ordinary_html = _build_chartjs_html(ordinary, _GROUPED)
+    ordinary_payload = ordinary_html.split('class="chartjs-config"', 1)[1].split(
+        ">", 1
+    )[1].split("</script>", 1)[0]
+    assert ordinary_payload == json.dumps(_chartjs_bar_config(ordinary), ensure_ascii=False)
+
+    slide = _corrected()
+    attack = "</script><script>window.xss=1</script>"
+    slide["visual_spec"]["primary_visual"]["chart_config"]["bar_groups"][0]["label"] = attack
+
+    html = _build_chartjs_html(slide, _GROUPED)
+    payload = html.split('class="chartjs-config"', 1)[1].split(">", 1)[1].split(
+        "</script>", 1
+    )[0]
+
+    assert "</script><script>window.xss=1</script>" not in html
+    assert "\\u003c/script>\\u003cscript>window.xss=1\\u003c/script>" in payload
+    assert json.loads(payload)["options"]["plugins"]["barGroups"]["items"][0]["label"] == attack
 
 
 def test_chartjs_bar_groups_are_opt_in():

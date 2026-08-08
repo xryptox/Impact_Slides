@@ -815,7 +815,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         if chart_cfg.get("_side_callout_external")
         else _build_side_callout_html(chart_cfg, layout)
     )
-    payload = _json.dumps(cfg, ensure_ascii=False)
+    payload = _json.dumps(cfg, ensure_ascii=False).replace("<", "\\u003c")
     bar_group_js = (
         _BAR_GROUP_PLUGIN_HTML
         if cfg.get("options", {}).get("plugins", {}).get("barGroups")
