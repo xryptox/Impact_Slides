@@ -31,24 +31,27 @@ When that applies, use PEW for orchestration and isolated worktrees, but launch 
 
 Durable workflow scripts:
 
-- `~/.pi/agent/pi-extensible-workflows/scripts/create-run-owned-worktree.ps1` — creates an issue worktree on the cleanup-compatible branch `pi-extensible-workflows/<RunId>/issue-<N>`
-- `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — verifies that run-owned branch, creates a tab in the supplied current Herdr workspace, and starts a genuine interactive Pi TUI
+- `~/.pi/agent/pi-extensible-workflows/scripts/start-ticket-wave.ps1` — primary interface: generates a delivery RunId, resolves the focused repo workspace and `dev` model, creates run-owned worktrees, launches tabs, and persists `wave.json` plus watcher targets
+- `~/.pi/agent/pi-extensible-workflows/scripts/inspect-ticket-wave.ps1` — derives branch heads, cleanliness, exact-branch PRs, CI metadata, and no-mistakes state from `wave.json`
+- `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-ticket-wave.ps1` — derives merged PR numbers from run-owned branches and delegates dry-run/apply deletion to verified cleanup
+- `~/.pi/agent/pi-extensible-workflows/scripts/create-run-owned-worktree.ps1` — internal primitive that creates `pi-extensible-workflows/<RunId>/issue-<N>`
+- `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — internal primitive that verifies run ownership, creates the current-workspace tab, and starts a genuine interactive Pi TUI
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-implement-visible.ps1` — writes the implementation contract and launches the visible implementer
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — writes the host-repair contract and launches the visible repair session
 - `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — supervising workflow watcher that returns idle/done/blocked pane output and no-mistakes gate state to the host session
 - `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
 
-The launcher deliberately uses the user's normal Pi settings plus the configured `dev` model (currently OpenRouter GPT-5.6 Terra at high thinking) and the `implement` skill. This path preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
+The launcher deliberately uses the user's normal Pi settings plus the `dev` alias resolved from the global PEW settings and the `implement` skill. The alias is the single model source; `wave.json` records its resolved value. This path preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
 ### Canonical launch and supervision
 
-1. Allocate one delivery RunId for the wave and create every ticket checkout with `create-run-owned-worktree.ps1 -RunId <id> -Issue <N>`; branches must be `pi-extensible-workflows/<RunId>/issue-<N>`. Never create new delivery branches as `fix/*`, `feat/*`, or another manual namespace.
-2. Determine the supervising session's current Herdr workspace; pass that existing workspace ID to the orchestrator.
-3. Launch new work with `orchestrate-herdr-implement-visible.ps1 -RunId <same-id>`; launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -RunId <same-id>`. Both launch paths reject a worktree whose branch is not owned by that RunId. Do not substitute direct `herdr pane run`, RPC, `pi --print`, or a newly created workspace.
-4. Collect each launcher's returned issue, tab, pane, and worktree IDs into a JSON target file with objects shaped as `{ "issue": N, "pane": "w2:pN", "worktree": "C:/..." }`.
-5. Start a background PEW workflow that invokes `watch-visible-implementers.ps1 -WorkspaceId <current> -TargetsPath <json>`. The watcher is one-shot: it returns the first pane that becomes `idle`, `done`, or `blocked`, together with recent output and authoritative `no-mistakes axi status`.
-6. Treat a watcher completion as the host notification. If it surfaces `ask-user`, present the finding verbatim, send the user's decision back to the same pane, and start a fresh watcher for the remaining active panes. Do not rely on Herdr status or observational memory to notify the host.
-7. After collecting a final report and checking Git/no-mistakes/PR state, close that tab. Keep tabs open while a decision or pipeline action remains outstanding.
+1. Start a wave with `start-ticket-wave.ps1 -Issue N,N,...`; normally provide no RunId, model, workspace, branch, worktree, pane, or targets-file input. The script infers and persists them in `wave.json`.
+2. Use the generated `targets.json` with a background PEW watcher invoking `watch-visible-implementers.ps1`. The watcher is one-shot: it returns the first pane that becomes `idle`, `done`, or `blocked`, together with recent output and authoritative no-mistakes state.
+3. Treat watcher completion as the host notification. If it surfaces `ask-user`, present the finding verbatim, send the decision to the same pane, and restart the watcher for remaining active panes.
+4. Use `inspect-ticket-wave.ps1 -ManifestPath <wave.json>` for authoritative branch/PR/gate collection instead of manually copying identifiers.
+5. Launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -RunId <wave RunId>` against the manifest worktree. Do not substitute direct branches, `herdr pane run`, RPC, `pi --print`, or another workspace.
+6. After collecting a final report and checking Git/no-mistakes/PR state, close that tab. Keep tabs open while a decision or pipeline action remains outstanding.
+7. After every PR in the manifest merges, run `cleanup-ticket-wave.ps1 -ManifestPath <wave.json>` first as a dry run and then with `-Apply`.
 
 A deliberately stopped or superseded watcher may report `CANCELLED`; verify the replacement run ID and implementation state, then treat that notification as expected rather than an implementation failure.
 
