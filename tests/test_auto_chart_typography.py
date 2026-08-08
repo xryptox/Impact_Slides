@@ -1227,6 +1227,54 @@ def test_auto_waterfall_honors_hidden_category_axis():
     assert 'class="chart-axis-label auto-x-label"' not in _svg_fallback_for_layout(slide, "waterfall_chart")
 
 
+def test_auto_line_empty_bounded_ticks_use_domain_endpoints():
+    slide = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {
+                "typography": {"mode": "auto"}, "y_axis_min": 0,
+                "y_axis_max": 100, "force_ticks": True, "y_axis_ticks": [-5, 105],
+            },
+            "steps_or_data": [{"label": "Q1", "value": 0}, {"label": "Q2", "value": 100}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_line_config
+
+    config = _chartjs_line_config(slide)
+    assert config is not None
+    scale = config["options"]["scales"]["y"]
+    assert (scale["min"], scale["max"]) == (0.0, 100.0)
+    assert scale["ticks"]["_rv2Values"] == [0.0, 100.0]
+
+
+def test_auto_wrapped_stacked_and_waterfall_labels_stay_inside_svg():
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    labels = ["Long reporting period alpha beta gamma delta epsilon zeta" for _ in range(2)]
+    stacked = {
+        "layout_type": "stacked_bar_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [{"label": label, "value": -1} for label in labels],
+        }},
+    }
+    waterfall = {
+        "layout_type": "waterfall_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [{"label": label, "value": 1} for label in labels],
+        }},
+    }
+    for slide, layout, height in ((stacked, "stacked_bar_chart", 480), (waterfall, "waterfall_chart", 520)):
+        svg = _svg_fallback_for_layout(slide, layout)
+        lines = re.findall(r'data-auto-label-index="(\d+)"[^>]* y="([0-9.]+)"', svg)
+        by_label = {}
+        for index, y in lines:
+            by_label.setdefault(index, []).append(float(y))
+        assert any(len(ys) > 1 for ys in by_label.values())
+        assert all(max(ys) < height and ys == sorted(ys) for ys in by_label.values())
+
+
 def test_auto_mode_does_not_change_legacy_output(tmp_path):
     slide = {
         "slide_number": 1, "title": "Legacy", "layout_type": "grouped_bar_chart", "content": {},

@@ -1350,6 +1350,7 @@ def apply_plan_to_chartjs_options(
         if not horizontal:
             cat_ticks["maxRotation"] = rot
             cat_ticks["minRotation"] = rot
+            cat_scale["offset"] = True
         cat_ticks["autoSkip"] = False
         display = []
         for i, t in enumerate(xl.texts):
@@ -1633,6 +1634,10 @@ def _bound_tick_view(
         for bound in (lo, hi):
             if bound is not None and not any(math.isclose(value, bound) for value, _label in pairs):
                 pairs.append((bound, format_tick(bound)))
+    if not pairs and lo is not None and hi is not None:
+        pairs = [(lo, format_tick(lo))]
+        if not math.isclose(lo, hi):
+            pairs.append((hi, format_tick(hi)))
     pairs.sort(key=lambda pair: pair[0])
     return [value for value, _label in pairs], [label for _value, label in pairs]
 

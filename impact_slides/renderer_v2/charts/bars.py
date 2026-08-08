@@ -533,10 +533,11 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         for line_i, line in enumerate(lines):
             if cfg.get("show_x_axis") is False:
                 continue
+            y = cat_y - (len(lines) - 1 - line_i) * x_fs
             parts.append(
                 f'<text class="auto-x-label" data-auto-label-index="{i}" '
-                f'x="{pad_l + i * slot + slot / 2:.1f}" y="{cat_y + line_i * x_fs:.1f}"'
-                f'{svg_label_transform(auto_plan, pad_l + i * slot + slot / 2, cat_y + line_i * x_fs)} '
+                f'x="{pad_l + i * slot + slot / 2:.1f}" y="{y:.1f}"'
+                f'{svg_label_transform(auto_plan, pad_l + i * slot + slot / 2, y)} '
                 f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
                 f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
             )
