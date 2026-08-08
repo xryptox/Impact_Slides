@@ -217,9 +217,9 @@ def measure_text_width(
     for ch in text:
         total += _GLYPH_ADVANCES.get(key, {}).get(ch, m[_char_class(ch)])
     # Tables are calibrated at the renderer's 600 axis-label weight.
-    # +2px absorbs FreeType/DirectWrite DOM-box drift without inflating
-    # long-label advances the way a flat percentage pad does.
-    return total * float(font_size) + 2.0
+    # +1px covers DirectWrite vs canvas subpixel drift; +2 overshoots the
+    # FreeType DOM-box upper band (8%/3px) on Linux CI for short labels.
+    return total * float(font_size) + 1.0
 
 
 def measure_text_height(
@@ -675,8 +675,18 @@ def _fit_x_labels(
                 skipped_count=n - len(kept),
             )
 
-    # Stage 6: ellipsis as final axis resort (unrotated, no skip first)
-    slot = _x_slot_width(plot_w, n) * 0.95
+    # Stage 6: ellipsis as final axis resort (unrotated, no skip first).
+    # Budget must match _try_x_fit unrotated adjacent limit (gap - 2), not only
+    # the 0.95*slot line-width cap — otherwise ellipsize can emit a label that
+    # still fails the neighbor check (tight 2-slot cases on Linux FreeType).
+    def _ellipsis_budget(slots: int) -> float:
+        raw = _x_slot_width(plot_w, slots)
+        line_cap = raw * 0.95
+        if slots >= 2:
+            return min(line_cap, raw - 2.0)
+        return line_cap
+
+    slot = _ellipsis_budget(n)
     ellipsed = [ellipsize(full_labels[i], font_size, slot, font=font) for i in range(n)]
     plan = attempt(ellipsed, rotation=0.0, wrap=False)
     if plan is not None:
@@ -689,7 +699,7 @@ def _fit_x_labels(
     # Last ditch: skip + ellipsis
     for step in range(2, n + 1):
         kept = set(skip_indices(n, step))
-        slot_k = _x_slot_width(plot_w, n) * 0.95
+        slot_k = _ellipsis_budget(n)
         texts = []
         for i in range(n):
             if i in kept:
