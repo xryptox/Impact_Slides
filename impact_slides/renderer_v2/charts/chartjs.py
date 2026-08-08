@@ -304,6 +304,22 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         # Grouped bars honour the declared domain too (#96: scale root).
         # Without this the auto-domain drifts from y_axis_min/max and
         # value-anchored overlays (callouts) pin off-plot.
+        groups = cfg.get("bar_groups")
+        if isinstance(groups, (list, tuple)) and groups:
+            items = []
+            for group in groups:
+                if not isinstance(group, Mapping):
+                    continue
+                try:
+                    start = int(group.get("start", 0))
+                    end = int(group.get("end", start))
+                except (TypeError, ValueError):
+                    continue
+                items.append({"label": str(group.get("label") or ""), "start": start, "end": end})
+            if items:
+                padding = options.setdefault("layout", {}).setdefault("padding", {})
+                padding["top"] = max(int(padding.get("top") or 0), 28)
+                options["plugins"]["barGroups"] = {"items": items}
         if cfg.get("y_axis_min") is not None:
             options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
         if cfg.get("y_axis_max") is not None:

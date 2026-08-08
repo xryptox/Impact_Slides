@@ -190,6 +190,54 @@ _JS = r"""
         }
       });
     } catch (e) { /* plugin registration is best-effort */ }
+    // Grouped-bar semantic brackets: opt-in through
+    // options.plugins.barGroups.items = [{label, start, end}]. This keeps
+    // Chart.js at parity with its SVG fallback without affecting other charts.
+    try {
+      Chart.register({
+        id: 'barGroups',
+        afterDraw: function (chart) {
+          var opts = chart.config.options.plugins && chart.config.options.plugins.barGroups;
+          var items = opts && opts.items;
+          var xs = chart.scales && chart.scales.x;
+          var area = chart.chartArea;
+          if (!items || !items.length || !xs || !area || chart.options.indexAxis === 'y') return;
+          var count = chart.data.labels ? chart.data.labels.length : 0;
+          if (!count) return;
+          var ctx = chart.ctx, painted = 0;
+          ctx.save();
+          ctx.strokeStyle = opts.color || '#63666a';
+          ctx.fillStyle = opts.labelColor || '#00175a';
+          ctx.lineWidth = opts.lineWidth || 1.5;
+          ctx.font = "600 14px 'Source Sans 3', sans-serif";
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          try {
+            items.forEach(function (item) {
+              var start = Math.max(0, Math.min(count - 1, Number(item.start) || 0));
+              var end = Math.max(start, Math.min(count - 1, Number(item.end) || start));
+              var first = xs.getPixelForTick(start), last = xs.getPixelForTick(end);
+              if (!Number.isFinite(first) || !Number.isFinite(last)) return;
+              var slot = count > 1 ? Math.abs(xs.getPixelForTick(1) - first) : area.right - area.left;
+              var x1 = Math.max(area.left, first - slot / 2 + 6);
+              var x2 = Math.min(area.right, last + slot / 2 - 6);
+              var y = area.top - 8;
+              if (!(x2 >= x1)) return;
+              ctx.beginPath();
+              ctx.moveTo(x1, y); ctx.lineTo(x2, y);
+              ctx.moveTo(x1, y); ctx.lineTo(x1, y + 6);
+              ctx.moveTo(x2, y); ctx.lineTo(x2, y + 6);
+              ctx.stroke();
+              ctx.fillText(String(item.label || ''), (x1 + x2) / 2, y - 6);
+              painted++;
+            });
+          } finally {
+            ctx.restore();
+          }
+          if (chart.canvas && chart.canvas.dataset) chart.canvas.dataset.rv2BarGroupsPainted = String(painted);
+        }
+      });
+    } catch (e) { /* plugin registration is best-effort */ }
     // R2/T1 (+ T6/T7/T9): overlay geometry in chartArea pixels. The server
     // emits overlays as % of the wrap (close, JS-off-safe); this plugin
     // overwrites left/top/width/height in exact pixels from the live chart.

@@ -20,6 +20,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 from amex_handoff_mutations import apply_issue_154_slide24_growth  # noqa: E402
 from impact_slides.renderer_v2 import render_deck  # noqa: E402
+from impact_slides.renderer_v2.charts.chartjs import _chartjs_bar_config  # noqa: E402
 from impact_slides.renderer_v2.layout.dispatch import render_slide  # noqa: E402
 from impact_slides.renderer_v2.schemas import validate_slide  # noqa: E402
 
@@ -124,17 +125,44 @@ def test_render_paints_exactly_six_growth_bars_and_support_context(use_chartjs: 
     ]:
         assert token in painted
     assert '<details open>' in html
-    for name, _, _ in _GROUPS:
-        assert html.count(name) == 1
-    assert html.count("bar-group-bracket") == 3
     assert "chart-support-outlined chart-table-aligned" in html
     assert 'data-rv2-chart-table-align="1"' in html
 
     if use_chartjs:
+        config = _chartjs_bar_config(slide)
+        assert config is not None
+        assert config["options"]["plugins"]["barGroups"]["items"] == [
+            {"label": name, "start": start, "end": end}
+            for name, start, end in _GROUPS
+        ]
         assert '"type": "bar"' in html or '"type":"bar"' in html
         assert '"data": [10.0, 4.0, 4.0, 13.0, 12.0, 9.0]' in html
     else:
+        for name, _, _ in _GROUPS:
+            assert html.count(name) == 1
+        assert html.count("bar-group-bracket") == 3
         assert html.count('class="vbar"') == 6
+
+
+def test_chartjs_bar_groups_are_opt_in():
+    configured = _chartjs_bar_config(_corrected())
+    assert configured is not None
+    assert configured["options"]["layout"]["padding"]["top"] >= 28
+
+    malformed = _corrected()
+    malformed["visual_spec"]["primary_visual"]["chart_config"]["bar_groups"] = [
+        {"label": "bad", "start": "nope", "end": 2}
+    ]
+    ignored = _chartjs_bar_config(malformed)
+    assert ignored is not None
+    assert "barGroups" not in ignored["options"]["plugins"]
+
+    without_groups = _corrected()
+    without_groups["visual_spec"]["primary_visual"]["chart_config"].pop("bar_groups")
+    default = _chartjs_bar_config(without_groups)
+    assert default is not None
+    assert "barGroups" not in default["options"]["plugins"]
+    assert "layout" not in default["options"]
 
 
 def test_mutations_catch_data_table_missing_context_and_aggregate_bars():
@@ -202,7 +230,9 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
               const row = slide && slide.querySelector('.chart-support-outlined');
               const canvas = slide && slide.querySelector('canvas');
               const chart = canvas && Chart.getChart(canvas);
-              if (!row || !chart) return false;
+              const groups = chart && chart.options.plugins && chart.options.plugins.barGroups;
+              const labels = groups && groups.items && groups.items.map(group => group.label).join('|');
+              if (!row || !chart || !groups || labels !== 'U.S. Consumer Services|Commercial Services|International Card Services' || canvas.dataset.rv2BarGroupsPainted !== '3') return false;
               const cells = [...row.querySelectorAll('.chart-outlined-cell .chart-outlined-box')];
               const canvasRect = canvas.getBoundingClientRect();
               const scale = canvasRect.width / chart.width;
@@ -232,8 +262,11 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
               const cellBoxes = cells.map(c => c.querySelector('.chart-outlined-box'));
               const canvas = slide.querySelector('canvas');
               const chart = canvas && Chart.getChart(canvas);
-              if (!labelBox || cellBoxes.some(b => !b) || !chart || !chart.scales.x)
-                return {ok:false, reason:'support row or chart missing'};
+              const groups = chart && chart.options.plugins && chart.options.plugins.barGroups;
+              if (!labelBox || cellBoxes.some(b => !b) || !chart || !chart.scales.x ||
+                  !groups || groups.items.length !== 3 ||
+                  canvas.dataset.rv2BarGroupsPainted !== '3')
+                return {ok:false, reason:'support row, chart, or group brackets missing'};
               const lr = labelBox.getBoundingClientRect();
               const cr = cellBoxes.map(c => c.getBoundingClientRect());
               const canvasRect = canvas.getBoundingClientRect();
@@ -242,6 +275,8 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
               if (elements.length !== 6) return {ok:false, reason:'bar count'};
               const barCenters = elements.map(el => canvasRect.left + el.x * scale);
               return {ok:true, labelRight:lr.right, firstLeft:cr[0].left,
+                groupLabels: groups.items.map(group => group.label),
+                paintedGroups: canvas.dataset.rv2BarGroupsPainted,
                 centers:cr.map(r => r.left + r.width / 2), barCenters,
                 widths:cr.map(r => r.width)};
             }"""
@@ -250,6 +285,8 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
 
     assert measured["ok"], measured
     assert measured["firstLeft"] >= measured["labelRight"] + 8
+    assert measured["groupLabels"] == [group[0] for group in _GROUPS]
+    assert measured["paintedGroups"] == "3"
     assert measured["centers"] == sorted(measured["centers"])
     assert all(width > 0 for width in measured["widths"])
     assert all(
