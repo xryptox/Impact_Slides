@@ -111,12 +111,12 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
     cfg = _chart_config(slide)
     typo = resolve_typography(cfg)
     x_tick_fs = int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 16
-    dl_fs = int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 18
+    value_typo = resolve_typography({"typography": cfg.get("typography")})
+    dl_fs = int(value_typo["datalabel_font_size"]) if value_typo.get("datalabel_font_size_set") else 18
     labels, series, rows, _pc = _bar_matrix(slide)
     auto_plan = compute_auto_plan_for_slide(slide, "waterfall_chart", chart_cfg=cfg)
     if auto_plan is not None:
         x_tick_fs = auto_plan.x_tick_font_size
-        dl_fs = auto_plan.datalabel_font_size
     label_lines, _value_ticks = svg_auto_axis_view(
         auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
     )
@@ -125,7 +125,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
 
     # Single-series bridges from first column; optional kind on steps_or_data.
     raw = _steps(slide)
-    bridges: list[tuple[str, float, str]] = []  # label, value, kind
+    bridges: list[tuple[int, str, float, str]] = []
     for i, lab in enumerate(labels):
         row = rows[i] if i < len(rows) else []
         v = row[0] if row else None
@@ -136,28 +136,28 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             kind = str(raw[i].get("kind") or "").lower().strip()
         if not kind:
             kind = "up" if v >= 0 else "down"
-        bridges.append((str(lab), float(v), kind))
+        bridges.append((i, str(lab), float(v), kind))
     if not bridges:
         return '<p class="chart-empty">No chart data for waterfall_chart</p>'
 
     # Running total: up/down float from prior level; total is absolute from 0.
     level = 0.0
-    centers: list[tuple[str, float, float, str, float]] = []
-    for lab, val, kind in bridges:
+    centers: list[tuple[int, str, float, float, str, float]] = []
+    for category_index, lab, val, kind in bridges:
         if kind == "total":
             if abs(val) < 1e-9 and level:
                 val = level
             y0, y1 = (0.0, val) if val >= 0 else (val, 0.0)
-            centers.append((lab, y0, y1 - y0, "total", val))
+            centers.append((category_index, lab, y0, y1 - y0, "total", val))
             level = val
         else:
             start = level
             level = level + val
             y0, y1 = min(start, level), max(start, level)
             k = "up" if val >= 0 else "down"
-            centers.append((lab, y0, y1 - y0, k, val))
+            centers.append((category_index, lab, y0, y1 - y0, k, val))
 
-    vals_ext = [c[1] for c in centers] + [c[1] + c[2] for c in centers] + [0.0]
+    vals_ext = [c[2] for c in centers] + [c[2] + c[3] for c in centers] + [0.0]
     vmin, vmax = min(vals_ext), max(vals_ext)
     if abs(vmax - vmin) < 1e-6:
         vmax = vmin + 1.0
@@ -196,7 +196,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             f'stroke-width="1" stroke-dasharray="4 4"/>'
         )
 
-    for i, (lab, y0, h, kind, val) in enumerate(centers):
+    for i, (category_index, lab, y0, h, kind, val) in enumerate(centers):
         cx = left + slot * i + slot / 2
         x = cx - bar_w / 2
         y_top = y_scale(y0 + h)
@@ -216,10 +216,10 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             f'text-anchor="middle" fill="{navy}" font-size="{dl_fs}" '
             f'font-weight="700">{esc(vlab)}</text>'
         )
-        lines = label_lines[i] if i < len(label_lines) else [lab]
+        lines = label_lines[category_index] if category_index < len(label_lines) else [lab]
         for line_i, line in enumerate(lines):
             parts.append(
-                f'<text class="chart-axis-label auto-x-label" data-auto-label-index="{i}" '
+                f'<text class="chart-axis-label auto-x-label" data-auto-label-index="{category_index}" '
                 f'x="{cx:.1f}" y="{height - 28 + line_i * x_tick_fs}"'
                 f'{svg_label_transform(auto_plan, cx, height - 28 + line_i * x_tick_fs)} '
                 f'text-anchor="middle" fill="{ink}" font-size="{x_tick_fs}">'

@@ -373,16 +373,59 @@ def test_wrapper_diagnostics_include_wrap_and_y_tick_reduction():
     assert "data-auto-x-wrap=" in attrs and "data-auto-y-reduced=" in attrs
 
 
-def test_adaptation_stage_mutation_trap_keeps_all_ordered_stages():
-    """Static mutation trap: deleting/reordering an adaptation stage fails."""
-    source = Path("impact_slides/renderer_v2/charts/auto_typography.py").read_text(encoding="utf-8")
-    positions = [source.index(marker) for marker in (
-        "# Stages 1–3: full labels",
-        "# Stage 4: short_label",
-        "# Stage 5: evenly skip full labels",
-        "# Stage 6: ellipsis",
-    )]
-    assert positions == sorted(positions)
+def test_adaptation_prefers_short_labels_before_skipping_categories():
+    labels = ["Long reporting period alpha beta"] * 8
+    plan = _fit_x_labels(labels, [f"Q{i}" for i in range(8)], 12, 160, 80)
+    assert plan is not None
+    assert plan.used_short
+    assert not plan.used_skip
+    assert not plan.used_ellipsis
+    assert plan.texts == [f"Q{i}" for i in range(8)]
+
+
+def test_waterfall_auto_uses_renderable_category_label_and_legacy_value_typography():
+    steps = [{"label": "Skipped category", "value": None}]
+    steps.extend(
+        {
+            "label": "Long reporting period alpha beta",
+            "short_label": f"Q{i}",
+            "value": i,
+        }
+        for i in range(1, 20)
+    )
+    slide = {
+        "slide_number": 1,
+        "title": "Waterfall",
+        "layout_type": "waterfall_chart",
+        "content": {},
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": steps,
+            }
+        },
+        "evidence_sources": [],
+    }
+    from impact_slides.renderer_v2 import charts
+
+    html = charts.build_chart_html(slide, "waterfall_chart", use_chartjs=False)
+    labels = re.findall(
+        r'class="chart-axis-label auto-x-label" data-auto-label-index="(\d+)"[^>]*>(.*?)</text>',
+        html,
+    )
+    value_size = re.search(r'class="chart-value"[^>]*font-size="(\d+)"', html)
+    assert labels == [("19", "Long reporting period alpha beta")]
+    assert value_size and value_size.group(1) == "18"
+
+    explicit = {**slide, "visual_spec": {"primary_visual": {
+        **slide["visual_spec"]["primary_visual"],
+        "chart_config": {"typography": {"mode": "auto", "datalabel_font_size": 22}},
+    }}}
+    explicit_html = charts.build_chart_html(explicit, "waterfall_chart", use_chartjs=False)
+    explicit_value_size = re.search(
+        r'class="chart-value"[^>]*font-size="(\d+)"', explicit_html
+    )
+    assert explicit_value_size and explicit_value_size.group(1) == "22"
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):
