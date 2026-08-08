@@ -1,0 +1,133 @@
+{
+  "slides": [
+    {
+      "layout_type": "dual_chart",
+      "packing_mode": "chart-led",
+      "title": "Credit Reserve Macroeconomic Scenarios: Select Variables",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "U.S. Unemployment Rate % \u00c2\u00b7 U.S. GDP Growth % (SAAR)",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 4.0,
+              "series_2": 4.2
+            },
+            {
+              "label": "Q2'25",
+              "value": 4.1,
+              "series_2": 4.3
+            },
+            {
+              "label": "Q3'25",
+              "value": 4.2,
+              "series_2": 4.5
+            },
+            {
+              "label": "Q4'25",
+              "value": 4.2,
+              "series_2": 4.6
+            },
+            {
+              "label": "Q1'26",
+              "value": 4.3,
+              "series_2": 4.7
+            },
+            {
+              "label": "Q2'26",
+              "value": 4.2,
+              "series_2": 4.8
+            },
+            {
+              "label": "Q3'26",
+              "value": 4.1,
+              "series_2": 4.9
+            },
+            {
+              "label": "Q4'26",
+              "value": 4.0,
+              "series_2": 5.0
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Baseline UE",
+              "Downside UE"
+            ],
+            "y_axis_min": 0,
+            "y_axis_max": 10
+          }
+        },
+        "secondary_visual": {
+          "type": "line_chart",
+          "steps_or_data": [
+            {
+              "label": "Q1'25",
+              "value": 2.0,
+              "series_2": 1.0
+            },
+            {
+              "label": "Q2'25",
+              "value": 2.1,
+              "series_2": 0.5
+            },
+            {
+              "label": "Q3'25",
+              "value": 2.0,
+              "series_2": 0.0
+            },
+            {
+              "label": "Q4'25",
+              "value": 1.9,
+              "series_2": -0.5
+            },
+            {
+              "label": "Q1'26",
+              "value": 1.8,
+              "series_2": -1.0
+            },
+            {
+              "label": "Q2'26",
+              "value": 1.9,
+              "series_2": -0.5
+            },
+            {
+              "label": "Q3'26",
+              "value": 2.0,
+              "series_2": 0.0
+            },
+            {
+              "label": "Q4'26",
+              "value": 2.1,
+              "series_2": 0.5
+            }
+          ],
+          "chart_config": {
+            "series_names": [
+              "Baseline GDP",
+              "Downside GDP"
+            ],
+            "y_axis_min": -5,
+            "y_axis_max": 6
+          }
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "Scenario note",
+            "body": "Reflects range of variables available as of March 31, 2026 from an independent third party without applying scenario weights. GDP is Real GDP QoQ % SAAR. Numeric series are approx. from chart bands \u00e2\u20ac\u201d not PDF OCR."
+          }
+        ]
+      },
+      "speaker_notes": "Approx. dual scenario lines; triple-scenario exact path still weak/B.",
+      "slide_number": 27
+    }
+  ]
+}

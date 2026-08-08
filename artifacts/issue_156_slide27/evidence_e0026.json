@@ -1,0 +1,13 @@
+{
+  "evidence_id": "E0026",
+  "source_file": "Q1-2026-Earnings-Presentation.pdf",
+  "insight_type": "pdf_page_insight",
+  "text": "Page 27: Credit Reserve Macroeconomic Scenarios: Select Variables\nQ1 Upside Scenario\nQ1 Baseline Scenario\nQ1 Downside Scenario\nQ1'25 through Q1'28\nReflects the range of variables available as of March 31, 2026. Forecast assumptions are from an independent third party and represent the range of forecasts from the macroeconomic scenarios used during the quarter without applying a weight to those scenarios. * Real GDP QoQ % Change Seasonally Adjusted to Annualized Rates (SAAR).\nU.S. Unemployment Rate %\nU.S. GDP Growth* %",
+  "priority_score": 0.67,
+  "confidence": "medium",
+  "suggested_narrative_use": ["What"],
+  "source_location": "Page 27",
+  "ocr_used": false,
+  "extraction_method": "text_layer",
+  "semantic_type": "Risk"
+}

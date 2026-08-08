@@ -1,0 +1,74 @@
+{
+  "viewport": [
+    1920,
+    1080
+  ],
+  "source_handoff": "artifacts/issue_156_slide27/archived_v10_handoff.json",
+  "source_sha256": "237b353085707f380b892575bb55ff68d6c9e0d1bb64c70baf4302cfbca8265f",
+  "slide": 27,
+  "layout": "dual_chart",
+  "captures": {
+    "archived_v10": {
+      "charts": [
+        {
+          "index": 0,
+          "width": 806,
+          "height": 688,
+          "chart_area": {
+            "width": 757.398193359375,
+            "height": 624.4,
+            "left": 28.4599609375,
+            "top": 34,
+            "right": 785.858154296875,
+            "bottom": 658.4
+          }
+        },
+        {
+          "index": 1,
+          "width": 806,
+          "height": 688,
+          "chart_area": {
+            "width": 758.8711700439453,
+            "height": 624.4,
+            "left": 26.986984252929688,
+            "top": 34,
+            "right": 785.858154296875,
+            "bottom": 658.4
+          }
+        }
+      ],
+      "png": "artifacts/issue_156_slide27/archived_v10_slide27_paint_ready.png"
+    },
+    "corrected": {
+      "charts": [
+        {
+          "index": 0,
+          "width": 806,
+          "height": 635,
+          "chart_area": {
+            "width": 757.398193359375,
+            "height": 571.4,
+            "left": 28.4599609375,
+            "top": 34,
+            "right": 785.858154296875,
+            "bottom": 605.4
+          }
+        },
+        {
+          "index": 1,
+          "width": 806,
+          "height": 635,
+          "chart_area": {
+            "width": 758.8711700439453,
+            "height": 571.4,
+            "left": 26.986984252929688,
+            "top": 34,
+            "right": 785.858154296875,
+            "bottom": 605.4
+          }
+        }
+      ],
+      "png": "artifacts/issue_156_slide27/corrected_slide27_paint_ready.png"
+    }
+  }
+}
