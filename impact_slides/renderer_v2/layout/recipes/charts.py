@@ -640,8 +640,36 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
     tile_count = sum(isinstance(tile, dict) for tile in tiles)
     cols = 2 if tile_count <= 4 else 3
     tile_width = (1920 - 2 * 96 - (cols - 1) * 18) / cols - 2 * 17
-    parts = []
+    aw, ah = chart_host_size("multi_panel", cols=cols)
+    from ...charts.auto_typography import compute_auto_plan_for_slide, sync_sibling_plans
+
+    tile_plans = []
     for tile in tiles:
+        if not isinstance(tile, dict) or str(tile.get("kind") or "metric") != "chart":
+            tile_plans.append(None)
+            continue
+        chart_type = str(tile.get("chart_type") or "grouped_bar_chart")
+        tile_cfg = tile.get("chart_config") or {}
+        if not isinstance(tile_cfg, dict):
+            tile_cfg = {}
+        sub_slide = {
+            **slide,
+            "layout_type": chart_type,
+            "visual_spec": {"primary_visual": {
+                "type": chart_type,
+                "steps_or_data": tile.get("steps_or_data") or [],
+                "chart_config": tile_cfg,
+            }},
+        }
+        tile_plans.append(
+            compute_auto_plan_for_slide(
+                sub_slide, chart_type, host_w=aw, host_h=ah, chart_cfg=tile_cfg
+            )
+        )
+    synced = iter(sync_sibling_plans([plan for plan in tile_plans if plan is not None]))
+    tile_plans = [next(synced, None) if plan is not None else None for plan in tile_plans]
+    parts = []
+    for tile, auto_plan in zip(tiles, tile_plans):
         if not isinstance(tile, dict):
             continue
         kind = str(tile.get("kind") or "metric")
@@ -675,6 +703,8 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 if callout_requested and callout_valid
                 else tile_cfg
             )
+            if auto_plan is not None:
+                paint_cfg = {**paint_cfg, "_auto_typo_plan": auto_plan}
             sub_slide = {
                 **slide,
                 "layout_type": chart_type,
