@@ -39,6 +39,17 @@ Durable workflow scripts:
 
 The launcher deliberately uses the user's normal Pi settings plus explicit SuperGrok Grok 4.5 high and the `implement` skill. This is the tested path that preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
+### Canonical launch and supervision
+
+1. Determine the supervising session's current Herdr workspace; pass that existing workspace ID to the orchestrator.
+2. Launch new work with `orchestrate-herdr-implement-visible.ps1`; launch returned host findings with `orchestrate-herdr-repair-visible.ps1`. Do not substitute direct `herdr pane run`, RPC, `pi --print`, or a newly created workspace.
+3. Collect each launcher's returned issue, tab, pane, and worktree IDs into a JSON target file with objects shaped as `{ "issue": N, "pane": "w2:pN", "worktree": "C:/..." }`.
+4. Start a background PEW workflow that invokes `watch-visible-implementers.ps1 -WorkspaceId <current> -TargetsPath <json>`. The watcher is one-shot: it returns the first pane that becomes `idle`, `done`, or `blocked`, together with recent output and authoritative `no-mistakes axi status`.
+5. Treat a watcher completion as the host notification. If it surfaces `ask-user`, present the finding verbatim, send the user's decision back to the same pane, and start a fresh watcher for the remaining active panes. Do not rely on Herdr status or observational memory to notify the host.
+6. After collecting a final report and checking Git/no-mistakes/PR state, close that tab. Keep tabs open while a decision or pipeline action remains outstanding.
+
+A deliberately stopped or superseded watcher may report `CANCELLED`; verify the replacement run ID and implementation state, then treat that notification as expected rather than an implementation failure.
+
 ## Delivery sequence
 
 ### 1. Prepare a dependency wave
