@@ -217,9 +217,9 @@ def measure_text_width(
     for ch in text:
         total += _GLYPH_ADVANCES.get(key, {}).get(ch, m[_char_class(ch)])
     # Tables are calibrated at the renderer's 600 axis-label weight.
-    # +1px covers DirectWrite vs canvas subpixel drift; +2 overshoots the
-    # FreeType DOM-box upper band (8%/3px) on Linux CI for short labels.
-    return total * float(font_size) + 1.0
+    # Quarter-pixel ceil absorbs subpixel DirectWrite/FreeType drift while
+    # staying inside the #150 calibration band (5% or 2px).
+    return math.ceil(total * float(font_size) * 4.0) / 4.0
 
 
 def measure_text_height(
@@ -1784,7 +1784,7 @@ def compute_auto_plan_for_slide(
             p.datalabel_font_size_set = 1
         return p
 
-    typo = resolve_typography(cfg)
+    typo = resolve_typography(cfg, chart_type=chart_type)
     if not typo.get("auto_mode"):
         return None
 
@@ -1871,7 +1871,7 @@ def typography_with_auto(
     from .typography import resolve_typography
 
     cfg = chart_cfg if isinstance(chart_cfg, Mapping) else _chart_config(slide)
-    base = resolve_typography(cfg)
+    base = resolve_typography(cfg, chart_type=chart_type)
     plan = compute_auto_plan_for_slide(
         slide, chart_type, host_w=host_w, host_h=host_h, chart_cfg=cfg
     )

@@ -7,6 +7,9 @@ and dual axis work unchanged. Single-series combos are pixel-identical.
 from __future__ import annotations
 
 import re
+from pathlib import Path
+
+import pytest
 
 from impact_slides.renderer_v2.charts import _build_combo_chart_svg
 
@@ -106,3 +109,43 @@ def test_series_colors_apply_to_stacked_segments():
     html = _build_combo_chart_svg(_slide(_STACKED, series_colors=["#111111", "#222222"]))
     assert 'fill="#111111"' in html
     assert 'fill="#222222"' in html
+
+
+def test_negative_stacked_combo_paints_both_signs_from_zero():
+    """Negative segments must paint below zero with separate cursors (#150 residual)."""
+    data = [
+        {"label": "Q1", "values": {"Gain": 2.0, "Loss": -1.0}},
+        {"label": "Q2", "values": {"Gain": 1.5, "Loss": -0.5}},
+    ]
+    html = _build_combo_chart_svg(_slide(data))
+    # 2 cats × 2 series = 4 segments (2 pos + 2 neg). Positive class is exact
+    # "combo-seg"; negatives add "combo-seg-neg".
+    assert html.count('class="combo-seg"') == 2
+    assert html.count("combo-seg-neg") == 2
+    # Net totals: 2-1=1 and 1.5-0.5=1
+    assert html.count(">1</text>") >= 2
+
+    by_x: dict[str, list[tuple[float, float, bool]]] = {}
+    for cls, x, y, h in re.findall(
+        r'<rect class="(combo-seg(?: combo-seg-neg)?)" x="([\d.]+)" y="([\d.]+)" '
+        r'width="[\d.]+" height="([\d.]+)"',
+        html,
+    ):
+        by_x.setdefault(x, []).append((float(y), float(h), "neg" in cls))
+    assert len(by_x) == 2
+    for segs in by_x.values():
+        pos = [s for s in segs if not s[2]]
+        neg = [s for s in segs if s[2]]
+        assert len(pos) == 1 and len(neg) == 1
+        pos_y, pos_h, _ = pos[0]
+        neg_y, neg_h, _ = neg[0]
+        # Positive sits above negative; they meet at the zero baseline.
+        assert pos_y + pos_h == pytest.approx(neg_y, abs=0.15)
+        assert pos_h > 0 and neg_h > 0
+
+    # Mutation trap: flipping the skip predicate must break the assertion.
+    source = Path(__file__).resolve().parents[1].joinpath(
+        "impact_slides/renderer_v2/charts/lines.py"
+    ).read_text(encoding="utf-8")
+    assert "if v is None or v >= 0:" in source
+    assert "neg_cursor" in source

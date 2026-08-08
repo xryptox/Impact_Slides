@@ -170,6 +170,7 @@ def resolve_typography(
     chart_cfg: Mapping[str, Any] | None,
     *,
     strict: bool | None = None,
+    chart_type: str | None = None,
 ) -> dict[str, int]:
     """Return effective tick/datalabel sizes.
 
@@ -180,6 +181,11 @@ def resolve_typography(
     explicit channel overrides remain optional and are never silently resized.
     Without a density context this returns legacy defaults for unset channels
     plus ``auto_mode=1`` so painters can run ``resolve_auto_typography``.
+
+    Waterfall value labels stay legacy 18px (auto sizes axes only). An authored
+    ``datalabel_font_size`` is rejected at this boundary when
+    ``chart_type == "waterfall_chart"``: strict raises; non-strict drops only
+    that field, keeps mode/axis overrides, and records a warning.
     """
     if strict is None:
         strict = _RENDER_STRICT.get()
@@ -206,20 +212,39 @@ def resolve_typography(
                 return merge_plan_into_typo(out, stashed)
         except ImportError as exc:
             raise RuntimeError("auto typography resolver is unavailable") from exc
-    raw = chart_cfg.get("typography")
-    if raw is None:
+    raw_in = chart_cfg.get("typography")
+    if raw_in is None:
         return out
-    if not isinstance(raw, Mapping):
+    if not isinstance(raw_in, Mapping):
         msg = "typography must be an object"
         if strict:
             raise ValueError(f"chart_config.typography: {msg}")
         _warn(f"ignored entire group: {msg}")
         return out
+    raw = dict(raw_in)
 
     # Unsupported keys → warn, continue.
     for key in raw:
         if key not in _SUPPORTED_TYPO_FIELDS:
             _warn(f"unsupported field ignored: {key}")
+
+    # Waterfall: value labels are not ordinary datalabels (#150).
+    ct = (chart_type or "").lower().strip()
+    if ct == "waterfall_chart" and "datalabel_font_size" in raw:
+        msg = (
+            "datalabel_font_size is not supported for waterfall_chart "
+            "(value labels stay legacy 18px; auto sizes axes only)"
+        )
+        if strict:
+            raise ValueError(f"chart_config.typography: {msg}")
+        _warn(msg)
+        # Drop only the unsupported field; keep mode/axis overrides.
+        raw.pop("datalabel_font_size", None)
+        # Mirror the strip onto a mutable author chart_config when present.
+        if isinstance(chart_cfg, dict):
+            authored = chart_cfg.get("typography")
+            if isinstance(authored, dict):
+                authored.pop("datalabel_font_size", None)
 
     mode_raw = raw.get("mode")
     auto_mode = False

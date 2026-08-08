@@ -281,12 +281,11 @@ def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, ro
         estimated_w, estimated_h = measure_label_box(
             text, size, font=font, weight=600, rotation_deg=rotation
         )
-        # Containment must hold; upper band is 8%/3px so FreeType vs DirectWrite
-        # DOM boxes on CI stay inside without over-tight canvas-only calibration.
+        # #150 acceptance: conservative containment within 5% or 2px.
         assert estimated_w >= bounds["width"], (font, size, rotation, text, estimated_w, bounds)
         assert estimated_h >= bounds["height"], (font, size, rotation, text, estimated_h, bounds)
-        assert estimated_w <= bounds["width"] + max(bounds["width"] * 0.08, 3), (font, size, rotation, text, estimated_w, bounds)
-        assert estimated_h <= bounds["height"] + max(bounds["height"] * 0.08, 3), (font, size, rotation, text, estimated_h, bounds)
+        assert estimated_w <= bounds["width"] + max(bounds["width"] * 0.05, 2), (font, size, rotation, text, estimated_w, bounds)
+        assert estimated_h <= bounds["height"] + max(bounds["height"] * 0.05, 2), (font, size, rotation, text, estimated_h, bounds)
 
 
 def test_auto_chartjs_uses_complete_formatted_tick_plan_and_reserves_default_legend(tmp_path):
@@ -782,15 +781,49 @@ def test_waterfall_auto_uses_renderable_category_label_and_legacy_value_typograp
     ]
     assert value_size and value_size.group(1) == "18"
 
+    # Non-strict path: unsupported datalabel override is stripped; values stay 18.
+    from impact_slides.renderer_v2.charts.typography import (
+        begin_render_warnings,
+        reset_render_strict,
+        set_render_strict,
+        take_render_warnings,
+    )
+
     explicit = {**slide, "visual_spec": {"primary_visual": {
         **slide["visual_spec"]["primary_visual"],
-        "chart_config": {"typography": {"mode": "auto", "datalabel_font_size": 22}},
+        "chart_config": {
+            "typography": {
+                "mode": "auto",
+                "x_tick_font_size": 14,
+                "datalabel_font_size": 22,
+            }
+        },
     }}}
-    explicit_html = charts.build_chart_html(explicit, "waterfall_chart", use_chartjs=False)
+    tok = set_render_strict(False)
+    wtok = begin_render_warnings()
+    try:
+        explicit_html = charts.build_chart_html(
+            explicit, "waterfall_chart", use_chartjs=False
+        )
+    finally:
+        warnings = take_render_warnings(wtok)
+        reset_render_strict(tok)
     explicit_value_size = re.search(
         r'class="chart-value"[^>]*font-size="(\d+)"', explicit_html
     )
     assert explicit_value_size and explicit_value_size.group(1) == "18"
+    assert any("datalabel_font_size is not supported for waterfall" in w for w in warnings)
+    assert 'font-size="14"' in explicit_html  # axis override preserved
+
+    # Strict path: same override raises at the typography boundary.
+    import pytest
+
+    with pytest.raises(ValueError, match="datalabel_font_size is not supported for waterfall"):
+        resolve_typography(
+            {"typography": {"mode": "auto", "datalabel_font_size": 22}},
+            strict=True,
+            chart_type="waterfall_chart",
+        )
 
 
 def test_auto_plan_includes_line_series_and_combo_overlay_axes():

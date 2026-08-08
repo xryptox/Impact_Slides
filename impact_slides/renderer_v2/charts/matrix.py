@@ -109,14 +109,12 @@ def _build_heatmap_html(slide: Mapping[str, Any]) -> str:
 def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
     """In-repo waterfall: running-total bridge bars (pack geometry parity)."""
     cfg = _chart_config(slide)
-    typo = resolve_typography(cfg)
+    # Waterfall value labels stay legacy 18px; auto typography sizes axes only (#150).
+    typo = resolve_typography(cfg, chart_type="waterfall_chart")
     x_tick_fs = int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 16
     labels, series, rows, _pc = _bar_matrix(slide)
     auto_plan = compute_auto_plan_for_slide(slide, "waterfall_chart", chart_cfg=cfg)
-    dl_fs = 18 if auto_plan is not None else (
-        int(typo["datalabel_font_size"])
-        if typo.get("datalabel_font_size_set") else 18
-    )
+    dl_fs = 18
     if auto_plan is not None:
         x_tick_fs = auto_plan.x_tick_font_size
     if not labels or not series or not rows:

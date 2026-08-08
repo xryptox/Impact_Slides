@@ -647,14 +647,15 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     for i, lab in enumerate(bar_labels):
         x = pad_l + i * bar_slot + (bar_slot - bar_w) / 2
         if stacked:
-            cursor = 0.0
+            # Positive stack grows up from zero; negative grows down (parity with stacked bars).
+            pos_cursor = 0.0
             for si in range(len(bar_series)):
                 v = bar_rows[i][si] if si < len(bar_rows[i]) else None
                 if v is None or v <= 0:
                     continue
-                y_bottom = bar_y(cursor)
-                cursor += v
-                y_top = bar_y(cursor)
+                y_bottom = bar_y(pos_cursor)
+                pos_cursor += v
+                y_top = bar_y(pos_cursor)
                 seg_color = bar_colors[i] or combo_palette[si % len(combo_palette)]
                 parts.append(
                     f'<rect class="combo-seg" x="{x:.1f}" y="{y_top:.1f}" width="{bar_w:.1f}" '
@@ -666,11 +667,30 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                         f'text-anchor="middle" fill="#fff" font-size="13" font-weight="600" '
                         f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(v))}</text>'
                     )
-            total = bar_totals[i]
+            neg_cursor = 0.0
+            for si in range(len(bar_series)):
+                v = bar_rows[i][si] if si < len(bar_rows[i]) else None
+                if v is None or v >= 0:
+                    continue
+                y_top = bar_y(neg_cursor)
+                neg_cursor += v
+                y_bottom = bar_y(neg_cursor)
+                seg_color = bar_colors[i] or combo_palette[si % len(combo_palette)]
+                parts.append(
+                    f'<rect class="combo-seg combo-seg-neg" x="{x:.1f}" y="{y_top:.1f}" '
+                    f'width="{bar_w:.1f}" height="{max(y_bottom - y_top, 0):.1f}" fill="{seg_color}"/>'
+                )
+            # Net total above the positive stack (or above zero).
+            net = bar_totals[i] + bar_minimums[i]
+            total_y = (
+                bar_y(bar_totals[i]) - 8
+                if bar_totals[i] > 0
+                else bar_y(0.0) - 8
+            )
             parts.append(
-                f'<text x="{x + bar_w / 2:.1f}" y="{bar_y(total) - 8:.1f}" text-anchor="middle" '
+                f'<text x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" text-anchor="middle" '
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="700" '
-                f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(total))}</text>'
+                f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(net))}</text>'
             )
         else:
             val = bar_rows[i][0] or 0.0
