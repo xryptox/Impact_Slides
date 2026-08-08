@@ -9,6 +9,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 - `gen_layout_index.py` — builds/checks `wiki/renderer_v2_LAYOUTS.md`
 - `simulation_probe.py` — Playwright helpers for simulation geometry probes (#137 identity, #146 paint-ready charts)
 - `amex_handoff_mutations.py` — bounded Amex handoff authoring fixes applied before a fidelity pass (#148 slides 13–14 bars/pane order; #156 slide 27 three scenarios / Q1'25–Q1'28 / source note / E0026 PDF citation; #157 slides 33–37 annex matrices; #158 slide 28 pane subtitles / drop pseudo `top_total`); does not change renderer defaults. CLI: `python scripts/amex_handoff_mutations.py IN.json -o OUT.json`
+- `../artifacts/issue_156_slide27/` — #156 source-evidence E0026 and reproducible archived-v10/corrected 1920×1080 paint-ready recaptures.
 - Ad-hoc helpers (`render_slide_shot.py`, shell sims)
 - `run_amex_simulation_v9.sh` — historical isolated SuperGrok 4.5 GNHF launcher for the measure-only Amex v9 baseline
 - `run_amex_simulation_v10.sh` — isolated SuperGrok 4.5 GNHF launcher for the v10 closed-ticket revalidation plus full 44-page PDF↔HTML comparison; its temporary GNHF home must not replace `~/.gnhf/config.yml`

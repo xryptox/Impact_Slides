@@ -26,6 +26,7 @@ from impact_slides.renderer_v2 import render_deck  # noqa: E402
 FIXTURES = Path(__file__).parent / "fixtures" / "renderer_v2"
 BROKEN = FIXTURES / "amex_s27_v10_broken.json"
 CORRECTED = FIXTURES / "amex_s27_corrected.json"
+EVIDENCE = REPO / "artifacts" / "issue_156_slide27" / "evidence_e0026.json"
 
 _DUAL = "dual" + "_chart"
 _PERIODS = [
@@ -64,6 +65,14 @@ def _assert_source_contract(slide: dict) -> None:
     assert slide["evidence_sources"] == [
         {"id": "E0026", "source_file": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"}
     ]
+
+
+def test_e0026_records_the_slide_27_pdf_evidence():
+    evidence = _load(EVIDENCE)
+    assert evidence["evidence_id"] == "E0026"
+    assert evidence["source_location"] == "Page 27"
+    assert "Q1 Upside Scenario" in evidence["text"]
+    assert "SAAR" in evidence["text"]
 
 
 def test_broken_fixture_documents_the_v10_truncation():
