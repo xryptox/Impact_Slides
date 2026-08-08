@@ -122,7 +122,7 @@ def test_dual_chart_applies_synced_auto_plan_to_chartjs_svg_and_metadata(tmp_pat
     y_sizes = [c["options"]["scales"]["y"]["ticks"]["font"]["size"] for c in configs]
     assert x_sizes[0] == x_sizes[1] and x_sizes[0] >= AUTO_X_LO
     assert y_sizes[0] == y_sizes[1] and y_sizes[0] >= AUTO_Y_LO
-    assert html.count('data-auto-typo="1"') == 2
+    assert html.count('data-auto-typo="1"') == 4  # Chart.js wrappers + SVG fallbacks
     meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
     assert len(meta["auto_typography"]) == 2
 
@@ -147,7 +147,7 @@ def test_svg_and_chartjs_receive_the_same_auto_sizes(tmp_path):
     svg = (svg_out / "presentation.html").read_text(encoding="utf-8")
     assert f'font-size="{chartjs_x}"' in svg
     assert f'font-size="{chartjs_y}"' in svg
-    assert 'data-auto-typo="1"' not in svg  # SVG has no canvas wrapper.
+    assert 'data-auto-typo="1"' in svg  # SVG wrapper carries the shared diagnostic.
 
 
 @pytest.mark.parametrize(

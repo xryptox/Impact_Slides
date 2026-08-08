@@ -109,7 +109,12 @@ def _svg_fallback_for_layout(
     slide: Mapping[str, Any], layout: str, *, record_diagnostic: bool = True
 ) -> str:
     """Static SVG painter for a Chart.js MVP layout (JS-off / noscript path)."""
-    from .auto_typography import compute_auto_plan_for_slide, record_auto_diagnostic
+    from ..slide_view import primary_visual
+    from .auto_typography import (
+        compute_auto_plan_for_slide,
+        plan_to_data_attrs,
+        record_auto_diagnostic,
+    )
 
     cfg = _chart_config(slide)
     host_w, host_h = {
@@ -121,33 +126,29 @@ def _svg_fallback_for_layout(
     )
     if plan is not None:
         cfg["_auto_typo_plan"] = plan
-        visual_spec = dict(slide.get("visual_spec") or {})
-        primary = dict(visual_spec.get("primary_visual") or {})
-        primary["chart_config"] = cfg
-        visual_spec["primary_visual"] = primary
-        # _chart_config merges either location; retain the top-level handoff
-        # shape too so direct SVG dispatch shares the exact resolved plan.
-        visual_spec["chart_config"] = cfg
-        slide = {**slide, "visual_spec": visual_spec}
+        primary = {**primary_visual(slide), "chart_config": cfg}
+        slide = {**slide, "visual_spec": {"primary_visual": primary, "chart_config": cfg}}
         if record_diagnostic:
             record_auto_diagnostic(
                 {**plan.diagnostic_dict(), "slide_number": slide.get("slide_number")}
             )
     if layout == "line_chart":
-        return _build_line_chart_svg(slide)
-    if layout == "combo_chart":
-        return _build_combo_chart_svg(slide)
-    if layout == "grouped_bar_chart":
-        return _build_grouped_bar_svg(slide)
-    if layout == "stacked_bar_chart":
-        return _build_stacked_bar_svg(slide)
-    if layout == "horizontal_bar_chart":
-        return _build_hbar_svg(slide)
-    if layout == "heatmap":
-        return _build_heatmap_html(slide)
-    if layout == "waterfall_chart":
-        return _build_waterfall_svg(slide)
-    return ""
+        rendered = _build_line_chart_svg(slide)
+    elif layout == "combo_chart":
+        rendered = _build_combo_chart_svg(slide)
+    elif layout == "grouped_bar_chart":
+        rendered = _build_grouped_bar_svg(slide)
+    elif layout == "stacked_bar_chart":
+        rendered = _build_stacked_bar_svg(slide)
+    elif layout == "horizontal_bar_chart":
+        rendered = _build_hbar_svg(slide)
+    elif layout == "heatmap":
+        rendered = _build_heatmap_html(slide)
+    elif layout == "waterfall_chart":
+        rendered = _build_waterfall_svg(slide)
+    else:
+        rendered = ""
+    return f'<div class="chart-svg-wrap"{plan_to_data_attrs(plan)}>{rendered}</div>' if plan else rendered
 
 from .chartjs import _build_chartjs_html
 

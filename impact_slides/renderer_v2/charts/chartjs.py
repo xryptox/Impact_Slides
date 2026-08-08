@@ -912,7 +912,13 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     fill = " chartjs-fill" if chart_cfg.get("fill_tile") else ""
     # #139: collision only on ordinary-label layouts when datalabel_font_size
     # is set; stacked/in-segment and named value sets stay untouched.
-    typo, auto_plan = typography_with_auto(slide, layout, chart_cfg=chart_cfg)
+    host_w, host_h = {
+        "horizontal_bar_chart": (960, 540),
+        "waterfall_chart": (1200, 520),
+    }.get(layout, (900, 480))
+    typo, auto_plan = typography_with_auto(
+        slide, layout, chart_cfg=chart_cfg, host_w=host_w, host_h=host_h
+    )
     collision = bool(typo.get("datalabel_font_size_set")) and uses_ordinary_datalabels(
         layout, chart_cfg
     )
