@@ -18,6 +18,7 @@ Expected roles:
 - `implementer` — implements one issue in an isolated feature worktree
 - `gate-driver` — recovery-only driver for an existing no-mistakes run; Kimi `review` model, `bash` only, all skills/extensions disabled (the role invokes the installed `no-mistakes` CLI directly)
 - `reviewer` — Kimi read-only correctness/data-loss review with project/cwd DOX context, CodeMapper only, and no unrelated extensions
+- `general-purpose` subagent in `~/.pi/agent/agents/general-purpose.md` — read-only Kimi worker required by the implement skill's two-axis `code-review` pass
 - `merger` — cheap-model, approval-gated merge of one exact PR head; `bash` only with all skills/extensions disabled
 
 The current aliases use `dev` for implementation work, `review` for Kimi review, and `cheap` for merging. Inspect the live settings rather than copying remembered provider names.
@@ -52,7 +53,7 @@ Each implementer must:
 
 - launch through `launch-visible-implementer.ps1` (directly or through the repair orchestrator), not a bare full-profile `pi` command;
 - invoke/read the `implement` skill explicitly;
-- use TDD where practical and perform the required code review;
+- use TDD where practical and run the `code-review` skill's parallel Standards and Spec subagents before no-mistakes;
 - change only its issue scope;
 - run focused checks, mutation/adversarial proof, one final full suite, and `python scripts/gen_layout_index.py --check` when relevant;
 - complete the DOX pass;
