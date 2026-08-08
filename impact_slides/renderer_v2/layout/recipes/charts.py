@@ -17,7 +17,15 @@ from ...strip import (
 )
 from ..regions import gl_card, insight_strip, notes_aside, slide_shell, source_strip
 
-from .shared import _content, _hero_stack, _so_what, _source_names, _visual_series_names, _vs_steps
+from .shared import (
+    _content,
+    _driver_card_html,
+    _hero_stack,
+    _so_what,
+    _source_names,
+    _visual_series_names,
+    _vs_steps,
+)
 from .metrics import render_metric
 from ...charts.typography import (
     chart_host_size,
@@ -594,8 +602,17 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
             slide, str(pv.get("type")), use_chartjs=use_chartjs,
             host_w=canvas_w, host_h=canvas_h,
         )
-    hero = _hero_stack(_sv_content(slide).get("key_stats") or [])
-    if not chart_html and not hero:
+    # #151: structured driver_card takes the right pane when valid.
+    driver_html = _driver_card_html(sv) if isinstance(sv, dict) else ""
+    hero = ""
+    if not driver_html:
+        # Fall back when type is driver_card but rows invalid (non-strict),
+        # or when secondary is the legacy hero-stats shape.
+        if isinstance(sv, dict) and sv.get("type") == "driver_card":
+            # normalize already warned; try key_stats fallback
+            pass
+        hero = _hero_stack(_sv_content(slide).get("key_stats") or [])
+    if not chart_html and not hero and not driver_html:
         return render_metric(slide, total, notes, active=active)
     left_chrome_html = chart_pane_headings_html(
         left_heading,
@@ -604,18 +621,21 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
         available_h=ah,
     )
 
-    # Right peer-card heading/subtitle above hero facts (not per-KPI).
-    # No chart canvas — shared chrome without remaining-canvas geometry.
-    right_heading = resolve_pane_heading(sv, series_names=[])
-    right_sub = resolve_pane_subtitle(sv)
-    right_chrome_html = chart_pane_headings_html(right_heading, right_sub)
-    _open = '<div class="gl-hero-stack">'
-    if hero.startswith(_open):
-        hero_html = f"{_open}{right_chrome_html}{hero[len(_open):]}"
-    elif right_chrome_html:
-        hero_html = f"{_open}{right_chrome_html}</div>"
+    if driver_html:
+        hero_html = driver_html
     else:
-        hero_html = hero
+        # Right peer-card heading/subtitle above hero facts (not per-KPI).
+        # No chart canvas — shared chrome without remaining-canvas geometry.
+        right_heading = resolve_pane_heading(sv, series_names=[])
+        right_sub = resolve_pane_subtitle(sv)
+        right_chrome_html = chart_pane_headings_html(right_heading, right_sub)
+        _open = '<div class="gl-hero-stack">'
+        if hero.startswith(_open):
+            hero_html = f"{_open}{right_chrome_html}{hero[len(_open):]}"
+        elif right_chrome_html:
+            hero_html = f"{_open}{right_chrome_html}</div>"
+        else:
+            hero_html = hero
 
     main = (
         f'<div class="gl-areas-chart-hero">'

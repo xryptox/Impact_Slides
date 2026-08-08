@@ -1468,35 +1468,20 @@
       "slide_number": 17
     },
     {
-      "layout_type": "combo_chart",
+      "slide_number": 18,
+      "layout_type": "chart_hero_dual",
       "packing_mode": "chart-led",
-      "title": "Premium Lending — Net Interest Income",
+      "title": "Premium Lending",
       "section": "Revenue",
       "content": {
-        "subtitle": "NII: Volume & Margin Drivers · $ in billions",
         "so_what": "",
-        "key_stats": [
-          {
-            "label": "Billed Business CAGR vs Q1'19",
-            "value": "8%"
-          },
-          {
-            "label": "NII CAGR vs Q1'19",
-            "value": "13%"
-          },
-          {
-            "label": "Total Balances CAGR",
-            "value": "7%"
-          },
-          {
-            "label": "Q1'26 NII",
-            "value": "$4.7B"
-          }
-        ]
+        "key_stats": []
       },
       "visual_spec": {
         "primary_visual": {
-          "type": "combo_chart",
+          "type": "grouped_bar_chart",
+          "heading": "Net Interest Income",
+          "subtitle": "$ in billions - % Increase/(decrease) vs. Prior year (FX-adjusted)",
           "steps_or_data": [
             {
               "label": "Q1'25",
@@ -1521,38 +1506,55 @@
           ],
           "chart_config": {
             "y_axis_min": 0,
-            "y_axis_max": 6
+            "y_axis_max": 6,
+            "boxed_labels": {
+              "label": "YoY Growth",
+              "values": [
+                "11%",
+                "12%",
+                "12%",
+                "12%",
+                "12%"
+              ]
+            }
           }
         },
-        "line_overlay": {
-          "label": "YoY Growth %",
-          "style": "dashed",
-          "data": [
+        "secondary_visual": {
+          "type": "driver_card",
+          "heading": "NII: Volume & Margin Drivers",
+          "subtitle": "CAGR % vs. Q1'19 (FX-adjusted except Margin)",
+          "rows": [
             {
-              "label": "Q1'25",
-              "value": 11
+              "label": "Billed Business",
+              "value": "8%",
+              "direction": "up",
+              "tone": "positive"
             },
             {
-              "label": "Q2'25",
-              "value": 12
+              "label": "Net Interest Income",
+              "value": "13%",
+              "direction": "up",
+              "tone": "positive"
             },
             {
-              "label": "Q3'25",
-              "value": 12
+              "label": "Volume",
+              "detail": "Total Balances",
+              "value": "7%",
+              "direction": "up",
+              "tone": "positive"
             },
             {
-              "label": "Q4'25",
-              "value": 12
-            },
-            {
-              "label": "Q1'26",
-              "value": 12
+              "label": "Margin",
+              "detail": "Net Interest Income / Average Total Balances",
+              "value": "5%",
+              "direction": "up",
+              "tone": "positive"
             }
           ]
         }
       },
-      "speaker_notes": "NII combo bars + dashed YoY overlay.",
-      "slide_number": 18
+      "speaker_notes": "Premium Lending NII bars with boxed YoY labels and volume/margin driver card.",
+      "evidence_sources": []
     },
     {
       "slide_number": 19,

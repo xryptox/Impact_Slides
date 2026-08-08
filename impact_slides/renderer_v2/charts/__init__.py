@@ -18,12 +18,13 @@ from .geometry import (
     outlined_lane_layout,
 )
 from .core import is_chart_layout, _icon_svg, _steps, _chart_config, build_icon_grid_html, _fallback_icon_grid, _svg_fallback_for_layout, build_chart_html
-from .bars import _bar_matrix, _bar_axes, _vbar_pad_t, _bar_group_brackets, _vbar_frame, _build_grouped_bar_svg, _build_stacked_bar_svg, _build_hbar_svg
+from .bars import BOXED_LABEL_MIN_FS, _bar_matrix, _bar_axes, _vbar_pad_t, _bar_group_brackets, _vbar_frame, _build_grouped_bar_svg, _build_stacked_bar_svg, _build_hbar_svg, resolve_boxed_labels
 from .lines import _line_data, _combo_bar_data, _combo_line_data, _build_line_chart_svg, _build_combo_chart_svg
 from .matrix import _fallback_matrix_chart, _build_heatmap_html, _build_waterfall_svg
 from .chartjs import _datalabels_cfg, _next_chart_id, _chartjs_common_options, _apply_bar_density_knobs, _apply_semantic_zero_line, _chartjs_bar_config, _chartjs_hbar_config, _chartjs_line_config, _chartjs_combo_config, _build_chartjs_html
 
 __all__ = [
+    'BOXED_LABEL_MIN_FS',
     '_BAR_SERIES_COLORS',
     '_BOARDROOM_SERIES',
     '_CALLOUT_TYPES',
@@ -88,5 +89,6 @@ __all__ = [
     'chart_geometry',
     'is_chart_layout',
     'outlined_lane_layout',
+    'resolve_boxed_labels',
     'side_callout_active',
 ]
