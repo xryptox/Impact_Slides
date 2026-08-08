@@ -4,7 +4,12 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping, Sequence
 
+from pydantic import ValidationError
+
+from ...charts.typography import _RENDER_STRICT, _warn
+from ...schemas import GroupedAnnexPrimaryVisual
 from ...slide_view import content as _sv_content
+from ...slide_view import primary_visual as _sv_primary_visual
 from ...slide_view import steps as _sv_steps
 from ...strip import (
     banned_face_opener,
@@ -269,6 +274,146 @@ def render_data_table_with_insight(slide, total, notes, active=False):
 
 
 
+# Fixed-stage content width and per-block readability floor. This mirrors the
+# existing deterministic chart-host checks: handoffs have no runtime viewport.
+GROUPED_ANNEX_HOST_WIDTH = 1728
+GROUPED_ANNEX_READABLE_BLOCK_WIDTH = 560
+_GROUPED_ANNEX_STYLE = """
+<style data-grouped-annex="1">
+.gl-grouped-annex { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--gap-md); align-items:start; }
+.gl-grouped-annex-1col { grid-template-columns:1fr; }
+.gl-grouped-annex-block { min-width:0; }
+.gl-grouped-annex-heading { margin:0 0 var(--space-2); color:var(--navy); font-family:var(--font-display); font-size:var(--fs-pill); font-weight:700; line-height:1.15; }
+.gl-grouped-annex .table-frame { max-width:none; }
+.gl-grouped-annex .annex-table .gl-annex-stub { width:52%; }
+.gl-grouped-annex .annex-table th, .gl-grouped-annex .annex-table td { white-space:normal; }
+.gl-grouped-annex .gl-annex-row-aggregate .gl-annex-stub { font-weight:700; }
+.gl-grouped-annex .gl-annex-indent-1 { padding-left:var(--size-4); }
+.gl-grouped-annex .gl-annex-indent-2 { padding-left:var(--size-6); }
+.gl-grouped-annex .gl-annex-indent-3 { padding-left:var(--size-8); }
+</style>
+"""
+
+
+def _annex_table_html(
+    headers: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    *,
+    header_groups: Sequence[Mapping[str, Any]] | None = None,
+    labelled_by: str | None = None,
+    row_styles: Sequence[tuple[str, int]] | None = None,
+    scoped_headers: bool = False,
+) -> str:
+    """Render the shared annex table surface used by ordinary and grouped blocks."""
+    if isinstance(header_groups, list) and header_groups:
+        top_cells = ['<th class="gl-annex-stub" rowspan="2"></th>']
+        for group in header_groups:
+            if isinstance(group, Mapping):
+                # R5-H/T13: no index-parity banding — the PDF annex band is
+                # uniformly navy; gl-annex-group-alt stays available for a
+                # future semantic banding handoff, not column parity.
+                top_cells.append(
+                    f'<th class="gl-annex-group" colspan="{int(group.get("span") or 1)}">'
+                    f'{esc(strip_eids(group.get("label") or ""))}</th>'
+                )
+        thead = "<tr>" + "".join(top_cells) + "</tr>"
+        thead += "<tr>" + "".join(
+            f'<th class="gl-annex-head">{esc(header)}</th>' for header in headers[1:]
+        ) + "</tr>"
+    else:
+        scope = ' scope="col"' if scoped_headers else ""
+        thead = "<tr>" + "".join(
+            f'<th{scope} class="{"gl-annex-stub" if column == 0 else "gl-annex-head"}">{esc(header)}</th>'
+            for column, header in enumerate(headers)
+        ) + "</tr>"
+
+    trs = []
+    for row_index, row in enumerate(rows):
+        style = row_styles[row_index] if row_styles else None
+        role, indent = style if style else (None, 0)
+        tds = []
+        for column, cell in enumerate(row):
+            if column == 0:
+                cls = "gl-annex-stub" + (f" gl-annex-indent-{indent}" if style else "")
+            else:
+                cls = "gl-annex-cell num" if re.search(r"[\d$%]", cell or "") else "gl-annex-cell"
+            tds.append(f'<td class="{cls}">{esc(cell)}</td>')
+        while len(tds) < len(headers):
+            tds.append('<td class="gl-annex-cell"></td>')
+        row_class = f' class="gl-annex-row gl-annex-row-{esc(role)}"' if style else ""
+        trs.append(f"<tr{row_class}>{''.join(tds)}</tr>")
+
+    aria = f' aria-labelledby="{labelled_by}"' if labelled_by else ""
+    return (
+        f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
+        f'<table class="data-table annex-table"{aria}><thead>{thead}</thead>'
+        f'<tbody>{"".join(trs)}</tbody></table></div>'
+    )
+
+
+def _grouped_annex_table(
+    group: Mapping[str, Any], index: int, slide_number: int
+) -> str:
+    heading = strip_eids(group.get("heading") or "")
+    rows = group.get("rows") or []
+    heading_id = f"gl-grouped-annex-heading-{slide_number}-{index}"
+    table = _annex_table_html(
+        group.get("headers") or [],
+        [row.get("cells") or [] for row in rows],
+        labelled_by=heading_id,
+        row_styles=[(row.get("role") or "child", int(row.get("indent") or 0)) for row in rows],
+        scoped_headers=True,
+    )
+    return (
+        f'<section class="gl-grouped-annex-block">'
+        f'<h3 class="gl-grouped-annex-heading" id="{heading_id}">{esc(heading)}</h3>'
+        f"{table}</section>"
+    )
+
+
+def render_grouped_annex_table(slide, total, notes, active=False):
+    """Render one or two peer annex matrices without flattening their identity."""
+    try:
+        groups = GroupedAnnexPrimaryVisual.model_validate(
+            _sv_primary_visual(slide)
+        ).model_dump()["groups"]
+    except ValidationError as error:
+        msg = "grouped annex requires 1-2 schema-valid primary_visual.groups"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg) from error
+        _warn(f"{msg}; rendering metric fallback")
+        return render_metric(slide, total, notes, active=active)
+
+    slide_number = int(slide["slide_number"])
+    group_count = len(groups)
+    required_width = GROUPED_ANNEX_READABLE_BLOCK_WIDTH * group_count
+    stacked = group_count > 1 and GROUPED_ANNEX_HOST_WIDTH < required_width
+    if stacked:
+        msg = "grouped annex blocks cannot fit side by side at the annex readability floor"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+    blocks = "".join(
+        _grouped_annex_table(group, i, slide_number) for i, group in enumerate(groups)
+    )
+    main = (
+        f'{_GROUPED_ANNEX_STYLE}<div class="gl-grouped-annex gl-grouped-annex-{1 if stacked else group_count}col">'
+        f'{blocks}</div>' + insight_strip(_so_what(slide))
+    )
+    return slide_shell(
+        number=slide_number,
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="grouped_annex_table",
+        active=active,
+        item_count=sum(len(group.get("rows") or []) for group in groups),
+    )
+
+
 def render_annex_table(slide, total, notes, active=False):
     """Dense widescreen annex table (#81/F12): stub column + many data
     columns, multi-level headers, micro type, full-width within the Fixed
@@ -282,45 +427,9 @@ def render_annex_table(slide, total, notes, active=False):
     body = rows[1:] if len(rows) > 1 else []
     # Multi-level headers (#81/F12): visual_spec.primary_visual.header_groups is
     # [{label, span}] spanning the data columns (stub is a rowspan=2 cell).
-    vs = slide.get("visual_spec") or {}
-    pv = vs.get("primary_visual") or {}
+    pv = _sv_primary_visual(slide)
     header_groups = pv.get("header_groups") if isinstance(pv, dict) else None
-    thead_rows = []
-    if isinstance(header_groups, list) and header_groups:
-        top_cells = [f'<th class="gl-annex-stub" rowspan="2"></th>']
-        for g in header_groups:
-            if isinstance(g, dict):
-                # R5-H/T13: no index-parity banding — the PDF annex band is
-                # uniformly navy; gl-annex-group-alt stays available for a
-                # future semantic banding handoff, not column parity.
-                top_cells.append(
-                    f'<th class="gl-annex-group" colspan="{int(g.get("span") or 1)}">{esc(strip_eids(g.get("label") or ""))}</th>'
-                )
-        thead_rows.append("<tr>" + "".join(top_cells) + "</tr>")
-        sub_cells = "".join(
-            f'<th class="gl-annex-head">{esc(h)}</th>' for h in head[1:]
-        )
-        thead_rows.append("<tr>" + sub_cells + "</tr>")
-        thead = "".join(thead_rows)
-    else:
-        thead = "<tr>" + "".join(
-            f'<th class="{"gl-annex-stub" if i == 0 else "gl-annex-head"}">{esc(h)}</th>'
-            for i, h in enumerate(head)
-        ) + "</tr>"
-    trs = []
-    for r in body:
-        tds = []
-        for i, cell in enumerate(r):
-            cls = "gl-annex-stub" if i == 0 else ("gl-annex-cell num" if re.search(r"[\d$%]", cell or "") else "gl-annex-cell")
-            tds.append(f'<td class="{cls}">{esc(cell)}</td>')
-        while len(tds) < len(head):
-            tds.append('<td class="gl-annex-cell"></td>')
-        trs.append("<tr>" + "".join(tds) + "</tr>")
-    table = (
-        f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
-        f'<table class="data-table annex-table"><thead>{thead}</thead>'
-        f'<tbody>{"".join(trs)}</tbody></table></div>'
-    )
+    table = _annex_table_html(head, body, header_groups=header_groups)
     main = table + insight_strip(_so_what(slide))
     return slide_shell(
         number=int(slide["slide_number"]),

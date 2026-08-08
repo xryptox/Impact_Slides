@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -214,6 +214,55 @@ class AnnexTableSlide(_BaseSlide):
     layout_type: Literal["annex_table"] = "annex_table"
 
 
+class GroupedAnnexRow(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    cells: List[str] = Field(min_length=2)
+    indent: int = Field(default=0, ge=0, le=3)
+    role: Literal["aggregate", "child"] = "child"
+
+
+class GroupedAnnexGroup(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    heading: str = Field(min_length=1)
+    headers: List[str] = Field(min_length=2)
+    rows: List[GroupedAnnexRow] = Field(min_length=1)
+
+    @field_validator("heading")
+    @classmethod
+    def heading_is_semantic(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("grouped annex heading must not be blank")
+        return value
+
+    @field_validator("headers")
+    @classmethod
+    def headers_are_semantic(cls, values: List[str]) -> List[str]:
+        if any(not value.strip() for value in values):
+            raise ValueError("grouped annex headers must not be blank")
+        return values
+
+    @model_validator(mode="after")
+    def rows_match_headers(self) -> "GroupedAnnexGroup":
+        if any(len(row.cells) != len(self.headers) for row in self.rows):
+            raise ValueError("each grouped annex row must match its headers")
+        return self
+
+
+class GroupedAnnexPrimaryVisual(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    type: Literal["grouped_annex_table"] = "grouped_annex_table"
+    groups: List[GroupedAnnexGroup] = Field(min_length=1, max_length=2)
+
+
+class GroupedAnnexVisualSpec(VisualSpec):
+    primary_visual: GroupedAnnexPrimaryVisual
+
+
+class GroupedAnnexTableSlide(_BaseSlide):
+    layout_type: Literal["grouped_annex_table"] = "grouped_annex_table"
+    visual_spec: GroupedAnnexVisualSpec
+
+
 class MultiPanelSlide(_BaseSlide):
     layout_type: Literal["multi_panel"] = "multi_panel"
 
@@ -283,6 +332,7 @@ ValidatedSlide = Union[
     GuidanceStatementCardSlide,
     BrandCoverSlide,
     AnnexTableSlide,
+    GroupedAnnexTableSlide,
     MultiPanelSlide,
     ChartSlide,
     LineChartSlide,
@@ -349,6 +399,7 @@ def validate_slide(raw: Dict[str, Any]) -> tuple[ValidatedSlide | None, str | No
         "brand_cover": BrandCoverSlide,
         "brand_divider": BrandCoverSlide,
         "annex_table": AnnexTableSlide,
+        "grouped_annex_table": GroupedAnnexTableSlide,
         "multi_panel": MultiPanelSlide,
         "grouped_bar_chart": ChartSlide,
         "stacked_bar_chart": ChartSlide,
