@@ -1140,6 +1140,93 @@ def test_hbar_hidden_value_axis_omits_baseline():
     assert 'class="hbar-zero"' not in _svg_fallback_for_layout(hbar, "horizontal_bar_chart")
 
 
+def test_auto_chartjs_preserves_wrapped_ticks_as_lines(tmp_path):
+    slide = {
+        "slide_number": 1, "title": "Wrapped", "layout_type": "line_chart", "content": {},
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [
+                {"label": "Long reporting period alpha beta gamma", "value": 1},
+                {"label": "Long reporting period alpha beta gamma", "value": 2},
+            ],
+        }},
+        "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False)
+    config = _configs((out / "presentation.html").read_text(encoding="utf-8"))[0]
+    display = config["options"]["scales"]["x"]["ticks"]["_rv2DisplayLabels"]
+    assert all(isinstance(label, list) and len(label) == 2 for label in display)
+
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page()
+        page.goto((out / "presentation.html").resolve().as_uri(), wait_until="networkidle")
+        ticks = page.evaluate("Object.values(Chart.instances)[0].scales.x.ticks.map(tick => tick.label)")
+        browser.close()
+    assert ticks == [["Long reporting", "period alpha beta gamma"]] * 2
+
+
+def test_auto_line_force_ticks_preserve_forced_domain():
+    slide = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {
+                "typography": {"mode": "auto"}, "force_ticks": True,
+                "y_axis_ticks": [0, 50, 100],
+            },
+            "steps_or_data": [{"label": "Q1", "value": 1}, {"label": "Q2", "value": 2}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_line_config
+
+    config = _chartjs_line_config(slide)
+    assert config is not None
+    scale = config["options"]["scales"]["y"]
+    assert (scale["min"], scale["max"]) == (0.0, 100.0)
+    assert scale["ticks"]["_rv2Values"] == [0.0, 50.0, 100.0]
+
+
+def test_auto_combo_invalid_secondary_ticks_use_bounded_domain_endpoints():
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [{"label": "Q1", "value": 1}],
+            },
+            "line_overlay": {
+                "data": [{"label": "Q1", "value": 0}, {"label": "Q2", "value": 100}],
+                "y_axis_min": 0, "y_axis_max": 100, "y_axis_ticks": [-5, 105],
+            },
+        },
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_combo_config
+
+    config = _chartjs_combo_config(combo)
+    assert config is not None
+    scale = config["options"]["scales"]["y1"]
+    assert (scale["min"], scale["max"]) == (0.0, 100.0)
+    assert scale["ticks"]["_rv2Values"] == [0.0, 100.0]
+
+
+def test_auto_waterfall_honors_hidden_category_axis():
+    slide = {
+        "layout_type": "waterfall_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}, "show_x_axis": False},
+            "steps_or_data": [{"label": "Q1", "value": 1}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    assert 'class="chart-axis-label auto-x-label"' not in _svg_fallback_for_layout(slide, "waterfall_chart")
+
+
 def test_auto_mode_does_not_change_legacy_output(tmp_path):
     slide = {
         "slide_number": 1, "title": "Legacy", "layout_type": "grouped_bar_chart", "content": {},

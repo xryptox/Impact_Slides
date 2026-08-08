@@ -143,6 +143,13 @@ def _line_axis(
     """Return the line painter's domain and ticks."""
     cfg = axis_config_after_break(cfg, break_overrides_min=True)
     y_max = cfg.get("y_axis_max")
+    forced_ticks = cfg.get("y_axis_ticks") if cfg.get("force_ticks") else None
+    if y_max is None and isinstance(forced_ticks, (list, tuple)) and len(forced_ticks) >= 2:
+        try:
+            y_max = max(float(tick) for tick in forced_ticks)
+            cfg = {**cfg, "y_axis_min": min(float(tick) for tick in forced_ticks)}
+        except (TypeError, ValueError):
+            pass
     if y_max is None:
         raw_max = max(values) if values else 10
         if raw_max <= 5:

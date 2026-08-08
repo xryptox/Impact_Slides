@@ -218,15 +218,16 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             f'text-anchor="middle" fill="{navy}" font-size="{dl_fs}" '
             f'font-weight="700">{esc(vlab)}</text>'
         )
-        lines = label_lines[category_index] if category_index < len(label_lines) else [lab]
-        for line_i, line in enumerate(lines):
-            parts.append(
-                f'<text class="chart-axis-label auto-x-label" data-auto-label-index="{category_index}" '
-                f'x="{cx:.1f}" y="{height - 28 + line_i * x_tick_fs}"'
-                f'{svg_label_transform(auto_plan, cx, height - 28 + line_i * x_tick_fs)} '
-                f'text-anchor="middle" fill="{ink}" font-size="{x_tick_fs}">'
-                f"{esc(line)}</text>"
-            )
+        if cfg.get("show_x_axis") is not False:
+            lines = label_lines[category_index] if category_index < len(label_lines) else [lab]
+            for line_i, line in enumerate(lines):
+                parts.append(
+                    f'<text class="chart-axis-label auto-x-label" data-auto-label-index="{category_index}" '
+                    f'x="{cx:.1f}" y="{height - 28 + line_i * x_tick_fs}"'
+                    f'{svg_label_transform(auto_plan, cx, height - 28 + line_i * x_tick_fs)} '
+                    f'text-anchor="middle" fill="{ink}" font-size="{x_tick_fs}">'
+                    f"{esc(line)}</text>"
+                )
 
     parts.append("</svg>")
     legend = (

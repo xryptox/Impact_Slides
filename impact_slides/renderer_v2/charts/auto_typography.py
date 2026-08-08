@@ -1356,7 +1356,7 @@ def apply_plan_to_chartjs_options(
             if not t:
                 display.append("")
             elif xl.lines and i < len(xl.lines) and len(xl.lines[i]) > 1:
-                display.append("\n".join(xl.lines[i]))
+                display.append(list(xl.lines[i]))
             else:
                 display.append(t)
         # Chart.js callback can't be a Python callable in JSON — emit parallel
@@ -1595,6 +1595,12 @@ def _extract_categories_and_shorts(
                     *secondary_domain,
                     lambda value: _fmt_unit(value, overlay_unit, overlay_unit_pos),
                 )
+                if not secondary_y_ticks:
+                    secondary_y_ticks, secondary_y_labs = _bound_tick_view(
+                        [], [], *secondary_domain,
+                        lambda value: _fmt_unit(value, overlay_unit, overlay_unit_pos),
+                        include_bounds=True,
+                    )
 
     dl_texts: list[str] = []
     want = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))
