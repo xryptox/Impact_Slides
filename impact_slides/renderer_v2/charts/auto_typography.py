@@ -452,7 +452,8 @@ def _try_x_fit(
     n = len(labels)
     if n == 0:
         return True, [], 0.0
-    slot = _x_slot_width(plot_w, total_slots or n)
+    slots = total_slots or n
+    slot = _x_slot_width(plot_w, slots)
     pos = list(positions) if positions is not None else list(range(n))
     if len(pos) != n:
         return False, [], 0.0
@@ -463,7 +464,10 @@ def _try_x_fit(
             gaps.append(pos[i] - pos[i - 1])
         if i + 1 < n:
             gaps.append(pos[i + 1] - pos[i])
-        return min(gaps, default=total_slots or n) * slot
+        return min(gaps, default=slots) * slot
+
+    def edge_clearance(i: int) -> float:
+        return min(pos[i] + 0.5, slots - pos[i] - 0.5) * slot
 
     lines_out: list[list[str]] = []
     max_h = 0.0
@@ -472,6 +476,9 @@ def _try_x_fit(
         segs = wrap_label(lab, max_lines=2) if wrap else [lab]
         if not wrap:
             segs = [lab]
+        if not lab:
+            lines_out.append([])
+            continue
         # If wrap produced 2 lines, each line must fit slot width.
         ok_lines = True
         for s in segs:
@@ -498,7 +505,7 @@ def _try_x_fit(
         if rotation < 0.5:
             h = measure_text_height(font_size, font=font, lines=len(segs))
             w = max(measure_text_width(s, font_size, font=font) for s in segs)
-            if w > label_max_w:
+            if w > min(label_max_w, edge_clearance(label_i) * 2):
                 return False, [], 0.0
         else:
             # Single-line rotated only in our stages.
@@ -524,7 +531,7 @@ def _try_x_fit(
     if rotation < 0.5 and n >= 2:
         for i, segs in enumerate(lines_out):
             w = max(measure_text_width(s, font_size, font=font) for s in segs)
-            if w > nearest_gap(i) - 2.0:
+            if w > min(nearest_gap(i) - 2.0, edge_clearance(i) * 2):
                 return False, [], 0.0
     return True, lines_out, used_h
 
@@ -703,6 +710,7 @@ def _fit_y_ticks(
     domain: tuple[float | None, float | None] | None = None,
     font: str = "source_sans_3",
     weight: str | int = "bold",
+    horizontal_axis: bool = False,
 ) -> tuple[bool, list[float], list[str], bool]:
     """Return (fits, values, labels, reduced); may drop interior ticks at the floor."""
     if not tick_labels:
@@ -714,19 +722,28 @@ def _fit_y_ticks(
         max_w = max(
             measure_text_width(s, font_size, font=font, weight=weight) for s in labs
         )
-        if max_w + _Y_AXIS_GAP > left_budget + 1e-6:
-            return False
         h = measure_text_height(font_size, font=font, lines=1)
-        # Vertical: labels centered on ticks must not overlap.
+        if horizontal_axis:
+            if h + _Y_AXIS_GAP > left_budget + 1e-6:
+                return False
+        elif max_w + _Y_AXIS_GAP > left_budget + 1e-6:
+            return False
         if len(vals) >= 2:
             ymin, ymax = domain or (min(vals), max(vals))
             ymin = min(vals) if ymin is None else ymin
             ymax = max(vals) if ymax is None else ymax
             span = ymax - ymin or 1.0
-            positions = [plot_h * (1.0 - (v - ymin) / span) for v in vals]
-            positions_sorted = sorted(positions)
-            for a, b in zip(positions_sorted, positions_sorted[1:]):
-                if abs(b - a) < h + 2.0:
+            positions = [plot_h * (v - ymin) / span for v in vals]
+            positions_sorted = sorted(zip(positions, labs))
+            for (a, a_lab), (b, b_lab) in zip(positions_sorted, positions_sorted[1:]):
+                required = (
+                    (measure_text_width(a_lab, font_size, font=font, weight=weight)
+                     + measure_text_width(b_lab, font_size, font=font, weight=weight)) / 2
+                    + 2.0
+                    if horizontal_axis
+                    else h + 2.0
+                )
+                if abs(b - a) < required:
                     return False
         return True
 
@@ -1040,6 +1057,7 @@ def resolve_auto_typography(
                 left_budget if cat_is_x else bottom_budget,
                 domain=y_domain,
                 font=fy if cat_is_x else fx,
+                horizontal_axis=not cat_is_x,
             )
 
         def at(size: int):
@@ -1050,6 +1068,7 @@ def resolve_auto_typography(
                 left_budget if cat_is_x else bottom_budget,
                 domain=secondary_y_domain,
                 font=fy if cat_is_x else fx,
+                horizontal_axis=not cat_is_x,
             )
             return ok and ok2, vv, ll, red, vv2, ll2, red2
 

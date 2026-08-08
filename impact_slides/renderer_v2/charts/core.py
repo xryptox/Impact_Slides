@@ -106,7 +106,12 @@ from .matrix import _build_heatmap_html, _build_waterfall_svg, _fallback_matrix_
 
 
 def _svg_fallback_for_layout(
-    slide: Mapping[str, Any], layout: str, *, record_diagnostic: bool = True
+    slide: Mapping[str, Any],
+    layout: str,
+    *,
+    record_diagnostic: bool = True,
+    host_w: float | None = None,
+    host_h: float | None = None,
 ) -> str:
     """Static SVG painter for a Chart.js MVP layout (JS-off / noscript path)."""
     from ..slide_view import primary_visual
@@ -118,9 +123,13 @@ def _svg_fallback_for_layout(
     )
 
     cfg = _chart_config(slide)
-    host_w, host_h = chart_host_dimensions(layout)
+    default_w, default_h = chart_host_dimensions(layout)
+    width = default_w if host_w is None else host_w
+    height = default_h if host_h is None else host_h
+    cfg["_auto_host_w"] = width
+    cfg["_auto_host_h"] = height
     plan = compute_auto_plan_for_slide(
-        slide, layout, host_w=host_w, host_h=host_h, chart_cfg=cfg
+        slide, layout, host_w=width, host_h=height, chart_cfg=cfg
     )
     if plan is not None:
         cfg["_auto_typo_plan"] = plan
@@ -163,15 +172,17 @@ def build_chart_html(
     layout: str,
     *,
     use_chartjs: bool = False,
+    host_w: float | None = None,
+    host_h: float | None = None,
 ) -> str:
     lt = (layout or slide.get("layout_type") or "").lower()
     if use_chartjs and lt in _CHARTJS_LAYOUTS:
-        js_html = _build_chartjs_html(slide, lt)
+        js_html = _build_chartjs_html(slide, lt, host_w=host_w, host_h=host_h)
         if js_html:
             return js_html
         # Fall through to SVG if config could not be built
     # Internal SVG painters (also used as Chart.js noscript fallback).
-    svg = _svg_fallback_for_layout(slide, lt)
+    svg = _svg_fallback_for_layout(slide, lt, host_w=host_w, host_h=host_h)
     if svg:
         return svg
     if lt == "stacked_bar_chart":

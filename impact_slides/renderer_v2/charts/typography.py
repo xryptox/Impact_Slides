@@ -361,6 +361,19 @@ def _pane_chrome_reserve_px(*, title: str, subtitle: str) -> int:
     return n
 
 
+def chart_pane_canvas_size(
+    host_w: float,
+    host_h: float,
+    *,
+    title: str = "",
+    subtitle: str = "",
+) -> tuple[float, float]:
+    """Return a chart pane's plot host after emitted heading chrome."""
+    return float(host_w), max(0.0, float(host_h) - _pane_chrome_reserve_px(
+        title=title.strip(), subtitle=subtitle.strip()
+    ))
+
+
 def chart_pane_title_html(
     text: str,
     *,

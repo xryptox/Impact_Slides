@@ -394,8 +394,8 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                   const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 &&
                     a.top < b.bottom - 1 && a.bottom > b.top + 1;
                   const within = (r, outer) => r.width >= 1 && r.height >= 1 &&
-                    r.left >= outer.left - 4 && r.top >= outer.top - 4 &&
-                    r.right <= outer.right + 4 && r.bottom <= outer.bottom + 4;
+                    r.left >= outer.left && r.top >= outer.top &&
+                    r.right <= outer.right && r.bottom <= outer.bottom;
                   const chartBox = (canvas, item) => {
                     const r = canvas.getBoundingClientRect(), sx = r.width / canvas.width, sy = r.height / canvas.height;
                     const left = item.align === 'right' || item.align === 'end' ? item.x - item.width :
@@ -923,6 +923,16 @@ def test_auto_skip_uses_actual_retained_tick_spacing():
     )[0]
 
 
+def test_auto_skip_fits_labels_inside_plot_edges():
+    from impact_slides.renderer_v2.charts.auto_typography import _try_x_fit
+
+    assert not _try_x_fit(
+        ["Processed Volumes"], 24, 440.6, 56,
+        font="source_sans_3", rotation=0, wrap=False,
+        positions=[5], total_slots=6,
+    )[0]
+
+
 def test_auto_full_labels_are_retained_in_chart_accessibility(tmp_path):
     labels = ["Long reporting period alpha beta"] * 8
     slide = {
@@ -1197,13 +1207,13 @@ def test_auto_chartjs_preserves_wrapped_ticks_as_lines(tmp_path):
     assert ticks == [["Long reporting", "period alpha beta gamma"]] * 2
 
 
-def test_auto_line_force_ticks_preserve_forced_domain():
+def test_auto_line_force_ticks_take_precedence_over_explicit_bounds():
     slide = {
         "layout_type": "line_chart",
         "visual_spec": {"primary_visual": {
             "chart_config": {
                 "typography": {"mode": "auto"}, "force_ticks": True,
-                "y_axis_ticks": [0, 50, 100],
+                "y_axis_ticks": [0, 50, 100], "y_axis_max": 120,
             },
             "steps_or_data": [{"label": "Q1", "value": 1}, {"label": "Q2", "value": 2}],
         }},
@@ -1271,6 +1281,18 @@ def test_auto_line_empty_bounded_ticks_use_domain_endpoints():
     scale = config["options"]["scales"]["y"]
     assert (scale["min"], scale["max"]) == (0.0, 100.0)
     assert scale["ticks"]["_rv2Values"] == [0.0, 100.0]
+
+
+def test_hbar_auto_value_ticks_fit_along_the_value_axis():
+    plan = resolve_auto_typography(
+        chart_type="horizontal_bar_chart", host_w=960, host_h=540,
+        categories=["Q1", "Q2"],
+        y_tick_values=[0, 100, 200, 300, 400],
+        y_tick_labels=["0", "100000000", "200000000", "300000000", "400000000"],
+        y_domain=(0, 400),
+        horizontal=True,
+    )
+    assert plan.x_tick_font_size > AUTO_X_LO
 
 
 def test_auto_wrapped_stacked_and_waterfall_labels_stay_inside_svg():

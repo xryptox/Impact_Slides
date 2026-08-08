@@ -144,10 +144,10 @@ def _line_axis(
     cfg = axis_config_after_break(cfg, break_overrides_min=True)
     y_max = cfg.get("y_axis_max")
     forced_ticks = cfg.get("y_axis_ticks") if cfg.get("force_ticks") else None
-    if y_max is None and isinstance(forced_ticks, (list, tuple)) and len(forced_ticks) >= 2:
+    if isinstance(forced_ticks, (list, tuple)) and len(forced_ticks) >= 2:
         try:
-            y_max = max(float(tick) for tick in forced_ticks)
-            cfg = {**cfg, "y_axis_min": min(float(tick) for tick in forced_ticks)}
+            forced = [float(tick) for tick in forced_ticks]
+            return min(forced), max(forced), forced
         except (TypeError, ValueError):
             pass
     if y_max is None:

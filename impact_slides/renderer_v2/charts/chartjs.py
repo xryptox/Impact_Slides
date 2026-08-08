@@ -25,6 +25,7 @@ from .auto_typography import (
     combo_overlay_domain,
     full_label_aria_suffix,
     plan_to_data_attrs,
+    measure_text_width,
     record_auto_diagnostic,
     typography_with_auto,
 )
@@ -152,6 +153,16 @@ def _chartjs_common_options(
     y_font: dict[str, Any] = {"family": "'IBM Plex Sans', sans-serif", "size": y_size}
     if y_weight:
         y_font["weight"] = y_weight
+    layout_padding: dict[str, int] = {}
+    if auto_plan is not None and getattr(auto_plan, "enabled", False):
+        if horizontal:
+            layout_padding["bottom"] = int(getattr(auto_plan, "x_tick_font_size", 0)) + 8
+        else:
+            labels = list(getattr(auto_plan, "y_tick_labels", []))
+            size = int(getattr(auto_plan, "y_tick_font_size", 0))
+            layout_padding["left"] = math.ceil(
+                max((measure_text_width(label, size, font="ibm_plex_sans", weight="bold") for label in labels), default=0.0)
+            ) + 12
     options = {
         "responsive": True,
         "maintainAspectRatio": False,
@@ -182,6 +193,8 @@ def _chartjs_common_options(
             },
         },
     }
+    if layout_padding:
+        options["layout"] = {"padding": layout_padding}
     if cfg:
         if cfg.get("show_legend") is False:
             options["plugins"]["legend"]["display"] = False
@@ -220,7 +233,13 @@ def _apply_bar_density_knobs(
 
 
 
-def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> dict[str, Any] | None:
+def _chartjs_bar_config(
+    slide: Mapping[str, Any],
+    *,
+    stacked: bool = False,
+    host_w: float = 900,
+    host_h: float = 480,
+) -> dict[str, Any] | None:
     """Grouped or stacked bar Chart.js config.
 
     Stacked mode (#72) sets scales.stacked so signed segment values stack —
@@ -253,8 +272,8 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         slide,
         "stacked_bar_chart" if stacked else "grouped_bar_chart",
         chart_cfg=cfg,
-        host_w=900,
-        host_h=480,
+        host_w=host_w,
+        host_h=host_h,
     )
     options = _chartjs_common_options(
         cfg, typo=typo, auto_plan=auto_plan, category_offset=True
@@ -561,7 +580,9 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
 
 
 
-def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+def _chartjs_hbar_config(
+    slide: Mapping[str, Any], *, host_w: float = 960, host_h: float = 540
+) -> dict[str, Any] | None:
     """Horizontal grouped bars — the anniversary retention board shape (#88).
 
     Chart.js canonical: ``indexAxis: "y"`` so bars run horizontally; the
@@ -590,7 +611,7 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         )
     _apply_bar_density_knobs(datasets, cfg)
     typo, auto_plan = typography_with_auto(
-        slide, "horizontal_bar_chart", chart_cfg=cfg, host_w=960, host_h=540
+        slide, "horizontal_bar_chart", chart_cfg=cfg, host_w=host_w, host_h=host_h
     )
     options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan, horizontal=True)
     options["indexAxis"] = "y"
@@ -639,7 +660,9 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
 
 
 
-def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+def _chartjs_line_config(
+    slide: Mapping[str, Any], *, host_w: float = 900, host_h: float = 480
+) -> dict[str, Any] | None:
     """Chart.js line config honoring the IR chart_config contract (#71).
 
     Chart.js is canonical for IR house style; honors the same fields the SVG
@@ -720,7 +743,7 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         datasets.append(ds)
 
     typo, auto_plan = typography_with_auto(
-        slide, "line_chart", chart_cfg=cfg, host_w=900, host_h=480
+        slide, "line_chart", chart_cfg=cfg, host_w=host_w, host_h=host_h
     )
     options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
     y_scale = options["scales"]["y"]
@@ -765,7 +788,9 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
 
 
 
-def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
+def _chartjs_combo_config(
+    slide: Mapping[str, Any], *, host_w: float = 900, host_h: float = 480
+) -> dict[str, Any] | None:
     bar_labels, bar_series, bar_rows, _bar_colors = _combo_bar_data(slide)
     if not bar_rows:
         return None
@@ -811,7 +836,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
     cfg = _chart_config(slide)
     _apply_bar_density_knobs(datasets, cfg)
     typo, auto_plan = typography_with_auto(
-        slide, "combo_chart", chart_cfg=cfg, host_w=900, host_h=480
+        slide, "combo_chart", chart_cfg=cfg, host_w=host_w, host_h=host_h
     )
     options = _chartjs_common_options(
         cfg, typo=typo, auto_plan=auto_plan, category_offset=True
@@ -850,14 +875,32 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
 
 
 
-def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
+def _build_chartjs_html(
+    slide: Mapping[str, Any],
+    layout: str,
+    *,
+    host_w: float | None = None,
+    host_h: float | None = None,
+) -> str:
     """Canvas + JSON config + noscript SVG fallback (library loaded in shell)."""
     import json as _json
 
+    default_w, default_h = chart_host_dimensions(layout)
+    width = default_w if host_w is None else host_w
+    height = default_h if host_h is None else host_h
+    cfg_host = dict(_chart_config(slide))
+    cfg_host["_auto_host_w"] = width
+    cfg_host["_auto_host_h"] = height
+    visual_spec = dict(slide.get("visual_spec") or {})
+    primary = dict(visual_spec.get("primary_visual") or {})
+    primary["chart_config"] = cfg_host
+    visual_spec["primary_visual"] = primary
+    visual_spec["chart_config"] = cfg_host
+    slide = {**slide, "visual_spec": visual_spec}
     if layout == "stacked_bar_chart":
-        cfg = _chartjs_bar_config(slide, stacked=True)
+        cfg = _chartjs_bar_config(slide, stacked=True, host_w=width, host_h=height)
     elif layout == "horizontal_bar_chart":
-        cfg = _chartjs_hbar_config(slide)
+        cfg = _chartjs_hbar_config(slide, host_w=width, host_h=height)
     else:
         builders = {
             "grouped_bar_chart": _chartjs_bar_config,
@@ -867,7 +910,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         builder = builders.get(layout)
         if not builder:
             return ""
-        cfg = builder(slide)
+        cfg = builder(slide, host_w=width, host_h=height)
     if not cfg:
         return ""
     cid = _next_chart_id()
@@ -900,7 +943,9 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         if cfg.get("options", {}).get("plugins", {}).get("barGroups")
         else ""
     )
-    svg_fb = _svg_fallback_for_layout(slide, layout, record_diagnostic=False)
+    svg_fb = _svg_fallback_for_layout(
+        slide, layout, record_diagnostic=False, host_w=width, host_h=height
+    )
     noscript = (
         f'<noscript>{"<style>[data-side-callout-html=wrap]{display:none}</style>" if side_callout_html else ""}{svg_fb}</noscript>'
         if svg_fb
@@ -953,9 +998,8 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     fill = " chartjs-fill" if chart_cfg.get("fill_tile") else ""
     # #139: collision only on ordinary-label layouts when datalabel_font_size
     # is set; stacked/in-segment and named value sets stay untouched.
-    host_w, host_h = chart_host_dimensions(layout)
     typo, auto_plan = typography_with_auto(
-        slide, layout, chart_cfg=chart_cfg, host_w=host_w, host_h=host_h
+        slide, layout, chart_cfg=chart_cfg, host_w=width, host_h=height
     )
     collision = bool(typo.get("datalabel_font_size_set")) and uses_ordinary_datalabels(
         layout, chart_cfg

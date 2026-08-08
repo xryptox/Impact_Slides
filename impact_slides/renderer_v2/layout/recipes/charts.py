@@ -21,8 +21,8 @@ from .shared import _content, _hero_stack, _so_what, _source_names, _visual_seri
 from .metrics import render_metric
 from ...charts.typography import (
     chart_host_size,
+    chart_pane_canvas_size,
     chart_pane_headings_html,
-    chart_pane_title_html,
     resolve_pane_heading,
     resolve_pane_subtitle,
     resolve_typography,
@@ -190,9 +190,18 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
             },
         }
         vs = slide["visual_spec"]
-    chart_html = build_chart_html(slide, layout, use_chartjs=use_chartjs)
     secondary = vs.get("secondary_visual") or {}
     key_stats = _sv_content(slide).get("key_stats") or []
+    from ...charts.auto_typography import chart_host_dimensions
+
+    host_w, host_h = chart_host_dimensions(layout)
+    if secondary:
+        host_w *= 0.55
+    if key_stats:
+        host_w *= 0.60 if not secondary else 0.80
+    chart_html = build_chart_html(
+        slide, layout, use_chartjs=use_chartjs, host_w=host_w, host_h=host_h
+    )
 
     # #100/N1: under-chart tables attach to any chart layout, not just
     # line_chart (PDF provision boards pair stacked bars with a reserve-rate
@@ -486,13 +495,19 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         }
         if visual.get("line_overlay"):
             sub_slide["visual_spec"]["line_overlay"] = visual["line_overlay"]
-        plans.append(compute_auto_plan_for_slide(sub_slide, vt, host_w=aw, host_h=ah, chart_cfg=pane_cfg))
-        pane_specs.append((visual, vt, pane_cfg, heading, names))
+        subtitle = resolve_pane_subtitle(visual)
+        canvas_w, canvas_h = chart_pane_canvas_size(
+            aw, ah, title=heading, subtitle=subtitle
+        )
+        plans.append(compute_auto_plan_for_slide(
+            sub_slide, vt, host_w=canvas_w, host_h=canvas_h, chart_cfg=pane_cfg
+        ))
+        pane_specs.append((visual, vt, pane_cfg, heading, subtitle, names, canvas_w, canvas_h))
 
     synced = iter(sync_sibling_plans([p for p in plans if p is not None]))
     resolved_plans = [next(synced, None) if plan is not None else None for plan in plans]
     panes: list[str] = []
-    for (visual, vt, pane_cfg, heading, names), plan in zip(pane_specs, resolved_plans):
+    for (visual, vt, pane_cfg, heading, subtitle, names, canvas_w, canvas_h), plan in zip(pane_specs, resolved_plans):
         if plan is not None:
             pane_cfg["_auto_typo_plan"] = plan
         sub_vs: dict[str, Any] = {"primary_visual": visual, "chart_config": pane_cfg}
@@ -505,13 +520,18 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
             "layout_type": vt, "content": {}, "visual_spec": sub_vs,
             "evidence_sources": slide.get("evidence_sources") or [],
         }
-        lbl = chart_pane_title_html(heading, available_w=aw, available_h=ah) if heading else ""
+        lbl = chart_pane_headings_html(
+            heading, subtitle, available_w=aw, available_h=ah
+        )
+        chart_html = build_chart_html(
+            sub_slide, vt, use_chartjs=use_chartjs, host_w=canvas_w, host_h=canvas_h
+        )
         pane_cls = "dual-chart-pane chart-frame gl-card"
         if pane_cfg.get("surface", top_cfg.get("surface")) == "white":
             pane_cls += " chart-surface-white"
         if pane_cfg.get("stage", top_cfg.get("stage")) == "flat":
             pane_cls += " chart-frame-flat"
-        panes.append(f'<div class="{pane_cls}">{lbl}{build_chart_html(sub_slide, vt, use_chartjs=use_chartjs)}</div>')
+        panes.append(f'<div class="{pane_cls}">{lbl}{chart_html}</div>')
     main = f'<div class="gl-grid gl-grid-2 dual-chart">{"".join(panes)}</div>'
     main += insight_strip(_so_what(slide))
     return slide_shell(
@@ -545,19 +565,24 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
     vs = slide.get("visual_spec") or {}
     pv = vs.get("primary_visual") if isinstance(vs.get("primary_visual"), dict) else {}
     sv = vs.get("secondary_visual") if isinstance(vs.get("secondary_visual"), dict) else {}
-    chart_html = ""
-    if pv.get("type"):
-        chart_html = build_chart_html(slide, str(pv.get("type")), use_chartjs=use_chartjs)
-    hero = _hero_stack(_sv_content(slide).get("key_stats") or [])
-    if not chart_html and not hero:
-        return render_metric(slide, total, notes, active=active)
-
     # Left pane heading/subtitle (#147 / #139 host geometry).
     # One combined title+subtitle reservation against remaining-canvas 320×240.
     left_names = _visual_series_names(pv) if pv else []
     left_heading = resolve_pane_heading(pv, series_names=left_names)
     left_sub = resolve_pane_subtitle(pv)
     aw, ah = chart_host_size("chart_hero_dual")
+    canvas_w, canvas_h = chart_pane_canvas_size(
+        aw, ah, title=left_heading, subtitle=left_sub
+    )
+    chart_html = ""
+    if pv.get("type"):
+        chart_html = build_chart_html(
+            slide, str(pv.get("type")), use_chartjs=use_chartjs,
+            host_w=canvas_w, host_h=canvas_h,
+        )
+    hero = _hero_stack(_sv_content(slide).get("key_stats") or [])
+    if not chart_html and not hero:
+        return render_metric(slide, total, notes, active=active)
     left_chrome_html = chart_pane_headings_html(
         left_heading,
         left_sub,
@@ -661,9 +686,14 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                 "chart_config": tile_cfg,
             }},
         }
+        heading = resolve_pane_heading(tile, series_names=_visual_series_names(tile))
+        subtitle = resolve_pane_subtitle(tile)
+        canvas_w, canvas_h = chart_pane_canvas_size(
+            aw, ah, title=heading, subtitle=subtitle
+        )
         tile_plans.append(
             compute_auto_plan_for_slide(
-                sub_slide, chart_type, host_w=aw, host_h=ah, chart_cfg=tile_cfg
+                sub_slide, chart_type, host_w=canvas_w, host_h=canvas_h, chart_cfg=tile_cfg
             )
         )
     synced = iter(sync_sibling_plans([plan for plan in tile_plans if plan is not None]))
@@ -716,8 +746,16 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
                     }
                 },
             }
+            heading = resolve_pane_heading(
+                tile, series_names=_visual_series_names(tile)
+            )
+            subtitle = resolve_pane_subtitle(tile)
+            canvas_w, canvas_h = chart_pane_canvas_size(
+                aw, ah, title=heading, subtitle=subtitle
+            )
             chart_html = build_chart_html(
-                sub_slide, sub_slide["layout_type"], use_chartjs=use_chartjs
+                sub_slide, sub_slide["layout_type"], use_chartjs=use_chartjs,
+                host_w=canvas_w, host_h=canvas_h,
             )
             tile_skin = str(tile.get("tile_skin") or "").lower()
             tile_pad = 0 if tile_skin == "ir" else 16
@@ -737,10 +775,6 @@ def render_multi_panel(slide, total, notes, active=False, *, use_chartjs: bool =
             # metric tiles below keep ordinary gl-tile-label. Host size from cols.
             # heading > label > chart_config.title > single series; explicit subtitle.
             aw, ah = chart_host_size("multi_panel", cols=cols)
-            heading = resolve_pane_heading(
-                tile, series_names=_visual_series_names(tile)
-            )
-            subtitle = resolve_pane_subtitle(tile)
             lbl = chart_pane_headings_html(
                 heading, subtitle, available_w=aw, available_h=ah
             )
