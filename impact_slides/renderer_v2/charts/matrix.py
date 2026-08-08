@@ -114,6 +114,9 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
     dl_fs = int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 18
     labels, series, rows, _pc = _bar_matrix(slide)
     auto_plan = compute_auto_plan_for_slide(slide, "waterfall_chart", chart_cfg=cfg)
+    if auto_plan is not None:
+        x_tick_fs = auto_plan.x_tick_font_size
+        dl_fs = auto_plan.datalabel_font_size
     label_lines, _value_ticks = svg_auto_axis_view(
         auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
     )

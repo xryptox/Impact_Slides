@@ -490,9 +490,9 @@ def render_dual_chart(slide, total, notes, active=False, *, use_chartjs: bool = 
         pane_specs.append((visual, vt, pane_cfg, heading, names))
 
     synced = iter(sync_sibling_plans([p for p in plans if p is not None]))
+    resolved_plans = [next(synced, None) if plan is not None else None for plan in plans]
     panes: list[str] = []
-    for visual, vt, pane_cfg, heading, names in pane_specs:
-        plan = next(synced, None) if resolve_typography(pane_cfg).get("auto_mode") else None
+    for (visual, vt, pane_cfg, heading, names), plan in zip(pane_specs, resolved_plans):
         if plan is not None:
             pane_cfg["_auto_typo_plan"] = plan
         sub_vs: dict[str, Any] = {"primary_visual": visual, "chart_config": pane_cfg}

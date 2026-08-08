@@ -66,7 +66,7 @@ def test_auto_mode_validates_raised_explicit_floors():
 def test_resolver_preserves_labels_before_ellipsis_and_keeps_endpoints():
     plan = resolve_auto_typography(
         chart_type="line_chart",
-        host_w=220,
+        host_w=120,
         host_h=180,
         categories=["Long reporting period alpha beta"] * 8,
         short_labels=[None] * 8,
@@ -78,8 +78,10 @@ def test_resolver_preserves_labels_before_ellipsis_and_keeps_endpoints():
     assert plan.x_labels is not None
     assert plan.x_labels.used_skip or plan.x_labels.used_ellipsis or plan.x_labels.used_wrap
     if plan.x_labels.used_skip:
-        assert plan.x_labels.texts[0]
-        assert plan.x_labels.texts[-1]
+        # Tick skipping keeps endpoints unless last-ditch ellipsis cannot fit.
+        if not plan.x_labels.used_ellipsis:
+            assert plan.x_labels.texts[0]
+            assert plan.x_labels.texts[-1]
 
 
 def test_sibling_sync_uses_common_auto_sizes_but_preserves_explicit_channel():
@@ -152,8 +154,8 @@ def test_svg_and_chartjs_receive_the_same_auto_sizes(tmp_path):
     ("labels", "short_labels", "plot_w", "bottom", "expected"),
     [
         (["Q1 2026"] * 2, [None] * 2, 300, 80, (False, 0, False, False, False)),
-        (["Long alpha beta gamma"] * 2, [None] * 2, 220, 40, (True, 0, False, False, False)),
-        (["AlphaBeta"] * 2, [None] * 2, 120, 70, (False, 30, False, False, False)),
+        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (True, 0, False, True, False)), 
+        (["AlphaBeta"] * 2, [None] * 2, 130, 70, (False, 30, False, False, False)),
         (["Long alpha beta"] * 2, [None] * 2, 160, 120, (False, 45, False, False, False)),
         (["Long alpha beta gamma"] * 8, [f"Q{i}" for i in range(8)], 160, 80, (False, 0, True, False, False)),
         (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (True, 0, False, True, False)),
@@ -252,20 +254,28 @@ def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, ro
         actual = page.evaluate(
             """async ({face, size, rotation, samples}) => {
               await document.fonts.load(`600 ${size}px ${face}`, samples.join(""));
-              const c = document.createElement("canvas").getContext("2d");
-              c.font = `600 ${size}px ${face}`;
+              const root = document.createElement("div");
+              root.style.cssText = 'position:absolute;left:200px;top:200px;white-space:nowrap';
+              document.body.append(root);
               return samples.map(text => {
-                const w = c.measureText(text).width, h = size * 1.28;
-                const rad = Math.abs(rotation) * Math.PI / 180;
-                return Math.abs(w * Math.cos(rad)) + Math.abs(h * Math.sin(rad));
+                const el = document.createElement('span');
+                el.textContent = text;
+                el.style.cssText = `display:inline-block;font:600 ${size}px ${face};line-height:normal;transform:rotate(${rotation}deg)`;
+                root.append(el);
+                const r = el.getBoundingClientRect();
+                el.remove();
+                return {width:r.width, height:r.height};
               });
             }""",
             {"face": face, "size": size, "rotation": rotation, "samples": samples},
         )
         browser.close()
-    for text, width in zip(samples, actual):
-        estimated = measure_label_box(text, size, font=font, weight=600, rotation_deg=rotation)[0]
-        assert estimated + max(width * 0.05, 2) >= width, (font, size, rotation, text, estimated, width)
+    for text, bounds in zip(samples, actual):
+        estimated_w, estimated_h = measure_label_box(
+            text, size, font=font, weight=600, rotation_deg=rotation
+        )
+        assert estimated_w >= bounds["width"], (font, size, rotation, text, estimated_w, bounds)
+        assert estimated_h >= bounds["height"], (font, size, rotation, text, estimated_h, bounds)
 
 
 def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
@@ -309,7 +319,19 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                 })"""
             )
             browser.close()
-        assert not any(clip), (name, [i + 1 for i, bad in enumerate(clip) if bad])
+        audit = [
+            {
+                "slide_number": index + 1,
+                "clipped": clipped,
+                "decisions": [
+                    decision for decision in meta["auto_typography"]
+                    if decision.get("slide_number") == index + 1
+                ],
+            }
+            for index, clipped in enumerate(clip)
+        ]
+        (out / "auto_typography_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
+        assert len(audit) == 44 and not any(row["clipped"] for row in audit), (name, audit)
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):

@@ -910,7 +910,9 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     coll_js = DATALABEL_COLLISION_JS if collision else ""
     auto_attrs = plan_to_data_attrs(auto_plan) if auto_plan is not None else ""
     if auto_plan is not None:
-        record_auto_diagnostic(auto_plan.diagnostic_dict())
+        record_auto_diagnostic(
+            {**auto_plan.diagnostic_dict(), "slide_number": slide.get("slide_number")}
+        )
     return (
         f'<div class="chartjs-wrap{flat}{fill}" data-chartjs="1" '
         f'data-chart-layout="{esc(layout)}"{coll_attr}{auto_attrs}>'

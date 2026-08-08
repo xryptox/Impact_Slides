@@ -200,7 +200,7 @@ def render_deck(
 
     strict_tok = set_render_strict(strict)
     warn_tok = begin_render_warnings()
-    begin_auto_diagnostics()
+    auto_diag_tok = begin_auto_diagnostics()
     try:
         notes_by_num, bodies = _paint_slides(
             slides,
@@ -209,7 +209,7 @@ def render_deck(
         )
     finally:
         warnings = take_render_warnings(warn_tok)
-        auto_typography = take_auto_diagnostics()
+        auto_typography = take_auto_diagnostics(auto_diag_tok)
         reset_render_strict(strict_tok)
 
     html = wrap_deck(

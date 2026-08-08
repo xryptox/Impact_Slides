@@ -8,17 +8,14 @@ from __future__ import annotations
 import math
 import re
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
+import contextvars
 from typing import Any, Callable, Mapping, Sequence
 
 # Auto candidate ranges (inclusive, whole px). Not public config.
 AUTO_X_LO, AUTO_X_HI = 12, 24
 AUTO_Y_LO, AUTO_Y_HI = 12, 28
 AUTO_DL_LO, AUTO_DL_HI = 11, 32
-
-# Explicit overrides under mode=auto use raised floors.
-AUTO_EXPLICIT_AXIS_LO = 12
-AUTO_EXPLICIT_DL_LO = 11
 
 # Supported chart types for auto v1.
 AUTO_CHART_TYPES = frozenset(
@@ -47,21 +44,25 @@ CONSERVATIVE_PLOT_H = 280.0
 _WRAP_SPLIT_RE = re.compile(r"(\s+|(?<=[/\-–,;:·])|(?=[/\-–,;:·]))")
 
 # Context for diagnostics collected during a render.
-_AUTO_DIAG: list[dict[str, Any]] = []
+_AUTO_DIAG: contextvars.ContextVar[list[dict[str, Any]] | None] = contextvars.ContextVar(
+    "rv2_auto_typography_diagnostics", default=None
+)
 
 
-def begin_auto_diagnostics() -> None:
-    _AUTO_DIAG.clear()
+def begin_auto_diagnostics() -> contextvars.Token:
+    return _AUTO_DIAG.set([])
 
 
-def take_auto_diagnostics() -> list[dict[str, Any]]:
-    out = list(_AUTO_DIAG)
-    _AUTO_DIAG.clear()
+def take_auto_diagnostics(token: contextvars.Token) -> list[dict[str, Any]]:
+    out = list(_AUTO_DIAG.get() or [])
+    _AUTO_DIAG.reset(token)
     return out
 
 
 def record_auto_diagnostic(entry: Mapping[str, Any]) -> None:
-    _AUTO_DIAG.append(dict(entry))
+    bucket = _AUTO_DIAG.get()
+    if bucket is not None:
+        bucket.append(dict(entry))
 
 
 def _warn(msg: str) -> None:
@@ -91,9 +92,9 @@ _FONT_METRICS: dict[str, dict[str, float]] = {
         "punct": 0.90,
         "other": 0.90,
         "avg": 0.64,
-        "ascender": 0.92,
-        "descender": 0.22,
-        "line_gap": 0.12,
+        "ascender": 1.05,
+        "descender": 0.28,
+        "line_gap": 0.14,
     },
     "ibm_plex_sans": {
         "digit": 0.63,
@@ -103,9 +104,9 @@ _FONT_METRICS: dict[str, dict[str, float]] = {
         "punct": 0.98,
         "other": 0.98,
         "avg": 0.70,
-        "ascender": 0.94,
-        "descender": 0.24,
-        "line_gap": 0.12,
+        "ascender": 1.00,
+        "descender": 0.28,
+        "line_gap": 0.14,
     },
     # Unknown theme fonts — conservative (wider) fallback.
     "_fallback": {

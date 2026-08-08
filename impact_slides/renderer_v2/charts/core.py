@@ -124,7 +124,9 @@ def _svg_fallback_for_layout(
         visual_spec["chart_config"] = cfg
         slide = {**slide, "visual_spec": visual_spec}
         if record_diagnostic:
-            record_auto_diagnostic(plan.diagnostic_dict())
+            record_auto_diagnostic(
+                {**plan.diagnostic_dict(), "slide_number": slide.get("slide_number")}
+            )
     if layout == "line_chart":
         return _build_line_chart_svg(slide)
     if layout == "combo_chart":
