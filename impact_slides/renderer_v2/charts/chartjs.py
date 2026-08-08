@@ -803,6 +803,9 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         else _build_side_callout_html(chart_cfg, layout)
     )
     payload = _json.dumps(cfg, ensure_ascii=False)
+    bar_group_js = ""
+    if (cfg.get("options", {}).get("plugins", {}).get("barGroups")):
+        bar_group_js = """<script>(function(){if(typeof Chart==='undefined'||Chart.__rv2BarGroups)return;Chart.__rv2BarGroups=1;Chart.register({id:'rv2BarGroups',afterDraw:function(chart){var opts=chart.config.options.plugins.barGroups,items=opts&&opts.items,xs=chart.scales.x,area=chart.chartArea,count=chart.data.labels.length;if(!items||!items.length||!xs||!area||chart.options.indexAxis==='y')return;var ctx=chart.ctx,painted=0;ctx.save();ctx.strokeStyle=opts.color||'#63666a';ctx.fillStyle=opts.labelColor||'#00175a';ctx.lineWidth=opts.lineWidth||1.5;ctx.font=\"600 14\"+\"px 'Source Sans 3', sans-serif\";ctx.textAlign='center';ctx.textBaseline='bottom';try{items.forEach(function(item){var start=Math.max(0,Math.min(count-1,Number(item.start)||0)),end=Math.max(start,Math.min(count-1,Number(item.end)||start)),first=xs.getPixelForTick(start),last=xs.getPixelForTick(end);if(!Number.isFinite(first)||!Number.isFinite(last))return;var slot=count>1?Math.abs(xs.getPixelForTick(1)-first):area.right-area.left,x1=Math.max(area.left,first-slot/2+6),x2=Math.min(area.right,last+slot/2-6),y=area.top-8;if(x2<x1)return;ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.moveTo(x1,y);ctx.lineTo(x1,y+6);ctx.moveTo(x2,y);ctx.lineTo(x2,y+6);ctx.stroke();ctx.fillText(String(item.label||''),(x1+x2)/2,y-6);painted++})}finally{ctx.restore()}chart.canvas.dataset.rv2BarGroupsPainted=String(painted)}})})()</script>"""
     svg_fb = _svg_fallback_for_layout(slide, layout)
     noscript = (
         f'<noscript>{"<style>[data-side-callout-html=wrap]{display:none}</style>" if side_callout_html else ""}{svg_fb}</noscript>'
@@ -868,6 +871,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
+        f"{bar_group_js}"
         f"{ann_html}"
         f"{break_html}"
         f"{callouts_html}"
