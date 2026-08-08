@@ -358,7 +358,10 @@ class AutoTypoPlan:
     x_labels: AxisLabelPlan | None = None
     y_tick_values: list[float] = field(default_factory=list)
     y_tick_labels: list[str] = field(default_factory=list)
+    secondary_y_tick_values: list[float] = field(default_factory=list)
+    secondary_y_tick_labels: list[str] = field(default_factory=list)
     y_ticks_reduced: bool = False
+    secondary_y_ticks_reduced: bool = False
     datalabels_suppressed: bool = False
     datalabel_suppress_count: int = 0
     warnings: list[str] = field(default_factory=list)
@@ -395,7 +398,9 @@ class AutoTypoPlan:
             "used_fallback_dims": self.used_fallback_dims,
             "used_fallback_font": self.used_fallback_font,
             "y_ticks_reduced": self.y_ticks_reduced,
+            "secondary_y_ticks_reduced": self.secondary_y_ticks_reduced,
             "y_tick_count": len(self.y_tick_values),
+            "secondary_y_tick_count": len(self.secondary_y_tick_values),
             "datalabels_suppressed": self.datalabels_suppressed,
             "datalabel_suppress_count": self.datalabel_suppress_count,
             "confidence": self.confidence,
@@ -509,6 +514,7 @@ def _fit_x_labels(
     bottom_budget: float,
     *,
     font: str = "source_sans_3",
+    allow_rotation: bool = True,
 ) -> AxisLabelPlan | None:
     """Adaptation order from the issue. Returns plan or None if nothing fits."""
     n = len(full_labels)
@@ -530,12 +536,10 @@ def _fit_x_labels(
         )
 
     # Stages 1–3: full labels
-    for wrap, rotation in (
-        (False, 0.0),
-        (True, 0.0),
-        (False, 30.0),
-        (False, 45.0),
-    ):
+    stages = [(False, 0.0), (True, 0.0)]
+    if allow_rotation:
+        stages.extend([(False, 30.0), (False, 45.0)])
+    for wrap, rotation in stages:
         plan = attempt(full_labels, rotation=rotation, wrap=wrap)
         if plan is not None:
             return plan
@@ -551,12 +555,7 @@ def _fit_x_labels(
         else:
             shorts.append(full)
     if any_short:
-        for wrap, rotation in (
-            (False, 0.0),
-            (True, 0.0),
-            (False, 30.0),
-            (False, 45.0),
-        ):
+        for wrap, rotation in stages:
             plan = attempt(shorts, rotation=rotation, wrap=wrap)
             if plan is not None:
                 plan.used_short = True
@@ -576,12 +575,7 @@ def _fit_x_labels(
         for step in range(2, n):
             kept = set(skip_indices(n, step))
             trial = [base[i] if i in kept else "" for i in range(n)]
-            for wrap, rotation in (
-                (False, 0.0),
-                (True, 0.0),
-                (False, 30.0),
-                (False, 45.0),
-            ):
+            for wrap, rotation in stages:
                 # Fit only kept labels with expanded slots.
                 kept_labs = [trial[i] for i in range(n) if trial[i]]
                 if not kept_labs:
@@ -820,8 +814,8 @@ def estimate_plot_box(
         "line_chart": (0.09, 0.04, 0.08, 0.12),
         "grouped_bar_chart": (0.08, 0.03, 0.08, 0.12),
         "stacked_bar_chart": (0.08, 0.03, 0.08, 0.12),
-        "combo_chart": (0.09, 0.04, 0.08, 0.12),
-        "horizontal_bar_chart": (0.16, 0.03, 0.04, 0.08),
+        "combo_chart": (80 / 900, 80 / 900, 40 / 480, 60 / 480),
+        "horizontal_bar_chart": (140 / 960, 24 / 960, 16 / 540, 40 / 540),
         "waterfall_chart": (0.06, 0.04, 0.08, 0.14),
     }
     fr = defaults.get(chart_type, (0.08, 0.04, 0.08, 0.12))
@@ -848,6 +842,8 @@ def resolve_auto_typography(
     series_count: int = 1,
     y_tick_values: Sequence[float] | None = None,
     y_tick_labels: Sequence[str] | None = None,
+    secondary_y_tick_values: Sequence[float] | None = None,
+    secondary_y_tick_labels: Sequence[str] | None = None,
     datalabel_texts: Sequence[str] | None = None,
     has_legend: bool = False,
     want_datalabels: bool = False,
@@ -911,6 +907,10 @@ def resolve_auto_typography(
     y_labs = list(y_tick_labels or [])
     if y_vals and not y_labs:
         y_labs = [f"{v:g}" for v in y_vals]
+    secondary_y_vals = list(secondary_y_tick_values or [])
+    secondary_y_labs = list(secondary_y_tick_labels or [])
+    if secondary_y_vals and not secondary_y_labs:
+        secondary_y_labs = [f"{v:g}" for v in secondary_y_vals]
     dl_texts = list(datalabel_texts or [])
 
     # Explicit channels are never silently resized.
@@ -948,15 +948,14 @@ def resolve_auto_typography(
                     cats, shorts, size, plot_w, bottom_budget, font=fx
                 )
             else:
-                # Reuse x fitter with plot_h as "width" analogy for vertical packing
-                # of horizontal category labels: width limit is left_budget.
                 p = _fit_x_labels(
                     cats,
                     shorts,
                     size,
-                    plot_h,  # vertical span acts as category strip length
-                    left_budget,  # label width budget
-                    font=fx,
+                    left_budget * max(len(cats), 1),
+                    plot_h / max(len(cats), 1),
+                    font=fy,
+                    allow_rotation=False,
                 )
             if p is None:
                 # Force ellipsis plan
@@ -975,9 +974,10 @@ def resolve_auto_typography(
                 cats,
                 shorts,
                 size,
-                plot_w if cat_is_x else plot_h,
-                bottom_budget if cat_is_x else left_budget,
+                plot_w if cat_is_x else left_budget * max(len(cats), 1),
+                bottom_budget if cat_is_x else plot_h / max(len(cats), 1),
                 font=fx if cat_is_x else fy,
+                allow_rotation=cat_is_x,
             )
 
         # Information outranks point size: exhaust the largest full-label
@@ -1014,33 +1014,32 @@ def resolve_auto_typography(
         explicit: int | None,
         labels: Sequence[str],
         values: Sequence[float],
-    ) -> tuple[int, list[float], list[str], bool]:
+    ) -> tuple[int, list[float], list[str], bool, list[float], list[str], bool]:
+        def fit(size: int, labs: Sequence[str], vals: Sequence[float]):
+            return _fit_y_ticks(
+                labs, vals, size, plot_h if cat_is_x else plot_w,
+                left_budget if cat_is_x else bottom_budget,
+                font=fy if cat_is_x else fx,
+            )
+
+        def at(size: int):
+            ok, vv, ll, red = fit(size, labels, values)
+            ok2, vv2, ll2, red2 = fit(size, secondary_y_labs, secondary_y_vals)
+            return ok and ok2, vv, ll, red, vv2, ll2, red2
+
         if explicit is not None:
-            size = int(explicit)
-            ok, vv, ll, red = _fit_y_ticks(
-                labels, values, size, plot_h if cat_is_x else plot_w,
-                left_budget if cat_is_x else bottom_budget,
-                font=fy if cat_is_x else fx,
-            )
-            return size, vv, ll, red
+            return (int(explicit), *at(int(explicit))[1:])
         lo, hi = (AUTO_Y_LO, AUTO_Y_HI) if cat_is_x else (AUTO_X_LO, AUTO_X_HI)
-        best = (lo, list(values), list(labels), False)
+        best = (lo, list(values), list(labels), False, list(secondary_y_vals), list(secondary_y_labs), False)
         for size in range(hi, lo - 1, -1):
-            ok, vv, ll, red = _fit_y_ticks(
-                labels,
-                values,
-                size,
-                plot_h if cat_is_x else plot_w,
-                left_budget if cat_is_x else bottom_budget,
-                font=fy if cat_is_x else fx,
-            )
-            if ok and (allow_y_tick_reduction or not red):
-                best = (size, vv, ll, red)
+            ok, vv, ll, red, vv2, ll2, red2 = at(size)
+            if ok and (allow_y_tick_reduction or not (red or red2)):
+                best = (size, vv, ll, red, vv2, ll2, red2)
                 break
         return best
 
     cat_size, cat_plan = choose_cat_size(x_explicit if cat_is_x else y_explicit)
-    val_size, vv, ll, red = choose_val_size(
+    val_size, vv, ll, red, vv2, ll2, red2 = choose_val_size(
         y_explicit if cat_is_x else x_explicit, y_labs, y_vals
     )
 
@@ -1055,8 +1054,11 @@ def resolve_auto_typography(
 
     plan.y_tick_values = vv
     plan.y_tick_labels = ll
+    plan.secondary_y_tick_values = vv2
+    plan.secondary_y_tick_labels = ll2
     plan.y_ticks_reduced = red
-    if red:
+    plan.secondary_y_ticks_reduced = red2
+    if red or red2:
         plan.warnings.append("y tick count reduced at floor to preserve endpoints")
         _warn(plan.warnings[-1])
 
@@ -1284,12 +1286,12 @@ def apply_plan_to_chartjs_options(
 
     if plan.y_ticks_reduced and plan.y_tick_values:
         val_scale = x if horizontal else y
-        val_scale["afterBuildTicks"] = {
-            "_rv2TickValues": list(plan.y_tick_values),
-        }
-        # Also set suggested min/max via ticks callback values list for static JSON:
         val_ticks = val_scale.setdefault("ticks", {})
         val_ticks["_rv2Values"] = list(plan.y_tick_values)
+    if plan.secondary_y_ticks_reduced and plan.secondary_y_tick_values:
+        secondary = scales.get("y1")
+        if isinstance(secondary, dict):
+            secondary.setdefault("ticks", {})["_rv2Values"] = list(plan.secondary_y_tick_values)
 
     return options
 
@@ -1309,8 +1311,8 @@ def merge_plan_into_typo(base: Mapping[str, int], plan: AutoTypoPlan) -> dict[st
 def _extract_categories_and_shorts(
     slide: Mapping[str, Any],
     chart_type: str,
-) -> tuple[list[str], list[str | None], int, list[float], list[str], list[str]]:
-    """categories, shorts, series_count, y_vals, y_labs, datalabel_texts."""
+) -> tuple[list[str], list[str | None], int, list[float], list[str], list[float], list[str], list[str]]:
+    """categories, shorts, series count, primary/secondary ticks, datalabels."""
     from .bars import _bar_axes, _bar_matrix
     from .core import _chart_config
     from .format import _fmt_bar, _fmt_value_label
@@ -1410,10 +1412,7 @@ def _extract_categories_and_shorts(
         labels, series, rows, _pc = _combo_bar_data(slide)
         cats = list(labels)
         series_count = max(len(series), 1)
-        for r in rows:
-            for v in r:
-                if v is not None:
-                    values_flat.append(float(v))
+        values_flat = [sum(v for v in r if v is not None and v > 0) for r in rows]
         for i, item in enumerate(raw_steps):
             if i >= len(cats):
                 break
@@ -1421,16 +1420,19 @@ def _extract_categories_and_shorts(
         while len(shorts) < len(cats):
             shorts.append(None)
     else:
-        return [], [], 1, [], [], []
+        return [], [], 1, [], [], [], [], []
 
     unit = str(cfg.get("y_axis_unit") if cfg.get("y_axis_unit") is not None else ("%" if ct == "line_chart" else ""))
-    if values_flat:
-        y_max, y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
+    if ct == "line_chart":
+        from .lines import _line_axis
+        _y_min, _y_max, y_ticks = _line_axis(cfg, values_flat)
+    elif values_flat:
+        _y_max, _y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
     else:
         y_ticks = list(cfg.get("y_axis_ticks") or [0, 1])
-        y_max = max(y_ticks) if y_ticks else 1.0
-        y_min = min(y_ticks) if y_ticks else 0.0
     y_labs = [_fmt_bar(v, unit) for v in y_ticks]
+    secondary_y_ticks: list[float] = []
+    secondary_y_labs: list[str] = []
 
     if ct == "combo_chart":
         line_points = _combo_line_data(slide)
@@ -1450,9 +1452,8 @@ def _extract_categories_and_shorts(
                     value = float(tick)
                 except (TypeError, ValueError):
                     continue
-                y_ticks.append(value)
-                y_labs.append(f"{value:g}{overlay_unit}")
-                values_flat.append(value)
+                secondary_y_ticks.append(value)
+                secondary_y_labs.append(f"{value:g}{overlay_unit}")
 
     dl_texts: list[str] = []
     want = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))
@@ -1462,7 +1463,7 @@ def _extract_categories_and_shorts(
         for v in values_flat:
             dl_texts.append(_fmt_value_label(v, unit, pos))
 
-    return cats, shorts, series_count, list(y_ticks), y_labs, dl_texts
+    return cats, shorts, series_count, list(y_ticks), y_labs, secondary_y_ticks, secondary_y_labs, dl_texts
 
 
 def compute_auto_plan_for_slide(
@@ -1492,6 +1493,12 @@ def compute_auto_plan_for_slide(
             x_tick_font_size=int(stashed.get("x_tick_font_size") or AUTO_X_LO),
             y_tick_font_size=int(stashed.get("y_tick_font_size") or AUTO_Y_LO),
             datalabel_font_size=int(stashed.get("datalabel_font_size") or AUTO_DL_LO),
+            y_tick_values=[float(v) for v in stashed.get("y_tick_values", [])],
+            y_tick_labels=[str(v) for v in stashed.get("y_tick_labels", [])],
+            secondary_y_tick_values=[float(v) for v in stashed.get("secondary_y_tick_values", [])],
+            secondary_y_tick_labels=[str(v) for v in stashed.get("secondary_y_tick_labels", [])],
+            y_ticks_reduced=bool(stashed.get("y_ticks_reduced")),
+            secondary_y_ticks_reduced=bool(stashed.get("secondary_y_ticks_reduced")),
             x_explicit=bool(stashed.get("x_explicit")),
             y_explicit=bool(stashed.get("y_explicit")),
             dl_explicit=bool(stashed.get("dl_explicit")),
@@ -1517,7 +1524,7 @@ def compute_auto_plan_for_slide(
     if ct not in AUTO_CHART_TYPES:
         return None
 
-    cats, shorts, series_count, y_vals, y_labs, dl_texts = _extract_categories_and_shorts(
+    cats, shorts, series_count, y_vals, y_labs, secondary_y_vals, secondary_y_labs, dl_texts = _extract_categories_and_shorts(
         slide, ct
     )
     has_legend = cfg.get("show_legend") is not False and series_count > 1
@@ -1552,6 +1559,8 @@ def compute_auto_plan_for_slide(
         series_count=series_count,
         y_tick_values=y_vals,
         y_tick_labels=y_labs,
+        secondary_y_tick_values=secondary_y_vals,
+        secondary_y_tick_labels=secondary_y_labs,
         datalabel_texts=dl_texts,
         has_legend=has_legend,
         want_datalabels=want_dl,
@@ -1559,7 +1568,7 @@ def compute_auto_plan_for_slide(
         y_explicit=y_ex,
         dl_explicit=dl_ex,
         horizontal=(ct == "horizontal_bar_chart"),
-        allow_y_tick_reduction=(ct != "combo_chart"),
+        allow_y_tick_reduction=True,
     )
     return plan
 

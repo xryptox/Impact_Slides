@@ -496,12 +496,68 @@ def test_auto_plan_includes_line_series_and_combo_overlay_axes():
     }
     combo_plan = compute_auto_plan_for_slide(combo, "combo_chart", host_w=900, host_h=480)
     assert combo_plan is not None
-    assert 20000 in combo_plan.y_tick_values
-    assert "20000 users" in combo_plan.y_tick_labels
+    assert 20000 in combo_plan.secondary_y_tick_values
+    assert "20000 users" in combo_plan.secondary_y_tick_labels
     from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
 
     svg = _svg_fallback_for_layout(combo, "combo_chart")
     assert "<polyline" in svg and 'x1="820"' in svg
+
+
+def test_auto_planning_matches_unrotated_hbar_and_line_svg_axes():
+    hbar = {
+        "layout_type": "horizontal_bar_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [
+                {"label": "Long reporting period alpha beta", "short_label": "Q1", "value": 1}
+                for _ in range(8)
+            ],
+        }},
+    }
+    hbar_plan = compute_auto_plan_for_slide(hbar, "horizontal_bar_chart", host_w=960, host_h=540)
+    assert hbar_plan is not None and hbar_plan.x_labels is not None
+    assert hbar_plan.x_labels.rotation_deg == 0
+
+    line = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [{"label": "Q1", "value": 9}],
+        }},
+    }
+    line_plan = compute_auto_plan_for_slide(line, "line_chart", host_w=900, host_h=480)
+    from impact_slides.renderer_v2.charts.lines import _build_line_chart_svg
+
+    svg = _build_line_chart_svg(line)
+    assert line_plan is not None
+    assert line_plan.y_tick_values == [0.0, 2.75, 5.5, 8.25, 11.0]
+    assert all(f">{tick:g}%</text>" in svg for tick in line_plan.y_tick_values)
+
+
+def test_combo_reduces_each_svg_axis_independently():
+    ticks = list(range(40))
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto", "y_tick_font_size": 12}, "y_axis_ticks": ticks},
+                "steps_or_data": [{"label": "Q1", "value": 1}],
+            },
+            "line_overlay": {
+                "data": [{"label": "Q1", "value": 39}],
+                "y_axis_ticks": ticks,
+            },
+        },
+    }
+    plan = compute_auto_plan_for_slide(combo, "combo_chart", host_w=900, host_h=480)
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    svg = _svg_fallback_for_layout(combo, "combo_chart")
+    assert plan is not None and plan.y_ticks_reduced and plan.secondary_y_ticks_reduced
+    assert plan.y_tick_values[0] == plan.secondary_y_tick_values[0] == 0
+    assert plan.y_tick_values[-1] == plan.secondary_y_tick_values[-1] == 39
+    assert svg.count('font-size="12"') < len(ticks) * 2
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):

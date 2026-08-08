@@ -792,7 +792,7 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
                 "tension": 0.15,
                 "pointRadius": 4,
                 "order": 1,
-                "yAxisID": "y",
+                "yAxisID": "y1",
             }
         )
     cfg = _chart_config(slide)
@@ -801,6 +801,30 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         slide, "combo_chart", chart_cfg=cfg, host_w=900, host_h=480
     )
     options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
+    if line_points:
+        vs = slide.get("visual_spec") or {}
+        overlay = vs.get("line_overlay") or {}
+        y1: dict[str, Any] = {
+            "position": "right",
+            "grid": {"display": False},
+            "ticks": {
+                "color": "#00175a",
+                "font": {"family": "'Source Sans 3', sans-serif", "size": typo["y_tick_font_size"]},
+            },
+        }
+        if isinstance(overlay, Mapping):
+            if overlay.get("y_axis_min") is not None:
+                y1["min"] = float(overlay["y_axis_min"])
+            if overlay.get("y_axis_max") is not None:
+                y1["max"] = float(overlay["y_axis_max"])
+            if isinstance(overlay.get("y_axis_ticks"), list) and len(overlay["y_axis_ticks"]) >= 2:
+                ticks = [float(tick) for tick in overlay["y_axis_ticks"]]
+                y1["min"] = ticks[0]
+                y1["max"] = ticks[-1]
+                y1["ticks"]["stepSize"] = ticks[1] - ticks[0]
+        options["scales"]["y1"] = y1
+        if auto_plan is not None and auto_plan.secondary_y_ticks_reduced:
+            y1["ticks"]["_rv2Values"] = list(auto_plan.secondary_y_tick_values)
     _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "bar",

@@ -130,6 +130,34 @@ def _combo_line_data(slide: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 
+def _line_axis(
+    cfg: Mapping[str, Any], values: list[float]
+) -> tuple[float, float, list[float]]:
+    """Return the line painter's domain and ticks."""
+    y_max = cfg.get("y_axis_max")
+    if y_max is None:
+        raw_max = max(values) if values else 10
+        if raw_max <= 5:
+            y_max = 5
+        elif raw_max <= 10:
+            y_max = int(raw_max) + 2
+        elif raw_max <= 20:
+            y_max = 20
+        elif raw_max <= 50:
+            y_max = int(raw_max) + 5
+        else:
+            y_max = int(raw_max * 1.15)
+    y_min = float(cfg.get("y_axis_min", 0))
+    y_max = float(y_max)
+    y_ticks = cfg.get("y_axis_ticks")
+    if y_ticks is None:
+        step = (y_max - y_min) / 4
+        if step >= 5:
+            step = int(step)
+        y_ticks = [y_min + i * step for i in range(5)]
+    return y_min, y_max, [float(t) for t in y_ticks]
+
+
 def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     """Build an SVG line chart for the given slide.
 
@@ -170,31 +198,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     for k in series_keys:
         values.extend(p[k] for p in points if k in p)
 
-    y_max = cfg.get("y_axis_max")
-    if y_max is None:
-        raw_max = max(values) if values else 10
-        # Round up to next nice number
-        if raw_max <= 5:
-            y_max = 5
-        elif raw_max <= 10:
-            y_max = int(raw_max) + 2
-        elif raw_max <= 20:
-            y_max = 20
-        elif raw_max <= 50:
-            y_max = int(raw_max) + 5
-        else:
-            y_max = int(raw_max * 1.15)
-    y_max = float(y_max)
-    y_min = float(cfg.get("y_axis_min", 0))
-
-    y_ticks = cfg.get("y_axis_ticks")
-    if y_ticks is None:
-        # Auto-generate ~5 ticks
-        step = (y_max - y_min) / 4
-        if step >= 5:
-            step = int(step)
-        y_ticks = [y_min + i * step for i in range(5)]
-    y_ticks = [float(t) for t in y_ticks]
+    y_min, y_max, y_ticks = _line_axis(cfg, values)
 
     y_unit = cfg.get("y_axis_unit", "%")
     y_label = cfg.get("y_axis_label", "")
@@ -548,9 +552,6 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         x_tick_fs = auto_plan.x_tick_font_size
         y_tick_fs = auto_plan.y_tick_font_size
         y_tick_wt = "700"
-    label_lines, _value_ticks = svg_auto_axis_view(
-        auto_plan, labels=bar_labels, ticks=[], format_tick=lambda _tick: ""
-    )
     # Y-axis tick labels only (bar axis) — plot gridlines default off (#152).
     bar_ticks = cfg.get("y_axis_ticks")
     if bar_ticks is None:
@@ -558,9 +559,10 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         if step >= 5:
             step = int(step)
         bar_ticks = [bar_min + i * step for i in range(5)]
-    for tick in bar_ticks:
-        tick = float(tick)
-        tick_label = _fmtb(tick)
+    label_lines, bar_tick_view = svg_auto_axis_view(
+        auto_plan, labels=bar_labels, ticks=bar_ticks, format_tick=_fmtb
+    )
+    for tick, tick_label in bar_tick_view:
         ty = bar_y(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
@@ -587,9 +589,10 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                 step = int(step)
             line_ticks = [line_min + i * step for i in range(5)]
         line_unit = overlay_cfg.get("y_axis_unit", "")
-        for tick in line_ticks:
-            tick = float(tick)
-            tick_label = f"{tick:g}{line_unit}" if line_unit else f"{tick:g}"
+        line_tick_view = [(float(tick), f"{float(tick):g}{line_unit}" if line_unit else f"{float(tick):g}") for tick in line_ticks]
+        if auto_plan is not None and auto_plan.secondary_y_ticks_reduced:
+            line_tick_view = list(zip(auto_plan.secondary_y_tick_values, auto_plan.secondary_y_tick_labels))
+        for tick, tick_label in line_tick_view:
             ty = line_y(tick)
             parts.append(
                 f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '

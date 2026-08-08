@@ -623,7 +623,9 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
                 f'font-family="var(--font-body, sans-serif)">'
                 f'{esc(_fmt_bar(tv, ""))}</text>'
             )
-    auto_plan = compute_auto_plan_for_slide(slide, "horizontal_bar_chart", chart_cfg=cfg)
+    auto_plan = compute_auto_plan_for_slide(
+        slide, "horizontal_bar_chart", host_w=W, host_h=H, chart_cfg=cfg
+    )
     label_lines, _value_ticks = svg_auto_axis_view(
         auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
     )

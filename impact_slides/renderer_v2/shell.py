@@ -388,6 +388,20 @@ _JS = r"""
             if (dl.labels[name] && dl.labels[name]._labels) bindMatrix(dl.labels[name]);
           });
         }/*__RV2_AUTO_TYPO_RUNTIME__*/
+        Object.keys(cfg.options.scales || {}).forEach(function (axis) {
+          var scale = cfg.options.scales[axis], ticks = scale && scale.ticks;
+          if (!ticks) return;
+          var display = ticks._rv2DisplayLabels, values = ticks._rv2Values;
+          delete ticks._rv2DisplayLabels;
+          delete ticks._rv2FullLabels;
+          delete ticks._rv2Values;
+          if (display) ticks.callback = function (value, index) { return display[index] || ''; };
+          if (values) {
+            scale.afterBuildTicks = function (chartScale) {
+              chartScale.ticks = values.map(function (value) { return {value: value}; });
+            };
+          }
+        });
         new Chart(canvas.getContext('2d'), cfg);
       } catch (err) {
         console.warn('chart init failed', id, err);
