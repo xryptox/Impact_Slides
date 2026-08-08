@@ -41,6 +41,19 @@ _S14_RIGHT_STEPS = [
     {"label": "Q1'26", "value": 2.0},
 ]
 
+# Issue #154 — PDF physical page / deck slide 24.
+_S24 = 24
+_S24_CATEGORIES = [
+    "U.S. Consumer",
+    "U.S. SME",
+    "U.S. Large & Global Corp.",
+    "Int'l Consumer",
+    "Int'l SME & Large Corp.",
+    "Processed Volumes",
+]
+_S24_GROWTH = [10, 4, 4, 13, 12, 9]
+_S24_SUPPORT = ["37%", "22%", "5%", "15%", "8%", "12%"]
+
 # Issue #156 — PDF page / deck slide 27 macroeconomic scenarios.
 # Values transcribed from Q1-2026-Earnings-Presentation.pdf, PDF page 27.
 _S27 = 27
@@ -569,6 +582,58 @@ def _s27_steps(values: list[list[float]]) -> list[dict[str, float | str]]:
     ]
 
 
+def apply_issue_154_slide24_growth(handoff: dict[str, Any]) -> dict[str, Any]:
+    """Restore slide 24's source chart semantics without renderer changes."""
+    out = handoff
+    try:
+        slide = _slide(out, _S24)
+    except KeyError:
+        return out
+    slide["layout_type"] = "grouped_bar_chart"
+    slide["packing_mode"] = "chart-led"
+    slide["content"] = {
+        **(slide.get("content") or {}),
+        "subtitle": (
+            "% Increase/(decrease) vs. Prior Year (FX-adjusted) · "
+            "$486B Processed Volumes · 9% FX-adjusted growth"
+        ),
+    }
+    slide["visual_spec"] = {
+        "primary_visual": {
+            "type": "grouped_bar_chart",
+            "steps_or_data": [
+                {"label": label, "value": value, "color": "#63666A" if label == "Processed Volumes" else "#006FCF"}
+                for label, value in zip(_S24_CATEGORIES, _S24_GROWTH)
+            ],
+            "chart_config": {
+                "series_names": ["Growth"],
+                "y_axis_min": 0,
+                "y_axis_max": 15,
+                "y_axis_ticks": [0, 5, 10, 15],
+                "y_axis_unit": "%",
+                "bar_groups": [
+                    {"label": "U.S. Consumer Services", "start": 0, "end": 0},
+                    {"label": "Commercial Services", "start": 1, "end": 2},
+                    {"label": "International Card Services", "start": 3, "end": 4},
+                ],
+            },
+        },
+        "secondary_visual": {
+            "type": "data_table",
+            "skin": "outlined_boxes",
+            "steps_or_data": [
+                ["", *_S24_CATEGORIES],
+                ["% of Total Network Volumes", *_S24_SUPPORT],
+            ],
+        },
+    }
+    slide["speaker_notes"] = (
+        "Six FX-adjusted growth bars: 10%, 4%, 4%, 13%, 12%, and 9%. "
+        "$486B Processed Volumes; 12% support value is distinct from 9% growth."
+    )
+    return out
+
+
 def apply_issue_156_slide27_scenarios(handoff: dict[str, Any]) -> dict[str, Any]:
     """Restore slide 27's PDF periods, scenarios, pane headings, and note.
 
@@ -789,6 +854,7 @@ def apply_issue_157_annex_matrices(handoff: dict[str, Any]) -> dict[str, Any]:
 def apply_all(handoff: dict[str, Any]) -> dict[str, Any]:
     """Apply every bounded Amex handoff mutation known to this module."""
     out = apply_issue_148_bar_semantics(handoff)
+    out = apply_issue_154_slide24_growth(out)
     out = apply_issue_156_slide27_scenarios(out)
     out = apply_issue_157_annex_matrices(out)
     out = apply_issue_159_grouped_annex(out)
