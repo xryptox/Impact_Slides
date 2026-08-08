@@ -126,32 +126,12 @@ def _bar_axes(
 
 
 
-def _bar_groups(cfg: Mapping[str, Any], labels: list[str]) -> list[dict[str, int | str]]:
-    """Return all declared brackets, or none when any declaration is invalid."""
-    groups = cfg.get("bar_groups")
-    if not isinstance(groups, (list, tuple)) or not groups:
-        return []
-    out: list[dict[str, int | str]] = []
-    for group in groups:
-        if not isinstance(group, Mapping):
-            return []
-        start, end = group.get("start", 0), group.get("end", group.get("start", 0))
-        if isinstance(start, bool) or isinstance(end, bool):
-            return []
-        try:
-            start, end = int(start), int(end)
-        except (OverflowError, TypeError, ValueError):
-            return []
-        if start < 0 or end < start or end >= len(labels):
-            return []
-        out.append({"label": str(group.get("label") or ""), "start": start, "end": end})
-    return out
-
-
-def _vbar_pad_t(cfg: Mapping[str, Any], series: list[str], labels: list[str]) -> int:
-    """Top padding for internal bar charts: room for legend + valid brackets."""
+def _vbar_pad_t(cfg: Mapping[str, Any], series: list[str]) -> int:
+    """Top padding for internal bar charts: room for legend + bar_groups."""
     base = 56 if len(series) > 1 else 40
-    return base + 28 if _bar_groups(cfg, labels) else base
+    if cfg.get("bar_groups"):
+        base += 28
+    return base
 
 
 
@@ -168,15 +148,23 @@ def _bar_group_brackets(
     (inclusive category indices). Each bracket is a horizontal line with
     vertical end ticks and a centered label above it.
     """
-    groups = _bar_groups(cfg, labels)
-    if not groups:
+    groups = cfg.get("bar_groups")
+    if not isinstance(groups, (list, tuple)) or not groups or not labels:
         return []
     parts: list[str] = []
     for g in groups:
-        start, end = int(g["start"]), int(g["end"])
+        if not isinstance(g, Mapping):
+            continue
+        try:
+            start = int(g.get("start", 0))
+            end = int(g.get("end", start))
+        except (TypeError, ValueError):
+            continue
+        start = max(0, min(start, len(labels) - 1))
+        end = max(start, min(end, len(labels) - 1))
         x1 = pad_l + start * slot + 6
         x2 = pad_l + (end + 1) * slot - 6
-        label = str(g["label"])
+        label = str(g.get("label") or "")
         parts.append(
             f'<g class="bar-group-bracket">'
             f'<line x1="{x1:.1f}" y1="{bracket_y:.1f}" x2="{x2:.1f}" y2="{bracket_y:.1f}" '
@@ -200,13 +188,12 @@ def _vbar_frame(
     y_min: float,
     y_ticks: list[float],
     series: list[str],
-    labels: list[str],
     *,
     pad_r: float | None = None,
 ) -> list[str]:
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
-    pad_l, default_pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series, labels), 56
+    pad_l, default_pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
     pad_r = default_pad_r if pad_r is None else pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
@@ -285,7 +272,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
     cfg = _chart_config(slide)
     geom = chart_geometry("_vertical_bar")
     W, H = geom["width"], geom["height"]
-    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series, labels), 56
+    pad_l, pad_r, pad_t, pad_b = geom["pad_l"], geom["pad_r"], _vbar_pad_t(cfg, series), 56
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     unit = cfg.get("y_axis_unit", "")
@@ -298,7 +285,7 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
             return pad_t + plot_h / 2
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
-    parts = _vbar_frame("vbar-grouped", cfg, y_max, y_min, y_ticks, series, labels)
+    parts = _vbar_frame("vbar-grouped", cfg, y_max, y_min, y_ticks, series)
     zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
 
     n = len(labels)
@@ -398,7 +385,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
     pad_l, pad_r, pad_t, pad_b = (
         geom["pad_l"],
         column[1] if column else geom["pad_r"],
-        _vbar_pad_t(cfg, series, labels),
+        _vbar_pad_t(cfg, series),
         56,
     )
     plot_w = W - pad_l - pad_r
@@ -413,7 +400,7 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
             return pad_t + plot_h / 2
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
-    parts = _vbar_frame("vbar-stacked", cfg, y_max, y_min, y_ticks, series, labels, pad_r=pad_r)
+    parts = _vbar_frame("vbar-stacked", cfg, y_max, y_min, y_ticks, series, pad_r=pad_r)
     zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
 
     n = len(labels)

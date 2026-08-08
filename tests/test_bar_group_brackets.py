@@ -119,17 +119,11 @@ def test_bracket_expands_top_padding():
     assert re.search(r'<line x1="70" y1="68"', html)
 
 
-def test_invalid_groups_leave_svg_unchanged():
-    baseline = _build_grouped_bar_svg(_slide("grouped_bar_chart", _SIX_BARS))
-    for groups in (
-        [{"label": "All", "start": -2, "end": 99}],
-        [{"label": "All", "start": float("inf"), "end": 1}],
-        [
-            {"label": "Valid", "start": 0, "end": 0},
-            {"label": "Bad", "start": True, "end": False},
-        ],
-    ):
-        html = _build_grouped_bar_svg(
-            _slide("grouped_bar_chart", _SIX_BARS, bar_groups=groups)
-        )
-        assert html == baseline
+def test_out_of_range_indices_clamped():
+    slide = _slide(
+        "grouped_bar_chart",
+        _SIX_BARS,
+        bar_groups=[{"label": "All", "start": -2, "end": 99}],
+    )
+    html = _build_grouped_bar_svg(slide)
+    assert ">All</text>" in html

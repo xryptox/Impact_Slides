@@ -612,6 +612,7 @@ def apply_issue_154_slide24_growth(handoff: dict[str, Any]) -> dict[str, Any]:
                 "y_axis_max": 15,
                 "y_axis_ticks": [0, 5, 10, 15],
                 "y_axis_unit": "%",
+                "point_labels": True,
                 "bar_groups": [
                     {"label": "U.S. Consumer Services", "start": 0, "end": 0},
                     {"label": "Commercial Services", "start": 1, "end": 2},

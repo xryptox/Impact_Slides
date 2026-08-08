@@ -66,6 +66,7 @@ def _assert_semantics(slide: dict) -> None:
     steps = visual["steps_or_data"]
     assert [p["label"] for p in steps] == _CATEGORIES
     assert [p["value"] for p in steps] == _GROWTH
+    assert visual["chart_config"]["point_labels"] is True
     assert [g["label"] for g in visual["chart_config"]["bar_groups"]] == [
         g[0] for g in _GROUPS
     ]
@@ -138,6 +139,7 @@ def test_render_paints_exactly_six_growth_bars_and_support_context(use_chartjs: 
         ]
         assert '"type": "bar"' in html or '"type":"bar"' in html
         assert '"data": [10.0, 4.0, 4.0, 13.0, 12.0, 9.0]' in html
+        assert '"10%"' in html and '"9%"' in html
     else:
         for name, _, _ in _GROUPS:
             assert html.count(name) == 1
@@ -158,6 +160,8 @@ def test_chartjs_bar_groups_are_opt_in():
         [{"label": "bad", "start": -1, "end": 2}],
         [{"label": "bad", "start": 0, "end": len(_CATEGORIES)}],
         [{"label": "bad", "start": math.inf, "end": 2}],
+        [{"label": "bad", "start": "1", "end": 2}],
+        [{"label": "bad", "start": 1.5, "end": 2}],
         [
             {"label": "valid", "start": 0, "end": 0},
             {"label": "bad", "start": True, "end": False},

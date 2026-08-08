@@ -312,18 +312,17 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 if not isinstance(group, Mapping):
                     items = []
                     break
-                raw_start = group.get("start", 0)
-                raw_end = group.get("end", raw_start)
-                if isinstance(raw_start, bool) or isinstance(raw_end, bool):
-                    items = []
-                    break
-                try:
-                    start = int(raw_start)
-                    end = int(raw_end)
-                except (OverflowError, TypeError, ValueError):
-                    items = []
-                    break
-                if start < 0 or end < start or end >= len(labels):
+                start = group.get("start", 0)
+                end = group.get("end", start)
+                if (
+                    isinstance(start, bool)
+                    or isinstance(end, bool)
+                    or not isinstance(start, int)
+                    or not isinstance(end, int)
+                    or start < 0
+                    or end < start
+                    or end >= len(labels)
+                ):
                     items = []
                     break
                 items.append({"label": str(group.get("label") or ""), "start": start, "end": end})
