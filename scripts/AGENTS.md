@@ -36,6 +36,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 - `pytest -q tests/test_amex_s13_s14_handoff_contract.py` (#148 handoff bar/pane contract)
 - `pytest -q tests/test_amex_s27_scenarios.py` (#156 slide-27 source scenarios / paint-ready contract)
 - `pytest -q tests/test_amex_annex_33_37_handoff.py` (#157 annex matrix restore contract)
+- `pytest -q tests/test_grouped_annex_table.py` (#159 slide-32 grouped peer annex contract)
 - `pytest -q tests/test_amex_s28_handoff_contract.py tests/test_multi_panel_pane_headings.py` (#158 slide-28 pane titles)
 
 ## Child DOX Index
