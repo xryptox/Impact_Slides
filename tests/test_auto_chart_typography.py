@@ -293,14 +293,20 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
         pane["chart_config"]["typography"].get("mode") == "auto"
         for pane in (slide_17["visual_spec"]["primary_visual"], slide_17["visual_spec"]["secondary_visual"])
     )
+    supported = {
+        "line_chart", "grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart", "waterfall_chart",
+    }
     for slide in handoff["slides"]:
         visual = slide.get("visual_spec") or {}
         for key in ("primary_visual", "secondary_visual"):
             pane = visual.get(key)
-            if isinstance(pane, dict) and pane.get("type") in {
-                "line_chart", "grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart", "waterfall_chart",
-            }:
+            if isinstance(pane, dict) and pane.get("type") in supported:
                 pane.setdefault("chart_config", {}).setdefault("typography", {})["mode"] = "auto"
+        primary = visual.get("primary_visual")
+        if isinstance(primary, dict):
+            for tile in primary.get("tiles") or []:
+                if isinstance(tile, dict) and tile.get("kind") == "chart" and tile.get("chart_type") in supported:
+                    tile.setdefault("chart_config", {}).setdefault("typography", {})["mode"] = "auto"
     path = tmp_path / "v10.json"
     path.write_text(json.dumps(handoff), encoding="utf-8")
     for name, suppress in (("chartjs", []), ("svg", ["charts"])):
@@ -344,6 +350,39 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
         ]
         (out / "auto_typography_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
         assert len(audit) == 44 and not any(row["clipped"] for row in audit), (name, audit)
+
+
+def test_unknown_font_uses_reduced_confidence_metrics():
+    plan = resolve_auto_typography(
+        chart_type="line_chart", host_w=900, host_h=480, categories=["Q1"],
+        font_x="Unrecognized Theme Font",
+    )
+    assert plan.used_fallback_font and plan.confidence == "reduced"
+
+
+def test_wrapper_diagnostics_include_wrap_and_y_tick_reduction():
+    plan = resolve_auto_typography(
+        chart_type="line_chart", host_w=120, host_h=80,
+        categories=["Long reporting period alpha beta"] * 8,
+        y_tick_values=list(range(0, 101, 10)),
+        y_tick_labels=[str(value) for value in range(0, 101, 10)],
+    )
+    from impact_slides.renderer_v2.charts.auto_typography import plan_to_data_attrs
+
+    attrs = plan_to_data_attrs(plan)
+    assert "data-auto-x-wrap=" in attrs and "data-auto-y-reduced=" in attrs
+
+
+def test_adaptation_stage_mutation_trap_keeps_all_ordered_stages():
+    """Static mutation trap: deleting/reordering an adaptation stage fails."""
+    source = Path("impact_slides/renderer_v2/charts/auto_typography.py").read_text(encoding="utf-8")
+    positions = [source.index(marker) for marker in (
+        "# Stages 1–3: full labels",
+        "# Stage 4: short_label",
+        "# Stage 5: evenly skip full labels",
+        "# Stage 6: ellipsis",
+    )]
+    assert positions == sorted(positions)
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):

@@ -1,4 +1,16 @@
 {
+  "meta": {
+    "title": "Auto typography fixture",
+    "client": "test",
+    "date": "2026-01-01",
+    "evidence_sources": [
+      {
+        "evidence_id": "E0001",
+        "title": "Amex Q1 2026 archived simulation handoff",
+        "locator": "git:23b145e:simulation/amex_q1_2026/passes/pass_01/handoff.json"
+      }
+    ]
+  },
   "presentation": {
     "title": "American Express Earnings Conference Call Q1'26",
     "subtitle": "Simulation handoff · v2 pass_03 · last residual A",
