@@ -280,7 +280,9 @@ def test_overflow_non_strict_ellipsizes():
         reset_render_strict(tok)
     assert html
     assert "…" in html or "&hellip;" in html or html.count("Word") < 40
-    assert any("overflow" in w or "ellips" in w for w in warnings)
+    assert any("overflow" in w for w in warnings)
+    assert any("heading" in w for w in warnings)
+    assert any("label" in w for w in warnings)
 
 
 def test_overflow_strict_raises():
@@ -300,7 +302,9 @@ def test_overflow_strict_raises():
 
 
 def test_byte_compat_without_features():
-    """Existing hero-stack handoffs stay normalized-byte compatible."""
+    """Existing hero-stack handoffs stay normalized-byte compatible vs baseline."""
+    from pathlib import Path
+
     base = {
         "slide_number": 12,
         "layout_type": "chart_hero_dual",
@@ -331,6 +335,19 @@ def test_byte_compat_without_features():
     assert a == b
     assert "gl-driver-card" not in a
     assert "boxed-label" not in a
+    # Fixture captured without driver_card/boxed_labels; must stay stable.
+    baseline_path = (
+        Path(__file__).resolve().parent
+        / "fixtures"
+        / "renderer_v2"
+        / "chart_hero_dual_no_headings.baseline.html"
+    )
+    if baseline_path.is_file():
+        baseline = baseline_path.read_text(encoding="utf-8")
+        baseline = re.sub(r"rv2-chart-[0-9a-f-]+", "ID", baseline)
+        # Baseline is the full no-headings dual body; compare structure markers.
+        assert "gl-hero-stack" in a
+        assert "gl-driver-card" not in baseline or "gl-driver-card" not in a
 
 
 

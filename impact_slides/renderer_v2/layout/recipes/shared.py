@@ -661,8 +661,23 @@ def _driver_card_html(visual: Mapping[str, Any] | None) -> str:
     card = normalize_driver_card(visual)
     if not card:
         return ""
-    # Reuse #147 pane chrome for heading/subtitle (no duplicate title module).
-    chrome = chart_pane_headings_html(card["heading"], card.get("subtitle") or "")
+    # Fit heading/subtitle to 2-line budget before #147 chrome (same wrap contract as rows).
+    heading = _driver_fit_text(
+        card["heading"],
+        font_size=_DRIVER_HEADING_FS,
+        max_width=_DRIVER_HEADING_MAX_W,
+        field="heading",
+    )
+    subtitle = card.get("subtitle") or ""
+    if subtitle:
+        subtitle = _driver_fit_text(
+            subtitle,
+            font_size=14.0,
+            max_width=_DRIVER_HEADING_MAX_W,
+            field="subtitle",
+        )
+    # Reuse #147 pane chrome; preserve wrapped lines as <br>.
+    chrome = chart_pane_headings_html(heading, subtitle).replace("\n", "<br>")
     row_html: list[str] = []
     for row in card["rows"]:
         label = _driver_fit_text(

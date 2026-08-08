@@ -108,6 +108,17 @@ def test_chartjs_plugin_payload():
     assert boxed["minFontSize"] >= 11
 
 
+def test_chartjs_plugin_has_outside_path():
+    """Chart.js boxedLabels plugin must paint outside+connector for short bars."""
+    from impact_slides.renderer_v2.shell import _BOXED_LABELS_PLUGIN_HTML
+
+    src = _BOXED_LABELS_PLUGIN_HTML
+    assert "outside" in src
+    assert "lineTo" in src  # connector stroke
+    assert "minBar" in src or "minBar=28" in src
+    assert "rv2BoxedLabelsOutside" in src
+
+
 def test_chartjs_html_embeds_plugin_not_collision():
     html = _build_chartjs_html(_slide(), "grouped_bar_chart")
     assert "boxedLabels" in html
