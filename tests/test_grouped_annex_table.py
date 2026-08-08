@@ -161,6 +161,15 @@ def test_ordinary_annex_table_markup_is_unchanged() -> None:
     ) in html
 
 
+@pytest.mark.parametrize("header_groups", [{"label": "Legacy", "span": 1}, ["Legacy"]])
+def test_ordinary_annex_preserves_permissive_header_groups(header_groups) -> None:
+    slide = _ordinary_annex_slide()
+    slide["visual_spec"]["primary_visual"]["header_groups"] = header_groups
+    html = render_slide(slide, total=1, notes="")
+    assert 'data-layout="annex_table"' in html
+    assert "Revenue" in html and "$1" in html
+
+
 def test_grouped_and_ordinary_annexes_use_the_shared_table_seam(monkeypatch) -> None:
     import impact_slides.renderer_v2.layout.recipes.metrics as metrics
 

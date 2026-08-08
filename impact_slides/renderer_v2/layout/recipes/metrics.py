@@ -305,16 +305,17 @@ def _annex_table_html(
     scoped_headers: bool = False,
 ) -> str:
     """Render the shared annex table surface used by ordinary and grouped blocks."""
-    if header_groups:
+    if isinstance(header_groups, list) and header_groups:
         top_cells = ['<th class="gl-annex-stub" rowspan="2"></th>']
         for group in header_groups:
-            # R5-H/T13: no index-parity banding — the PDF annex band is
-            # uniformly navy; gl-annex-group-alt stays available for a
-            # future semantic banding handoff, not column parity.
-            top_cells.append(
-                f'<th class="gl-annex-group" colspan="{int(group.get("span") or 1)}">'
-                f'{esc(strip_eids(group.get("label") or ""))}</th>'
-            )
+            if isinstance(group, Mapping):
+                # R5-H/T13: no index-parity banding — the PDF annex band is
+                # uniformly navy; gl-annex-group-alt stays available for a
+                # future semantic banding handoff, not column parity.
+                top_cells.append(
+                    f'<th class="gl-annex-group" colspan="{int(group.get("span") or 1)}">'
+                    f'{esc(strip_eids(group.get("label") or ""))}</th>'
+                )
         thead = "<tr>" + "".join(top_cells) + "</tr>"
         thead += "<tr>" + "".join(
             f'<th class="gl-annex-head">{esc(header)}</th>' for header in headers[1:]
