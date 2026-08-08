@@ -37,7 +37,7 @@ Durable workflow scripts:
 - `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — supervising workflow watcher that returns idle/done/blocked pane output and no-mistakes gate state to the host session
 - `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
 
-The launcher deliberately uses the user's normal Pi settings plus explicit SuperGrok Grok 4.5 high and the `implement` skill. This is the tested path that preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
+The launcher deliberately uses the user's normal Pi settings plus the configured `dev` model (currently OpenRouter GPT-5.6 Terra at high thinking) and the `implement` skill. This path preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
 ### Canonical launch and supervision
 
