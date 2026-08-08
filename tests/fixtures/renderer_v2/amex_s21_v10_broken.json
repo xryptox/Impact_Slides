@@ -1,0 +1,124 @@
+{
+  "presentation": {
+    "title": "Amex Q1'26 — slide 21 v10 broken"
+  },
+  "slides": [
+    {
+      "slide_number": 21,
+      "layout_type": "multi_panel",
+      "packing_mode": "stat-led",
+      "title": "Capital",
+      "section": "Capital",
+      "content": {
+        "subtitle": "$ in billions; Common Shares Outstanding in millions",
+        "so_what": "",
+        "key_stats": [
+          {
+            "label": "CET1 Ratio Q1'26",
+            "value": "10.5%"
+          },
+          {
+            "label": "CET1 Target",
+            "value": "10–11%"
+          },
+          {
+            "label": "NI Returned (3yr)",
+            "value": "74%"
+          },
+          {
+            "label": "Dividend/share ↑ (3yr)",
+            "value": "58%"
+          },
+          {
+            "label": "Q1'26 Capital Returned",
+            "value": "$2.3B"
+          },
+          {
+            "label": "Shares Outstanding",
+            "value": "682"
+          },
+          {
+            "label": "ROE Q1'26",
+            "value": "35%"
+          }
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "multi_panel",
+          "tiles": [
+            {
+              "kind": "chart",
+              "chart_type": "stacked_bar_chart",
+              "label": "Capital composition",
+              "steps_or_data": [
+                [
+                  "Quarter",
+                  "Dividends",
+                  "Share Repurchases"
+                ],
+                [
+                  "Q4'24",
+                  "0.5",
+                  "1.1"
+                ],
+                [
+                  "Q1'25",
+                  "0.6",
+                  "0.7"
+                ],
+                [
+                  "Q2'25",
+                  "0.6",
+                  "1.4"
+                ],
+                [
+                  "Q3'25",
+                  "0.6",
+                  "2.3"
+                ],
+                [
+                  "Q4'25",
+                  "0.6",
+                  "0.9"
+                ],
+                [
+                  "Q1'26",
+                  "0.7",
+                  "1.6"
+                ]
+              ],
+              "chart_config": {}
+            },
+            {
+              "kind": "metric",
+              "label": "CET1 Ratio Q1'26",
+              "value": "10.5%"
+            },
+            {
+              "kind": "metric",
+              "label": "CET1 Target",
+              "value": "10–11%"
+            },
+            {
+              "kind": "metric",
+              "label": "NI Returned (3yr)",
+              "value": "74%"
+            },
+            {
+              "kind": "metric",
+              "label": "Dividend/share ↑ (3yr)",
+              "value": "58%"
+            },
+            {
+              "kind": "metric",
+              "label": "Q1'26 Capital Returned",
+              "value": "$2.3B"
+            }
+          ]
+        }
+      },
+      "speaker_notes": "v2 pass_01: multi_panel capital board (F11)."
+    }
+  ]
+}

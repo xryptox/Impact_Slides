@@ -802,9 +802,13 @@ def _chartjs_combo_config(
     bar_labels, bar_series, bar_rows, _bar_colors = _combo_bar_data(slide)
     if not bar_rows:
         return None
+    cfg = _chart_config(slide)
+    palette = _series_colors(cfg)
+    # Multi-series combo bars stack (SVG parity; #155 capital-return boards).
+    stacked = len(bar_series) > 1
     datasets: list[dict[str, Any]] = []
     for si, name in enumerate(bar_series):
-        color = _series_color(si)
+        color = palette[si % len(palette)]
         data = [row[si] if si < len(row) else None for row in bar_rows]
         datasets.append(
             {
@@ -814,6 +818,7 @@ def _chartjs_combo_config(
                 "backgroundColor": color,
                 "borderColor": color,
                 "order": 2,
+                **({"stack": "combo"} if stacked else {}),
             }
         )
     line_points = _combo_line_data(slide)
@@ -841,7 +846,6 @@ def _chartjs_combo_config(
         if not isinstance(overlay, Mapping) or overlay.get("dual_axis", True) is not False:
             line_dataset["yAxisID"] = "y1"
         datasets.append(line_dataset)
-    cfg = _chart_config(slide)
     _apply_bar_density_knobs(datasets, cfg)
     typo, auto_plan = typography_with_auto(
         slide, "combo_chart", chart_cfg=cfg, host_w=host_w, host_h=host_h
@@ -849,6 +853,9 @@ def _chartjs_combo_config(
     options = _chartjs_common_options(
         cfg, typo=typo, auto_plan=auto_plan, category_offset=True
     )
+    if stacked:
+        options["scales"]["x"]["stacked"] = True
+        options["scales"]["y"]["stacked"] = True
     if line_points:
         vs = slide.get("visual_spec") or {}
         overlay = vs.get("line_overlay") or {}
@@ -874,6 +881,54 @@ def _chartjs_combo_config(
             options["scales"]["y1"] = y1
             if auto_plan is not None:
                 apply_plan_to_chartjs_options(options, auto_plan)
+    # Stack totals on the bar series only (line stays unlabeled here).
+    if stacked and (
+        cfg.get("stack_totals")
+        or cfg.get("stack_total_labels")
+        or cfg.get("point_labels")
+        or cfg.get("show_point_labels")
+    ):
+        unit = str(cfg.get("y_axis_unit") or "")
+
+        def _fmt_value(v: float) -> str:
+            return _fmt_value_label(v, unit)
+
+        total_matrix: list[list[str]] | None = None
+        if cfg.get("stack_totals") or cfg.get("stack_total_labels"):
+            explicit = cfg.get("stack_total_labels")
+            if isinstance(explicit, (list, tuple)) and explicit:
+                totals: list[Any] = [
+                    str(explicit[ci]) if ci < len(explicit) else ""
+                    for ci in range(len(bar_labels))
+                ]
+            else:
+                totals = [
+                    sum(v for v in row if isinstance(v, (int, float)))
+                    for row in bar_rows
+                ]
+            total_matrix = [[""] * len(bar_labels) for _ in bar_series]
+            for ci, (row, total) in enumerate(zip(bar_rows, totals)):
+                top_si = 0
+                for si in range(len(bar_series) - 1, -1, -1):
+                    v = row[si] if si < len(row) else None
+                    if isinstance(v, (int, float)) and v > 0:
+                        top_si = si
+                        break
+                total_matrix[top_si][ci] = (
+                    total if isinstance(total, str) else _fmt_value(total)
+                )
+        if total_matrix is not None:
+            options["plugins"]["datalabels"] = {
+                **_datalabels_cfg(
+                    anchor="end",
+                    align="top",
+                    offset=2,
+                    color=_NAVY,
+                    size=12,
+                    labels=total_matrix,
+                ),
+                "clip": False,
+            }
     _apply_semantic_zero_line(options, datasets, axis="y")
     return {
         "type": "bar",

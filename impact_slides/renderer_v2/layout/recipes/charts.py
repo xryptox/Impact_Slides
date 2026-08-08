@@ -175,6 +175,189 @@ _CHART_TABLE_ALIGN_JS = """
 """
 
 
+def _compose_chart_with_support(
+    chart_html: str,
+    *,
+    layout: str,
+    primary: Mapping[str, Any] | None,
+    secondary: Mapping[str, Any] | None,
+    wrap_classes: list[str] | None = None,
+    host_px: float | None = None,
+) -> str:
+    """Attach an optional plot-aligned support table under a chart (#36/#149/#155).
+
+    Returns chart_html unchanged when secondary has no table rows. Shared by
+    ``render_chart`` and ``render_chart_hero_dual`` so hero boards can host the
+    same outlined/plain support contract without a second geometry path.
+    """
+    from ...charts import chart_column_interval
+
+    secondary = secondary if isinstance(secondary, Mapping) else {}
+    primary = primary if isinstance(primary, Mapping) else {}
+    wrap_classes = list(wrap_classes or [])
+    sec_steps = secondary.get("steps_or_data") or []
+    table_rows: list[list[str]] = []
+    for st in sec_steps:
+        if isinstance(st, (list, tuple)):
+            table_rows.append([strip_eids(str(x)) for x in st])
+        elif isinstance(st, str) and "|" in st:
+            table_rows.append([strip_eids(x) for x in st.split("|")])
+    if not table_rows:
+        if wrap_classes:
+            return f'<div class="chart-svg-wrap {" ".join(wrap_classes)}">{chart_html}</div>'
+        return chart_html
+
+    header = table_rows[0]
+    body = table_rows[1:]
+    raw_steps = primary.get("steps_or_data") or []
+    if raw_steps and all(isinstance(pt, Mapping) for pt in raw_steps):
+        labels = [
+            str(pt.get("label") or pt.get("x") or "").strip()
+            for pt in raw_steps
+        ]
+    elif (
+        len(raw_steps) > 1
+        and all(isinstance(pt, (list, tuple)) and len(pt) > 0 for pt in raw_steps)
+    ):
+        labels = [str(r[0]).strip() for r in raw_steps[1:]]
+    else:
+        labels = []
+    n = len(labels)
+    aligned = (
+        n > 0
+        and all(len(r) == n + 1 for r in table_rows)
+        and [c.strip() for c in header[1:]] == labels
+    )
+    skin = str(secondary.get("skin") or "").strip()
+    is_outlined = skin == "outlined_boxes"
+    outlined_stacked = False
+    lane_shift_px = 0.0
+    resolved_host_px = float(host_px) if host_px is not None else 0.0
+    if aligned:
+        left, right, width = chart_column_interval(layout, n)
+        table_w = right / width * 100
+        label_w = left / right * 100
+        col_w = (right - left) / n / right * 100
+        colgroup = (
+            "<colgroup>"
+            f'<col style="width:{label_w:.2f}%">'
+            + f'<col style="width:{col_w:.2f}%">' * n
+            + "</colgroup>"
+        )
+        align_attrs = (
+            f' data-align-left="{left:.1f}" data-align-right="{right:.1f}"'
+            f' data-align-width="{width:.1f}"'
+        )
+        if is_outlined:
+            from ...charts.geometry import (
+                OUTLINED_HOST_WIDTH_PX,
+                outlined_lane_layout,
+            )
+            from ...charts.typography import _RENDER_STRICT, _warn
+
+            label_text = ""
+            if body and body[0]:
+                label_text = str(body[0][0] or "").strip()
+            if host_px is None:
+                resolved_host_px = OUTLINED_HOST_WIDTH_PX
+                if "chart-with-stats" in wrap_classes:
+                    resolved_host_px = OUTLINED_HOST_WIDTH_PX * (0.44 / 0.55)
+            lane = outlined_lane_layout(
+                left,
+                right,
+                width,
+                n,
+                host_px=resolved_host_px,
+                has_label=bool(label_text),
+            )
+            if not lane["ok"]:
+                msg = (
+                    "outlined support row cannot reserve label lane "
+                    f"for n={n} (host too narrow)"
+                )
+                if _RENDER_STRICT.get():
+                    raise ValueError(msg)
+                _warn(msg)
+                outlined_stacked = True
+                aligned = False
+                colgroup = ""
+                align_attrs = ""
+            else:
+                shift = float(lane["shift_px"])
+                wrap_w = float(lane["wrap_w_px"])
+                lab_col = float(lane["label_col_w_px"])
+                pitch = float(lane["pitch_px"])
+                table_w = wrap_w / resolved_host_px * 100
+                label_w = lab_col / wrap_w * 100 if wrap_w else 0.0
+                col_w = pitch / wrap_w * 100 if wrap_w else 0.0
+                lane_shift_px = shift
+                align_attrs += (
+                    f' data-label-shift="{shift:.1f}"'
+                    f' data-label-col="{lab_col:.1f}"'
+                )
+    else:
+        colgroup = ""
+        align_attrs = ""
+        table_w = 0.0
+        label_w = 0.0
+        col_w = 0.0
+
+    if is_outlined:
+        cells_html = ""
+        for row in body:
+            for ci, c in enumerate(row):
+                cls_name = (
+                    "chart-outlined-label" if ci == 0 else "chart-outlined-cell"
+                )
+                if aligned:
+                    pct = label_w if ci == 0 else col_w
+                    cells_html += (
+                        f'<div class="{cls_name}" style="width:{pct:.2f}%">'
+                        f'<span class="chart-outlined-box">{esc(c)}</span></div>'
+                    )
+                else:
+                    cells_html += (
+                        f'<div class="{cls_name}">'
+                        f'<span class="chart-outlined-box">{esc(c)}</span></div>'
+                    )
+        box_cls = "chart-support-outlined"
+        if aligned:
+            box_cls += " chart-table-aligned"
+        elif outlined_stacked:
+            box_cls += " chart-outlined-stacked"
+        style_bits = []
+        if aligned:
+            style_bits.append(f"width:{table_w:.2f}%")
+        if lane_shift_px > 0 and resolved_host_px:
+            shift_pct = lane_shift_px / resolved_host_px * 100
+            style_bits.append(f"margin-left:{-shift_pct:.2f}%")
+        box_style = f' style="{";".join(style_bits)}"' if style_bits else ""
+        tbl = f'<div class="{box_cls}"{box_style}{align_attrs}>{cells_html}</div>'
+    else:
+        tbl_cls = "chart-support-table" + (
+            " chart-table-aligned" if aligned else ""
+        )
+        tbl_style = f' style="width:{table_w:.2f}%"' if aligned else ""
+        tbl = (
+            f'<table class="{tbl_cls}"{tbl_style}{align_attrs}>'
+            f"{colgroup}<thead><tr>"
+        )
+        tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
+        tbl += "</tr></thead><tbody>"
+        for row in body:
+            tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
+        tbl += "</tbody></table>"
+
+    align_js = _CHART_TABLE_ALIGN_JS if aligned else ""
+    cls = " ".join(
+        wrap_classes + (["chart-align-table"] if aligned else [])
+    )
+    return (
+        f'<div class="chart-svg-wrap {cls}">'
+        f'<div class="chart-col">{chart_html}{tbl}{align_js}</div></div>'
+    )
+
+
 def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False):
     from ...charts import build_chart_html, is_chart_layout
 
@@ -234,192 +417,14 @@ def render_chart(slide, total, notes, active=False, *, use_chartjs: bool = False
 
     # Supporting data table below chart (e.g., line chart + table)
     if has_table:
-        from ...charts import chart_column_interval
+        main = _compose_chart_with_support(
+            chart_html,
+            layout=layout,
+            primary=vs.get("primary_visual") or {},
+            secondary=secondary,
+            wrap_classes=wrap_classes,
+        )
 
-        sec_steps = secondary.get("steps_or_data") or []
-        table_rows: list[list[str]] = []
-        for st in sec_steps:
-            if isinstance(st, (list, tuple)):
-                table_rows.append([strip_eids(str(x)) for x in st])
-            elif isinstance(st, str) and "|" in st:
-                table_rows.append([strip_eids(x) for x in st.split("|")])
-        if table_rows:
-            header = table_rows[0]
-            body = table_rows[1:]
-
-            # --- Plot alignment (spatial composition contract, #36) --------
-            # When the table's header cells match the chart's category labels
-            # 1:1, each value column is centered under its chart category and
-            # the table shares the SVG's width context (PDF house style).
-            primary = vs.get("primary_visual") or {}
-            raw_steps = primary.get("steps_or_data") or []
-            # Category labels from either supported primary form (#136):
-            # mapping points use label/x; row-list data skips the header row
-            # and takes the first cell of each data row.
-            if raw_steps and all(isinstance(p, Mapping) for p in raw_steps):
-                labels = [
-                    str(p.get("label") or p.get("x") or "").strip()
-                    for p in raw_steps
-                ]
-            elif (
-                len(raw_steps) > 1
-                and all(isinstance(p, (list, tuple)) and len(p) > 0 for p in raw_steps)
-            ):
-                labels = [str(r[0]).strip() for r in raw_steps[1:]]
-            else:
-                labels = []
-            n = len(labels)
-            aligned = (
-                n > 0
-                and all(len(r) == n + 1 for r in table_rows)
-                and [c.strip() for c in header[1:]] == labels
-            )
-            skin = str(secondary.get("skin") or "").strip()
-            is_outlined = skin == "outlined_boxes"
-            outlined_stacked = False
-            lane_shift_px = 0.0
-            host_px = 0.0  # set for outlined aligned path
-            if aligned:
-                left, right, width = chart_column_interval(layout, n)
-                # Ordinary support tables: colgroup % of table width. The table
-                # spans [0, right] of the shared SVG width context, so an
-                # absolute column center (pct * table_w) equals cx / width.
-                table_w = right / width * 100
-                label_w = left / right * 100  # label col as % of table width
-                col_w = (right - left) / n / right * 100
-                colgroup = (
-                    "<colgroup>"
-                    f'<col style="width:{label_w:.2f}%">'
-                    + f'<col style="width:{col_w:.2f}%">' * n
-                    + "</colgroup>"
-                )
-                align_attrs = (
-                    f' data-align-left="{left:.1f}" data-align-right="{right:.1f}"'
-                    f' data-align-width="{width:.1f}"'
-                )
-                if is_outlined:
-                    # #149: reserve a readable label lane; may extend left of
-                    # the chart column so value cells stay under bar centers.
-                    from ...charts.geometry import (
-                        OUTLINED_HOST_WIDTH_PX,
-                        outlined_lane_layout,
-                    )
-                    from ...charts.typography import _RENDER_STRICT, _warn
-
-                    label_text = ""
-                    if body and body[0]:
-                        label_text = str(body[0][0] or "").strip()
-                    # Match CSS host fraction: chart-split=55%, +stats=44%.
-                    # Scale from OUTLINED_HOST_WIDTH_PX so monkeypatches stick.
-                    host_px = OUTLINED_HOST_WIDTH_PX
-                    if "chart-with-stats" in wrap_classes:
-                        host_px = OUTLINED_HOST_WIDTH_PX * (0.44 / 0.55)
-                    lane = outlined_lane_layout(
-                        left,
-                        right,
-                        width,
-                        n,
-                        host_px=host_px,
-                        has_label=bool(label_text),
-                    )
-                    if not lane["ok"]:
-                        msg = (
-                            "outlined support row cannot reserve label lane "
-                            f"for n={n} (host too narrow)"
-                        )
-                        if _RENDER_STRICT.get():
-                            raise ValueError(msg)
-                        _warn(msg)
-                        outlined_stacked = True
-                        aligned = False
-                        colgroup = ""
-                        align_attrs = ""
-                    else:
-                        shift = float(lane["shift_px"])
-                        wrap_w = float(lane["wrap_w_px"])
-                        lab_col = float(lane["label_col_w_px"])
-                        pitch = float(lane["pitch_px"])
-                        table_w = wrap_w / host_px * 100
-                        label_w = lab_col / wrap_w * 100 if wrap_w else 0.0
-                        col_w = pitch / wrap_w * 100 if wrap_w else 0.0
-                        lane_shift_px = shift
-                        align_attrs += (
-                            f' data-label-shift="{shift:.1f}"'
-                            f' data-label-col="{lab_col:.1f}"'
-                        )
-            else:
-                colgroup = ""
-                align_attrs = ""
-                table_w = 0.0
-                label_w = 0.0
-                col_w = 0.0
-
-            # N6: opt-in outlined-box skin (PDF provision boards: gray-stroked,
-            # unfilled reserve-rate cells under each period column, period labels
-            # already on the chart axis so the header row is dropped).
-            # Declarative via secondary_visual.skin; absent -> today's table.
-            if is_outlined:
-                cells_html = ""
-                for row in body:
-                    for ci, c in enumerate(row):
-                        cls_name = (
-                            "chart-outlined-label" if ci == 0 else "chart-outlined-cell"
-                        )
-                        # outer slot carries the pitch-matched alignment width;
-                        # the visible stroked box sits inside (PDF p15: cells
-                        # are ~40% of the column pitch, centered, separated).
-                        if aligned:
-                            pct = label_w if ci == 0 else col_w
-                            cells_html += (
-                                f'<div class="{cls_name}" style="width:{pct:.2f}%">'
-                                f'<span class="chart-outlined-box">{esc(c)}</span></div>'
-                            )
-                        else:
-                            cells_html += (
-                                f'<div class="{cls_name}">'
-                                f'<span class="chart-outlined-box">{esc(c)}</span></div>'
-                            )
-                box_cls = "chart-support-outlined"
-                if aligned:
-                    box_cls += " chart-table-aligned"
-                elif outlined_stacked:
-                    box_cls += " chart-outlined-stacked"
-                style_bits = []
-                if aligned:
-                    style_bits.append(f"width:{table_w:.2f}%")
-                    if lane_shift_px > 0:
-                        # % of .chart-col (containing block) — same base as width.
-                        shift_pct = lane_shift_px / host_px * 100
-                        style_bits.append(f"margin-left:{-shift_pct:.2f}%")
-                box_style = f' style="{";".join(style_bits)}"' if style_bits else ""
-                tbl = f'<div class="{box_cls}"{box_style}{align_attrs}>{cells_html}</div>'
-            else:
-                tbl_cls = "chart-support-table" + (
-                    " chart-table-aligned" if aligned else ""
-                )
-                tbl_style = f' style="width:{table_w:.2f}%"' if aligned else ""
-                tbl = (
-                    f'<table class="{tbl_cls}"{tbl_style}{align_attrs}>'
-                    f"{colgroup}<thead><tr>"
-                )
-                tbl += "".join(f"<th>{esc(h)}</th>" for h in header)
-                tbl += "</tr></thead><tbody>"
-                for row in body:
-                    tbl += "<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
-                tbl += "</tbody></table>"
-            # Width sharing is UNCONDITIONAL (#40): every support table lives
-            # inside the chart's width context (.chart-col), whether or not
-            # its columns align with chart categories. Column alignment
-            # (colgroup) remains conditional on the header/category match.
-            # #136: Chart.js runtime re-pitch only when this table is aligned.
-            align_js = _CHART_TABLE_ALIGN_JS if aligned else ""
-            cls = " ".join(
-                wrap_classes + (["chart-align-table"] if aligned else [])
-            )
-            main = (
-                f'<div class="chart-svg-wrap {cls}">'
-                f'<div class="chart-col">{chart_html}{tbl}{align_js}</div></div>'
-            )
     # Metric strip from key_stats (PDF pattern: chart + KPI row below)
     if has_stats:
         tiles = ""
@@ -601,6 +606,18 @@ def render_chart_hero_dual(slide, total, notes, active=False, *, use_chartjs: bo
         chart_html = build_chart_html(
             slide, str(pv.get("type")), use_chartjs=use_chartjs,
             host_w=canvas_w, host_h=canvas_h,
+        )
+    # #155: under-chart support row when secondary_visual carries table rows.
+    # Right-pane chrome still reads heading/subtitle from the same mapping.
+    support_steps = sv.get("steps_or_data") if isinstance(sv, Mapping) else None
+    if chart_html and support_steps:
+        chart_html = _compose_chart_with_support(
+            chart_html,
+            layout=str(pv.get("type") or slide.get("layout_type") or ""),
+            primary=pv,
+            secondary=sv,
+            wrap_classes=["chart-split"],
+            host_px=float(canvas_w),
         )
     # #151: structured driver_card takes the right pane when valid.
     driver_html = _driver_card_html(sv) if isinstance(sv, dict) else ""
