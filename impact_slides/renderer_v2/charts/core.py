@@ -116,6 +116,11 @@ def _svg_fallback_for_layout(
     if plan is not None:
         cfg["_auto_typo_plan"] = plan
         visual_spec = dict(slide.get("visual_spec") or {})
+        primary = dict(visual_spec.get("primary_visual") or {})
+        primary["chart_config"] = cfg
+        visual_spec["primary_visual"] = primary
+        # _chart_config merges either location; retain the top-level handoff
+        # shape too so direct SVG dispatch shares the exact resolved plan.
         visual_spec["chart_config"] = cfg
         slide = {**slide, "visual_spec": visual_spec}
         if record_diagnostic:

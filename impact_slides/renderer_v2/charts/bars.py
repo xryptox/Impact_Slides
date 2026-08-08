@@ -15,6 +15,7 @@ from .callouts import (
     _resolve_side_callout,
     _side_column_geometry,
 )
+from .auto_typography import compute_auto_plan_for_slide, svg_auto_axis_view, svg_label_transform
 from .typography import (
     estimate_label_box,
     resolve_typography,
@@ -218,13 +219,21 @@ def _vbar_frame(
         f'xmlns="http://www.w3.org/2000/svg" '
         f'style="width:100%;height:auto">'
     ]
-    # Tick labels only — plot gridlines default off (#152).
-    for tick in y_ticks:
+    # Tick labels only — plot gridlines default off (#152). The caller may
+    # stash an auto plan; only use its y ticks when they share this native domain.
+    plan = cfg.get("_auto_typo_plan")
+    # Stacked bars use stack sums, not the resolver's flattened-value domain.
+    if getattr(plan, "chart_type", "") != "grouped_bar_chart":
+        plan = None
+    _lines, value_ticks = svg_auto_axis_view(
+        plan, labels=[], ticks=y_ticks, format_tick=lambda tick: _fmt_bar(tick, unit)
+    )
+    for tick, tick_label in value_ticks:
         ty = y_pos(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
-            f'font-family="var(--font-body, sans-serif)">{esc(_fmt_bar(tick, unit))}</text>'
+            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
     # Stash sizes on cfg for value/x label painters in the same call.
     cfg["_typo_x_tick_fs"] = x_tick_fs
@@ -296,6 +305,10 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
     dl_fs = int(cfg.get("_typo_dl_fs") or 14)
     x_fs = int(cfg.get("_typo_x_tick_fs") or 14)
     dl_set = bool(cfg.get("_typo_dl_set"))
+    auto_plan = compute_auto_plan_for_slide(slide, "grouped_bar_chart", chart_cfg=cfg)
+    label_lines, _value_ticks = svg_auto_axis_view(
+        auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
+    )
 
     parts.extend(_bar_group_brackets(cfg, labels, pad_l, slot, pad_t - 22))
 
@@ -340,13 +353,26 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
                 f'fill="var(--navy, #00175a)" font-size="{dl_fs}" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(txt)}</text>'
             )
-        parts.append(
-            f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
-            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
-            f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
-        )
+        lines = label_lines[i] if i < len(label_lines) else [lab]
+        for line_i, line in enumerate(lines):
+            if auto_plan is None:
+                parts.append(
+                    f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
+                    f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
+                    f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+                )
+            else:
+                parts.append(
+                    f'<text class="auto-x-label" data-auto-label-index="{i}" '
+                    f'x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25 + line_i * x_fs:.1f}"'
+                    f'{svg_label_transform(auto_plan, pad_l + i * slot + slot / 2, H - pad_b + 25 + line_i * x_fs)} '
+                    f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
+                    f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+                )
 
-    if dl_set and label_items:
+    if auto_plan is not None and auto_plan.datalabels_suppressed:
+        pass
+    elif dl_set and label_items:
         suppressed, details = suppress_colliding_labels(label_items)
         keep = set(range(len(label_items))) - set(suppressed)
         for i in sorted(keep):
@@ -401,6 +427,10 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
     parts = _vbar_frame("vbar-stacked", cfg, y_max, y_min, y_ticks, series, pad_r=pad_r)
+    auto_plan = compute_auto_plan_for_slide(slide, "stacked_bar_chart", chart_cfg=cfg)
+    label_lines, _value_ticks = svg_auto_axis_view(
+        auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
+    )
     zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
 
     n = len(labels)
@@ -476,11 +506,16 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         # Category labels sit lower when negative totals occupy the usual row
         cat_y = H - 12 if any(neg_sums) else H - pad_b + 25
         x_fs = int(cfg.get("_typo_x_tick_fs") or 14)
-        parts.append(
-            f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{cat_y}" '
-            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
-            f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
-        )
+        lines = label_lines[i] if i < len(label_lines) else [lab]
+        for line_i, line in enumerate(lines):
+            parts.append(
+                f'<text class="auto-x-label" data-auto-label-index="{i}" '
+                f'x="{pad_l + i * slot + slot / 2:.1f}" y="{cat_y + line_i * x_fs:.1f}"'
+                f'{svg_label_transform(auto_plan, pad_l + i * slot + slot / 2, cat_y + line_i * x_fs)} '
+                f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{x_fs}" '
+                f'font-weight="600" font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+            )
+            
 
     if column:
         offset, gutter = column
@@ -586,13 +621,20 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
                 f'font-family="var(--font-body, sans-serif)">'
                 f'{esc(_fmt_bar(tv, ""))}</text>'
             )
+    auto_plan = compute_auto_plan_for_slide(slide, "horizontal_bar_chart", chart_cfg=cfg)
+    label_lines, _value_ticks = svg_auto_axis_view(
+        auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
+    )
     for i, lab in enumerate(labels):
         cy = pad_t + row_h * i + row_h / 2
-        parts.append(
-            f'<text class="hbar-cat" x="{pad_l - 8:.1f}" y="{cy + 4:.1f}" '
-            f'text-anchor="end" fill="var(--navy, #00175a)" font-size="{cat_fs}" '
-            f'font-weight="{cat_wt}">{esc(lab)}</text>'
-        )
+        lines = label_lines[i] if i < len(label_lines) else [lab]
+        for line_i, line in enumerate(lines):
+            parts.append(
+                f'<text class="hbar-cat auto-x-label" data-auto-label-index="{i}" '
+                f'x="{pad_l - 8:.1f}" y="{cy + 4 + (line_i - (len(lines) - 1) / 2) * cat_fs:.1f}" '
+                f'text-anchor="end" fill="var(--navy, #00175a)" font-size="{cat_fs}" '
+                f'font-weight="{cat_wt}">{esc(line)}</text>'
+            )
         for si in range(m):
             v = rows[i][si] if si < len(rows[i]) else None
             if v is None:

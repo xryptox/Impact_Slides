@@ -8,6 +8,7 @@ from .format import _fmt_unit, _series_colors
 from .geometry import chart_geometry
 from .bars import _bar_matrix
 from .core import _chart_config, _steps
+from .auto_typography import compute_auto_plan_for_slide, svg_auto_axis_view, svg_label_transform
 from .typography import (
     estimate_label_box,
     resolve_typography,
@@ -222,10 +223,13 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
         '<defs></defs>',
     ]
 
+    auto_plan = compute_auto_plan_for_slide(slide, "line_chart", chart_cfg=cfg)
+    label_lines, value_ticks = svg_auto_axis_view(
+        auto_plan, labels=[str(p["label"]) for p in points], ticks=y_ticks, format_tick=_fmtu
+    )
     # Y-axis tick labels only — plot gridlines default off (#152).
-    for tick in y_ticks:
+    for tick, tick_label in value_ticks:
         ty = y_pos(tick)
-        tick_label = _fmtu(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
@@ -246,11 +250,15 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
 
     # X-axis labels
     for i, p in enumerate(points):
-        parts.append(
-            f'<text x="{x_pos(i):.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
-            f'font-family="var(--font-body, sans-serif)">{esc(p["label"])}</text>'
-        )
+        lines = label_lines[i] if i < len(label_lines) else [str(p["label"])]
+        for line_i, line in enumerate(lines):
+            parts.append(
+                f'<text class="auto-x-label" data-auto-label-index="{i}" '
+                f'x="{x_pos(i):.1f}" y="{H - pad_b + 25 + line_i * x_tick_fs}"'
+                f'{svg_label_transform(auto_plan, x_pos(i), H - pad_b + 25 + line_i * x_tick_fs)} text-anchor="middle" '
+                f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+            )
 
     # Y-axis label (rotated)
     if y_label:
@@ -382,7 +390,9 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
                     f'font-family="var(--font-body, sans-serif)">{esc(txt)}</text>'
                 )
 
-    if dl_set and label_items:
+    if auto_plan is not None and auto_plan.datalabels_suppressed:
+        pass
+    elif dl_set and label_items:
         suppressed, details = suppress_colliding_labels(label_items)
         keep = set(range(len(label_items))) - set(suppressed)
         for i in sorted(keep):
@@ -519,6 +529,10 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         f'style="width:100%;height:auto">',
     ]
 
+    auto_plan = compute_auto_plan_for_slide(slide, "combo_chart", chart_cfg=cfg)
+    label_lines, _value_ticks = svg_auto_axis_view(
+        auto_plan, labels=bar_labels, ticks=[], format_tick=lambda _tick: ""
+    )
     # Y-axis tick labels only (bar axis) — plot gridlines default off (#152).
     bar_ticks = cfg.get("y_axis_ticks")
     if bar_ticks is None:
@@ -630,11 +644,15 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="600" '
                 f'font-family="var(--font-body, sans-serif)">{esc(val_text)}</text>'
             )
-        parts.append(
-            f'<text x="{x + bar_w/2:.1f}" y="{H - pad_b + 25}" text-anchor="middle" '
-            f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
-            f'font-family="var(--font-body, sans-serif)">{esc(lab)}</text>'
-        )
+        lines = label_lines[i] if i < len(label_lines) else [lab]
+        for line_i, line in enumerate(lines):
+            parts.append(
+                f'<text class="auto-x-label" data-auto-label-index="{i}" '
+                f'x="{x + bar_w/2:.1f}" y="{H - pad_b + 25 + line_i * x_tick_fs}"'
+                f'{svg_label_transform(auto_plan, x + bar_w / 2, H - pad_b + 25 + line_i * x_tick_fs)} text-anchor="middle" '
+                f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
+                f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+            )
 
     # Line overlay
     if line_points:

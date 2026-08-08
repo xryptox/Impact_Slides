@@ -7,6 +7,7 @@ from ..strip import esc, strip_eids
 from .format import _fmt_chart_num
 from .bars import _bar_matrix
 from .core import _chart_config, _steps
+from .auto_typography import compute_auto_plan_for_slide, svg_auto_axis_view, svg_label_transform
 from .typography import resolve_typography
 
 
@@ -112,6 +113,10 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
     x_tick_fs = int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 16
     dl_fs = int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 18
     labels, series, rows, _pc = _bar_matrix(slide)
+    auto_plan = compute_auto_plan_for_slide(slide, "waterfall_chart", chart_cfg=cfg)
+    label_lines, _value_ticks = svg_auto_axis_view(
+        auto_plan, labels=labels, ticks=[], format_tick=lambda _tick: ""
+    )
     if not labels or not series or not rows:
         return '<p class="chart-empty">No chart data for waterfall_chart</p>'
 
@@ -208,11 +213,15 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
             f'text-anchor="middle" fill="{navy}" font-size="{dl_fs}" '
             f'font-weight="700">{esc(vlab)}</text>'
         )
-        parts.append(
-            f'<text class="chart-axis-label" x="{cx:.1f}" y="{height - 28}" '
-            f'text-anchor="middle" fill="{ink}" font-size="{x_tick_fs}">'
-            f"{esc(lab[:16])}</text>"
-        )
+        lines = label_lines[i] if i < len(label_lines) else [lab]
+        for line_i, line in enumerate(lines):
+            parts.append(
+                f'<text class="chart-axis-label auto-x-label" data-auto-label-index="{i}" '
+                f'x="{cx:.1f}" y="{height - 28 + line_i * x_tick_fs}"'
+                f'{svg_label_transform(auto_plan, cx, height - 28 + line_i * x_tick_fs)} '
+                f'text-anchor="middle" fill="{ink}" font-size="{x_tick_fs}">'
+                f"{esc(line)}</text>"
+            )
 
     parts.append("</svg>")
     legend = (

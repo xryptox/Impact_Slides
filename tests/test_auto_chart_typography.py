@@ -1,8 +1,10 @@
 """#150 — public auto-typography resolver and renderer integration."""
 from __future__ import annotations
 
+import base64
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -10,9 +12,13 @@ from impact_slides.renderer_v2 import render_deck
 from impact_slides.renderer_v2.charts.auto_typography import (
     AUTO_X_LO,
     AUTO_Y_LO,
+    _fit_x_labels,
+    measure_label_box,
     resolve_auto_typography,
     sync_sibling_plans,
 )
+
+FIXTURES = Path(__file__).parent / "fixtures" / "renderer_v2"
 from impact_slides.renderer_v2.charts.typography import resolve_typography
 
 
@@ -140,6 +146,147 @@ def test_svg_and_chartjs_receive_the_same_auto_sizes(tmp_path):
     assert f'font-size="{chartjs_x}"' in svg
     assert f'font-size="{chartjs_y}"' in svg
     assert 'data-auto-typo="1"' not in svg  # SVG has no canvas wrapper.
+
+
+@pytest.mark.parametrize(
+    ("labels", "short_labels", "plot_w", "bottom", "expected"),
+    [
+        (["Q1 2026"] * 2, [None] * 2, 300, 80, (False, 0, False, False, False)),
+        (["Long alpha beta gamma"] * 2, [None] * 2, 220, 40, (True, 0, False, False, False)),
+        (["AlphaBeta"] * 2, [None] * 2, 120, 70, (False, 30, False, False, False)),
+        (["Long alpha beta"] * 2, [None] * 2, 160, 120, (False, 45, False, False, False)),
+        (["Long alpha beta gamma"] * 8, [f"Q{i}" for i in range(8)], 160, 80, (False, 0, True, False, False)),
+        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (True, 0, False, True, False)),
+        (["Supercalifragilisticexpialidocious"] * 8, [None] * 8, 100, 80, (False, 0, False, True, True)),
+    ],
+)
+def test_x_adaptation_stage_order_mutation_traps(labels, short_labels, plot_w, bottom, expected):
+    """Each issue-mandated stage has a distinct fit case and ordering trap."""
+    plan = _fit_x_labels(labels, short_labels, 12, plot_w, bottom)
+    assert plan is not None
+    assert (
+        plan.used_wrap,
+        plan.rotation_deg,
+        plan.used_short,
+        plan.used_skip,
+        plan.used_ellipsis,
+    ) == expected
+
+
+def test_sibling_sync_mutation_trap_uses_smallest_non_explicit_size():
+    wide = resolve_auto_typography(
+        chart_type="line_chart", host_w=900, host_h=480, categories=["Q1", "Q2"]
+    )
+    dense = resolve_auto_typography(
+        chart_type="line_chart", host_w=220, host_h=180,
+        categories=["Long reporting period alpha beta"] * 8,
+    )
+    synced = sync_sibling_plans([wide, dense])
+    assert synced[0].x_tick_font_size == synced[1].x_tick_font_size == dense.x_tick_font_size
+
+
+def test_svg_receives_adapted_labels_and_datalabel_suppression(tmp_path):
+    pane = _pane(
+        "grouped_bar_chart",
+        ["Supercalifragilisticexpialidocious"] * 20,
+        typography={"mode": "auto"},
+        short=True,
+    )
+    slide = {
+        "slide_number": 1, "title": "Auto", "layout_type": "grouped_bar_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "svg"
+    render_deck(path, out, strict=False, suppress_features=["charts"])
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    labels = re.findall(r'class="auto-x-label"[^>]*>(.*?)</text>', html)
+    assert labels and all("Supercalifragilisticexpialidocious" not in label for label in labels)
+    assert set(labels) <= {f"Q{i}" for i in range(1, 21)}
+
+
+@pytest.mark.parametrize("font", ["Source Sans 3", "IBM Plex Sans"])
+@pytest.mark.parametrize("size", [12, 18, 24])
+@pytest.mark.parametrize("rotation", [0, 30, 45])
+def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, rotation):
+    """Chromium verifies the metric tables; Chromium is never deck runtime."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    family = "source-sans-3-latin.woff2" if font == "Source Sans 3" else "ibm-plex-sans-latin.woff2"
+    face = "SourceMetric" if font == "Source Sans 3" else "PlexMetric"
+    font_data = base64.b64encode(
+        (Path("impact_slides/renderer_v2/assets/fonts") / family).read_bytes()
+    ).decode("ascii")
+    samples = ["WWWWW", "mill", "Revenue", "Q1 2026", "111,222.50%", "M&A / FY-2026"]
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page()
+        page.set_content(
+            f'<style>@font-face{{font-family:{face};src:url(data:font/woff2;base64,{font_data}) format("woff2")}}</style>'
+        )
+        actual = page.evaluate(
+            """async ({face, size, rotation, samples}) => {
+              await document.fonts.load(`600 ${size}px ${face}`, samples.join(""));
+              const c = document.createElement("canvas").getContext("2d");
+              c.font = `600 ${size}px ${face}`;
+              return samples.map(text => {
+                const w = c.measureText(text).width, h = size * 1.28;
+                const rad = Math.abs(rotation) * Math.PI / 180;
+                return Math.abs(w * Math.cos(rad)) + Math.abs(h * Math.sin(rad));
+              });
+            }""",
+            {"face": face, "size": size, "rotation": rotation, "samples": samples},
+        )
+        browser.close()
+    for text, width in zip(samples, actual):
+        estimated = measure_label_box(text, size, font=font, weight=600, rotation_deg=rotation)[0]
+        assert estimated + max(width * 0.05, 2) >= width, (font, size, rotation, text, estimated, width)
+
+
+def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
+    """The archived v10 handoff renders both paths with recorded decisions and no viewport clips."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    from scripts.amex_handoff_mutations import apply_all
+
+    handoff = json.loads((FIXTURES / "amex_v10_44_slide_handoff.json").read_text(encoding="utf-8"))
+    handoff = apply_all(handoff)
+    for slide in handoff["slides"]:
+        visual = slide.get("visual_spec") or {}
+        for key in ("primary_visual", "secondary_visual"):
+            pane = visual.get(key)
+            if isinstance(pane, dict) and pane.get("type") in {
+                "line_chart", "grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart", "waterfall_chart",
+            }:
+                pane.setdefault("chart_config", {}).setdefault("typography", {})["mode"] = "auto"
+    path = tmp_path / "v10.json"
+    path.write_text(json.dumps(handoff), encoding="utf-8")
+    for name, suppress in (("chartjs", []), ("svg", ["charts"])):
+        out = tmp_path / name
+        render_deck(path, out, strict=False, suppress_features=suppress)
+        html = (out / "presentation.html").read_text(encoding="utf-8")
+        meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+        assert len(re.findall(r'<section class="slide[^>]*data-slide-number="', html)) == 44
+        assert meta["auto_typography"], name
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1920, "height": 1080})
+            page.goto((out / "presentation.html").resolve().as_uri(), wait_until="networkidle")
+            clip = page.evaluate(
+                """() => [...document.querySelectorAll('.slide')].map(slide => {
+                    slide.classList.add('active');
+                    const bad = [...slide.querySelectorAll('svg text, .chartjs-wrap, canvas')].some(el => {
+                      const r = el.getBoundingClientRect();
+                      return r.width < 1 || r.height < 1 || r.left < -1 || r.top < -1 || r.right > 1921 || r.bottom > 1081;
+                    });
+                    slide.classList.remove('active');
+                    return bad;
+                })"""
+            )
+            browser.close()
+        assert not any(clip), (name, [i + 1 for i, bad in enumerate(clip) if bad])
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):

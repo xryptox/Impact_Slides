@@ -9,7 +9,7 @@ import math
 import re
 import sys
 from dataclasses import asdict, dataclass, field
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 # Auto candidate ranges (inclusive, whole px). Not public config.
 AUTO_X_LO, AUTO_X_HI = 12, 24
@@ -79,29 +79,30 @@ def _warn(msg: str) -> None:
 # Font metrics (normalized advances, calibrated for boardroom fonts)
 # ---------------------------------------------------------------------------
 
-# Advances are fractions of em. Tuned so estimated bounds conservatively
-# contain real rendered bounds within max(5%, 2px) for representative glyphs.
+# Advances are fractions of em. Per-class maxima come from Chromium canvas
+# measurement of the vendored variable WOFF2 faces at 12/18/24px; the 2% pad
+# in measure_text_width makes each estimate conservative within 5% or 2px.
 _FONT_METRICS: dict[str, dict[str, float]] = {
     "source_sans_3": {
-        "digit": 0.56,
-        "upper": 0.64,
-        "lower": 0.50,
-        "space": 0.24,
-        "punct": 0.28,
-        "other": 0.58,
-        "avg": 0.52,
+        "digit": 0.54,
+        "upper": 0.82,
+        "lower": 0.86,
+        "space": 0.21,
+        "punct": 0.90,
+        "other": 0.90,
+        "avg": 0.64,
         "ascender": 0.92,
         "descender": 0.22,
         "line_gap": 0.12,
     },
     "ibm_plex_sans": {
-        "digit": 0.58,
-        "upper": 0.66,
-        "lower": 0.52,
-        "space": 0.26,
-        "punct": 0.30,
-        "other": 0.60,
-        "avg": 0.54,
+        "digit": 0.63,
+        "upper": 0.97,
+        "lower": 0.91,
+        "space": 0.25,
+        "punct": 0.98,
+        "other": 0.98,
+        "avg": 0.70,
         "ascender": 0.94,
         "descender": 0.24,
         "line_gap": 0.12,
@@ -1181,6 +1182,31 @@ def plan_to_data_attrs(plan: AutoTypoPlan) -> str:
         ("data-auto-confidence", str(d.get("confidence", "high"))),
     )
     return "".join(f' {k}="{v}"' for k, v in keys)
+
+
+def svg_label_transform(plan: AutoTypoPlan | None, x: float, y: float) -> str:
+    """SVG equivalent of the plan's Chart.js category-axis rotation."""
+    rotation = plan.x_labels.rotation_deg if plan and plan.x_labels else 0.0
+    return f' transform="rotate(-{rotation:g} {x:.1f} {y:.1f})"' if rotation else ""
+
+
+def svg_auto_axis_view(
+    plan: AutoTypoPlan | None,
+    *,
+    labels: Sequence[str],
+    ticks: Sequence[float],
+    format_tick: Callable[[float], str],
+) -> tuple[list[list[str]], list[tuple[float, str]]]:
+    """Return the stashed plan's SVG category lines and value-axis ticks."""
+    category_lines = [[str(label)] for label in labels]
+    value_ticks = [(float(tick), format_tick(float(tick))) for tick in ticks]
+    if not plan or not plan.enabled:
+        return category_lines, value_ticks
+    if plan.x_labels is not None and len(plan.x_labels.lines) == len(labels):
+        category_lines = [list(lines) for lines in plan.x_labels.lines]
+    if plan.y_ticks_reduced and plan.y_tick_values:
+        value_ticks = list(zip(plan.y_tick_values, plan.y_tick_labels))
+    return category_lines, value_ticks
 
 
 def apply_plan_to_chartjs_options(
