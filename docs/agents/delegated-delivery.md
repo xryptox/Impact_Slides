@@ -31,12 +31,13 @@ When that applies, use PEW for orchestration and isolated worktrees, but launch 
 
 Durable workflow scripts:
 
-- `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — starts the lean interactive Pi child
-- `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — repair/report lifecycle built on that launcher
+- `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — creates a tab in the supplied current Herdr workspace and starts a genuine interactive Pi TUI
+- `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-implement-visible.ps1` — writes the implementation contract and launches the visible implementer
+- `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — writes the host-repair contract and launches the visible repair session
 - `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — supervising workflow watcher that returns idle/done/blocked pane output and no-mistakes gate state to the host session
 - `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
 
-The lean child starts with `--no-extensions --no-skills` and explicitly loads only SuperGrok, the skill-command extension, Ponytail, CodeMapper, and the `implement` skill. Its tool allowlist is `read,bash,edit,write,map,search,outline,expand,path`. Observational memory, RTK, fork/subagent, handoff, TSCG, and PEW are excluded from the child. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
+The launcher deliberately uses the user's normal Pi settings plus explicit SuperGrok Grok 4.5 high and the `implement` skill. This is the tested path that preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
 ## Delivery sequence
 
@@ -52,7 +53,8 @@ The lean child starts with `--no-extensions --no-skills` and explicitly loads on
 
 Each implementer must:
 
-- launch through `launch-visible-implementer.ps1` (directly or through the repair orchestrator) into the supervising session's current Herdr workspace, not a new workspace or a bare full-profile `pi` command;
+- launch through `orchestrate-herdr-implement-visible.ps1` (or `orchestrate-herdr-repair-visible.ps1` for returned work), which delegates tab creation to `launch-visible-implementer.ps1` in the supervising session's current Herdr workspace;
+- immediately start a background workflow using `watch-visible-implementers.ps1` for every pane in the wave; relaunch the one-shot watcher after an answered gate until every implementer reaches its collected terminal report;
 - invoke/read the `implement` skill explicitly;
 - use TDD where practical and run the `code-review` skill's parallel Standards and Spec subagents before no-mistakes;
 - change only its issue scope;
