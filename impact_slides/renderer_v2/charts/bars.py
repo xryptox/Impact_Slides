@@ -233,7 +233,7 @@ def _vbar_frame(
     for tick, tick_label in value_ticks:
         ty = y_pos(tick)
         parts.append(
-            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+            f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
@@ -625,7 +625,7 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
         for tv, tick_label in value_ticks:
             tx = x_pos(tv)
             parts.append(
-                f'<text class="hbar-xtick" x="{tx:.1f}" y="{H - pad_b + 18:.1f}" '
+                f'<text class="hbar-xtick auto-y-label" x="{tx:.1f}" y="{H - pad_b + 18:.1f}" '
                 f'text-anchor="middle" fill="var(--navy, #00175a)" '
                 f'font-size="{x_tick_fs}" font-weight="{x_tick_wt}" '
                 f'font-family="var(--font-body, sans-serif)">'

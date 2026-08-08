@@ -247,7 +247,7 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     for tick, tick_label in value_ticks:
         ty = y_pos(tick)
         parts.append(
-            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+            f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
@@ -561,7 +561,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     for tick, tick_label in bar_tick_view:
         ty = bar_y(tick)
         parts.append(
-            f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+            f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
             f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
         )
@@ -592,7 +592,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         for tick, tick_label in line_tick_view:
             ty = line_y(tick)
             parts.append(
-                f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
+                f'<text class="auto-y1-label" x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
                 f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
                 f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
             )

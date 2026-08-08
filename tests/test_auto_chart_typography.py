@@ -297,8 +297,14 @@ def test_auto_chartjs_uses_complete_formatted_tick_plan_and_reserves_default_leg
     assert plan is not None
     assert ticks["_rv2Values"] == plan.y_tick_values
     assert ticks["_rv2Labels"] == plan.y_tick_labels
+    assert config["options"]["scales"]["y"]["min"] == plan.y_tick_values[0]
+    assert config["options"]["scales"]["y"]["max"] == plan.y_tick_values[-1]
     assert all(label.startswith("USD") for label in ticks["_rv2Labels"])
     assert config["options"]["plugins"]["legend"].get("display") is False
+    svg_out = tmp_path / "svg"
+    render_deck(path, svg_out, strict=False, suppress_features=["charts"])
+    svg = (svg_out / "presentation.html").read_text(encoding="utf-8")
+    assert all(f">{label}</text>" in svg for label in plan.y_tick_labels)
     explicit = json.loads(json.dumps(slide))
     explicit["visual_spec"]["primary_visual"]["chart_config"]["series_names"] = ["Revenue", "Margin"]
     explicit_plan = compute_auto_plan_for_slide(explicit, "line_chart", host_w=900, host_h=480)
@@ -420,13 +426,18 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                       : [...slide.querySelectorAll('.chart-svg-wrap[data-auto-typo="1"]')].map(wrap => {
                           const boxes = [...wrap.querySelectorAll('svg text')].map(text => text.getBoundingClientRect());
                           const categoryBoxes = [...wrap.querySelectorAll('svg text.auto-x-label')].map(text => text.getBoundingClientRect());
+                          const yBoxes = [...wrap.querySelectorAll('svg text.auto-y-label')].map(text => text.getBoundingClientRect());
+                          const y1Boxes = [...wrap.querySelectorAll('svg text.auto-y1-label')].map(text => text.getBoundingClientRect());
                           const rows = categoryBoxes.reduce((rows, box) => {
                             const row = rows.find(row => Math.abs(row[0].top - box.top) < 1);
                             (row || rows[rows.push([]) - 1]).push(box);
                             return rows;
                           }, []);
-                          return {text_count: categoryBoxes.length, clipped: boxes.some(box => !within(box, outer)),
-                            overlap: rows.some(row => row.some((box, i) => row.slice(i + 1).some(other => overlap(box, other))))};
+                          const collides = group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other)));
+                          return {text_count: categoryBoxes.length, y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
+                            expected_y_ticks: Number(wrap.dataset.autoYTicks || 0), expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
+                            clipped: boxes.some(box => !within(box, outer)),
+                            overlap: rows.some(collides) || collides(yBoxes) || collides(y1Boxes)};
                         });
                     return {slide_number: index + 1, panes};
                   });
@@ -437,7 +448,18 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
         for row in audit:
             if expected_by_slide[row["slide_number"]]:
                 assert len(row["panes"]) == expected_by_slide[row["slide_number"]], (name, row)
-                assert all(pane["text_count"] and not pane["clipped"] and not pane["overlap"] for pane in row["panes"]), (name, row)
+                if name == "svg":
+                    assert all(
+                        pane["text_count"] and pane["y_text_count"] == pane["expected_y_ticks"]
+                        and pane["y1_text_count"] == pane["expected_y1_ticks"]
+                        and not pane["clipped"] and not pane["overlap"]
+                        for pane in row["panes"]
+                    ), (name, row)
+                else:
+                    assert all(
+                        pane["text_count"] and not pane["clipped"] and not pane["overlap"]
+                        for pane in row["panes"]
+                    ), (name, row)
         (out / "auto_typography_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
 
 
