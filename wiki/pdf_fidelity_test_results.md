@@ -1,5 +1,7 @@
 # PDF Fidelity Test — Renderer v2 vs Amex Q1'26 Earnings PDF
 
+> **Superseded - historical fidelity snapshot.** Current Amex slide 24 behavior is covered by `tests/test_amex_s24_growth_handoff_contract.py`.
+
 **Round 1:** 2026-07-18 (baseline) · **Round 2:** 2026-07-18 (after fidelity tickets #29–#31) · **Round 3:** 2026-07-18 (all remaining gaps closed via #32–#35)
 **Test:** Recreate 10 chart/visualization slides from the Amex Q1'26 Earnings PDF (44 pages) using renderer_v2, with data manually extracted from the PDF.
 **Artifacts:**
