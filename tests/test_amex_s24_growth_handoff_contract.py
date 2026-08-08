@@ -150,12 +150,18 @@ def test_chartjs_bar_groups_are_opt_in():
     assert configured["options"]["layout"]["padding"]["top"] >= 28
 
     malformed = _corrected()
-    malformed["visual_spec"]["primary_visual"]["chart_config"]["bar_groups"] = [
-        {"label": "bad", "start": "nope", "end": 2}
-    ]
-    ignored = _chartjs_bar_config(malformed)
-    assert ignored is not None
-    assert "barGroups" not in ignored["options"]["plugins"]
+    for malformed_groups in (
+        [{"label": "bad", "start": "nope", "end": 2}],
+        [{"label": "bad", "start": True, "end": False}],
+        [{"label": "bad", "start": 3, "end": 2}],
+        [{"label": "bad", "start": -1, "end": 2}],
+        [{"label": "bad", "start": 0, "end": len(_CATEGORIES)}],
+    ):
+        malformed["visual_spec"]["primary_visual"]["chart_config"]["bar_groups"] = malformed_groups
+        ignored = _chartjs_bar_config(malformed)
+        assert ignored is not None
+        assert "barGroups" not in ignored["options"]["plugins"]
+        assert "layout" not in ignored["options"]
 
     without_groups = _corrected()
     without_groups["visual_spec"]["primary_visual"]["chart_config"].pop("bar_groups")

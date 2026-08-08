@@ -311,10 +311,16 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
             for group in groups:
                 if not isinstance(group, Mapping):
                     continue
+                raw_start = group.get("start", 0)
+                raw_end = group.get("end", raw_start)
+                if isinstance(raw_start, bool) or isinstance(raw_end, bool):
+                    continue
                 try:
-                    start = int(group.get("start", 0))
-                    end = int(group.get("end", start))
+                    start = int(raw_start)
+                    end = int(raw_end)
                 except (TypeError, ValueError):
+                    continue
+                if start < 0 or end < start or end >= len(labels):
                     continue
                 items.append({"label": str(group.get("label") or ""), "start": start, "end": end})
             if items:
