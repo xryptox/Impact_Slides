@@ -238,13 +238,8 @@ def resolve_typography(
         if strict:
             raise ValueError(f"chart_config.typography: {msg}")
         _warn(msg)
-        # Drop only the unsupported field; keep mode/axis overrides.
+        # Drop only the unsupported field on the local copy; keep mode/axis overrides.
         raw.pop("datalabel_font_size", None)
-        # Mirror the strip onto a mutable author chart_config when present.
-        if isinstance(chart_cfg, dict):
-            authored = chart_cfg.get("typography")
-            if isinstance(authored, dict):
-                authored.pop("datalabel_font_size", None)
 
     mode_raw = raw.get("mode")
     auto_mode = False
@@ -284,7 +279,8 @@ def resolve_typography(
 def typography_from_slide(slide: Mapping[str, Any], *, strict: bool | None = None) -> dict[str, int]:
     from .core import _chart_config
 
-    return resolve_typography(_chart_config(slide), strict=strict)
+    layout = str(slide.get("layout_type") or "").lower().strip() or None
+    return resolve_typography(_chart_config(slide), strict=strict, chart_type=layout)
 
 
 def ordinary_datalabel_size(typo: Mapping[str, int], *, default: int = LEGACY_DATALABEL) -> int:
