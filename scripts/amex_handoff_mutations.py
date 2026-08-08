@@ -41,12 +41,434 @@ _S14_RIGHT_STEPS = [
     {"label": "Q1'26", "value": 2.0},
 ]
 
+# Issue #157 — PDF pages / deck slides 33–37 annex matrices.
+# v10 handoff lost FX rows, value cells, and period associations.
+_FX_NOTE = "* See Slide 3 for an explanation of FX-adjusted information."
+# annex_table paints subtitle via chosen_dek; body_text is not rendered.
+# Put units first so slide 34 ($ in millions) is visibly distinct from
+# 33/35–37 ($ in billions) without a renderer production change.
+_ANNEX_FRAME = "% Increase/(decrease) vs. Prior year"
+
+
+def _annex_subtitle(units: str) -> str:
+    return f"{units} · {_ANNEX_FRAME}"
+
+
+_ANNEX_33_37: dict[int, dict[str, Any]] = {
+    33: {
+        "title": "Annex 2 Total Balances — Reported & FX-Adjusted",
+        "units": "$ in billions",
+        "rows": [
+            [
+                "Metric",
+                "Q1'19",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26",
+            ],
+            [
+                "GAAP Total Balances",
+                "$142",
+                "$194",
+                "$199",
+                "$202",
+                "$208",
+                "$207",
+                "$212",
+                "$216",
+                "$225",
+                "$224",
+            ],
+            [
+                "FX-Adjusted Total Balances*",
+                "$140",
+                "$193",
+                "$200",
+                "$202",
+                "$211",
+                "$209",
+                "",
+                "",
+                "",
+                "",
+            ],
+            [
+                "YoY% Inc/(Dec) in GAAP Total Balances",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "7%",
+                "7%",
+                "7%",
+                "8%",
+                "8%",
+            ],
+            [
+                "YoY% Inc/(Dec) in FX-Adjusted Total Balances*",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "7%",
+                "6%",
+                "7%",
+                "7%",
+                "7%",
+            ],
+            [
+                "GAAP Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "7%",
+            ],
+            [
+                "FX-Adjusted Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR*",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "7%",
+            ],
+        ],
+    },
+    34: {
+        "title": "Annex 3 Revenue — Reported & FX-Adjusted",
+        "units": "$ in millions",
+        "rows": [
+            ["Item", "Q1'26", "Q1'25", "YoY% Inc/(Dec)"],
+            ["Discount Revenue", "$9,512", "$8,743", "9%"],
+            ["FX-Adjusted*", "", "$8,857", "7%"],
+            ["Net Card Fees", "$2,752", "$2,333", "18%"],
+            ["FX-Adjusted*", "", "$2,374", "16%"],
+            ["Service Fees and Other Revenue", "$1,951", "$1,722", "13%"],
+            ["FX-Adjusted*", "", "$1,783", "9%"],
+            ["Net Interest Income", "$4,692", "$4,169", "13%"],
+            ["FX-Adjusted*", "", "$4,196", "12%"],
+            ["Revenues Net of Interest Expense", "$18,907", "$16,967", "11%"],
+            ["FX-Adjusted*", "", "$17,210", "10%"],
+        ],
+    },
+    35: {
+        "title": "Annex 4 Net Card Fees — Reported & FX-Adjusted",
+        "units": "$ in billions",
+        "rows": [
+            [
+                "Metric",
+                "Q1'19",
+                "Q1'23",
+                "Q2'23",
+                "Q3'23",
+                "Q4'23",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26",
+            ],
+            [
+                "GAAP Net Card Fees",
+                "$0.9",
+                "$1.7",
+                "$1.8",
+                "$1.8",
+                "$1.9",
+                "$2.0",
+                "$2.1",
+                "$2.2",
+                "$2.2",
+                "$2.3",
+                "$2.5",
+                "$2.6",
+                "$2.6",
+                "$2.8",
+            ],
+            [
+                "FX-Adjusted Net Card Fees*",
+                "$0.9",
+                "$1.7",
+                "$1.8",
+                "$1.8",
+                "$1.9",
+                "$2.0",
+                "$2.1",
+                "$2.2",
+                "$2.3",
+                "$2.4",
+                "",
+                "",
+                "",
+                "",
+            ],
+            [
+                "YoY% Inc/(Dec) in GAAP Net Card Fees",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "15%",
+                "15%",
+                "18%",
+                "18%",
+                "18%",
+                "20%",
+                "18%",
+                "17%",
+                "18%",
+            ],
+            [
+                "YoY% Inc/(Dec) in FX-Adjusted Net Card Fees*",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "16%",
+                "16%",
+                "18%",
+                "19%",
+                "20%",
+                "20%",
+                "17%",
+                "16%",
+                "16%",
+            ],
+            [
+                "GAAP Net Card Fees Q1'19 - Q1'26 CAGR",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "17%",
+            ],
+            [
+                "FX-Adjusted Net Card Fees Q1'19 - Q1'26 CAGR*",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "17%",
+            ],
+        ],
+    },
+    36: {
+        "title": "Annex 5 Net Interest Income — Reported & FX-Adjusted",
+        "units": "$ in billions",
+        "rows": [
+            [
+                "Metric",
+                "Q1'19",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26",
+            ],
+            [
+                "GAAP Net Interest Income",
+                "$2.1",
+                "$3.8",
+                "$3.7",
+                "$4.0",
+                "$4.0",
+                "$4.2",
+                "$4.2",
+                "$4.5",
+                "$4.5",
+                "$4.7",
+            ],
+            [
+                "FX-Adjusted Net Interest Income*",
+                "$2.1",
+                "$3.7",
+                "$3.7",
+                "$4.0",
+                "$4.1",
+                "$4.2",
+                "",
+                "",
+                "",
+                "",
+            ],
+            [
+                "YoY% Inc/(Dec) in GAAP Net Interest Income",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "11%",
+                "12%",
+                "12%",
+                "12%",
+                "13%",
+            ],
+            [
+                "YoY% Inc/(Dec) in FX-Adjusted Net Interest Income*",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "11%",
+                "12%",
+                "12%",
+                "12%",
+                "12%",
+            ],
+            [
+                "GAAP Net Interest Income Q1'19 - Q1'26 CAGR",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "12%",
+            ],
+            [
+                "FX-Adjusted Net Interest Income Q1'19 - Q1'26 CAGR*",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "13%",
+            ],
+        ],
+    },
+    37: {
+        "title": "Annex 6 Revenues Net of Interest Expense — Reported & FX-Adjusted",
+        "units": "$ in billions",
+        "rows": [
+            [
+                "Metric",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26",
+            ],
+            [
+                "GAAP Revenues Net of Interest Expense",
+                "$15.8",
+                "$16.3",
+                "$16.6",
+                "$17.2",
+                "$17.0",
+                "$17.9",
+                "$18.4",
+                "$19.0",
+                "$18.9",
+            ],
+            [
+                "FX-Adjusted Revenues Net of Interest Expense*",
+                "$15.7",
+                "$16.4",
+                "$16.7",
+                "$17.3",
+                "$17.2",
+                "",
+                "",
+                "",
+                "",
+            ],
+            [
+                "YoY% Inc/(Dec) in GAAP Revenues Net of Interest Expense",
+                "",
+                "",
+                "",
+                "",
+                "7%",
+                "9%",
+                "11%",
+                "10%",
+                "11%",
+            ],
+            [
+                "YoY% Inc/(Dec) in FX-Adjusted Revenues Net of Interest Expense*",
+                "",
+                "",
+                "",
+                "",
+                "8%",
+                "9%",
+                "11%",
+                "9%",
+                "10%",
+            ],
+        ],
+    },
+}
+
 
 def _slide(handoff: dict[str, Any], number: int) -> dict[str, Any]:
     for s in handoff.get("slides") or []:
         if int(s.get("slide_number", -1)) == number:
             return s
     raise KeyError(f"handoff missing slide_number={number}")
+
+
+def _has_slide(handoff: dict[str, Any], number: int) -> bool:
+    return any(int(s.get("slide_number", -1)) == number for s in handoff.get("slides") or [])
 
 
 def apply_issue_148_bar_semantics(handoff: dict[str, Any]) -> dict[str, Any]:
@@ -179,9 +601,51 @@ def apply_issue_158_slide28_pane_titles(handoff: dict[str, Any]) -> dict[str, An
     return out
 
 
+def apply_issue_157_annex_matrices(handoff: dict[str, Any]) -> dict[str, Any]:
+    """Restore complete PDF annex matrices on Amex slides 33–37.
+
+    Type (A) handoff fix only: full GAAP / FX-adjusted / YoY / CAGR rows with
+    source periods. Does not change renderer defaults. No-op when none of the
+    annex slides are present (partial fixture handoffs).
+    """
+    out = handoff
+    if not any(_has_slide(out, n) for n in _ANNEX_33_37):
+        return out
+    for number, meta in _ANNEX_33_37.items():
+        if not _has_slide(out, number):
+            continue
+        slide = _slide(out, number)
+        slide["layout_type"] = "annex_table"
+        slide["packing_mode"] = "stat-led"
+        slide["title"] = meta["title"]
+        slide["section"] = "Annex"
+        content = dict(slide.get("content") or {})
+        units = str(meta["units"])
+        content["subtitle"] = _annex_subtitle(units)
+        content["body_text"] = units
+        content.setdefault("so_what", "")
+        slide["content"] = content
+        slide["visual_spec"] = {
+            "primary_visual": {
+                "type": "annex_table",
+                "steps_or_data": deepcopy(meta["rows"]),
+            }
+        }
+        slide["disclosure"] = {
+            "pattern": "detail",
+            "panels": [{"title": "FX-adjusted note", "body": _FX_NOTE}],
+        }
+        slide["speaker_notes"] = (
+            f"Annex slide {number} restored from PDF source matrix (#157). "
+            "All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+        )
+    return out
+
+
 def apply_all(handoff: dict[str, Any]) -> dict[str, Any]:
     """Apply every bounded Amex handoff mutation known to this module."""
     out = apply_issue_148_bar_semantics(handoff)
+    out = apply_issue_157_annex_matrices(out)
     return apply_issue_158_slide28_pane_titles(out)
 
 
@@ -193,7 +657,7 @@ def main(argv: list[str] | None = None) -> int:
         "--output",
         type=Path,
         required=True,
-        help="Destination handoff JSON (issues #148/#158 mutations applied)",
+        help="Destination handoff JSON (all known Amex mutations applied)",
     )
     args = p.parse_args(argv)
     data = json.loads(args.input.read_text(encoding="utf-8"))

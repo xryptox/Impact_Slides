@@ -1,0 +1,595 @@
+{
+  "presentation": {
+    "title": "Amex Q1'26 Annex 33-37 restored (#157)",
+    "subtitle": "PDF-source complete annex matrices",
+    "audience": "Investors / IR",
+    "theme": {
+      "--color-bg": "#ffffff",
+      "--color-surface": "#ffffff",
+      "--color-ink": "#001B4D",
+      "--color-ink-muted": "#3A4A6B",
+      "--color-accent": "#006FCF",
+      "--color-accent-2": "#00175A",
+      "--color-border": "#E0E3EB",
+      "--color-stage-bg": "#00175A",
+      "--color-primary": "#00175A",
+      "--navy": "#00175A"
+    },
+    "chrome_level": "minimal",
+    "notes": "Issue #157 restored annex matrices from Q1-2026-Earnings-Presentation.pdf pages 33-37."
+  },
+  "slides": [
+    {
+      "slide_number": 33,
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 2 Total Balances — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": "",
+        "body_text": "$ in billions"
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'19",
+              "Q1'24",
+              "Q2'24",
+              "Q3'24",
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "GAAP Total Balances",
+              "$142",
+              "$194",
+              "$199",
+              "$202",
+              "$208",
+              "$207",
+              "$212",
+              "$216",
+              "$225",
+              "$224"
+            ],
+            [
+              "FX-Adjusted Total Balances*",
+              "$140",
+              "$193",
+              "$200",
+              "$202",
+              "$211",
+              "$209",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "YoY% Inc/(Dec) in GAAP Total Balances",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "7%",
+              "7%",
+              "7%",
+              "8%",
+              "8%"
+            ],
+            [
+              "YoY% Inc/(Dec) in FX-Adjusted Total Balances*",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "7%",
+              "6%",
+              "7%",
+              "7%",
+              "7%"
+            ],
+            [
+              "GAAP Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "7%"
+            ],
+            [
+              "FX-Adjusted Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR*",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "7%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex slide 33 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+    },
+    {
+      "slide_number": 34,
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 3 Revenue — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": "",
+        "body_text": "$ in millions"
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Q1'26",
+              "Q1'25",
+              "YoY% Inc/(Dec)"
+            ],
+            [
+              "Discount Revenue",
+              "$9,512",
+              "$8,743",
+              "9%"
+            ],
+            [
+              "FX-Adjusted*",
+              "",
+              "$8,857",
+              "7%"
+            ],
+            [
+              "Net Card Fees",
+              "$2,752",
+              "$2,333",
+              "18%"
+            ],
+            [
+              "FX-Adjusted*",
+              "",
+              "$2,374",
+              "16%"
+            ],
+            [
+              "Service Fees and Other Revenue",
+              "$1,951",
+              "$1,722",
+              "13%"
+            ],
+            [
+              "FX-Adjusted*",
+              "",
+              "$1,783",
+              "9%"
+            ],
+            [
+              "Net Interest Income",
+              "$4,692",
+              "$4,169",
+              "13%"
+            ],
+            [
+              "FX-Adjusted*",
+              "",
+              "$4,196",
+              "12%"
+            ],
+            [
+              "Revenues Net of Interest Expense",
+              "$18,907",
+              "$16,967",
+              "11%"
+            ],
+            [
+              "FX-Adjusted*",
+              "",
+              "$17,210",
+              "10%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex slide 34 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+    },
+    {
+      "slide_number": 35,
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 4 Net Card Fees — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": "",
+        "body_text": "$ in billions"
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'19",
+              "Q1'23",
+              "Q2'23",
+              "Q3'23",
+              "Q4'23",
+              "Q1'24",
+              "Q2'24",
+              "Q3'24",
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "GAAP Net Card Fees",
+              "$0.9",
+              "$1.7",
+              "$1.8",
+              "$1.8",
+              "$1.9",
+              "$2.0",
+              "$2.1",
+              "$2.2",
+              "$2.2",
+              "$2.3",
+              "$2.5",
+              "$2.6",
+              "$2.6",
+              "$2.8"
+            ],
+            [
+              "FX-Adjusted Net Card Fees*",
+              "$0.9",
+              "$1.7",
+              "$1.8",
+              "$1.8",
+              "$1.9",
+              "$2.0",
+              "$2.1",
+              "$2.2",
+              "$2.3",
+              "$2.4",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "YoY% Inc/(Dec) in GAAP Net Card Fees",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "15%",
+              "15%",
+              "18%",
+              "18%",
+              "18%",
+              "20%",
+              "18%",
+              "17%",
+              "18%"
+            ],
+            [
+              "YoY% Inc/(Dec) in FX-Adjusted Net Card Fees*",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "16%",
+              "16%",
+              "18%",
+              "19%",
+              "20%",
+              "20%",
+              "17%",
+              "16%",
+              "16%"
+            ],
+            [
+              "GAAP Net Card Fees Q1'19 - Q1'26 CAGR",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "17%"
+            ],
+            [
+              "FX-Adjusted Net Card Fees Q1'19 - Q1'26 CAGR*",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "17%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex slide 35 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+    },
+    {
+      "slide_number": 36,
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 5 Net Interest Income — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": "",
+        "body_text": "$ in billions"
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'19",
+              "Q1'24",
+              "Q2'24",
+              "Q3'24",
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "GAAP Net Interest Income",
+              "$2.1",
+              "$3.8",
+              "$3.7",
+              "$4.0",
+              "$4.0",
+              "$4.2",
+              "$4.2",
+              "$4.5",
+              "$4.5",
+              "$4.7"
+            ],
+            [
+              "FX-Adjusted Net Interest Income*",
+              "$2.1",
+              "$3.7",
+              "$3.7",
+              "$4.0",
+              "$4.1",
+              "$4.2",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "YoY% Inc/(Dec) in GAAP Net Interest Income",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "11%",
+              "12%",
+              "12%",
+              "12%",
+              "13%"
+            ],
+            [
+              "YoY% Inc/(Dec) in FX-Adjusted Net Interest Income*",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "11%",
+              "12%",
+              "12%",
+              "12%",
+              "12%"
+            ],
+            [
+              "GAAP Net Interest Income Q1'19 - Q1'26 CAGR",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "12%"
+            ],
+            [
+              "FX-Adjusted Net Interest Income Q1'19 - Q1'26 CAGR*",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "13%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex slide 36 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+    },
+    {
+      "slide_number": 37,
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 6 Revenues Net of Interest Expense — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": "",
+        "body_text": "$ in billions"
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'24",
+              "Q2'24",
+              "Q3'24",
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "GAAP Revenues Net of Interest Expense",
+              "$15.8",
+              "$16.3",
+              "$16.6",
+              "$17.2",
+              "$17.0",
+              "$17.9",
+              "$18.4",
+              "$19.0",
+              "$18.9"
+            ],
+            [
+              "FX-Adjusted Revenues Net of Interest Expense*",
+              "$15.7",
+              "$16.4",
+              "$16.7",
+              "$17.3",
+              "$17.2",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "YoY% Inc/(Dec) in GAAP Revenues Net of Interest Expense",
+              "",
+              "",
+              "",
+              "",
+              "7%",
+              "9%",
+              "11%",
+              "10%",
+              "11%"
+            ],
+            [
+              "YoY% Inc/(Dec) in FX-Adjusted Revenues Net of Interest Expense*",
+              "",
+              "",
+              "",
+              "",
+              "8%",
+              "9%",
+              "11%",
+              "9%",
+              "10%"
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex slide 37 restored from PDF source matrix (#157). All GAAP, FX-adjusted, YoY, and CAGR rows preserved."
+    }
+  ]
+}
