@@ -228,7 +228,7 @@ def test_svg_receives_adapted_labels_and_datalabel_suppression(tmp_path):
     html = (out / "presentation.html").read_text(encoding="utf-8")
     labels = re.findall(r'class="auto-x-label"[^>]*>(.*?)</text>', html)
     assert labels and all("Supercalifragilisticexpialidocious" not in label for label in labels)
-    assert set(labels) <= {f"Q{i}" for i in range(1, 21)}
+    assert all("…" in label for label in labels)
 
 
 @pytest.mark.parametrize("font", ["Source Sans 3", "IBM Plex Sans"])

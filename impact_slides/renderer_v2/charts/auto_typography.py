@@ -569,9 +569,10 @@ def _fit_x_labels(
                 )
                 return plan
 
-    # Stage 5: evenly skip (full labels preferred, then short), try rotations
-    for use_short in (False, True) if any_short else (False,):
-        base = shorts if use_short else list(full_labels)
+    # Stage 5: evenly skip full labels. short_label is only a way to avoid
+    # information loss, never a substitute on an already-skipped axis.
+    for use_short in (False,):
+        base = list(full_labels)
         for step in range(2, n):
             kept = set(skip_indices(n, step))
             trial = [base[i] if i in kept else "" for i in range(n)]
