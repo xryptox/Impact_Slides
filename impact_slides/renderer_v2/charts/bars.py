@@ -18,6 +18,7 @@ from .callouts import (
 from .auto_typography import (
     axis_config_after_break,
     compute_auto_plan_for_slide,
+    full_label_aria_suffix,
     svg_auto_axis_view,
     svg_label_transform,
 )
@@ -236,7 +237,8 @@ def _vbar_frame(
         y_tick_wt = "700"
     parts: list[str] = [
         f'<svg class="chart-svg vbar-chart {cls}" viewBox="0 0 {W} {H}" '
-        f'xmlns="http://www.w3.org/2000/svg" '
+        f'xmlns="http://www.w3.org/2000/svg" role="img" '
+        f'aria-label="Bar chart{esc(full_label_aria_suffix(plan))}" '
         f'style="width:100%;height:auto">'
     ]
     # Tick labels only — plot gridlines default off (#152).
@@ -631,7 +633,8 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
     bar_h = min(28.0, (row_h * 0.7) / max(m, 1))
     parts = [
         f'<svg class="chart-svg hbar" viewBox="0 0 {W} {H}" '
-        f'xmlns="http://www.w3.org/2000/svg" role="img">'
+        f'xmlns="http://www.w3.org/2000/svg" role="img" '
+        f'aria-label="Horizontal bar chart{esc(full_label_aria_suffix(auto_plan))}">'
     ]
     label_lines, value_ticks = svg_auto_axis_view(
         auto_plan, labels=labels, ticks=x_ticks, format_tick=lambda tick: _fmt_bar(tick, "")

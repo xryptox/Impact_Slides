@@ -22,6 +22,7 @@ from .core import _chart_config, _svg_fallback_for_layout
 from .auto_typography import (
     apply_plan_to_chartjs_options,
     chart_host_dimensions,
+    full_label_aria_suffix,
     plan_to_data_attrs,
     record_auto_diagnostic,
     typography_with_auto,
@@ -962,10 +963,11 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         record_auto_diagnostic(
             {**auto_plan.diagnostic_dict(), "slide_number": slide.get("slide_number")}
         )
+    aria_label = f"{layout} chart{full_label_aria_suffix(auto_plan)}"
     return (
         f'<div class="chartjs-wrap{flat}{fill}" data-chartjs="1" '
         f'data-chart-layout="{esc(layout)}"{coll_attr}{auto_attrs}>'
-        f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
+        f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(aria_label)}"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
         f"{bar_group_js}"

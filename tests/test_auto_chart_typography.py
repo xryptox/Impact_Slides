@@ -156,11 +156,11 @@ def test_svg_and_chartjs_receive_the_same_auto_sizes(tmp_path):
     ("labels", "short_labels", "plot_w", "bottom", "expected"),
     [
         (["Q1 2026"] * 2, [None] * 2, 300, 80, (False, 0, False, False, False)),
-        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (True, 0, False, True, False)), 
+        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (False, 0, False, True, False)), 
         (["AlphaBeta"] * 2, [None] * 2, 130, 70, (False, 30, False, False, False)),
         (["Long alpha beta"] * 2, [None] * 2, 140, 110, (False, 45, False, False, False)),
         (["Long alpha beta gamma"] * 8, [f"Q{i}" for i in range(8)], 160, 80, (False, 0, True, False, False)),
-        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (True, 0, False, True, False)),
+        (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (False, 0, False, True, False)),
         (["Supercalifragilisticexpialidocious"] * 8, [None] * 8, 100, 80, (False, 0, False, False, True)),
     ],
 )
@@ -878,6 +878,95 @@ def test_combo_reduces_each_svg_axis_independently():
     assert plan.y_tick_values[0] == plan.secondary_y_tick_values[0] == 0
     assert plan.y_tick_values[-1] == plan.secondary_y_tick_values[-1] == 39
     assert svg.count('font-size="12"') < len(ticks) * 2
+
+
+def test_auto_skip_uses_actual_retained_tick_spacing():
+    labels = ["Moderately long category"] * 8
+    kept = [0, 5, 7]
+    from impact_slides.renderer_v2.charts.auto_typography import _try_x_fit
+
+    assert _try_x_fit(
+        [labels[i] for i in kept], 12, 340, 80,
+        font="source_sans_3", rotation=0, wrap=True,
+    )[0]
+    assert not _try_x_fit(
+        [labels[i] for i in kept], 12, 340, 80,
+        font="source_sans_3", rotation=0, wrap=True,
+        positions=kept, total_slots=len(labels),
+    )[0]
+
+
+def test_auto_full_labels_are_retained_in_chart_accessibility(tmp_path):
+    labels = ["Long reporting period alpha beta"] * 8
+    slide = {
+        "slide_number": 1, "title": "Accessible", "layout_type": "line_chart", "content": {},
+        "visual_spec": {"primary_visual": _pane("line_chart", labels, typography={"mode": "auto"}, short=True)},
+        "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    chartjs_out, svg_out = tmp_path / "chartjs", tmp_path / "svg"
+    render_deck(path, chartjs_out, strict=False)
+    render_deck(path, svg_out, strict=False, suppress_features=["charts"])
+    for output in (chartjs_out, svg_out):
+        html = (output / "presentation.html").read_text(encoding="utf-8")
+        assert "categories: Long reporting period alpha beta" in html
+
+
+def test_auto_tick_view_preserves_authored_axis_domain():
+    slide = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {
+                "typography": {"mode": "auto"}, "y_axis_min": 0,
+                "y_axis_max": 100, "y_axis_ticks": [45, 50, 55],
+            },
+            "steps_or_data": [{"label": "Q1", "value": 0}, {"label": "Q2", "value": 100}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_line_config
+
+    config = _chartjs_line_config(slide)
+    assert config is not None
+    scale = config["options"]["scales"]["y"]
+    assert (scale["min"], scale["max"]) == (0.0, 100.0)
+    assert scale["ticks"]["_rv2Values"] == [45.0, 50.0, 55.0]
+
+
+def test_auto_combo_primary_domain_includes_negative_bar_totals():
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [{"label": "Q1", "value": -100}],
+            },
+            "line_overlay": {"dual_axis": False, "data": [{"label": "Q1", "value": 10}]},
+        },
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_combo_config
+
+    config = _chartjs_combo_config(combo)
+    assert config is not None
+    scale = config["options"]["scales"]["y"]
+    assert scale["min"] <= -100
+
+
+def test_auto_bar_ticks_include_explicit_nonround_domain_bound():
+    slide = {
+        "layout_type": "grouped_bar_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}, "y_axis_max": 99},
+            "steps_or_data": [{"label": "Q1", "value": 98}],
+        }},
+    }
+    from impact_slides.renderer_v2.charts.chartjs import _chartjs_bar_config
+
+    config = _chartjs_bar_config(slide)
+    assert config is not None
+    scale = config["options"]["scales"]["y"]
+    assert scale["max"] == 99
+    assert scale["ticks"]["_rv2Values"][-1] == 99
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):

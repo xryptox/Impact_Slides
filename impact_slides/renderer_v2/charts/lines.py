@@ -11,6 +11,7 @@ from .core import _chart_config, _steps
 from .auto_typography import (
     axis_config_after_break,
     compute_auto_plan_for_slide,
+    full_label_aria_suffix,
     svg_auto_axis_view,
     svg_label_transform,
 )
@@ -227,17 +228,17 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
             return pad_t + plot_h / 2
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
-    parts: list[str] = [
-        f'<svg class="chart-svg line-chart" viewBox="0 0 {W} {H}" '
-        f'xmlns="http://www.w3.org/2000/svg" '
-        f'style="width:100%;height:auto">',
-        # Marker def for potential future use
-        '<defs></defs>',
-    ]
-
     auto_plan = compute_auto_plan_for_slide(
         slide, "line_chart", host_w=W, host_h=H, chart_cfg=cfg
     )
+    parts: list[str] = [
+        f'<svg class="chart-svg line-chart" viewBox="0 0 {W} {H}" '
+        f'xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="Line chart{esc(full_label_aria_suffix(auto_plan))}" '
+        f'style="width:100%;height:auto">',
+        '<defs></defs>',
+    ]
+
     if auto_plan is not None:
         x_tick_fs = auto_plan.x_tick_font_size
         y_tick_fs = auto_plan.y_tick_font_size
@@ -489,8 +490,9 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     if not bar_rows:
         return '<p class="chart-empty">No combo chart data</p>'
     stacked = len(bar_series) > 1
-    # Per-category totals drive the bar axis (single-series rows have 1 cell)
+    # Per-category signed stack extents drive the shared bar axis.
     bar_totals = [sum(v for v in row if v is not None and v > 0) for row in bar_rows]
+    bar_minimums = [sum(v for v in row if v is not None and v < 0) for row in bar_rows]
 
     vs = slide.get("visual_spec") or {}
     overlay_cfg = vs.get("line_overlay") or {}
@@ -513,7 +515,7 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
 
     line_values = [p["value"] for p in line_points] if line_points else []
     use_dual_axis = bool(line_points) and overlay_cfg.get("dual_axis", True)
-    shared_values = [*bar_totals, *line_values] if not use_dual_axis else bar_totals
+    shared_values = [*bar_totals, *bar_minimums, *line_values] if not use_dual_axis else [*bar_totals, *bar_minimums]
     bar_max, bar_min, planned_bar_ticks = _bar_axes(
         cfg, max(shared_values, default=0.0), min(shared_values, default=0.0)
     )
@@ -546,15 +548,16 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
     def _fmtb(v: float) -> str:
         return _fmt_unit(v, bar_unit, bar_unit_pos)
 
-    parts: list[str] = [
-        f'<svg class="chart-svg combo-chart" viewBox="0 0 {W} {H}" '
-        f'xmlns="http://www.w3.org/2000/svg" '
-        f'style="width:100%;height:auto">',
-    ]
-
     auto_plan = compute_auto_plan_for_slide(
         slide, "combo_chart", host_w=W, host_h=H, chart_cfg=cfg
     )
+    parts: list[str] = [
+        f'<svg class="chart-svg combo-chart" viewBox="0 0 {W} {H}" '
+        f'xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="Combo chart{esc(full_label_aria_suffix(auto_plan))}" '
+        f'style="width:100%;height:auto">',
+    ]
+
     if auto_plan is not None:
         x_tick_fs = auto_plan.x_tick_font_size
         y_tick_fs = auto_plan.y_tick_font_size

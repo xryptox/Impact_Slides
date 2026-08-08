@@ -7,7 +7,7 @@ from ..strip import esc, strip_eids
 from .format import _fmt_chart_num
 from .bars import _bar_matrix
 from .core import _chart_config, _steps
-from .auto_typography import compute_auto_plan_for_slide, svg_auto_axis_view, svg_label_transform
+from .auto_typography import compute_auto_plan_for_slide, full_label_aria_suffix, svg_auto_axis_view, svg_label_transform
 from .typography import resolve_typography
 
 
@@ -188,7 +188,7 @@ def _build_waterfall_svg(slide: Mapping[str, Any]) -> str:
 
     parts = [
         f'<svg class="chart-svg" viewBox="0 0 {width} {height}" '
-        f'role="img" aria-label="Waterfall chart">'
+        f'role="img" aria-label="Waterfall chart{esc(full_label_aria_suffix(auto_plan))}">'
     ]
     if vmin < 0 < vmax:
         yz = y_scale(0.0)

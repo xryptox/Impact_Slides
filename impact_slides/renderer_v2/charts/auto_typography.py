@@ -362,6 +362,10 @@ class AutoTypoPlan:
     y_tick_labels: list[str] = field(default_factory=list)
     secondary_y_tick_values: list[float] = field(default_factory=list)
     secondary_y_tick_labels: list[str] = field(default_factory=list)
+    y_domain_min: float | None = None
+    y_domain_max: float | None = None
+    secondary_y_domain_min: float | None = None
+    secondary_y_domain_max: float | None = None
     y_ticks_reduced: bool = False
     secondary_y_ticks_reduced: bool = False
     datalabels_suppressed: bool = False
@@ -403,6 +407,10 @@ class AutoTypoPlan:
             "secondary_y_ticks_reduced": self.secondary_y_ticks_reduced,
             "y_tick_count": len(self.y_tick_values),
             "secondary_y_tick_count": len(self.secondary_y_tick_values),
+            "y_domain_min": self.y_domain_min,
+            "y_domain_max": self.y_domain_max,
+            "secondary_y_domain_min": self.secondary_y_domain_min,
+            "secondary_y_domain_max": self.secondary_y_domain_max,
             "datalabels_suppressed": self.datalabels_suppressed,
             "datalabel_suppress_count": self.datalabel_suppress_count,
             "confidence": self.confidence,
@@ -437,17 +445,30 @@ def _try_x_fit(
     font: str,
     rotation: float,
     wrap: bool,
+    positions: Sequence[int] | None = None,
+    total_slots: int | None = None,
 ) -> tuple[bool, list[list[str]], float]:
     """Return (fits, lines_per_label, used_height)."""
     n = len(labels)
     if n == 0:
         return True, [], 0.0
-    slot = _x_slot_width(plot_w, n)
-    # Unrotated labels may use ~0.95 of slot; rotated share more via stagger.
-    max_w = slot * (1.35 if rotation >= 30 else 0.95)
+    slot = _x_slot_width(plot_w, total_slots or n)
+    pos = list(positions) if positions is not None else list(range(n))
+    if len(pos) != n:
+        return False, [], 0.0
+
+    def nearest_gap(i: int) -> float:
+        gaps = []
+        if i:
+            gaps.append(pos[i] - pos[i - 1])
+        if i + 1 < n:
+            gaps.append(pos[i + 1] - pos[i])
+        return min(gaps, default=total_slots or n) * slot
+
     lines_out: list[list[str]] = []
     max_h = 0.0
-    for lab in labels:
+    for label_i, lab in enumerate(labels):
+        label_max_w = nearest_gap(label_i) * (1.35 if rotation >= 30 else 0.95)
         segs = wrap_label(lab, max_lines=2) if wrap else [lab]
         if not wrap:
             segs = [lab]
@@ -459,17 +480,17 @@ def _try_x_fit(
             )
             # Multi-line unrotated: width is max line; height sums.
             if rotation < 0.5:
-                if measure_text_width(s, font_size, font=font) > max_w:
+                if measure_text_width(s, font_size, font=font) > label_max_w:
                     ok_lines = False
                     break
             else:
-                if bw > max_w * 1.1 and measure_text_width(s, font_size, font=font) > max_w:
+                if bw > label_max_w * 1.1 and measure_text_width(s, font_size, font=font) > label_max_w:
                     # Allow tall rotated labels; width along baseline limited by slot diagonal.
                     baseline_w = measure_text_width(s, font_size, font=font)
                     # Projected horizontal footprint.
                     rad = math.radians(rotation)
                     foot = baseline_w * math.cos(rad) + measure_text_height(font_size, font=font) * math.sin(rad)
-                    if foot > slot * 1.25:
+                    if foot > nearest_gap(label_i) * 1.25:
                         ok_lines = False
                         break
         if not ok_lines:
@@ -477,7 +498,7 @@ def _try_x_fit(
         if rotation < 0.5:
             h = measure_text_height(font_size, font=font, lines=len(segs))
             w = max(measure_text_width(s, font_size, font=font) for s in segs)
-            if w > max_w:
+            if w > label_max_w:
                 return False, [], 0.0
         else:
             # Single-line rotated only in our stages.
@@ -492,7 +513,7 @@ def _try_x_fit(
                 baseline_w * math.cos(rad)
                 + measure_text_height(font_size, font=font) * math.sin(rad)
             )
-            if half_foot + _ROT_PAD > slot * 0.55 and n > 2:
+            if half_foot + _ROT_PAD > nearest_gap(label_i) * 0.55 and n > 2:
                 return False, [], 0.0
         lines_out.append(segs)
         max_h = max(max_h, h if rotation >= 0.5 else measure_text_height(font_size, font=font, lines=len(segs)))
@@ -503,7 +524,7 @@ def _try_x_fit(
     if rotation < 0.5 and n >= 2:
         for i, segs in enumerate(lines_out):
             w = max(measure_text_width(s, font_size, font=font) for s in segs)
-            if w > slot - 2.0:
+            if w > nearest_gap(i) - 2.0:
                 return False, [], 0.0
     return True, lines_out, used_h
 
@@ -572,57 +593,47 @@ def _fit_x_labels(
 
     # Stage 5: evenly skip full labels. short_label is only a way to avoid
     # information loss, never a substitute on an already-skipped axis.
-    for use_short in (False,):
-        base = list(full_labels)
-        for step in range(2, n):
-            kept = set(skip_indices(n, step))
-            trial = [base[i] if i in kept else "" for i in range(n)]
-            for wrap, rotation in stages:
-                # Fit only kept labels with expanded slots.
-                kept_labs = [trial[i] for i in range(n) if trial[i]]
-                if not kept_labs:
-                    continue
-                # Effective slot grows with skip.
-                ok, lines_kept, _h = _try_x_fit(
-                    kept_labs,
-                    font_size,
-                    plot_w,
-                    bottom_budget,
-                    font=font,
-                    rotation=rotation,
-                    wrap=wrap,
-                )
-                if not ok:
-                    continue
-                lines_full: list[list[str]] = []
-                ki = 0
-                texts: list[str] = []
-                for i in range(n):
-                    if trial[i]:
-                        lines_full.append(lines_kept[ki])
-                        texts.append(trial[i])
-                        ki += 1
-                    else:
-                        lines_full.append([])
-                        texts.append("")
-                return AxisLabelPlan(
-                    texts=texts,
-                    full_texts=list(full_labels),
-                    lines=lines_full,
-                    rotation_deg=float(rotation),
-                    used_wrap=wrap and any(len(L) > 1 for L in lines_kept),
-                    used_short=use_short,
-                    used_skip=True,
-                    skipped_count=n - len(kept),
-                    short_count=sum(
-                        1
-                        for i, t in enumerate(texts)
-                        if t
-                        and use_short
-                        and short_labels[i] is not None
-                        and str(short_labels[i] or "").strip()
-                    ),
-                )
+    base = list(full_labels)
+    for step in range(2, n):
+        kept = set(skip_indices(n, step))
+        trial = [base[i] if i in kept else "" for i in range(n)]
+        for wrap, rotation in stages:
+            kept_labs = [trial[i] for i in range(n) if trial[i]]
+            if not kept_labs:
+                continue
+            ok, lines_kept, _h = _try_x_fit(
+                kept_labs,
+                font_size,
+                plot_w,
+                bottom_budget,
+                font=font,
+                rotation=rotation,
+                wrap=wrap,
+                positions=sorted(kept),
+                total_slots=n,
+            )
+            if not ok:
+                continue
+            lines_full: list[list[str]] = []
+            ki = 0
+            texts: list[str] = []
+            for i in range(n):
+                if trial[i]:
+                    lines_full.append(lines_kept[ki])
+                    texts.append(trial[i])
+                    ki += 1
+                else:
+                    lines_full.append([])
+                    texts.append("")
+            return AxisLabelPlan(
+                texts=texts,
+                full_texts=list(full_labels),
+                lines=lines_full,
+                rotation_deg=float(rotation),
+                used_wrap=wrap and any(len(L) > 1 for L in lines_kept),
+                used_skip=True,
+                skipped_count=n - len(kept),
+            )
 
     # Stage 6: ellipsis as final axis resort (unrotated, no skip first)
     slot = _x_slot_width(plot_w, n) * 0.95
@@ -638,7 +649,7 @@ def _fit_x_labels(
     # Last ditch: skip + ellipsis
     for step in range(2, n + 1):
         kept = set(skip_indices(n, step))
-        slot_k = _x_slot_width(plot_w, max(len(kept), 1)) * 0.95
+        slot_k = _x_slot_width(plot_w, n) * 0.95
         texts = []
         for i in range(n):
             if i in kept:
@@ -654,6 +665,8 @@ def _fit_x_labels(
             font=font,
             rotation=0.0,
             wrap=False,
+            positions=sorted(kept),
+            total_slots=n,
         )
         if not ok:
             continue
@@ -1180,6 +1193,14 @@ def sync_sibling_plans(plans: Sequence[AutoTypoPlan]) -> list[AutoTypoPlan]:
     return out
 
 
+def full_label_aria_suffix(plan: AutoTypoPlan | None) -> str:
+    """Accessible full category labels retained when display labels are shortened."""
+    if not plan or not plan.enabled or plan.x_labels is None:
+        return ""
+    labels = [label for label in plan.x_labels.full_texts if label]
+    return f"; categories: {', '.join(labels)}" if labels else ""
+
+
 def plan_to_data_attrs(plan: AutoTypoPlan, *, value_axis_visible: bool = True) -> str:
     """Compact data-* attribute string for chart wrappers."""
     if not plan.enabled:
@@ -1198,7 +1219,8 @@ def plan_to_data_attrs(plan: AutoTypoPlan, *, value_axis_visible: bool = True) -
         ("data-auto-y-reduced", str(int(bool(d.get("y_ticks_reduced"))))),
         ("data-auto-y-ticks", str(0 if plan.chart_type == "waterfall_chart" or not value_axis_visible else len(plan.y_tick_values))),
         ("data-auto-y1-ticks", str(len(plan.secondary_y_tick_values))),
-        ("data-auto-x-labels", html.escape(json.dumps([text for text in plan.x_labels.texts if text] if plan.x_labels else []), quote=True)),
+        ("data-auto-x-labels", html.escape(json.dumps(["\n".join(lines) for lines in plan.x_labels.lines if lines] if plan.x_labels else []), quote=True)),
+        ("data-auto-x-full-labels", html.escape(json.dumps(plan.x_labels.full_texts if plan.x_labels else []), quote=True)),
         ("data-auto-x-short", str(d.get("x_short_count", 0))),
         ("data-auto-x-ellipsis", str(d.get("x_ellipsis_count", 0))),
         ("data-auto-dl-suppress", str(d.get("datalabel_suppress_count", 0))),
@@ -1333,8 +1355,10 @@ def apply_plan_to_chartjs_options(
         val_ticks["_rv2Values"] = list(plan.y_tick_values)
         val_ticks["_rv2Labels"] = list(plan.y_tick_labels)
         val_ticks["autoSkip"] = False
-        val_scale["min"] = min(plan.y_tick_values)
-        val_scale["max"] = max(plan.y_tick_values)
+        if plan.y_domain_min is not None:
+            val_scale["min"] = plan.y_domain_min
+        if plan.y_domain_max is not None:
+            val_scale["max"] = plan.y_domain_max
         val_ticks.pop("stepSize", None)
     if plan.secondary_y_tick_values:
         secondary = scales.get("y1")
@@ -1343,8 +1367,10 @@ def apply_plan_to_chartjs_options(
             secondary_ticks["_rv2Values"] = list(plan.secondary_y_tick_values)
             secondary_ticks["_rv2Labels"] = list(plan.secondary_y_tick_labels)
             secondary_ticks["autoSkip"] = False
-            secondary["min"] = min(plan.secondary_y_tick_values)
-            secondary["max"] = max(plan.secondary_y_tick_values)
+            if plan.secondary_y_domain_min is not None:
+                secondary["min"] = plan.secondary_y_domain_min
+            if plan.secondary_y_domain_max is not None:
+                secondary["max"] = plan.secondary_y_domain_max
 
     return options
 
@@ -1465,7 +1491,14 @@ def _extract_categories_and_shorts(
         labels, series, rows, _pc = _combo_bar_data(slide)
         cats = list(labels)
         series_count = max(len(series), 1)
-        values_flat = [sum(v for v in r if v is not None and v > 0) for r in rows]
+        values_flat = [
+            value
+            for row in rows
+            for value in (
+                sum(v for v in row if v is not None and v > 0),
+                sum(v for v in row if v is not None and v < 0),
+            )
+        ]
         for i, item in enumerate(raw_steps):
             if i >= len(cats):
                 break
@@ -1534,6 +1567,29 @@ def _extract_categories_and_shorts(
     return cats, shorts, series_count, list(y_ticks), y_labs, secondary_y_ticks, secondary_y_labs, dl_texts
 
 
+def _plan_domain(cfg: Mapping[str, Any], ticks: Sequence[float]) -> tuple[float | None, float | None]:
+    if not ticks:
+        return None, None
+    try:
+        lo = float(cfg["y_axis_min"]) if cfg.get("y_axis_min") is not None else min(ticks)
+        hi = float(cfg["y_axis_max"]) if cfg.get("y_axis_max") is not None else max(ticks)
+    except (TypeError, ValueError):
+        return min(ticks), max(ticks)
+    return lo, hi
+
+
+def _bound_tick_view(
+    ticks: Sequence[float], labels: Sequence[str], lo: float | None, hi: float | None,
+    format_tick: Callable[[float], str],
+) -> tuple[list[float], list[str]]:
+    pairs = [(float(v), str(label)) for v, label in zip(ticks, labels) if (lo is None or v >= lo) and (hi is None or v <= hi)]
+    for bound in (lo, hi):
+        if bound is not None and not any(math.isclose(value, bound) for value, _label in pairs):
+            pairs.append((bound, format_tick(bound)))
+    pairs.sort(key=lambda pair: pair[0])
+    return [value for value, _label in pairs], [label for _value, label in pairs]
+
+
 def compute_auto_plan_for_slide(
     slide: Mapping[str, Any],
     chart_type: str,
@@ -1565,6 +1621,10 @@ def compute_auto_plan_for_slide(
             y_tick_labels=[str(v) for v in stashed.get("y_tick_labels", [])],
             secondary_y_tick_values=[float(v) for v in stashed.get("secondary_y_tick_values", [])],
             secondary_y_tick_labels=[str(v) for v in stashed.get("secondary_y_tick_labels", [])],
+            y_domain_min=stashed.get("y_domain_min"),
+            y_domain_max=stashed.get("y_domain_max"),
+            secondary_y_domain_min=stashed.get("secondary_y_domain_min"),
+            secondary_y_domain_max=stashed.get("secondary_y_domain_max"),
             y_ticks_reduced=bool(stashed.get("y_ticks_reduced")),
             secondary_y_ticks_reduced=bool(stashed.get("secondary_y_ticks_reduced")),
             x_explicit=bool(stashed.get("x_explicit")),
@@ -1618,6 +1678,17 @@ def compute_auto_plan_for_slide(
     except (TypeError, ValueError):
         hh_f = None
 
+    from .format import _fmt_unit
+
+    unit = str(cfg.get("y_axis_unit") if cfg.get("y_axis_unit") is not None else ("%" if ct == "line_chart" else ""))
+    unit_pos = str(cfg.get("y_axis_unit_position") or "suffix")
+    domain_cfg = axis_config_after_break(cfg, break_overrides_min=ct == "line_chart") if ct in {"line_chart", "horizontal_bar_chart"} else cfg
+    primary_domain = _plan_domain(domain_cfg, y_vals)
+    if ct in {"grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart"}:
+        y_vals, y_labs = _bound_tick_view(
+            y_vals, y_labs, *primary_domain,
+            lambda value: _fmt_unit(value, unit, unit_pos),
+        )
     plan = resolve_auto_typography(
         chart_type=ct,
         host_w=hw_f,
@@ -1638,6 +1709,9 @@ def compute_auto_plan_for_slide(
         horizontal=(ct == "horizontal_bar_chart"),
         allow_y_tick_reduction=True,
     )
+    plan.y_domain_min, plan.y_domain_max = primary_domain
+    if secondary_y_vals:
+        plan.secondary_y_domain_min, plan.secondary_y_domain_max = min(secondary_y_vals), max(secondary_y_vals)
     return plan
 
 
