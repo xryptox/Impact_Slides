@@ -802,8 +802,6 @@ def estimate_plot_box(
     host_h: float,
     chart_type: str,
     has_legend: bool,
-    has_title: bool = False,
-    title_reserve: float = 0.0,
     exterior_lane: float = 0.0,
     pad_l: float | None = None,
     pad_r: float | None = None,
@@ -827,9 +825,6 @@ def estimate_plot_box(
     pb = float(pad_b if pad_b is not None else host_h * fr[3])
     if has_legend:
         pt += _LEGEND_H
-    if title_reserve > 0:
-        # Title already outside plot host in dual panes; only subtract if included.
-        pass
     if exterior_lane > 0:
         pr += exterior_lane
     plot_w = max(0.0, host_w - pl - pr)

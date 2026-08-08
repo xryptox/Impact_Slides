@@ -201,8 +201,8 @@ def resolve_typography(
 
             if isinstance(stashed, AutoTypoPlan):
                 return merge_plan_into_typo(out, stashed)
-        except ImportError:
-            pass
+        except ImportError as exc:
+            raise RuntimeError("auto typography resolver is unavailable") from exc
     raw = chart_cfg.get("typography")
     if raw is None:
         return out
@@ -221,11 +221,7 @@ def resolve_typography(
     mode_raw = raw.get("mode")
     auto_mode = False
     if mode_raw is not None:
-        if not isinstance(mode_raw, str) or mode_raw.strip().lower() not in {
-            "auto",
-            "manual",
-            "legacy",
-        }:
+        if not isinstance(mode_raw, str) or mode_raw.strip().lower() != "auto":
             msg = "mode must be 'auto' (or omitted)"
             if strict:
                 raise ValueError(f"chart_config.typography: {msg}")

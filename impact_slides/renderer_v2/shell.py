@@ -387,7 +387,7 @@ _JS = r"""
           Object.keys(dl.labels).forEach(function (name) {
             if (dl.labels[name] && dl.labels[name]._labels) bindMatrix(dl.labels[name]);
           });
-        }
+        }/*__RV2_AUTO_TYPO_RUNTIME__*/
         new Chart(canvas.getContext('2d'), cfg);
       } catch (err) {
         console.warn('chart init failed', id, err);
@@ -445,6 +445,30 @@ def wrap_deck(
     css = "\n\n".join(p for p in (bundle.font_css, load_css(debug=debug)) if p)
     theme_block = _theme_style(theme)
     slides = "\n".join(slide_html)
+    auto_runtime = "" if "data-auto-typo=\"1\"" not in slides else """
+        if (cfg.options._rv2AutoTypography) {
+          Object.keys(cfg.options.scales || {}).forEach(function (axis) {
+            var scale = cfg.options.scales[axis], ticks = scale && scale.ticks;
+            if (!ticks) return;
+            if (Array.isArray(ticks._rv2DisplayLabels)) {
+              cfg.data.labels = ticks._rv2DisplayLabels;
+              canvas.setAttribute('data-auto-full-labels', JSON.stringify(ticks._rv2FullLabels || ticks._rv2DisplayLabels));
+              delete ticks._rv2DisplayLabels;
+              delete ticks._rv2FullLabels;
+            }
+            if (Array.isArray(ticks._rv2Values)) {
+              var allowed = ticks._rv2Values;
+              ticks.callback = function (value) {
+                return allowed.some(function (v) { return Math.abs(Number(value) - Number(v)) < 1e-8; }) ? value : '';
+              };
+              delete ticks._rv2Values;
+            }
+            delete scale.afterBuildTicks;
+          });
+          delete cfg.options._rv2AutoTypography;
+        }
+        """
+    js = _JS.replace("/*__RV2_AUTO_TYPO_RUNTIME__*/", auto_runtime)
     # Minimal chrome omits the deck-controls markup entirely (not just CSS-hide),
     # so stage-only decks carry no product control chrome in the DOM (#83/F14).
     controls_html = (
@@ -479,7 +503,7 @@ def wrap_deck(
 {controls_html}
 <script type="application/json" id="DECK_META">{json.dumps(deck_meta, ensure_ascii=False)}</script>
 <script>
-{_JS}
+{js}
 </script>
 </body>
 </html>
