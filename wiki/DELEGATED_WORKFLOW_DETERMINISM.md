@@ -104,6 +104,8 @@ These inputs should not be automated:
 ## Current limitations
 
 - The watcher returns after the first unseen event so PEW can deliver a real supervising-session follow-up. The host must rearm it while work remains; `watcher-state.json` prevents immediate duplicate delivery.
+- The watcher enforces operational loop ceilings: more than 5 no-mistakes review-fix rounds, more than 90 minutes in review fixing, or more than 10 minutes without agent/log activity emits `loop-limit` and requires controlled recovery. These are orchestration safety limits, not native PEW budgets.
+- PEW aggregate budgets (`tokens`, `costUsd`, `durationMs`, `agentLaunches`) constrain workflow-owned `agent()` work, but visible Herdr Pi and no-mistakes subprocesses run outside those agent budgets; the watcher limits cover that gap.
 - Herdr and no-mistakes state is parsed from CLI output, so upstream output-format changes can break detection.
 - LLM implementation and review cannot be made fully deterministic.
 - A wave created before the manifest architecture may have manual branch names, no valid `wave.json`, and no automatic cleanup path.

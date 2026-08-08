@@ -39,7 +39,7 @@ Durable workflow scripts:
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-implement-visible.ps1` — writes the implementation contract and launches the visible implementer
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — writes the host-repair contract and launches the visible repair session
 - `~/.pi/agent/pi-extensible-workflows/scripts/restart-visible-implementer.ps1` — crash-only restart in the existing pane; requires an exact clean branch/head plus recovery brief before relaunching the genuine TUI
-- `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — deduplicating return-on-first-event watcher that returns one idle/done/blocked event and no-mistakes state, raises a Herdr notification, persists its seen-state for rearming, and applies verified cleanup after every run-owned PR is merged and linked issue closed
+- `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — deduplicating return-on-first-event watcher that returns one idle/done/blocked or loop-limit event and no-mistakes state, raises a Herdr notification, persists its seen-state for rearming, and applies verified cleanup after every run-owned PR is merged and linked issue closed
 - `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
 
 The launcher deliberately uses the user's normal Pi settings plus the `dev` alias resolved from the global PEW settings and the `implement` skill. The alias is the single model source; `wave.json` records its resolved value. This path preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
@@ -48,7 +48,7 @@ The launcher deliberately uses the user's normal Pi settings plus the `dev` alia
 
 1. Start a wave with `start-ticket-wave.ps1 -Issue N,N,...`; normally provide no RunId, model, workspace, branch, worktree, pane, or targets-file input. The script infers and persists them in `wave.json`.
 2. Use the generated `targets.json` with one background PEW shell invoking `watch-visible-implementers.ps1`. It returns on the first unseen idle/done/blocked event, so PEW delivers that terminal result as a real host-session follow-up; it also raises a Herdr notification and persists dedupe state beside the manifest.
-3. Treat each workflow follow-up as the host notification. If it surfaces `ask-user`, present the finding verbatim and send the decision to the same pane. Rearm the same watcher after every event while work remains; persisted state suppresses unchanged repeats until the reminder interval.
+3. Treat each workflow follow-up as the host notification. If it surfaces `ask-user`, present the finding verbatim and send the decision to the same pane. If it surfaces `loop-limit`, approve no further fixes: preserve custody and request controlled recovery. Default limits are more than 5 review-fix rounds, more than 90 minutes in review fixing, or more than 10 minutes without agent/log activity. Rearm the same watcher after every event while work remains; persisted state suppresses unchanged repeats until the reminder interval.
 4. Use `inspect-ticket-wave.ps1 -ManifestPath <wave.json>` for authoritative branch/PR/gate collection instead of manually copying identifiers.
 5. Launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -RunId <wave RunId>` against the manifest worktree. Do not substitute direct branches, `herdr pane run`, RPC, `pi --print`, or another workspace.
 6. Keep tabs open while a decision or pipeline action remains outstanding. After every run-owned PR is `MERGED`, every linked issue is closed, and each implementer is terminal with its final report collectible, the watcher closes the tabs, runs `cleanup-ticket-wave.ps1` dry-run then `-Apply`, emits the cleanup result, and exits.
@@ -82,6 +82,8 @@ Each implementer must:
 - report commits, tests, mutations, review results, no-mistakes run ID/findings/fixes, PR URL, CI state, and blockers.
 
 `ask-user` findings are escalation points. An implementer must not decide them without explicit standing consent.
+
+No-mistakes review loops are also escalation points. After more than 5 review-fix rounds, 90 minutes in review fixing, or 10 minutes without agent/log activity, approve no further fix: report the run, head, round/time, and current findings, preserve pipeline custody, and wait for controlled recovery.
 
 ### 3. Respect no-mistakes custody
 
