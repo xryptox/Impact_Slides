@@ -1178,7 +1178,7 @@ def sync_sibling_plans(plans: Sequence[AutoTypoPlan]) -> list[AutoTypoPlan]:
     return out
 
 
-def plan_to_data_attrs(plan: AutoTypoPlan) -> str:
+def plan_to_data_attrs(plan: AutoTypoPlan, *, value_axis_visible: bool = True) -> str:
     """Compact data-* attribute string for chart wrappers."""
     if not plan.enabled:
         return ""
@@ -1194,7 +1194,7 @@ def plan_to_data_attrs(plan: AutoTypoPlan) -> str:
         ("data-auto-x-wrap", str(int(bool(d.get("x_used_wrap"))))),
         ("data-auto-x-skip", str(d.get("x_skipped_count", 0))),
         ("data-auto-y-reduced", str(int(bool(d.get("y_ticks_reduced"))))),
-        ("data-auto-y-ticks", str(0 if plan.chart_type == "waterfall_chart" else len(plan.y_tick_values))),
+        ("data-auto-y-ticks", str(0 if plan.chart_type == "waterfall_chart" or not value_axis_visible else len(plan.y_tick_values))),
         ("data-auto-y1-ticks", str(len(plan.secondary_y_tick_values))),
         ("data-auto-x-short", str(d.get("x_short_count", 0))),
         ("data-auto-x-ellipsis", str(d.get("x_ellipsis_count", 0))),
@@ -1249,8 +1249,10 @@ def axis_config_after_break(
             return effective
     if len(retained) >= 2:
         effective["y_axis_ticks"] = retained
+        effective["force_ticks"] = bool(cfg.get("force_ticks"))
     else:
         effective.pop("y_axis_ticks", None)
+        effective["force_ticks"] = False
     return effective
 
 
@@ -1327,14 +1329,17 @@ def apply_plan_to_chartjs_options(
         val_ticks = val_scale.setdefault("ticks", {})
         val_ticks["_rv2Values"] = list(plan.y_tick_values)
         val_ticks["_rv2Labels"] = list(plan.y_tick_labels)
+        val_ticks["autoSkip"] = False
         val_scale["min"] = min(plan.y_tick_values)
         val_scale["max"] = max(plan.y_tick_values)
+        val_ticks.pop("stepSize", None)
     if plan.secondary_y_tick_values:
         secondary = scales.get("y1")
         if isinstance(secondary, dict):
             secondary_ticks = secondary.setdefault("ticks", {})
             secondary_ticks["_rv2Values"] = list(plan.secondary_y_tick_values)
             secondary_ticks["_rv2Labels"] = list(plan.secondary_y_tick_labels)
+            secondary_ticks["autoSkip"] = False
             secondary["min"] = min(plan.secondary_y_tick_values)
             secondary["max"] = max(plan.secondary_y_tick_values)
 

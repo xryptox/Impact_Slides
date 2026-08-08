@@ -737,6 +737,8 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         if cfg.get("y_axis_max") is not None:
             y_scale["max"] = float(cfg["y_axis_max"])
         y_scale["axisBreak"] = {"from": float(y_break.get("from", 0)), "to": float(y_break["to"])}
+    if auto_plan is not None:
+        apply_plan_to_chartjs_options(options, auto_plan)
     if point_labels and not (auto_plan is not None and auto_plan.datalabels_suppressed):
         dl_size = ordinary_datalabel_size(typo)
         options["plugins"]["datalabels"] = _datalabels_cfg(
@@ -947,7 +949,14 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
     )
     coll_attr = ' data-rv2-collision="1"' if collision else ""
     coll_js = DATALABEL_COLLISION_JS if collision else ""
-    auto_attrs = plan_to_data_attrs(auto_plan) if auto_plan is not None else ""
+    value_axis_visible = chart_cfg.get(
+        "show_x_axis" if layout == "horizontal_bar_chart" else "show_y_axis"
+    ) is not False
+    auto_attrs = (
+        plan_to_data_attrs(auto_plan, value_axis_visible=value_axis_visible)
+        if auto_plan is not None
+        else ""
+    )
     if auto_plan is not None:
         record_auto_diagnostic(
             {**auto_plan.diagnostic_dict(), "slide_number": slide.get("slide_number")}

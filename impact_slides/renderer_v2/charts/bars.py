@@ -623,7 +623,8 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
     def x_pos(v: float) -> float:
         return pad_l + ((v - x_min) / rng) * plot_w
 
-    zero_x = x_pos(0.0)
+    baseline = min(max(0.0, x_min), x_max)
+    zero_x = x_pos(baseline)
     n = len(labels)
     m = len(series)
     row_h = plot_h / max(n, 1)
@@ -660,8 +661,9 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
             v = rows[i][si] if si < len(rows[i]) else None
             if v is None:
                 continue
-            x0 = min(zero_x, x_pos(v))
-            w = abs(x_pos(v) - zero_x)
+            value_x = x_pos(min(max(v, x_min), x_max))
+            x0 = min(zero_x, value_x)
+            w = abs(value_x - zero_x)
             by = cy - (bar_h * m) / 2 + si * bar_h
             color = palette[si % len(palette)]
             parts.append(

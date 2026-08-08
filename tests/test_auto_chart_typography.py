@@ -414,17 +414,25 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                       ? [...slide.querySelectorAll('.chartjs-wrap[data-auto-typo="1"]')].map(wrap => {
                           const canvas = wrap.querySelector('canvas');
                           const raw = canvas ? (window.__rv2ChartText || []).filter(item => item.canvas === canvas.id) : [];
-                          const boxes = raw.map(item => chartBox(canvas, item)).filter(box => box.width >= 1 && box.height >= 1);
+                          const boxes = raw.map(item => ({text: item.text, box: chartBox(canvas, item)}))
+                            .filter(item => item.box.width >= 1 && item.box.height >= 1);
                           const chart = canvas && Chart.getChart(canvas), rect = canvas && canvas.getBoundingClientRect();
                           const x = chart && chart.scales.x, y = chart && chart.scales.y, y1 = chart && chart.scales.y1;
-                          const xBoxes = x && rect ? boxes.filter(box => box.top >= rect.top + x.top * rect.height / canvas.height - 1) : [];
-                          const yBoxes = y && rect ? boxes.filter(box => box.right <= rect.left + y.left * rect.width / canvas.width + 1) : [];
-                          const y1Boxes = y1 && rect ? boxes.filter(box => box.left >= rect.left + y1.left * rect.width / canvas.width - 1) : [];
-                          const axisBoxes = xBoxes.concat(yBoxes, y1Boxes);
-                          return {text_count: axisBoxes.length, raw_text_count: raw.length, y1_text_count: y1Boxes.length,
-                            expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
+                          const valueAxis = chart && chart.options.indexAxis === 'y' ? x : y;
+                          const categoryAxis = chart && chart.options.indexAxis === 'y' ? y : x;
+                          const axisText = axis => new Set((axis && axis.ticks || []).map(tick => String(tick.label)));
+                          const categoryLabels = axisText(categoryAxis), valueLabels = axisText(valueAxis), y1Labels = axisText(y1);
+                          const boxesFor = labels => [...labels].map(label =>
+                            boxes.find(item => item.text === label || (label === '0' && item.text === '0%'))).filter(Boolean).map(item => item.box);
+                          const categoryBoxes = boxesFor(categoryLabels);
+                          const yBoxes = boxesFor(valueLabels);
+                          const y1Boxes = boxesFor(y1Labels);
+                          const axisBoxes = categoryBoxes.concat(yBoxes, y1Boxes);
+                          return {text_count: axisBoxes.length, raw_text_count: raw.length, y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
+                            actual_y_ticks: valueAxis ? valueAxis.ticks.length : 0, actual_y1_ticks: y1 ? y1.ticks.length : 0,
+                            expected_y_ticks: Number(wrap.dataset.autoYTicks || 0), expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
                             clipped: axisBoxes.some(box => !within(box, outer)),
-                            overlap: [xBoxes, yBoxes, y1Boxes].some(group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other))))};
+                            overlap: [categoryBoxes, yBoxes, y1Boxes].some(group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other))))};
                         })
                       : [...slide.querySelectorAll('.chart-svg-wrap[data-auto-typo="1"]')].map(wrap => {
                           const boxes = [...wrap.querySelectorAll('svg text')].map(text => text.getBoundingClientRect());
@@ -466,7 +474,17 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                     ), (name, row)
                 else:
                     assert all(
-                        pane["text_count"] and pane["y1_text_count"] >= pane["expected_y1_ticks"]
+                        pane["text_count"] and (
+                            pane["expected_y_ticks"] == 0 or (
+                                pane["actual_y_ticks"] == pane["expected_y_ticks"]
+                                and pane["y_text_count"] >= pane["actual_y_ticks"]
+                            )
+                        ) and (
+                            pane["expected_y1_ticks"] == 0 or (
+                                pane["actual_y1_ticks"] == pane["expected_y1_ticks"]
+                                and pane["y1_text_count"] >= pane["actual_y1_ticks"]
+                            )
+                        )
                         and not pane["clipped"] and not pane["overlap"]
                         for pane in row["panes"]
                     ), (name, row)
@@ -502,6 +520,45 @@ def test_auto_axis_break_plans_and_renders_only_effective_domain(tmp_path):
     svg = (svg_out / "presentation.html").read_text(encoding="utf-8")
     assert ">0%</text>" not in svg
     assert ">0</text>" not in svg
+
+
+def test_hbar_broken_axis_svg_bars_use_effective_domain_baseline(tmp_path):
+    pane = _pane("horizontal_bar_chart", ["2024", "2025"], typography={"mode": "auto"})
+    pane["chart_config"].update({"y_axis_break": {"from": 0, "to": 90}, "y_axis_max": 100})
+    for point, value in zip(pane["steps_or_data"], (92, 98)):
+        point["value"] = value
+    slide = {
+        "slide_number": 1, "title": "Bars", "layout_type": "horizontal_bar_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False, suppress_features=["charts"])
+    svg = (out / "presentation.html").read_text(encoding="utf-8")
+    bars = re.findall(r'<rect class="hbar-bar" x="([\d.]+)"[^>]* width="([\d.]+)"', svg)
+    assert bars and all(float(x) >= 140 and 0 < float(width) < 796 for x, width in bars)
+
+
+def test_auto_break_ignores_insufficient_forced_ticks(tmp_path):
+    pane = _pane("line_chart", ["2024", "2025"], typography={"mode": "auto"})
+    pane["chart_config"].update({
+        "force_ticks": True, "y_axis_ticks": [0, 50, 100],
+        "y_axis_break": {"from": 0, "to": 90},
+    })
+    for point, value in zip(pane["steps_or_data"], (92, 98)):
+        point["value"] = value
+    slide = {
+        "slide_number": 1, "title": "Line", "layout_type": "line_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False)
+    scale = _configs((out / "presentation.html").read_text(encoding="utf-8"))[0]["options"]["scales"]["y"]
+    assert scale["ticks"]["_rv2Values"][-1] == scale["max"] > 100
+    assert "stepSize" not in scale["ticks"]
 
 
 def test_hbar_broken_axis_auto_ticks_stay_within_nonround_maximum(tmp_path):
