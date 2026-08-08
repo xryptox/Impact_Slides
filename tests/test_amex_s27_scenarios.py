@@ -62,7 +62,7 @@ def _assert_source_contract(slide: dict) -> None:
     assert disclosure["title"] == "Scenario note"
     assert "SAAR" in disclosure["body"]
     assert slide["evidence_sources"] == [
-        {"id": "E0270", "source_file": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"}
+        {"id": "E0026", "source_file": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"}
     ]
 
 

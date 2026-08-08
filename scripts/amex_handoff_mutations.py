@@ -614,7 +614,7 @@ def apply_issue_156_slide27_scenarios(handoff: dict[str, Any]) -> dict[str, Any]
         },
     }
     slide["evidence_sources"] = [
-        {"id": "E0270", "source_file": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"}
+        {"id": "E0026", "source_file": "Q1-2026-Earnings-Presentation.pdf, PDF page 27"}
     ]
     slide["disclosure"] = {
         "pattern": "detail",
