@@ -95,9 +95,10 @@ _FONT_METRICS: dict[str, dict[str, float]] = {
         "punct": 0.40,
         "other": 0.60,
         "avg": 0.55,
-        "ascender": 1.05,
-        "descender": 0.28,
-        "line_gap": 0.14,
+        # OS/2 typo metrics (USE_TYPO_METRICS); DOM line-box uses rounded px.
+        "ascender": 1.024,
+        "descender": 0.400,
+        "line_gap": 0.0,
     },
     "ibm_plex_sans": {
         "digit": 0.600,
@@ -107,9 +108,9 @@ _FONT_METRICS: dict[str, dict[str, float]] = {
         "punct": 0.45,
         "other": 0.65,
         "avg": 0.60,
-        "ascender": 0.95,
-        "descender": 0.26,
-        "line_gap": 0.13,
+        "ascender": 1.025,
+        "descender": 0.275,
+        "line_gap": 0.0,
     },
     # Unknown theme fonts — conservative (wider) fallback.
     "_fallback": {
@@ -213,13 +214,18 @@ def measure_text_width(
     m = _FONT_METRICS[key]
     if not text:
         return 0.0
+    fs = float(font_size)
     total = 0.0
+    # FreeType/Linux CI snaps each glyph advance to whole px; DirectWrite keeps
+    # subpixel sums. Cover both with max(subpixel, hinted) inside the #150 band.
+    hinted = 0
+    glyphs = _GLYPH_ADVANCES.get(key, {})
     for ch in text:
-        total += _GLYPH_ADVANCES.get(key, {}).get(ch, m[_char_class(ch)])
-    # Tables are calibrated at the renderer's 600 axis-label weight.
-    # Quarter-pixel ceil + 0.25px pad absorbs subpixel DirectWrite/FreeType
-    # drift while staying inside the #150 calibration band (5% or 2px).
-    return math.ceil(total * float(font_size) * 4.0) / 4.0 + 0.25
+        adv = glyphs.get(ch, m[_char_class(ch)])
+        total += adv
+        hinted += int(adv * fs + 0.5)
+    subpixel = math.ceil(total * fs * 4.0) / 4.0 + 0.25
+    return max(subpixel, float(hinted))
 
 
 def measure_text_height(
@@ -230,7 +236,13 @@ def measure_text_height(
 ) -> float:
     key, _ = normalize_font_key(font)
     m = _FONT_METRICS[key]
-    line_h = (m["ascender"] + m["descender"] + m["line_gap"]) * float(font_size)
+    fs = float(font_size)
+    # Chromium font-bounding box: round each side to px then sum (matches DOM).
+    line_h = float(
+        int(m["ascender"] * fs + 0.5)
+        + int(m["descender"] * fs + 0.5)
+        + int(m["line_gap"] * fs + 0.5)
+    )
     return line_h * max(int(lines), 1)
 
 
@@ -256,9 +268,9 @@ def measure_label_box(
     if rot < 0.5:
         return w, h
     rad = math.radians(rot)
-    # AABB of rotated rectangle.
-    aw = abs(w * math.cos(rad)) + abs(h * math.sin(rad))
-    ah = abs(w * math.sin(rad)) + abs(h * math.cos(rad))
+    # AABB of rotated rectangle. 0.01px covers float32 layout vs float64 trig.
+    aw = abs(w * math.cos(rad)) + abs(h * math.sin(rad)) + 0.01
+    ah = abs(w * math.sin(rad)) + abs(h * math.cos(rad)) + 0.01
     return aw, ah
 
 
