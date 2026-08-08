@@ -118,7 +118,11 @@ Closed as accepted divergence (do **not** re-file): R1 flat-stage residual,
 F12+ annex multi-level headers, N2 chip weight (r4 D11); R2 elbow L-bracket arm
 (r5 L3); R3 Centurion seal (permanent wontfix, r3 Q6 — original artwork only).
 
-Known non-renderer defect: annex slides 33–36 are a **vision transcription**
-failure (real 4-column tables flattened to Item/Detail key-value pairs), not a
-renderer gap. `scripts/run_amex_simulation.sh` carries mandatory table
-transcription rules for this.
+Closed handoff defect (do **not** re-file as renderer): annex slides 33–37 were a
+**vision transcription** failure (real multi-column tables flattened to
+Item/Detail key-value pairs). Restored by type-(A) handoff mutation
+`apply_issue_157_annex_matrices` (#157); contract
+`tests/test_amex_annex_33_37_handoff.py`. Next fidelity pass must run
+`amex_handoff_mutations.apply_all` (see `scripts/AGENTS.md`).
+`scripts/run_amex_simulation.sh` still carries mandatory table transcription
+rules so new handoffs do not regress.

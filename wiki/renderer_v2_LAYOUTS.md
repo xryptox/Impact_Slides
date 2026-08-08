@@ -9,7 +9,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 
 | layout_type | recipe | source | fixture | tests |
 |---|---|---|---|---|
-| `annex_table` | `render_annex_table` | impact_slides/renderer_v2/layout/recipes/metrics.py:272 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
+| `annex_table` | `render_annex_table` | impact_slides/renderer_v2/layout/recipes/metrics.py:272 | `amex_annex_33_37_restored_handoff.json`, `amex_annex_33_37_v10_broken_handoff.json` | `amex_annex_33_37_handoff.py`, `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `before_after` | `render_before_after` | impact_slides/renderer_v2/layout/recipes/comparison.py:233 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
 | `before_after_detailed` | `render_before_after_detailed` | impact_slides/renderer_v2/layout/recipes/comparison.py:259 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3a_layouts.py` |
 | `brand_cover` | `render_brand_cover` | impact_slides/renderer_v2/layout/recipes/covers.py:60 | — | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
@@ -56,7 +56,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `system_architecture` | `render_system_architecture` | impact_slides/renderer_v2/layout/recipes/diagrams.py:23 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
 | `three_column_comparison` | `render_three_column_comparison` | impact_slides/renderer_v2/layout/recipes/comparison.py:183 | — | `circle_pair.py`, `layout_dispatch_parity.py`, `visual_regression_deck.py` +1 |
 | `timeline` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gates.py` +3 |
-| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes/covers.py:25 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `amex_s28_handoff_contract.py`, `circle_pair.py`, `combo_chart.py` +14 |
+| `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes/covers.py:25 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `amex_annex_33_37_handoff.py`, `amex_s28_handoff_contract.py`, `circle_pair.py` +15 |
 | `waterfall_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:169 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |
 
 ## Layouts with no direct test reference

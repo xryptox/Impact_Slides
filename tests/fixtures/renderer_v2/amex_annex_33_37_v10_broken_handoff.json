@@ -1,0 +1,475 @@
+{
+  "presentation": {
+    "title": "Amex Q1'26 Annex 33-37 v10 broken baseline (#157)",
+    "subtitle": "Incomplete annex matrices as extracted in v10",
+    "audience": "Investors / IR",
+    "theme": {
+      "--color-bg": "#ffffff",
+      "--color-surface": "#ffffff",
+      "--color-ink": "#001B4D",
+      "--color-ink-muted": "#3A4A6B",
+      "--color-accent": "#006FCF",
+      "--color-accent-2": "#00175A",
+      "--color-border": "#E0E3EB",
+      "--color-stage-bg": "#00175A",
+      "--color-primary": "#00175A",
+      "--navy": "#00175A"
+    },
+    "chrome_level": "minimal",
+    "notes": "v10 baseline defects for issue #157 (Type A missing annex cells)."
+  },
+  "slides": [
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 2 Total Balances — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Metric",
+              "Q1'19",
+              "Q1'24",
+              "Q2'24",
+              "Q3'24",
+              "Q4'24",
+              "Q1'25",
+              "Q2'25",
+              "Q3'25",
+              "Q4'25",
+              "Q1'26"
+            ],
+            [
+              "GAAP Total Balances $B",
+              "142",
+              "194",
+              "199",
+              "202",
+              "208",
+              "207",
+              "212",
+              "216",
+              "225",
+              "224"
+            ],
+            [
+              "YoY GAAP Tot. Balances",
+              "—",
+              "—",
+              "—",
+              "—",
+              "—",
+              "7%",
+              "7%",
+              "7%",
+              "8%",
+              "8%"
+            ],
+            [
+              "YoY FX-Adj Tot. Balances*",
+              "—",
+              "—",
+              "—",
+              "—",
+              "—",
+              "7%",
+              "6%",
+              "7%",
+              "7%",
+              "7%"
+            ],
+            [
+              "CAGR GAAP Q1'19–Q1'26",
+              "7%",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CAGR FX-Adj Q1'19–Q1'26*",
+              "7%",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "header_groups": [
+            {
+              "label": "Prior / Reported",
+              "span": 5
+            },
+            {
+              "label": "Current / FX-Adj",
+              "span": 5
+            }
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 32. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 33
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 3 Revenue — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "$ in millions",
+              ""
+            ],
+            [
+              "Revenue – Reported & FX-Adjusted*",
+              ""
+            ],
+            [
+              "* See Slide 3 for an explanation of FX-adjusted ",
+              "information."
+            ],
+            [
+              "Q1'26",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "YoY%",
+              ""
+            ],
+            [
+              "Inc/(Dec)",
+              ""
+            ],
+            [
+              "Discount Revenue",
+              ""
+            ],
+            [
+              "$9,512",
+              ""
+            ],
+            [
+              "$8,743",
+              ""
+            ],
+            [
+              "FX-Adjusted*",
+              ""
+            ],
+            [
+              "$8,857",
+              ""
+            ],
+            [
+              "Net Card Fees",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 33. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 34
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 4 Net Card Fees — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "$ in billions",
+              ""
+            ],
+            [
+              "Net Card Fees – Reported & FX-Adjusted*",
+              ""
+            ],
+            [
+              "Q1'19",
+              ""
+            ],
+            [
+              "Q1'23",
+              ""
+            ],
+            [
+              "Q2'23",
+              ""
+            ],
+            [
+              "Q3'23",
+              ""
+            ],
+            [
+              "Q4'23",
+              ""
+            ],
+            [
+              "Q1'24",
+              ""
+            ],
+            [
+              "Q2'24 Q3'24 Q4'24",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "Q2'25",
+              ""
+            ],
+            [
+              "Q3'25",
+              ""
+            ],
+            [
+              "Q4'25",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 34. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 35
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 5 Net Interest Income — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "$ in billions",
+              ""
+            ],
+            [
+              "Net Interest Income – Reported & FX-Adjusted*",
+              ""
+            ],
+            [
+              "Q1'19",
+              ""
+            ],
+            [
+              "Q1'24",
+              ""
+            ],
+            [
+              "Q2'24",
+              ""
+            ],
+            [
+              "Q3'24",
+              ""
+            ],
+            [
+              "Q4'24",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "Q2'25",
+              ""
+            ],
+            [
+              "Q3'25",
+              ""
+            ],
+            [
+              "Q4'25",
+              ""
+            ],
+            [
+              "Q1'26",
+              ""
+            ],
+            [
+              "GAAP Net Interest Income",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 35. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 36
+    },
+    {
+      "layout_type": "annex_table",
+      "packing_mode": "stat-led",
+      "title": "Annex 6 Revenues Net of Interest Expense — Reported & FX-Adjusted",
+      "section": "Annex",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+        "so_what": ""
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "annex_table",
+          "steps_or_data": [
+            [
+              "Item",
+              "Detail"
+            ],
+            [
+              "Revenues Net of Interest Expense – Reported & FX",
+              "-Adjusted*"
+            ],
+            [
+              "Q1'24",
+              ""
+            ],
+            [
+              "Q2'24",
+              ""
+            ],
+            [
+              "Q3'24",
+              ""
+            ],
+            [
+              "Q4'24",
+              ""
+            ],
+            [
+              "Q1'25",
+              ""
+            ],
+            [
+              "Q2'25",
+              ""
+            ],
+            [
+              "Q3'25",
+              ""
+            ],
+            [
+              "Q4'25",
+              ""
+            ],
+            [
+              "Q1'26",
+              ""
+            ],
+            [
+              "GAAP Revenues Net of Interest Expense",
+              ""
+            ],
+            [
+              "$15.8",
+              ""
+            ],
+            [
+              "$16.3",
+              ""
+            ]
+          ]
+        }
+      },
+      "disclosure": {
+        "pattern": "detail",
+        "panels": [
+          {
+            "title": "FX-adjusted note",
+            "body": "* See Slide 3 for an explanation of FX-adjusted information."
+          }
+        ]
+      },
+      "speaker_notes": "Annex filled/scaffold page index 36. | v2 pass_01: annex_table density (F12).",
+      "slide_number": 37
+    }
+  ]
+}
