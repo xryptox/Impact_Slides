@@ -6,7 +6,7 @@ re-exports every name so ``from ...layout.recipes import X`` and
 """
 from __future__ import annotations
 
-from .shared import _DATE_LEAD, _END_YEAR, _LABEL_COLON, _CLOSED_LOOP, _REGIONISH, _content, _vs_steps, _so_what, _source_names, argument_kicker, panel_kicker, split_step_copy, apply_timeline_year_overrides, pair_comparison, _is_matrix, right_panel_model, near, _bullets_html, _proof_html, _fact_html, _kpi_cards, _stat_label_value, _table_inset, _circle_pair_svg, _table_matrix, table_as_kpi, _hero_stack, _sequential_grid, _is_series_num, _visual_series_names
+from .shared import _DATE_LEAD, _END_YEAR, _LABEL_COLON, _CLOSED_LOOP, _REGIONISH, _content, _vs_steps, _so_what, _source_names, argument_kicker, panel_kicker, split_step_copy, apply_timeline_year_overrides, pair_comparison, _is_matrix, right_panel_model, near, _bullets_html, _proof_html, _fact_html, _kpi_cards, _stat_label_value, _table_inset, _circle_pair_svg, _table_matrix, table_as_kpi, _hero_stack, _driver_card_html, normalize_driver_card, _sequential_grid, _is_series_num, _visual_series_names
 from .metrics import render_metric, render_table, render_metric_row_with_breakdown, render_data_table_with_insight, render_annex_table, render_grouped_annex_table, render_kpi_trend_cards, render_ir_bullet_sheet, render_guidance_statement_card
 from .covers import render_title, render_brand_cover, render_section_divider, render_quote
 from .comparison import render_pill_comparison, render_comparison, render_comparison_with_metrics, render_three_column_comparison, render_before_after, render_before_after_detailed, render_split
@@ -24,6 +24,7 @@ __all__ = [
     '_bullets_html',
     '_circle_pair_svg',
     '_content',
+    '_driver_card_html',
     '_fact_html',
     '_hero_stack',
     '_is_matrix',
@@ -41,6 +42,7 @@ __all__ = [
     'apply_timeline_year_overrides',
     'argument_kicker',
     'near',
+    'normalize_driver_card',
     'pair_comparison',
     'panel_kicker',
     'render_annex_table',

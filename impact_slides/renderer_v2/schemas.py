@@ -194,8 +194,52 @@ class PillComparisonSlide(_BaseSlide):
     layout_type: Literal["pill_comparison"] = "pill_comparison"
 
 
+class DriverCardRow(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    label: str = Field(min_length=1)
+    value: str = Field(min_length=1)
+    detail: Optional[str] = None
+    direction: Optional[Literal["up", "down", "flat"]] = None
+    tone: Optional[Literal["positive", "negative", "neutral", "accent"]] = None
+
+    @field_validator("label", "value")
+    @classmethod
+    def nonblank(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("driver_card row label/value must not be blank")
+        return value
+
+
+class DriverCardSecondaryVisual(BaseModel):
+    """#151 structured right-pane driver card for chart_hero_dual."""
+    model_config = ConfigDict(extra="allow")
+    type: Literal["driver_card"] = "driver_card"
+    heading: str = Field(min_length=1)
+    subtitle: Optional[str] = None
+    rows: List[DriverCardRow] = Field(min_length=1, max_length=6)
+
+    @field_validator("heading")
+    @classmethod
+    def heading_is_semantic(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("driver_card heading must not be blank")
+        return value
+
+
+class ChartHeroDualVisualSpec(VisualSpec):
+    @model_validator(mode="after")
+    def driver_card_shape(self) -> "ChartHeroDualVisualSpec":
+        sv = self.secondary_visual
+        if isinstance(sv, dict) and sv.get("type") == "driver_card":
+            self.secondary_visual = DriverCardSecondaryVisual.model_validate(sv).model_dump(
+                exclude_none=True
+            )
+        return self
+
+
 class ChartHeroDualSlide(_BaseSlide):
     layout_type: Literal["chart_hero_dual"] = "chart_hero_dual"
+    visual_spec: Optional[ChartHeroDualVisualSpec] = None
 
 
 class IrBulletSheetSlide(_BaseSlide):

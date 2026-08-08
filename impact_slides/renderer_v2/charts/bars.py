@@ -26,9 +26,146 @@ from .typography import (
     estimate_label_box,
     resolve_typography,
     suppress_colliding_labels,
+    _RENDER_STRICT,
     _warn,
 )
 
+# #151 boxed in-bar furniture — independent of ordinary datalabel collision.
+BOXED_LABEL_MIN_FS = 12
+BOXED_LABEL_PAD_X = 6
+BOXED_LABEL_PAD_Y = 3
+BOXED_LABEL_MIN_BAR_H = 28  # px inside-bar readability floor
+
+
+def resolve_boxed_labels(
+    raw: Any,
+    *,
+    category_count: int,
+) -> dict[str, Any] | None:
+    """Normalize chart_config.boxed_labels; None when absent/invalid (non-strict)."""
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping):
+        msg = "boxed_labels must be an object"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    values = raw.get("values")
+    if not isinstance(values, (list, tuple)):
+        msg = "boxed_labels.values must be a list"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    if len(values) != int(category_count):
+        msg = (
+            f"boxed_labels category mismatch: got {len(values)} values "
+            f"for {category_count} categories"
+        )
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    texts = [str(v) if v is not None else "" for v in values]
+    label = str(raw.get("label") or "").strip()
+    return {
+        "label": label,
+        "values": texts,
+        "minFontSize": BOXED_LABEL_MIN_FS,
+    }
+
+
+def _paint_boxed_labels_svg(
+    parts: list[str],
+    *,
+    boxed: Mapping[str, Any],
+    labels: list[str],
+    matrix: list[list[float | None]],
+    pad_l: float,
+    slot: float,
+    group_w: float,
+    bar_w: float,
+    series_count: int,
+    y_pos,
+    zero_y: float,
+) -> None:
+    """Paint category-aligned boxed labels; short bars go outside + connector."""
+    from .auto_typography import measure_text_height, measure_text_width
+
+    fs = float(boxed.get("minFontSize") or BOXED_LABEL_MIN_FS)
+    values = list(boxed.get("values") or [])
+    for i, text in enumerate(values):
+        if not text or i >= len(labels):
+            continue
+        # Prefer single-series bar; else first series with a value.
+        v = None
+        bar_j = 0
+        if series_count == 1:
+            v = matrix[i][0] if matrix and matrix[i] else None
+        else:
+            for j in range(series_count):
+                cand = matrix[i][j] if j < len(matrix[i]) else None
+                if cand is not None:
+                    v, bar_j = cand, j
+                    break
+        if v is None:
+            continue
+        gx = pad_l + i * slot + (slot - group_w) / 2
+        x = gx + bar_j * bar_w
+        bw = max(bar_w - 4, 4.0)
+        cx = x + bw / 2
+        if v >= 0:
+            top = y_pos(v)
+            bh = max(zero_y - top, 0.0)
+        else:
+            top = zero_y
+            bh = max(y_pos(v) - zero_y, 0.0)
+        tw = measure_text_width(text, fs, font="ibm_plex_sans", weight="bold")
+        th = measure_text_height(fs, font="ibm_plex_sans", lines=1)
+        box_w = tw + 2 * BOXED_LABEL_PAD_X
+        box_h = th + 2 * BOXED_LABEL_PAD_Y
+        inside = bh >= max(BOXED_LABEL_MIN_BAR_H, box_h + 8) and bw >= box_w + 4
+        if inside:
+            # consistent relative position ~60% up the bar from baseline
+            cy = top + bh * 0.4
+            placement = "inside"
+            box_y = cy - box_h / 2
+            text_y = cy + th * 0.35
+            connector = ""
+        else:
+            placement = "outside"
+            gap = 10.0
+            if v >= 0:
+                box_y = top - gap - box_h
+                stem_y1 = top
+                stem_y2 = box_y + box_h
+            else:
+                box_y = top + bh + gap
+                stem_y1 = top + bh
+                stem_y2 = box_y
+            text_y = box_y + box_h / 2 + th * 0.35
+            connector = (
+                f'<line class="boxed-label-connector" x1="{cx:.1f}" y1="{stem_y1:.1f}" '
+                f'x2="{cx:.1f}" y2="{stem_y2:.1f}" stroke="var(--navy, #00175a)" '
+                f'stroke-width="1"/>'
+            )
+            _warn(f"boxed_labels outside placement category={i} label={text!r}")
+        box_x = cx - box_w / 2
+        aria = f'{boxed.get("label") or "boxed label"}: {text}'
+        parts.append(
+            f'<g class="boxed-label" data-boxed-placement="{placement}" '
+            f'data-boxed-index="{i}" role="img" aria-label="{esc(aria)}">'
+            f"{connector}"
+            f'<rect class="boxed-label-box" x="{box_x:.1f}" y="{box_y:.1f}" '
+            f'width="{box_w:.1f}" height="{box_h:.1f}" rx="3" '
+            f'fill="var(--panel, #eef0f0)" stroke="var(--navy, #00175a)" '
+            f'stroke-width="1"/>'
+            f'<text class="boxed-label-text" x="{cx:.1f}" y="{text_y:.1f}" '
+            f'text-anchor="middle" fill="var(--navy, #00175a)" font-size="{fs:.0f}" '
+            f'font-weight="700" font-family="var(--font-display, sans-serif)">'
+            f"{esc(text)}</text></g>"
+        )
 
 
 def _bar_matrix(
@@ -410,6 +547,23 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
             )
     else:
         parts.extend(label_markup)
+
+    # #151: semantic boxed labels — never suppressed by ordinary collision.
+    boxed = resolve_boxed_labels(cfg.get("boxed_labels"), category_count=len(labels))
+    if boxed:
+        _paint_boxed_labels_svg(
+            parts,
+            boxed=boxed,
+            labels=labels,
+            matrix=matrix,
+            pad_l=pad_l,
+            slot=slot,
+            group_w=group_w,
+            bar_w=bar_w,
+            series_count=len(series),
+            y_pos=y_pos,
+            zero_y=zero_y,
+        )
 
     parts.append("</svg>")
     return "".join(parts)

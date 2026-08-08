@@ -4,7 +4,7 @@ from __future__ import annotations
 import math
 import uuid
 from typing import Any, Mapping
-from ..shell import _BAR_GROUP_PLUGIN_HTML
+from ..shell import _BAR_GROUP_PLUGIN_HTML, _BOXED_LABELS_PLUGIN_HTML
 from ..strip import esc, strip_eids
 
 from .format import _NAVY, _NAVY_SOFT, _WHITE, _fmt_unit, _fmt_value_label, _series_color, _series_colors
@@ -16,7 +16,7 @@ from .callouts import (
     _merge_callout_bands,
     _side_column_geometry,
 )
-from .bars import _bar_matrix
+from .bars import BOXED_LABEL_MIN_FS, _bar_matrix, resolve_boxed_labels
 from .lines import _combo_bar_data, _combo_line_data, _line_data
 from .core import _chart_config, _svg_fallback_for_layout
 from .auto_typography import (
@@ -393,6 +393,14 @@ def _chartjs_bar_config(
             options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
         if cfg.get("y_axis_max") is not None:
             options["scales"]["y"]["max"] = float(cfg["y_axis_max"])
+        # #151 boxed labels: vertical grouped/plain bars only.
+        boxed = resolve_boxed_labels(cfg.get("boxed_labels"), category_count=len(labels))
+        if boxed:
+            options["plugins"]["boxedLabels"] = {
+                "label": boxed["label"],
+                "values": boxed["values"],
+                "minFontSize": int(boxed.get("minFontSize") or BOXED_LABEL_MIN_FS),
+            }
     _apply_semantic_zero_line(options, datasets, axis="y")
     if stacked and (cfg.get("stack_totals") or cfg.get("point_labels") or cfg.get("show_point_labels")):
         # #101/N3: per-category signed totals painted above each stack via
@@ -943,6 +951,11 @@ def _build_chartjs_html(
         if cfg.get("options", {}).get("plugins", {}).get("barGroups")
         else ""
     )
+    boxed_js = (
+        _BOXED_LABELS_PLUGIN_HTML
+        if cfg.get("options", {}).get("plugins", {}).get("boxedLabels")
+        else ""
+    )
     svg_fb = _svg_fallback_for_layout(
         slide, layout, record_diagnostic=False, host_w=width, host_h=height
     )
@@ -1026,6 +1039,7 @@ def _build_chartjs_html(
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
         f"{bar_group_js}"
+        f"{boxed_js}"
         f"{ann_html}"
         f"{break_html}"
         f"{callouts_html}"

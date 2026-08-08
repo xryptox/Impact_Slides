@@ -2088,6 +2088,92 @@ body.gl-debug .gl-areas-freeform .gl-slot {
   color: var(--ink);
 }
 
+/* ---------- chart_hero_dual driver card (#151) ---------- */
+.gl-driver-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm, 10px);
+  flex: 1;
+  background: var(--gradient-panel), var(--panel);
+  border-radius: var(--radius-md, 14px);
+  box-shadow: var(--shadow-3);
+  padding: var(--size-5) var(--size-6);
+  min-width: 0;
+}
+.gl-driver-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.gl-driver-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--panel-border, #d8dce3);
+}
+.gl-driver-row:last-child { border-bottom: none; }
+.gl-driver-copy { min-width: 0; }
+.gl-driver-label {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--navy);
+}
+.gl-driver-detail {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink-muted, #63666a);
+  margin-top: 2px;
+}
+.gl-driver-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.gl-driver-value {
+  font-family: var(--font-display, 'IBM Plex Sans', sans-serif);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--navy);
+}
+.gl-driver-row.gl-driver-tone--positive .gl-driver-value,
+.gl-driver-row.gl-driver-tone--positive .gl-driver-dir { color: var(--color-accent-2, #0a7d55); }
+.gl-driver-row.gl-driver-tone--negative .gl-driver-value,
+.gl-driver-row.gl-driver-tone--negative .gl-driver-dir { color: var(--color-warn, #b35900); }
+.gl-driver-row.gl-driver-tone--accent .gl-driver-value,
+.gl-driver-row.gl-driver-tone--accent .gl-driver-dir { color: var(--blue, #006fcf); }
+.gl-driver-row.gl-driver-tone--neutral .gl-driver-value { color: var(--navy); }
+
+/* Direction via shape (no embedded arrow characters). */
+.gl-driver-dir {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  flex: 0 0 auto;
+}
+.gl-driver-dir--up {
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 12px solid currentColor;
+}
+.gl-driver-dir--down {
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 12px solid currentColor;
+}
+.gl-driver-dir--flat {
+  width: 14px;
+  height: 3px;
+  background: currentColor;
+  border: 0;
+}
+
 /* ---------- IR bullet sheet (#77/F7) ---------- */
 .gl-areas-ir-bullets { display: block; }
 .gl-ir-bullets {

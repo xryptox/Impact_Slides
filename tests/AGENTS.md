@@ -27,6 +27,7 @@ Regression suite and fixtures for preprocessor + renderer_v2.
 - Amex #157 annex handoff contract: `test_amex_annex_33_37_handoff.py` + fixtures `amex_annex_33_37_v10_broken_handoff.json` / `amex_annex_33_37_restored_handoff.json` (`apply_issue_157_annex_matrices`; PDF-source semantic-cell probes + 1920×1080 browser geometry; no renderer production change)
 - Amex #159 grouped annex composition: `test_grouped_annex_table.py` + `amex_slide32_grouped_annex.json` (`apply_issue_159_grouped_annex`; source-group mutation traps, schema/strict fallback, and 1920×1080 browser geometry)
 - Amex #158 handoff + multi_panel pane titles: `test_amex_s28_handoff_contract.py` + `test_multi_panel_pane_headings.py` + fixtures `amex_s28_v10_broken.json` / `amex_s28_corrected.json` (mutation drops slide-28 `top_total` pseudo-titles; renderer multi_panel tiles share #147 heading/subtitle chrome; SVG honors `stack_total_labels`)
+- #151 driver_card + boxed bar labels: `test_driver_card.py` + `test_boxed_labels.py` (schema 1/6/7 rows, malformed direction/tone, overflow strict/non-strict, no-valid-row hero fallback, order/a11y; boxed category mismatch, in-bar/outside+connector, Chart.js+SVG, collision independence). Slide 18 target lives in `amex_v10_44_slide_handoff.json`
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
 - Do not reintroduce legacy preprocessor baseline harnesses; see `LEGACY_MIGRATION.md`
 

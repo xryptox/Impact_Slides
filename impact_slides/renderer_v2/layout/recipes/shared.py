@@ -511,6 +511,226 @@ def _hero_stack(stats: Sequence[Any]) -> str:
     return f'<div class="gl-hero-stack">{"".join(cards)}</div>'
 
 
+_DRIVER_DIRS = frozenset({"up", "down", "flat"})
+_DRIVER_TONES = frozenset({"positive", "negative", "neutral", "accent"})
+# Right pane ~1/3 of 1920 content; two-line clamp budget for labels/details.
+_DRIVER_TEXT_MAX_W = 280.0
+_DRIVER_HEADING_MAX_W = 360.0
+_DRIVER_FS = 16.0
+_DRIVER_HEADING_FS = 20.0
+
+
+def _driver_fit_text(
+    text: str,
+    *,
+    font_size: float,
+    max_width: float,
+    field: str,
+) -> str:
+    """Keep one line when it fits; else wrap to 2 lines and ellipsize. Strict raises."""
+    from ...charts.auto_typography import ellipsize, measure_text_width, wrap_label
+    from ...charts.typography import _RENDER_STRICT, _warn
+
+    raw = (text or "").strip()
+    if not raw:
+        return ""
+    if measure_text_width(raw, font_size, font="source_sans_3", weight="semibold") <= max_width:
+        return raw
+    lines = wrap_label(raw, max_lines=2)
+    fitted: list[str] = []
+    overflow = False
+    for line in lines:
+        if measure_text_width(line, font_size, font="source_sans_3", weight="semibold") <= max_width:
+            fitted.append(line)
+            continue
+        overflow = True
+        fitted.append(ellipsize(line, font_size, max_width, font="source_sans_3"))
+    rejoined = " ".join(x.replace("…", "") for x in fitted).strip()
+    compact_src = " ".join(raw.split())
+    compact_out = " ".join(rejoined.split())
+    if compact_out != compact_src and not any("…" in x for x in fitted):
+        overflow = True
+        if fitted:
+            fitted[-1] = ellipsize(fitted[-1], font_size, max_width, font="source_sans_3")
+    if overflow:
+        msg = f"driver_card {field} overflow"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+    return chr(10).join(fitted)
+
+
+def normalize_driver_card(visual: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """Validate/normalize secondary_visual driver_card; None → fall back."""
+    from ...charts.typography import _RENDER_STRICT, _warn
+
+    if not isinstance(visual, Mapping) or visual.get("type") != "driver_card":
+        return None
+    heading = strip_eids(str(visual.get("heading") or "")).strip()
+    if not heading:
+        msg = "driver_card missing heading"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    raw_rows = visual.get("rows")
+    if not isinstance(raw_rows, list):
+        msg = "driver_card rows must be a list"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    if len(raw_rows) > 6:
+        msg = "driver_card supports at most 6 rows"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+        raw_rows = raw_rows[:6]
+    rows: list[dict[str, Any]] = []
+    for i, raw in enumerate(raw_rows):
+        if not isinstance(raw, Mapping):
+            msg = f"driver_card row {i} malformed"
+            if _RENDER_STRICT.get():
+                raise ValueError(msg)
+            _warn(msg)
+            continue
+        label = strip_eids(str(raw.get("label") or "")).strip()
+        value = strip_eids(str(raw.get("value") or "")).strip()
+        if not label or not value:
+            msg = f"driver_card row {i} missing label/value"
+            if _RENDER_STRICT.get():
+                raise ValueError(msg)
+            _warn(msg)
+            continue
+        detail_raw = raw.get("detail")
+        detail = (
+            strip_eids(str(detail_raw)).strip()
+            if detail_raw is not None and str(detail_raw).strip()
+            else ""
+        )
+        direction = raw.get("direction")
+        if direction is not None and direction != "":
+            direction = str(direction).strip().lower()
+            if direction not in _DRIVER_DIRS:
+                msg = f"driver_card row {i} bad direction"
+                if _RENDER_STRICT.get():
+                    raise ValueError(msg)
+                _warn(msg)
+                continue
+        else:
+            direction = None
+        tone = raw.get("tone")
+        if tone is not None and tone != "":
+            tone = str(tone).strip().lower()
+            if tone not in _DRIVER_TONES:
+                msg = f"driver_card row {i} bad tone"
+                if _RENDER_STRICT.get():
+                    raise ValueError(msg)
+                _warn(msg)
+                continue
+        else:
+            tone = None
+        rows.append(
+            {
+                "label": label,
+                "value": value,
+                "detail": detail,
+                "direction": direction,
+                "tone": tone,
+            }
+        )
+    if not rows:
+        msg = "driver_card has no valid rows"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+        return None
+    subtitle = strip_eids(str(visual.get("subtitle") or "")).strip()
+    return {
+        "type": "driver_card",
+        "heading": heading,
+        "subtitle": subtitle,
+        "rows": rows,
+    }
+
+
+def _driver_card_html(visual: Mapping[str, Any] | None) -> str:
+    """Render a normalized driver_card as right-pane HTML (#151)."""
+    from ...charts.typography import chart_pane_headings_html
+
+    card = normalize_driver_card(visual)
+    if not card:
+        return ""
+    # Fit heading/subtitle to 2-line budget before #147 chrome (same wrap contract as rows).
+    heading = _driver_fit_text(
+        card["heading"],
+        font_size=_DRIVER_HEADING_FS,
+        max_width=_DRIVER_HEADING_MAX_W,
+        field="heading",
+    )
+    subtitle = card.get("subtitle") or ""
+    if subtitle:
+        subtitle = _driver_fit_text(
+            subtitle,
+            font_size=14.0,
+            max_width=_DRIVER_HEADING_MAX_W,
+            field="subtitle",
+        )
+    # Reuse #147 pane chrome; preserve wrapped lines as <br>.
+    chrome = chart_pane_headings_html(heading, subtitle).replace("\n", "<br>")
+    row_html: list[str] = []
+    for row in card["rows"]:
+        label = _driver_fit_text(
+            row["label"], font_size=_DRIVER_FS, max_width=_DRIVER_TEXT_MAX_W, field="label"
+        )
+        detail = row.get("detail") or ""
+        detail_html = ""
+        if detail:
+            d = _driver_fit_text(
+                detail, font_size=13.0, max_width=_DRIVER_TEXT_MAX_W, field="detail"
+            )
+            detail_html = (
+                f'<div class="gl-driver-detail">{esc(d).replace(chr(10), "<br>")}</div>'
+            )
+        direction = row.get("direction")
+        tone = row.get("tone") or "neutral"
+        dir_cls = f" gl-driver-dir--{direction}" if direction else ""
+        tone_cls = f" gl-driver-tone--{tone}"
+        dir_html = ""
+        aria_dir = ""
+        if direction:
+            dir_html = (
+                f'<span class="gl-driver-dir{dir_cls}" data-direction="{esc(direction)}" '
+                f'aria-hidden="true"></span>'
+            )
+            aria_dir = f", {direction}"
+        aria = (
+            f'{row["label"]}'
+            + (f': {detail}' if detail else "")
+            + f' {row["value"]}{aria_dir}'
+        )
+        # value then direction (right metric column reading order)
+        row_html.append(
+            f'<div class="gl-driver-row{tone_cls}" role="listitem" aria-label="{esc(aria)}">'
+            f'<div class="gl-driver-copy">'
+            f'<div class="gl-driver-label">{esc(label).replace(chr(10), "<br>")}</div>'
+            f"{detail_html}"
+            f"</div>"
+            f'<div class="gl-driver-metric">'
+            f'<span class="gl-driver-value">{esc(row["value"])}</span>'
+            f"{dir_html}"
+            f"</div>"
+            f"</div>"
+        )
+    return (
+        f'<div class="gl-driver-card" role="group" '
+        f'aria-label="{esc(card["heading"])}">'
+        f"{chrome}"
+        f'<div class="gl-driver-rows" role="list">{"".join(row_html)}</div>'
+        f"</div>"
+    )
+
+
 
 def _sequential_grid(
     items: list[str],
