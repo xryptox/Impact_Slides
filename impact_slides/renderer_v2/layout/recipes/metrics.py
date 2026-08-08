@@ -6,6 +6,7 @@ from typing import Any, Mapping, Sequence
 
 from ...slide_view import content as _sv_content
 from ...slide_view import steps as _sv_steps
+from ...charts.typography import _RENDER_STRICT, _warn
 from ...strip import (
     banned_face_opener,
     chosen_dek,
@@ -267,6 +268,90 @@ def render_data_table_with_insight(slide, total, notes, active=False):
         item_count=len(body) if not table_as_kpi(rows) else len(body) - 1,
     )
 
+
+
+# Fixed-stage content width and per-block readability floor. This mirrors the
+# existing deterministic chart-host checks: handoffs have no runtime viewport.
+GROUPED_ANNEX_HOST_WIDTH = 1728
+GROUPED_ANNEX_READABLE_BLOCK_WIDTH = 560
+_GROUPED_ANNEX_STYLE = """
+<style data-grouped-annex="1">
+.gl-grouped-annex { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--gap-md); align-items:start; }
+.gl-grouped-annex-1col { grid-template-columns:1fr; }
+.gl-grouped-annex-block { min-width:0; }
+.gl-grouped-annex-heading { margin:0 0 var(--space-2); color:var(--navy); font-family:var(--font-display); font-size:var(--fs-pill); font-weight:700; line-height:1.15; }
+.gl-grouped-annex .table-frame { max-width:none; }
+.gl-grouped-annex .annex-table .gl-annex-stub { width:52%; }
+.gl-grouped-annex .annex-table th, .gl-grouped-annex .annex-table td { white-space:normal; }
+.gl-grouped-annex .gl-annex-row-aggregate .gl-annex-stub { font-weight:700; }
+.gl-grouped-annex .gl-annex-indent-1 { padding-left:var(--size-4); }
+.gl-grouped-annex .gl-annex-indent-2 { padding-left:var(--size-6); }
+.gl-grouped-annex .gl-annex-indent-3 { padding-left:var(--size-8); }
+</style>
+"""
+
+
+def _grouped_annex_table(group: Mapping[str, Any], index: int) -> str:
+    heading = strip_eids(group.get("heading") or "")
+    headers = group.get("headers") or []
+    rows = group.get("rows") or []
+    heading_id = f"gl-grouped-annex-heading-{index}"
+    th = "".join(f'<th scope="col">{esc(header)}</th>' for header in headers)
+    body = []
+    for row in rows:
+        cells = row.get("cells") or []
+        role = row.get("role") or "child"
+        indent = int(row.get("indent") or 0)
+        tds = []
+        for column, cell in enumerate(cells):
+            if column == 0:
+                cls = f"gl-annex-stub gl-annex-indent-{indent}"
+            else:
+                numeric = re.search(r"[\d$%]", str(cell or ""))
+                cls = "gl-annex-cell num" if numeric else "gl-annex-cell"
+            tds.append(f'<td class="{cls}">{esc(cell)}</td>')
+        body.append(
+            f'<tr class="gl-annex-row gl-annex-row-{esc(role)}">{"".join(tds)}</tr>'
+        )
+    return (
+        f'<section class="gl-grouped-annex-block">'
+        f'<h3 class="gl-grouped-annex-heading" id="{heading_id}">{esc(heading)}</h3>'
+        f'<div class="gl-annex table-frame gl-card gl-annex-micro">'
+        f'<table class="data-table annex-table" aria-labelledby="{heading_id}">'
+        f'<thead><tr>{th}</tr></thead><tbody>{"".join(body)}</tbody></table></div></section>'
+    )
+
+
+def render_grouped_annex_table(slide, total, notes, active=False):
+    """Render one or two peer annex matrices without flattening their identity."""
+    pv = (slide.get("visual_spec") or {}).get("primary_visual") or {}
+    groups = pv.get("groups") if isinstance(pv, Mapping) else []
+    groups = groups if isinstance(groups, list) else []
+    group_count = len(groups)
+    required_width = GROUPED_ANNEX_READABLE_BLOCK_WIDTH * group_count
+    stacked = group_count > 1 and GROUPED_ANNEX_HOST_WIDTH < required_width
+    if stacked:
+        msg = "grouped annex blocks cannot fit side by side at the annex readability floor"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg)
+        _warn(msg)
+    blocks = "".join(_grouped_annex_table(group, i) for i, group in enumerate(groups))
+    main = (
+        f'{_GROUPED_ANNEX_STYLE}<div class="gl-grouped-annex gl-grouped-annex-{1 if stacked else group_count}col">'
+        f'{blocks}</div>' + insight_strip(_so_what(slide))
+    )
+    return slide_shell(
+        number=int(slide["slide_number"]),
+        total=total,
+        title=strip_eids(slide.get("title") or ""),
+        dek=chosen_dek(slide),
+        main_html=main,
+        notes_html=notes_aside(int(slide["slide_number"]), notes),
+        footer_html=source_strip(_source_names(slide)),
+        layout_class="grouped_annex_table",
+        active=active,
+        item_count=sum(len(group.get("rows") or []) for group in groups),
+    )
 
 
 def render_annex_table(slide, total, notes, active=False):

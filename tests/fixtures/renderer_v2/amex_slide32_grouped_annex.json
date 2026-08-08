@@ -1,0 +1,47 @@
+{
+  "slide_number": 32,
+  "layout_type": "grouped_annex_table",
+  "packing_mode": "stat-led",
+  "title": "Annex 1 (2 of 2) Billed Business — Reported & FX-Adjusted",
+  "section": "Annex",
+  "content": {
+    "subtitle": "% Increase/(decrease) vs. Prior year · $ where noted",
+    "so_what": ""
+  },
+  "visual_spec": {
+    "primary_visual": {
+      "type": "grouped_annex_table",
+      "groups": [
+        {
+          "heading": "Commercial Services",
+          "headers": ["Segment", "Q1'26 Reported", "FX-Adj.*"],
+          "rows": [
+            {"cells": ["U.S. Large and Global Corp.", "4%", "4%"], "role": "child", "indent": 1},
+            {"cells": ["Total Billed Business", "4%", "4%"], "role": "aggregate"},
+            {"cells": ["G&S", "3%", "3%"], "role": "child", "indent": 1},
+            {"cells": ["T&E", "7%", "6%"], "role": "child", "indent": 1}
+          ]
+        },
+        {
+          "heading": "International Card Services",
+          "headers": ["Segment", "Q1'26 Reported", "FX-Adj.*"],
+          "rows": [
+            {"cells": ["International Consumer", "21%", "13%"], "role": "child", "indent": 1},
+            {"cells": ["International SME & Large Corp.", "19%", "12%"], "role": "child", "indent": 1},
+            {"cells": ["Total Billed Business", "20%", "13%"], "role": "aggregate"},
+            {"cells": ["G&S", "21%", "14%"], "role": "child", "indent": 1},
+            {"cells": ["T&E", "18%", "10%"], "role": "child", "indent": 1}
+          ]
+        }
+      ]
+    }
+  },
+  "disclosure": {
+    "pattern": "detail",
+    "panels": [
+      {"title": "FX-adjusted note", "body": "* See Slide 3 for an explanation of FX-adjusted information."}
+    ]
+  },
+  "speaker_notes": "Peer blocks preserve the source scan path.",
+  "evidence_sources": []
+}

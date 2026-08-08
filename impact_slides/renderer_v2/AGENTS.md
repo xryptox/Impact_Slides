@@ -6,7 +6,7 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
 
 ## Ownership
 
-- Layout catalog, dispatch registry, recipes, charts, shell/CSS, validation schemas for handoff slides
+- Layout catalog, dispatch registry, recipes, charts, shell/CSS, validation schemas for handoff slides; `grouped_annex_table` holds 1–2 independently headed annex matrices without flattening peer groups
 - Generated layout index consumer: `wiki/renderer_v2_LAYOUTS.md` (produced by `scripts/gen_layout_index.py`)
 
 ## Local Contracts
@@ -19,6 +19,7 @@ Step 4 deterministic renderer: Builder handoff JSON → self-contained 1920×108
 - `cli.py` paints **raw** `handoff["slides"]` after `validate_handoff` (load-bearing; do not paint validated models without fixing fallback field loss — see issue history #133)
 - `validate_handoff` fallback must be non-lossy **and** total (spread raw + degrade path)
 - No external chart pack; no home-directory lookups anywhere under this tree
+- `grouped_annex_table` accepts 1–2 schema-validated `primary_visual.groups`; each group has a heading, headers, author-ordered rows, and optional `aggregate|child` role plus indentation. Strict hosts reject blocks below the annex readability floor; non-strict hosts stack and warn. Ordinary `annex_table` remains unchanged
 - Delivery default: self-contained (`DeliveryMode.SELF_CONTAINED`)
 - Chart pane titles: HTML-owned `.gl-chart-pane-title` via `charts/typography.chart_pane_title_html` / `resolve_pane_heading` (`heading` → `label` → `chart_config.title` → single series name). Optional pane `subtitle` → `.gl-chart-pane-subtitle` (dek treatment; empty reserves no space). Emit title+subtitle together through `chart_pane_headings_html` so remaining-canvas 320×240 subtracts one combined title/subtitle reservation (title-only exact boundary still succeeds; title+subtitle at that boundary strict-fails / non-strict legacy). `chart_hero_dual` accepts both fields on `primary_visual` and `secondary_visual` (right heading sits above hero facts, not per-KPI). `multi_panel` chart tiles use the same `heading`/`label`/`subtitle` resolve helpers via `chart_pane_headings_html` (#158); legitimate `top_total` remains opt-in (#90). Hosts pass `chart_host_size(kind)`. Ordinary non-chart `.gl-tile-label` stays 13px gray
 - Opt-in `chart_config.typography` (`x_tick_font_size` 8–24, `y_tick_font_size` 8–28, `datalabel_font_size` 8–32): absent → legacy Chart.js 13/13/11. Invalid group: strict raises; non-strict drops whole group + warns. Tick sizes honored on Chart.js + SVG painters (grouped/stacked/line/combo/hbar). `datalabel_font_size` + collision only on ordinary-label layouts (`grouped_bar_chart` / `line_chart` with `point_labels`) — not stacked in-segment/totals or hbar chips (`charts/typography.py`)

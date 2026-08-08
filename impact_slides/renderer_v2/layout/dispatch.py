@@ -42,6 +42,7 @@ LAYOUT_RECIPES: dict[str, Callable[..., str]] = {
     "brand_cover": recipes.render_brand_cover,
     "brand_divider": partial(recipes.render_brand_cover, divider=True),
     "annex_table": recipes.render_annex_table,
+    "grouped_annex_table": recipes.render_grouped_annex_table,
     "multi_panel": recipes.render_multi_panel,
     "full_process_flow": recipes.render_process,
     "timeline": recipes.render_process,

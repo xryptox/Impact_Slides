@@ -631,6 +631,62 @@ def apply_issue_156_slide27_scenarios(handoff: dict[str, Any]) -> dict[str, Any]
     return out
 
 
+# Issue #159 — PDF physical page / deck slide 32 grouped annex tables.
+_S32 = 32
+_S32_GROUPS = [
+    {
+        "heading": "Commercial Services",
+        "headers": ["Segment", "Q1'26 Reported", "FX-Adj.*"],
+        "rows": [
+            {"cells": ["U.S. Large and Global Corp.", "4%", "4%"], "role": "child", "indent": 1},
+            {"cells": ["Total Billed Business", "4%", "4%"], "role": "aggregate"},
+            {"cells": ["G&S", "3%", "3%"], "role": "child", "indent": 1},
+            {"cells": ["T&E", "7%", "6%"], "role": "child", "indent": 1},
+        ],
+    },
+    {
+        "heading": "International Card Services",
+        "headers": ["Segment", "Q1'26 Reported", "FX-Adj.*"],
+        "rows": [
+            {"cells": ["International Consumer", "21%", "13%"], "role": "child", "indent": 1},
+            {"cells": ["International SME & Large Corp.", "19%", "12%"], "role": "child", "indent": 1},
+            {"cells": ["Total Billed Business", "20%", "13%"], "role": "aggregate"},
+            {"cells": ["G&S", "21%", "14%"], "role": "child", "indent": 1},
+            {"cells": ["T&E", "18%", "10%"], "role": "child", "indent": 1},
+        ],
+    },
+]
+
+
+def apply_issue_159_grouped_annex(handoff: dict[str, Any]) -> dict[str, Any]:
+    """Restore slide 32's two peer PDF annex blocks without flattening them."""
+    out = handoff
+    try:
+        slide = _slide(out, _S32)
+    except KeyError:
+        return out
+    slide["layout_type"] = "grouped_annex_table"
+    slide["packing_mode"] = "stat-led"
+    slide["title"] = "Annex 1 (2 of 2) Billed Business — Reported & FX-Adjusted"
+    slide["section"] = "Annex"
+    content = dict(slide.get("content") or {})
+    content["subtitle"] = "% Increase/(decrease) vs. Prior year · $ where noted"
+    content.setdefault("so_what", "")
+    slide["content"] = content
+    slide["visual_spec"] = {
+        "primary_visual": {
+            "type": "grouped_annex_table",
+            "groups": deepcopy(_S32_GROUPS),
+        }
+    }
+    slide["disclosure"] = {
+        "pattern": "detail",
+        "panels": [{"title": "FX-adjusted note", "body": _FX_NOTE}],
+    }
+    slide["speaker_notes"] = "Slide 32 retains Commercial Services and International Card Services as peer source tables (#159)."
+    return out
+
+
 # Issue #158 — PDF physical page / deck slide 28 multi_panel pane titles.
 # v10 handoff put dollar stack totals in tile top_total pseudo-titles.
 _S28 = 28
@@ -735,6 +791,7 @@ def apply_all(handoff: dict[str, Any]) -> dict[str, Any]:
     out = apply_issue_148_bar_semantics(handoff)
     out = apply_issue_156_slide27_scenarios(out)
     out = apply_issue_157_annex_matrices(out)
+    out = apply_issue_159_grouped_annex(out)
     return apply_issue_158_slide28_pane_titles(out)
 
 

@@ -47,6 +47,7 @@ _LADDER_PARITY = {
     "ecosystem_map": "render_ecosystem_map",
     "evidence_cards": "render_evidence_cards",
     "full_process_flow": "render_process",
+    "grouped_annex_table": "render_grouped_annex_table",
     "grouped_bar_chart": "render_chart",
     "guidance_statement_card": "render_guidance_statement_card",
     "heatmap": "render_chart",
