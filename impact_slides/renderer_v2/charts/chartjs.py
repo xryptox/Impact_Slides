@@ -312,10 +312,13 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 if not isinstance(group, Mapping):
                     items = []
                     break
-                start = group.get("start", 0)
-                end = group.get("end", start)
+                label = group.get("label")
+                start = group.get("start")
+                end = group.get("end")
                 if (
-                    isinstance(start, bool)
+                    not isinstance(label, str)
+                    or not label.strip()
+                    or isinstance(start, bool)
                     or isinstance(end, bool)
                     or not isinstance(start, int)
                     or not isinstance(end, int)
@@ -325,7 +328,7 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
                 ):
                     items = []
                     break
-                items.append({"label": str(group.get("label") or ""), "start": start, "end": end})
+                items.append({"label": label, "start": start, "end": end})
             if items:
                 padding = options.setdefault("layout", {}).setdefault("padding", {})
                 padding["top"] = max(int(padding.get("top") or 0), 28)

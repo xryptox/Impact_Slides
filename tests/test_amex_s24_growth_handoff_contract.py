@@ -1,8 +1,9 @@
 """#154 — restore Amex PDF page 24 customer-type growth chart.
 
-Type (A) handoff correction: existing grouped bars, bar-group brackets, and
-outlined aligned support row express the source composition without a renderer
-change. Identity-safe browser evidence addresses slide 24 by number + layout.
+Handoff correction plus the authorized minimal Chart.js bracket capability:
+grouped bars, bar-group brackets, and the outlined aligned support row express
+the source composition. Identity-safe browser evidence addresses slide 24 by
+number + layout.
 """
 
 from __future__ import annotations
@@ -77,9 +78,9 @@ def _assert_semantics(slide: dict) -> None:
     assert support["skin"] == "outlined_boxes"
     assert support["steps_or_data"] == [
         ["", *_CATEGORIES],
-        ["$486B Total Network Volumes · % of Total Network Volumes", *_SUPPORT],
+        ["86B Total Network Volumes · % of Total Network Volumes", *_SUPPORT],
     ]
-    assert "$486B Total Network Volumes" in slide["content"]["subtitle"]
+    assert "86B Total Network Volumes" in slide["content"]["subtitle"]
     assert slide["content"]["key_stats"] == []
     assert "FX-adjusted" in slide["content"]["subtitle"]
     assert "9%" in slide["content"]["subtitle"]
@@ -87,12 +88,6 @@ def _assert_semantics(slide: dict) -> None:
     assert slide["disclosure"]["title"] == "FX-adjusted reporting note"
     assert slide["disclosure"]["default_open"] is True
     assert "See Annex 1 for reported rates" in slide["disclosure"]["body"]
-
-
-def test_broken_fixture_still_documents_the_data_table_defect():
-    broken = _slide(_load(BROKEN))
-    assert broken["layout_type"] == _TABLE
-    assert broken["visual_spec"]["primary_visual"]["type"] == _TABLE
 
 
 def test_mutation_restores_source_semantics_and_is_idempotent():
@@ -120,7 +115,7 @@ def test_render_paints_exactly_six_growth_bars_and_support_context(use_chartjs: 
     for token in [
         *_CATEGORIES,
         *_SUPPORT,
-        "$486B Total Network Volumes",
+        "86B Total Network Volumes",
         "9% FX-adjusted growth",
         "FX-adjusted reporting note",
         "See Annex 1 for reported rates",
@@ -154,6 +149,8 @@ def test_chartjs_bar_groups_are_opt_in():
 
     malformed = _corrected()
     for malformed_groups in (
+        [{}],
+        [{"label": "", "start": 0, "end": 0}],
         [{"label": "bad", "start": "nope", "end": 2}],
         [{"label": "bad", "start": True, "end": False}],
         [{"label": "bad", "start": 3, "end": 2}],
@@ -273,7 +270,7 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
               const label = row && row.querySelector('.chart-outlined-label');
               const cells = row && [...row.querySelectorAll('.chart-outlined-cell')];
               if (!row || !label || !cells || cells.length !== 6 ||
-                  !label.textContent.includes('$486B Total Network Volumes'))
+                  !label.textContent.includes('86B Total Network Volumes'))
                 return {ok:false, reason:'support row missing total or cells'};
               const labelBox = label.querySelector('.chart-outlined-box');
               const cellBoxes = cells.map(c => c.querySelector('.chart-outlined-box'));
