@@ -1389,7 +1389,8 @@
             "y_axis_unit_position": "prefix",
             "typography": {
               "y_tick_font_size": 24,
-              "datalabel_font_size": 28
+              "datalabel_font_size": 28,
+              "mode": "auto"
             }
           }
         },
@@ -1444,7 +1445,8 @@
             "y_axis_unit": "%",
             "typography": {
               "y_tick_font_size": 24,
-              "datalabel_font_size": 28
+              "datalabel_font_size": 28,
+              "mode": "auto"
             }
           },
           "label": "YoY Growth %"

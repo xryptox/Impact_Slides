@@ -241,7 +241,11 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         datasets.append(ds)
     _apply_bar_density_knobs(datasets, cfg)
     typo, auto_plan = typography_with_auto(
-        slide, "stacked_bar_chart" if stacked else "grouped_bar_chart", chart_cfg=cfg
+        slide,
+        "stacked_bar_chart" if stacked else "grouped_bar_chart",
+        chart_cfg=cfg,
+        host_w=900,
+        host_h=480,
     )
     options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
     if stacked:
@@ -573,7 +577,9 @@ def _chartjs_hbar_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             }
         )
     _apply_bar_density_knobs(datasets, cfg)
-    typo, auto_plan = typography_with_auto(slide, "horizontal_bar_chart", chart_cfg=cfg)
+    typo, auto_plan = typography_with_auto(
+        slide, "horizontal_bar_chart", chart_cfg=cfg, host_w=960, host_h=540
+    )
     options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan, horizontal=True)
     options["indexAxis"] = "y"
     x_scale = options["scales"]["x"]
@@ -701,7 +707,9 @@ def _chartjs_line_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
             )
         datasets.append(ds)
 
-    typo, auto_plan = typography_with_auto(slide, "line_chart", chart_cfg=cfg)
+    typo, auto_plan = typography_with_auto(
+        slide, "line_chart", chart_cfg=cfg, host_w=900, host_h=480
+    )
     options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
     y_scale = options["scales"]["y"]
     # Axis domain: explicit min/max, or forced ticks (0/5/10/15 rails).
@@ -788,7 +796,9 @@ def _chartjs_combo_config(slide: Mapping[str, Any]) -> dict[str, Any] | None:
         )
     cfg = _chart_config(slide)
     _apply_bar_density_knobs(datasets, cfg)
-    typo, auto_plan = typography_with_auto(slide, "combo_chart", chart_cfg=cfg)
+    typo, auto_plan = typography_with_auto(
+        slide, "combo_chart", chart_cfg=cfg, host_w=900, host_h=480
+    )
     options = _chartjs_common_options(cfg, typo=typo, auto_plan=auto_plan)
     _apply_semantic_zero_line(options, datasets, axis="y")
     return {

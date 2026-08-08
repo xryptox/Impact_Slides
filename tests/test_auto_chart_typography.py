@@ -66,7 +66,7 @@ def test_auto_mode_validates_raised_explicit_floors():
 def test_resolver_preserves_labels_before_ellipsis_and_keeps_endpoints():
     plan = resolve_auto_typography(
         chart_type="line_chart",
-        host_w=120,
+        host_w=80,
         host_h=180,
         categories=["Long reporting period alpha beta"] * 8,
         short_labels=[None] * 8,
@@ -156,10 +156,10 @@ def test_svg_and_chartjs_receive_the_same_auto_sizes(tmp_path):
         (["Q1 2026"] * 2, [None] * 2, 300, 80, (False, 0, False, False, False)),
         (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (True, 0, False, True, False)), 
         (["AlphaBeta"] * 2, [None] * 2, 130, 70, (False, 30, False, False, False)),
-        (["Long alpha beta"] * 2, [None] * 2, 160, 120, (False, 45, False, False, False)),
+        (["Long alpha beta"] * 2, [None] * 2, 140, 110, (False, 45, False, False, False)),
         (["Long alpha beta gamma"] * 8, [f"Q{i}" for i in range(8)], 160, 80, (False, 0, True, False, False)),
         (["Long alpha beta gamma"] * 8, [None] * 8, 220, 80, (True, 0, False, True, False)),
-        (["Supercalifragilisticexpialidocious"] * 8, [None] * 8, 100, 80, (False, 0, False, True, True)),
+        (["Supercalifragilisticexpialidocious"] * 8, [None] * 8, 100, 80, (False, 0, False, False, True)),
     ],
 )
 def test_x_adaptation_stage_order_mutation_traps(labels, short_labels, plot_w, bottom, expected):
@@ -194,7 +194,7 @@ def test_sibling_sync_mutation_trap_uses_smallest_non_explicit_size():
 
 
 def test_plan_suppresses_chartjs_and_svg_ordinary_datalabels(tmp_path):
-    pane = _pane("grouped_bar_chart", [f"Category {i}" for i in range(40)], typography={"mode": "auto"})
+    pane = _pane("grouped_bar_chart", [f"Category {i}" for i in range(80)], typography={"mode": "auto"})
     slide = {
         "slide_number": 1, "title": "Auto", "layout_type": "grouped_bar_chart", "content": {},
         "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
@@ -276,6 +276,8 @@ def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, ro
         )
         assert estimated_w >= bounds["width"], (font, size, rotation, text, estimated_w, bounds)
         assert estimated_h >= bounds["height"], (font, size, rotation, text, estimated_h, bounds)
+        assert estimated_w <= bounds["width"] + max(bounds["width"] * 0.05, 2), (font, size, rotation, text, estimated_w, bounds)
+        assert estimated_h <= bounds["height"] + max(bounds["height"] * 0.05, 2), (font, size, rotation, text, estimated_h, bounds)
 
 
 def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
@@ -286,6 +288,11 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
 
     handoff = json.loads((FIXTURES / "amex_v10_44_slide_handoff.json").read_text(encoding="utf-8"))
     handoff = apply_all(handoff)
+    slide_17 = next(slide for slide in handoff["slides"] if slide["slide_number"] == 17)
+    assert all(
+        pane["chart_config"]["typography"].get("mode") == "auto"
+        for pane in (slide_17["visual_spec"]["primary_visual"], slide_17["visual_spec"]["secondary_visual"])
+    )
     for slide in handoff["slides"]:
         visual = slide.get("visual_spec") or {}
         for key in ("primary_visual", "secondary_visual"):
@@ -326,6 +333,11 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                 "decisions": [
                     decision for decision in meta["auto_typography"]
                     if decision.get("slide_number") == index + 1
+                ],
+                "warnings": [
+                    warning for decision in meta["auto_typography"]
+                    if decision.get("slide_number") == index + 1
+                    for warning in decision.get("warnings", [])
                 ],
             }
             for index, clipped in enumerate(clip)

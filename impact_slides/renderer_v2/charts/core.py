@@ -112,7 +112,13 @@ def _svg_fallback_for_layout(
     from .auto_typography import compute_auto_plan_for_slide, record_auto_diagnostic
 
     cfg = _chart_config(slide)
-    plan = compute_auto_plan_for_slide(slide, layout, chart_cfg=cfg)
+    host_w, host_h = {
+        "horizontal_bar_chart": (960, 540),
+        "waterfall_chart": (1200, 520),
+    }.get(layout, (900, 480))
+    plan = compute_auto_plan_for_slide(
+        slide, layout, host_w=host_w, host_h=host_h, chart_cfg=cfg
+    )
     if plan is not None:
         cfg["_auto_typo_plan"] = plan
         visual_spec = dict(slide.get("visual_spec") or {})

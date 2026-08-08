@@ -86,11 +86,11 @@ def _warn(msg: str) -> None:
 _FONT_METRICS: dict[str, dict[str, float]] = {
     "source_sans_3": {
         "digit": 0.54,
-        "upper": 0.82,
-        "lower": 0.86,
-        "space": 0.21,
-        "punct": 0.90,
-        "other": 0.90,
+        "upper": 0.80,
+        "lower": 0.82,
+        "space": 0.20,
+        "punct": 0.81,
+        "other": 0.82,
         "avg": 0.64,
         "ascender": 1.05,
         "descender": 0.28,
@@ -98,15 +98,15 @@ _FONT_METRICS: dict[str, dict[str, float]] = {
     },
     "ibm_plex_sans": {
         "digit": 0.63,
-        "upper": 0.97,
-        "lower": 0.91,
-        "space": 0.25,
-        "punct": 0.98,
-        "other": 0.98,
+        "upper": 0.93,
+        "lower": 0.855,
+        "space": 0.236,
+        "punct": 0.925,
+        "other": 0.94,
         "avg": 0.70,
-        "ascender": 1.00,
-        "descender": 0.28,
-        "line_gap": 0.14,
+        "ascender": 0.95,
+        "descender": 0.26,
+        "line_gap": 0.13,
     },
     # Unknown theme fonts — conservative (wider) fallback.
     "_fallback": {
@@ -121,6 +121,17 @@ _FONT_METRICS: dict[str, dict[str, float]] = {
         "descender": 0.28,
         "line_gap": 0.16,
     },
+}
+
+_GLYPH_ADVANCES = {
+    "source_sans_3": {"W": .80, "m": .843, "i": .262, "l": .271, "R": .592,
+        "e": .507, "v": .495, "n": .56, "u": .556, "Q": .674, "M": .745,
+        "A": .558, "F": .51, "Y": .501, "&": .639, "/": .344, "-": .322,
+        ".": .275, ",": .275, "%": .841},
+    "ibm_plex_sans": {"W": .949, "m": .888, "i": .275, "l": .294, "R": .664,
+        "e": .558, "v": .524, "n": .588, "u": .588, "Q": .712, "M": .817,
+        "A": .672, "F": .577, "Y": .632, "&": .713, "/": .437, "-": .402,
+        ".": .299, ",": .299, "%": .96},
 }
 
 _FONT_ALIASES = {
@@ -177,17 +188,9 @@ def measure_text_width(
         return 0.0
     total = 0.0
     for ch in text:
-        total += m[_char_class(ch)]
-    # Bold ≈ +4% advance (Plex/Source).
-    bold = False
-    if isinstance(weight, str):
-        bold = weight.lower() in {"bold", "700", "600", "semibold"}
-    elif isinstance(weight, (int, float)):
-        bold = int(weight) >= 600
-    if bold:
-        total *= 1.04
-    # 2% safety pad so estimates contain real bounds.
-    return total * float(font_size) * 1.02
+        total += _GLYPH_ADVANCES.get(key, {}).get(ch, m[_char_class(ch)])
+    # Tables are calibrated at the renderer's 600 axis-label weight.
+    return total * float(font_size) * 1.003
 
 
 def measure_text_height(
