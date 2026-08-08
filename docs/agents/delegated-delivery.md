@@ -18,10 +18,10 @@ Expected roles:
 - `implementer` — implements one issue in an isolated feature worktree
 - `gate-driver` — recovery-only driver for an existing no-mistakes run; Kimi `review` model, `bash` only, all skills/extensions disabled (the role invokes the installed `no-mistakes` CLI directly)
 - `reviewer` — Kimi read-only correctness/data-loss review with project/cwd DOX context, CodeMapper only, and no unrelated extensions
-- `general-purpose` subagent in `~/.pi/agent/agents/general-purpose.md` — read-only Kimi worker required by the implement skill's two-axis `code-review` pass
+- `general-purpose` subagent in `~/.pi/agent/agents/general-purpose.md` — read-only Grok Latest worker required by the implement skill's two-axis `code-review` pass
 - `merger` — cheap-model, approval-gated merge of one exact PR head; `bash` only with all skills/extensions disabled
 
-The current aliases use `dev` for implementation work, `review` for Kimi review, and `cheap` for merging. Inspect the live settings rather than copying remembered provider names.
+The current `dev` alias and general-purpose Standards/Spec subagent use `openrouter/~x-ai/grok-latest` with high thinking. `review` remains the independent Kimi model and `cheap` remains reserved for merging. Terra is not used by the active delegated-delivery pipeline.
 
 ## Why Herdr wraps implementation
 
