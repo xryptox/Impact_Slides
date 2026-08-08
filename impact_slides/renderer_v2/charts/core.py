@@ -125,7 +125,10 @@ def _svg_fallback_for_layout(
     if plan is not None:
         cfg["_auto_typo_plan"] = plan
         primary = {**primary_visual(slide), "chart_config": cfg}
-        slide = {**slide, "visual_spec": {"primary_visual": primary, "chart_config": cfg}}
+        visual_spec = dict(slide.get("visual_spec") or {})
+        visual_spec["primary_visual"] = primary
+        visual_spec["chart_config"] = cfg
+        slide = {**slide, "visual_spec": visual_spec}
         if record_diagnostic:
             record_auto_diagnostic(
                 {**plan.diagnostic_dict(), "slide_number": slide.get("slide_number")}

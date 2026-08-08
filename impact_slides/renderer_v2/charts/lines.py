@@ -559,8 +559,9 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             step = int(step)
         bar_ticks = [bar_min + i * step for i in range(5)]
     for tick in bar_ticks:
-        ty = bar_y(float(tick))
-        tick_label = _fmtb(float(tick))
+        tick = float(tick)
+        tick_label = _fmtb(tick)
+        ty = bar_y(tick)
         parts.append(
             f'<text x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
             f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
@@ -587,8 +588,9 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             line_ticks = [line_min + i * step for i in range(5)]
         line_unit = overlay_cfg.get("y_axis_unit", "")
         for tick in line_ticks:
-            ty = line_y(float(tick))
+            tick = float(tick)
             tick_label = f"{tick:g}{line_unit}" if line_unit else f"{tick:g}"
+            ty = line_y(tick)
             parts.append(
                 f'<text x="{W - pad_r + 10}" y="{ty + 5:.1f}" text-anchor="start" '
                 f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '

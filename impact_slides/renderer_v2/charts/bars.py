@@ -205,6 +205,9 @@ def _vbar_frame(
             return pad_t + plot_h / 2
         return pad_t + plot_h - ((v - y_min) / rng) * plot_h
 
+    plan = cfg.get("_auto_typo_plan")
+    if getattr(plan, "chart_type", "") not in {"grouped_bar_chart", "stacked_bar_chart"}:
+        plan = None
     typo = resolve_typography(cfg)
     # SVG legacy y-tick is 14; only override when the knob is explicitly set.
     y_tick_fs = (
@@ -214,17 +217,16 @@ def _vbar_frame(
     x_tick_fs = (
         int(typo["x_tick_font_size"]) if typo.get("x_tick_font_size_set") else 14
     )
+    if getattr(plan, "enabled", False):
+        x_tick_fs = int(plan.x_tick_font_size)
+        y_tick_fs = int(plan.y_tick_font_size)
+        y_tick_wt = "700"
     parts: list[str] = [
         f'<svg class="chart-svg vbar-chart {cls}" viewBox="0 0 {W} {H}" '
         f'xmlns="http://www.w3.org/2000/svg" '
         f'style="width:100%;height:auto">'
     ]
-    # Tick labels only — plot gridlines default off (#152). The caller may
-    # stash an auto plan; only use its y ticks when they share this native domain.
-    plan = cfg.get("_auto_typo_plan")
-    # Stacked bars use stack sums, not the resolver's flattened-value domain.
-    if getattr(plan, "chart_type", "") != "grouped_bar_chart":
-        plan = None
+    # Tick labels only — plot gridlines default off (#152).
     _lines, value_ticks = svg_auto_axis_view(
         plan, labels=[], ticks=y_ticks, format_tick=lambda tick: _fmt_bar(tick, unit)
     )

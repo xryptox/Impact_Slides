@@ -858,6 +858,7 @@ def resolve_auto_typography(
     font_y: str | None = "ibm_plex_sans",
     font_dl: str | None = "ibm_plex_sans",
     horizontal: bool | None = None,
+    allow_y_tick_reduction: bool = True,
 ) -> AutoTypoPlan:
     """Largest whole-px sizes that fit; axes beat ordinary datalabels."""
     ct = (chart_type or "").lower().strip()
@@ -1033,7 +1034,7 @@ def resolve_auto_typography(
                 left_budget if cat_is_x else bottom_budget,
                 font=fy if cat_is_x else fx,
             )
-            if ok:
+            if ok and (allow_y_tick_reduction or not red):
                 best = (size, vv, ll, red)
                 break
         return best
@@ -1347,10 +1348,20 @@ def _extract_categories_and_shorts(
         labels, series, rows, _pc = _bar_matrix(slide)
         cats = list(labels)
         series_count = max(len(series), 1)
-        for r in rows:
-            for v in r:
-                if v is not None:
-                    values_flat.append(float(v))
+        if ct == "stacked_bar_chart":
+            values_flat = [
+                value
+                for row in rows
+                for value in (
+                    sum(v for v in row if v is not None and v > 0),
+                    sum(v for v in row if v is not None and v < 0),
+                )
+            ]
+        else:
+            for r in rows:
+                for v in r:
+                    if v is not None:
+                        values_flat.append(float(v))
         for i, item in enumerate(raw_steps):
             if i >= len(cats):
                 break
@@ -1412,7 +1423,7 @@ def _extract_categories_and_shorts(
     else:
         return [], [], 1, [], [], []
 
-    unit = str(cfg.get("y_axis_unit") or "")
+    unit = str(cfg.get("y_axis_unit") if cfg.get("y_axis_unit") is not None else ("%" if ct == "line_chart" else ""))
     if values_flat:
         y_max, y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
     else:
@@ -1548,6 +1559,7 @@ def compute_auto_plan_for_slide(
         y_explicit=y_ex,
         dl_explicit=dl_ex,
         horizontal=(ct == "horizontal_bar_chart"),
+        allow_y_tick_reduction=(ct != "combo_chart"),
     )
     return plan
 

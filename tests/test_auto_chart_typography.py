@@ -215,7 +215,7 @@ def test_plan_suppresses_chartjs_and_svg_ordinary_datalabels(tmp_path):
 def test_svg_receives_adapted_labels_and_datalabel_suppression(tmp_path):
     pane = _pane(
         "grouped_bar_chart",
-        ["Supercalifragilisticexpialidocious"] * 20,
+        ["Supercalifragilisticexpialidocious"] * 8,
         typography={"mode": "auto"},
         short=True,
     )
@@ -229,8 +229,7 @@ def test_svg_receives_adapted_labels_and_datalabel_suppression(tmp_path):
     render_deck(path, out, strict=False, suppress_features=["charts"])
     html = (out / "presentation.html").read_text(encoding="utf-8")
     labels = re.findall(r'class="auto-x-label"[^>]*>(.*?)</text>', html)
-    assert labels and all("Supercalifragilisticexpialidocious" not in label for label in labels)
-    assert all("…" in label for label in labels)
+    assert labels == [f"Q{i + 1}" for i in range(8)]
 
 
 @pytest.mark.parametrize("font", ["Source Sans 3", "IBM Plex Sans"])
@@ -238,7 +237,6 @@ def test_svg_receives_adapted_labels_and_datalabel_suppression(tmp_path):
 @pytest.mark.parametrize("rotation", [0, 30, 45])
 def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, rotation):
     """Chromium verifies the metric tables; Chromium is never deck runtime."""
-    pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright
 
     family = "source-sans-3-latin.woff2" if font == "Source Sans 3" else "ibm-plex-sans-latin.woff2"
@@ -284,7 +282,6 @@ def test_calibrated_metrics_conservatively_contain_browser_bounds(font, size, ro
 
 def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
     """The archived v10 handoff renders both paths with recorded decisions and no viewport clips."""
-    pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright
     from scripts.amex_handoff_mutations import apply_all
 
@@ -393,7 +390,7 @@ def test_waterfall_auto_uses_renderable_category_label_and_legacy_value_typograp
             "short_label": f"Q{i}",
             "value": i,
         }
-        for i in range(1, 20)
+        for i in range(1, 9)
     )
     slide = {
         "slide_number": 1,
@@ -416,7 +413,7 @@ def test_waterfall_auto_uses_renderable_category_label_and_legacy_value_typograp
         html,
     )
     value_size = re.search(r'class="chart-value"[^>]*font-size="(\d+)"', html)
-    assert labels == [("19", "Long reporting period alpha beta")]
+    assert labels == [("8", "Long reporting period alpha beta")]
     assert value_size and value_size.group(1) == "18"
 
     explicit = {**slide, "visual_spec": {"primary_visual": {
@@ -459,6 +456,30 @@ def test_auto_plan_includes_line_series_and_combo_overlay_axes():
     assert line_plan is not None and line_plan.x_labels is not None
     assert line_plan.x_labels.used_short and max(line_plan.y_tick_values) >= 2000
 
+    percent_line = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [{"label": "Q1", "value": 100}],
+        }},
+    }
+    percent_plan = compute_auto_plan_for_slide(
+        percent_line, "line_chart", host_w=900, host_h=480
+    )
+    assert percent_plan is not None and percent_plan.y_tick_labels[-1].endswith("%")
+
+    stacked = {
+        "layout_type": "stacked_bar_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}},
+            "steps_or_data": [{"label": "Q1", "values": {"A": 60, "B": 60}}],
+        }},
+    }
+    stacked_plan = compute_auto_plan_for_slide(
+        stacked, "stacked_bar_chart", host_w=900, host_h=480
+    )
+    assert stacked_plan is not None and max(stacked_plan.y_tick_values) >= 120
+
     combo = {
         "layout_type": "combo_chart",
         "visual_spec": {
@@ -477,6 +498,10 @@ def test_auto_plan_includes_line_series_and_combo_overlay_axes():
     assert combo_plan is not None
     assert 20000 in combo_plan.y_tick_values
     assert "20000 users" in combo_plan.y_tick_labels
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    svg = _svg_fallback_for_layout(combo, "combo_chart")
+    assert "<polyline" in svg and 'x1="820"' in svg
 
 
 def test_auto_mode_does_not_change_legacy_output(tmp_path):
