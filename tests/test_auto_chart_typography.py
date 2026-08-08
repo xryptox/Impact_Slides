@@ -416,28 +416,37 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                           const raw = canvas ? (window.__rv2ChartText || []).filter(item => item.canvas === canvas.id) : [];
                           const boxes = raw.map(item => chartBox(canvas, item)).filter(box => box.width >= 1 && box.height >= 1);
                           const chart = canvas && Chart.getChart(canvas), rect = canvas && canvas.getBoundingClientRect();
-                          const x = chart && chart.scales.x, y = chart && chart.scales.y;
+                          const x = chart && chart.scales.x, y = chart && chart.scales.y, y1 = chart && chart.scales.y1;
                           const xBoxes = x && rect ? boxes.filter(box => box.top >= rect.top + x.top * rect.height / canvas.height - 1) : [];
                           const yBoxes = y && rect ? boxes.filter(box => box.right <= rect.left + y.left * rect.width / canvas.width + 1) : [];
-                          const axisBoxes = xBoxes.concat(yBoxes);
-                          return {text_count: axisBoxes.length, raw_text_count: raw.length, clipped: axisBoxes.some(box => !within(box, outer)),
-                            overlap: [xBoxes, yBoxes].some(group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other))))};
+                          const y1Boxes = y1 && rect ? boxes.filter(box => box.left >= rect.left + y1.left * rect.width / canvas.width - 1) : [];
+                          const axisBoxes = xBoxes.concat(yBoxes, y1Boxes);
+                          return {text_count: axisBoxes.length, raw_text_count: raw.length, y1_text_count: y1Boxes.length,
+                            expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
+                            clipped: axisBoxes.some(box => !within(box, outer)),
+                            overlap: [xBoxes, yBoxes, y1Boxes].some(group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other))))};
                         })
                       : [...slide.querySelectorAll('.chart-svg-wrap[data-auto-typo="1"]')].map(wrap => {
                           const boxes = [...wrap.querySelectorAll('svg text')].map(text => text.getBoundingClientRect());
                           const categoryBoxes = [...wrap.querySelectorAll('svg text.auto-x-label')].map(text => text.getBoundingClientRect());
                           const yBoxes = [...wrap.querySelectorAll('svg text.auto-y-label')].map(text => text.getBoundingClientRect());
                           const y1Boxes = [...wrap.querySelectorAll('svg text.auto-y1-label')].map(text => text.getBoundingClientRect());
-                          const rows = categoryBoxes.reduce((rows, box) => {
-                            const row = rows.find(row => Math.abs(row[0].top - box.top) < 1);
-                            (row || rows[rows.push([]) - 1]).push(box);
-                            return rows;
-                          }, []);
+                          const categoryGroups = [...wrap.querySelectorAll('svg text.auto-x-label')].reduce((groups, text) => {
+                            const key = text.dataset.autoLabelIndex;
+                            if (key !== undefined) {
+                              if (!groups.has(key)) groups.set(key, []);
+                              groups.get(key).push(text.getBoundingClientRect());
+                            }
+                            return groups;
+                          }, new Map());
                           const collides = group => group.some((box, i) => group.slice(i + 1).some(other => overlap(box, other)));
+                          const groups = [...categoryGroups.values()];
+                          const categoryOverlap = groups.some((group, i) => groups.slice(i + 1).some(other =>
+                            group.some(box => other.some(candidate => overlap(box, candidate)))));
                           return {text_count: categoryBoxes.length, y_text_count: yBoxes.length, y1_text_count: y1Boxes.length,
                             expected_y_ticks: Number(wrap.dataset.autoYTicks || 0), expected_y1_ticks: Number(wrap.dataset.autoY1Ticks || 0),
                             clipped: boxes.some(box => !within(box, outer)),
-                            overlap: rows.some(collides) || collides(yBoxes) || collides(y1Boxes)};
+                            overlap: categoryOverlap || collides(yBoxes) || collides(y1Boxes)};
                         });
                     return {slide_number: index + 1, panes};
                   });
@@ -457,10 +466,59 @@ def test_full_44_slide_v10_auto_audit_chartjs_and_svg(tmp_path):
                     ), (name, row)
                 else:
                     assert all(
-                        pane["text_count"] and not pane["clipped"] and not pane["overlap"]
+                        pane["text_count"] and pane["y1_text_count"] >= pane["expected_y1_ticks"]
+                        and not pane["clipped"] and not pane["overlap"]
                         for pane in row["panes"]
                     ), (name, row)
         (out / "auto_typography_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
+
+
+def test_auto_axis_break_plans_and_renders_only_effective_domain(tmp_path):
+    line = _pane("line_chart", ["2024", "2025"], typography={"mode": "auto"})
+    hbar = _pane("horizontal_bar_chart", ["2024", "2025"], typography={"mode": "auto"})
+    for pane in (line, hbar):
+        pane["chart_config"].update({"y_axis_break": {"from": 0, "to": 90}, "y_axis_max": 100})
+        for point, value in zip(pane["steps_or_data"], (92, 98)):
+            point["value"] = value
+    slides = [
+        {"slide_number": 1, "title": "Line", "layout_type": "line_chart", "content": {},
+         "visual_spec": {"primary_visual": line}, "evidence_sources": []},
+        {"slide_number": 2, "title": "Bars", "layout_type": "horizontal_bar_chart", "content": {},
+         "visual_spec": {"primary_visual": hbar}, "evidence_sources": []},
+    ]
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff(slides)), encoding="utf-8")
+    chartjs_out = tmp_path / "chartjs"
+    render_deck(path, chartjs_out, strict=False)
+    configs = _configs((chartjs_out / "presentation.html").read_text(encoding="utf-8"))
+    for config, scale_name in zip(configs, ("y", "x")):
+        scale = config["options"]["scales"][scale_name]
+        planned = scale["ticks"]["_rv2Values"]
+        assert planned[0] == scale["min"] == 90
+        assert planned[-1] == scale["max"] == 100
+        assert all(90 <= tick <= 100 for tick in planned)
+    svg_out = tmp_path / "svg"
+    render_deck(path, svg_out, strict=False, suppress_features=["charts"])
+    svg = (svg_out / "presentation.html").read_text(encoding="utf-8")
+    assert ">0%</text>" not in svg
+    assert ">0</text>" not in svg
+
+
+def test_hbar_broken_axis_auto_ticks_stay_within_nonround_maximum(tmp_path):
+    pane = _pane("horizontal_bar_chart", ["2024", "2025"], typography={"mode": "auto"})
+    pane["chart_config"].update({"y_axis_break": {"from": 0, "to": 90}, "y_axis_max": 99})
+    for point, value in zip(pane["steps_or_data"], (92, 98)):
+        point["value"] = value
+    slide = {
+        "slide_number": 1, "title": "Bars", "layout_type": "horizontal_bar_chart", "content": {},
+        "visual_spec": {"primary_visual": pane}, "evidence_sources": [],
+    }
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(_handoff([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(path, out, strict=False)
+    scale = _configs((out / "presentation.html").read_text(encoding="utf-8"))[0]["options"]["scales"]["x"]
+    assert scale["ticks"]["_rv2Values"][-1] == scale["max"] == 99
 
 
 def test_unknown_font_uses_reduced_confidence_metrics():

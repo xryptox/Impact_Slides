@@ -1218,6 +1218,42 @@ def svg_label_transform(plan: AutoTypoPlan | None, x: float, y: float) -> str:
     return f' transform="rotate(-{rotation:g} {x:.1f} {y:.1f})"' if rotation else ""
 
 
+def axis_config_after_break(
+    cfg: Mapping[str, Any], *, break_overrides_min: bool = False
+) -> dict[str, Any]:
+    """Return a chart config whose domain excludes a configured break band."""
+    effective = dict(cfg)
+    axis_break = cfg.get("y_axis_break")
+    if not isinstance(axis_break, Mapping) or axis_break.get("to") is None:
+        return effective
+    try:
+        minimum = float(axis_break["to"])
+    except (TypeError, ValueError):
+        return effective
+    if break_overrides_min or cfg.get("y_axis_min") is None:
+        effective["y_axis_min"] = minimum
+    else:
+        return effective
+    ticks = cfg.get("y_axis_ticks")
+    if not isinstance(ticks, (list, tuple)):
+        return effective
+    try:
+        retained = [float(tick) for tick in ticks if float(tick) >= minimum]
+    except (TypeError, ValueError):
+        return effective
+    maximum = effective.get("y_axis_max")
+    if maximum is not None:
+        try:
+            retained = [tick for tick in retained if tick <= float(maximum)]
+        except (TypeError, ValueError):
+            return effective
+    if len(retained) >= 2:
+        effective["y_axis_ticks"] = retained
+    else:
+        effective.pop("y_axis_ticks", None)
+    return effective
+
+
 def svg_auto_axis_view(
     plan: AutoTypoPlan | None,
     *,
@@ -1434,9 +1470,15 @@ def _extract_categories_and_shorts(
     unit = str(cfg.get("y_axis_unit") if cfg.get("y_axis_unit") is not None else ("%" if ct == "line_chart" else ""))
     if ct == "line_chart":
         from .lines import _line_axis
-        _y_min, _y_max, y_ticks = _line_axis(cfg, values_flat)
+        _y_min, _y_max, y_ticks = _line_axis(
+            axis_config_after_break(cfg, break_overrides_min=True), values_flat
+        )
     elif values_flat:
-        _y_max, _y_min, y_ticks = _bar_axes(cfg, max(values_flat), min(values_flat))
+        axis_cfg = axis_config_after_break(cfg) if ct == "horizontal_bar_chart" else cfg
+        _y_max, _y_min, y_ticks = _bar_axes(
+            axis_cfg, max(values_flat), min(values_flat),
+            nonzero_min_ticks=ct == "horizontal_bar_chart",
+        )
     else:
         y_ticks = list(cfg.get("y_axis_ticks") or [0, 1])
     unit_pos = str(cfg.get("y_axis_unit_position") or "suffix")

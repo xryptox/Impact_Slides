@@ -15,7 +15,12 @@ from .callouts import (
     _resolve_side_callout,
     _side_column_geometry,
 )
-from .auto_typography import compute_auto_plan_for_slide, svg_auto_axis_view, svg_label_transform
+from .auto_typography import (
+    axis_config_after_break,
+    compute_auto_plan_for_slide,
+    svg_auto_axis_view,
+    svg_label_transform,
+)
 from .typography import (
     estimate_label_box,
     resolve_typography,
@@ -98,6 +103,8 @@ def _bar_axes(
     cfg: dict[str, Any],
     data_max: float,
     data_min: float,
+    *,
+    nonzero_min_ticks: bool = False,
 ) -> tuple[float, float, list[float]]:
     """Compute (y_max, y_min, ticks) with nice-number rounding."""
     y_max = cfg.get("y_axis_max")
@@ -113,6 +120,9 @@ def _bar_axes(
         if y_min < 0 and abs(y_min) > 0.15 * y_max:
             step = _nice_step((y_max - y_min) / 4)
             lo = math.floor(y_min / step) * step
+        elif y_min > 0 and nonzero_min_ticks:
+            step = _nice_step((y_max - y_min) / 4)
+            lo = y_min
         else:
             # Small negative tail (e.g. reserve releases): tick from zero up
             step = _nice_step(y_max / 4)
@@ -120,9 +130,12 @@ def _bar_axes(
         hi = math.ceil(y_max / step) * step
         ticks = []
         t = lo
-        while t <= hi + 1e-9:
+        limit = min(hi, y_max) if nonzero_min_ticks else hi
+        while t <= limit + 1e-9:
             ticks.append(round(t, 6))
             t += step
+        if nonzero_min_ticks and (not ticks or not math.isclose(ticks[-1], y_max)):
+            ticks.append(y_max)
     return y_max, y_min, [float(t) for t in ticks]
 
 
@@ -598,7 +611,9 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     if auto_plan:
-        x_max, x_min, x_ticks = _bar_axes(cfg, max(vals), min(vals))
+        x_max, x_min, x_ticks = _bar_axes(
+            axis_config_after_break(cfg), max(vals), min(vals), nonzero_min_ticks=True
+        )
     else:
         x_max = _nice_max(max(vals) * 1.05)
         x_min = min(0.0, min(vals))

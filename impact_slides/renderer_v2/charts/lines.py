@@ -8,7 +8,12 @@ from .format import _fmt_unit, _series_colors
 from .geometry import chart_geometry
 from .bars import _bar_axes, _bar_matrix
 from .core import _chart_config, _steps
-from .auto_typography import compute_auto_plan_for_slide, svg_auto_axis_view, svg_label_transform
+from .auto_typography import (
+    axis_config_after_break,
+    compute_auto_plan_for_slide,
+    svg_auto_axis_view,
+    svg_label_transform,
+)
 from .typography import (
     estimate_label_box,
     resolve_typography,
@@ -134,6 +139,7 @@ def _line_axis(
     cfg: Mapping[str, Any], values: list[float]
 ) -> tuple[float, float, list[float]]:
     """Return the line painter's domain and ticks."""
+    cfg = axis_config_after_break(cfg, break_overrides_min=True)
     y_max = cfg.get("y_axis_max")
     if y_max is None:
         raw_max = max(values) if values else 10
