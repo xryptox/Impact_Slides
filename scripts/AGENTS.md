@@ -12,7 +12,8 @@ Repo tooling invoked by agents and CI — not product runtime.
 - `../artifacts/issue_156_slide27/` — #156 source-evidence E0026 and reproducible archived-v10/corrected 1920×1080 paint-ready recaptures.
 - Ad-hoc helpers (`render_slide_shot.py`, shell sims)
 - `run_amex_simulation_v9.sh` — historical isolated SuperGrok 4.5 GNHF launcher for the measure-only Amex v9 baseline
-- `run_amex_simulation_v10.sh` — isolated SuperGrok 4.5 GNHF launcher for the v10 closed-ticket revalidation plus full 44-page PDF↔HTML comparison; its temporary GNHF home must not replace `~/.gnhf/config.yml`
+- `run_amex_simulation_v10.sh` — historical isolated SuperGrok 4.5 GNHF launcher for the v10 closed-ticket revalidation plus full 44-page PDF↔HTML comparison
+- `run_amex_simulation_v11.sh` — current isolated Grok Latest GNHF launcher for complete-deck observation after #136–#159; applies the canonical handoff mutations, revalidates every closed ticket, and produces a fresh 44-page PDF↔HTML residual ledger without changing renderer code; its temporary GNHF home must not replace `~/.gnhf/config.yml`
 
 ## Local Contracts
 
