@@ -4,10 +4,13 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping, Sequence
 
+from pydantic import ValidationError
+
+from ...charts.typography import _RENDER_STRICT, _warn
+from ...schemas import GroupedAnnexPrimaryVisual
 from ...slide_view import content as _sv_content
 from ...slide_view import primary_visual as _sv_primary_visual
 from ...slide_view import steps as _sv_steps
-from ...charts.typography import _RENDER_STRICT, _warn
 from ...strip import (
     banned_face_opener,
     chosen_dek,
@@ -347,10 +350,12 @@ def _annex_table_html(
     )
 
 
-def _grouped_annex_table(group: Mapping[str, Any], index: int) -> str:
+def _grouped_annex_table(
+    group: Mapping[str, Any], index: int, slide_number: int
+) -> str:
     heading = strip_eids(group.get("heading") or "")
     rows = group.get("rows") or []
-    heading_id = f"gl-grouped-annex-heading-{index}"
+    heading_id = f"gl-grouped-annex-heading-{slide_number}-{index}"
     table = _annex_table_html(
         group.get("headers") or [],
         [row.get("cells") or [] for row in rows],
@@ -367,8 +372,18 @@ def _grouped_annex_table(group: Mapping[str, Any], index: int) -> str:
 
 def render_grouped_annex_table(slide, total, notes, active=False):
     """Render one or two peer annex matrices without flattening their identity."""
-    groups = _sv_primary_visual(slide).get("groups")
-    groups = groups if isinstance(groups, list) else []
+    try:
+        groups = GroupedAnnexPrimaryVisual.model_validate(
+            _sv_primary_visual(slide)
+        ).model_dump()["groups"]
+    except ValidationError as error:
+        msg = "grouped annex requires 1-2 schema-valid primary_visual.groups"
+        if _RENDER_STRICT.get():
+            raise ValueError(msg) from error
+        _warn(f"{msg}; rendering metric fallback")
+        return render_metric(slide, total, notes, active=active)
+
+    slide_number = int(slide["slide_number"])
     group_count = len(groups)
     required_width = GROUPED_ANNEX_READABLE_BLOCK_WIDTH * group_count
     stacked = group_count > 1 and GROUPED_ANNEX_HOST_WIDTH < required_width
@@ -377,13 +392,15 @@ def render_grouped_annex_table(slide, total, notes, active=False):
         if _RENDER_STRICT.get():
             raise ValueError(msg)
         _warn(msg)
-    blocks = "".join(_grouped_annex_table(group, i) for i, group in enumerate(groups))
+    blocks = "".join(
+        _grouped_annex_table(group, i, slide_number) for i, group in enumerate(groups)
+    )
     main = (
         f'{_GROUPED_ANNEX_STYLE}<div class="gl-grouped-annex gl-grouped-annex-{1 if stacked else group_count}col">'
         f'{blocks}</div>' + insight_strip(_so_what(slide))
     )
     return slide_shell(
-        number=int(slide["slide_number"]),
+        number=slide_number,
         total=total,
         title=strip_eids(slide.get("title") or ""),
         dek=chosen_dek(slide),

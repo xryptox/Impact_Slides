@@ -91,6 +91,43 @@ def test_group_schema_accepts_a_long_heading() -> None:
     assert "very long commercial-services heading" in _render(slide)
 
 
+@pytest.mark.parametrize(
+    "mutate", [
+        pytest.param(lambda s: _groups(s).append(_groups(s)[0]), id="third-group"),
+        pytest.param(lambda s: _groups(s)[0].pop("heading"), id="malformed-group"),
+    ],
+)
+def test_renderer_rejects_invalid_raw_groups_or_degrades_safely(mutate, tmp_path: Path) -> None:
+    slide = _slide()
+    mutate(slide)
+    handoff = tmp_path / "invalid.json"
+    handoff.write_text(json.dumps({"slides": [slide]}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="schema-valid primary_visual.groups"):
+        render_deck(handoff, tmp_path / "strict")
+
+    out = tmp_path / "nonstrict"
+    render_deck(handoff, out, strict=False)
+    assert 'data-layout="metric_dashboard"' in (out / "presentation.html").read_text(
+        encoding="utf-8"
+    )
+    assert any(
+        "schema-valid primary_visual.groups" in warning
+        for warning in json.loads((out / "run_meta.json").read_text(encoding="utf-8"))["warnings"]
+    )
+
+
+def test_grouped_annex_heading_ids_are_unique_per_slide() -> None:
+    first = _render(_slide())
+    second_slide = _slide()
+    second_slide["slide_number"] = 33
+    second = _render(second_slide)
+    assert 'id="gl-grouped-annex-heading-32-0"' in first
+    assert 'aria-labelledby="gl-grouped-annex-heading-32-1"' in first
+    assert 'id="gl-grouped-annex-heading-33-0"' in second
+    assert 'aria-labelledby="gl-grouped-annex-heading-33-1"' in second
+
+
 def _ordinary_annex_slide() -> dict:
     return {
         "slide_number": 1,
@@ -242,7 +279,7 @@ def test_browser_keeps_peer_blocks_distinct_and_nonoverlapping(tmp_path: Path) -
     assert min(left["box"]["w"], right["box"]["w"]) >= 400
     assert all(block["box"]["t"] >= measured["stage"]["t"] - 1 for block in measured["blocks"])
     assert all(block["box"]["b"] <= measured["stage"]["b"] + 1 for block in measured["blocks"])
-    assert all(block["labelledBy"] for block in measured["blocks"])
+    assert len({block["labelledBy"] for block in measured["blocks"]}) == 2
     assert all(block["headers"] == ["Segment", "Q1'26 Reported", "FX-Adj.*"] for block in measured["blocks"])
     assert all(block["childIndent"] >= 16 for block in measured["blocks"])
     assert all(int(block["aggregateWeight"]) >= 700 for block in measured["blocks"])
