@@ -7,6 +7,7 @@ Archive of historical prompts, plans, research, and specs. Not the live engineer
 ## Ownership
 
 - Historical and draft markdown under `wiki/`
+- Reference snapshot: `DELEGATED_WORKFLOW_DETERMINISM.md` (non-binding assessment; live contract remains under `docs/agents/`)
 - Generated current index: `renderer_v2_LAYOUTS.md` (owned operationally by renderer_v2 + `scripts/gen_layout_index.py`)
 
 ## Local Contracts
