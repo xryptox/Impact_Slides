@@ -54,6 +54,18 @@ _S24_CATEGORIES = [
 _S24_GROWTH = [10, 4, 4, 13, 12, 9]
 _S24_SUPPORT = ["37%", "22%", "5%", "15%", "8%", "12%"]
 
+# Issue #155 — PDF physical page / deck slide 21 capital return composition.
+_S21 = 21
+_S21_QUARTERS = ["Q4'24", "Q1'25", "Q2'25", "Q3'25", "Q4'25", "Q1'26"]
+_S21_DIVIDENDS = [0.5, 0.6, 0.6, 0.6, 0.6, 0.7]
+_S21_REPURCHASES = [1.1, 0.7, 1.4, 2.3, 0.9, 1.6]
+_S21_STACK_TOTALS = ["$1.6", "$1.3", "$2.0", "$2.9", "$1.5", "$2.3"]
+_S21_SHARES = [702, 701, 696, 689, 686, 682]
+_S21_ROE = ["35%", "34%", "36%", "36%", "34%", "35%"]
+_S21_PANE_HEADING = "Capital Return & Common Shares Outstanding"
+_S21_PANE_SUB = "$ in billions; Common Shares Outstanding in millions"
+
+
 # Issue #156 — PDF page / deck slide 27 macroeconomic scenarios.
 # Values transcribed from Q1-2026-Earnings-Presentation.pdf, PDF page 27.
 _S27 = 27
@@ -864,10 +876,86 @@ def apply_issue_157_annex_matrices(handoff: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+
+def apply_issue_155_slide21_capital(handoff: dict[str, Any]) -> dict[str, Any]:
+    """Restore slide 21's coordinated capital-return chart composition.
+
+    Left pane: stacked dividends + repurchases, shares-outstanding line overlay,
+    explicit stack totals, and category-aligned ROE support row. Right pane:
+    summary KPIs (58% / 74% / 10.5% + CET1 target/minimum context) without the
+    left-panel series facts.
+    """
+    out = handoff
+    try:
+        slide = _slide(out, _S21)
+    except KeyError:
+        return out
+
+    steps = [
+        ["Quarter", "Dividends", "Share Repurchases"],
+        *[
+            [q, str(d), str(r)]
+            for q, d, r in zip(_S21_QUARTERS, _S21_DIVIDENDS, _S21_REPURCHASES)
+        ],
+    ]
+    slide["layout_type"] = "chart_hero_dual"
+    slide["packing_mode"] = "chart-led"
+    slide["content"] = {
+        **(slide.get("content") or {}),
+        "subtitle": _S21_PANE_SUB,
+        "key_stats": [
+            {"label": "Dividend/share ↑ (3yr)", "value": "58%"},
+            {"label": "NI Returned (3yr)", "value": "74%"},
+            {"label": "CET1 Ratio Q1'26", "value": "10.5%"},
+            {"label": "CET1 Target", "value": "10–11%"},
+        ],
+    }
+    slide["visual_spec"] = {
+        "primary_visual": {
+            "type": "combo_chart",
+            "heading": _S21_PANE_HEADING,
+            "subtitle": _S21_PANE_SUB,
+            "steps_or_data": steps,
+            "chart_config": {
+                "stack_totals": True,
+                "stack_total_labels": list(_S21_STACK_TOTALS),
+                "series_names": ["Dividends", "Share Repurchases"],
+                "y_axis_unit": "$",
+                "show_legend": True,
+            },
+        },
+        "line_overlay": {
+            "label": "Common Shares Outstanding",
+            "dual_axis": True,
+            "y_axis_unit": "",
+            "data": [
+                {"label": q, "value": v}
+                for q, v in zip(_S21_QUARTERS, _S21_SHARES)
+            ],
+        },
+        "secondary_visual": {
+            "type": "data_table",
+            "skin": "outlined_boxes",
+            "steps_or_data": [
+                ["", *_S21_QUARTERS],
+                ["Return on Average Equity", *_S21_ROE],
+            ],
+        },
+    }
+    slide["speaker_notes"] = (
+        "Capital return board: stacked Dividends + Share Repurchases with "
+        "completed-stack totals $1.6/$1.3/$2.0/$2.9/$1.5/$2.3; Common Shares "
+        "Outstanding line 702→682; ROE support row 35%/34%/36%/36%/34%/35%. "
+        "Right summary: 58% dividend/share growth, 74% NI returned, 10.5% CET1 "
+        "vs 10–11% target."
+    )
+    return out
+
 def apply_all(handoff: dict[str, Any]) -> dict[str, Any]:
     """Apply every bounded Amex handoff mutation known to this module."""
     out = apply_issue_148_bar_semantics(handoff)
     out = apply_issue_154_slide24_growth(out)
+    out = apply_issue_155_slide21_capital(out)
     out = apply_issue_156_slide27_scenarios(out)
     out = apply_issue_157_annex_matrices(out)
     out = apply_issue_159_grouped_annex(out)

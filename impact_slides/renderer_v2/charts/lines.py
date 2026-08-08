@@ -681,16 +681,27 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
                     f'width="{bar_w:.1f}" height="{max(y_bottom - y_top, 0):.1f}" fill="{seg_color}"/>'
                 )
             # Net total above the positive stack (or above zero).
-            net = bar_totals[i] + bar_minimums[i]
+            # #155 / stacked-bar parity: explicit stack_total_labels win.
+            explicit = cfg.get("stack_total_labels")
+            if (
+                isinstance(explicit, (list, tuple))
+                and i < len(explicit)
+                and explicit[i] not in (None, "")
+            ):
+                total_txt = str(explicit[i])
+            else:
+                net = bar_totals[i] + bar_minimums[i]
+                total_txt = _fmtb(net)
             total_y = (
                 bar_y(bar_totals[i]) - 8
                 if bar_totals[i] > 0
                 else bar_y(0.0) - 8
             )
             parts.append(
-                f'<text x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" text-anchor="middle" '
+                f'<text class="vbar-stack-total" x="{x + bar_w / 2:.1f}" y="{total_y:.1f}" '
+                f'text-anchor="middle" '
                 f'fill="var(--navy, #00175a)" font-size="14" font-weight="700" '
-                f'font-family="var(--font-body, sans-serif)">{esc(_fmtb(net))}</text>'
+                f'font-family="var(--font-body, sans-serif)">{esc(total_txt)}</text>'
             )
         else:
             val = bar_rows[i][0] or 0.0
