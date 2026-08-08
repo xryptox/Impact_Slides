@@ -27,12 +27,13 @@ The current aliases use `dev` for implementation work, `review` for Kimi review,
 
 PEW's native child runtime resolves models before dynamically registered providers are loaded. A provider registered by an extension, such as SuperGrok, may therefore work in normal Pi but fail in native `agent(...)` calls with `UNKNOWN_MODEL`.
 
-When that applies, use PEW for orchestration and isolated worktrees, but launch each full interactive Pi implementer in a visible tab in the supervising session's current Herdr workspace. Do not create a separate workspace or use `pi --print`: progress must remain observable alongside the supervisor. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
+When that applies, use PEW for orchestration and isolated worktrees, but launch each full interactive Pi implementer in a visible tab in the supervising session's current Herdr workspace. Do not create a separate workspace or use `pi --print`: progress must remain observable alongside the supervisor. Start a supervising workflow watcher for each launched wave so idle/done/blocked panes—especially no-mistakes `ask-user` gates—produce a follow-up in the host session; Herdr status alone does not notify the host. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
 
 Durable workflow scripts:
 
 - `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — starts the lean interactive Pi child
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — repair/report lifecycle built on that launcher
+- `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — supervising workflow watcher that returns idle/done/blocked pane output and no-mistakes gate state to the host session
 - `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
 
 The lean child starts with `--no-extensions --no-skills` and explicitly loads only SuperGrok, the skill-command extension, Ponytail, CodeMapper, and the `implement` skill. Its tool allowlist is `read,bash,edit,write,map,search,outline,expand,path`. Observational memory, RTK, fork/subagent, handoff, TSCG, and PEW are excluded from the child. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
