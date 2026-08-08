@@ -1,0 +1,41 @@
+{
+  "presentation": {
+    "title": "American Express Earnings Conference Call Q1'26",
+    "subtitle": "Issue #154 contract fixture — v10 broken slide 24 only"
+  },
+  "slides": [
+    {
+      "layout_type": "data_table",
+      "packing_mode": "stat-led",
+      "title": "Q1'26 Network Volumes Growth by Customer Type",
+      "section": "Appendix",
+      "content": {
+        "subtitle": "% Increase/(decrease) vs. Prior Year (FX-adjusted)",
+        "so_what": "",
+        "key_stats": [
+          {"label": "U.S. Consumer % of NV", "value": "37%"},
+          {"label": "U.S. SME % of NV", "value": "22%"},
+          {"label": "Processed Volumes", "value": "$486B"}
+        ]
+      },
+      "visual_spec": {
+        "primary_visual": {
+          "type": "data_table",
+          "steps_or_data": [
+            ["Segment", "YoY Growth", "% of Network Volumes"],
+            ["U.S. Consumer Services", "10%", "37%"],
+            ["U.S. SME", "4%", "22%"],
+            ["U.S. Large & Global Corp.", "4%", "5%"],
+            ["Commercial Services (total)", "4%", "—"],
+            ["Int'l Consumer", "13%", "15%"],
+            ["Int'l SME & Large Corp.", "12%", "8%"],
+            ["International Card Services", "13%", "—"],
+            ["Processed Volumes", "12% report / 9% FX-adj", "$486B"]
+          ]
+        }
+      },
+      "speaker_notes": "Network volumes table from PDF p24.",
+      "slide_number": 24
+    }
+  ]
+}

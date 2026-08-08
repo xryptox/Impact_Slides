@@ -1787,10 +1787,10 @@ body.gl-debug .gl-areas-freeform .gl-slot {
   min-height: 105px; /* PDF p15: two-line label block */
   font-weight: 600;
   line-height: 1.2;
-  /* at most two lines (#149) */
+  /* Allow the required Total Network Volumes label to remain readable. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 4;
   overflow: hidden;
   white-space: normal;
 }

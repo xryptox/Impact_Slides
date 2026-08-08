@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 import uuid
 from typing import Any, Mapping
+from ..shell import _BAR_GROUP_PLUGIN_HTML
 from ..strip import esc, strip_eids
 
 from .format import _NAVY, _NAVY_SOFT, _WHITE, _fmt_unit, _fmt_value_label, _series_color, _series_colors
@@ -304,6 +305,34 @@ def _chartjs_bar_config(slide: Mapping[str, Any], *, stacked: bool = False) -> d
         # Grouped bars honour the declared domain too (#96: scale root).
         # Without this the auto-domain drifts from y_axis_min/max and
         # value-anchored overlays (callouts) pin off-plot.
+        groups = cfg.get("bar_groups")
+        if isinstance(groups, (list, tuple)) and groups:
+            items = []
+            for group in groups:
+                if not isinstance(group, Mapping):
+                    items = []
+                    break
+                label = group.get("label")
+                start = group.get("start")
+                end = group.get("end")
+                if (
+                    not isinstance(label, str)
+                    or not label.strip()
+                    or isinstance(start, bool)
+                    or isinstance(end, bool)
+                    or not isinstance(start, int)
+                    or not isinstance(end, int)
+                    or start < 0
+                    or end < start
+                    or end >= len(labels)
+                ):
+                    items = []
+                    break
+                items.append({"label": label, "start": start, "end": end})
+            if items:
+                padding = options.setdefault("layout", {}).setdefault("padding", {})
+                padding["top"] = max(int(padding.get("top") or 0), 28)
+                options["plugins"]["barGroups"] = {"items": items}
         if cfg.get("y_axis_min") is not None:
             options["scales"]["y"]["min"] = float(cfg["y_axis_min"])
         if cfg.get("y_axis_max") is not None:
@@ -786,7 +815,12 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         if chart_cfg.get("_side_callout_external")
         else _build_side_callout_html(chart_cfg, layout)
     )
-    payload = _json.dumps(cfg, ensure_ascii=False)
+    payload = _json.dumps(cfg, ensure_ascii=False).replace("<", "\\u003c")
+    bar_group_js = (
+        _BAR_GROUP_PLUGIN_HTML
+        if cfg.get("options", {}).get("plugins", {}).get("barGroups")
+        else ""
+    )
     svg_fb = _svg_fallback_for_layout(slide, layout)
     noscript = (
         f'<noscript>{"<style>[data-side-callout-html=wrap]{display:none}</style>" if side_callout_html else ""}{svg_fb}</noscript>'
@@ -852,6 +886,7 @@ def _build_chartjs_html(slide: Mapping[str, Any], layout: str) -> str:
         f'<canvas id="{esc(cid)}" class="chartjs-canvas" aria-label="{esc(layout)} chart"></canvas>'
         f'<script type="application/json" class="chartjs-config" data-for="{esc(cid)}">'
         f"{payload}</script>"
+        f"{bar_group_js}"
         f"{ann_html}"
         f"{break_html}"
         f"{callouts_html}"
