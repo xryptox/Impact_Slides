@@ -289,6 +289,8 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
               if (elements.length !== 6) return {ok:false, reason:'bar count'};
               const barCenters = elements.map(el => canvasRect.left + el.x * scale);
               return {ok:true, labelRight:lr.right, firstLeft:cr[0].left,
+                labelScrollHeight: labelBox.scrollHeight,
+                labelClientHeight: labelBox.clientHeight,
                 groupLabels: groups.items.map(group => group.label),
                 paintedGroups: canvas.dataset.rv2BarGroupsPainted,
                 centers:cr.map(r => r.left + r.width / 2), barCenters,
@@ -299,6 +301,7 @@ def test_1920x1080_support_cells_align_and_do_not_overlap_label_lane(tmp_path: P
 
     assert measured["ok"], measured
     assert measured["firstLeft"] >= measured["labelRight"] + 8
+    assert measured["labelScrollHeight"] <= measured["labelClientHeight"], measured
     assert measured["groupLabels"] == [group[0] for group in _GROUPS]
     assert measured["paintedGroups"] == "3"
     assert measured["centers"] == sorted(measured["centers"])
