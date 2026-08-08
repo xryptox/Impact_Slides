@@ -32,26 +32,30 @@ When that applies, use PEW for orchestration and isolated worktrees, but launch 
 Durable workflow scripts:
 
 - `~/.pi/agent/pi-extensible-workflows/scripts/start-ticket-wave.ps1` — primary interface: generates a delivery RunId, resolves the focused repo workspace and `dev` model, creates run-owned worktrees, launches tabs, and persists `wave.json` plus watcher targets
-- `~/.pi/agent/pi-extensible-workflows/scripts/inspect-ticket-wave.ps1` — derives branch heads, cleanliness, exact-branch PRs, CI metadata, and no-mistakes state from `wave.json`
-- `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-ticket-wave.ps1` — derives merged PR numbers from run-owned branches and delegates dry-run/apply deletion to verified cleanup
+- `~/.pi/agent/pi-extensible-workflows/scripts/inspect-ticket-wave.ps1` — derives branch heads, cleanliness, exact-branch PRs, closing-reference state, CI metadata, and branch-bound no-mistakes state from `wave.json`
+- `~/.pi/agent/pi-extensible-workflows/scripts/watch-ticket-wave.ps1` — persistent outer supervisor around the return-on-first-event watcher; keeps polling automatically and writes each event to the manifest's host follow-up file
+- `~/.pi/agent/extensions/ticket-wave-followups.ts` — global Pi extension that watches active-wave follow-up files for the current session and injects each event as a real supervising-session user follow-up
+- `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-ticket-wave.ps1` — derives merged PR numbers from run-owned branches, supports issue-scoped partial cleanup, updates manifest/targets, and delegates dry-run/apply deletion to verified cleanup
 - `~/.pi/agent/pi-extensible-workflows/scripts/create-run-owned-worktree.ps1` — internal primitive that creates `pi-extensible-workflows/<RunId>/issue-<N>`
 - `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — internal primitive that verifies run ownership, creates the current-workspace tab, and starts a genuine interactive Pi TUI
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-implement-visible.ps1` — writes the implementation contract and launches the visible implementer
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — writes the host-repair contract and launches the visible repair session
 - `~/.pi/agent/pi-extensible-workflows/scripts/restart-visible-implementer.ps1` — crash-only restart in the existing pane; requires an exact clean branch/head plus recovery brief before relaunching the genuine TUI
 - `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — deduplicating return-on-first-event watcher that returns one idle/done/blocked or loop-limit event and no-mistakes state, raises a Herdr notification, persists its seen-state for rearming, and applies verified cleanup after every run-owned PR is merged and linked issue closed
-- `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
+- `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification; tolerates already-deleted GitHub branches and partial waves
+- `~/.pi/agent/pi-extensible-workflows/scripts/preflight-approved-pr.ps1` — deterministic base/head/check/mergeability/closing-reference preflight
+- `~/.pi/agent/pi-extensible-workflows/scripts/Invoke-ApprovedMerge.ps1` — exact-head approved squash merge outside PEW persistence, used when Windows journal renames are unreliable
 
 The launcher deliberately uses the user's normal Pi settings plus the `dev` alias resolved from the global PEW settings and the `implement` skill. The alias is the single model source; `wave.json` records its resolved value. This path preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
 ### Canonical launch and supervision
 
 1. Start a wave with `start-ticket-wave.ps1 -Issue N,N,...`; normally provide no RunId, model, workspace, branch, worktree, pane, or targets-file input. The script infers and persists them in `wave.json`.
-2. Use the generated `targets.json` with one background PEW shell invoking `watch-visible-implementers.ps1`. It returns on the first unseen idle/done/blocked event, so PEW delivers that terminal result as a real host-session follow-up; it also raises a Herdr notification and persists dedupe state beside the manifest.
-3. Treat each workflow follow-up as the host notification. If it surfaces `ask-user`, present the finding verbatim and send the decision to the same pane. If it surfaces `loop-limit`, approve no further fixes: preserve custody and request controlled recovery. Default limits are more than 5 review-fix rounds, more than 90 minutes in review fixing, or more than 10 minutes without agent/log activity. Rearm the same watcher after every event while work remains; persisted state suppresses unchanged repeats until the reminder interval.
+2. `start-ticket-wave.ps1` starts `watch-ticket-wave.ps1` automatically as the persistent outer supervisor (pass `-SkipWatcherStart` only for deterministic tests). It repeatedly invokes the deduplicating return-on-first-event watcher and keeps polling without manual rearm. Startup records the supervising `PI_SESSION_ID` and append-only follow-up queue in the active-wave registry; the global `ticket-wave-followups.ts` extension injects every queued event into that exact session. If no session ID is available, the watcher still persists and prints events for the caller.
+3. Treat each delivered watcher event as the host notification. If it surfaces `ask-user`, present the finding verbatim and send the decision to the same pane. If it surfaces `loop-limit`, approve no further fixes: preserve custody and request controlled recovery. Default limits are more than 5 review-fix rounds, more than 90 minutes in review fixing, or more than 10 minutes without agent/log activity. Persisted state suppresses unchanged repeats until the reminder interval.
 4. Use `inspect-ticket-wave.ps1 -ManifestPath <wave.json>` for authoritative branch/PR/gate collection instead of manually copying identifiers.
-5. Launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -RunId <wave RunId>` against the manifest worktree. Do not substitute direct branches, `herdr pane run`, RPC, `pi --print`, or another workspace.
-6. Keep tabs open while a decision or pipeline action remains outstanding. After every run-owned PR is `MERGED`, every linked issue is closed, and each implementer is terminal with its final report collectible, the watcher closes the tabs, runs `cleanup-ticket-wave.ps1` dry-run then `-Apply`, emits the cleanup result, and exits.
+5. Launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -RunId <wave RunId>` against the manifest worktree. It writes `repair-prompt.md`, copies the authoritative host findings, and explicitly supersedes the original implementation prompt. Do not substitute direct branches, `herdr pane run`, RPC, `pi --print`, or another workspace.
+6. Keep tabs open while a decision or pipeline action remains outstanding. Inspection and watching bind no-mistakes status to the ticket branch's recorded run ID rather than trusting the CLI's most-recent run. After every run-owned PR is `MERGED`, every linked issue is closed, and each implementer is terminal with its final report collectible, the watcher closes the tabs, runs `cleanup-ticket-wave.ps1` dry-run then `-Apply`, emits the cleanup result, and exits. For an already merged subset, pass `-Issue N,...`; partial cleanup updates `wave.json` and `targets.json`.
 7. A PR that is only `CLOSED` is not cleanup authorization. The watcher reports the block and preserves all artifacts. If automatic cleanup fails, inspect `wave.json` and rerun `cleanup-ticket-wave.ps1 -ManifestPath <wave.json>` manually.
 
 A deliberately stopped or superseded watcher may report `CANCELLED`; verify the replacement run ID and implementation state, then treat that notification as expected rather than an implementation failure.
@@ -113,14 +117,14 @@ Return real defects to the same implementer and existing no-mistakes run. Do not
 
 ### 5. Prepare merge metadata
 
-Before approval, verify that every PR:
+Before approval, run `preflight-approved-pr.ps1` (or equivalent inspection) and verify that every PR:
 
 - targets `main`;
 - is open and non-draft;
 - is clean/mergeable;
 - has green required checks;
 - has the reviewed exact head SHA;
-- contains `Closes #N` (or equivalent).
+- contains `Closes #N` (or equivalent). The watcher emits `metadata-blocked` before terminal delivery when this is absent.
 
 Record the exact head SHA presented for approval.
 
@@ -128,7 +132,7 @@ Record the exact head SHA presented for approval.
 
 The user may approve one exact PR or a named batch. Batch approval is conditional and serial:
 
-1. Launch the `merger` role once per PR.
+1. Launch the `merger` role once per PR, or invoke `Invoke-ApprovedMerge.ps1` with the same literal approval and exact-head inputs when Windows PEW persistence is unreliable.
 2. Supply PR number, reviewed head SHA, and literal `HUMAN_APPROVAL: true`.
 3. Recheck against current `main` after every preceding merge.
 4. Squash-merge and delete the remote branch only when all role checks pass.
@@ -151,7 +155,7 @@ After merges:
 
 ## Windows failure modes
 
-- PEW journal persistence can fail with `EPERM` during atomic rename after an external merge succeeded. Query the PR before retrying; never assume exactly-once external effects.
+- PEW journal persistence can fail with `EPERM` during atomic rename after an external merge succeeded. Prefer `Invoke-ApprovedMerge.ps1` for the deterministic merge side effect; if a PEW merger was used, query the PR before retrying and never assume exactly-once external effects.
 - PowerShell native stderr can be promoted to an exception. Classify using exit code and authoritative state, not stderr text alone.
 - Herdr marks a completed interactive Pi as `done`; `herdr wait agent-status --status idle` does not accept/observe that terminal state. Poll `herdr pane list` for `done` or `idle`, then collect the report and close the tab.
 - Quote Git revision ranges as one normal argument (`base..head`); malformed nested quoting can make Git treat the range as a filename.
