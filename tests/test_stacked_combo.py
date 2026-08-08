@@ -121,8 +121,12 @@ def test_negative_stacked_combo_paints_both_signs_from_zero():
     # "combo-seg"; negatives add "combo-seg-neg".
     assert html.count('class="combo-seg"') == 2
     assert html.count("combo-seg-neg") == 2
-    # Net totals: 2-1=1 and 1.5-0.5=1
-    assert html.count(">1</text>") >= 2
+    # Net totals: 2-1=1 and 1.5-0.5=1 (stack-total style only)
+    net_totals = re.findall(
+        r'<text[^>]*font-weight="700"[^>]*>([^<]*)</text>',
+        html,
+    )
+    assert net_totals == ["1", "1"]
 
     by_x: dict[str, list[tuple[float, float, bool]]] = {}
     for cls, x, y, h in re.findall(
