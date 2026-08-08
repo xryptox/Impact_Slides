@@ -791,12 +791,14 @@ def _fit_y_ticks(
             positions = [plot_h * (v - ymin) / span for v in vals]
             positions_sorted = sorted(zip(positions, labs))
             for (a, a_lab), (b, b_lab) in zip(positions_sorted, positions_sorted[1:]):
+                # +3px neighbor pad: rounded OS/2 line-boxes are ~1px tighter
+                # than prior class metrics; keep dense authored ticks thinning.
                 required = (
                     (measure_text_width(a_lab, font_size, font=font, weight=weight)
                      + measure_text_width(b_lab, font_size, font=font, weight=weight)) / 2
                     + 2.0
                     if horizontal_axis
-                    else h + 2.0
+                    else h + 3.0
                 )
                 if abs(b - a) < required:
                     return False
