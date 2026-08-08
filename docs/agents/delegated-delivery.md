@@ -38,6 +38,7 @@ Durable workflow scripts:
 - `~/.pi/agent/pi-extensible-workflows/scripts/launch-visible-implementer.ps1` — internal primitive that verifies run ownership, creates the current-workspace tab, and starts a genuine interactive Pi TUI
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-implement-visible.ps1` — writes the implementation contract and launches the visible implementer
 - `~/.pi/agent/pi-extensible-workflows/scripts/orchestrate-herdr-repair-visible.ps1` — writes the host-repair contract and launches the visible repair session
+- `~/.pi/agent/pi-extensible-workflows/scripts/restart-visible-implementer.ps1` — crash-only restart in the existing pane; requires an exact clean branch/head plus recovery brief before relaunching the genuine TUI
 - `~/.pi/agent/pi-extensible-workflows/scripts/watch-visible-implementers.ps1` — deduplicating return-on-first-event watcher that returns one idle/done/blocked event and no-mistakes state, raises a Herdr notification, persists its seen-state for rearming, and applies verified cleanup after every run-owned PR is merged and linked issue closed
 - `~/.pi/agent/pi-extensible-workflows/scripts/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification
 
