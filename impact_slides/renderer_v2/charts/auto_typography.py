@@ -1233,7 +1233,7 @@ def plan_to_data_attrs(plan: AutoTypoPlan, *, value_axis_visible: bool = True) -
         ("data-auto-x-skip", str(d.get("x_skipped_count", 0))),
         ("data-auto-y-reduced", str(int(bool(d.get("y_ticks_reduced"))))),
         ("data-auto-y-ticks", str(0 if plan.chart_type == "waterfall_chart" or not value_axis_visible else len(plan.y_tick_values))),
-        ("data-auto-y1-ticks", str(len(plan.secondary_y_tick_values))),
+        ("data-auto-y1-ticks", str(0 if not value_axis_visible else len(plan.secondary_y_tick_values))),
         ("data-auto-x-labels", html.escape(json.dumps(["\n".join(lines) for lines in plan.x_labels.lines if lines] if plan.x_labels else []), quote=True)),
         ("data-auto-x-full-labels", html.escape(json.dumps(plan.x_labels.full_texts if plan.x_labels else []), quote=True)),
         ("data-auto-x-short", str(d.get("x_short_count", 0))),
@@ -1571,13 +1571,12 @@ def _extract_categories_and_shorts(
                 secondary_domain = (line_min, line_max)
                 overlay_unit = str(overlay.get("y_axis_unit") or "")
                 overlay_unit_pos = str(overlay.get("y_axis_unit_position") or "suffix")
-                for tick in line_ticks:
-                    try:
-                        value = float(tick)
-                    except (TypeError, ValueError):
-                        continue
-                    secondary_y_ticks.append(value)
-                    secondary_y_labs.append(_fmt_unit(value, overlay_unit, overlay_unit_pos))
+                secondary_y_ticks, secondary_y_labs = _bound_tick_view(
+                    [float(tick) for tick in line_ticks if isinstance(tick, (int, float))],
+                    [_fmt_unit(float(tick), overlay_unit, overlay_unit_pos) for tick in line_ticks if isinstance(tick, (int, float))],
+                    *secondary_domain,
+                    lambda value: _fmt_unit(value, overlay_unit, overlay_unit_pos),
+                )
 
     dl_texts: list[str] = []
     want = bool(cfg.get("point_labels") or cfg.get("show_point_labels"))
@@ -1603,12 +1602,13 @@ def _plan_domain(cfg: Mapping[str, Any], ticks: Sequence[float]) -> tuple[float 
 
 def _bound_tick_view(
     ticks: Sequence[float], labels: Sequence[str], lo: float | None, hi: float | None,
-    format_tick: Callable[[float], str],
+    format_tick: Callable[[float], str], *, include_bounds: bool = False,
 ) -> tuple[list[float], list[str]]:
     pairs = [(float(v), str(label)) for v, label in zip(ticks, labels) if (lo is None or v >= lo) and (hi is None or v <= hi)]
-    for bound in (lo, hi):
-        if bound is not None and not any(math.isclose(value, bound) for value, _label in pairs):
-            pairs.append((bound, format_tick(bound)))
+    if include_bounds:
+        for bound in (lo, hi):
+            if bound is not None and not any(math.isclose(value, bound) for value, _label in pairs):
+                pairs.append((bound, format_tick(bound)))
     pairs.sort(key=lambda pair: pair[0])
     return [value for value, _label in pairs], [label for _value, label in pairs]
 
@@ -1705,12 +1705,16 @@ def compute_auto_plan_for_slide(
 
     unit = str(cfg.get("y_axis_unit") if cfg.get("y_axis_unit") is not None else ("%" if ct == "line_chart" else ""))
     unit_pos = str(cfg.get("y_axis_unit_position") or "suffix")
-    if ct in {"grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart"} or (
-        ct == "line_chart" and isinstance(cfg.get("y_axis_break"), Mapping)
-    ):
+    if ct in {"line_chart", "grouped_bar_chart", "stacked_bar_chart", "horizontal_bar_chart", "combo_chart"}:
+        line_ticks = (
+            axis_config_after_break(cfg, break_overrides_min=True).get("y_axis_ticks")
+            if ct == "line_chart"
+            else None
+        )
         y_vals, y_labs = _bound_tick_view(
             y_vals, y_labs, *primary_domain,
             lambda value: _fmt_unit(value, unit, unit_pos),
+            include_bounds=ct != "line_chart" or isinstance(cfg.get("y_axis_break"), Mapping),
         )
     plan = resolve_auto_typography(
         chart_type=ct,

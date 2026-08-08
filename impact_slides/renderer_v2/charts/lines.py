@@ -250,41 +250,39 @@ def _build_line_chart_svg(slide: Mapping[str, Any]) -> str:
     label_lines, value_ticks = svg_auto_axis_view(
         auto_plan, labels=[str(p["label"]) for p in points], ticks=y_ticks, format_tick=_fmtu
     )
-    # Y-axis tick labels only — plot gridlines default off (#152).
-    for tick, tick_label in value_ticks:
-        ty = y_pos(tick)
-        parts.append(
-            f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
-            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
-        )
-
-    # Y-axis line
-    parts.append(
-        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
-
-    # X-axis line
-    parts.append(
-        f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
-
-    # X-axis labels
-    for i, p in enumerate(points):
-        lines = label_lines[i] if i < len(label_lines) else [str(p["label"])]
-        for line_i, line in enumerate(lines):
+    show_y_axis = cfg.get("show_y_axis") is not False
+    show_x_axis = cfg.get("show_x_axis") is not False
+    if show_y_axis:
+        # Y-axis tick labels only — plot gridlines default off (#152).
+        for tick, tick_label in value_ticks:
+            ty = y_pos(tick)
             parts.append(
-                f'<text class="auto-x-label" data-auto-label-index="{i}" '
-                f'x="{x_pos(i):.1f}" y="{H - pad_b + 25 + line_i * x_tick_fs}"'
-                f'{svg_label_transform(auto_plan, x_pos(i), H - pad_b + 25 + line_i * x_tick_fs)} text-anchor="middle" '
-                f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
-                f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+                f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+                f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
+                f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
             )
+        parts.append(
+            f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+        )
+    if show_x_axis:
+        parts.append(
+            f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+        )
+        for i, p in enumerate(points):
+            lines = label_lines[i] if i < len(label_lines) else [str(p["label"])]
+            for line_i, line in enumerate(lines):
+                parts.append(
+                    f'<text class="auto-x-label" data-auto-label-index="{i}" '
+                    f'x="{x_pos(i):.1f}" y="{H - pad_b + 25 + line_i * x_tick_fs}"'
+                    f'{svg_label_transform(auto_plan, x_pos(i), H - pad_b + 25 + line_i * x_tick_fs)} text-anchor="middle" '
+                    f'fill="var(--navy, #00175a)" font-size="{x_tick_fs}" font-weight="600" '
+                    f'font-family="var(--font-body, sans-serif)">{esc(line)}</text>'
+                )
 
     # Y-axis label (rotated)
-    if y_label:
+    if show_y_axis and y_label:
         parts.append(
             f'<text x="20" y="{pad_t + plot_h / 2:.0f}" text-anchor="middle" '
             f'transform="rotate(-90 20 {pad_t + plot_h / 2:.0f})" '
@@ -562,27 +560,28 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
         x_tick_fs = auto_plan.x_tick_font_size
         y_tick_fs = auto_plan.y_tick_font_size
         y_tick_wt = "700"
+    show_y_axis = cfg.get("show_y_axis") is not False
+    show_x_axis = cfg.get("show_x_axis") is not False
     # Y-axis tick labels only (bar axis) — plot gridlines default off (#152).
     bar_ticks = planned_bar_ticks
     label_lines, bar_tick_view = svg_auto_axis_view(
         auto_plan, labels=bar_labels, ticks=bar_ticks, format_tick=_fmtb
     )
-    for tick, tick_label in bar_tick_view:
-        ty = bar_y(tick)
+    if show_y_axis:
+        for tick, tick_label in bar_tick_view:
+            ty = bar_y(tick)
+            parts.append(
+                f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+                f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
+                f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+            )
         parts.append(
-            f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
-            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+            f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
         )
 
-    # Left Y-axis
-    parts.append(
-        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
-
     # Right Y-axis (dual axis)
-    if use_dual_axis and line_points:
+    if use_dual_axis and line_points and show_y_axis:
         parts.append(
             f'<line x1="{W - pad_r}" y1="{pad_t}" x2="{W - pad_r}" y2="{H - pad_b}" '
             f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
@@ -607,10 +606,11 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             )
 
     # X-axis line
-    parts.append(
-        f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
+    if show_x_axis:
+        parts.append(
+            f'<line x1="{pad_l}" y1="{H - pad_b}" x2="{W - pad_r}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+        )
 
     # Bar legend (multi-series stacked mode only)
     if stacked and cfg.get("show_legend") is not False:
@@ -678,6 +678,8 @@ def _build_combo_chart_svg(slide: Mapping[str, Any]) -> str:
             )
         lines = label_lines[i] if i < len(label_lines) else [lab]
         for line_i, line in enumerate(lines):
+            if not show_x_axis:
+                continue
             parts.append(
                 f'<text class="auto-x-label" data-auto-label-index="{i}" '
                 f'x="{x + bar_w/2:.1f}" y="{H - pad_b + 25 + line_i * x_tick_fs}"'

@@ -149,7 +149,10 @@ def _svg_fallback_for_layout(
         rendered = _build_waterfall_svg(slide)
     else:
         rendered = ""
-    return f'<div class="chart-svg-wrap"{plan_to_data_attrs(plan)}>{rendered}</div>' if plan else rendered
+    value_axis_visible = cfg.get(
+        "show_x_axis" if layout == "horizontal_bar_chart" else "show_y_axis"
+    ) is not False
+    return f'<div class="chart-svg-wrap"{plan_to_data_attrs(plan, value_axis_visible=value_axis_visible)}>{rendered}</div>' if plan else rendered
 
 from .chartjs import _build_chartjs_html
 

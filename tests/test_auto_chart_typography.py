@@ -1028,6 +1028,63 @@ def test_auto_bar_ticks_include_explicit_nonround_domain_bound():
     assert scale["ticks"]["_rv2Values"][-1] == 99
 
 
+def test_auto_line_and_combo_tick_views_stay_inside_authored_domains():
+    line = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {
+                "typography": {"mode": "auto"}, "y_axis_min": 0,
+                "y_axis_max": 100, "y_axis_ticks": [-5, 50, 105],
+            },
+            "steps_or_data": [{"label": "Q1", "value": 0}, {"label": "Q2", "value": 100}],
+        }},
+    }
+    line_plan = compute_auto_plan_for_slide(line, "line_chart", host_w=900, host_h=480)
+    assert line_plan is not None and line_plan.y_tick_values == [50.0]
+
+    combo = {
+        "layout_type": "combo_chart",
+        "visual_spec": {
+            "primary_visual": {
+                "chart_config": {"typography": {"mode": "auto"}},
+                "steps_or_data": [{"label": "Q1", "value": 1}],
+            },
+            "line_overlay": {
+                "data": [{"label": "Q1", "value": 100}], "y_axis_min": 0,
+                "y_axis_max": 100, "y_axis_ticks": [-5, 50, 105],
+            },
+        },
+    }
+    combo_plan = compute_auto_plan_for_slide(combo, "combo_chart", host_w=900, host_h=480)
+    assert combo_plan is not None
+    assert combo_plan.secondary_y_tick_values == [50.0]
+
+
+def test_auto_svg_honors_hidden_axis_contract_and_hbar_diagnostics():
+    from impact_slides.renderer_v2.charts.core import _svg_fallback_for_layout
+
+    line = {
+        "layout_type": "line_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}, "show_x_axis": False, "show_y_axis": False},
+            "steps_or_data": [{"label": "Q1", "value": 1}],
+        }},
+    }
+    line_svg = _svg_fallback_for_layout(line, "line_chart")
+    assert 'class="auto-x-label"' not in line_svg and 'class="auto-y-label"' not in line_svg
+
+    hbar = {
+        "layout_type": "horizontal_bar_chart",
+        "visual_spec": {"primary_visual": {
+            "chart_config": {"typography": {"mode": "auto"}, "show_x_axis": False, "show_y_axis": False},
+            "steps_or_data": [{"label": "Q1", "value": 1}],
+        }},
+    }
+    hbar_svg = _svg_fallback_for_layout(hbar, "horizontal_bar_chart")
+    assert 'class="auto-x-label"' not in hbar_svg and 'class="auto-y-label"' not in hbar_svg
+    assert 'data-auto-y-ticks="0"' in hbar_svg
+
+
 def test_auto_mode_does_not_change_legacy_output(tmp_path):
     slide = {
         "slide_number": 1, "title": "Legacy", "layout_type": "grouped_bar_chart", "content": {},

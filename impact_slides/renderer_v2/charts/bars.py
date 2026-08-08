@@ -245,29 +245,33 @@ def _vbar_frame(
     _lines, value_ticks = svg_auto_axis_view(
         plan, labels=[], ticks=y_ticks, format_tick=lambda tick: _fmt_bar(tick, unit)
     )
-    for tick, tick_label in value_ticks:
-        ty = y_pos(tick)
-        parts.append(
-            f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
-            f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
-            f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
-        )
+    show_y_axis = cfg.get("show_y_axis") is not False
+    if show_y_axis:
+        for tick, tick_label in value_ticks:
+            ty = y_pos(tick)
+            parts.append(
+                f'<text class="auto-y-label" x="{pad_l - 10}" y="{ty + 5:.1f}" text-anchor="end" '
+                f'fill="var(--navy, #00175a)" font-size="{y_tick_fs}" font-weight="{y_tick_wt}" '
+                f'font-family="var(--font-body, sans-serif)">{esc(tick_label)}</text>'
+            )
     # Stash sizes on cfg for value/x label painters in the same call.
     cfg["_typo_x_tick_fs"] = x_tick_fs
     cfg["_typo_dl_fs"] = (
         int(typo["datalabel_font_size"]) if typo.get("datalabel_font_size_set") else 14
     )
     cfg["_typo_dl_set"] = int(typo.get("datalabel_font_size_set") or 0)
-    parts.append(
-        f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
+    if show_y_axis:
+        parts.append(
+            f'<line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{H - pad_b}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+        )
     # X-axis at zero (or plot bottom when all values positive)
     zero_y = y_pos(0) if y_min < 0 else float(H - pad_b)
-    parts.append(
-        f'<line x1="{pad_l}" y1="{zero_y:.1f}" x2="{W - pad_r}" y2="{zero_y:.1f}" '
-        f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
-    )
+    if cfg.get("show_x_axis") is not False:
+        parts.append(
+            f'<line x1="{pad_l}" y1="{zero_y:.1f}" x2="{W - pad_r}" y2="{zero_y:.1f}" '
+            f'stroke="var(--navy, #00175a)" stroke-width="1"/>'
+        )
     # Legend (multi-series only)
     if len(series) > 1 and cfg.get("show_legend") is not False:
         palette = _series_colors(cfg)
@@ -372,6 +376,8 @@ def _build_grouped_bar_svg(slide: Mapping[str, Any]) -> str:
             )
         lines = label_lines[i] if i < len(label_lines) else [lab]
         for line_i, line in enumerate(lines):
+            if cfg.get("show_x_axis") is False:
+                continue
             if auto_plan is None:
                 parts.append(
                     f'<text x="{pad_l + i * slot + slot / 2:.1f}" y="{H - pad_b + 25}" '
@@ -525,6 +531,8 @@ def _build_stacked_bar_svg(slide: Mapping[str, Any]) -> str:
         x_fs = int(cfg.get("_typo_x_tick_fs") or 14)
         lines = label_lines[i] if i < len(label_lines) else [lab]
         for line_i, line in enumerate(lines):
+            if cfg.get("show_x_axis") is False:
+                continue
             parts.append(
                 f'<text class="auto-x-label" data-auto-label-index="{i}" '
                 f'x="{pad_l + i * slot + slot / 2:.1f}" y="{cat_y + line_i * x_fs:.1f}"'
@@ -653,13 +661,14 @@ def _build_hbar_svg(slide: Mapping[str, Any]) -> str:
     for i, lab in enumerate(labels):
         cy = pad_t + row_h * i + row_h / 2
         lines = label_lines[i] if i < len(label_lines) else [lab]
-        for line_i, line in enumerate(lines):
-            parts.append(
-                f'<text class="hbar-cat auto-x-label" data-auto-label-index="{i}" '
-                f'x="{pad_l - 8:.1f}" y="{cy + 4 + (line_i - (len(lines) - 1) / 2) * cat_fs:.1f}" '
-                f'text-anchor="end" fill="var(--navy, #00175a)" font-size="{cat_fs}" '
-                f'font-weight="{cat_wt}">{esc(line)}</text>'
-            )
+        if cfg.get("show_y_axis") is not False:
+            for line_i, line in enumerate(lines):
+                parts.append(
+                    f'<text class="hbar-cat auto-x-label" data-auto-label-index="{i}" '
+                    f'x="{pad_l - 8:.1f}" y="{cy + 4 + (line_i - (len(lines) - 1) / 2) * cat_fs:.1f}" '
+                    f'text-anchor="end" fill="var(--navy, #00175a)" font-size="{cat_fs}" '
+                    f'font-weight="{cat_wt}">{esc(line)}</text>'
+                )
         for si in range(m):
             v = rows[i][si] if si < len(rows[i]) else None
             if v is None:
