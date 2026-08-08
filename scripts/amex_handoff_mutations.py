@@ -42,6 +42,7 @@ _S14_RIGHT_STEPS = [
 ]
 
 # Issue #156 — PDF page / deck slide 27 macroeconomic scenarios.
+# Values transcribed from Q1-2026-Earnings-Presentation.pdf, PDF page 27.
 _S27 = 27
 _S27_PERIODS = [
     "Q1'25", "Q2'25", "Q3'25", "Q4'25", "Q1'26", "Q2'26", "Q3'26",
@@ -581,7 +582,9 @@ def apply_issue_156_slide27_scenarios(handoff: dict[str, Any]) -> dict[str, Any]
         return out
     slide["layout_type"] = "dual_chart"
     slide["packing_mode"] = "chart-led"
-    slide["content"] = {"subtitle": "", "so_what": ""}
+    content = dict(slide.get("content") or {})
+    content.update({"subtitle": "", "so_what": ""})
+    slide["content"] = content
     slide["visual_spec"] = {
         "primary_visual": {
             "type": "line_chart",
