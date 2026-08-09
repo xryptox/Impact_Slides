@@ -72,6 +72,7 @@ class SurfacePlan:
     _sync_group: Optional[str] = None
     _explicit_size: Optional[int] = None
     _overflow: bool = False
+    _malformed_explicit: bool = False
 
     def to_public(self) -> dict[str, Any]:
         sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
@@ -120,21 +121,46 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
     for sp in surfaces:
         _seal_digests(sp)
 
+    # ponytail: synthetic AVG_ADVANCE is the interim engine (not unknown-font
+    # fallback); emit plan.conservative_metrics only when a dual measured path
+    # falls back (D23).
+
+    fit_errors = [e for e in events if e.code == "validation.fit"]
     overflow = [s for s in surfaces if s._overflow]
-    if overflow and strict:
+    if strict and (overflow or fit_errors):
         raise RendererValidationError(
-            sort_events(events + [_overflow_event(s) for s in overflow]),
+            sort_events(list(events) + [_overflow_event(s) for s in overflow]),
             handoff_schema_version=deck.meta.handoff_schema_version,
             renderer_version=RENDERER_VERSION,
         )
-    if overflow and not strict:
+    if not strict and overflow:
         for s in overflow:
             events.append(_overflow_event(s))
             s.fallback = "fallback_unresolved"
-            if "plan.unresolved_overflow" not in s.adaptation_codes:
-                # adaptation_codes stay non-error; overflow is the event.
-                pass
-            # Paint at floor (already set); mark degraded via events.
+
+    # Non-strict D28/D49: convert fit errors to policy-default warnings.
+    if not strict and fit_errors:
+        rewritten: list[DiagnosticEvent] = []
+        for e in events:
+            if e.code == "validation.fit":
+                rewritten.append(
+                    event(
+                        code="repair.policy_defaulted",
+                        severity="warning",
+                        phase="plan",
+                        role=e.role,
+                        path=e.path,
+                        action="default_typography",
+                        result="defaulted",
+                        slide_number=e.slide_number,
+                        layout_type=e.layout_type,
+                        surface_id=e.surface_id,
+                        expected="role size within floor..ceiling",
+                    )
+                )
+            else:
+                rewritten.append(e)
+        events = rewritten
 
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
 
@@ -242,7 +268,8 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
         if slide.takeaway is not None:
             typo = slide.takeaway.typography
             mode, sync, explicit = _typo_fields(typo, "body_font_size")
-            takeaway_budget = _line_box(TAKEAWAY_FLOOR) * 4 + 48  # label + pad + border
+            # Reserve at ceiling so grown text cannot overlap body (D172/D288).
+            takeaway_budget = _line_box(TAKEAWAY_CEIL) * 4 + 48  # label + pad + border
             takeaway_plan = SurfacePlan(
                 surface_id=f"slide-{sn}-takeaway",
                 role="takeaway",
@@ -338,28 +365,29 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         floor, ceil = TAKEAWAY_FLOOR, TAKEAWAY_CEIL
         sp.role_sizes[fit] = floor
 
-    # Explicit size validation (D49) — out of range → treat as malformed group.
+    # Explicit size validation (D49): out of role range is malformed.
     if sp._explicit_size is not None and not (floor <= sp._explicit_size <= ceil):
-        # D28/D49: discard group; default adaptive. Kernel models already clamp
-        # 8–48; still enforce role range here.
-        sp._explicit_size = None
-        sp._mode = "adaptive"
-        sp._sync_group = None
         events.append(
             event(
-                code="repair.policy_defaulted",
-                severity="warning",
+                code="validation.fit",
+                severity="error",
                 phase="plan",
                 role=sp.role,
                 path=f"/slides/{sp.slide_number}/typography",
-                action="default_typography",
-                result="defaulted",
+                action="reject",
+                result="failed",
                 slide_number=sp.slide_number,
                 layout_type=sp.layout_type,
                 surface_id=sp.surface_id,
-                expected="role size within floor..ceiling",
+                expected=f"{fit} size within {floor}..{ceil}",
+                input_meta={"type": "int", "value": sp._explicit_size},
             )
         )
+        # Discard pin now so measure continues with defaults; strict raises later.
+        sp._explicit_size = None
+        sp._mode = "adaptive"
+        sp._sync_group = None
+        sp._malformed_explicit = True
 
     if sp._mode == "fixed":
         size = sp._explicit_size if sp._explicit_size is not None else floor

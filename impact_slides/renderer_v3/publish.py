@@ -80,13 +80,15 @@ def build_presentation_html(
         [
             "<style>",
             generate_theme_css().rstrip("\n"),
-            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy)}",
-            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always;overflow:hidden}",
+            # Fixed 1920×1080 stage; viewport may scale the stage uniformly (D68).
+            "html{width:100%;height:100%}",
+            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy);transform-origin:top left}",
+            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always}",
             "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             "p,li{font-size:var(--text-body);line-height:1.4}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
-            ".takeaway-label{font-size:14px;font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
+            ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
             "</style>",
             "</head>",
             "<body>",
@@ -193,8 +195,11 @@ def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
         if slide.takeaway is not None:
             tsp = plans_by_id.get(f"slide-{sn}-takeaway")
             body_px = tsp.role_sizes.get("body") if tsp else None
+            label_px = tsp.role_sizes.get("label") if tsp else None
             out.append(f'<aside class="takeaway" {_plan_attrs(tsp)} role="note">')
-            out.append('<p class="takeaway-label">Key takeaway</p>')
+            out.append(
+                f'<p class="takeaway-label"{_style_font(label_px)}>Key takeaway</p>'
+            )
             out.append(
                 f'<p class="takeaway-text"{_style_font(body_px)}>' 
                 f"{_escape(slide.takeaway.text)}</p>"
