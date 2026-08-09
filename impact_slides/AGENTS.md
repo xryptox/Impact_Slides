@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Python package for the Impact_Slides hybrid pipeline: Step 1 preprocessor (v4) and shared support modules. Step 4 currently lives in legacy `renderer_v2/`; the new renderer-3 implementation will live in sibling `renderer_v3/`.
+Python package for the Impact_Slides hybrid pipeline: Step 1 preprocessor (v4) and shared support modules. Step 4 legacy renderer lives in `renderer_v2/`; schema-v1 kernel lives in sibling `renderer_v3/`.
 
 ## Ownership
 

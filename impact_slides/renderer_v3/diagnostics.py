@@ -49,6 +49,42 @@ REPAIR_CODES = frozenset(
         "repair.locator_dropped",
     }
 )
+# Kernel emits validation + repair only; plan/paint codes arrive with those phases.
+CLOSED_CODES = VALIDATION_CODES | REPAIR_CODES
+DiagnosticCode = Literal[
+    "validation.schema_version",
+    "validation.configuration",
+    "validation.required",
+    "validation.unknown_field",
+    "validation.inapplicable_field",
+    "validation.type",
+    "validation.value",
+    "validation.cardinality",
+    "validation.identity",
+    "validation.reference",
+    "validation.structure",
+    "validation.conflict",
+    "validation.fit",
+    "validation.accessibility",
+    "repair.schema_version_assumed",
+    "repair.field_dropped",
+    "repair.item_dropped",
+    "repair.reference_dropped",
+    "repair.id_generated",
+    "repair.position_repaired",
+    "repair.value_to_missing",
+    "repair.value_canonicalized",
+    "repair.prose_flattened",
+    "repair.format_dropped",
+    "repair.domain_replaced",
+    "repair.axis_restored",
+    "repair.policy_defaulted",
+    "repair.color_substituted",
+    "repair.sync_disabled",
+    "repair.structure_flattened",
+    "repair.chrome_omitted",
+    "repair.locator_dropped",
+]
 
 ActionName = Literal[
     "assume_schema_v1",
@@ -125,7 +161,7 @@ class DiagnosticEvent(BaseModel):
     """One closed D309 diagnostic event."""
 
     model_config = ConfigDict(extra="forbid")
-    code: str
+    code: DiagnosticCode
     severity: Severity
     phase: Phase
     role: str
@@ -142,7 +178,7 @@ class DiagnosticEvent(BaseModel):
 
 def event(
     *,
-    code: str,
+    code: DiagnosticCode,
     severity: Severity,
     phase: Phase,
     role: str,
@@ -156,6 +192,8 @@ def event(
     input_meta: dict[str, Any] | None = None,
     occurrences: int = 1,
 ) -> DiagnosticEvent:
+    if code not in CLOSED_CODES:
+        raise ValueError(f"diagnostic code not in closed catalog: {code!r}")
     return DiagnosticEvent(
         code=code,
         severity=severity,

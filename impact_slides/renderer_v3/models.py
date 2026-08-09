@@ -99,6 +99,16 @@ class ClosedModel(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_null_placeholders(cls, data: Any) -> Any:
+        # D212: absent data is omitted; null is an invalid placeholder.
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if value is None:
+                    raise ValueError(f"{key!r} must be omitted, not null")
+        return data
+
 
 class DeckMeta(ClosedModel):
     handoff_schema_version: Literal[1]

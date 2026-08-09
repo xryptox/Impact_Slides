@@ -157,11 +157,13 @@ def test_nonstrict_drops_unknown_field_and_revalidates():
     assert result.ok
     assert result.repaired
     assert not hasattr(result.deck.slides[1], "packing_mode")
-    dumped = result.deck.model_dump(mode="json")
+    dumped = result.deck.model_dump(mode="json", exclude_none=True)
     assert "packing_mode" not in dumped["slides"][1]
     assert any(e.code == "repair.field_dropped" for e in result.events)
-    # repaired model is fully valid as strict too
-    again = validate_handoff(result.deck.model_dump(mode="json"), strict=True)
+    # repaired model is fully valid as strict too (omit nulls per D212)
+    again = validate_handoff(
+        result.deck.model_dump(mode="json", exclude_none=True), strict=True
+    )
     assert again.ok
 
 
@@ -171,6 +173,26 @@ def test_nonstrict_assumes_schema_version_when_meta_empty():
     result = validate_handoff(raw, strict=False)
     assert result.deck.meta.handoff_schema_version == 1
     assert any(e.code == "repair.schema_version_assumed" for e in result.events)
+
+
+def test_nonstrict_does_not_assume_version_when_unknown_fields_present():
+    raw = _minimal()
+    raw["meta"] = {}
+    raw["slides"][1]["packing_mode"] = "dense"
+    # Unknown field blocks assume_schema_v1; drop may still repair the field,
+    # but missing version without a clean assume remains a validation error.
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=False)
+    codes = {e.code for e in ei.value.events}
+    assert "repair.schema_version_assumed" not in codes
+    assert "validation.schema_version" in codes or "validation.required" in codes
+
+
+def test_null_placeholder_rejected():
+    raw = _minimal()
+    raw["slides"][1]["speaker_notes"] = None
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
 
 
 def test_nonstrict_does_not_invent_business_text():

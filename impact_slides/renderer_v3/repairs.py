@@ -10,7 +10,7 @@ RepairFn = Callable[[Any, list[DiagnosticEvent]], Any]
 
 
 def assume_schema_v1(raw: Any, events: list[DiagnosticEvent]) -> Any:
-    """Insert handoff_schema_version:1 when meta exists without version (D311)."""
+    """Insert handoff_schema_version:1 only when input is otherwise exact v1 (D311)."""
     if not isinstance(raw, dict):
         return raw
     meta = raw.get("meta")
@@ -18,7 +18,7 @@ def assume_schema_v1(raw: Any, events: list[DiagnosticEvent]) -> Any:
         return raw
     if "handoff_schema_version" in meta:
         return raw
-    # Only when no other top-level keys look legacy and meta is otherwise empty/minimal.
+    # Only empty meta + closed envelope; any unknown/legacy field blocks assume.
     legacy_markers = {
         "presentation",
         "theme",
@@ -29,11 +29,22 @@ def assume_schema_v1(raw: Any, events: list[DiagnosticEvent]) -> Any:
     }
     if legacy_markers.intersection(raw):
         return raw
-    if any(k != "handoff_schema_version" for k in meta):
-        # meta has other unknown keys — not a clean assume
+    if meta:
+        return raw
+    allowed_top = {"meta", "sections", "number_formats", "evidence_registry", "slides"}
+    if set(raw) - allowed_top:
+        return raw
+    if _envelope_has_unknown_fields(raw):
         return raw
     out = deepcopy(raw)
-    out["meta"] = {**meta, "handoff_schema_version": 1}
+    out["meta"] = {"handoff_schema_version": 1}
+    # Prove the repaired input is exact schema v1 before keeping the assume.
+    from .models import Deck
+
+    try:
+        Deck.model_validate(out)
+    except Exception:
+        return raw
     events.append(
         event(
             code="repair.schema_version_assumed",
@@ -47,6 +58,50 @@ def assume_schema_v1(raw: Any, events: list[DiagnosticEvent]) -> Any:
         )
     )
     return out
+
+
+def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
+    """True if any closed object carries a field outside the kernel allowlist."""
+    slides = raw.get("slides")
+    if not isinstance(slides, list):
+        return False
+    for slide in slides:
+        if not isinstance(slide, dict):
+            continue
+        layout = slide.get("layout_type")
+        common = {
+            "slide_number",
+            "layout_type",
+            "payload",
+            "speaker_notes",
+            "evidence_ids",
+        }
+        if layout in ("opening_cover", "closing_cover"):
+            allowed = common
+            payload_allowed = {"title", "subtitle", "period_label", "date_label"}
+        elif layout == "narrative":
+            allowed = common | {
+                "section_id",
+                "title",
+                "content",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            }
+            payload_allowed = {"blocks", "typography"}
+        else:
+            return True
+        if set(slide) - allowed:
+            return True
+        payload = slide.get("payload")
+        if isinstance(payload, dict) and set(payload) - payload_allowed:
+            return True
+    sections = raw.get("sections")
+    if isinstance(sections, list):
+        for sec in sections:
+            if isinstance(sec, dict) and set(sec) - {"section_id", "label"}:
+                return True
+    return False
 
 
 def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
@@ -198,7 +253,11 @@ REPAIR_REGISTRY: dict[str, RepairFn] = {
 
 
 def apply_allowlisted_repairs(raw: Any) -> tuple[Any, list[DiagnosticEvent]]:
-    """Apply every kernel allowlisted repair in stable order; collect events."""
+    """Apply every kernel allowlisted repair in stable order; collect events.
+
+    ``assume_schema_v1`` runs first and only keeps the edit when the rest of the
+    input is already exact v1 (D311). Unknown-field drops never unlock assume.
+    """
     events: list[DiagnosticEvent] = []
     current = raw
     for name in ("assume_schema_v1", "drop_unknown_fields"):
