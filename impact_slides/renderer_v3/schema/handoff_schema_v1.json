@@ -1,0 +1,859 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xryptox.github.io/Impact_Slides/renderer_v3/handoff_schema_v1.json",
+  "title": "Deck",
+  "description": "Minimal top-level deck envelope (D211).",
+  "$defs": {
+    "ClosingCoverSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "closing_cover",
+          "default": "closing_cover",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/CoverPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload"
+      ],
+      "title": "ClosingCoverSlide",
+      "type": "object"
+    },
+    "CoverPayload": {
+      "additionalProperties": false,
+      "description": "Shared opening/closing cover payload (D268).",
+      "properties": {
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "period_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Period Label"
+        },
+        "date_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date Label"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "CoverPayload",
+      "type": "object"
+    },
+    "DeckMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "handoff_schema_version": {
+          "const": 1,
+          "title": "Handoff Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "handoff_schema_version"
+      ],
+      "title": "DeckMeta",
+      "type": "object"
+    },
+    "Disclosure": {
+      "additionalProperties": false,
+      "properties": {
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/DisclosureSection"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Sections",
+          "type": "array"
+        }
+      },
+      "required": [
+        "sections"
+      ],
+      "title": "Disclosure",
+      "type": "object"
+    },
+    "DisclosureItem": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "paragraph",
+            "bullet"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "text"
+      ],
+      "title": "DisclosureItem",
+      "type": "object"
+    },
+    "DisclosureSection": {
+      "additionalProperties": false,
+      "properties": {
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/DisclosureItem"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "surface_id",
+        "title",
+        "items"
+      ],
+      "title": "DisclosureSection",
+      "type": "object"
+    },
+    "EvidenceEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "source_name": {
+          "minLength": 1,
+          "title": "Source Name",
+          "type": "string"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        }
+      },
+      "required": [
+        "source_name"
+      ],
+      "title": "EvidenceEntry",
+      "type": "object"
+    },
+    "NarrativeBulletListBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "block_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Block Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "bullet_list",
+          "title": "Type",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/Prose"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "block_id",
+        "type",
+        "items"
+      ],
+      "title": "NarrativeBulletListBlock",
+      "type": "object"
+    },
+    "NarrativeParagraphsBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "block_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Block Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "paragraphs",
+          "title": "Type",
+          "type": "string"
+        },
+        "paragraphs": {
+          "items": {
+            "$ref": "#/$defs/Prose"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Paragraphs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "block_id",
+        "type",
+        "paragraphs"
+      ],
+      "title": "NarrativeParagraphsBlock",
+      "type": "object"
+    },
+    "NarrativePayload": {
+      "additionalProperties": false,
+      "properties": {
+        "blocks": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "bullet_list": "#/$defs/NarrativeBulletListBlock",
+                "paragraphs": "#/$defs/NarrativeParagraphsBlock"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/NarrativeParagraphsBlock"
+              },
+              {
+                "$ref": "#/$defs/NarrativeBulletListBlock"
+              }
+            ]
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Blocks",
+          "type": "array"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Typography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "blocks"
+      ],
+      "title": "NarrativePayload",
+      "type": "object"
+    },
+    "NarrativeSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "narrative",
+          "default": "narrative",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/NarrativePayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "NarrativeSlide",
+      "type": "object"
+    },
+    "NumberFormat": {
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnitSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "value_decimals": {
+          "maximum": 4,
+          "minimum": 0,
+          "title": "Value Decimals",
+          "type": "integer"
+        },
+        "tick_decimals": {
+          "anyOf": [
+            {
+              "maximum": 4,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tick Decimals"
+        },
+        "negative_style": {
+          "enum": [
+            "minus",
+            "parentheses"
+          ],
+          "title": "Negative Style",
+          "type": "string"
+        },
+        "value_scale": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "title": "Value Scale",
+          "type": "number"
+        },
+        "scale_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scale Label"
+        }
+      },
+      "required": [
+        "value_decimals",
+        "negative_style"
+      ],
+      "title": "NumberFormat",
+      "type": "object"
+    },
+    "OpeningCoverSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "opening_cover",
+          "default": "opening_cover",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/CoverPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload"
+      ],
+      "title": "OpeningCoverSlide",
+      "type": "object"
+    },
+    "Prose": {
+      "additionalProperties": false,
+      "properties": {
+        "runs": {
+          "items": {
+            "$ref": "#/$defs/ProseRun"
+          },
+          "minItems": 1,
+          "title": "Runs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "runs"
+      ],
+      "title": "Prose",
+      "type": "object"
+    },
+    "ProseRun": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "emphasis": {
+          "anyOf": [
+            {
+              "const": "strong",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Emphasis"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "ProseRun",
+      "type": "object"
+    },
+    "SectionEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "section_id",
+        "label"
+      ],
+      "title": "SectionEntry",
+      "type": "object"
+    },
+    "SubtitleContent": {
+      "additionalProperties": false,
+      "properties": {
+        "subtitle": {
+          "minLength": 1,
+          "title": "Subtitle",
+          "type": "string"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Typography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "subtitle"
+      ],
+      "title": "SubtitleContent",
+      "type": "object"
+    },
+    "Takeaway": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Typography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Takeaway",
+      "type": "object"
+    },
+    "Typography": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "adaptive",
+          "enum": [
+            "adaptive",
+            "fixed"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "sync_group": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sync Group"
+        },
+        "body_font_size": {
+          "anyOf": [
+            {
+              "maximum": 48,
+              "minimum": 8,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body Font Size"
+        },
+        "subtitle_font_size": {
+          "anyOf": [
+            {
+              "maximum": 48,
+              "minimum": 8,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle Font Size"
+        }
+      },
+      "title": "Typography",
+      "type": "object"
+    },
+    "UnitSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "position": {
+          "enum": [
+            "prefix",
+            "suffix"
+          ],
+          "title": "Position",
+          "type": "string"
+        },
+        "spacing": {
+          "enum": [
+            "none",
+            "space"
+          ],
+          "title": "Spacing",
+          "type": "string"
+        },
+        "accessible_name": {
+          "minLength": 1,
+          "title": "Accessible Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "position",
+        "spacing",
+        "accessible_name"
+      ],
+      "title": "UnitSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/DeckMeta"
+    },
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/SectionEntry"
+      },
+      "title": "Sections",
+      "type": "array"
+    },
+    "number_formats": {
+      "additionalProperties": {
+        "$ref": "#/$defs/NumberFormat"
+      },
+      "title": "Number Formats",
+      "type": "object"
+    },
+    "evidence_registry": {
+      "additionalProperties": {
+        "$ref": "#/$defs/EvidenceEntry"
+      },
+      "title": "Evidence Registry",
+      "type": "object"
+    },
+    "slides": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "closing_cover": "#/$defs/ClosingCoverSlide",
+            "narrative": "#/$defs/NarrativeSlide",
+            "opening_cover": "#/$defs/OpeningCoverSlide"
+          },
+          "propertyName": "layout_type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/OpeningCoverSlide"
+          },
+          {
+            "$ref": "#/$defs/ClosingCoverSlide"
+          },
+          {
+            "$ref": "#/$defs/NarrativeSlide"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Slides",
+      "type": "array"
+    }
+  },
+  "required": [
+    "meta",
+    "sections",
+    "number_formats",
+    "evidence_registry",
+    "slides"
+  ],
+  "type": "object"
+}

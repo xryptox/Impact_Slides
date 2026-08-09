@@ -53,4 +53,4 @@ Legacy Step 4 renderer v2: current Builder handoff JSON → self-contained 1920�
 ## Child DOX Index
 
 - No child AGENTS.md under `charts/`, `layout/`, `diagram/`, `css/`, or `assets/` — those packages are implementation slices of this boundary, not separate operating contracts.
-- Sibling `../renderer_v3/AGENTS.md` will own renderer 3.0/schema-v1 when that package is created.
+- Sibling `../renderer_v3/AGENTS.md` owns renderer 3.0/schema-v1 kernel (validation + generated schema); do not implement v3 contracts here.
