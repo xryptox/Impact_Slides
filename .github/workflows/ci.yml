@@ -41,6 +41,11 @@ jobs:
       - name: renderer_v3 handoff schema is current
         run: python -m impact_slides.renderer_v3.schema_export --check
 
+      # boardroom_amex CSS is generated from the theme manifest (D129). Drift means
+      # the committed artifact was not regenerated after a token change.
+      - name: renderer_v3 theme CSS is current
+        run: python -m impact_slides.renderer_v3.theme_export --check
+
       # The renderer must not reach outside the repo for a chart pack. A machine-local
       # soft-import previously made heatmap/waterfall render empty everywhere but one
       # dev box, and the suite stayed green (see PR #127). Cheap guard against relapse.

@@ -1,0 +1,77 @@
+/* Generated from impact_slides.renderer_v3.theme — do not edit. */
+/* theme_id: boardroom_amex */
+:root {
+  --font-display: "Source Sans 3", sans-serif;
+  --font-body: "Source Sans 3", "IBM Plex Sans", sans-serif;
+  --font-num: "IBM Plex Sans", "Source Sans 3", sans-serif;
+  --color-navy: #00175A;
+  --color-primary-blue: #006FCF;
+  --color-sky-blue: #80C8FF;
+  --color-success: #0A7D55;
+  --color-neutral: #63666A;
+  --color-warning: #B35900;
+  --color-ink: #53565A;
+  --color-ink-faint: #929292;
+  --color-ink-on-dark: #FFFFFF;
+  --color-white: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F8F8F8;
+  --color-panel: #EEF0F0;
+  --color-panel-border: #D8DCE3;
+  --color-grid: #E0E4EA;
+  --color-rule: #00175A;
+  --color-stage: #0B0F1A;
+  --color-band: #00175A;
+  --color-band-ink: #FFFFFF;
+  --color-chart-plot: transparent;
+  --color-chart-body: transparent;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 20px;
+  --space-lg: 28px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 96px;
+  --space-pad-x: 96px;
+  --space-pad-top: 56px;
+  --space-pad-bottom: 48px;
+  --border-width-hairline: 1px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-card: 16px;
+  --text-xs: 14px;
+  --text-sm: 14px;
+  --text-body: 22px;
+  --text-lead: 22px;
+  --text-insight: 26px;
+  --text-title: 56px;
+  --text-display: 72px;
+  --text-kpi: 70px;
+  --font-weight-body: 400;
+  --font-weight-emphasis: 600;
+  --font-weight-title: 700;
+}
+
+/* D5/D6 — chart plot/body surfaces are transparent and flat. */
+.chart-plot,
+.chart-body {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* D66/D67 — named card chrome uses panel + hairline border. */
+.card-panel {
+  background: var(--color-panel);
+  border: var(--border-width-hairline) solid var(--color-panel-border);
+  border-radius: var(--radius-card);
+}
+
+/* D42 — structural title/header bands use dark navy + white ink. */
+.band-title,
+.band-table-header {
+  background: var(--color-band);
+  color: var(--color-band-ink);
+}
