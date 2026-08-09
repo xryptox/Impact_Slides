@@ -2,19 +2,23 @@
 
 ## Purpose
 
-Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. This delivery owns typed validation into one canonical deck model; painting/planning land in later tickets.
+Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model and deterministic five-artifact publication for the kernel compositions; full painting/planning land in later tickets.
 
 ## Ownership
 
 - Closed schema-v1 handoff models (`models.py`)
 - Aggregating validation + allowlisted non-strict repairs (`validate.py`, `repairs.py`, `diagnostics.py`)
+- Public `render_deck` + CLI publication (`render.py`, `publish.py`, `cli.py`)
 - Generated JSON Schema artifact `schema/handoff_schema_v1.json` (D121)
 - Does **not** own legacy v2 layouts, recipes, charts, or migration of unversioned handoffs (D119 is a later tool)
 
 ## Local Contracts
 
-- Public API: `from impact_slides.renderer_v3 import validate_handoff, RendererValidationError`
+- Public API: `from impact_slides.renderer_v3 import render_deck, validate_handoff, RendererValidationError, RendererConfigurationError, RendererPublicationError`
+- CLI: `python -m impact_slides.renderer_v3 --handoff PATH --out DIR` (strict default; `--no-strict`, `--debug`, `--svg-only`); `schema --check` / bare `--check` retain the D121 drift gate
 - `validate_handoff(raw, *, strict=True) -> ValidationResult` with `.deck` as the only paint input (D122)
+- `render_deck(handoff_path, out_dir, *, strict=True, ...)` publishes exactly five UTF-8/LF artifacts: `presentation.html`, `slide_notes.md`, `evidence_manifest.json`, `run_meta.json`, `handoff_schema_v1.json` (D250)
+- Clean → exit 0 / `ok: true`; degraded non-strict → exit 2 / `ok: false`; failed → typed error, exit 1, prior output untouched (D112/D312)
 - Strict aggregates all detectable errors into `RendererValidationError.events` (D120/D309/D310)
 - Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311)
 - Kernel compositions: `opening_cover`, `narrative`, `closing_cover` (D210/D251/D268/D270)
@@ -28,11 +32,12 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - New compositions need payload models + discriminator entry + tests before paint
 - Prefer root-cause validation in `Deck` / slide model validators over caller guards
 - Diagnostics stay closed (D309 codes/actions/results); no free-form stderr interface
+- Publication stages all five artifacts then replaces; never partial writes to `out_dir`
 - Share only genuinely immutable, version-neutral assets through a neutral module — never reach into v2 implementation packages
 
 ## Verification
 
-- `python -m pytest -q tests/test_renderer_v3_kernel.py`
+- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py`
 - `python -m impact_slides.renderer_v3.schema_export --check`
 - Full suite: `python -m pytest -q`
 - CI: schema drift step + pytest in `.github/workflows/ci.yml`

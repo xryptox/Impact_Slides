@@ -1,6 +1,6 @@
-"""python -m impact_slides.renderer_v3 → schema export by default."""
+"""python -m impact_slides.renderer_v3 → render CLI (schema subcommand retained)."""
 from __future__ import annotations
 
-from .schema_export import main
+from .cli import main
 
 raise SystemExit(main())
