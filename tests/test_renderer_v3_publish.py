@@ -24,6 +24,10 @@ from impact_slides.renderer_v3 import (
     __version__,
     render_deck,
 )
+from impact_slides.renderer_v3.publish import (
+    canonical_schema_bytes,
+    resolved_schema_source,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/minimal_cover_narrative_cover.json"
@@ -88,7 +92,11 @@ def test_schema_artifact_is_byte_copy_of_checked_in(tmp_path: Path):
     handoff = _write_handoff(tmp_path)
     out = tmp_path / "out"
     render_deck(handoff, out)
-    assert (out / "handoff_schema_v1.json").read_bytes() == SCHEMA.read_bytes()
+    expected = canonical_schema_bytes(resolved_schema_source())
+    assert b"\r\n" not in expected
+    assert (out / "handoff_schema_v1.json").read_bytes() == expected
+    # Same canonical LF bytes the package path resolves to (D121/D250).
+    assert expected == canonical_schema_bytes(SCHEMA)
 
 
 def test_artifacts_are_utf8_lf_with_trailing_newline(tmp_path: Path):
@@ -327,7 +335,9 @@ def test_published_schema_matches_checked_in_bytes(tmp_path: Path):
     handoff = _write_handoff(tmp_path)
     out = tmp_path / "out"
     render_deck(handoff, out)
-    assert (out / "handoff_schema_v1.json").read_bytes() == SCHEMA.read_bytes()
+    assert (out / "handoff_schema_v1.json").read_bytes() == canonical_schema_bytes(
+        SCHEMA
+    )
 
 
 def test_no_extra_artifacts_or_temps_left_behind(tmp_path: Path):
@@ -390,6 +400,78 @@ def test_backup_bind_only_after_full_copy(tmp_path: Path, monkeypatch):
     with pytest.raises(RendererPublicationError):
         render_deck(handoff, out)
     assert _file_map(out) == prior
+
+
+def test_fresh_out_failed_replace_leaves_no_partial(tmp_path: Path, monkeypatch):
+    """Failed first publish must not leave a partial out_dir."""
+    import impact_slides.renderer_v3.publish as pub
+
+    handoff = _write_handoff(tmp_path)
+    out = tmp_path / "fresh_out"
+    real_replace = pub.os.replace
+    calls = {"n": 0}
+
+    def flaky_replace(src, dst):
+        calls["n"] += 1
+        # First successful path is staging → out (no prior out_dir).
+        if calls["n"] == 1:
+            raise OSError("simulated staging promote failure")
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(pub.os, "replace", flaky_replace)
+    with pytest.raises(RendererPublicationError):
+        render_deck(handoff, out)
+    assert not out.exists()
+
+
+def test_rollback_failure_preserves_backup(tmp_path: Path, monkeypatch):
+    """If restore fails after out is moved aside, keep the bound backup."""
+    import impact_slides.renderer_v3.publish as pub
+
+    handoff = _write_handoff(tmp_path)
+    out = tmp_path / "out"
+    render_deck(handoff, out)
+    prior = _file_map(out)
+
+    real_replace = pub.os.replace
+
+    def replace_then_break(src, dst):
+        src_s, dst_s = str(src), str(dst)
+        if ".renderer_v3_stage_" in src_s and dst_s == str(out):
+            raise OSError("simulated promote failure")
+        if ".renderer_v3_retired_" in src_s and dst_s == str(out):
+            raise OSError("simulated retired restore failure")
+        return real_replace(src, dst)
+
+    def boom_restore(out_dir, backup):
+        raise pub.RendererPublicationError(
+            [
+                pub.event(
+                    code="publication.rollback_failed",
+                    severity="error",
+                    phase="publication",
+                    role="publisher",
+                    path="/artifacts",
+                    action="rollback",
+                    result="failed",
+                    expected="prior output restored byte-identical",
+                )
+            ]
+        )
+
+    monkeypatch.setattr(pub.os, "replace", replace_then_break)
+    monkeypatch.setattr(pub, "_restore_backup", boom_restore)
+
+    with pytest.raises(RendererPublicationError) as ei:
+        render_deck(handoff, out)
+    assert any(e.code == "publication.rollback_failed" for e in ei.value.events)
+    backups = [
+        p
+        for p in tmp_path.iterdir()
+        if p.is_dir() and p.name.startswith(".renderer_v3_backup_")
+    ]
+    assert len(backups) == 1
+    assert _file_map(backups[0]) == prior
 
 
 def test_package_export_includes_render_deck():

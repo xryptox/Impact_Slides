@@ -50,7 +50,8 @@ def check_schema(repo_root: Path | None = None) -> None:
     expected = schema_json()
     if not path.is_file():
         raise SystemExit(f"missing schema artifact: {path}")
-    actual = path.read_text(encoding="utf-8")
+    # Compare LF form so Windows CRLF checkouts still match the D121 blob.
+    actual = path.read_text(encoding="utf-8").replace("\r\n", "\n")
     if actual != expected:
         raise SystemExit(
             f"schema drift: {path} does not match models. "

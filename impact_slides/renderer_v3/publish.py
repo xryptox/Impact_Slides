@@ -327,6 +327,15 @@ def build_run_meta(
     }
 
 
+def canonical_schema_bytes(schema_source: Path) -> bytes:
+    """D121/D250 schema bytes: repository-canonical UTF-8/LF."""
+    data = schema_source.read_bytes()
+    # Working trees may checkout CRLF; publish the LF form of the git blob.
+    if b"\r\n" in data:
+        data = data.replace(b"\r\n", b"\n")
+    return data
+
+
 def stage_artifacts(
     *,
     deck: Deck,
@@ -342,11 +351,7 @@ def stage_artifacts(
     html = build_presentation_html(deck, debug=debug, svg_only=svg_only)
     notes = build_slide_notes_md(deck)
     manifest = dumps_json(build_evidence_manifest(deck))
-    schema_bytes = schema_source.read_bytes()
-    # Normalize schema to LF if the checked-in file somehow has CRLF (Windows).
-    if b"\r\n" in schema_bytes:
-        # Spec requires byte-copy of checked-in artifact — do not rewrite.
-        pass
+    schema_bytes = canonical_schema_bytes(schema_source)
 
     partial = {
         "presentation.html": html.encode("utf-8"),
@@ -371,7 +376,7 @@ def stage_artifacts(
 
 
 def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
-    """Stage in sibling temp, then replace destination as a unit (D250/D312)."""
+    """Stage complete set, then directory-swap into destination (D250/D312)."""
     out_dir = Path(out_dir)
     parent = out_dir.parent if out_dir.parent != Path("") else Path(".")
     parent.mkdir(parents=True, exist_ok=True)
@@ -380,6 +385,9 @@ def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
         tempfile.mkdtemp(prefix=".renderer_v3_stage_", dir=str(parent))
     )
     backup: Path | None = None
+    retired: Path | None = None
+    staging_pending = True
+    preserve_backup = False
     try:
         for name in CANONICAL_ARTIFACTS:
             if name not in artifacts:
@@ -399,7 +407,6 @@ def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
                 )
             write_text_bytes(staging / name, artifacts[name])
 
-        # Verify staged set is exactly the five names.
         staged_names = {p.name for p in staging.iterdir() if p.is_file()}
         if staged_names != set(CANONICAL_ARTIFACTS):
             raise RendererPublicationError(
@@ -418,45 +425,43 @@ def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
             )
 
         if out_dir.exists():
-            # Only bind backup after the full copy succeeds so a mid-copy failure
-            # never triggers restore from a partial snapshot (prior out stays put).
+            # Bind backup only after the full copy succeeds (partial backup never used).
             backup_tmp = Path(
                 tempfile.mkdtemp(prefix=".renderer_v3_backup_", dir=str(parent))
             )
             try:
-                for item in out_dir.iterdir():
-                    dest = backup_tmp / item.name
-                    if item.is_dir():
-                        shutil.copytree(item, dest)
-                    else:
-                        shutil.copy2(item, dest)
+                _copy_dir_contents(out_dir, backup_tmp)
             except Exception:
                 shutil.rmtree(backup_tmp, ignore_errors=True)
                 raise
             backup = backup_tmp
-            for name in CANONICAL_ARTIFACTS:
-                target = out_dir / name
-                if target.exists():
-                    target.unlink()
-        else:
-            out_dir.mkdir(parents=True, exist_ok=True)
 
-        for name in CANONICAL_ARTIFACTS:
-            _replace_file(staging / name, out_dir / name)
+            retired = Path(
+                tempfile.mkdtemp(prefix=".renderer_v3_retired_", dir=str(parent))
+            )
+            shutil.rmtree(retired)
+            os.replace(str(out_dir), str(retired))
 
-        # D250: destination contains only the five canonical artifacts.
-        for item in list(out_dir.iterdir()):
-            if item.name not in CANONICAL_ARTIFACTS:
-                if item.is_dir():
-                    shutil.rmtree(item)
-                else:
-                    item.unlink()
+        os.replace(str(staging), str(out_dir))
+        staging_pending = False
+
+        if retired is not None:
+            shutil.rmtree(retired, ignore_errors=True)
+            retired = None
 
     except RendererPublicationError:
-        _restore_backup(out_dir, backup)
+        try:
+            _abort_publish(out_dir, retired, backup)
+        except RendererPublicationError:
+            preserve_backup = backup is not None and backup.exists()
+            raise
         raise
     except Exception as exc:
-        _restore_backup(out_dir, backup)
+        try:
+            _abort_publish(out_dir, retired, backup)
+        except RendererPublicationError:
+            preserve_backup = backup is not None and backup.exists()
+            raise
         raise RendererPublicationError(
             [
                 event(
@@ -473,8 +478,11 @@ def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
             ]
         ) from exc
     finally:
-        shutil.rmtree(staging, ignore_errors=True)
-        if backup is not None:
+        if staging_pending:
+            shutil.rmtree(staging, ignore_errors=True)
+        if retired is not None and retired.exists() and not preserve_backup:
+            shutil.rmtree(retired, ignore_errors=True)
+        if backup is not None and not preserve_backup:
             shutil.rmtree(backup, ignore_errors=True)
 
 
@@ -489,29 +497,63 @@ def write_text_bytes(path: Path, data: bytes) -> None:
         pass
 
 
-def _replace_file(src: Path, dest: Path) -> None:
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    # os.replace is atomic on the same filesystem for a single file.
-    os.replace(str(src), str(dest))
+def _copy_dir_contents(src: Path, dest: Path) -> None:
+    for item in src.iterdir():
+        target = dest / item.name
+        if item.is_dir():
+            shutil.copytree(item, target)
+        else:
+            shutil.copy2(item, target)
+
+
+def _abort_publish(
+    out_dir: Path,
+    retired: Path | None,
+    backup: Path | None,
+) -> None:
+    """Restore prior output after a failed swap; raise rollback_failed if not."""
+    try:
+        if retired is not None and retired.exists():
+            if out_dir.exists():
+                shutil.rmtree(out_dir)
+            os.replace(str(retired), str(out_dir))
+            return
+        # out never moved aside (or never existed): leave it alone.
+        if out_dir.exists():
+            return
+        if backup is not None and backup.exists():
+            _restore_backup(out_dir, backup)
+    except RendererPublicationError:
+        raise
+    except Exception as exc:
+        if backup is not None and backup.exists():
+            _restore_backup(out_dir, backup)
+            return
+        raise RendererPublicationError(
+            [
+                event(
+                    code="publication.rollback_failed",
+                    severity="error",
+                    phase="publication",
+                    role="publisher",
+                    path="/artifacts",
+                    action="rollback",
+                    result="failed",
+                    expected="prior output restored byte-identical",
+                    input_meta={"type": type(exc).__name__},
+                )
+            ]
+        ) from exc
 
 
 def _restore_backup(out_dir: Path, backup: Path | None) -> None:
     if backup is None or not backup.exists():
         return
     try:
+        if out_dir.exists():
+            shutil.rmtree(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
-        for name in CANONICAL_ARTIFACTS:
-            target = out_dir / name
-            if target.exists():
-                target.unlink()
-        for item in backup.iterdir():
-            dest = out_dir / item.name
-            if item.is_dir():
-                if dest.exists():
-                    shutil.rmtree(dest)
-                shutil.copytree(item, dest)
-            else:
-                shutil.copy2(item, dest)
+        _copy_dir_contents(backup, out_dir)
     except Exception as exc:
         raise RendererPublicationError(
             [
