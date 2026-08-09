@@ -18,10 +18,9 @@ from .diagnostics import (
 )
 from .models import Deck
 from .schema_export import schema_path
+from .theme import THEME_ID, generate_theme_css
 
 from ._version import __version__ as RENDERER_VERSION
-
-THEME_ID = "boardroom_amex"
 
 CANONICAL_ARTIFACTS = (
     "presentation.html",
@@ -72,10 +71,12 @@ def build_presentation_html(deck: Deck, *, debug: bool = False, svg_only: bool =
     parts.extend(
         [
             "<style>",
-            "body{margin:0;font-family:system-ui,sans-serif;background:#fff;color:#00175A}",
-            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:64px;page-break-after:always}",
-            "h1{font-size:48px;margin:0 0 16px}h2{font-size:32px;margin:0 0 12px}",
-            "p,li{font-size:24px;line-height:1.4}",
+            generate_theme_css().rstrip("\n"),
+            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy)}",
+            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always}",
+            "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
+            "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
+            "p,li{font-size:var(--text-body);line-height:1.4}",
             "</style>",
             "</head>",
             "<body>",

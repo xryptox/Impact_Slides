@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model and deterministic five-artifact publication for the kernel compositions; full painting/planning land in later tickets.
+Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model, deterministic five-artifact publication for the kernel compositions, and the sole boardroom_amex theme manifest (CSS/Chart.js/SVG tokens); full painting/planning land in later tickets.
 
 ## Ownership
 
@@ -10,6 +10,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Aggregating validation + allowlisted non-strict repairs (`validate.py`, `repairs.py`, `diagnostics.py`)
 - Public `render_deck` + CLI publication (`render.py`, `publish.py`, `cli.py`)
 - Generated JSON Schema artifact `schema/handoff_schema_v1.json` (D121)
+- Canonical `boardroom_amex` theme manifest + generated CSS (`theme/`, `theme_export.py`) (D127-D133)
 - Does **not** own legacy v2 layouts, recipes, charts, or migration of unversioned handoffs (D119 is a later tool)
 
 ## Local Contracts
@@ -25,6 +26,8 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Envelope: `meta`, `sections`, `number_formats`, `evidence_registry`, `slides` (D211)
 - Must not import `impact_slides.renderer_v2` or mutate v2 behavior
 - Schema artifact is generated: `python -m impact_slides.renderer_v3.schema_export` (write) or `--check` (CI)
+- Theme CSS artifact is generated from the Python manifest: `python -m impact_slides.renderer_v3.theme_export` (write) or `--check` (CI); painters resolve colors via `theme.resolve_color` / CSS `var(--color-*)` only (D129-D131)
+- Chart plot/body surfaces stay transparent and flat via generated `.chart-plot`/`.chart-body` rules (D5/D6)
 
 ## Work Guidance
 
@@ -34,14 +37,16 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Diagnostics stay closed (D309 codes/actions/results); no free-form stderr interface
 - Publication stages all five artifacts then replaces; never partial writes to `out_dir`
 - Share only genuinely immutable, version-neutral assets through a neutral module — never reach into v2 implementation packages
+- Theme tokens change only in `theme/` manifest; regenerate CSS; never hand-edit `boardroom_amex.tokens.css` or put raw theme hex in painters
 
 ## Verification
 
-- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py`
+- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py`
 - `python -m impact_slides.renderer_v3.schema_export --check`
+- `python -m impact_slides.renderer_v3.theme_export --check`
 - Full suite: `python -m pytest -q`
-- CI: schema drift step + pytest in `.github/workflows/ci.yml`
+- CI: schema + theme CSS drift steps + pytest in `.github/workflows/ci.yml`
 
 ## Child DOX Index
 
-- No child AGENTS.md — `schema/` is a generated artifact directory, not an operating boundary.
+- No child AGENTS.md — `schema/` is a generated artifact directory; `theme/` is the theme package (manifest + generated CSS), not a separate operating boundary.
