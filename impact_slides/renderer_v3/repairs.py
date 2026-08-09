@@ -9,6 +9,11 @@ from .diagnostics import DiagnosticEvent, event
 RepairFn = Callable[[Any, list[DiagnosticEvent]], Any]
 
 
+def _slide_number(slide: dict[str, Any]) -> int | None:
+    v = slide.get("slide_number")
+    return v if isinstance(v, int) and not isinstance(v, bool) else None
+
+
 def assume_schema_v1(raw: Any, events: list[DiagnosticEvent]) -> Any:
     """Insert handoff_schema_version:1 only when input is otherwise exact v1 (D311)."""
     if not isinstance(raw, dict):
@@ -179,9 +184,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 path=f"/slides/{i}",
                 events=events,
                 role="slide",
-                slide_number=slide.get("slide_number")
-                if isinstance(slide.get("slide_number"), int)
-                else None,
+                slide_number=_slide_number(slide),
                 layout_type=layout if isinstance(layout, str) else None,
             )
             payload = slide.get("payload")
@@ -195,9 +198,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     path=f"/slides/{i}/payload",
                     events=events,
                     role="cover_payload",
-                    slide_number=slide.get("slide_number")
-                    if isinstance(slide.get("slide_number"), int)
-                    else None,
+                    slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
             if isinstance(payload, dict) and layout == "narrative":
@@ -207,9 +208,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     path=f"/slides/{i}/payload",
                     events=events,
                     role="narrative_payload",
-                    slide_number=slide.get("slide_number")
-                    if isinstance(slide.get("slide_number"), int)
-                    else None,
+                    slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
     return out

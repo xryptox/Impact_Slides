@@ -19,6 +19,11 @@ from .repairs import apply_allowlisted_repairs
 _LAYOUT_SET = frozenset(LAYOUT_TYPES)
 
 
+def _int_or_none(value: Any) -> int | None:
+    """True int only — bool is an int subclass."""
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
 @dataclass
 class ValidationResult:
     """Successful validation outcome: canonical model + diagnostics."""
@@ -121,9 +126,7 @@ def _peek_version(raw: Any) -> int | None:
     if isinstance(raw, dict):
         meta = raw.get("meta")
         if isinstance(meta, dict):
-            v = meta.get("handoff_schema_version")
-            if isinstance(v, int):
-                return v
+            return _int_or_none(meta.get("handoff_schema_version"))
     return None
 
 
@@ -250,7 +253,7 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                 )
                 continue
             layout = slide.get("layout_type")
-            sn = slide.get("slide_number") if isinstance(slide.get("slide_number"), int) else None
+            sn = _int_or_none(slide.get("slide_number"))
             if layout is None:
                 events.append(
                     event(
@@ -448,7 +451,7 @@ def _slide_context(
                 sn = s.get("slide_number")
                 lt = s.get("layout_type")
                 return (
-                    sn if isinstance(sn, int) else None,
+                    _int_or_none(sn),
                     lt if isinstance(lt, str) else None,
                 )
     return None, None
