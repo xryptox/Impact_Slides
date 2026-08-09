@@ -76,6 +76,42 @@ def render_deck(
             handoff_schema_version=None,
             renderer_version=RENDERER_VERSION,
         ) from None
+    except UnicodeDecodeError as exc:
+        raise RendererValidationError(
+            [
+                event(
+                    code="validation.type",
+                    severity="error",
+                    phase="validation",
+                    role="deck",
+                    path="/",
+                    action="reject",
+                    result="failed",
+                    expected="UTF-8 JSON object deck envelope",
+                    input_meta={"type": "unicode_decode_error"},
+                )
+            ],
+            handoff_schema_version=None,
+            renderer_version=RENDERER_VERSION,
+        ) from exc
+    except OSError as exc:
+        raise RendererConfigurationError(
+            [
+                event(
+                    code="validation.configuration",
+                    severity="error",
+                    phase="validation",
+                    role="caller",
+                    path="/handoff_path",
+                    action="reject",
+                    result="failed",
+                    expected="readable handoff JSON path",
+                    input_meta={"type": type(exc).__name__},
+                )
+            ],
+            handoff_schema_version=None,
+            renderer_version=RENDERER_VERSION,
+        ) from exc
     except json.JSONDecodeError as exc:
         raise RendererValidationError(
             [

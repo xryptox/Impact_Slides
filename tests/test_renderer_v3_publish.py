@@ -345,6 +345,53 @@ def test_no_extra_artifacts_or_temps_left_behind(tmp_path: Path):
     assert {p.name for p in out.iterdir()} == CANONICAL
 
 
+
+def test_unreadable_handoff_is_typed_configuration_error(tmp_path: Path, monkeypatch):
+    handoff = _write_handoff(tmp_path)
+    out = tmp_path / "out"
+
+    def boom(self, *args, **kwargs):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(Path, "read_text", boom)
+    with pytest.raises(RendererConfigurationError) as ei:
+        render_deck(handoff, out)
+    assert any(e.code == "validation.configuration" for e in ei.value.events)
+
+
+def test_non_utf8_handoff_is_typed_validation_error(tmp_path: Path):
+    handoff = tmp_path / "bad.json"
+    handoff.write_bytes(bytes([0xFF, 0xFE]) + b" not utf8")
+    out = tmp_path / "out"
+    with pytest.raises(RendererValidationError) as ei:
+        render_deck(handoff, out)
+    assert any(e.code == "validation.type" for e in ei.value.events)
+
+
+def test_backup_bind_only_after_full_copy(tmp_path: Path, monkeypatch):
+    """Mid-backup copy failure must not restore from a partial backup."""
+    import impact_slides.renderer_v3.publish as pub
+
+    handoff = _write_handoff(tmp_path)
+    out = tmp_path / "out"
+    render_deck(handoff, out)
+    prior = _file_map(out)
+
+    calls = {"n": 0}
+    real_copy2 = pub.shutil.copy2
+
+    def flaky_copy2(src, dst, *a, **k):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise OSError("simulated backup copy failure")
+        return real_copy2(src, dst, *a, **k)
+
+    monkeypatch.setattr(pub.shutil, "copy2", flaky_copy2)
+    with pytest.raises(RendererPublicationError):
+        render_deck(handoff, out)
+    assert _file_map(out) == prior
+
+
 def test_package_export_includes_render_deck():
     import impact_slides.renderer_v3 as pkg
 

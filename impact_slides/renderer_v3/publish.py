@@ -418,18 +418,22 @@ def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
             )
 
         if out_dir.exists():
-            backup = Path(
+            # Only bind backup after the full copy succeeds so a mid-copy failure
+            # never triggers restore from a partial snapshot (prior out stays put).
+            backup_tmp = Path(
                 tempfile.mkdtemp(prefix=".renderer_v3_backup_", dir=str(parent))
             )
-            for item in out_dir.iterdir():
-                dest = backup / item.name
-                if item.is_dir():
-                    shutil.copytree(item, dest)
-                else:
-                    shutil.copy2(item, dest)
-            # Clear destination files we manage; leave unknown files? Spec says
-            # destination should contain only the five — replace whole dir contents
-            # of canonical names only, remove stale canonicals first.
+            try:
+                for item in out_dir.iterdir():
+                    dest = backup_tmp / item.name
+                    if item.is_dir():
+                        shutil.copytree(item, dest)
+                    else:
+                        shutil.copy2(item, dest)
+            except Exception:
+                shutil.rmtree(backup_tmp, ignore_errors=True)
+                raise
+            backup = backup_tmp
             for name in CANONICAL_ARTIFACTS:
                 target = out_dir / name
                 if target.exists():
