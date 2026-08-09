@@ -183,11 +183,12 @@ def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
             attrs = _plan_attrs(bsp)
             style = _style_font(body_px)
             if block.type == "paragraphs":
+                out.append(
+                    f'<div class="paragraphs" data-block-id="{_escape(bid)}" {attrs}{style}>'
+                )
                 for prose in block.paragraphs:
-                    out.append(
-                        f'<p data-block-id="{_escape(bid)}" {attrs}{style}>'
-                        f"{_prose_html(prose)}</p>"
-                    )
+                    out.append(f"<p{style}>{_prose_html(prose)}</p>")
+                out.append("</div>")
             elif block.type == "bullet_list":
                 out.append(
                     f'<ul data-block-id="{_escape(bid)}" {attrs}{style}>'

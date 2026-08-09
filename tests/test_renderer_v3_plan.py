@@ -8,6 +8,7 @@ Seams under test:
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -141,6 +142,34 @@ def test_sync_group_aligns_equivalent_roles_only():
     assert "plan.synchronized" in by["slide-2-subtitle"].adaptation_codes
 
 
+def test_sync_growth_event_matches_frozen_size():
+    raw = _minimal()
+    narrative = json.loads(json.dumps(raw["slides"][1]))
+    narrative["slide_number"] = 3
+    narrative["content"] = {
+        "subtitle": "A deliberately longer synchronized subtitle " * 8,
+        "typography": {"mode": "adaptive", "sync_group": "deks"},
+    }
+    raw["slides"][1]["content"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "deks",
+    }
+    raw["slides"][2]["slide_number"] = 4
+    raw["slides"].insert(2, narrative)
+
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    by = plan.by_surface_id()
+    frozen = by["slide-2-subtitle"].role_sizes["subtitle"]
+    growth = next(
+        e
+        for e in plan.events
+        if e.code == "plan.typography_grown"
+        and e.surface_id == "slide-2-subtitle"
+    )
+    assert growth.input == {"type": "int", "value": frozen}
+    assert growth.expected.contract == f"subtitle grew to {frozen}px"
+
+
 def test_strict_overflow_raises_before_publication(tmp_path: Path):
     raw = _minimal()
     # Force unfittable body by stuffing a huge unbreakable token.
@@ -179,6 +208,21 @@ def test_nonstrict_overflow_publishes_degraded_complete_text(tmp_path: Path):
     assert monster in html  # D59: no truncation
     meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
     assert any(e["code"] == "plan.unresolved_overflow" for e in meta["events"])
+    overflow_plan = next(
+        p for p in meta["plans"] if p["surface_id"] == "slide-2-block-lead"
+    )
+    assert overflow_plan["fallback"] == "fallback_unresolved"
+    sizes = ",".join(
+        f"{key}:{value}" for key, value in overflow_plan["role_sizes"].items()
+    )
+    adaptations = ",".join(overflow_plan["adaptation_codes"])
+    digest_source = (
+        f"2|narrative|narrative_block|slide-2-block-lead|2|{sizes}|"
+        f"{adaptations}|fallback_unresolved"
+    )
+    assert overflow_plan["painter_plan_digest"] == hashlib.sha256(
+        digest_source.encode()
+    ).hexdigest()
 
 
 def test_render_deck_embeds_frozen_plan_in_meta_and_html(tmp_path: Path):
@@ -213,6 +257,7 @@ def test_render_deck_embeds_frozen_plan_in_meta_and_html(tmp_path: Path):
     assert "Key takeaway" in html
     # Narrative body sizes applied as whole px
     assert "font-size:" in html
+    assert html.count('data-surface-id="slide-2-block-lead"') == 1
 
 
 def test_plan_is_deterministic_across_calls():

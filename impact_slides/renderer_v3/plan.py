@@ -119,9 +119,29 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
     # Phase 2 — synchronize equivalent roles (D3/D4/D26/D69).
     _synchronize(surfaces, events)
 
-    # Digests after sizes freeze.
+    # Size-dependent events must describe the synchronized frozen sizes.
+    events = [e for e in events if e.code != "plan.typography_grown"]
     for sp in surfaces:
-        _seal_digests(sp)
+        if "plan.typography_grown" in sp.adaptation_codes:
+            fit = sp._fit_role
+            assert fit is not None
+            size = sp.role_sizes[fit]
+            events.append(
+                event(
+                    code="plan.typography_grown",
+                    severity="info",
+                    phase="plan",
+                    role=sp.role,
+                    path=f"/slides/{sp.slide_number}/{sp.role}",
+                    action="measure",
+                    result="accepted",
+                    slide_number=sp.slide_number,
+                    layout_type=sp.layout_type,
+                    surface_id=sp.surface_id,
+                    expected=f"{fit} grew to {size}px",
+                    input_meta={"type": "int", "value": size},
+                )
+            )
 
     # ponytail: synthetic AVG_ADVANCE is the interim engine (not unknown-font
     # fallback); emit plan.conservative_metrics only when a dual measured path
@@ -163,6 +183,9 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
             else:
                 rewritten.append(e)
         events = rewritten
+
+    for sp in surfaces:
+        _seal_digests(sp)
 
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
 
@@ -427,22 +450,6 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
     sp.role_sizes[fit] = chosen
     if chosen > floor:
         sp.adaptation_codes.append("plan.typography_grown")
-        events.append(
-            event(
-                code="plan.typography_grown",
-                severity="info",
-                phase="plan",
-                role=sp.role,
-                path=f"/slides/{sp.slide_number}/{sp.role}",
-                action="measure",
-                result="accepted",
-                slide_number=sp.slide_number,
-                layout_type=sp.layout_type,
-                surface_id=sp.surface_id,
-                expected=f"{fit} grew to {chosen}px",
-                input_meta={"type": "int", "value": chosen},
-            )
-        )
     if wrapped:
         sp.adaptation_codes.append("plan.text_wrapped")
         events.append(
