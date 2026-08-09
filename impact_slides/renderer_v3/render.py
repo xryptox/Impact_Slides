@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Final
 
-RENDERER_VERSION = "3.0.0"
+from ._version import __version__ as RENDERER_VERSION
 from .diagnostics import (
     RendererConfigurationError,
     RendererPublicationError,

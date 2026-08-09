@@ -5,6 +5,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ._version import __version__
+
 Severity = Literal["info", "warning", "error"]
 Phase = Literal["validation", "repair", "plan", "paint", "readiness", "publication"]
 
@@ -229,7 +231,7 @@ class _RendererFailure(Exception):
         events: list[DiagnosticEvent],
         *,
         handoff_schema_version: int | None = 1,
-        renderer_version: str = "3.0.0",
+        renderer_version: str = __version__,
     ) -> None:
         self.status = "failed"
         self.ok = False

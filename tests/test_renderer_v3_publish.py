@@ -309,15 +309,25 @@ def test_cli_svg_only_flag(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_mutation_dropping_schema_copy_fails_contract(tmp_path: Path):
-    """Guard: published schema must match checked-in bytes, not a regenerate."""
+def test_missing_schema_source_fails_before_publish(tmp_path: Path, monkeypatch):
+    """Publication must require the checked-in D121 schema bytes."""
+    import impact_slides.renderer_v3.render as rnd
+
+    handoff = _write_handoff(tmp_path)
+    out = tmp_path / "out"
+    missing = tmp_path / "nope.json"
+    monkeypatch.setattr(rnd, "resolved_schema_source", lambda: missing)
+    with pytest.raises(RendererPublicationError) as ei:
+        render_deck(handoff, out)
+    assert any(e.code == "publication.transaction_failed" for e in ei.value.events)
+    assert not out.exists() or list(out.iterdir()) == []
+
+
+def test_published_schema_matches_checked_in_bytes(tmp_path: Path):
     handoff = _write_handoff(tmp_path)
     out = tmp_path / "out"
     render_deck(handoff, out)
-    published = out / "handoff_schema_v1.json"
-    # Mutate destination as an attacker would after a non-copy publisher
-    published.write_bytes(b'{"not":"schema"}\n')
-    assert published.read_bytes() != SCHEMA.read_bytes()
+    assert (out / "handoff_schema_v1.json").read_bytes() == SCHEMA.read_bytes()
 
 
 def test_no_extra_artifacts_or_temps_left_behind(tmp_path: Path):

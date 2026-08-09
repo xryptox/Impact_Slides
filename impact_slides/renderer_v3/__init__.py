@@ -13,7 +13,7 @@ from .diagnostics import (
 from .render import SELF_CONTAINED, render_deck
 from .validate import ValidationResult, validate_handoff
 
-__version__ = "3.0.0"
+from ._version import __version__
 
 __all__ = [
     "DiagnosticEvent",

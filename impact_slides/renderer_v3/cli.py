@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from pathlib import Path
 from typing import Sequence
 
 from . import __version__
@@ -125,21 +127,30 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _print_failure(exc: RendererValidationError) -> None:
-    report = exc.to_report()
-    print(f"[renderer_v3] {exc}", file=sys.stderr)
-    for e in report["events"]:
-        print(
-            f"  {e.get('severity')}: {e.get('code')} {e.get('path')} "
-            f"action={e.get('action', {}).get('name')} "
-            f"result={e.get('result', {}).get('name')}",
-            file=sys.stderr,
-        )
+    """D309: one deterministic stderr line per warning/error (no free-form prose)."""
+    for e in exc.to_report()["events"]:
+        if e.get("severity") == "info":
+            continue
+        print(_diagnostic_line(e), file=sys.stderr)
 
 
 def _print_degraded(result: dict) -> None:
-    print(
-        f"[renderer_v3] degraded publication ok=false codes={result.get('errors')}",
-        file=sys.stderr,
+    meta_path = result.get("run_meta")
+    if not meta_path:
+        return
+    events = json.loads(Path(meta_path).read_text(encoding="utf-8")).get("events") or []
+    for e in events:
+        if e.get("severity") == "info":
+            continue
+        print(_diagnostic_line(e), file=sys.stderr)
+
+
+def _diagnostic_line(e: dict) -> str:
+    action = (e.get("action") or {}).get("name", "")
+    result = (e.get("result") or {}).get("name", "")
+    return (
+        f"{e.get('severity')}	{e.get('code')}	{e.get('phase')}	"
+        f"{e.get('path')}	{action}	{result}	occurrences={e.get('occurrences', 1)}"
     )
 
 

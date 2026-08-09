@@ -19,7 +19,7 @@ from .diagnostics import (
 from .models import Deck
 from .schema_export import schema_path
 
-RENDERER_VERSION = "3.0.0"
+from ._version import __version__ as RENDERER_VERSION
 
 THEME_ID = "boardroom_amex"
 
@@ -38,10 +38,6 @@ _HASHED_ARTIFACTS = tuple(n for n in CANONICAL_ARTIFACTS if n != "run_meta.json"
 def dumps_json(obj: Any) -> str:
     """UTF-8/LF JSON, two-space indent, trailing newline (D250/D312)."""
     return json.dumps(obj, indent=2, ensure_ascii=False) + "\n"
-
-
-def write_text(path: Path, text: str) -> None:
-    path.write_bytes(text.encode("utf-8"))
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -89,7 +85,8 @@ def build_presentation_html(deck: Deck, *, debug: bool = False, svg_only: bool =
         sid = f"slide-{slide.slide_number}"
         parts.append(
             f'<section class="slide" id="{sid}" data-layout="{slide.layout_type}" '
-            f'data-slide-number="{slide.slide_number}">'
+            f'data-slide-number="{slide.slide_number}" '
+            f'data-surface-id="{sid}" data-diagnostic-count="0">'
         )
         parts.extend(_paint_slide_body(slide))
         notes = getattr(slide, "speaker_notes", None)
@@ -122,10 +119,10 @@ def _paint_slide_body(slide: Any) -> list[str]:
             if block.type == "paragraphs":
                 for prose in block.paragraphs:
                     out.append(
-                        f'<p data-block-id="{_escape(bid)}">{_prose_html(prose)}</p>'
+                        f'<p data-block-id="{_escape(bid)}" data-surface-id="{_escape(bid)}">{_prose_html(prose)}</p>'
                     )
             elif block.type == "bullet_list":
-                out.append(f'<ul data-block-id="{_escape(bid)}">')
+                out.append(f'<ul data-block-id="{_escape(bid)}" data-surface-id="{_escape(bid)}">')
                 for item in block.items:
                     out.append(f"<li>{_prose_html(item)}</li>")
                 out.append("</ul>")
@@ -214,8 +211,12 @@ def build_slide_summaries(deck: Deck) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for slide in deck.slides:
         surface_ids: list[str] = []
-        if slide.layout_type == "narrative":
+        if slide.layout_type in ("opening_cover", "closing_cover"):
+            surface_ids.append(f"slide-{slide.slide_number}-cover")
+        elif slide.layout_type == "narrative":
             surface_ids.extend(b.block_id for b in slide.payload.blocks)
+            if slide.takeaway is not None:
+                surface_ids.append(f"slide-{slide.slide_number}-takeaway")
             disclosure = getattr(slide, "disclosure", None)
             if disclosure is not None:
                 surface_ids.extend(s.surface_id for s in disclosure.sections)
@@ -239,9 +240,9 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
             {
                 "slide_number": slide.slide_number,
                 "layout_type": slide.layout_type,
-                "frozen_plan_attached": True,
+                "frozen_plan_attached": True,  # kernel plan entries attached in run_meta.plans
                 "required_payload_present": True,
-                "semantic_table_present": False,
+                "semantic_table_present": False,  # no chart surfaces in kernel compositions
                 "stable_ids_resolved": True,
                 "readiness_contract_version": 1,
             }
@@ -272,7 +273,6 @@ def _plan_entry(surface_id: str, role: str, slide: Any) -> dict[str, Any]:
     return {
         "surface_id": surface_id,
         "role": role,
-        "slide_number": slide.slide_number,
         "semantic_digest": digest,
         "design_stage_region": 0,
         "role_sizes": {},
@@ -440,9 +440,13 @@ def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
         for name in CANONICAL_ARTIFACTS:
             _replace_file(staging / name, out_dir / name)
 
-        # Drop any non-canonical leftovers only when we fully own a fresh dir?
-        # Keep unknown files so config-rejection tests retain markers; publication
-        # always writes the five names.
+        # D250: destination contains only the five canonical artifacts.
+        for item in list(out_dir.iterdir()):
+            if item.name not in CANONICAL_ARTIFACTS:
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
 
     except RendererPublicationError:
         _restore_backup(out_dir, backup)
