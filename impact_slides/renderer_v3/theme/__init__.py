@@ -31,7 +31,7 @@ class PaletteEntry:
     roles: frozenset[str]
 
 
-# Canonical Amex hex values (uppercase storage; lowercase on resolve for CSS).
+# Canonical Amex hex values (uppercase storage; resolve_color returns lowercase).
 _PALETTE: tuple[PaletteEntry, ...] = (
     PaletteEntry("navy", "#00175A", frozenset({
         "series_identity", "fill", "text_on_light", "band", "border",
