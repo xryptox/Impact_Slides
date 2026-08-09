@@ -266,19 +266,23 @@ def test_schema_drift_detected(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_renderer_v3_does_not_import_renderer_v2():
-    pkg = ROOT / "impact_slides" / "renderer_v3"
-    offenders = []
-    for path in pkg.rglob("*.py"):
-        for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if "renderer_v2" not in line:
-                continue
-            stripped = line.lstrip()
-            if stripped.startswith("#") or stripped.startswith('"') or stripped.startswith("'"):
-                continue
-            if "import" in line or "from" in line:
-                offenders.append(f"{path.relative_to(ROOT).as_posix()}:{i}")
-    assert offenders == [], f"v3 must not import v2: {offenders}"
+def test_renderer_v3_import_does_not_load_renderer_v2():
+    """Behavioral isolation: loading v3 must not pull v2 into sys.modules."""
+    # Drop both packages so the assertion is about this import edge, not prior tests.
+    for name in list(sys.modules):
+        if name == "impact_slides.renderer_v2" or name.startswith(
+            "impact_slides.renderer_v2."
+        ):
+            del sys.modules[name]
+        if name == "impact_slides.renderer_v3" or name.startswith(
+            "impact_slides.renderer_v3."
+        ):
+            del sys.modules[name]
+    importlib.import_module("impact_slides.renderer_v3")
+    assert not any(
+        n == "impact_slides.renderer_v2" or n.startswith("impact_slides.renderer_v2.")
+        for n in sys.modules
+    )
 
 
 def test_renderer_v2_untouched_by_v3_import():
@@ -286,6 +290,13 @@ def test_renderer_v2_untouched_by_v3_import():
     before = getattr(v2, "__version__", None)
     importlib.import_module("impact_slides.renderer_v3")
     assert v2.__version__ == before == "2.0.0"
+
+
+def test_bool_true_is_not_schema_version_one():
+    raw = _minimal()
+    raw["meta"]["handoff_schema_version"] = True
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
 
 
 # ---------------------------------------------------------------------------

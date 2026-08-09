@@ -97,7 +97,7 @@ KERNEL_LAYOUTS = frozenset({"opening_cover", "closing_cover", "narrative"})
 class ClosedModel(BaseModel):
     """Renderer-owned object: unknown fields are forbidden (D118)."""
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False, strict=True)
 
     @model_validator(mode="before")
     @classmethod

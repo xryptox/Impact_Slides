@@ -183,7 +183,7 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                     expected="handoff_schema_version == 1",
                 )
             )
-        elif ver != 1:
+        elif not isinstance(ver, int) or isinstance(ver, bool) or ver != 1:
             events.append(
                 event(
                     code="validation.schema_version",
@@ -194,9 +194,12 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                     action="reject",
                     result="failed",
                     expected="handoff_schema_version == 1",
-                    input_meta={"type": type(ver).__name__, "value": ver
-                    if isinstance(ver, (int, str, bool)) or ver is None
-                    else None},
+                    input_meta={
+                        "type": type(ver).__name__,
+                        "value": ver
+                        if isinstance(ver, (int, str, bool)) or ver is None
+                        else None,
+                    },
                 )
             )
         for key in sorted(set(meta) - {"handoff_schema_version"}):
