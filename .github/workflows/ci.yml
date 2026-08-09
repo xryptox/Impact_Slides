@@ -36,6 +36,11 @@ jobs:
       - name: Layout index is current
         run: python scripts/gen_layout_index.py --check
 
+      # renderer_v3 JSON Schema is generated from typed models (D121). Drift means
+      # the committed artifact was not regenerated after a model change.
+      - name: renderer_v3 handoff schema is current
+        run: python -m impact_slides.renderer_v3.schema_export --check
+
       # The renderer must not reach outside the repo for a chart pack. A machine-local
       # soft-import previously made heatmap/waterfall render empty everywhere but one
       # dev box, and the suite stayed green (see PR #127). Cheap guard against relapse.
@@ -43,6 +48,13 @@ jobs:
         run: |
           if grep -rn 'Path\.home()' impact_slides/renderer_v2/; then
             echo "::error::renderer_v2 must not reference Path.home()"
+            exit 1
+          fi
+
+      - name: No machine-local paths in renderer_v3
+        run: |
+          if grep -rn 'Path\.home()' impact_slides/renderer_v3/; then
+            echo "::error::renderer_v3 must not reference Path.home()"
             exit 1
           fi
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Python package for the Impact_Slides hybrid pipeline: Step 1 preprocessor (v4) and shared support modules. Step 4 currently lives in legacy `renderer_v2/`; the new renderer-3 implementation will live in sibling `renderer_v3/`.
+Python package for the Impact_Slides hybrid pipeline: Step 1 preprocessor (v4) and shared support modules. Step 4 legacy renderer lives in `renderer_v2/`; schema-v1 kernel lives in sibling `renderer_v3/`.
 
 ## Ownership
 
@@ -33,4 +33,4 @@ Python package for the Impact_Slides hybrid pipeline: Step 1 preprocessor (v4) a
 ## Child DOX Index
 
 - `renderer_v2/AGENTS.md` — legacy Step 4 HTML renderer (current layouts, charts, recipes, handoff → deck)
-- `renderer_v3/AGENTS.md` — create with the new package; renderer 3.0/schema-v1 implementation contract
+- `renderer_v3/AGENTS.md` — schema-v1 canonical kernel (typed validation, repairs, generated JSON Schema); painting arrives in later tickets

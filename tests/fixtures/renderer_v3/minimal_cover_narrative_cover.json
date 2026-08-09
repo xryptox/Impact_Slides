@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "overview",
+      "label": "Overview"
+    }
+  ],
+  "number_formats": {},
+  "evidence_registry": {
+    "src-board-pack": {
+      "source_name": "Board pack Q4"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {
+        "title": "Impact Review",
+        "subtitle": "Confidential",
+        "period_label": "Q4 2025",
+        "date_label": "January 2026"
+      },
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "narrative",
+      "section_id": "overview",
+      "title": "Where we stand",
+      "content": {
+        "subtitle": "Three facts that frame the quarter"
+      },
+      "payload": {
+        "blocks": [
+          {
+            "block_id": "lead",
+            "type": "paragraphs",
+            "paragraphs": [
+              {
+                "runs": [
+                  {"text": "Revenue held "},
+                  {"text": "flat", "emphasis": "strong"},
+                  {"text": " against plan."}
+                ]
+              }
+            ]
+          },
+          {
+            "block_id": "bullets",
+            "type": "bullet_list",
+            "items": [
+              {"runs": [{"text": "Cost actions landed on schedule."}]},
+              {"runs": [{"text": "Pipeline coverage remains above target."}]}
+            ]
+          }
+        ]
+      },
+      "takeaway": {
+        "text": "Stay the course on cost while protecting growth bets."
+      },
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"],
+      "speaker_notes": "Open with the flat-revenue frame; do not restate the cover."
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {
+        "title": "Discussion"
+      }
+    }
+  ]
+}
