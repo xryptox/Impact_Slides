@@ -10,10 +10,6 @@ THEME_RELATIVE_PATH = Path(
 )
 
 
-def theme_css() -> str:
-    return generate_theme_css()
-
-
 def theme_css_path(repo_root: Path | None = None) -> Path:
     root = repo_root if repo_root is not None else _default_repo_root()
     return root / THEME_RELATIVE_PATH
@@ -22,14 +18,14 @@ def theme_css_path(repo_root: Path | None = None) -> Path:
 def write_theme(repo_root: Path | None = None) -> Path:
     path = theme_css_path(repo_root)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(theme_css(), encoding="utf-8", newline="\n")
+    path.write_text(generate_theme_css(), encoding="utf-8", newline="\n")
     return path
 
 
 def check_theme(repo_root: Path | None = None) -> None:
     """Raise SystemExit if the committed CSS artifact drifts from the manifest."""
     path = theme_css_path(repo_root)
-    expected = theme_css()
+    expected = generate_theme_css()
     if not path.is_file():
         raise SystemExit(f"missing theme CSS artifact: {path}")
     actual = path.read_text(encoding="utf-8").replace("\r\n", "\n")

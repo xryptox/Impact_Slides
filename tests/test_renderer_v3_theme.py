@@ -152,6 +152,35 @@ def test_generated_css_declares_transparent_flat_chart_surfaces():
     assert "border-radius: 0" in block
 
 
+
+
+def test_css_color_tokens_match_palette():
+    """Color custom properties must resolve from the palette, not a second hex table."""
+    css = css_custom_properties()
+    assert css["--color-navy"].lower() == resolve_color("navy", role="series_identity")
+    assert css["--color-primary-blue"].lower() == resolve_color(
+        "primary_blue", role="series_identity"
+    )
+    assert css["--color-neutral"].lower() == resolve_color("neutral", role="series_identity")
+    assert css["--color-band"].lower() == resolve_color("navy", role="band")
+    assert css["--color-band-ink"].lower() == resolve_color("white", role="text_on_dark")
+    assert css["--color-panel"].lower() == resolve_color("panel", role="surface")
+    # band ink on band: contrast-safe (D42/D66)
+    assert contrast_ratio(css["--color-band-ink"], css["--color-band"]) >= 4.5
+
+
+def test_chart_js_and_svg_tokens_share_resolved_colors():
+    from impact_slides.renderer_v3.theme import chart_js_tokens, svg_tokens
+
+    assert chart_js_tokens() == svg_tokens()
+    bag = chart_js_tokens()
+    assert bag["plot_background"] == bag["body_background"] == "transparent"
+    assert bag["series"]["line"][0] == resolve_color("navy", role="series_identity")
+    assert bag["series"]["bar"][0] == resolve_color(
+        "primary_blue", role="series_identity"
+    )
+
+
 def test_committed_theme_css_matches_manifest():
     expected = generate_theme_css()
     assert THEME_CSS.is_file()

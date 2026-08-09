@@ -7,7 +7,7 @@ via ``python -m impact_slides.renderer_v3.theme_export --check``.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Literal, Mapping
+from typing import Literal, Mapping
 
 THEME_ID = "boardroom_amex"
 
@@ -93,32 +93,36 @@ _BAR_SERIES_KEYS: tuple[str, ...] = (
 _LINE_STYLE_KEYS: tuple[str, ...] = ("solid", "dashed", "dotted", "dash_dot")
 _MARKER_KEYS: tuple[str, ...] = ("circle", "square", "triangle", "diamond")
 
-# Semantic CSS custom properties (D129). Values come only from this manifest.
+def _hex(key: str) -> str:
+    return _BY_KEY[key].hex
+
+
+# Semantic CSS custom properties (D129). Color values derive from _PALETTE only.
 _CSS_TOKENS: tuple[tuple[str, str], ...] = (
     # fonts
     ("--font-display", '"Source Sans 3", sans-serif'),
     ("--font-body", '"Source Sans 3", "IBM Plex Sans", sans-serif'),
     ("--font-num", '"IBM Plex Sans", "Source Sans 3", sans-serif'),
-    # colors (semantic --color-* only)
-    ("--color-navy", "#00175A"),
-    ("--color-primary-blue", "#006FCF"),
-    ("--color-sky-blue", "#80C8FF"),
-    ("--color-success", "#0A7D55"),
-    ("--color-neutral", "#63666A"),
-    ("--color-warning", "#B35900"),
-    ("--color-ink", "#53565A"),
-    ("--color-ink-faint", "#929292"),
-    ("--color-ink-on-dark", "#FFFFFF"),
-    ("--color-white", "#FFFFFF"),
-    ("--color-surface", "#FFFFFF"),
-    ("--color-surface-soft", "#F8F8F8"),
-    ("--color-panel", "#EEF0F0"),
-    ("--color-panel-border", "#D8DCE3"),
-    ("--color-grid", "#E0E4EA"),
-    ("--color-rule", "#00175A"),
-    ("--color-stage", "#0B0F1A"),
-    ("--color-band", "#00175A"),
-    ("--color-band-ink", "#FFFFFF"),
+    # colors (semantic --color-* only) — hex from _PALETTE
+    ("--color-navy", _hex("navy")),
+    ("--color-primary-blue", _hex("primary_blue")),
+    ("--color-sky-blue", _hex("sky_blue")),
+    ("--color-success", _hex("success")),
+    ("--color-neutral", _hex("neutral")),
+    ("--color-warning", _hex("warning")),
+    ("--color-ink", _hex("ink")),
+    ("--color-ink-faint", _hex("ink_faint")),
+    ("--color-ink-on-dark", _hex("white")),
+    ("--color-white", _hex("white")),
+    ("--color-surface", _hex("surface")),
+    ("--color-surface-soft", _hex("surface_soft")),
+    ("--color-panel", _hex("panel")),
+    ("--color-panel-border", _hex("panel_border")),
+    ("--color-grid", _hex("grid")),
+    ("--color-rule", _hex("navy")),
+    ("--color-stage", _hex("stage")),
+    ("--color-band", _hex("navy")),
+    ("--color-band-ink", _hex("white")),
     ("--color-chart-plot", "transparent"),
     ("--color-chart-body", "transparent"),
     # spacing
@@ -282,10 +286,7 @@ def chart_js_tokens() -> dict[str, object]:
     }
 
 
-def svg_tokens() -> dict[str, object]:
-    """Resolved token bag for SVG painters — same colors as Chart.js."""
-    return chart_js_tokens()
-
+svg_tokens = chart_js_tokens  # same resolved bag for both painters (D129/D57)
 
 def _preferred_role(key: str) -> str:
     entry = _BY_KEY[key]
@@ -303,5 +304,3 @@ def _preferred_role(key: str) -> str:
     raise ValueError(f"palette key {key!r} has no roles")
 
 
-def iter_palette() -> Iterable[PaletteEntry]:
-    return iter(_PALETTE)
