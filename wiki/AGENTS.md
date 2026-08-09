@@ -8,7 +8,7 @@ Archive of historical prompts, plans, research, and specs. Not the live engineer
 
 - Historical and draft markdown under `wiki/`
 - Reference snapshot: `DELEGATED_WORKFLOW_DETERMINISM.md` (non-binding assessment; live contract remains under `docs/agents/`)
-- Final active specification: `SPEC_renderer_v2_full_deck_density_and_chart_fidelity.md` (user-approved v11-driven renderer 3.0/schema-v1 contract; implementation tickets may be derived from it)
+- Final active specification: `SPEC_renderer_v3_full_deck_density_and_chart_fidelity.md` (user-approved renderer-v3/schema-v1 contract; implementation tickets may be derived from it; renderer_v2 remains legacy)
 - Generated current index: `renderer_v2_LAYOUTS.md` (owned operationally by renderer_v2 + `scripts/gen_layout_index.py`)
 
 ## Local Contracts

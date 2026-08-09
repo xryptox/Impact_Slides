@@ -1,4 +1,4 @@
-# Renderer v2 — full-deck density and chart-fidelity specification
+# Renderer v3 — full-deck density and chart-fidelity specification
 
 Status: **FINAL — user-approved in full; implementation tickets may now be prepared.**
 
@@ -601,17 +601,18 @@ no-ops. Axes, ticks, semantic zero lines, measure rules, connectors,
 support-table borders, heatmap cells, and structural dividers remain. No theme
 or recipe may silently restore ordinary plot gridlines.
 
-### D64 — Delivery is one renderer-wide behavior change
+### D64 — Delivery is one renderer-v3 behavior change
 
-These contracts take effect for all existing handoffs without a renderer
-version or legacy-theme switch. Omitted typography becomes adaptive under D20;
-chart surfaces become transparent and borderless; point labels follow D34;
-explicit pane headings use the new navy bands; gridline requests become
-D63-diagnosed no-ops; and series-identity and accessibility validation becomes
-mandatory. `typography.mode: "fixed"` remains the only narrow compatibility
-control and affects typography only. Canonical fixtures, snapshots, and the
-Amex handoff migrate in the same delivery; no duplicate legacy rendering path
-is retained.
+These contracts define the new `impact_slides.renderer_v3` package and schema-v1
+handoffs; they do not alter `impact_slides.renderer_v2` handoff behavior in place.
+Omitted typography becomes adaptive under D20; chart surfaces become transparent
+and borderless; point labels follow D34; explicit pane headings use the new navy
+bands; gridline requests become D63-diagnosed no-ops; and series-identity and
+accessibility validation becomes mandatory. `typography.mode: "fixed"` remains
+the only narrow compatibility control and affects typography only. Canonical v3
+fixtures, snapshots, and the Amex handoff migrate together. Renderer v3 contains
+no embedded renderer-v2 compatibility path; the separate v2 package remains the
+frozen legacy implementation during migration and after v3 release.
 
 ### D65 — Transparency preserves semantic data and separation fills
 
@@ -1299,15 +1300,20 @@ semantics. Cross-version conversion remains an offline deterministic migration,
 never an implicit render step. Visual changes that do not alter handoff meaning
 advance the renderer version instead. Emitted metadata records both versions.
 
-### D125 — The breaking renderer contract ships as version 3.0.0
+### D125 — The breaking renderer contract ships as `renderer_v3` version 3.0.0
 
-This renderer-wide behavior change ships as renderer `3.0.0` while retaining
-the `impact_slides.renderer_v2` import path and `render_deck` API; no duplicate
-`renderer_v3` package is created. One version source feeds `__version__`, run
-metadata, diagnostics, and generated artifacts. Patch releases fix defects
-without changing contracts, minor releases add backward-compatible capability,
-and major releases may change defaults, visual contracts, or supported handoff
-schemas. Handoff schema versions remain independently governed by D117/D124.
+This contract is implemented in the new `impact_slides.renderer_v3` package with
+public interfaces `from impact_slides.renderer_v3 import render_deck` and
+`python -m impact_slides.renderer_v3`. The current
+`impact_slides.renderer_v2` package remains the frozen legacy renderer and is not
+renamed, wrapped around v3, or copied wholesale into v3. Shared immutable assets
+may be factored into a neutral package only when both versions genuinely consume
+them; v3 otherwise owns its canonical model, planner, diagnostics, painters,
+shell, and artifacts. One v3 version source feeds `__version__`, run metadata,
+diagnostics, and generated artifacts. Patch releases fix defects without changing
+contracts, minor releases add backward-compatible capability, and major releases
+may change defaults, visual contracts, or supported handoff schemas. Handoff
+schema versions remain independently governed by D117/D124.
 
 ### D126 — The migrated 44-slide deck is a release-blocking corpus
 
@@ -3106,11 +3112,13 @@ handoffs cannot choose a painter. Required-painter failure strict-emits nothing
 or non-strict shows the D247 pane fallback. Acceptance compares both paths from
 one render invocation, not separate handoffs or planning passes.
 
-### D249 — Renderer 3.0 keeps one narrow deterministic public API
+### D249 — Renderer 3.0 exposes one narrow deterministic public API
 
-The existing `render_deck(handoff_path, out_dir, *, seed_path=None, debug=False,
-strict=True, theme=None, chrome_level=None, delivery=SELF_CONTAINED,
-force_features=None, suppress_features=None)` seam and names remain callable.
+The new `impact_slides.renderer_v3` package exposes
+`render_deck(handoff_path, out_dir, *, seed_path=None, debug=False, strict=True,
+theme=None, chrome_level=None, delivery=SELF_CONTAINED, force_features=None,
+suppress_features=None)` so intentional caller migration is an import-path change
+rather than an interface redesign.
 Strict is boolean/default true; debug adds deterministic inspection chrome only.
 Accepted legacy-shaped values are seed/theme/chrome None, self-contained
 delivery, no forced features, and suppression absent/empty or exactly charts for
@@ -4747,6 +4755,9 @@ later canonical contracts. Explicit precedence is:
 - D290–D301 are the canonical common chart envelope and chart-fact contracts.
 - D302–D308 are the canonical seven chart-family contracts, superseding
   intermediate D239–D246 details where wording differs.
+- D64/D125/D249 establish `impact_slides.renderer_v3` as the new package and
+  retain `impact_slides.renderer_v2` as the separate frozen legacy renderer,
+  superseding earlier in-place replacement assumptions.
 - D309–D315 close diagnostics, repair, migration, canonical-corpus, and release
   evidence contracts. D311's closed actions and explicitly composition-owned
   fallback kinds supersede earlier illustrative non-strict transformations; an

@@ -100,7 +100,7 @@ When the user requests a durable behavior change, record it here or in the relev
 ## Child DOX Index
 
 - `impact_slides/AGENTS.md` — Python package (preprocessor v4 + shared modules); child covers renderer
-- `impact_slides/renderer_v2/AGENTS.md` — Step 4 handoff → HTML deck (layouts, charts, recipes, validation)
+- `impact_slides/renderer_v2/AGENTS.md` — legacy Step 4 renderer v2 (current layouts, charts, recipes, validation); renderer v3 will be a sibling package with its own child contract
 - `docs/AGENTS.md` — agent operating docs (`docs/agents/`) and ADRs
 - `tests/AGENTS.md` — pytest suite, fixtures, CI expectations
 - `wiki/AGENTS.md` — historical archive + stale-doc marker policy; generated layout index

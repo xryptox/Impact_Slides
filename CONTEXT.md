@@ -23,7 +23,7 @@ The *Impact Slide Builder* custom GPT role. Turns an approved Slide Update Plan 
 _Avoid_: generator, author
 
 **Renderer**:
-The Python renderer (`impact_slides.renderer_v2`) that turns Builder handoff JSON + Evidence Register into standalone HTML decks. Also the *Impact Slide Renderer* GPT role that produces layout/rendering guidance.
+The Python Step 4 renderer that turns Builder handoff JSON + Evidence Register into standalone HTML decks. `impact_slides.renderer_v2` is the current frozen legacy implementation; the approved schema-v1 redesign is built as the separate `impact_slides.renderer_v3` package. Also the *Impact Slide Renderer* GPT role that produces layout/rendering guidance.
 _Avoid_: converter, exporter
 
 **Handoff**:
@@ -115,7 +115,7 @@ A curated subset of an open design-token primitive library, mapped into Boardroo
 The mechanism by which optional JS libraries (charts, mermaid, alpine, swiper, icons) are auto-enabled from handoff content, with soft size warnings. Reserved `feature_ids` select what the inliner includes.
 
 **Layout**:
-A named slide composition in the layout catalog (e.g. `split_text_visual`, `metric_dashboard`, `comparison_grid`, `evidence_cards`). New layouts must use strict `gl-*` primitives.
+A named slide composition in a renderer's layout catalog. Legacy renderer v2 includes names such as `split_text_visual`, `metric_dashboard`, `comparison_grid`, and `evidence_cards`; renderer v3 schema v1 instead uses its closed semantic composition vocabulary. New v2 maintenance layouts use strict `gl-*` primitives; v3 work follows its final specification.
 _Avoid_: template, slide type (use *layout*)
 
 **Diagram Primitive**:
