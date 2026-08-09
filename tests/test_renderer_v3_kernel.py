@@ -268,21 +268,24 @@ def test_schema_drift_detected(tmp_path: Path):
 
 def test_renderer_v3_import_does_not_load_renderer_v2():
     """Behavioral isolation: loading v3 must not pull v2 into sys.modules."""
-    # Drop both packages so the assertion is about this import edge, not prior tests.
-    for name in list(sys.modules):
-        if name == "impact_slides.renderer_v2" or name.startswith(
-            "impact_slides.renderer_v2."
-        ):
-            del sys.modules[name]
-        if name == "impact_slides.renderer_v3" or name.startswith(
-            "impact_slides.renderer_v3."
-        ):
-            del sys.modules[name]
-    importlib.import_module("impact_slides.renderer_v3")
-    assert not any(
-        n == "impact_slides.renderer_v2" or n.startswith("impact_slides.renderer_v2.")
-        for n in sys.modules
+    # Fresh interpreter so this import edge cannot stale-bind other tests'
+    # module-level render_deck / monkeypatch targets (see publish suite).
+    script = (
+        "import importlib, sys; "
+        "importlib.import_module('impact_slides.renderer_v3'); "
+        "assert not any("
+        "n == 'impact_slides.renderer_v2' or n.startswith('impact_slides.renderer_v2.') "
+        "for n in sys.modules"
+        ")"
     )
+    proc = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr or proc.stdout
 
 
 def test_renderer_v2_untouched_by_v3_import():

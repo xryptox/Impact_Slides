@@ -5,6 +5,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ._version import __version__
+
 Severity = Literal["info", "warning", "error"]
 Phase = Literal["validation", "repair", "plan", "paint", "readiness", "publication"]
 
@@ -49,8 +51,14 @@ REPAIR_CODES = frozenset(
         "repair.locator_dropped",
     }
 )
-# Kernel emits validation + repair only; plan/paint codes arrive with those phases.
-CLOSED_CODES = VALIDATION_CODES | REPAIR_CODES
+PUBLICATION_CODES = frozenset(
+    {
+        "publication.transaction_failed",
+        "publication.rollback_failed",
+    }
+)
+# Kernel emits validation + repair + publication; plan/paint codes arrive later.
+CLOSED_CODES = VALIDATION_CODES | REPAIR_CODES | PUBLICATION_CODES
 DiagnosticCode = Literal[
     "validation.schema_version",
     "validation.configuration",
@@ -84,6 +92,8 @@ DiagnosticCode = Literal[
     "repair.structure_flattened",
     "repair.chrome_omitted",
     "repair.locator_dropped",
+    "publication.transaction_failed",
+    "publication.rollback_failed",
 ]
 
 ActionName = Literal[
@@ -211,15 +221,17 @@ def event(
     )
 
 
-class RendererValidationError(Exception):
-    """Handoff/schema validation failed before planning or publication (D312)."""
+class _RendererFailure(Exception):
+    """Shared failed-run payload: status, versions, counts, ordered events (D312)."""
+
+    _label = "renderer failed"
 
     def __init__(
         self,
         events: list[DiagnosticEvent],
         *,
         handoff_schema_version: int | None = 1,
-        renderer_version: str = "3.0.0",
+        renderer_version: str = __version__,
     ) -> None:
         self.status = "failed"
         self.ok = False
@@ -231,7 +243,7 @@ class RendererValidationError(Exception):
 
     def _summary(self) -> str:
         n = self.severity_counts.get("error", 0)
-        return f"renderer validation failed with {n} error(s)"
+        return f"{self._label} with {n} error(s)"
 
     def to_report(self) -> dict[str, Any]:
         return {
@@ -242,6 +254,24 @@ class RendererValidationError(Exception):
             "severity_counts": dict(self.severity_counts),
             "events": [e.model_dump(exclude_none=True) for e in self.events],
         }
+
+
+class RendererValidationError(_RendererFailure):
+    """Handoff/schema/planning failure before publication (D312)."""
+
+    _label = "renderer validation failed"
+
+
+class RendererConfigurationError(_RendererFailure):
+    """Caller configuration rejected in either mode (D249/D312)."""
+
+    _label = "renderer configuration failed"
+
+
+class RendererPublicationError(_RendererFailure):
+    """Publication or rollback failure (D312)."""
+
+    _label = "renderer publication failed"
 
 
 def _severity_counts(events: list[DiagnosticEvent]) -> dict[str, int]:

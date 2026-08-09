@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel.
+Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication.
 
 ## Ownership
 
@@ -28,6 +28,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 - Amex #157 annex handoff contract: `test_amex_annex_33_37_handoff.py` + fixtures `amex_annex_33_37_v10_broken_handoff.json` / `amex_annex_33_37_restored_handoff.json` (`apply_issue_157_annex_matrices`; PDF-source semantic-cell probes + 1920×1080 browser geometry; no renderer production change)
 - Amex #159 grouped annex composition: `test_grouped_annex_table.py` + `amex_slide32_grouped_annex.json` (`apply_issue_159_grouped_annex`; source-group mutation traps, schema/strict fallback, and 1920×1080 browser geometry)
 - Renderer v3 kernel (#175): `test_renderer_v3_kernel.py` + fixture `renderer_v3/minimal_cover_narrative_cover.json` (typed Deck validation, allowlisted repairs, schema drift, v2 isolation + mutation traps)
+- Renderer v3 publish (#176): `test_renderer_v3_publish.py` (five D250 artifacts, clean/degraded/failed + CLI exit codes, byte-identical reruns, failed-run preservation + mutation traps)
 - Amex #158 handoff + multi_panel pane titles: `test_amex_s28_handoff_contract.py` + `test_multi_panel_pane_headings.py` + fixtures `amex_s28_v10_broken.json` / `amex_s28_corrected.json` (mutation drops slide-28 `top_total` pseudo-titles; renderer multi_panel tiles share #147 heading/subtitle chrome; SVG honors `stack_total_labels`)
 - #151 driver_card + boxed bar labels: `test_driver_card.py` + `test_boxed_labels.py` (schema 1/6/7 rows, malformed direction/tone, overflow strict/non-strict, no-valid-row hero fallback, order/a11y; boxed category mismatch, in-bar/outside+connector, Chart.js+SVG, collision independence). Slide 18 target lives in `amex_v10_44_slide_handoff.json`
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
@@ -36,7 +37,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 ## Verification
 
 - `python -m pytest -q`
-- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py`
+- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py`
 
 ## Child DOX Index
 
