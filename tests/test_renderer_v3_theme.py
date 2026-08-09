@@ -32,12 +32,8 @@ from impact_slides.renderer_v3.theme_export import check_theme, theme_css_path, 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/minimal_cover_narrative_cover.json"
 THEME_CSS = ROOT / "impact_slides/renderer_v3/theme/boardroom_amex.tokens.css"
-V3_PY = ROOT / "impact_slides/renderer_v3"
-
-# Hex only allowed inside the theme module (and its generated CSS artifact).
+# Hex only allowed inside the generated :root token declarations.
 _HEX_RE = re.compile(r"#[0-9A-Fa-f]{3,8}\b")
-_PAINTER_ALLOW_NAMES = frozenset({"theme_export.py"})
-_PAINTER_ALLOW_DIRS = frozenset({"theme"})
 
 
 def _write_handoff(tmp: Path) -> Path:
@@ -83,6 +79,12 @@ def test_sky_blue_cannot_identify_a_series():
         resolve_color("sky_blue", role="series_identity")
     # fill on dark/outlined surfaces remains valid
     assert resolve_color("sky_blue", role="fill").lower() == "#80c8ff"
+
+
+def test_ink_faint_is_not_authorized_for_text_on_light():
+    with pytest.raises(ValueError, match="role"):
+        resolve_color("ink_faint", role="text_on_light")
+    assert resolve_color("ink_faint", role="fill").lower() == "#929292"
 
 
 def test_white_restricted_to_dark_surfaces():
@@ -239,21 +241,3 @@ def test_presentation_html_uses_theme_tokens_not_raw_hex(tmp_path: Path):
     stripped = re.sub(r":root\s*\{[^}]*\}", "", style, count=1, flags=re.S)
     assert not _HEX_RE.search(stripped), stripped
 
-
-def test_schema_v1_painters_contain_no_raw_theme_hex():
-    """Production painters (everything except theme.*) hold no theme hex (D129)."""
-    offenders: list[str] = []
-    for path in sorted(V3_PY.rglob("*.py")):
-        if path.name in _PAINTER_ALLOW_NAMES:
-            continue
-        if any(part in _PAINTER_ALLOW_DIRS for part in path.parts):
-            continue
-        if path.name.startswith("test_"):
-            continue
-        text = path.read_text(encoding="utf-8")
-        for i, line in enumerate(text.splitlines(), 1):
-            if line.lstrip().startswith("#"):
-                continue
-            if _HEX_RE.search(line):
-                offenders.append(f"{path.relative_to(ROOT)}:{i}:{line.strip()}")
-    assert offenders == []

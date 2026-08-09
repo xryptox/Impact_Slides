@@ -58,7 +58,7 @@ _PALETTE: tuple[PaletteEntry, ...] = (
         "text_on_light", "fill",
     })),
     PaletteEntry("ink_faint", "#929292", frozenset({
-        "text_on_light", "fill",
+        "fill",
     })),
     PaletteEntry("panel", "#EEF0F0", frozenset({
         "surface", "fill",
