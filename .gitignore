@@ -50,3 +50,11 @@ Impact_Slides-*/
 
 # Disposable local/CI scratch (do not commit)
 .tmp/
+
+# Windows reserved device names (break git add -A)
+nul
+NUL
+con
+CON
+aux
+AUX

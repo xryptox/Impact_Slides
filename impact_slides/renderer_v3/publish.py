@@ -86,7 +86,9 @@ def build_presentation_html(
             ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always}",
             "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
-            "p,li{font-size:var(--text-body);line-height:1.4}",
+            # Spacing constants must stay aligned with plan.BLOCK_MARGIN_Y.
+            "p,ul{font-size:var(--text-body);line-height:1.4;margin:0 0 12px;padding:0}",
+            "li{margin:0;padding:0;margin-left:1.25em}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
             ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
             "</style>",
@@ -175,7 +177,8 @@ def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
             )
         for block in slide.payload.blocks:
             bid = block.block_id
-            bsp = plans_by_id.get(bid)
+            surface_id = f"slide-{sn}-block-{bid}"
+            bsp = plans_by_id.get(surface_id)
             body_px = bsp.role_sizes.get("body") if bsp else None
             attrs = _plan_attrs(bsp)
             style = _style_font(body_px)
@@ -296,7 +299,10 @@ def build_slide_summaries(deck: Deck, deck_plan: Any = None) -> list[dict[str, A
                 surface_ids.append(tid)
             if slide.content is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-subtitle")
-            surface_ids.extend(b.block_id for b in slide.payload.blocks)
+            surface_ids.extend(
+                f"slide-{slide.slide_number}-block-{b.block_id}"
+                for b in slide.payload.blocks
+            )
             if slide.takeaway is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-takeaway")
             disclosure = getattr(slide, "disclosure", None)

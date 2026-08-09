@@ -50,8 +50,8 @@ def test_plan_deck_freezes_whole_pixel_sizes_for_kernel_surfaces():
     assert "slide-1-cover" in by
     assert "slide-2-title" in by
     assert "slide-2-subtitle" in by
-    assert "lead" in by
-    assert "bullets" in by
+    assert "slide-2-block-lead" in by
+    assert "slide-2-block-bullets" in by
     assert "slide-2-takeaway" in by
     assert "slide-3-cover" in by
 
@@ -60,7 +60,10 @@ def test_plan_deck_freezes_whole_pixel_sizes_for_kernel_surfaces():
     assert sub.role_sizes["subtitle"] <= SUBTITLE_CEIL
     assert isinstance(sub.role_sizes["subtitle"], int)
 
-    body_sizes = {by["lead"].role_sizes["body"], by["bullets"].role_sizes["body"]}
+    body_sizes = {
+        by["slide-2-block-lead"].role_sizes["body"],
+        by["slide-2-block-bullets"].role_sizes["body"],
+    }
     assert len(body_sizes) == 1  # D225 one common body size
     body = next(iter(body_sizes))
     assert BODY_FLOOR <= body <= BODY_CEIL
@@ -84,7 +87,7 @@ def test_sparse_prose_grows_above_floor():
     by = plan.by_surface_id()
     # Short fixture text should grow.
     assert by["slide-2-subtitle"].role_sizes["subtitle"] > SUBTITLE_FLOOR
-    assert by["lead"].role_sizes["body"] > BODY_FLOOR
+    assert by["slide-2-block-lead"].role_sizes["body"] > BODY_FLOOR
     assert "plan.typography_grown" in by["slide-2-subtitle"].adaptation_codes
     assert any(e.code == "plan.typography_grown" for e in plan.events)
 
@@ -97,7 +100,7 @@ def test_fixed_mode_does_not_grow():
     plan = plan_deck(deck, strict=True)
     by = plan.by_surface_id()
     assert by["slide-2-subtitle"].role_sizes["subtitle"] == SUBTITLE_FLOOR
-    assert by["lead"].role_sizes["body"] == BODY_FLOOR
+    assert by["slide-2-block-lead"].role_sizes["body"] == BODY_FLOOR
     assert "plan.typography_grown" not in by["slide-2-subtitle"].adaptation_codes
 
 
@@ -242,5 +245,5 @@ def test_mutation_floor_change_breaks_grow_only_contract():
 
     deck = validate_handoff(_minimal(), strict=True).deck
     plan = plan_deck(deck, strict=True)
-    body = plan.by_surface_id()["lead"].role_sizes["body"]
+    body = plan.by_surface_id()["slide-2-block-lead"].role_sizes["body"]
     assert body >= plan_mod.BODY_FLOOR

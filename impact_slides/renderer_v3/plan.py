@@ -38,6 +38,8 @@ TAKEAWAY_FLOOR: Final = 22
 TAKEAWAY_CEIL: Final = 28
 
 LINE_HEIGHT: Final = 1.4
+# Must match publish.py narrative CSS box model (R178-003).
+BLOCK_MARGIN_Y: Final = 12  # p/ul margin-bottom in px
 # Conservative average glyph advance as fraction of em (D23; no vendored TTF yet).
 # ponytail: synthetic metrics until fonts ship; swap for measured IBM Plex/Source Sans.
 AVG_ADVANCE: Final = 0.58
@@ -301,9 +303,11 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
         per_h = body_h // n_blocks
         for i, block in enumerate(blocks):
             items = _block_text_items(block)
+            # Deck-unique surface id: block_id is only slide-local (D115/D225).
+            surface_id = f"slide-{sn}-block-{block.block_id}"
             out.append(
                 SurfacePlan(
-                    surface_id=block.block_id,
+                    surface_id=surface_id,
                     role="narrative_block",
                     slide_number=sn,
                     layout_type=lt,
@@ -500,7 +504,9 @@ def _text_fits_detail(
         total_lines += max(1, len(lines))
         if len(lines) > 1:
             wrapped = True
-    need_h = total_lines * line_h
+    # Include the same block margin paint applies between units (publish CSS).
+    unit_count = max(1, sum(1 for u in units if any(t for t, _ in u)))
+    need_h = total_lines * line_h + max(0, unit_count - 1) * BLOCK_MARGIN_Y
     fits = (need_h <= box_h) and not width_overflow
     return fits, wrapped
 
