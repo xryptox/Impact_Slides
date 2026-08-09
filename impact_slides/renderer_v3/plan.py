@@ -1,0 +1,667 @@
+"""Deck-wide measure/plan phase for kernel compositions (D1–D4, D22, D59, D68–D70).
+
+Freezes whole-pixel role sizes against the fixed 1920×1080 design stage before
+paint. Runtime may only consume these plans — never replan.
+"""
+from __future__ import annotations
+
+import hashlib
+import math
+import re
+from dataclasses import dataclass, field
+from typing import Any, Final, Optional
+
+from .diagnostics import DiagnosticEvent, RendererValidationError, event, sort_events
+from .models import Deck, Typography
+
+from ._version import __version__ as RENDERER_VERSION
+
+DESIGN_STAGE_W: Final = 1920
+DESIGN_STAGE_H: Final = 1080
+PAD_X: Final = 96
+PAD_TOP: Final = 56
+PAD_BOTTOM: Final = 48
+CONTENT_W: Final = DESIGN_STAGE_W - 2 * PAD_X  # 1728
+
+# Fixed chrome (D13) — never grow.
+TITLE_PX: Final = 56
+COVER_TITLE_PX: Final = 72
+COVER_META_PX: Final = 22
+TAKEAWAY_LABEL_PX: Final = 14
+
+# Adaptive floors / ceilings (D12/D14/D51/D59/D171/D172/D225/D288).
+SUBTITLE_FLOOR: Final = 22
+SUBTITLE_CEIL: Final = 26
+BODY_FLOOR: Final = 22
+BODY_CEIL: Final = 28
+TAKEAWAY_FLOOR: Final = 22
+TAKEAWAY_CEIL: Final = 28
+
+LINE_HEIGHT: Final = 1.4
+# Conservative average glyph advance as fraction of em (D23; no vendored TTF yet).
+# ponytail: synthetic metrics until fonts ship; swap for measured IBM Plex/Source Sans.
+AVG_ADVANCE: Final = 0.58
+STRONG_ADVANCE: Final = 0.62
+
+
+@dataclass
+class SurfacePlan:
+    """Frozen plan for one semantic surface (D312)."""
+
+    surface_id: str
+    role: str
+    slide_number: int
+    layout_type: str
+    slot_order: int
+    design_stage_region: int
+    role_sizes: dict[str, int]
+    adaptation_codes: list[str] = field(default_factory=list)
+    reservations: list[dict[str, Any]] = field(default_factory=list)
+    fallback: Optional[str] = None
+    expected_placement_classes: list[str] = field(default_factory=list)
+    display_identity_strategy: Optional[str] = None
+    semantic_digest: str = ""
+    painter_plan_digest: str = ""
+    # Internal measure fields (not published).
+    _text_items: list[tuple[str, bool]] = field(default_factory=list)  # (text, strong)
+    _box_w: int = CONTENT_W
+    _box_h: int = 0
+    _fit_role: Optional[str] = None  # which role_sizes key is adaptive text
+    _typo: Optional[Typography] = None
+    _mode: str = "adaptive"
+    _sync_group: Optional[str] = None
+    _explicit_size: Optional[int] = None
+    _overflow: bool = False
+
+    def to_public(self) -> dict[str, Any]:
+        sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
+        row: dict[str, Any] = {
+            "surface_id": self.surface_id,
+            "role": self.role,
+            "semantic_digest": self.semantic_digest,
+            "design_stage_region": self.design_stage_region,
+            "role_sizes": sizes,
+            "adaptation_codes": list(self.adaptation_codes),
+            "reservations": list(self.reservations),
+            "fallback": self.fallback,
+            "expected_placement_classes": list(self.expected_placement_classes),
+            "painter_plan_digest": self.painter_plan_digest,
+        }
+        if self.display_identity_strategy is not None:
+            row["display_identity_strategy"] = self.display_identity_strategy
+        return row
+
+
+@dataclass
+class DeckPlan:
+    surfaces: list[SurfacePlan]
+    events: list[DiagnosticEvent] = field(default_factory=list)
+
+    def public_plans(self) -> list[dict[str, Any]]:
+        return [s.to_public() for s in self.surfaces]
+
+    def by_surface_id(self) -> dict[str, SurfacePlan]:
+        return {s.surface_id: s for s in self.surfaces}
+
+
+def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
+    """Measure every kernel surface, synchronize, freeze whole-pixel sizes (D69)."""
+    surfaces = _collect_surfaces(deck)
+    events: list[DiagnosticEvent] = []
+
+    # Phase 1 — independent measure at design stage.
+    for sp in surfaces:
+        _measure_surface(sp, events)
+
+    # Phase 2 — synchronize equivalent roles (D3/D4/D26/D69).
+    _synchronize(surfaces, events)
+
+    # Digests after sizes freeze.
+    for sp in surfaces:
+        _seal_digests(sp)
+
+    overflow = [s for s in surfaces if s._overflow]
+    if overflow and strict:
+        raise RendererValidationError(
+            sort_events(events + [_overflow_event(s) for s in overflow]),
+            handoff_schema_version=deck.meta.handoff_schema_version,
+            renderer_version=RENDERER_VERSION,
+        )
+    if overflow and not strict:
+        for s in overflow:
+            events.append(_overflow_event(s))
+            s.fallback = "fallback_unresolved"
+            if "plan.unresolved_overflow" not in s.adaptation_codes:
+                # adaptation_codes stay non-error; overflow is the event.
+                pass
+            # Paint at floor (already set); mark degraded via events.
+
+    return DeckPlan(surfaces=surfaces, events=sort_events(events))
+
+
+# ---------------------------------------------------------------------------
+# Surface collection (composition slot order)
+# ---------------------------------------------------------------------------
+
+
+def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
+    out: list[SurfacePlan] = []
+    region = 0
+    for slide in deck.slides:
+        lt = slide.layout_type
+        sn = slide.slide_number
+        if lt in ("opening_cover", "closing_cover"):
+            region += 1
+            p = slide.payload
+            texts: list[tuple[str, bool]] = [(p.title, True)]
+            if p.subtitle:
+                texts.append((p.subtitle, False))
+            if p.period_label:
+                texts.append((p.period_label, False))
+            if p.date_label:
+                texts.append((p.date_label, False))
+            # Covers: fixed display chrome (D13/D223) — no adaptive growth.
+            out.append(
+                SurfacePlan(
+                    surface_id=f"slide-{sn}-cover",
+                    role="cover",
+                    slide_number=sn,
+                    layout_type=lt,
+                    slot_order=0,
+                    design_stage_region=region,
+                    role_sizes={
+                        "title": COVER_TITLE_PX,
+                        "subtitle": COVER_META_PX,
+                        "meta": COVER_META_PX,
+                    },
+                    _text_items=texts,
+                    _box_w=CONTENT_W,
+                    _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
+                    _fit_role=None,
+                    _mode="fixed",
+                )
+            )
+            continue
+
+        if lt != "narrative":
+            continue
+
+        # Slot order: title chrome (fixed), subtitle, body blocks, takeaway.
+        region += 1
+        title_h = _line_box(TITLE_PX) + 12
+        used = title_h
+
+        # Title is fixed chrome — recorded so painters share one plan.
+        out.append(
+            SurfacePlan(
+                surface_id=f"slide-{sn}-title",
+                role="title",
+                slide_number=sn,
+                layout_type=lt,
+                slot_order=0,
+                design_stage_region=region,
+                role_sizes={"title": TITLE_PX},
+                _text_items=[(slide.title, True)],
+                _box_w=CONTENT_W,
+                _box_h=title_h,
+                _fit_role=None,
+                _mode="fixed",
+            )
+        )
+
+        subtitle_budget = 0
+        if slide.content is not None:
+            typo = slide.content.typography
+            mode, sync, explicit = _typo_fields(typo, "subtitle_font_size")
+            # Reserve max possible subtitle block so body/takeaway never overlap (D171).
+            subtitle_budget = _line_box(SUBTITLE_CEIL) * 3 + 16
+            out.append(
+                SurfacePlan(
+                    surface_id=f"slide-{sn}-subtitle",
+                    role="subtitle",
+                    slide_number=sn,
+                    layout_type=lt,
+                    slot_order=1,
+                    design_stage_region=region,
+                    role_sizes={"subtitle": SUBTITLE_FLOOR},
+                    _text_items=[(slide.content.subtitle, False)],
+                    _box_w=CONTENT_W,
+                    _box_h=subtitle_budget,
+                    _fit_role="subtitle",
+                    _typo=typo,
+                    _mode=mode,
+                    _sync_group=sync,
+                    _explicit_size=explicit,
+                )
+            )
+            used += subtitle_budget
+
+        # Takeaway reserved before body so body cannot steal its slot (D172/D288).
+        takeaway_budget = 0
+        takeaway_plan: SurfacePlan | None = None
+        if slide.takeaway is not None:
+            typo = slide.takeaway.typography
+            mode, sync, explicit = _typo_fields(typo, "body_font_size")
+            takeaway_budget = _line_box(TAKEAWAY_FLOOR) * 4 + 48  # label + pad + border
+            takeaway_plan = SurfacePlan(
+                surface_id=f"slide-{sn}-takeaway",
+                role="takeaway",
+                slide_number=sn,
+                layout_type=lt,
+                slot_order=100,  # after blocks; set final after block count
+                design_stage_region=region,
+                role_sizes={
+                    "body": TAKEAWAY_FLOOR,
+                    "label": TAKEAWAY_LABEL_PX,
+                },
+                _text_items=[(slide.takeaway.text, False)],
+                _box_w=CONTENT_W,
+                _box_h=takeaway_budget,
+                _fit_role="body",
+                _typo=typo,
+                _mode=mode,
+                _sync_group=sync,
+                _explicit_size=explicit,
+            )
+            used += takeaway_budget
+
+        body_h = max(80, DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM - used)
+        blocks = list(slide.payload.blocks)
+        # One common body size across all blocks (D225/D270) — shared measure group.
+        body_typo = slide.payload.typography
+        mode, sync, explicit = _typo_fields(body_typo, "body_font_size")
+        n_blocks = max(1, len(blocks))
+        per_h = body_h // n_blocks
+        for i, block in enumerate(blocks):
+            items = _block_text_items(block)
+            out.append(
+                SurfacePlan(
+                    surface_id=block.block_id,
+                    role="narrative_block",
+                    slide_number=sn,
+                    layout_type=lt,
+                    slot_order=10 + i,
+                    design_stage_region=region,
+                    role_sizes={"body": BODY_FLOOR},
+                    _text_items=items,
+                    _box_w=CONTENT_W,
+                    _box_h=per_h,
+                    _fit_role="body",
+                    _typo=body_typo,
+                    _mode=mode,
+                    _sync_group=sync,
+                    _explicit_size=explicit,
+                )
+            )
+
+        if takeaway_plan is not None:
+            takeaway_plan.slot_order = 10 + len(blocks)
+            out.append(takeaway_plan)
+
+    # Stable plan order: slide, slot, surface_id (D312).
+    out.sort(key=lambda s: (s.slide_number, s.slot_order, s.surface_id))
+    return out
+
+
+def _prose_items(prose: Any) -> list[tuple[str, bool]]:
+    return [(run.text, run.emphasis == "strong") for run in prose.runs]
+
+
+def _typo_fields(
+    typo: Optional[Typography], size_field: str
+) -> tuple[str, Optional[str], Optional[int]]:
+    if typo is None:
+        return "adaptive", None, None
+    mode = typo.mode
+    sync = typo.sync_group if mode == "adaptive" else None
+    explicit = getattr(typo, size_field, None)
+    return mode, sync, explicit
+
+
+# ---------------------------------------------------------------------------
+# Measure
+# ---------------------------------------------------------------------------
+
+
+def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
+    fit = sp._fit_role
+    if fit is None:
+        # Fixed chrome — still check it fits at its fixed size.
+        px = next(iter(sp.role_sizes.values()))
+        if not _text_fits(sp._text_items, px, sp._box_w, sp._box_h):
+            sp._overflow = True
+        return
+
+    floor = sp.role_sizes[fit]
+    ceil = {"subtitle": SUBTITLE_CEIL, "body": BODY_CEIL}[fit]
+    if fit == "body" and sp.role == "takeaway":
+        floor, ceil = TAKEAWAY_FLOOR, TAKEAWAY_CEIL
+        sp.role_sizes[fit] = floor
+
+    # Explicit size validation (D49) — out of range → treat as malformed group.
+    if sp._explicit_size is not None and not (floor <= sp._explicit_size <= ceil):
+        # D28/D49: discard group; default adaptive. Kernel models already clamp
+        # 8–48; still enforce role range here.
+        sp._explicit_size = None
+        sp._mode = "adaptive"
+        sp._sync_group = None
+        events.append(
+            event(
+                code="repair.policy_defaulted",
+                severity="warning",
+                phase="plan",
+                role=sp.role,
+                path=f"/slides/{sp.slide_number}/typography",
+                action="default_typography",
+                result="defaulted",
+                slide_number=sp.slide_number,
+                layout_type=sp.layout_type,
+                surface_id=sp.surface_id,
+                expected="role size within floor..ceiling",
+            )
+        )
+
+    if sp._mode == "fixed":
+        size = sp._explicit_size if sp._explicit_size is not None else floor
+        sp.role_sizes[fit] = size
+        if not _text_fits(sp._text_items, size, sp._box_w, sp._box_h):
+            sp._overflow = True
+        return
+
+    # Adaptive grow-only (D2): try ceiling down to floor; pick largest that fits.
+    if sp._explicit_size is not None:
+        # Pinned role — no growth (D218); still must fit.
+        size = sp._explicit_size
+        sp.role_sizes[fit] = size
+        if not _text_fits(sp._text_items, size, sp._box_w, sp._box_h):
+            # Try floor only if pin fails? Spec: explicit that does not fit →
+            # normal strict/non-strict (D27). Keep pin; mark overflow.
+            sp._overflow = True
+        return
+
+    chosen = floor
+    wrapped = False
+    for size in range(ceil, floor - 1, -1):
+        ok, did_wrap = _text_fits_detail(sp._text_items, size, sp._box_w, sp._box_h)
+        if ok:
+            chosen = size
+            wrapped = did_wrap
+            break
+    else:
+        # Floor does not fit.
+        sp._overflow = True
+        chosen = floor
+
+    sp.role_sizes[fit] = chosen
+    if chosen > floor:
+        sp.adaptation_codes.append("plan.typography_grown")
+        events.append(
+            event(
+                code="plan.typography_grown",
+                severity="info",
+                phase="plan",
+                role=sp.role,
+                path=f"/slides/{sp.slide_number}/{sp.role}",
+                action="measure",
+                result="accepted",
+                slide_number=sp.slide_number,
+                layout_type=sp.layout_type,
+                surface_id=sp.surface_id,
+                expected=f"{fit} grew to {chosen}px",
+                input_meta={"type": "int", "value": chosen},
+            )
+        )
+    if wrapped:
+        sp.adaptation_codes.append("plan.text_wrapped")
+        events.append(
+            event(
+                code="plan.text_wrapped",
+                severity="info",
+                phase="plan",
+                role=sp.role,
+                path=f"/slides/{sp.slide_number}/{sp.role}",
+                action="measure",
+                result="accepted",
+                slide_number=sp.slide_number,
+                layout_type=sp.layout_type,
+                surface_id=sp.surface_id,
+            )
+        )
+
+
+def _text_fits(
+    items: list[tuple[str, bool]], px: int, box_w: int, box_h: int
+) -> bool:
+    ok, _ = _text_fits_detail(items, px, box_w, box_h)
+    return ok
+
+
+def _text_fits_detail(
+    items: list[tuple[str, bool]], px: int, box_w: int, box_h: int
+) -> tuple[bool, bool]:
+    """Return (fits, wrapped). Never truncates or drops text (D59)."""
+    if box_w <= 0 or box_h <= 0:
+        return False, False
+    # Join runs into logical lines (one item-group per paragraph/bullet already
+    # flattened into sequential runs; treat each top-level caller's items as
+    # one or more paragraphs separated by empty marker — we wrap the whole
+    # concatenated text per call site which already splits by block item).
+    # For multi-item lists, each tuple-run stream may include multiple bullets
+    # concatenated; split on a sentinel is unnecessary — callers pass one
+    # prose unit OR we measure total height of wrapped units.
+    # Simpler: wrap each contiguous text chunk (joined runs) separately and sum.
+    # Items are runs of one prose unit when from _prose_items; blocks pass all
+    # runs of all paragraphs/items — separate units by re-wrapping each
+    # paragraph/bullet as independent height addends via blank-run? We pass
+    # flat runs. Reconstruct units by measuring joined full text with
+    # paragraph breaks inserted by callers as "\n" in text? Our collectors
+    # don't insert breaks. Measure each run-joined prose as one unit: for
+    # blocks we need per-paragraph. Fix: _block_text_items should separate.
+    # Using total joined text is conservative (slightly taller if breaks lost).
+    units = _split_units(items)
+    line_h = _line_box(px)
+    total_lines = 0
+    wrapped = False
+    width_overflow = False
+    for unit_items in units:
+        text = "".join(t for t, _ in unit_items)
+        if not text:
+            continue
+        lines, wo = _wrap_lines(unit_items, px, box_w)
+        width_overflow = width_overflow or wo
+        total_lines += max(1, len(lines))
+        if len(lines) > 1:
+            wrapped = True
+    need_h = total_lines * line_h
+    fits = (need_h <= box_h) and not width_overflow
+    return fits, wrapped
+
+
+def _split_units(
+    items: list[tuple[str, bool]],
+) -> list[list[tuple[str, bool]]]:
+    """Split on explicit newline markers; otherwise one unit (single prose).
+
+    Block collectors insert a ('\\n', False) sentinel between paragraphs/items.
+    """
+    units: list[list[tuple[str, bool]]] = [[]]
+    for text, strong in items:
+        if text == "\n" and not strong:
+            if units[-1]:
+                units.append([])
+            continue
+        units[-1].append((text, strong))
+    return [u for u in units if u]
+
+
+def _wrap_lines(
+    items: list[tuple[str, bool]], px: int, box_w: int
+) -> tuple[list[str], bool]:
+    """Word-wrap at spaces/punctuation; never split words (D24/D59).
+
+    Returns (lines, width_overflow). Width overflow means an unbreakable token
+    exceeds the box — still kept intact, never truncated.
+    """
+    text = "".join(t for t, _ in items)
+    if not text:
+        return [""], False
+    strong_chars = sum(len(t) for t, s in items if s)
+    total_chars = max(1, sum(len(t) for t, _ in items))
+    adv = AVG_ADVANCE + (STRONG_ADVANCE - AVG_ADVANCE) * (strong_chars / total_chars)
+    char_w = px * adv
+
+    tokens = re.findall(r"\S+\s*", text)
+    if not tokens:
+        return [text], len(text) * char_w > box_w
+    lines: list[str] = []
+    cur = ""
+    width_overflow = False
+    for tok in tokens:
+        tok_w = len(tok.rstrip()) * char_w
+        if tok_w > box_w:
+            width_overflow = True
+        trial = cur + tok
+        if cur and len(trial) * char_w > box_w:
+            lines.append(cur.rstrip())
+            cur = tok
+        else:
+            cur = trial
+    if cur:
+        lines.append(cur.rstrip())
+    return (lines or [""]), width_overflow
+
+
+def _line_box(px: int) -> int:
+    return int(math.ceil(px * LINE_HEIGHT))
+
+
+# ---------------------------------------------------------------------------
+# Synchronize
+# ---------------------------------------------------------------------------
+
+
+def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> None:
+    """Equivalent roles share the largest common safe size (D3/D26/D69)."""
+    # Group by (fit_role_name, sync_key). Same-slide narrative body blocks share
+    # an implicit group so D225 one-size-across-blocks holds even without key.
+    groups: dict[tuple[str, str], list[SurfacePlan]] = {}
+    for sp in surfaces:
+        fit = sp._fit_role
+        if fit is None or sp._mode != "adaptive" or sp._explicit_size is not None:
+            continue
+        if sp._sync_group:
+            key = (fit, f"g:{sp._sync_group}")
+        elif sp.role == "narrative_block":
+            key = (fit, f"slide:{sp.slide_number}:body")
+        else:
+            continue  # independent
+        groups.setdefault(key, []).append(sp)
+
+    for (_fit, _key), members in sorted(groups.items(), key=lambda kv: kv[0]):
+        if len(members) < 2:
+            # Still unify single-member narrative body (one block) — no-op size.
+            if members:
+                pass
+            continue
+        # Largest common size that every member can fit.
+        fit = members[0]._fit_role
+        assert fit is not None
+        floor = members[0].role_sizes[fit]
+        # Start from min of independently chosen sizes, then try grow to max
+        # of those if all fit — D3: largest that safely fits every member.
+        independent = [m.role_sizes[fit] for m in members]
+        target = min(independent)
+        upper = max(independent)
+        for size in range(upper, floor - 1, -1):
+            if all(
+                _text_fits(m._text_items, size, m._box_w, m._box_h) for m in members
+            ):
+                target = size
+                break
+        changed = False
+        for m in members:
+            if m.role_sizes[fit] != target:
+                changed = True
+            m.role_sizes[fit] = target
+            # If sync reduced a grown size, drop grow code if no longer grown.
+            if target == floor:
+                m.adaptation_codes = [
+                    c for c in m.adaptation_codes if c != "plan.typography_grown"
+                ]
+            elif "plan.typography_grown" not in m.adaptation_codes and target > floor:
+                m.adaptation_codes.append("plan.typography_grown")
+        if changed or len(members) > 1:
+            for m in members:
+                if "plan.synchronized" not in m.adaptation_codes:
+                    m.adaptation_codes.append("plan.synchronized")
+                events.append(
+                    event(
+                        code="plan.synchronized",
+                        severity="info",
+                        phase="plan",
+                        role=m.role,
+                        path=f"/slides/{m.slide_number}/{m.role}",
+                        action="measure",
+                        result="accepted",
+                        slide_number=m.slide_number,
+                        layout_type=m.layout_type,
+                        surface_id=m.surface_id,
+                        expected=f"{fit} synchronized to {target}px",
+                        input_meta={"type": "int", "value": target},
+                    )
+                )
+
+
+# ---------------------------------------------------------------------------
+# Digests / events
+# ---------------------------------------------------------------------------
+
+
+def _seal_digests(sp: SurfacePlan) -> None:
+    sizes = ",".join(f"{k}:{sp.role_sizes[k]}" for k in sorted(sp.role_sizes))
+    adap = ",".join(sp.adaptation_codes)
+    base = (
+        f"{sp.slide_number}|{sp.layout_type}|{sp.role}|{sp.surface_id}|"
+        f"{sp.design_stage_region}|{sizes}|{adap}|{sp.fallback or ''}"
+    )
+    # Semantic digest: identity + content fingerprint (not sizes).
+    content = "|".join(t for t, _ in sp._text_items)
+    sem_src = f"{sp.slide_number}|{sp.role}|{sp.surface_id}|{content}"
+    sp.semantic_digest = _sha(sem_src)
+    sp.painter_plan_digest = _sha(base)
+
+
+def _sha(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _overflow_event(sp: SurfacePlan) -> DiagnosticEvent:
+    return event(
+        code="plan.unresolved_overflow",
+        severity="error",
+        phase="plan",
+        role=sp.role,
+        path=f"/slides/{sp.slide_number}/{sp.role}",
+        action="measure",
+        result="failed",
+        slide_number=sp.slide_number,
+        layout_type=sp.layout_type,
+        surface_id=sp.surface_id,
+        expected="complete text fits at role floor without truncation",
+    )
+
+
+def _block_text_items(block: Any) -> list[tuple[str, bool]]:
+    """Flatten block prose with unit separators for multi-unit height."""
+    items: list[tuple[str, bool]] = []
+    if block.type == "paragraphs":
+        for i, prose in enumerate(block.paragraphs):
+            if i:
+                items.append(("\n", False))
+            items.extend(_prose_items(prose))
+    else:
+        for i, prose in enumerate(block.items):
+            if i:
+                items.append(("\n", False))
+            items.extend(_prose_items(prose))
+    return items

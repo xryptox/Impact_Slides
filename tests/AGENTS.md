@@ -30,6 +30,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 - Renderer v3 kernel (#175): `test_renderer_v3_kernel.py` + fixture `renderer_v3/minimal_cover_narrative_cover.json` (typed Deck validation, allowlisted repairs, schema drift, v2 isolation + mutation traps)
 - Renderer v3 publish (#176): `test_renderer_v3_publish.py` (five D250 artifacts, clean/degraded/failed + CLI exit codes, byte-identical reruns, failed-run preservation + mutation traps)
 - Renderer v3 theme (#177): `test_renderer_v3_theme.py` (boardroom_amex manifest to CSS/Chart.js/SVG tokens, contrast-safe roles, no raw painter hex, transparent chart surfaces, CSS drift gate)
+- Renderer v3 plan (#178): `test_renderer_v3_plan.py` (deck-wide measure/plan freeze, grow-only prose/subtitle/takeaway, sync groups, strict/non-strict overflow, frozen plan in run_meta + HTML data-*)
 - Amex #158 handoff + multi_panel pane titles: `test_amex_s28_handoff_contract.py` + `test_multi_panel_pane_headings.py` + fixtures `amex_s28_v10_broken.json` / `amex_s28_corrected.json` (mutation drops slide-28 `top_total` pseudo-titles; renderer multi_panel tiles share #147 heading/subtitle chrome; SVG honors `stack_total_labels`)
 - #151 driver_card + boxed bar labels: `test_driver_card.py` + `test_boxed_labels.py` (schema 1/6/7 rows, malformed direction/tone, overflow strict/non-strict, no-valid-row hero fallback, order/a11y; boxed category mismatch, in-bar/outside+connector, Chart.js+SVG, collision independence). Slide 18 target lives in `amex_v10_44_slide_handoff.json`
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
@@ -38,7 +39,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 ## Verification
 
 - `python -m pytest -q`
-- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py`
+- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py`
 
 ## Child DOX Index
 
