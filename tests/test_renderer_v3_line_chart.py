@@ -475,6 +475,58 @@ def test_rev14_non_strict_repairs_uncontained_fixed_domain():
     assert [c.category_id for c in repaired_vis.chart_data.categories] == expected_categories
 
 
+def test_generated_domain_authored_max_below_data_strict_rejects():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "min": "0",
+        "max": "4",
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_generated_domain_authored_max_below_data_non_strict_repairs():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "min": "0",
+        "max": "4",
+    }
+    result = validate_handoff(raw, strict=False)
+    assert result.ok
+    assert result.repaired
+    matched = [
+        e
+        for e in result.events
+        if e.code == "repair.domain_replaced" and e.action.name == "drop_field"
+    ]
+    assert len(matched) == 1
+    ev = matched[0]
+    assert ev.result.name == "dropped"
+    assert ev.phase == "repair"
+    assert ev.path.endswith("/value_axes/primary/domain/max")
+    repaired_vis = result.deck.slides[1].payload.primary_visual
+    domain = repaired_vis.value_axes.primary.domain
+    assert domain.kind == "generated"
+    assert domain.min == "0"
+    assert domain.max is None
+    cp = plan_deck(result.deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    values = [
+        float(v)
+        for s in vis["chart_data"]["series"]
+        for v in s["values"]
+        if v is not None
+    ]
+    assert float(cp["domain"]["min"]) <= min(values)
+    assert float(cp["domain"]["max"]) >= max(values)
+    g = cp["geometry"]
+    ys = [p["y"] for p in cp["points"] if p["finite"]]
+    assert all(g["pad_t"] <= y <= g["pad_t"] + g["plot_h"] for y in ys)
+
+
 def test_rev12_facts_follow_semantic_table_visibility():
     deck = validate_handoff(_raw(), strict=True).deck
     plan = plan_deck(deck, strict=True)

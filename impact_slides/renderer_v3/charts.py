@@ -970,7 +970,6 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     g = plan["geometry"]
     y_min = float(Decimal(plan["domain"]["min"]))
     y_max = float(Decimal(plan["domain"]["max"]))
-    show_legend = plan["identity_strategy"] == "legend"
     return {
         "type": "line",
         "data": {"labels": labels, "datasets": datasets},

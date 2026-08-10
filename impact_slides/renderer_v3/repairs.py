@@ -972,8 +972,10 @@ def repair_source_footer_names(raw: Any, events: list[DiagnosticEvent]) -> Any:
 
 
 def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) -> Any:
-    """D230 non-strict: a fixed domain that does not contain every finite chart
-    value is replaced by a diagnosed safe generated domain (strict rejects)."""
+    """D230 non-strict: authored domain bounds that fail to contain every finite
+    chart value are fixed before revalidation (strict rejects). A fixed domain is
+    replaced by a diagnosed safe generated domain; offending authored generated
+    min/max keys are dropped so the domain regenerates from the data."""
     if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
         return raw
     out = deepcopy(raw)
@@ -987,18 +989,16 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
         axes = visual.get("value_axes")
         primary = axes.get("primary") if isinstance(axes, dict) else None
         domain = primary.get("domain") if isinstance(primary, dict) else None
-        if not isinstance(domain, dict) or domain.get("kind") != "fixed":
+        if not isinstance(domain, dict) or domain.get("kind") not in (
+            "fixed",
+            "generated",
+        ):
             continue
         data = visual.get("chart_data")
         series = data.get("series") if isinstance(data, dict) else None
         if not isinstance(series, list):
             continue
-        try:
-            lo = Decimal(str(domain.get("min")))
-            hi = Decimal(str(domain.get("max")))
-        except (InvalidOperation, TypeError, ValueError):
-            continue
-        uncontained = False
+        finite: list[Decimal] = []
         for s in series:
             values = s.get("values") if isinstance(s, dict) else None
             if not isinstance(values, list):
@@ -1007,31 +1007,67 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
                 if v is None:
                     continue
                 try:
-                    dv = Decimal(str(v))
+                    finite.append(Decimal(str(v)))
                 except (InvalidOperation, TypeError, ValueError):
                     continue
-                if dv < lo or dv > hi:
-                    uncontained = True
-                    break
-            if uncontained:
-                break
-        if not uncontained:
+        if not finite:
             continue
-        primary["domain"] = {"kind": "generated"}
-        events.append(
-            event(
-                code="repair.domain_replaced",
-                severity="warning",
-                phase="repair",
-                role="value_axis",
-                path=f"/slides/{i}/payload/primary_visual/value_axes/primary/domain",
-                action="replace_domain",
-                result="generated",
-                slide_number=_slide_number(slide),
-                layout_type="single_chart",
-                expected="fixed domain containing every finite value",
-            )
+        domain_path = (
+            f"/slides/{i}/payload/primary_visual/value_axes/primary/domain"
         )
+        if domain.get("kind") == "fixed":
+            try:
+                lo = Decimal(str(domain.get("min")))
+                hi = Decimal(str(domain.get("max")))
+            except (InvalidOperation, TypeError, ValueError):
+                continue
+            if all(lo <= dv <= hi for dv in finite):
+                continue
+            primary["domain"] = {"kind": "generated"}
+            events.append(
+                event(
+                    code="repair.domain_replaced",
+                    severity="warning",
+                    phase="repair",
+                    role="value_axis",
+                    path=domain_path,
+                    action="replace_domain",
+                    result="generated",
+                    slide_number=_slide_number(slide),
+                    layout_type="single_chart",
+                    expected="fixed domain containing every finite value",
+                )
+            )
+            continue
+        for key in ("min", "max"):
+            raw_bound = domain.get(key)
+            if raw_bound is None:
+                continue
+            try:
+                bound = Decimal(str(raw_bound))
+            except (InvalidOperation, TypeError, ValueError):
+                continue
+            if key == "min":
+                uncontained = any(dv < bound for dv in finite)
+            else:
+                uncontained = any(dv > bound for dv in finite)
+            if not uncontained:
+                continue
+            del domain[key]
+            events.append(
+                event(
+                    code="repair.domain_replaced",
+                    severity="warning",
+                    phase="repair",
+                    role="value_axis",
+                    path=f"{domain_path}/{key}",
+                    action="drop_field",
+                    result="dropped",
+                    slide_number=_slide_number(slide),
+                    layout_type="single_chart",
+                    expected=f"generated domain {key} containing every finite value",
+                )
+            )
     return out
 
 
