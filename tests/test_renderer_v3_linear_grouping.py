@@ -14,7 +14,13 @@ from pathlib import Path
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
-from impact_slides.renderer_v3.plan import plan_deck
+from impact_slides.renderer_v3.plan import (
+    _line_box,
+    _linear_fit_detail,
+    _text_width,
+    _wrap_label_lines,
+    plan_deck,
+)
 from impact_slides.renderer_v3.schema_export import check_schema
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +29,213 @@ FIXTURE = ROOT / "tests/fixtures/renderer_v3/linear_grouping_compositions.json"
 
 def _raw() -> dict:
     return json.loads(FIXTURE.read_text(encoding="utf-8"))
+
+
+# Published CSS box contract for linear compositions (publish.py stylesheet):
+# card padding 16px, meta/h3/h4 margin-bottom 4px, step/stage column gap 8px,
+# container + arch-components gap 16px, connectors 24px, layered gap 20px.
+_L_PAD = 16
+_L_MARGIN = 4
+_L_GAP = 16
+_L_CONN = 24
+_L_INNER = 8
+_L_LAYER = 20
+
+
+def _deck(slides: list[dict]) -> dict:
+    raw = _raw()
+    return {
+        "meta": raw["meta"],
+        "sections": raw["sections"],
+        "number_formats": raw["number_formats"],
+        "evidence_registry": raw["evidence_registry"],
+        "slides": slides,
+    }
+
+
+def _linear_surfaces(deck: dict, *, strict: bool) -> list:
+    result = validate_handoff(deck, strict=strict)
+    plan = plan_deck(result.deck, strict=strict)
+    return [sp for sp in plan.surfaces if sp._linear_spec is not None]
+
+
+def _painted_linear_height(sp) -> float:
+    """Height the published CSS box model paints for a frozen linear plan."""
+    spec = sp._linear_spec
+    kind = spec["kind"]
+    box_w = sp._box_w
+    heading_px = sp.role_sizes["heading"]
+    detail_px = sp.role_sizes["detail"]
+    meta_px = sp.role_sizes["meta"]
+
+    def lines(text: str, px: int, width: float, *, strong: bool = False) -> int:
+        return len(_wrap_label_lines(text, px, width, strong=strong))
+
+    def card(heading, detail, h_px, d_px, inner, meta=None) -> float:
+        h = 2 * _L_PAD + _L_MARGIN + lines(heading, h_px, inner, strong=True) * _line_box(h_px)
+        if meta is not None:
+            h += _L_MARGIN + lines(str(meta), meta_px, inner, strong=True) * _line_box(meta_px)
+        if detail:
+            h += lines(detail, d_px, inner) * _line_box(d_px)
+        return h
+
+    if kind in ("process_flow", "timeline"):
+        items = spec["items"]
+        n = len(items)
+
+        def item_card(it, inner) -> float:
+            meta = str(it.get("ordinal", "")) if kind == "process_flow" else it.get("time_label")
+            return card(it["heading"], it.get("detail"), heading_px, detail_px, inner, meta=meta)
+
+        if spec.get("orientation", "horizontal") == "horizontal":
+            step_w = (box_w - (n - 1) * (2 * _L_GAP + _L_CONN)) / n
+            return max(item_card(it, step_w - 2 * _L_PAD) for it in items)
+        inner = box_w - 2 * _L_PAD
+        return sum(item_card(it, inner) for it in items) + (n - 1) * _L_CONN + (2 * n - 2) * _L_GAP
+
+    if kind == "layered_architecture":
+        layers = spec["layers"]
+        total = 0.0
+        for layer in layers:
+            comps = layer["components"]
+            col_w = (box_w - _L_GAP * (len(comps) - 1)) / len(comps)
+            layer_h = lines(layer["heading"], heading_px, box_w, strong=True) * _line_box(heading_px)
+            layer_h += _L_INNER
+            layer_h += max(
+                (card(c["heading"], c.get("detail"), heading_px, detail_px, col_w - 2 * _L_PAD)
+                 for c in comps),
+                default=0,
+            )
+            total += layer_h
+        return total + (len(layers) - 1) * _L_LAYER
+
+    stages = spec["stages"]
+    k = len(stages)
+
+    def stage(st, nxt, stage_w) -> float:
+        h = lines(st["heading"], heading_px, stage_w, strong=True) * _line_box(heading_px)
+        h += _L_MARGIN + _L_INNER
+        for c in st["components"]:
+            h += card(c["heading"], c.get("detail"), detail_px, detail_px, stage_w - 2 * _L_PAD)
+        h += _L_INNER * max(0, len(st["components"]) - 1)
+        if st.get("transfer_label"):
+            text = f"{st['heading']} to {nxt}: {st['transfer_label']}"
+            h += _L_INNER + _L_MARGIN + lines(text, meta_px, stage_w) * _line_box(meta_px)
+        return h
+
+    if spec.get("orientation", "horizontal") == "horizontal":
+        stage_w = (box_w - (k - 1) * (2 * _L_GAP + _L_CONN)) / k
+        return max(
+            stage(st, stages[i + 1]["heading"] if i + 1 < k else "", stage_w)
+            for i, st in enumerate(stages)
+        )
+    return (
+        sum(stage(st, stages[i + 1]["heading"] if i + 1 < k else "", box_w)
+            for i, st in enumerate(stages))
+        + (k - 1) * _L_CONN
+        + (2 * k - 2) * _L_GAP
+    )
+
+
+def test_linear_measure_reserves_painted_height_fixture_deck():
+    surfaces = _linear_surfaces(_raw(), strict=True)
+    seen = {sp.role: sp._linear_spec.get("orientation") for sp in surfaces}
+    assert seen == {
+        "process_flow": "horizontal",
+        "timeline": "horizontal",
+        "layered_architecture": None,
+        "data_pipeline": "horizontal",
+    }
+    for sp in surfaces:
+        ok, measured = _linear_fit_detail(sp)
+        assert ok, sp.role
+        assert measured >= _painted_linear_height(sp), sp.role
+
+
+def test_linear_measure_reserves_painted_height_vertical_deck():
+    slides = _raw()["slides"]
+    by = {s["layout_type"]: s for s in slides}
+    by["process_flow"]["payload"]["steps"] = [
+        {"step_id": f"s{i}", "heading": f"Step {i}", "detail": "Short detail."}
+        for i in range(6)
+    ]
+    by["timeline"]["payload"]["milestones"] = [
+        {"milestone_id": f"m{i}", "time_label": f"Q{i}", "heading": f"Milestone {i}"}
+        for i in range(6)
+    ]
+    by["data_pipeline"]["payload"]["stages"] = [
+        {
+            "stage_id": f"st{i}",
+            "heading": f"Stage {i}",
+            **({"transfer_label": "batch moves on"} if i < 4 else {}),
+            "components": [
+                {"component_id": f"c{i}", "heading": f"Component {i}", "detail": "Detail text."}
+            ],
+        }
+        for i in range(5)
+    ]
+    surfaces = _linear_surfaces(_deck(slides), strict=False)
+    seen = {sp.role: sp._linear_spec.get("orientation") for sp in surfaces}
+    assert seen["process_flow"] == "vertical"
+    assert seen["timeline"] == "vertical"
+    assert seen["data_pipeline"] == "vertical"
+    for sp in surfaces:
+        _ok, measured = _linear_fit_detail(sp)
+        assert measured >= _painted_linear_height(sp), sp.role
+
+
+def test_pipeline_transfer_measure_uses_painted_string():
+    heading_a = ("Ingest " + "alpha " * 10).rstrip()
+    heading_b = ("Transform " + "beta " * 10).rstrip()
+    label = ("batch " * 12).rstrip()
+    slides = _raw()["slides"]
+    dp = next(s for s in slides if s["layout_type"] == "data_pipeline")
+    dp["payload"]["stages"] = [
+        {
+            "stage_id": "a",
+            "heading": heading_a,
+            "transfer_label": label,
+            "components": [{"component_id": "c1", "heading": "Load"}],
+        },
+        {
+            "stage_id": "b",
+            "heading": heading_b,
+            "transfer_label": "curated",
+            "components": [{"component_id": "c2", "heading": "Cleanse"}],
+        },
+        {
+            "stage_id": "c",
+            "heading": "Serve",
+            "components": [{"component_id": "c3", "heading": "Dash"}],
+        },
+    ]
+    surfaces = _linear_surfaces(_deck(slides), strict=False)
+    sp = next(p for p in surfaces if p.role == "data_pipeline")
+    ok, _h = _linear_fit_detail(sp)
+    assert ok is False
+    assert sp.fallback == "accessible_ordered_flow"
+
+
+def test_vertical_pipeline_components_measured_inside_card_padding():
+    heading = ""
+    while _text_width(heading + "x ", 16, strong=True) <= 1696:
+        heading += "x "
+    heading = (heading + "x ").rstrip()
+    slides = _raw()["slides"]
+    by = {s["layout_type"]: s for s in slides}
+    by["data_pipeline"]["payload"]["stages"] = [
+        {
+            "stage_id": f"st{i}",
+            "heading": f"Stage {i}",
+            "components": [{"component_id": f"c{i}", "heading": heading}],
+        }
+        for i in range(5)
+    ]
+    surfaces = _linear_surfaces(_deck(slides), strict=False)
+    sp = next(p for p in surfaces if p.role == "data_pipeline")
+    assert sp._linear_spec["orientation"] == "vertical"
+    _ok, measured = _linear_fit_detail(sp)
+    assert measured >= _painted_linear_height(sp)
 
 
 def test_schema_artifact_matches_models():

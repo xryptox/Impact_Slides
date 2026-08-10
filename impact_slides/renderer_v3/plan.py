@@ -2714,10 +2714,10 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
             // n,
         )
         heights = []
-        for st in stages:
-            inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
+        inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
+        for i, st in enumerate(stages):
             lines, fit = _linear_lines(
-                st["heading"], heading_px, inner_w, strong=True, max_lines=3
+                st["heading"], heading_px, col_w, strong=True, max_lines=3
             )
             ok = ok and fit
             h = (
@@ -2743,8 +2743,12 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     h += len(lines) * _line_box(detail_px)
             h += LINEAR_INNER_GAP * max(0, len(st["components"]) - 1)
             if st.get("transfer_label"):
+                nxt = stages[i + 1]["heading"] if i + 1 < n else ""
                 lines, fit = _linear_lines(
-                    st["transfer_label"], meta_px, inner_w, max_lines=2
+                    f"{st['heading']} to {nxt}: {st['transfer_label']}",
+                    meta_px,
+                    col_w,
+                    max_lines=2,
                 )
                 ok = ok and fit
                 h += (
@@ -2756,7 +2760,8 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
         total = max(heights) + BLOCK_MARGIN_Y
     else:
         total = 0
-        for st in stages:
+        inner_w = max(40, box_w - 2 * LINEAR_CARD_PAD)
+        for i, st in enumerate(stages):
             lines, fit = _linear_lines(
                 st["heading"], heading_px, box_w, strong=True, max_lines=3
             )
@@ -2768,7 +2773,7 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
             )
             for c in st["components"]:
                 lines, fit = _linear_lines(
-                    c["heading"], detail_px, box_w, strong=True, max_lines=3
+                    c["heading"], detail_px, inner_w, strong=True, max_lines=3
                 )
                 ok = ok and fit
                 h += (
@@ -2778,14 +2783,18 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                 )
                 if c.get("detail"):
                     lines, fit = _linear_lines(
-                        c["detail"], detail_px, box_w, max_lines=3
+                        c["detail"], detail_px, inner_w, max_lines=3
                     )
                     ok = ok and fit
                     h += len(lines) * _line_box(detail_px)
             h += LINEAR_INNER_GAP * max(0, len(st["components"]) - 1)
             if st.get("transfer_label"):
+                nxt = stages[i + 1]["heading"] if i + 1 < n else ""
                 lines, fit = _linear_lines(
-                    st["transfer_label"], meta_px, box_w, max_lines=2
+                    f"{st['heading']} to {nxt}: {st['transfer_label']}",
+                    meta_px,
+                    box_w,
+                    max_lines=2,
                 )
                 ok = ok and fit
                 h += (
