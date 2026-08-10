@@ -1,6 +1,7 @@
 """Transactional D250 artifact publication (D112/D113/D250/D312)."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import html
 import json
@@ -17,6 +18,7 @@ from .diagnostics import (
     sort_events,
 )
 from .models import Deck
+from .plan import DeckPlan
 from .schema_export import schema_path
 from .theme import THEME_ID, generate_theme_css
 
@@ -53,8 +55,20 @@ def _slide_heading(slide: Any) -> str:
     return slide.layout_type
 
 
-def build_presentation_html(deck: Deck, *, debug: bool = False, svg_only: bool = False) -> str:
+def build_presentation_html(
+    deck: Deck,
+    *,
+    debug: bool = False,
+    svg_only: bool = False,
+    deck_plan: DeckPlan | None = None,
+    events: list[DiagnosticEvent] | None = None,
+) -> str:
     """Minimal deterministic HTML shell for kernel compositions (paint later)."""
+    plans_by_id = deck_plan.by_surface_id() if deck_plan is not None else {}
+    events_by_surface = _events_by_surface(events or [])
+    font_dir = Path(__file__).with_name("assets") / "fonts"
+    source_sans = base64.b64encode((font_dir / "source-sans-3-latin.woff2").read_bytes()).decode("ascii")
+    ibm_plex = base64.b64encode((font_dir / "ibm-plex-sans-latin.woff2").read_bytes()).decode("ascii")
     parts: list[str] = [
         "<!DOCTYPE html>",
         '<html lang="en">',
@@ -63,6 +77,7 @@ def build_presentation_html(deck: Deck, *, debug: bool = False, svg_only: bool =
         f"<title>{_escape(deck.slides[0].payload.title if hasattr(deck.slides[0].payload, 'title') else 'Impact Slides')}</title>",
         f'<meta name="generator" content="impact_slides.renderer_v3/{RENDERER_VERSION}"/>',
         f'<meta name="theme-id" content="{THEME_ID}"/>',
+        f'<meta name="design-stage" content="{1920}x{1080}"/>',
     ]
     if debug:
         parts.append('<meta name="renderer-debug" content="1"/>')
@@ -71,65 +86,230 @@ def build_presentation_html(deck: Deck, *, debug: bool = False, svg_only: bool =
     parts.extend(
         [
             "<style>",
+            f"@font-face{{font-family:'Source Sans 3';src:url(data:font/woff2;base64,{source_sans}) format('woff2');font-weight:200 900;font-style:normal}}",
+            f"@font-face{{font-family:'IBM Plex Sans';src:url(data:font/woff2;base64,{ibm_plex}) format('woff2');font-weight:100 700;font-style:normal}}",
             generate_theme_css().rstrip("\n"),
-            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy)}",
-            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always}",
+            # Fixed 1920×1080 stage; viewport may scale the stage uniformly (D68).
+            "html{width:100%;height:100%}",
+            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy);overflow:auto}",
+            ".deck-stage{width:1920px;transform-origin:top left}",
+            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);transform-origin:top left;page-break-after:always}",
             "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
-            "p,li{font-size:var(--text-body);line-height:1.4}",
+            # Spacing constants must stay aligned with plan.BLOCK_MARGIN_Y.
+            "p,ul{font-size:var(--text-body);line-height:1.4;margin:0 0 var(--space-sm);padding:0}",
+            "li{margin:0;padding:0;margin-left:1.25em}",
+            ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
+            ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
+            ".disclosures summary{padding-left:1.25em}",
+            "@media print{"
+            "details:not([open])>summary~*{display:block}"
+            "html,body{width:auto;height:auto;overflow:visible}"
+            ".deck-stage{width:1920px!important;transform:none!important}"
+            ".slide{width:1920px!important;height:1080px!important;transform:none!important;margin:0!important;page-break-after:always}"
+            "}",
             "</style>",
             "</head>",
             "<body>",
+            '<main class="deck-stage">',
         ]
     )
     for slide in deck.slides:
         sid = f"slide-{slide.slide_number}"
+        slide_diag = _diag_attrs(events_by_surface.get(sid, []))
         parts.append(
             f'<section class="slide" id="{sid}" data-layout="{slide.layout_type}" '
             f'data-slide-number="{slide.slide_number}" '
-            f'data-surface-id="{sid}" data-diagnostic-count="0">'
+            f'data-surface-id="{sid}" {slide_diag}>'
         )
-        parts.extend(_paint_slide_body(slide))
+        parts.extend(
+            _paint_slide_body(
+                slide, plans_by_id, events_by_surface, deck.evidence_registry
+            )
+        )
         notes = getattr(slide, "speaker_notes", None)
         if notes:
             parts.append(f'<aside class="notes">{_escape(notes)}</aside>')
         parts.append("</section>")
-    parts.extend(["</body>", "</html>", ""])
+    parts.extend([
+        "</main>",
+        "<script>(()=>{const s=document.querySelector('.deck-stage'),a=[...s.children];const fit=()=>{const z=Math.min(innerWidth/1920,innerHeight/1080);s.style.width=`${1920*z}px`;a.forEach(x=>{x.style.transform=`scale(${z})`;x.style.marginBottom=`${1080*(z-1)}px`})};addEventListener('resize',fit);fit()})()</script>",
+        "</body>",
+        "</html>",
+        "",
+    ])
     return "\n".join(parts)
 
 
-def _paint_slide_body(slide: Any) -> list[str]:
+def _events_by_surface(
+    events: list[DiagnosticEvent],
+) -> dict[str, list[DiagnosticEvent]]:
+    """Project plan/paint events onto surfaces by DiagnosticEvent.surface_id."""
+    out: dict[str, list[DiagnosticEvent]] = {}
+    for e in events:
+        sid = e.surface_id
+        if not sid:
+            continue
+        out.setdefault(sid, []).append(e)
+    return out
+
+
+def _diag_attrs(surface_events: list[DiagnosticEvent]) -> str:
+    """Sorted unique diagnostic codes + true count for one surface (R178-004)."""
+    codes = sorted({e.code for e in surface_events})
+    return (
+        f'data-diagnostic-codes="{_escape(",".join(codes))}" '
+        f'data-diagnostic-count="{len(surface_events)}"'
+    )
+
+
+def _plan_attrs(
+    sp: Any | None,
+    events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
+) -> str:
+    """Compact D312 data-* diagnostics from a frozen surface plan."""
+    events_by_surface = events_by_surface or {}
+    if sp is None:
+        return 'data-diagnostic-count="0"'
+    sizes = ",".join(f"{k}:{sp.role_sizes[k]}" for k in sorted(sp.role_sizes))
+    adap = ",".join(sp.adaptation_codes)
+    diag = _diag_attrs(events_by_surface.get(sp.surface_id, []))
+    bits = [
+        f'data-surface-id="{_escape(sp.surface_id)}"',
+        f'data-plan-sizes="{_escape(sizes)}"',
+        f'data-plan-adaptations="{_escape(adap)}"',
+        diag,
+    ]
+    return " ".join(bits)
+
+
+def _style_font(px: int | None) -> str:
+    if px is None:
+        return ""
+    return f' style="font-size:{px}px"'
+
+
+def _paint_slide_body(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
+    evidence_registry: dict[str, Any] | None = None,
+) -> list[str]:
+    events_by_surface = events_by_surface or {}
+    evidence_registry = evidence_registry or {}
     lt = slide.layout_type
     out: list[str] = []
+    sn = slide.slide_number
     if lt in ("opening_cover", "closing_cover"):
         p = slide.payload
-        out.append(f"<h1>{_escape(p.title)}</h1>")
+        sp = plans_by_id.get(f"slide-{sn}-cover")
+        title_px = sp.role_sizes.get("title") if sp else None
+        sub_px = sp.role_sizes.get("subtitle") if sp else None
+        meta_px = sp.role_sizes.get("meta") if sp else None
+        out.append(
+            f'<div class="cover" {_plan_attrs(sp, events_by_surface)}>'  # one cover surface
+        )
+        out.append(f"<h1{_style_font(title_px)}>{_soft_break_html(p.title)}</h1>")
         if p.subtitle:
-            out.append(f"<p class=\"subtitle\">{_escape(p.subtitle)}</p>")
+            out.append(
+                f'<p class="subtitle"{_style_font(sub_px)}>{_soft_break_html(p.subtitle)}</p>'
+            )
         if p.period_label:
-            out.append(f"<p class=\"period\">{_escape(p.period_label)}</p>")
+            out.append(
+                f'<p class="period"{_style_font(meta_px)}>{_soft_break_html(p.period_label)}</p>'
+            )
         if p.date_label:
-            out.append(f"<p class=\"date\">{_escape(p.date_label)}</p>")
+            out.append(
+                f'<p class="date"{_style_font(meta_px)}>{_soft_break_html(p.date_label)}</p>'
+            )
+        out.append("</div>")
         return out
     if lt == "narrative":
-        out.append(f"<h1>{_escape(slide.title)}</h1>")
+        title_sp = plans_by_id.get(f"slide-{sn}-title")
+        title_px = title_sp.role_sizes.get("title") if title_sp else None
+        out.append(
+            f'<h1 {_plan_attrs(title_sp, events_by_surface)}{_style_font(title_px)}>{_soft_break_html(slide.title)}</h1>'
+        )
         if slide.content is not None:
-            out.append(f"<p class=\"subtitle\">{_escape(slide.content.subtitle)}</p>")
+            sub_sp = plans_by_id.get(f"slide-{sn}-subtitle")
+            sub_px = sub_sp.role_sizes.get("subtitle") if sub_sp else None
+            out.append(
+                f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
+                f"{_soft_break_html(slide.content.subtitle)}</p>"
+            )
         for block in slide.payload.blocks:
             bid = block.block_id
+            surface_id = f"slide-{sn}-block-{bid}"
+            bsp = plans_by_id.get(surface_id)
+            body_px = bsp.role_sizes.get("body") if bsp else None
+            attrs = _plan_attrs(bsp, events_by_surface)
+            style = _style_font(body_px)
             if block.type == "paragraphs":
+                out.append(
+                    f'<div class="paragraphs" data-block-id="{_escape(bid)}" {attrs}{style}>'
+                )
                 for prose in block.paragraphs:
-                    out.append(
-                        f'<p data-block-id="{_escape(bid)}" data-surface-id="{_escape(bid)}">{_prose_html(prose)}</p>'
-                    )
+                    out.append(f"<p{style}>{_prose_html(prose)}</p>")
+                out.append("</div>")
             elif block.type == "bullet_list":
-                out.append(f'<ul data-block-id="{_escape(bid)}" data-surface-id="{_escape(bid)}">')
+                out.append(
+                    f'<ul data-block-id="{_escape(bid)}" {attrs}{style}>'
+                )
                 for item in block.items:
                     out.append(f"<li>{_prose_html(item)}</li>")
                 out.append("</ul>")
         if slide.takeaway is not None:
+            tsp = plans_by_id.get(f"slide-{sn}-takeaway")
+            body_px = tsp.role_sizes.get("body") if tsp else None
+            label_px = tsp.role_sizes.get("label") if tsp else None
+            out.append(f'<aside class="takeaway" {_plan_attrs(tsp, events_by_surface)} role="note">')
             out.append(
-                f'<p class="takeaway" data-role="takeaway">{_escape(slide.takeaway.text)}</p>'
+                f'<p class="takeaway-label"{_style_font(label_px)}>Key takeaway</p>'
+            )
+            out.append(
+                f'<p class="takeaway-text"{_style_font(body_px)}>' 
+                f"{_soft_break_html(slide.takeaway.text)}</p>"
+            )
+            out.append("</aside>")
+        if slide.disclosure is not None:
+            out.append('<div class="disclosures">')
+            for section in slide.disclosure.sections:
+                dsp = plans_by_id.get(
+                    f"slide-{sn}-disclosure-{section.surface_id}"
+                )
+                px = dsp.role_sizes.get("body") if dsp else None
+                out.append(
+                    f'<details id="slide-{sn}-{_escape(section.surface_id)}" '
+                    f'{_plan_attrs(dsp, events_by_surface)}>'
+                )
+                out.append(
+                    f"<summary{_style_font(px)}>{_soft_break_html(section.title)}</summary>"
+                )
+                in_list = False
+                for item in section.items:
+                    if item.kind == "bullet" and not in_list:
+                        out.append(f"<ul{_style_font(px)}>")
+                        in_list = True
+                    elif item.kind == "paragraph" and in_list:
+                        out.append("</ul>")
+                        in_list = False
+                    if item.kind == "bullet":
+                        out.append(f"<li>{_soft_break_html(item.text)}</li>")
+                    else:
+                        out.append(f"<p{_style_font(px)}>{_soft_break_html(item.text)}</p>")
+                if in_list:
+                    out.append("</ul>")
+                out.append("</details>")
+            out.append("</div>")
+        if slide.source_footer is not None:
+            fsp = plans_by_id.get(f"slide-{sn}-source-footer")
+            px = fsp.role_sizes.get("body") if fsp else None
+            names = "; ".join(
+                evidence_registry[eid].source_name for eid in slide.source_footer
+            )
+            out.append(
+                f'<footer class="source-footer" {_plan_attrs(fsp, events_by_surface)}'
+                f'{_style_font(px)}>Sources: {_soft_break_html(names)}</footer>'
             )
         return out
     out.append(f"<p>Unsupported layout in kernel paint: {_escape(lt)}</p>")
@@ -138,13 +318,40 @@ def _paint_slide_body(slide: Any) -> list[str]:
 
 def _prose_html(prose: Any) -> str:
     chunks: list[str] = []
-    for run in prose.runs:
-        text = _escape(run.text)
+    runs = list(prose.runs)
+    for i, run in enumerate(runs):
+        text = _soft_break_html(run.text)
         if run.emphasis == "strong":
             chunks.append(f"<strong>{text}</strong>")
         else:
             chunks.append(text)
+        # Plan joins runs before wrap; emit trailing <wbr> at soft-break run edges.
+        nxt = runs[i + 1].text if i + 1 < len(runs) else ""
+        if (
+            run.text
+            and run.text[-1] in _SOFT_BREAK_AFTER
+            and nxt
+            and not nxt[0].isspace()
+        ):
+            chunks.append("<wbr>")
     return "".join(chunks)
+
+
+# Must match plan._wrap_tokens soft break set (R178-029 freeze/paint parity).
+_SOFT_BREAK_AFTER = frozenset("-,:;.")
+
+
+def _soft_break_html(text: str) -> str:
+    """Escape text and insert <wbr> after plan soft-break punctuation."""
+    if not text:
+        return ""
+    parts: list[str] = []
+    n = len(text)
+    for i, ch in enumerate(text):
+        parts.append(html.escape(ch, quote=True))
+        if ch in _SOFT_BREAK_AFTER and i + 1 < n and not text[i + 1].isspace():
+            parts.append("<wbr>")
+    return "".join(parts)
 
 
 def _escape(text: str) -> str:
@@ -208,19 +415,34 @@ def build_evidence_manifest(deck: Deck) -> dict[str, Any]:
     }
 
 
-def build_slide_summaries(deck: Deck) -> list[dict[str, Any]]:
+def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    planned = deck_plan.by_surface_id() if deck_plan is not None else {}
     for slide in deck.slides:
         surface_ids: list[str] = []
         if slide.layout_type in ("opening_cover", "closing_cover"):
             surface_ids.append(f"slide-{slide.slide_number}-cover")
         elif slide.layout_type == "narrative":
-            surface_ids.extend(b.block_id for b in slide.payload.blocks)
+            # Composition-slot order: title, subtitle, blocks, takeaway, disclosure.
+            tid = f"slide-{slide.slide_number}-title"
+            if tid in planned:
+                surface_ids.append(tid)
+            if slide.content is not None:
+                surface_ids.append(f"slide-{slide.slide_number}-subtitle")
+            surface_ids.extend(
+                f"slide-{slide.slide_number}-block-{b.block_id}"
+                for b in slide.payload.blocks
+            )
             if slide.takeaway is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-takeaway")
             disclosure = getattr(slide, "disclosure", None)
             if disclosure is not None:
-                surface_ids.extend(s.surface_id for s in disclosure.sections)
+                surface_ids.extend(
+                    f"slide-{slide.slide_number}-disclosure-{s.surface_id}"
+                    for s in disclosure.sections
+                )
+            if slide.source_footer is not None:
+                surface_ids.append(f"slide-{slide.slide_number}-source-footer")
         row: dict[str, Any] = {
             "slide_number": slide.slide_number,
             "layout_type": slide.layout_type,
@@ -251,38 +473,12 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
     return rows
 
 
-def build_plans(deck: Deck) -> list[dict[str, Any]]:
-    """One plan entry per planned surface; kernel compositions use slot digests."""
-    plans: list[dict[str, Any]] = []
-    for slide in deck.slides:
-        if slide.layout_type in ("opening_cover", "closing_cover"):
-            surface_id = f"slide-{slide.slide_number}-cover"
-            plans.append(_plan_entry(surface_id, "cover", slide))
-        elif slide.layout_type == "narrative":
-            for block in slide.payload.blocks:
-                plans.append(_plan_entry(block.block_id, "narrative_block", slide))
-            if slide.takeaway is not None:
-                plans.append(
-                    _plan_entry(f"slide-{slide.slide_number}-takeaway", "takeaway", slide)
-                )
-    return plans
-
-
-def _plan_entry(surface_id: str, role: str, slide: Any) -> dict[str, Any]:
-    digest_src = f"{slide.slide_number}:{slide.layout_type}:{role}:{surface_id}"
-    digest = sha256_bytes(digest_src.encode("utf-8"))
-    return {
-        "surface_id": surface_id,
-        "role": role,
-        "semantic_digest": digest,
-        "design_stage_region": 0,
-        "role_sizes": {},
-        "adaptation_codes": [],
-        "reservations": [],
-        "fallback": None,
-        "expected_placement_classes": [],
-        "painter_plan_digest": digest,
-    }
+def build_plans(deck: Deck, deck_plan: DeckPlan | None = None) -> list[dict[str, Any]]:
+    """One plan entry per planned surface from the frozen deck plan (D69/D312)."""
+    if deck_plan is not None:
+        return deck_plan.public_plans()
+    # Fallback stub only if called without a plan (should not happen in render_deck).
+    return []
 
 
 def build_run_meta(
@@ -295,6 +491,7 @@ def build_run_meta(
     svg_only: bool,
     events: list[DiagnosticEvent],
     artifact_bytes: dict[str, bytes],
+    deck_plan: DeckPlan | None = None,
 ) -> dict[str, Any]:
     severity = {"info": 0, "warning": 0, "error": 0}
     for e in events:
@@ -319,10 +516,10 @@ def build_run_meta(
         "ok": ok,
         "options": {"strict": strict, "debug": debug, "svg_only": svg_only},
         "slide_count": len(deck.slides),
-        "slides": build_slide_summaries(deck),
+        "slides": build_slide_summaries(deck, deck_plan),
         "severity_counts": severity,
         "events": [e.model_dump(mode="json", exclude_none=True) for e in sort_events(events)],
-        "plans": build_plans(deck),
+        "plans": build_plans(deck, deck_plan),
         "static_readiness": build_static_readiness(deck),
         "artifacts": artifacts,
     }
@@ -347,9 +544,16 @@ def stage_artifacts(
     svg_only: bool,
     events: list[DiagnosticEvent],
     schema_source: Path,
+    deck_plan: DeckPlan | None = None,
 ) -> dict[str, bytes]:
     """Build all five artifact payloads in memory (bytes, UTF-8/LF)."""
-    html = build_presentation_html(deck, debug=debug, svg_only=svg_only)
+    html = build_presentation_html(
+        deck,
+        debug=debug,
+        svg_only=svg_only,
+        deck_plan=deck_plan,
+        events=events,
+    )
     notes = build_slide_notes_md(deck)
     manifest = dumps_json(build_evidence_manifest(deck))
     schema_bytes = canonical_schema_bytes(schema_source)
@@ -370,6 +574,7 @@ def stage_artifacts(
             svg_only=svg_only,
             events=events,
             artifact_bytes=partial,
+            deck_plan=deck_plan,
         )
     )
     partial["run_meta.json"] = run_meta.encode("utf-8")

@@ -75,7 +75,9 @@ def test_render_deck_publishes_exactly_five_artifacts(tmp_path: Path):
     assert result["ok"] is True
     assert result["renderer_version"] == __version__ == "3.0.0"
     assert result["handoff_schema_version"] == 1
-    assert result["severity_counts"] == {"info": 0, "warning": 0, "error": 0}
+    # D21: successful growth emits plan info events; clean = no warning/error.
+    assert result["severity_counts"]["warning"] == 0
+    assert result["severity_counts"]["error"] == 0
     assert result["errors"] == []
     for key in (
         "presentation",

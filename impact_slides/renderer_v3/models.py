@@ -163,15 +163,33 @@ class Typography(ClosedModel):
     body_font_size: Optional[int] = Field(default=None, ge=8, le=48)
     subtitle_font_size: Optional[int] = Field(default=None, ge=8, le=48)
 
+    @model_validator(mode="after")
+    def _adaptive_sync_only(self) -> Typography:
+        if self.sync_group is not None and self.mode != "adaptive":
+            raise ValueError("sync_group requires adaptive typography")
+        return self
+
 
 class SubtitleContent(ClosedModel):
     subtitle: NonEmptyStr
     typography: Optional[Typography] = None
 
+    @model_validator(mode="after")
+    def _subtitle_typography_only(self) -> SubtitleContent:
+        if self.typography and self.typography.body_font_size is not None:
+            raise ValueError("body_font_size is inapplicable to subtitle typography")
+        return self
+
 
 class Takeaway(ClosedModel):
     text: NonEmptyStr
     typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _body_typography_only(self) -> Takeaway:
+        if self.typography and self.typography.subtitle_font_size is not None:
+            raise ValueError("subtitle_font_size is inapplicable to takeaway typography")
+        return self
 
 
 class DisclosureItem(ClosedModel):
@@ -234,6 +252,12 @@ NarrativeBlock = Annotated[
 class NarrativePayload(ClosedModel):
     blocks: list[NarrativeBlock] = Field(min_length=1, max_length=4)
     typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _body_typography_only(self) -> NarrativePayload:
+        if self.typography and self.typography.subtitle_font_size is not None:
+            raise ValueError("subtitle_font_size is inapplicable to narrative typography")
+        return self
 
     @model_validator(mode="after")
     def _unique_block_ids(self) -> NarrativePayload:
@@ -384,10 +408,17 @@ class Deck(ClosedModel):
         if len(labels_norm) != len(set(labels_norm)):
             raise ValueError("section labels must be unique after normalization")
 
-        # Slide numbers unique
+        # Slide numbers and authored disclosure identities are deck-unique.
         nums = [s.slide_number for s in self.slides]
         if len(nums) != len(set(nums)):
             raise ValueError("slide_number values must be deck-unique")
+        disclosure_ids = [
+            section.surface_id
+            for slide in self.slides
+            for section in (slide.disclosure.sections if isinstance(slide, NarrativeSlide) and slide.disclosure else [])
+        ]
+        if len(disclosure_ids) != len(set(disclosure_ids)):
+            raise ValueError("disclosure surface_id values must be deck-unique")
 
         # Cover placement (D223/D268)
         openings = [

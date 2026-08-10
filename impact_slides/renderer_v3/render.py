@@ -12,6 +12,7 @@ from .diagnostics import (
     RendererValidationError,
     event,
 )
+from .plan import plan_deck
 from .publish import (
     THEME_ID,
     publish_transaction,
@@ -134,6 +135,12 @@ def render_deck(
     # validate_handoff raises RendererValidationError on failure — no writes yet.
     result = validate_handoff(raw, strict=strict)
     events = list(result.events)
+
+    # D69: freeze whole-pixel role sizes before any paint/publication.
+    # plan_deck raises RendererValidationError on strict overflow — no writes yet.
+    deck_plan = plan_deck(result.deck, strict=strict)
+    events.extend(deck_plan.events)
+
     degraded = bool(result.repaired) or any(
         e.severity in ("warning", "error") for e in events
     )
@@ -168,6 +175,7 @@ def render_deck(
         svg_only=svg_only,
         events=events,
         schema_source=schema_src,
+        deck_plan=deck_plan,
     )
     publish_transaction(out, artifacts)
 

@@ -51,14 +51,34 @@ REPAIR_CODES = frozenset(
         "repair.locator_dropped",
     }
 )
+PLAN_CODES = frozenset(
+    {
+        "plan.typography_grown",
+        "plan.synchronized",
+        "plan.geometry_reallocated",
+        "plan.gutter_reserved",
+        "plan.text_wrapped",
+        "plan.text_rotated",
+        "plan.label_repositioned",
+        "plan.chrome_deduplicated",
+        "plan.identity_selected",
+        "plan.short_label_used",
+        "plan.ticks_skipped",
+        "plan.label_ellipsized",
+        "plan.label_suppressed",
+        "plan.surface_relocated",
+        "plan.conservative_metrics",
+        "plan.unresolved_overflow",
+    }
+)
 PUBLICATION_CODES = frozenset(
     {
         "publication.transaction_failed",
         "publication.rollback_failed",
     }
 )
-# Kernel emits validation + repair + publication; plan/paint codes arrive later.
-CLOSED_CODES = VALIDATION_CODES | REPAIR_CODES | PUBLICATION_CODES
+# Kernel emits validation + repair + plan + publication; paint codes arrive later.
+CLOSED_CODES = VALIDATION_CODES | REPAIR_CODES | PLAN_CODES | PUBLICATION_CODES
 DiagnosticCode = Literal[
     "validation.schema_version",
     "validation.configuration",
@@ -92,6 +112,22 @@ DiagnosticCode = Literal[
     "repair.structure_flattened",
     "repair.chrome_omitted",
     "repair.locator_dropped",
+    "plan.typography_grown",
+    "plan.synchronized",
+    "plan.geometry_reallocated",
+    "plan.gutter_reserved",
+    "plan.text_wrapped",
+    "plan.text_rotated",
+    "plan.label_repositioned",
+    "plan.chrome_deduplicated",
+    "plan.identity_selected",
+    "plan.short_label_used",
+    "plan.ticks_skipped",
+    "plan.label_ellipsized",
+    "plan.label_suppressed",
+    "plan.surface_relocated",
+    "plan.conservative_metrics",
+    "plan.unresolved_overflow",
     "publication.transaction_failed",
     "publication.rollback_failed",
 ]

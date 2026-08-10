@@ -244,10 +244,233 @@ def _drop_unknown_object(
         )
 
 
+def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> Any:
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    out = deepcopy(raw)
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict) or slide.get("layout_type") != "narrative":
+            continue
+        surfaces = (
+            ("content", "subtitle_font_size", "body_font_size", 22, 26),
+            ("takeaway", "body_font_size", "subtitle_font_size", 22, 28),
+            ("payload", "body_font_size", "subtitle_font_size", 22, 28),
+        )
+        for owner, size_field, forbidden, floor, ceiling in surfaces:
+            surface = slide.get(owner)
+            has_typography = isinstance(surface, dict) and "typography" in surface
+            typo = surface.get("typography") if isinstance(surface, dict) else None
+            malformed = has_typography and (
+                not isinstance(typo, dict)
+                or set(typo) - {"mode", "sync_group", size_field}
+                or forbidden in typo
+                or typo.get("mode", "adaptive") not in {"adaptive", "fixed"}
+                or (
+                    "sync_group" in typo
+                    and (
+                        typo.get("mode", "adaptive") != "adaptive"
+                        or not isinstance(typo["sync_group"], str)
+                        or not typo["sync_group"].strip()
+                    )
+                )
+                or (
+                    size_field in typo
+                    and (
+                        not isinstance(typo[size_field], int)
+                        or isinstance(typo[size_field], bool)
+                        or not floor <= typo[size_field] <= ceiling
+                    )
+                )
+            )
+            if malformed:
+                del surface["typography"]
+                events.append(
+                    event(
+                        code="repair.policy_defaulted",
+                        severity="warning",
+                        phase="repair",
+                        role=owner,
+                        path=f"/slides/{i}/{owner}/typography",
+                        action="default_typography",
+                        result="defaulted",
+                        slide_number=_slide_number(slide),
+                        layout_type="narrative",
+                        expected="surface-applicable typography fields",
+                    )
+                )
+    return out
+
+
+def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
+    """D222 non-strict: drop malformed/duplicate disclosure sections; keep first.
+
+    Deck-unique surface_id is enforced by preserving the first valid section and
+    dropping later collisions diagnostically. Empty repaired disclosure is omitted.
+    """
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    out = deepcopy(raw)
+    seen_ids: set[str] = set()
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict) or slide.get("layout_type") != "narrative":
+            continue
+        if "disclosure" not in slide:
+            continue
+        disc = slide.get("disclosure")
+        path_base = f"/slides/{i}/disclosure"
+        sn = _slide_number(slide)
+        if disc is None or not isinstance(disc, dict) or not isinstance(disc.get("sections"), list):
+            del slide["disclosure"]
+            events.append(
+                event(
+                    code="repair.item_dropped",
+                    severity="warning",
+                    phase="repair",
+                    role="disclosure",
+                    path=path_base,
+                    action="drop_field",
+                    result="dropped",
+                    slide_number=sn,
+                    layout_type="narrative",
+                    expected="disclosure object with 1-4 valid sections",
+                )
+            )
+            continue
+        kept: list[dict[str, Any]] = []
+        seen_titles: set[str] = set()
+        for j, section in enumerate(disc["sections"]):
+            if len(kept) >= 4:
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="disclosure",
+                        path=f"{path_base}/sections/{j}",
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=sn,
+                        layout_type="narrative",
+                        expected="at most 4 disclosure sections",
+                    )
+                )
+                continue
+            spath = f"{path_base}/sections/{j}"
+            if not isinstance(section, dict):
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="disclosure",
+                        path=spath,
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=sn,
+                        layout_type="narrative",
+                        expected="disclosure section object",
+                    )
+                )
+                continue
+            sid = section.get("surface_id")
+            title = section.get("title")
+            items = section.get("items")
+            valid_shape = (
+                isinstance(sid, str)
+                and bool(sid.strip())
+                and isinstance(title, str)
+                and bool(title.strip())
+                and isinstance(items, list)
+                and 1 <= len(items) <= 6
+                and all(
+                    isinstance(it, dict)
+                    and it.get("kind") in {"paragraph", "bullet"}
+                    and isinstance(it.get("text"), str)
+                    and bool(it["text"].strip())
+                    for it in items
+                )
+            )
+            if not valid_shape:
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="disclosure",
+                        path=spath,
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=sn,
+                        layout_type="narrative",
+                        expected="deck-unique surface_id, title, 1-6 plain items",
+                    )
+                )
+                continue
+            title_key = title.casefold()
+            if sid in seen_ids:
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="disclosure",
+                        path=spath,
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=sn,
+                        layout_type="narrative",
+                        expected="deck-unique disclosure surface_id",
+                        input_meta={"surface_id": sid},
+                    )
+                )
+                continue
+            if title_key in seen_titles:
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="disclosure",
+                        path=spath,
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=sn,
+                        layout_type="narrative",
+                        expected="normalized-unique disclosure title",
+                        input_meta={"title": title},
+                    )
+                )
+                continue
+            seen_ids.add(sid)
+            seen_titles.add(title_key)
+            kept.append(section)
+        if not kept:
+            del slide["disclosure"]
+            events.append(
+                event(
+                    code="repair.item_dropped",
+                    severity="warning",
+                    phase="repair",
+                    role="disclosure",
+                    path=path_base,
+                    action="drop_field",
+                    result="dropped",
+                    slide_number=sn,
+                    layout_type="narrative",
+                    expected="at least one valid disclosure section",
+                )
+            )
+        else:
+            slide["disclosure"] = {"sections": kept}
+    return out
+
+
 # Closed registry: name → transform (D123).
 REPAIR_REGISTRY: dict[str, RepairFn] = {
     "assume_schema_v1": assume_schema_v1,
     "drop_unknown_fields": drop_unknown_fields,
+    "discard_inapplicable_typography": discard_inapplicable_typography,
+    "repair_disclosure_sections": repair_disclosure_sections,
 }
 
 
@@ -259,6 +482,6 @@ def apply_allowlisted_repairs(raw: Any) -> tuple[Any, list[DiagnosticEvent]]:
     """
     events: list[DiagnosticEvent] = []
     current = raw
-    for name in ("assume_schema_v1", "drop_unknown_fields"):
+    for name in REPAIR_REGISTRY:
         current = REPAIR_REGISTRY[name](current, events)
     return current, events
