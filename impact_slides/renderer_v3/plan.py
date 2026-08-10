@@ -90,6 +90,7 @@ LINEAR_DETAIL_PX: Final = 16
 LINEAR_META_PX: Final = 14  # step numbers / time labels
 LINEAR_GAP: Final = 16
 LINEAR_CARD_PAD: Final = 16
+LINEAR_CARD_MARGIN: Final = 4
 LINEAR_CONNECTOR_H: Final = 24
 LINEAR_INNER_GAP: Final = 8
 LINEAR_LAYER_GAP: Final = 20
@@ -2621,7 +2622,7 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     )
                     ok = ok and fit
                     h += len(lines) * _line_box(detail_px)
-                h += LINEAR_CARD_PAD
+                h += LINEAR_CARD_PAD + 2 * LINEAR_CARD_MARGIN
                 heights.append(h)
             total = max(heights) + LINEAR_CONNECTOR_H + BLOCK_MARGIN_Y
         else:
@@ -2651,7 +2652,12 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     )
                     ok = ok and fit
                     h += len(lines) * _line_box(detail_px)
-                h += LINEAR_CARD_PAD + LINEAR_CONNECTOR_H + 2 * LINEAR_GAP
+                h += (
+                    LINEAR_CARD_PAD
+                    + 2 * LINEAR_CARD_MARGIN
+                    + LINEAR_CONNECTOR_H
+                    + 2 * LINEAR_GAP
+                )
                 total += h
             total = total - LINEAR_CONNECTOR_H - 2 * LINEAR_GAP + BLOCK_MARGIN_Y
         if not ok:
@@ -2677,7 +2683,7 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     c["heading"], heading_px, inner_w, strong=True, max_lines=3
                 )
                 ok = ok and fit
-                ch += len(lines) * _line_box(heading_px)
+                ch += len(lines) * _line_box(heading_px) + LINEAR_CARD_MARGIN
                 if c.get("detail"):
                     lines, fit = _linear_lines(
                         c["detail"], detail_px, inner_w, max_lines=4
@@ -2710,61 +2716,84 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
         heights = []
         for st in stages:
             inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
-            h = LINEAR_CARD_PAD
             lines, fit = _linear_lines(
                 st["heading"], heading_px, inner_w, strong=True, max_lines=3
             )
             ok = ok and fit
-            h += len(lines) * _line_box(heading_px) + LINEAR_INNER_GAP
+            h = (
+                len(lines) * _line_box(heading_px)
+                + LINEAR_CARD_MARGIN
+                + LINEAR_INNER_GAP
+            )
             for c in st["components"]:
                 lines, fit = _linear_lines(
                     c["heading"], detail_px, inner_w, strong=True, max_lines=3
                 )
                 ok = ok and fit
-                h += len(lines) * _line_box(detail_px)
+                h += (
+                    2 * LINEAR_CARD_PAD
+                    + LINEAR_CARD_MARGIN
+                    + len(lines) * _line_box(detail_px)
+                )
                 if c.get("detail"):
                     lines, fit = _linear_lines(
                         c["detail"], detail_px, inner_w, max_lines=3
                     )
                     ok = ok and fit
                     h += len(lines) * _line_box(detail_px)
+            h += LINEAR_INNER_GAP * max(0, len(st["components"]) - 1)
             if st.get("transfer_label"):
                 lines, fit = _linear_lines(
                     st["transfer_label"], meta_px, inner_w, max_lines=2
                 )
                 ok = ok and fit
-                h += LINEAR_INNER_GAP + len(lines) * _line_box(meta_px)
-            h += LINEAR_CARD_PAD
+                h += (
+                    LINEAR_INNER_GAP
+                    + LINEAR_CARD_MARGIN
+                    + len(lines) * _line_box(meta_px)
+                )
             heights.append(h)
         total = max(heights) + BLOCK_MARGIN_Y
     else:
         total = 0
         for st in stages:
-            h = LINEAR_CARD_PAD
             lines, fit = _linear_lines(
                 st["heading"], heading_px, box_w, strong=True, max_lines=3
             )
             ok = ok and fit
-            h += len(lines) * _line_box(heading_px) + LINEAR_INNER_GAP
+            h = (
+                len(lines) * _line_box(heading_px)
+                + LINEAR_CARD_MARGIN
+                + LINEAR_INNER_GAP
+            )
             for c in st["components"]:
                 lines, fit = _linear_lines(
                     c["heading"], detail_px, box_w, strong=True, max_lines=3
                 )
                 ok = ok and fit
-                h += len(lines) * _line_box(detail_px)
+                h += (
+                    2 * LINEAR_CARD_PAD
+                    + LINEAR_CARD_MARGIN
+                    + len(lines) * _line_box(detail_px)
+                )
                 if c.get("detail"):
                     lines, fit = _linear_lines(
                         c["detail"], detail_px, box_w, max_lines=3
                     )
                     ok = ok and fit
                     h += len(lines) * _line_box(detail_px)
+            h += LINEAR_INNER_GAP * max(0, len(st["components"]) - 1)
             if st.get("transfer_label"):
                 lines, fit = _linear_lines(
                     st["transfer_label"], meta_px, box_w, max_lines=2
                 )
                 ok = ok and fit
-                h += LINEAR_INNER_GAP + len(lines) * _line_box(meta_px)
-            h += LINEAR_CARD_PAD + LINEAR_CONNECTOR_H + 2 * LINEAR_GAP
+                h += (
+                    LINEAR_INNER_GAP
+                    + LINEAR_CARD_MARGIN
+                    + len(lines) * _line_box(meta_px)
+                )
+            h += LINEAR_CONNECTOR_H + 2 * LINEAR_GAP
             total += h
         total = total - LINEAR_CONNECTOR_H - 2 * LINEAR_GAP + BLOCK_MARGIN_Y
     if not ok:

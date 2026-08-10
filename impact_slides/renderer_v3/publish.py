@@ -185,6 +185,7 @@ def build_presentation_html(
             ".process-flow.horizontal,.timeline.horizontal,.data-pipeline.horizontal{flex-direction:row}",
             ".process-flow.vertical,.timeline.vertical,.data-pipeline.vertical{flex-direction:column}",
             ".process-step,.timeline-milestone,.pipeline-stage{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px}",
+            ".pipeline-stage h3{margin:0 0 4px;font-weight:var(--font-weight-emphasis)}",
             ".linear-card{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:16px;box-sizing:border-box;min-width:0}",
             ".linear-card h3,.linear-card h4{margin:0 0 4px;font-size:inherit;font-weight:var(--font-weight-emphasis)}",
             ".linear-meta{margin:0 0 4px;font-weight:var(--font-weight-emphasis);letter-spacing:0.04em}",
