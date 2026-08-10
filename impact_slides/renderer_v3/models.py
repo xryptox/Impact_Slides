@@ -910,6 +910,15 @@ class ValueAxis(ClosedModel):
                 raise ValueError("leading_break requires generated domain min")
             if Decimal(self.domain.min) >= Decimal(self.leading_break.to):
                 raise ValueError("leading_break requires min < to")
+        if self.leading_break is not None and self.domain.kind == "fixed":
+            if not any(
+                Decimal(t) == Decimal(self.leading_break.to)
+                for t in self.domain.ticks
+            ):
+                raise ValueError(
+                    "leading_break with a fixed domain requires a fixed tick"
+                    " equal to leading_break.to (D157/D159)"
+                )
         return self
 
 
@@ -1027,7 +1036,9 @@ def _finite_values(chart: Any) -> list[Decimal]:
     return out
 
 
-def _leading_break_rules(chart: Any, *, allow: bool) -> None:
+def _leading_break_rules(
+    chart: Any, *, allow: bool, positive_only: bool = False
+) -> None:
     br = chart.value_axes.primary.leading_break
     if br is None:
         return
@@ -1042,7 +1053,7 @@ def _leading_break_rules(chart: Any, *, allow: bool) -> None:
     if any(v <= target for v in finite):
         # D157/D243: every finite value lies beyond the break target.
         raise ValueError("leading_break.to must be below every finite value")
-    if any(v <= 0 for v in finite):
+    if positive_only and any(v <= 0 for v in finite):
         raise ValueError(
             "leading_break requires every finite value on the positive side (D243)"
         )
@@ -1289,7 +1300,7 @@ class HorizontalBarChartVisual(ClosedModel):
                     f"series {s.series_id!r} requires at least one finite value"
                 )
         _common_chart_heading_rules(self)
-        _leading_break_rules(self, allow=True)
+        _leading_break_rules(self, allow=True, positive_only=True)
         _bar_domain_includes_zero(self)
         _domain_contains_finite(self)
         _validate_category_groups(self)

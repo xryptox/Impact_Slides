@@ -2487,8 +2487,10 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
     else:
         scales = {"x": cat_scale, "y": value_scale}
         index_axis = "x"
+    base_v = vis_min if leading is not None else 0.0
     for ds in datasets:
         ds["indexAxis"] = index_axis
+        ds["base"] = base_v
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},

@@ -52,6 +52,14 @@ def _chart_slide(raw: dict) -> dict:
     return next(s for s in raw["slides"] if s.get("layout_type") == "single_chart")
 
 
+def _contracts(excinfo: pytest.ExceptionInfo) -> list[str]:
+    return [
+        ev.expected.contract
+        for ev in excinfo.value.events
+        if ev.expected is not None and ev.expected.contract
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Validation / model
 # ---------------------------------------------------------------------------
@@ -107,6 +115,106 @@ def test_strict_rejects_hbar_mixed_sign_with_break():
     vis["chart_data"]["series"][0]["values"] = ["62.5", "-5.0", "55.2", "50.0"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
+
+
+def test_strict_rejects_hbar_nonpositive_side_with_break():
+    raw = _h()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "min": "-20",
+        "target_ticks": 5,
+    }
+    vis["value_axes"]["primary"]["leading_break"] = {"to": "-10"}
+    vis["chart_data"]["series"][0]["values"] = ["-5.0", "48.0", "55.2", "50.0"]
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    assert any("positive side" in c for c in _contracts(excinfo))
+
+
+def test_line_leading_break_allows_negative_values():
+    raw = json.loads(LINE.read_text(encoding="utf-8"))
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["chart_data"]["series"][0]["values"] = ["-8.0", "-7.0", None, "-2.0"]
+    vis["chart_data"]["series"][1]["values"] = ["-6.0", "-5.0", "-4.0", "-3.0"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "min": "-20",
+        "target_ticks": 5,
+    }
+    vis["value_axes"]["primary"]["leading_break"] = {"to": "-10"}
+    assert validate_handoff(raw, strict=True).ok
+
+
+def test_line_leading_break_error_never_cites_d243():
+    raw = json.loads(LINE.read_text(encoding="utf-8"))
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "min": "-20",
+        "target_ticks": 5,
+    }
+    vis["value_axes"]["primary"]["leading_break"] = {"to": "10"}
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    contracts = _contracts(excinfo)
+    assert any("below every finite value" in c for c in contracts)
+    assert not any("D243" in c for c in contracts)
+
+
+def test_hbar_fixed_domain_break_requires_tick_at_break_to():
+    raw = _h()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "80",
+        "ticks": ["0", "20", "60", "80"],
+    }
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    assert any("fixed tick" in c for c in _contracts(excinfo))
+
+
+def test_hbar_fixed_domain_break_with_tick_at_to_plans():
+    raw = _h()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "80",
+        "ticks": ["0", "20", "40", "60", "80"],
+    }
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["net-share"].chart_paint
+    assert cp["geometry"]["zero_x"] == pytest.approx(cp["geometry"]["pad_l"], abs=0.5)
+
+
+def test_line_fixed_domain_break_requires_tick_at_break_to():
+    raw = json.loads(LINE.read_text(encoding="utf-8"))
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "8",
+        "ticks": ["0", "2", "4", "6", "8"],
+    }
+    vis["value_axes"]["primary"]["leading_break"] = {"to": "1"}
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_line_fixed_domain_break_with_tick_at_to_validates():
+    raw = json.loads(LINE.read_text(encoding="utf-8"))
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "8",
+        "ticks": ["0", "1", "2", "4", "6", "8"],
+    }
+    vis["value_axes"]["primary"]["leading_break"] = {"to": "1"}
+    assert validate_handoff(raw, strict=True).ok
 
 
 def test_strict_rejects_overlapping_category_groups():
@@ -379,7 +487,7 @@ def test_chartjs_bar_area_pinned_to_frozen_plot(fixture, surface_id, tmp_path: P
     cluster = datasets[0]["categoryPercentage"] * pitch
     slot = cluster / n_ser
     bar_w = datasets[0]["barPercentage"] * slot
-    baseline = v_min if v_min > 0 else (v_max if v_max < 0 else 0.0)
+    baseline = float(datasets[0].get("base", 0.0))
 
     def value_px(v: float) -> float:
         if horizontal:
