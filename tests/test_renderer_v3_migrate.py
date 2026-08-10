@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -298,11 +300,17 @@ def test_cli_check_and_migrate(tmp_path: Path, capsys: pytest.CaptureFixture[str
 
 
 def test_no_hidden_production_path():
-    """Renderer package must not call migrate during render (D119)."""
-    import impact_slides.renderer_v3.render as render_mod
-    import impact_slides.renderer_v3.validate as validate_mod
-
-    render_src = Path(render_mod.__file__).read_text(encoding="utf-8")
-    validate_src = Path(validate_mod.__file__).read_text(encoding="utf-8")
-    assert "migrate" not in render_src
-    assert "migrate" not in validate_src
+    """Importing render/validate must not pull in the migrate module (D119)."""
+    code = (
+        "import sys\n"
+        "import impact_slides.renderer_v3.render\n"
+        "import impact_slides.renderer_v3.validate\n"
+        "assert 'impact_slides.renderer_v3.migrate' not in sys.modules\n"
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr

@@ -397,12 +397,16 @@ def _table_payload_from_matrix(
     }
 
 
-def _section_id_for(slide: Mapping[str, Any], used: set[str], sections: dict[str, str]) -> str:
+def _section_id_for(
+    slide: Mapping[str, Any], used: set[str], sections: dict[str, str], *, register: bool = True
+) -> str:
     label = _text(slide.get("section")) or _text(_content(slide).get("section")) or "section"
     # Prefer existing label match
     for sid, lab in sections.items():
         if lab.casefold() == label.casefold():
             return sid
+    if not register:
+        return ""
     sid = _unique_slug(label, used, fallback=f"section-{len(used)+1}")
     sections[sid] = label
     used.add(sid)
@@ -622,9 +626,17 @@ def _convert_grouped_annex(
             sod = vs["primary_visual"].get("steps_or_data")
             if isinstance(sod, list) and sod and isinstance(sod[0], dict):
                 peers_raw = sod
+    if len(peers_raw) > 2:
+        return None, UnresolvedDecision(
+            slide_number,
+            f"{path}/visual_spec",
+            legacy_input,
+            "Proof failed: need one or two explicitly headed complete annex matrices.",
+            target="grouped_annex_table",
+        )
     peers_out: list[dict[str, Any]] = []
     if peers_raw:
-        for i, peer in enumerate(peers_raw[:2]):
+        for i, peer in enumerate(peers_raw):
             if not isinstance(peer, dict):
                 peers_out = []
                 break
@@ -1064,6 +1076,14 @@ def migrate_handoff(
     evidence_registry: dict[str, dict[str, Any]] = {}
     number_formats: dict[str, Any] = {}
 
+    for pre_slide in slides_in:
+        if not isinstance(pre_slide, dict):
+            continue
+        pre_entry = LEGACY_INVENTORY.get(_raw_layout(pre_slide))
+        if pre_entry is not None and pre_entry.target != "section_divider":
+            if _text(pre_slide.get("section")):
+                _section_id_for(pre_slide, section_ids_used, sections)
+
     unresolved: list[UnresolvedDecision] = []
     dispositions: list[SlideDisposition] = []
     out_slides: list[dict[str, Any]] = []
@@ -1115,13 +1135,13 @@ def migrate_handoff(
             )
             continue
 
-        # Pre-register section labels so dividers can resolve.
-        sec_label = _text(slide.get("section"))
-        if sec_label and entry.target != "section_divider":
-            _section_id_for(slide, section_ids_used, sections)
-
         section_id = (
-            _section_id_for(slide, section_ids_used, sections)
+            _section_id_for(
+                slide,
+                section_ids_used,
+                sections,
+                register=entry.target != "section_divider",
+            )
             if entry.classification == "deterministic"
             else ""
         )
@@ -1291,6 +1311,8 @@ def migrate_handoff(
 
     if not check and out_path is not None:
         out_path.mkdir(parents=True, exist_ok=True)
+        for stale in ("handoff_v1.json", "handoff_candidate.json"):
+            (out_path / stale).unlink(missing_ok=True)
         report = {
             "inventory": inventory_report,
             "slide_dispositions": [asdict(d) for d in dispositions],
