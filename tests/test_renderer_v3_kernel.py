@@ -339,6 +339,44 @@ def test_mutation_footer_not_subset_fails():
         validate_handoff(raw, strict=True)
 
 
+def test_whitespace_only_speaker_notes_rejected():
+    """D221: notes must be non-whitespace plain text (strict and non-strict)."""
+    raw = _minimal()
+    raw["slides"][1]["speaker_notes"] = "  \n\t  "
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=False)
+
+
+def test_duplicate_footer_visible_names_rejected_strict():
+    """D217: source_footer visible source_name values must be normalized-unique."""
+    raw = _minimal()
+    raw["evidence_registry"]["src-alt"] = {"source_name": "Board pack Q4"}
+    raw["slides"][1]["evidence_ids"] = ["src-board-pack", "src-alt"]
+    raw["slides"][1]["source_footer"] = ["src-board-pack", "src-alt"]
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    assert any(
+        e.code in {"validation.value", "validation.identity", "validation.conflict"}
+        for e in ei.value.events
+    )
+
+
+def test_nonstrict_drops_later_duplicate_footer_names():
+    """D217 non-strict: keep first footer ID, drop later duplicate visible names."""
+    raw = _minimal()
+    raw["evidence_registry"]["src-alt"] = {"source_name": "board pack q4"}
+    raw["slides"][1]["evidence_ids"] = ["src-board-pack", "src-alt"]
+    raw["slides"][1]["source_footer"] = ["src-board-pack", "src-alt"]
+    result = validate_handoff(raw, strict=False)
+    assert result.deck.slides[1].source_footer == ["src-board-pack"]
+    assert any(
+        e.code == "repair.item_dropped" and e.role == "source_footer"
+        for e in result.events
+    )
+
+
 def test_raw_dict_not_attached_to_result():
     raw = _minimal()
     raw_id = id(raw)

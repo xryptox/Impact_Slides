@@ -123,6 +123,13 @@ class EvidenceEntry(ClosedModel):
     source_name: NonEmptyStr
     locator: Optional[dict[str, Any]] = None
 
+    @field_validator("source_name")
+    @classmethod
+    def _source_name_non_whitespace(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("source_name must be non-whitespace")
+        return v
+
     @field_validator("locator")
     @classmethod
     def _locator_is_json_object(cls, v: Any) -> Any:
@@ -291,6 +298,14 @@ class _SlideBase(ClosedModel):
     payload: Any  # narrowed per subclass
     speaker_notes: Optional[NonEmptyStr] = None
     evidence_ids: Optional[list[SemanticId]] = Field(default=None, min_length=1)
+
+    @field_validator("speaker_notes")
+    @classmethod
+    def _notes_non_whitespace(cls, v: Optional[str]) -> Optional[str]:
+        # D221: empty/whitespace-only notes fail; never strip or invent content.
+        if v is not None and not v.strip():
+            raise ValueError("speaker_notes must be non-whitespace plain text")
+        return v
 
 
 class OpeningCoverSlide(_SlideBase):
@@ -466,6 +481,18 @@ class Deck(ClosedModel):
                 if eid not in self.evidence_registry:
                     raise ValueError(f"unresolved evidence id {eid!r}")
                 referenced.add(eid)
+            footer = getattr(s, "source_footer", None)
+            if footer:
+                names = [
+                    self.evidence_registry[eid].source_name.casefold()
+                    for eid in footer
+                    if eid in self.evidence_registry
+                ]
+                if len(names) != len(set(names)):
+                    raise ValueError(
+                        "source_footer visible source_name values must be "
+                        "normalized-unique"
+                    )
         unused_ev = [k for k in self.evidence_registry if k not in referenced]
         if unused_ev:
             raise ValueError(f"unused evidence entries: {unused_ev}")
