@@ -356,11 +356,11 @@ def test_table_sync_group_uses_grid_fit_not_prose():
     # Wide sibling: many fat numeric columns force a lower independent size.
     wide_cols = [
         {"column_id": f"c{i}", "label": f"Metric {i}", "short_label": f"M{i}"}
-        for i in range(8)
+        for i in range(12)
     ]
     wide_cells = {
         f"c{i}": {"type": "number", "value": "1234567.8", "format_id": "usd_1"}
-        for i in range(8)
+        for i in range(12)
     }
     wide_slide = {
         "slide_number": 3,
@@ -391,19 +391,54 @@ def test_table_sync_group_uses_grid_fit_not_prose():
     raw["slides"][3]["slide_number"] = 4
 
     deck = validate_handoff(raw, strict=True).deck
+    from impact_slides.renderer_v3.plan import _table_fit_detail
+
+    # Independent measure: compact fits 24; 12 fat cols fail grid at 24, fit at 20+.
+    compact_only = validate_handoff(_table_raw(), strict=True).deck
+    compact_plan = plan_deck(compact_only, strict=True)
+    compact_sp = next(s for s in compact_plan.surfaces if s.role == "data_table")
+    compact_indep = compact_sp.role_sizes["table"]
+    assert compact_indep == 24
+
+    wide_only_raw = _table_raw()
+    wide_only_raw["number_formats"] = {
+        k: v
+        for k, v in wide_only_raw["number_formats"].items()
+        if k == "usd_1"
+    }
+    wide_only_raw["slides"][1] = {
+        **wide_slide,
+        "slide_number": 2,
+        "payload": {
+            "table": {
+                **wide_slide["payload"]["table"],
+                "typography": {"mode": "adaptive"},
+            }
+        },
+    }
+    wide_only = validate_handoff(wide_only_raw, strict=True).deck
+    wide_plan = plan_deck(wide_only, strict=True)
+    wide_sp = next(s for s in wide_plan.surfaces if s.role == "data_table")
+    wide_indep = wide_sp.role_sizes["table"]
+    assert wide_indep < compact_indep
+    assert not _table_fit_detail(
+        dict(wide_sp.table_paint), compact_indep, wide_sp._box_w, wide_sp._box_h
+    )[0]
+    assert _table_fit_detail(
+        dict(wide_sp.table_paint), wide_indep, wide_sp._box_w, wide_sp._box_h
+    )[0]
+
     plan = plan_deck(deck, strict=True)
     tables = [s for s in plan.surfaces if s.role == "data_table"]
     assert len(tables) == 2
     sizes = {s.surface_id: s.role_sizes["table"] for s in tables}
-    assert sizes["seg-perf"] == sizes["wide-perf"]
+    assert sizes["seg-perf"] == sizes["wide-perf"] == wide_indep
     for sp in tables:
         assert not sp._overflow
         assert sp.table_paint is not None
         assert sp.table_paint["col_widths"]
         # Frozen paint widths must still hold every value at the synced size.
         px = sp.role_sizes["table"]
-        from impact_slides.renderer_v3.plan import _table_fit_detail
-
         ok, _, _ = _table_fit_detail(
             dict(sp.table_paint), px, sp._box_w, sp._box_h
         )

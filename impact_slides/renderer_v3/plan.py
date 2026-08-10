@@ -1408,16 +1408,13 @@ def _table_fit_detail(
         total = sum(mins)
         if total > box_w:
             return None
-        # Distribute leftover to text-heavy (stub) first, then headers.
-        leftover = box_w - total
-        widths = [int(round(m)) for m in mins]
-        # Fix rounding drift.
-        drift = box_w - sum(widths)
+        # Ceil so value cells never lose the fractional px that round drops (D70).
+        widths = [int(math.ceil(m)) for m in mins]
+        if sum(widths) > box_w:
+            # Float mins fit but integer floors do not — try label adaptations.
+            return None
+        # Give leftover to the stub column.
         if widths:
-            widths[0] += drift
-        if leftover > 0:
-            widths[0] += int(leftover)
-            # re-fix after leftover to stub
             widths[0] += box_w - sum(widths)
         return widths
 
