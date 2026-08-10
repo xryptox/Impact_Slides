@@ -1442,14 +1442,14 @@ def _table_fit_detail(
             if groups is None
             else [g["short_label"] for g in groups]
         )
-        # Values keep mins when they fit; otherwise equal-split the floor box.
-        value_total = sum(int(math.ceil(v)) for v in value_mins)
-        remaining = box_w - value_total
-        if remaining >= total_cols:
-            stub_w = max(1, remaining // 2)
-            widths = [stub_w] + [int(math.ceil(v)) for v in value_mins]
-            widths[0] += box_w - sum(widths)
-        if widths is None or widths[0] < 1:
+        # Values keep ceil mins whenever they fit the box; leftover may be
+        # only a few px on the stub (labels ellipsize). Equal-split only when
+        # value ceils alone exceed box_w.
+        value_ceils = [int(math.ceil(v)) for v in value_mins]
+        value_total = sum(value_ceils)
+        if value_total <= box_w:
+            widths = [box_w - value_total] + value_ceils
+        else:
             base = max(1, box_w // total_cols)
             widths = [base] * total_cols
             widths[0] += box_w - sum(widths)

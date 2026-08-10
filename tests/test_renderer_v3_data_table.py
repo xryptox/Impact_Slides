@@ -345,6 +345,45 @@ def test_byte_identical_rerun(tmp_path: Path):
         assert (a / name).read_bytes() == (b / name).read_bytes()
 
 
+def test_ellipsis_pack_keeps_value_ceil_widths_when_float_mins_fit():
+    """Value-feasible tables must not false-overflow after integer packing."""
+    from impact_slides.renderer_v3.plan import CONTENT_W, TABLE_CELL_PAD_X, _table_fit_detail, _text_width
+
+    px = 20
+    n = 18
+    cell = "$100,000"
+    # Float value mins fit CONTENT_W; ceil leftover is smaller than total_cols.
+    assert sum(_text_width(cell, px) + TABLE_CELL_PAD_X for _ in range(n)) <= CONTENT_W
+    spec = {
+        "n_cols": n,
+        "n_rows": 1,
+        "header_full": ["S"] + [f"C{i}" for i in range(n)],
+        "header_short": ["S"] + [f"C{i}" for i in range(n)],
+        "row_labels_full": ["R"],
+        "row_labels_short": ["R"],
+        "cells_vis": [[cell] * n],
+        "cells_acc": [[cell] * n],
+        "cells_role": [["metric"] * n],
+        "cells_align": [["right"] * n],
+        "col_ids": [f"c{i}" for i in range(n)],
+        "groups": None,
+        "scale_labels": [],
+        "col_widths": [],
+        "display_headers": None,
+        "display_row_labels": None,
+        "display_groups": None,
+        "ellipsized": False,
+        "short_label_used": False,
+        "all_texts": [],
+    }
+    ok, codes, _h = _table_fit_detail(spec, px, CONTENT_W, 10**9)
+    assert ok, codes
+    assert len(spec["col_widths"]) == n + 1
+    assert sum(spec["col_widths"]) == CONTENT_W
+    for c in range(n):
+        assert _text_width(cell, px) <= spec["col_widths"][c + 1] - TABLE_CELL_PAD_X
+
+
 def test_table_sync_group_uses_grid_fit_not_prose():
     """Synced tables must share a size every grid can fit (D69/D70)."""
     raw = _table_raw()
