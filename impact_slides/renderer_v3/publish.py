@@ -101,6 +101,8 @@ def build_presentation_html(
             "li{margin:0;padding:0;margin-left:1.25em}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
             ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
+            ".disclosures summary{padding-left:1.25em}",
+            "@media print{details:not([open])>summary~*{display:block}}",
             "</style>",
             "</head>",
             "<body>",
@@ -403,7 +405,12 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                 surface_ids.append(f"slide-{slide.slide_number}-takeaway")
             disclosure = getattr(slide, "disclosure", None)
             if disclosure is not None:
-                surface_ids.extend(s.surface_id for s in disclosure.sections)
+                surface_ids.extend(
+                    f"slide-{slide.slide_number}-disclosure-{s.surface_id}"
+                    for s in disclosure.sections
+                )
+            if slide.source_footer is not None:
+                surface_ids.append(f"slide-{slide.slide_number}-source-footer")
         row: dict[str, Any] = {
             "slide_number": slide.slide_number,
             "layout_type": slide.layout_type,

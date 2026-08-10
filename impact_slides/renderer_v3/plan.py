@@ -51,6 +51,7 @@ TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
 TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
 TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
 LIST_INDENT_EM: Final = 1.25
+DISCLOSURE_INDENT_EM: Final = 1.25
 _METRIC_CHARS: Final = ''.join(chr(i) for i in range(32, 127))
 _SOURCE_SANS_ADVANCES: Final = {
     400: dict(zip(_METRIC_CHARS, (0.2,0.289,0.426,0.497,0.497,0.824,0.609,0.249,0.303,0.303,0.418,0.497,0.249,0.311,0.249,0.35,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.249,0.249,0.497,0.497,0.497,0.425,0.847,0.543,0.588,0.571,0.615,0.527,0.494,0.617,0.652,0.263,0.479,0.579,0.486,0.727,0.647,0.664,0.566,0.664,0.569,0.534,0.536,0.645,0.515,0.786,0.513,0.476,0.539,0.303,0.35,0.303,0.497,0.5,0.542,0.504,0.553,0.456,0.555,0.496,0.292,0.504,0.544,0.246,0.247,0.495,0.255,0.829,0.547,0.542,0.555,0.555,0.347,0.419,0.338,0.544,0.467,0.719,0.446,0.467,0.425,0.303,0.241,0.303,0.497))),
@@ -449,6 +450,12 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             for section in slide.disclosure.sections:
                 items = [(section.title, True)]
                 items.extend((item.text, False) for item in section.items)
+                bullet_groups = sum(
+                    item.kind == "bullet"
+                    and (i == 0 or section.items[i - 1].kind != "bullet")
+                    for i, item in enumerate(section.items)
+                )
+                paragraph_boxes = sum(item.kind == "paragraph" for item in section.items)
                 disclosure = SurfacePlan(
                     surface_id=f"slide-{sn}-disclosure-{section.surface_id}",
                     role="disclosure",
@@ -466,7 +473,8 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _box_w=CONTENT_W,
                     _fit_role=None,
                     _mode="fixed",
-                    _margin_boxes=len(items),
+                    _margin_boxes=paragraph_boxes + bullet_groups,
+                    _indent_em=DISCLOSURE_INDENT_EM,
                 )
                 next_slot += 1
                 adaptive_surfaces.append(disclosure)
@@ -534,10 +542,19 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     ]
     floors = [need(sp, size) for sp, size in zip(surfaces, baseline_sizes)]
     remaining = max(0, available_h - sum(sp._chrome_h for sp in surfaces))
-    allocations = []
-    for height in floors:
-        allocations.append(min(remaining, height))
-        remaining -= allocations[-1]
+    allocations = [0] * len(surfaces)
+    priority = sorted(
+        range(len(surfaces)),
+        key=lambda i: (
+            surfaces[i].role not in {"takeaway", "disclosure", "source_footer"}
+            and surfaces[i]._explicit_size is None
+            and surfaces[i]._mode != "fixed",
+            i,
+        ),
+    )
+    for i in priority:
+        allocations[i] = min(remaining, floors[i])
+        remaining -= allocations[i]
 
     groups: dict[tuple[str, str], list[int]] = {}
     for i, sp in enumerate(surfaces):

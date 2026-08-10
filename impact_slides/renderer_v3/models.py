@@ -408,10 +408,17 @@ class Deck(ClosedModel):
         if len(labels_norm) != len(set(labels_norm)):
             raise ValueError("section labels must be unique after normalization")
 
-        # Slide numbers unique
+        # Slide numbers and authored disclosure identities are deck-unique.
         nums = [s.slide_number for s in self.slides]
         if len(nums) != len(set(nums)):
             raise ValueError("slide_number values must be deck-unique")
+        disclosure_ids = [
+            section.surface_id
+            for slide in self.slides
+            for section in (slide.disclosure.sections if isinstance(slide, NarrativeSlide) and slide.disclosure else [])
+        ]
+        if len(disclosure_ids) != len(set(disclosure_ids)):
+            raise ValueError("disclosure surface_id values must be deck-unique")
 
         # Cover placement (D223/D268)
         openings = [

@@ -476,6 +476,18 @@ def test_pinned_cross_role_sync_does_not_constrain_automatic_role():
     assert not any(e.code == "validation.conflict" for e in plan.events)
 
 
+def test_duplicate_disclosure_surface_ids_are_rejected():
+    raw = _minimal()
+    section = {
+        "surface_id": "terms",
+        "title": "Terms",
+        "items": [{"kind": "paragraph", "text": "Statement."}],
+    }
+    raw["slides"][1]["disclosure"] = {"sections": [section, dict(section)]}
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
 def test_common_surfaces_are_planned_and_painted(tmp_path: Path):
     raw = _minimal()
     raw["slides"][1]["disclosure"] = {
@@ -496,10 +508,16 @@ def test_common_surfaces_are_planned_and_painted(tmp_path: Path):
     assert "<details" in html
     assert "Forward-looking statement." in html
     assert "Sources: Board pack Q4" in html
+    assert "@media print{details:not([open])>summary~*{display:block}}" in html
     meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
     ids = {plan["surface_id"] for plan in meta["plans"]}
     assert "slide-2-disclosure-terms" in ids
     assert "slide-2-source-footer" in ids
+    narrative = meta["slides"][1]
+    assert narrative["surface_ids"][-2:] == [
+        "slide-2-disclosure-terms",
+        "slide-2-source-footer",
+    ]
 
 
 def test_unicode_uses_diagnosed_conservative_metrics():
