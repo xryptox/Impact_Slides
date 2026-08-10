@@ -618,7 +618,8 @@ def test_common_surfaces_are_planned_and_painted(tmp_path: Path):
     render_deck(_write(tmp_path, raw), out)
     html = (out / "presentation.html").read_text(encoding="utf-8")
     assert "<details" in html
-    assert "Forward-looking statement." in html
+    # R178-029 may insert <wbr> after hyphens/punctuation in painted text.
+    assert "Forward-looking statement." in html.replace("<wbr>", "")
     assert "Sources: Board pack Q4" in html
     assert "details:not([open])>summary~*{display:block}" in html
     assert "@media print{" in html
