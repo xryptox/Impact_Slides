@@ -10,6 +10,7 @@ Seams under test:
 from __future__ import annotations
 
 import json
+import math
 from copy import deepcopy
 from pathlib import Path
 
@@ -423,6 +424,63 @@ def test_label_line_budget_falls_through_to_short():
         assert s["short_label_used"] is True
         assert s["display_headers"] == ["Seg", "Rev", "NIM", "Opex"]
         assert "plan.short_label_used" in codes
+
+
+def test_stub_labels_use_emphasis_metrics():
+    from impact_slides.renderer_v3.plan import (
+        TABLE_CELL_PAD_X,
+        _table_fit_detail,
+        _text_width,
+    )
+
+    label = "MMMMMMMM"
+    cell = "1"
+    spec = {
+        "n_cols": 1,
+        "n_rows": 1,
+        "header_full": ["S", "A"],
+        "header_short": ["S", "A"],
+        "row_labels_full": [label],
+        "row_labels_short": [label],
+        "cells_vis": [[cell]],
+        "cells_acc": [[cell]],
+        "cells_role": [["metric"]],
+        "cells_align": [["right"]],
+        "col_ids": ["a"],
+        "groups": None,
+        "scale_labels": [],
+        "col_widths": [],
+        "display_headers": None,
+        "display_row_labels": None,
+        "display_groups": None,
+        "ellipsized": False,
+        "short_label_used": False,
+        "all_texts": [],
+    }
+    regular_only_width = math.ceil(
+        _text_width(label, 20) + TABLE_CELL_PAD_X
+    ) + math.ceil(_text_width(cell, 20) + TABLE_CELL_PAD_X)
+    assert _text_width(label, 20, strong=True) + TABLE_CELL_PAD_X > math.ceil(
+        _text_width(label, 20) + TABLE_CELL_PAD_X
+    )
+
+    ok, _, _ = _table_fit_detail(
+        spec,
+        20,
+        regular_only_width,
+        10**9,
+        allow_short=False,
+        allow_ellipsis=False,
+    )
+    assert not ok
+
+    wrapped = dict(spec)
+    wrapped["row_labels_full"] = ["Premium Card Members"]
+    wrapped["row_labels_short"] = ["Premium Card Members"]
+    ok, codes, _ = _table_fit_detail(wrapped, 20, 174, 10**9)
+    assert ok
+    assert wrapped["display_row_labels"] == ["Premium Ca…"]
+    assert "plan.label_ellipsized" in codes
 
 
 def test_table_sync_group_uses_grid_fit_not_prose():

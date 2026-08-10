@@ -1358,8 +1358,8 @@ def _table_fit_detail(
         for lab in r_labels:
             toks = _wrap_tokens(lab)
             tw = max(
-                (_text_width(tok.rstrip(), px) for _, tok in toks),
-                default=_text_width(lab, px),
+                (_text_width(tok.rstrip(), px, strong=True) for _, tok in toks),
+                default=_text_width(lab, px, strong=True),
             )
             mins[0] = max(mins[0], tw + TABLE_CELL_PAD_X)
         for c in range(n_value_cols):
@@ -1413,11 +1413,11 @@ def _table_fit_detail(
         new_rows = []
         cell_w0 = widths[0] - TABLE_CELL_PAD_X
         for lab in r_labels:
-            lines = _wrap_label_lines(lab, px, max(1, cell_w0))
+            lines = _wrap_label_lines(lab, px, max(1, cell_w0), strong=True)
             if len(lines) > TABLE_MAX_LABEL_LINES or any(
-                _text_width(ln, px) > cell_w0 for ln in lines
+                _text_width(ln, px, strong=True) > cell_w0 for ln in lines
             ):
-                lab2 = _ellipsis_to_width(lab, px, max(1, cell_w0))
+                lab2 = _ellipsis_to_width(lab, px, max(1, cell_w0), strong=True)
                 if lab2 != lab:
                     changed = True
                 new_rows.append(lab2)
@@ -1470,7 +1470,7 @@ def _table_fit_detail(
         body_lines_total = 0
         for r, lab in enumerate(r_labels):
             cell_w = max(1, widths[0] - TABLE_CELL_PAD_X)
-            lines = _wrap_label_lines(lab, px, cell_w)
+            lines = _wrap_label_lines(lab, px, cell_w, strong=True)
             if len(lines) > TABLE_MAX_LABEL_LINES:
                 geometry_ok = False
                 lines = lines[:TABLE_MAX_LABEL_LINES] or [lab]
