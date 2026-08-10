@@ -478,6 +478,19 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
             table = payload.get("table")
             if isinstance(table, dict):
                 located.append((f"/slides/{i}/payload/table", table))
+        elif layout == "single_chart":
+            visual = payload.get("primary_visual")
+            if (
+                isinstance(visual, dict)
+                and visual.get("chart_type") == "heatmap"
+                and isinstance(visual.get("table_data"), dict)
+            ):
+                located.append(
+                    (
+                        f"/slides/{i}/payload/primary_visual/table_data",
+                        visual["table_data"],
+                    )
+                )
         elif layout == "grouped_annex_table":
             peers = payload.get("tables")
             if isinstance(peers, list):

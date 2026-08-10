@@ -826,17 +826,137 @@ class LineChartVisual(ClosedModel):
         return self
 
 
-class SingleChartPayload(ClosedModel):
-    """single_chart composition: one line primary, no support yet (D140)."""
+class GeneratedHeatmapScale(ClosedModel):
+    """Scale derived from all finite heatmap cells (D163/D246/D308)."""
 
-    primary_visual: LineChartVisual
+    mode: Literal["generated"] = "generated"
+
+
+class FixedHeatmapScale(ClosedModel):
+    """Authored finite min < max containing every finite cell (D163/D246)."""
+
+    mode: Literal["fixed"] = "fixed"
+    min: CanonicalDecimal
+    max: CanonicalDecimal
+
+    @model_validator(mode="after")
+    def _ordered_bounds(self) -> FixedHeatmapScale:
+        if Decimal(self.min) >= Decimal(self.max):
+            raise ValueError("fixed heatmap scale requires min < max")
+        return self
+
+
+HeatmapScale = Annotated[
+    Union[GeneratedHeatmapScale, FixedHeatmapScale],
+    Field(discriminator="mode"),
+]
+
+
+class HeatmapVisual(ClosedModel):
+    """Native semantic heatmap: one D255 table + one color scale (D163/D246/D308)."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["heatmap"] = "heatmap"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    table_data: TableData
+    scale: HeatmapScale
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_axis_chart_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        forbidden = (
+            "chart_data",
+            "category_axis",
+            "value_axes",
+            "display",
+            "typography",
+            "context_labels",
+            "annotations",
+            "measurements",
+            "category_groups",
+            "auxiliary_series",
+            "coverage",
+        )
+        for key in forbidden:
+            if key in data:
+                raise ValueError(f"heatmap forbids field {key!r}")
+        return data
+
+    @model_validator(mode="after")
+    def _heatmap_invariants(self) -> HeatmapVisual:
+        if self.subtitle is not None and self.heading is None:
+            raise ValueError("subtitle requires heading")
+        table = self.table_data
+        n_cols = len(table.columns)
+        n_rows = len(table.rows)
+        if not (1 <= n_cols <= 12):
+            raise ValueError("heatmap requires 1–12 value columns")
+        if not (1 <= n_rows <= 12):
+            raise ValueError("heatmap requires 1–12 rows")
+        if table.column_groups is not None:
+            raise ValueError("heatmap forbids column_groups")
+        if table.typography is not None:
+            raise ValueError("heatmap forbids table typography overrides")
+        format_ids: set[str] = set()
+        finite: list[Decimal] = []
+        for row in table.rows:
+            for cell in row.cells.values():
+                kind = getattr(cell, "type", None)
+                if kind == "missing":
+                    continue
+                if kind != "number":
+                    raise ValueError(
+                        "heatmap cells must be number or missing only"
+                    )
+                format_ids.add(cell.format_id)
+                finite.append(Decimal(cell.value))
+        if not finite:
+            raise ValueError("heatmap requires at least one finite value")
+        if len(format_ids) != 1:
+            raise ValueError(
+                "heatmap numbers must share exactly one format_id"
+            )
+        if self.scale.mode == "fixed":
+            lo = Decimal(self.scale.min)
+            hi = Decimal(self.scale.max)
+            for v in finite:
+                if v < lo or v > hi:
+                    raise ValueError(
+                        "fixed heatmap scale must contain every finite value"
+                    )
+        return self
+
+    @property
+    def shared_format_id(self) -> str:
+        for row in self.table_data.rows:
+            for cell in row.cells.values():
+                fid = getattr(cell, "format_id", None)
+                if fid is not None:
+                    return fid
+        raise RuntimeError("heatmap has no numeric format_id")
+
+
+ChartVisual = Annotated[
+    Union[LineChartVisual, HeatmapVisual],
+    Field(discriminator="chart_type"),
+]
+
+
+class SingleChartPayload(ClosedModel):
+    """single_chart composition: one line or heatmap primary, no support yet (D140)."""
+
+    primary_visual: ChartVisual
 
     @model_validator(mode="before")
     @classmethod
     def _forbid_support(cls, data: Any) -> Any:
         if isinstance(data, dict) and "support_visual" in data:
             raise ValueError(
-                "support_visual is not implemented on single_chart line tracer"
+                "support_visual is not implemented on single_chart"
             )
         return data
 
@@ -1148,6 +1268,12 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
         return ids
     if lt == "grouped_annex_table":
         return [peer.table.surface_id for peer in payload.tables]
+    if lt == "single_chart":
+        chart = payload.primary_visual
+        # Heatmap owns a nested D255 table with its own deck-unique surface (D308).
+        table = getattr(chart, "table_data", None)
+        if table is not None:
+            return [table.surface_id]
     return []
 
 
@@ -1176,6 +1302,10 @@ def _slide_tables(slide: Any) -> list[TableData]:
         return [payload.table]
     if lt == "grouped_annex_table":
         return [peer.table for peer in payload.tables]
+    if lt == "single_chart":
+        table = getattr(payload.primary_visual, "table_data", None)
+        if table is not None:
+            return [table]
     return []
 
 
@@ -1242,17 +1372,25 @@ class Deck(ClosedModel):
                 referenced_formats.add(fid)
             if isinstance(slide, SingleChartSlide):
                 chart = slide.payload.primary_visual
-                fid = chart.value_axes.primary.format_id
-                if fid not in self.number_formats:
-                    raise ValueError(f"unresolved format_id {fid!r}")
-                referenced_formats.add(fid)
-                # Author series colors must be known palette keys (D16/D98/D130).
-                from .theme import palette_keys  # local import avoids cycle at import
+                if isinstance(chart, LineChartVisual):
+                    fid = chart.value_axes.primary.format_id
+                    if fid not in self.number_formats:
+                        raise ValueError(f"unresolved format_id {fid!r}")
+                    referenced_formats.add(fid)
+                    # Author series colors must be known palette keys (D16/D98/D130).
+                    from .theme import palette_keys  # local import avoids cycle
 
-                keys = set(palette_keys())
-                for s in chart.chart_data.series:
-                    if s.color is not None and s.color not in keys:
-                        raise ValueError(f"unknown series color key {s.color!r}")
+                    keys = set(palette_keys())
+                    for s in chart.chart_data.series:
+                        if s.color is not None and s.color not in keys:
+                            raise ValueError(
+                                f"unknown series color key {s.color!r}"
+                            )
+                elif isinstance(chart, HeatmapVisual):
+                    fid = chart.shared_format_id
+                    if fid not in self.number_formats:
+                        raise ValueError(f"unresolved format_id {fid!r}")
+                    referenced_formats.add(fid)
         unused_fmt = [k for k in self.number_formats if k not in referenced_formats]
         if unused_fmt:
             raise ValueError(f"unused number_formats: {unused_fmt}")

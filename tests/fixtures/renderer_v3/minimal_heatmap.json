@@ -1,0 +1,155 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "density",
+      "label": "Density"
+    }
+  ],
+  "number_formats": {
+    "pct_1": {
+      "unit": "percent",
+      "value_decimals": 1,
+      "negative_style": "minus"
+    }
+  },
+  "evidence_registry": {
+    "src-board-pack": {
+      "source_name": "Board pack Q4"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {
+        "title": "Impact Review"
+      },
+      "evidence_ids": [
+        "src-board-pack"
+      ]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "density",
+      "title": "Regional intensity",
+      "content": {
+        "subtitle": "Share of billed volume"
+      },
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "region-heat",
+          "chart_type": "heatmap",
+          "heading": "Volume density",
+          "subtitle": "By region and quarter",
+          "table_data": {
+            "surface_id": "region-heat-table",
+            "stub_header": {
+              "label": "Region"
+            },
+            "columns": [
+              {
+                "column_id": "q1",
+                "label": "Q1"
+              },
+              {
+                "column_id": "q2",
+                "label": "Q2"
+              },
+              {
+                "column_id": "q3",
+                "label": "Q3"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "us",
+                "label": "US",
+                "cells": {
+                  "q1": {
+                    "type": "number",
+                    "value": "12.5",
+                    "format_id": "pct_1"
+                  },
+                  "q2": {
+                    "type": "number",
+                    "value": "18.0",
+                    "format_id": "pct_1"
+                  },
+                  "q3": {
+                    "type": "number",
+                    "value": "22.5",
+                    "format_id": "pct_1"
+                  }
+                }
+              },
+              {
+                "row_id": "emea",
+                "label": "EMEA",
+                "cells": {
+                  "q1": {
+                    "type": "number",
+                    "value": "8.0",
+                    "format_id": "pct_1"
+                  },
+                  "q2": {
+                    "type": "missing"
+                  },
+                  "q3": {
+                    "type": "number",
+                    "value": "11.5",
+                    "format_id": "pct_1"
+                  }
+                }
+              },
+              {
+                "row_id": "apac",
+                "label": "APAC",
+                "cells": {
+                  "q1": {
+                    "type": "number",
+                    "value": "4.5",
+                    "format_id": "pct_1"
+                  },
+                  "q2": {
+                    "type": "number",
+                    "value": "6.0",
+                    "format_id": "pct_1"
+                  },
+                  "q3": {
+                    "type": "number",
+                    "value": "9.0",
+                    "format_id": "pct_1"
+                  }
+                }
+              }
+            ]
+          },
+          "scale": {
+            "mode": "generated"
+          }
+        }
+      },
+      "takeaway": {
+        "text": "US density leads; EMEA Q2 is missing."
+      },
+      "evidence_ids": [
+        "src-board-pack"
+      ],
+      "source_footer": [
+        "src-board-pack"
+      ]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {
+        "title": "Discussion"
+      }
+    }
+  ]
+}
