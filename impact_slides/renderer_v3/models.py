@@ -99,7 +99,14 @@ LayoutTypeName = Literal[
 ]
 
 KERNEL_LAYOUTS = frozenset(
-    {"opening_cover", "closing_cover", "narrative", "data_table"}
+    {
+        "opening_cover",
+        "section_divider",
+        "closing_cover",
+        "narrative",
+        "legal_notice",
+        "data_table",
+    }
 )
 
 
@@ -311,7 +318,30 @@ class CoverPayload(ClosedModel):
 
 
 class SectionDividerPayload(ClosedModel):
+    """Divider payload is only the registry section_id (D269)."""
+
     section_id: SemanticId
+
+
+class LegalNoticePayload(ClosedModel):
+    """Multipart legal notice sequence payload (D226/D271)."""
+
+    notice_id: SemanticId
+    part: int = Field(gt=0)
+    total_parts: int = Field(gt=0)
+    paragraphs: list[NonEmptyStr] = Field(min_length=1, max_length=6)
+    title: Optional[NonEmptyStr] = None
+
+    @model_validator(mode="after")
+    def _part_bounds_and_title(self) -> LegalNoticePayload:
+        if self.part > self.total_parts:
+            raise ValueError("part must be <= total_parts")
+        if self.part == 1:
+            if self.title is None:
+                raise ValueError("legal_notice part 1 requires title")
+        elif self.title is not None:
+            raise ValueError("legal_notice continuation parts forbid authored title")
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -480,6 +510,15 @@ class _SlideBase(ClosedModel):
             raise ValueError("speaker_notes must be non-whitespace plain text")
         return v
 
+    @field_validator("evidence_ids")
+    @classmethod
+    def _evidence_ids_duplicate_free(
+        cls, v: Optional[list[str]]
+    ) -> Optional[list[str]]:
+        if v is not None and len(v) != len(set(v)):
+            raise ValueError("evidence_ids must be duplicate-free")
+        return v
+
 
 class OpeningCoverSlide(_SlideBase):
     layout_type: Literal["opening_cover"] = "opening_cover"
@@ -524,6 +563,48 @@ class ClosingCoverSlide(_SlideBase):
         return data
 
 
+class SectionDividerSlide(_SlideBase):
+    layout_type: Literal["section_divider"] = "section_divider"
+    payload: SectionDividerPayload
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_ordinary_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for key in (
+                "title",
+                "section_id",
+                "content",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            ):
+                if key in data:
+                    raise ValueError(f"section_divider forbids root field {key!r}")
+        return data
+
+
+class LegalNoticeSlide(_SlideBase):
+    layout_type: Literal["legal_notice"] = "legal_notice"
+    section_id: SemanticId
+    payload: LegalNoticePayload
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_ordinary_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for key in (
+                "title",
+                "content",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            ):
+                if key in data:
+                    raise ValueError(f"legal_notice forbids root field {key!r}")
+        return data
+
+
 def _ordinary_footer_subset(slide: Any) -> Any:
     """Shared evidence/source_footer checks for ordinary (non-cover) slides."""
     if slide.source_footer is not None:
@@ -534,10 +615,6 @@ def _ordinary_footer_subset(slide: Any) -> Any:
         missing = [i for i in slide.source_footer if i not in slide.evidence_ids]
         if missing:
             raise ValueError("source_footer must be a subset of evidence_ids")
-    if slide.evidence_ids is not None and len(slide.evidence_ids) != len(
-        set(slide.evidence_ids)
-    ):
-        raise ValueError("evidence_ids must be duplicate-free")
     return slide
 
 
@@ -575,12 +652,19 @@ class DataTableSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
-# Kernel compositions: covers + narrative + data_table (#179).
+# Kernel compositions: covers + divider + narrative + legal + data_table (#191).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
 Slide = Annotated[
-    Union[OpeningCoverSlide, ClosingCoverSlide, NarrativeSlide, DataTableSlide],
+    Union[
+        OpeningCoverSlide,
+        SectionDividerSlide,
+        ClosingCoverSlide,
+        NarrativeSlide,
+        LegalNoticeSlide,
+        DataTableSlide,
+    ],
     Field(discriminator="layout_type"),
 ]
 
@@ -669,9 +753,19 @@ class Deck(ClosedModel):
         if closings and closings[0] != len(self.slides) - 1:
             raise ValueError("closing_cover must be last")
 
-        # Section references + contiguity (D215)
+        # Section references + contiguity + dividers (D215/D269)
+        section_index = {sid: i for i, sid in enumerate(section_ids)}
         used_sections: list[str] = []
-        for s in self.slides:
+        divider_for: dict[str, int] = {}
+        for i, s in enumerate(self.slides):
+            if s.layout_type == "section_divider":
+                dsid = s.payload.section_id
+                if dsid not in section_index:
+                    raise ValueError(f"unknown section_id {dsid!r}")
+                if dsid in divider_for:
+                    raise ValueError(f"duplicate section_divider for {dsid!r}")
+                divider_for[dsid] = i
+                continue
             sid = getattr(s, "section_id", None)
             if sid is None:
                 continue
@@ -680,16 +774,67 @@ class Deck(ClosedModel):
             if not used_sections or used_sections[-1] != sid:
                 used_sections.append(sid)
         # Contiguous runs already enforced by append-on-change; check registry order
-        # and that each registry entry is used.
+        # and that each registry entry is used by ordinary/legal slides.
         if section_ids:
-            # Filter used to registry order presence
             if used_sections != [sid for sid in section_ids if sid in used_sections]:
                 raise ValueError("section runs must follow registry order")
             unused = [sid for sid in section_ids if sid not in used_sections]
             if unused:
                 raise ValueError(f"unused sections: {unused}")
-        elif any(getattr(s, "section_id", None) for s in self.slides):
+        elif any(
+            getattr(s, "section_id", None) or s.layout_type == "section_divider"
+            for s in self.slides
+        ):
             raise ValueError("section_id present but sections registry is empty")
+
+        # Divider must sit immediately before the first ordinary slide of its section.
+        first_ordinary: dict[str, int] = {}
+        for i, s in enumerate(self.slides):
+            sid = getattr(s, "section_id", None)
+            if sid is None or s.layout_type == "section_divider":
+                continue
+            first_ordinary.setdefault(sid, i)
+        for dsid, di in divider_for.items():
+            fo = first_ordinary.get(dsid)
+            if fo is None:
+                raise ValueError(f"section_divider {dsid!r} has no ordinary slide")
+            if di != fo - 1:
+                raise ValueError(
+                    f"section_divider for {dsid!r} must immediately precede "
+                    "its first ordinary slide"
+                )
+
+        # Legal notice multipart sequences (D226/D271)
+        notice_runs: dict[str, list[tuple[int, Any]]] = {}
+        for i, s in enumerate(self.slides):
+            if s.layout_type != "legal_notice":
+                continue
+            notice_runs.setdefault(s.payload.notice_id, []).append((i, s))
+        for nid, parts in notice_runs.items():
+            total = parts[0][1].payload.total_parts
+            section = parts[0][1].section_id
+            if len(parts) != total:
+                raise ValueError(
+                    f"legal_notice {nid!r} must cover exactly 1..{total} parts"
+                )
+            indices = [i for i, _ in parts]
+            if indices != list(range(indices[0], indices[0] + total)):
+                raise ValueError(f"legal_notice {nid!r} parts must be adjacent")
+            seen_parts: list[int] = []
+            for _, slide in parts:
+                if slide.payload.total_parts != total:
+                    raise ValueError(
+                        f"legal_notice {nid!r} total_parts must match across parts"
+                    )
+                if slide.section_id != section:
+                    raise ValueError(
+                        f"legal_notice {nid!r} section_id must match across parts"
+                    )
+                seen_parts.append(slide.payload.part)
+            if seen_parts != list(range(1, total + 1)):
+                raise ValueError(
+                    f"legal_notice {nid!r} parts must be exactly 1..{total} in order"
+                )
 
         # Evidence: every registry entry referenced; every slide ref resolves (D216/D217)
         referenced: set[str] = set()

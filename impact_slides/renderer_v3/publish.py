@@ -45,13 +45,25 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _slide_heading(slide: Any) -> str:
+def _slide_heading(slide: Any, sections: list[Any] | None = None) -> str:
     title = getattr(slide, "title", None)
     if title:
         return title
     payload = getattr(slide, "payload", None)
     if payload is not None and getattr(payload, "title", None):
         return payload.title
+    if slide.layout_type == "section_divider":
+        # D269: accessibility/notes wording from registry label, not id token.
+        sec_id = payload.section_id
+        if sections:
+            for sec in sections:
+                if sec.section_id == sec_id:
+                    return sec.label
+        return sec_id
+    if slide.layout_type == "legal_notice":
+        if payload.part == 1 and payload.title:
+            return payload.title
+        return "— continued"
     return slide.layout_type
 
 
@@ -74,7 +86,7 @@ def build_presentation_html(
         '<html lang="en">',
         "<head>",
         '<meta charset="utf-8"/>',
-        f"<title>{_escape(deck.slides[0].payload.title if hasattr(deck.slides[0].payload, 'title') else 'Impact Slides')}</title>",
+        f"<title>{_escape(_slide_heading(deck.slides[0], deck.sections))}</title>",
         f'<meta name="generator" content="impact_slides.renderer_v3/{RENDERER_VERSION}"/>',
         f'<meta name="theme-id" content="{THEME_ID}"/>',
         f'<meta name="design-stage" content="{1920}x{1080}"/>',
@@ -99,6 +111,21 @@ def build_presentation_html(
             # Spacing constants must stay aligned with plan.BLOCK_MARGIN_Y.
             "p,ul{font-size:var(--text-body);line-height:1.4;margin:0 0 var(--space-sm);padding:0}",
             "li{margin:0;padding:0;margin-left:1.25em}",
+            # Brand / divider / legal chrome (D223/D268/D269/D271) — renderer-owned.
+            # Descendant selectors; frozen sizes still applied inline from plan role_sizes.
+            ".cover{display:flex;flex-direction:column;justify-content:center;height:100%;gap:var(--space-sm)}",
+            ".cover h1{font-size:var(--text-display);margin:0 0 var(--space-md)}",
+            ".cover .subtitle,.cover .period,.cover .date{font-size:var(--text-body);margin:0}",
+            ".cover-band{height:8px;background:var(--color-band);margin:0 0 var(--space-lg);flex:0 0 auto}",
+            ".section-divider{display:flex;flex-direction:column;justify-content:center;height:100%}",
+            ".section-divider .divider-meta{font-size:var(--text-body);letter-spacing:0.08em;text-transform:uppercase;margin:0 0 var(--space-sm);color:var(--color-primary-blue)}",
+            ".section-divider h1{font-size:var(--text-title);margin:0}",
+            ".section-divider .divider-rule{height:4px;width:120px;background:var(--color-band);margin:var(--space-md) 0 0}",
+            ".legal-notice{height:100%;overflow:visible}",
+            ".legal-notice h1,.legal-notice .legal-continued{margin:0 0 var(--space-md);font-weight:var(--font-weight-title)}",
+            ".legal-notice .legal-body p{margin:0 0 var(--space-sm);white-space:pre-wrap}",
+            ".legal-notice .legal-part{margin:var(--space-md) 0 0;color:var(--color-ink)}",
+            ".legal-overflow,.cover-overflow,.divider-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
             ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
             # D173: notes stay off the visible slide; HTML/notes artifact stay exact.
@@ -143,6 +170,7 @@ def build_presentation_html(
                 plans_by_id,
                 events_by_surface,
                 deck.evidence_registry,
+                sections=deck.sections,
             )
         )
         notes = getattr(slide, "speaker_notes", None)
@@ -212,9 +240,11 @@ def _paint_slide_body(
     plans_by_id: dict[str, Any],
     events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
     evidence_registry: dict[str, Any] | None = None,
+    sections: list[Any] | None = None,
 ) -> list[str]:
     events_by_surface = events_by_surface or {}
     evidence_registry = evidence_registry or {}
+    sections = sections or []
     lt = slide.layout_type
     out: list[str] = []
     sn = slide.slide_number
@@ -224,9 +254,11 @@ def _paint_slide_body(
         title_px = sp.role_sizes.get("title") if sp else None
         sub_px = sp.role_sizes.get("subtitle") if sp else None
         meta_px = sp.role_sizes.get("meta") if sp else None
+        overflow = " cover-overflow" if sp is not None and getattr(sp, "fallback", None) else ""
         out.append(
-            f'<div class="cover" {_plan_attrs(sp, events_by_surface)}>'  # one cover surface
+            f'<div class="cover{overflow}" {_plan_attrs(sp, events_by_surface)}>'  # one cover surface
         )
+        out.append('<div class="cover-band" aria-hidden="true"></div>')
         out.append(f"<h1{_style_font(title_px)}>{_soft_break_html(p.title)}</h1>")
         if p.subtitle:
             out.append(
@@ -239,6 +271,66 @@ def _paint_slide_body(
         if p.date_label:
             out.append(
                 f'<p class="date"{_style_font(meta_px)}>{_soft_break_html(p.date_label)}</p>'
+            )
+        out.append("</div>")
+        return out
+    if lt == "section_divider":
+        sp = plans_by_id.get(f"slide-{sn}-divider")
+        title_px = sp.role_sizes.get("title") if sp else None
+        meta_px = sp.role_sizes.get("meta") if sp else None
+        # Visible wording from D215 registry only — never authored override (D269).
+        sec_id = slide.payload.section_id
+        label = next((s.label for s in sections if s.section_id == sec_id), sec_id)
+        ord_n = next(
+            (i + 1 for i, s in enumerate(sections) if s.section_id == sec_id),
+            1,
+        )
+        meta = f"Section {ord_n}"
+        overflow = " divider-overflow" if sp is not None and getattr(sp, "fallback", None) else ""
+        out.append(
+            f'<div class="section-divider{overflow}" {_plan_attrs(sp, events_by_surface)} '
+            f'data-section-id="{_escape(sec_id)}">'
+        )
+        out.append(
+            f'<p class="divider-meta"{_style_font(meta_px)}>{_soft_break_html(meta)}</p>'
+        )
+        out.append(f"<h1{_style_font(title_px)}>{_soft_break_html(label)}</h1>")
+        out.append('<div class="divider-rule" aria-hidden="true"></div>')
+        out.append("</div>")
+        return out
+    if lt == "legal_notice":
+        p = slide.payload
+        sp = plans_by_id.get(f"slide-{sn}-legal")
+        title_px = sp.role_sizes.get("title") if sp else None
+        body_px = sp.role_sizes.get("body") if sp else None
+        meta_px = sp.role_sizes.get("meta") if sp else None
+        overflow = " legal-overflow" if sp is not None and getattr(sp, "fallback", None) else ""
+        out.append(
+            f'<div class="legal-notice{overflow}" {_plan_attrs(sp, events_by_surface)} '
+            f'data-notice-id="{_escape(p.notice_id)}" data-part="{p.part}" '
+            f'data-total-parts="{p.total_parts}">'
+        )
+        if p.part == 1:
+            out.append(
+                f"<h1{_style_font(title_px)}>{_soft_break_html(p.title or '')}</h1>"
+            )
+        else:
+            # Renderer-owned continuation; no authored (cont.) title (D226/D271).
+            out.append(
+                f'<p class="legal-continued"{_style_font(title_px)} '
+                f'aria-label="Part {p.part} of {p.total_parts}, continued">'
+                f"{_soft_break_html('— continued')}</p>"
+            )
+        out.append('<div class="legal-body">')
+        for para in p.paragraphs:
+            # Exact paragraphs; only safe escaping + soft-break markers.
+            out.append(f"<p{_style_font(body_px)}>{_soft_break_html(para)}</p>")
+        out.append("</div>")
+        # D271: visible part-of-total chrome is for continuation parts.
+        if p.part > 1:
+            out.append(
+                f'<p class="legal-part"{_style_font(meta_px)}>'
+                f"Part {p.part} of {p.total_parts}</p>"
             )
         out.append("</div>")
         return out
@@ -556,7 +648,7 @@ def build_slide_notes_md(deck: Deck) -> str:
     """
     chunks: list[str] = []
     for slide in deck.slides:
-        heading = _slide_heading(slide)
+        heading = _slide_heading(slide, deck.sections)
         chunks.append(f"# Slide {slide.slide_number} — {heading}")
         chunks.append("")
         notes = getattr(slide, "speaker_notes", None)
@@ -619,6 +711,10 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
         surface_ids: list[str] = []
         if slide.layout_type in ("opening_cover", "closing_cover"):
             surface_ids.append(f"slide-{slide.slide_number}-cover")
+        elif slide.layout_type == "section_divider":
+            surface_ids.append(f"slide-{slide.slide_number}-divider")
+        elif slide.layout_type == "legal_notice":
+            surface_ids.append(f"slide-{slide.slide_number}-legal")
         elif slide.layout_type in ("narrative", "data_table"):
             # Composition-slot order: title, subtitle, body/table, takeaway, disclosure.
             tid = f"slide-{slide.slide_number}-title"

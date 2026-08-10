@@ -84,6 +84,18 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
         if layout in ("opening_cover", "closing_cover"):
             allowed = common
             payload_allowed = {"title", "subtitle", "period_label", "date_label"}
+        elif layout == "section_divider":
+            allowed = common
+            payload_allowed = {"section_id"}
+        elif layout == "legal_notice":
+            allowed = common | {"section_id"}
+            payload_allowed = {
+                "notice_id",
+                "part",
+                "total_parts",
+                "paragraphs",
+                "title",
+            }
         elif layout == "narrative":
             allowed = common | {
                 "section_id",
@@ -167,8 +179,14 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "speaker_notes",
                 "evidence_ids",
             }
-            if layout in ("opening_cover", "closing_cover"):
+            if layout in ("opening_cover", "closing_cover", "section_divider"):
                 allowed = common
+                # Brand chrome forbids ordinary semantic roots — never strip them.
+                protected = _SEMANTIC_COMMON_FIELDS
+            elif layout == "legal_notice":
+                allowed = common | {"section_id"}
+                # Legal requires section_id; other ordinary semantic roots stay.
+                protected = _SEMANTIC_COMMON_FIELDS - {"section_id"}
             elif layout in ("narrative", "data_table"):
                 allowed = common | {
                     "section_id",
@@ -178,6 +196,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     "disclosure",
                     "source_footer",
                 }
+                protected = frozenset()
             else:
                 # Unknown/unimplemented layout: only strip truly global noise keys
                 allowed = common | {
@@ -188,6 +207,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     "disclosure",
                     "source_footer",
                 }
+                protected = frozenset()
             _drop_unknown_object(
                 slide,
                 allowed=allowed,
@@ -196,6 +216,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 role="slide",
                 slide_number=_slide_number(slide),
                 layout_type=layout if isinstance(layout, str) else None,
+                protected=protected,
             )
             payload = slide.get("payload")
             if isinstance(payload, dict) and layout in (
@@ -208,6 +229,32 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     path=f"/slides/{i}/payload",
                     events=events,
                     role="cover_payload",
+                    slide_number=_slide_number(slide),
+                    layout_type=layout,
+                )
+            if isinstance(payload, dict) and layout == "section_divider":
+                _drop_unknown_object(
+                    payload,
+                    allowed={"section_id"},
+                    path=f"/slides/{i}/payload",
+                    events=events,
+                    role="divider_payload",
+                    slide_number=_slide_number(slide),
+                    layout_type=layout,
+                )
+            if isinstance(payload, dict) and layout == "legal_notice":
+                _drop_unknown_object(
+                    payload,
+                    allowed={
+                        "notice_id",
+                        "part",
+                        "total_parts",
+                        "paragraphs",
+                        "title",
+                    },
+                    path=f"/slides/{i}/payload",
+                    events=events,
+                    role="legal_notice_payload",
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
@@ -234,6 +281,21 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
     return out
 
 
+# Authored ordinary semantic fields (D287). Non-strict must not silently drop
+# these on brand/legal layouts — leave them so validation fails until a typed
+# unresolved-slide fallback exists (D180/D268/D271).
+_SEMANTIC_COMMON_FIELDS = frozenset(
+    {
+        "section_id",
+        "title",
+        "content",
+        "takeaway",
+        "disclosure",
+        "source_footer",
+    }
+)
+
+
 def _drop_unknown_object(
     obj: dict[str, Any],
     *,
@@ -243,9 +305,13 @@ def _drop_unknown_object(
     role: str,
     slide_number: int | None = None,
     layout_type: str | None = None,
+    protected: frozenset[str] = frozenset(),
 ) -> None:
     unknown = [k for k in list(obj.keys()) if k not in allowed]
     for key in unknown:
+        if key in protected:
+            # Keep forbidden semantic content in place for validation failure.
+            continue
         del obj[key]
         events.append(
             event(

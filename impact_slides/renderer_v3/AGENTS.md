@@ -30,9 +30,12 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Takeaway outer reservation includes label/pad/border/outer margin; text fitter uses the inner box only. Cover elements measure at their own frozen role sizes. Paragraph/list margins match paint per CSS block box. Planning uses calibrated Source Sans 3 metrics, diagnoses conservative unsupported-glyph fallback, and publication embeds the vendored font.
 - Strict aggregates all detectable errors into `RendererValidationError.events` (D120/D309/D310)
 - Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311); `repair_disclosure_sections` drops malformed/duplicate D222 sections (keep first); `repair_source_footer_names` drops later duplicate visible footer names
+- Non-strict `drop_unknown_fields` may strip noise keys only: on brand/legal layouts it **retains** forbidden D287 ordinary semantic roots (`title`/`content`/`takeaway`/`disclosure`/`source_footer`, and `section_id` on covers/dividers) so revalidation fails without deleting authored content; typed D180 unresolved-slide fallback is not yet implemented
 - `_wrap_lines` breaks at spaces and after `-,:;.` when more content follows; paint inserts matching `<wbr>` via `_soft_break_html` (R178-029). Disclosure units measure summary/list indent separately from full-width paragraphs
 - Print media expands closed disclosures and resets viewport stage scale to fixed 1920×1080
-- Kernel compositions: `opening_cover`, `narrative`, `data_table`, `closing_cover` (D183/D210/D251/D257/D268/D270)
+- Kernel compositions: `opening_cover`, `section_divider`, `closing_cover`, `narrative`, `legal_notice`, `data_table` (D178–D183/D210/D215/D223/D226/D251/D257/D268–D271/D287)
+- Brand slides: covers share one `CoverPayload` (title + optional subtitle/period/date); divider payload is only `section_id` with registry-derived label + section ordinal; renderer owns bands/rules/chrome (descendant CSS + per-type `*-overflow` outline classes); no root title/section/takeaway/disclosure/source_footer
+- `legal_notice`: multipart `notice_id` + adjacent `part`/`total_parts`, plain paragraphs only; part 1 owns title, later parts paint renderer `— continued` + part-of-total; fixed 28/16px type, no adaptive growth or common takeaway/disclosure/footer
 - Envelope: `meta`, `sections`, `number_formats`, `evidence_registry`, `slides` (D211); `number_formats` uses closed unit vocabulary (`usd`/`percent`/`percentage_points`/`basis_points`)
 - `data_table` paints one full-width D255 table: navy headers, transparent body, native `scope`/`headers`, one common 20–24px fit, em-dash missing, no row/column/value loss (D24–D25/D103–D105)
 - Must not import `impact_slides.renderer_v2` or mutate v2 behavior
@@ -53,7 +56,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 
 ## Verification
 
-- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py`
+- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py`
 - `python -m impact_slides.renderer_v3.schema_export --check`
 - `python -m impact_slides.renderer_v3.theme_export --check`
 - Full suite: `python -m pytest -q`
