@@ -57,6 +57,9 @@ CHART_PANE_SUBTITLE_PX: Final = 22
 CHART_PANE_PAD_Y: Final = 20
 CHART_PANE_GAP: Final = 4
 CHART_VIEW_MIN_H: Final = 252
+_AXIS_CHART_ROLES: Final = frozenset(
+    {"line_chart", "grouped_bar_chart", "horizontal_bar_chart"}
+)
 
 # Adaptive floors / ceilings (D12/D14/D51/D59/D171/D172/D225/D288).
 SUBTITLE_FLOOR: Final = 22
@@ -675,9 +678,9 @@ def _collect_surfaces(
                 out.append(bp)
                 adaptive_surfaces.append(bp)
         elif lt == "single_chart":
-            # single_chart line or heatmap (D239/D246/D302/D308).
-            from .charts import freeze_heatmap, freeze_line_chart
-            from .models import HeatmapVisual, LineChartVisual
+            # single_chart axis charts + heatmap (D239/D240/D243/D246/D302/D308).
+            from .charts import freeze_chart, freeze_heatmap
+            from .models import HeatmapVisual
 
             body_slots = 1
             chart = slide.payload.primary_visual
@@ -722,8 +725,7 @@ def _collect_surfaces(
                     )
                 )
             else:
-                assert isinstance(chart, LineChartVisual)
-                chart_spec = freeze_line_chart(
+                chart_spec = freeze_chart(
                     chart,
                     deck.number_formats,
                     box_w=CONTENT_W,
@@ -735,10 +737,15 @@ def _collect_surfaces(
                     role_sizes["pane_title"] = 40
                     if chart.subtitle:
                         role_sizes["pane_subtitle"] = 22
+                chart_role = {
+                    "line": "line_chart",
+                    "grouped_bar": "grouped_bar_chart",
+                    "horizontal_bar": "horizontal_bar_chart",
+                }.get(chart.chart_type, f"{chart.chart_type}_chart")
                 out.append(
                     SurfacePlan(
                         surface_id=chart.surface_id,
-                        role="line_chart",
+                        role=chart_role,
                         slide_number=sn,
                         slide_index=slide_index,
                         layout_type=lt,
@@ -878,11 +885,11 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     chart_targets = {
         sp.surface_id: sp._box_h
         for sp in surfaces
-        if sp._chart_spec is not None and sp.role == "line_chart"
+        if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES
     }
 
     def need(sp: SurfacePlan, size: int) -> int:
-        if sp._chart_spec is not None and sp.role == "line_chart":
+        if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES:
             return CHART_VIEW_MIN_H
         if sp._linear_spec is not None:
             ok, height = _linear_fit_detail(sp)
@@ -977,10 +984,10 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         ]
         if height > floor_h:
             sp.adaptation_codes.append("plan.geometry_reallocated")
-        if sp._chart_spec is not None and sp.role == "line_chart":
-            from .charts import freeze_line_chart
+        if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES:
+            from .charts import freeze_chart
 
-            sp._chart_spec = freeze_line_chart(
+            sp._chart_spec = freeze_chart(
                 sp._chart_visual,
                 sp._chart_formats,
                 box_w=sp._box_w,
@@ -1005,7 +1012,7 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
 
 def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
     fit = sp._fit_role
-    if sp._chart_spec is not None and sp.role == "line_chart":
+    if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES:
         if math.ceil(sp._chart_spec["geometry"]["view_h"]) > sp._box_h:
             sp._overflow = True
         return
@@ -2043,7 +2050,7 @@ def _heatmap_table_spec(chart_spec: dict[str, Any]) -> dict[str, Any]:
 
 
 def _chart_text_items(chart_spec: dict[str, Any]) -> list[tuple[str, bool]]:
-    """Digest inputs for line-chart surfaces (labels + formatted values)."""
+    """Digest inputs for chart surfaces (labels + formatted values)."""
     items: list[tuple[str, bool]] = []
     if chart_spec.get("heading"):
         items.append((chart_spec["heading"], True))

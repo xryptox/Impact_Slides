@@ -193,6 +193,63 @@
       "title": "ArchitectureLayer",
       "type": "object"
     },
+    "BoxedLabelAuxiliary": {
+      "additionalProperties": false,
+      "description": "Category-aligned boxed labels targeting one bar series (D146/D235).",
+      "properties": {
+        "auxiliary_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Auxiliary Id",
+          "type": "string"
+        },
+        "role": {
+          "const": "boxed_label",
+          "default": "boxed_label",
+          "title": "Role",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "format_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Format Id",
+          "type": "string"
+        },
+        "target_series_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Target Series Id",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "auxiliary_id",
+        "label",
+        "format_id",
+        "target_series_id",
+        "values"
+      ],
+      "title": "BoxedLabelAuxiliary",
+      "type": "object"
+    },
     "CategoryAxis": {
       "additionalProperties": false,
       "properties": {
@@ -218,6 +275,51 @@
         "visible"
       ],
       "title": "CategoryAxis",
+      "type": "object"
+    },
+    "CategoryGroup": {
+      "additionalProperties": false,
+      "description": "Semantic category hierarchy only — never aggregates values (D155/D237).",
+      "properties": {
+        "group_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Group Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "category_ids": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Category Ids",
+          "type": "array"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        }
+      },
+      "required": [
+        "group_id",
+        "label",
+        "category_ids"
+      ],
+      "title": "CategoryGroup",
       "type": "object"
     },
     "ChartCategory": {
@@ -256,14 +358,14 @@
     },
     "ChartData": {
       "additionalProperties": false,
-      "description": "Ordered category-and-series matrix (D228/D291).",
+      "description": "Ordered category-and-series matrix (D228/D291).\n\nFamily cardinality (line vs bar category/series floors) is enforced on the\nchart visual; this model owns rectangular identity only.",
       "properties": {
         "categories": {
           "items": {
             "$ref": "#/$defs/ChartCategory"
           },
           "maxItems": 24,
-          "minItems": 2,
+          "minItems": 1,
           "title": "Categories",
           "type": "array"
         },
@@ -350,7 +452,7 @@
               }
             ]
           },
-          "minItems": 2,
+          "minItems": 1,
           "title": "Values",
           "type": "array"
         },
@@ -1531,6 +1633,126 @@
       "title": "GroupedAnnexTableSlide",
       "type": "object"
     },
+    "GroupedBarChartVisual": {
+      "additionalProperties": false,
+      "description": "Vertical zero-baseline grouped bars (D240).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "grouped_bar",
+          "default": "grouped_bar",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "chart_data": {
+          "$ref": "#/$defs/ChartData"
+        },
+        "category_axis": {
+          "$ref": "#/$defs/CategoryAxis"
+        },
+        "value_axes": {
+          "$ref": "#/$defs/ValueAxes"
+        },
+        "display": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartDisplay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "category_groups": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CategoryGroup"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category Groups"
+        },
+        "auxiliary_series": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/BoxedLabelAuxiliary"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auxiliary Series"
+        }
+      },
+      "required": [
+        "surface_id",
+        "chart_data",
+        "category_axis",
+        "value_axes"
+      ],
+      "title": "GroupedBarChartVisual",
+      "type": "object"
+    },
     "HeatmapVisual": {
       "additionalProperties": false,
       "description": "Native semantic heatmap: one D255 table + one color scale (D163/D246/D308).",
@@ -1606,6 +1828,126 @@
         "scale"
       ],
       "title": "HeatmapVisual",
+      "type": "object"
+    },
+    "HorizontalBarChartVisual": {
+      "additionalProperties": false,
+      "description": "Horizontal grouped bars with optional leading break (D243).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "horizontal_bar",
+          "default": "horizontal_bar",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "chart_data": {
+          "$ref": "#/$defs/ChartData"
+        },
+        "category_axis": {
+          "$ref": "#/$defs/CategoryAxis"
+        },
+        "value_axes": {
+          "$ref": "#/$defs/ValueAxes"
+        },
+        "display": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartDisplay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "category_groups": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CategoryGroup"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category Groups"
+        },
+        "auxiliary_series": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/BoxedLabelAuxiliary"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auxiliary Series"
+        }
+      },
+      "required": [
+        "surface_id",
+        "chart_data",
+        "category_axis",
+        "value_axes"
+      ],
+      "title": "HorizontalBarChartVisual",
       "type": "object"
     },
     "LayeredArchitecturePayload": {
@@ -3036,12 +3378,14 @@
     },
     "SingleChartPayload": {
       "additionalProperties": false,
-      "description": "single_chart composition: one line or heatmap primary, no support yet (D140).",
+      "description": "single_chart composition: one axis-chart or heatmap primary, no support yet (D140).",
       "properties": {
         "primary_visual": {
           "discriminator": {
             "mapping": {
+              "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
+              "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
               "line": "#/$defs/LineChartVisual"
             },
             "propertyName": "chart_type"
@@ -3049,6 +3393,12 @@
           "oneOf": [
             {
               "$ref": "#/$defs/LineChartVisual"
+            },
+            {
+              "$ref": "#/$defs/GroupedBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/HorizontalBarChartVisual"
             },
             {
               "$ref": "#/$defs/HeatmapVisual"

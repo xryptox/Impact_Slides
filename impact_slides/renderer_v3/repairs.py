@@ -1041,7 +1041,11 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
             continue
         payload = slide.get("payload")
         visual = payload.get("primary_visual") if isinstance(payload, dict) else None
-        if not isinstance(visual, dict) or visual.get("chart_type") != "line":
+        if not isinstance(visual, dict) or visual.get("chart_type") not in (
+            "line",
+            "grouped_bar",
+            "horizontal_bar",
+        ):
             continue
         axes = visual.get("value_axes")
         primary = axes.get("primary") if isinstance(axes, dict) else None

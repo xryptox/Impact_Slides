@@ -173,7 +173,7 @@ def default_series_keys(family: str) -> tuple[str, ...]:
     fam = (family or "").strip().lower()
     if fam in ("line", "trend", "area"):
         return _LINE_SERIES_KEYS
-    if fam in ("bar", "column", "stacked_bar", "grouped_bar"):
+    if fam in ("bar", "column", "stacked_bar", "grouped_bar", "horizontal_bar"):
         return _BAR_SERIES_KEYS
     raise ValueError(f"unknown chart family for series cycle: {family!r}")
 

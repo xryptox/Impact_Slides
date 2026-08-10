@@ -1,0 +1,95 @@
+{
+  "meta": {"handoff_schema_version": 1},
+  "sections": [{"section_id": "growth", "label": "Growth"}],
+  "number_formats": {
+    "pct_1": {"unit": "percent", "value_decimals": 1, "negative_style": "minus"},
+    "usd_0": {"unit": "usd", "value_decimals": 0, "negative_style": "minus"}
+  },
+  "evidence_registry": {
+    "src-board-pack": {"source_name": "Board pack Q4"}
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {"title": "Impact Review"},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "growth",
+      "title": "Segment growth",
+      "content": {"subtitle": "Reported currency"},
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "seg-growth",
+          "chart_type": "grouped_bar",
+          "heading": "Billed business growth",
+          "subtitle": "YoY %",
+          "chart_data": {
+            "categories": [
+              {"category_id": "us", "label": "US"},
+              {"category_id": "intl", "label": "Intl"},
+              {"category_id": "smob", "label": "SMOB"},
+              {"category_id": "corp", "label": "Corp"}
+            ],
+            "series": [
+              {
+                "series_id": "fy24",
+                "name": "FY'24",
+                "values": ["3.2", "-1.5", "0", null]
+              },
+              {
+                "series_id": "fy25",
+                "name": "FY'25",
+                "values": ["4.1", "2.0", "1.2", "5.5"]
+              }
+            ]
+          },
+          "category_axis": {"visible": true, "title": "Segment"},
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "pct_1",
+              "domain": {"kind": "generated", "target_ticks": 5},
+              "title": "YoY %"
+            }
+          },
+          "display": {"ordinary_values": "show", "series_identity": "legend"},
+          "category_groups": [
+            {
+              "group_id": "core",
+              "label": "Core",
+              "category_ids": ["us", "intl"]
+            },
+            {
+              "group_id": "other",
+              "label": "Other",
+              "category_ids": ["smob", "corp"]
+            }
+          ],
+          "auxiliary_series": [
+            {
+              "auxiliary_id": "vol-box",
+              "role": "boxed_label",
+              "label": "Volume $B",
+              "format_id": "usd_0",
+              "target_series_id": "fy25",
+              "values": ["120", "80", "40", "60"]
+            }
+          ]
+        }
+      },
+      "takeaway": {"text": "US leads; Corp missing FY'24 is real gap."},
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {"title": "Discussion"}
+    }
+  ]
+}

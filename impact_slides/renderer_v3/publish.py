@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .charts import chart_boot_script, paint_heatmap_html, paint_line_chart_html
+from .charts import chart_boot_script, paint_chart_html, paint_heatmap_html
 from .diagnostics import (
     DiagnosticEvent,
     RendererPublicationError,
@@ -584,7 +584,7 @@ def _paint_single_chart(
     *,
     svg_only: bool = False,
 ) -> list[str]:
-    """Paint single_chart line or heatmap from frozen plan (D69/D248/D302/D308)."""
+    """Paint single_chart axis charts or heatmap from frozen plan (D69/D248/D302/D308)."""
     chart = slide.payload.primary_visual
     sp = plans_by_id.get(chart.surface_id)
     if sp is None or not getattr(sp, "chart_paint", None):
@@ -595,7 +595,7 @@ def _paint_single_chart(
     paint = sp.chart_paint
     if paint.get("chart_type") == "heatmap":
         return paint_heatmap_html(paint, plan_attrs=attrs)
-    return paint_line_chart_html(paint, plan_attrs=attrs, svg_only=svg_only)
+    return paint_chart_html(paint, plan_attrs=attrs, svg_only=svg_only)
 
 
 def _paint_data_table(
@@ -1448,7 +1448,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
         painters: list[str] = []
         if is_chart:
             ctype = getattr(slide.payload.primary_visual, "chart_type", None)
-            if ctype == "line":
+            if ctype in ("line", "grouped_bar", "horizontal_bar"):
                 painters = ["chartjs", "svg"]
             # heatmap: native HTML only — no canvas/SVG painters (D246/D248).
         rows.append(
