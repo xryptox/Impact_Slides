@@ -1117,7 +1117,7 @@ def freeze_heatmap(
     if colored and finite:
         if equal:
             mid_vis = format_semantic_value(
-                NumberValue(value=str(lo), format_id=fmt_id), formats
+                NumberValue(value=format(lo, "f"), format_id=fmt_id), formats
             ).visible
             fill = _heatmap_fill(Decimal("0.5"))
             key_stops.append(
@@ -1137,7 +1137,7 @@ def freeze_heatmap(
             ):
                 # Prefer an authored finite cell label when it matches the stop.
                 vis = format_semantic_value(
-                    NumberValue(value=str(val), format_id=fmt_id), formats
+                    NumberValue(value=format(val, "f"), format_id=fmt_id), formats
                 ).visible
                 fill = _heatmap_fill(t)
                 key_stops.append(
@@ -1187,8 +1187,8 @@ def freeze_heatmap(
         "format_id": fmt_id,
         "scale": {
             "mode": chart.scale.mode,
-            "min": str(lo),
-            "max": str(hi),
+            "min": format(lo, "f"),
+            "max": format(hi, "f"),
             "equal": equal,
             "key_stops": key_stops,
             "scale_label": scale_label,

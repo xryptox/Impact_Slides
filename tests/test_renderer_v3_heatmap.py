@@ -281,3 +281,41 @@ def test_uncolored_freeze_keeps_all_cells():
     assert all(c["fill"] is None for row in frozen["cells"] for c in row)
     assert len(frozen["cells"]) == 3
     assert len(frozen["cells"][0]) == 3
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        ["0.0000001", "0.0000005", "0.0000009"],
+        ["0.0000005", "0.0000005", "0.0000005"],
+    ],
+    ids=["tiny-range", "tiny-equal"],
+)
+def test_tiny_values_render_canonical_scale_key(tmp_path: Path, values: list[str]):
+    raw = _raw()
+    table = raw["slides"][1]["payload"]["primary_visual"]["table_data"]
+    idx = 0
+    for row in table["rows"]:
+        for cid in list(row["cells"]):
+            row["cells"][cid] = {
+                "type": "number",
+                "value": values[idx % len(values)],
+                "format_id": "pct_1",
+            }
+            idx += 1
+    deck = validate_handoff(raw, strict=True).deck
+    frozen = freeze_heatmap(deck.slides[1].payload.primary_visual, deck.number_formats)
+    canonical = re.compile(r"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")
+    assert canonical.match(frozen["scale"]["min"])
+    assert canonical.match(frozen["scale"]["max"])
+    assert len(frozen["scale"]["key_stops"]) >= 1
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=True)
+    assert result["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-heatmap-colored="true"' in html
+    stops = re.findall(r'class="heatmap-scale-stop"[^>]*>(.*?)</span>', html)
+    assert stops
+    assert all("E" not in s and "e" not in s for s in stops)
