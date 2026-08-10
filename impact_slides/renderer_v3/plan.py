@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Final, Optional
 
 from .diagnostics import DiagnosticEvent, RendererValidationError, event, sort_events
-from .models import ORDINARY_TABLE_LAYOUTS, Deck, Typography
+from .models import Deck, Typography
 
 KERNEL_TABLE_LAYOUTS = frozenset(
     {
@@ -1500,8 +1500,12 @@ def _collect_grouped_annex_body(
     for i, peer in enumerate(peers):
         heading = peer.heading
         short = peer.short_heading or peer.heading
-        # Heading height reserved as chrome outside table fit box.
-        heading_h = _required_height([(heading, True)], GROUPED_ANNEX_HEADING_PX, peer_w, 1)
+        # Prefer short heading only when full heading cannot fit (D259).
+        full_h = _required_height([(heading, True)], GROUPED_ANNEX_HEADING_PX, peer_w, 1)
+        short_h = _required_height([(short, True)], GROUPED_ANNEX_HEADING_PX, peer_w, 1)
+        use_short = full_h > _line_box(GROUPED_ANNEX_HEADING_PX) * 2 and short != heading
+        display_heading = short if use_short else heading
+        heading_h = short_h if use_short else full_h
         sp = _table_surface_plan(
             table=peer.table,
             deck=deck,
@@ -1518,14 +1522,15 @@ def _collect_grouped_annex_body(
                 "peer_count": n,
                 "heading_full": heading,
                 "heading_short": short,
-                "display_heading": heading,
+                "display_heading": display_heading,
+                "heading_px": GROUPED_ANNEX_HEADING_PX,
             },
         )
         sp._chrome_h = heading_h + BLOCK_MARGIN_Y
         sp._text_items = [(heading, True), (short, True)] + sp._text_items
-        # Force same-slide peer sync via synthetic group when adaptive.
-        if sp._mode == "adaptive" and sp._sync_group is None:
-            sp._sync_group = f"slide-{sn}-grouped-annex"
+        # Equivalent annex peers share one common adaptive size (D185).
+        if sp._mode == "adaptive" and sp._explicit_size is None:
+            sp._sync_group = sp._sync_group or f"slide-{sn}-grouped-annex"
         plans.append(sp)
     return len(plans), plans
 
@@ -2155,6 +2160,9 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
         if sp._table_spec is not None:
             sp._table_spec["paint_as"] = "sequential_annex"
             sp._box_w = CONTENT_W
+            floor = ANNEX_TABLE_FLOOR
+            _table_fit_detail(sp._table_spec, floor, CONTENT_W, 10**9)
+            sp.role_sizes["table"] = floor
 
 
 def _record_surface_adaptations(

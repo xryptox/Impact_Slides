@@ -152,11 +152,12 @@ def build_presentation_html(
             "table.period-comparison td.num{font-variant-numeric:tabular-nums lining-nums}",
             ".table-scale{font-size:var(--text-xs);margin:0 0 var(--space-sm);color:var(--color-navy)}",
             ".table-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
+            ".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
             # Grouped annex peers (D185/D259).
             ".grouped-annex{display:flex;flex-direction:row;gap:24px;width:100%;margin:0 0 var(--space-sm)}",
             ".grouped-annex.sequential{flex-direction:column;gap:var(--space-md)}",
             ".grouped-annex-peer{flex:1 1 0;min-width:0}",
-            ".grouped-annex-peer h2{font-size:18px;margin:0 0 var(--space-sm)}",
+            ".grouped-annex-peer h2{margin:0 0 var(--space-sm)}",
             ".grouped-annex-divider{flex:0 0 1px;background:var(--color-rule);align-self:stretch}",
             # Metric strip (D165/D265).
             ".metric-strip{display:flex;flex-direction:row;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
@@ -511,7 +512,9 @@ def _paint_table_surface(
     table_class: str = "data-table",
     heading: str | None = None,
     heading_px: int | None = None,
+    heading_title: str | None = None,
     include_plan_attrs: bool = True,
+    extra_table_class: str = "",
 ) -> list[str]:
     """Paint one D255 table from frozen plan (D69/D183/D255–D260)."""
     sp = plans_by_id.get(table.surface_id)
@@ -528,7 +531,12 @@ def _paint_table_surface(
 
     if heading is not None:
         h_style = _style_font(heading_px)
-        out.append(f"<h2{h_style}>{_soft_break_html(heading)}</h2>")
+        title_attr = (
+            f' title="{_escape(heading_title)}"' if heading_title else ""
+        )
+        out.append(
+            f"<h2{title_attr}{h_style}>{_soft_break_html(heading)}</h2>"
+        )
 
     headers = list(paint["display_headers"])
     row_labels = list(paint["display_row_labels"])
@@ -542,8 +550,9 @@ def _paint_table_surface(
     leaf_hids = [f"{table.surface_id}-h-{cid}" for cid in col_ids]
     group_hids: dict[str, str] = {}
 
+    extra = f" {extra_table_class}" if extra_table_class else ""
     out.append(
-        f'<table class="{table_class}{overflow_cls}" {attrs}{style} '
+        f'<table class="{table_class}{overflow_cls}{extra}" {attrs}{style} '
         f'data-table-surface="{_escape(table.surface_id)}">' 
     )
     if widths:
@@ -762,6 +771,8 @@ def _paint_grouped_annex(
         sp = plans_by_id.get(peer.table.surface_id)
         paint = getattr(sp, "table_paint", None) or {}
         heading = paint.get("display_heading") or peer.heading
+        heading_px = paint.get("heading_px") or 18
+        full_h = paint.get("heading_full")
         out.append(
             f'<div class="grouped-annex-peer" data-peer-index="{i}">'
         )
@@ -772,7 +783,8 @@ def _paint_grouped_annex(
                 events_by_surface,
                 table_class="data-table",
                 heading=heading,
-                heading_px=18,
+                heading_px=int(heading_px),
+                heading_title=full_h if full_h and full_h != heading else None,
             )
         )
         out.append("</div>")
@@ -841,6 +853,19 @@ def _paint_comparison_cards(
             )
             out.append("</div>")
         out.append("</article>")
+    out.append("</div>")
+    # Complete D255 table is the a11y/print source (D261); cards are visual.
+    out.append('<div class="sr-only">')
+    out.extend(
+        _paint_table_surface(
+            table,
+            plans_by_id,
+            events_by_surface,
+            table_class="data-table",
+            include_plan_attrs=False,
+            extra_table_class="sr-only-table",
+        )
+    )
     out.append("</div>")
     return out
 

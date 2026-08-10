@@ -219,5 +219,5 @@ def test_grouped_annex_single_peer_full_width(tmp_path: Path):
     render_deck(handoff, out, strict=True)
     html = (out / "presentation.html").read_text(encoding="utf-8")
     assert "US Consumer" in html
-    assert "grouped-annex-divider" not in html
+    assert 'class="grouped-annex-divider"' not in html
     assert 'data-table-surface="peer-us"' in html

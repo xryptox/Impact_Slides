@@ -113,16 +113,6 @@ KERNEL_LAYOUTS = frozenset(
     }
 )
 
-# Ordinary full-width table compositions that share chrome (title/subtitle/…).
-ORDINARY_TABLE_LAYOUTS = frozenset(
-    {
-        "data_table",
-        "annex_table",
-        "period_comparison",
-        "comparison_cards",
-    }
-)
-
 PERIOD_COMPARISON_COLUMN_IDS: tuple[str, str, str] = (
     "current_period",
     "comparison_period",
