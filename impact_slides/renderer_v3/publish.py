@@ -115,7 +115,11 @@ def build_presentation_html(
             f'data-slide-number="{slide.slide_number}" '
             f'data-surface-id="{sid}" {slide_diag}>'
         )
-        parts.extend(_paint_slide_body(slide, plans_by_id, events_by_surface))
+        parts.extend(
+            _paint_slide_body(
+                slide, plans_by_id, events_by_surface, deck.evidence_registry
+            )
+        )
         notes = getattr(slide, "speaker_notes", None)
         if notes:
             parts.append(f'<aside class="notes">{_escape(notes)}</aside>')
@@ -182,8 +186,10 @@ def _paint_slide_body(
     slide: Any,
     plans_by_id: dict[str, Any],
     events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
+    evidence_registry: dict[str, Any] | None = None,
 ) -> list[str]:
     events_by_surface = events_by_surface or {}
+    evidence_registry = evidence_registry or {}
     lt = slide.layout_type
     out: list[str] = []
     sn = slide.slide_number
@@ -258,6 +264,46 @@ def _paint_slide_body(
                 f"{_escape(slide.takeaway.text)}</p>"
             )
             out.append("</aside>")
+        if slide.disclosure is not None:
+            out.append('<div class="disclosures">')
+            for section in slide.disclosure.sections:
+                dsp = plans_by_id.get(
+                    f"slide-{sn}-disclosure-{section.surface_id}"
+                )
+                px = dsp.role_sizes.get("body") if dsp else None
+                out.append(
+                    f'<details id="slide-{sn}-{_escape(section.surface_id)}" '
+                    f'{_plan_attrs(dsp, events_by_surface)}>'
+                )
+                out.append(
+                    f"<summary{_style_font(px)}>{_escape(section.title)}</summary>"
+                )
+                in_list = False
+                for item in section.items:
+                    if item.kind == "bullet" and not in_list:
+                        out.append(f"<ul{_style_font(px)}>")
+                        in_list = True
+                    elif item.kind == "paragraph" and in_list:
+                        out.append("</ul>")
+                        in_list = False
+                    if item.kind == "bullet":
+                        out.append(f"<li>{_escape(item.text)}</li>")
+                    else:
+                        out.append(f"<p{_style_font(px)}>{_escape(item.text)}</p>")
+                if in_list:
+                    out.append("</ul>")
+                out.append("</details>")
+            out.append("</div>")
+        if slide.source_footer is not None:
+            fsp = plans_by_id.get(f"slide-{sn}-source-footer")
+            px = fsp.role_sizes.get("body") if fsp else None
+            names = "; ".join(
+                evidence_registry[eid].source_name for eid in slide.source_footer
+            )
+            out.append(
+                f'<footer class="source-footer" {_plan_attrs(fsp, events_by_surface)}'
+                f'{_style_font(px)}>Sources: {_escape(names)}</footer>'
+            )
         return out
     out.append(f"<p>Unsupported layout in kernel paint: {_escape(lt)}</p>")
     return out

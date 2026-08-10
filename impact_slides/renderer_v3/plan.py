@@ -28,6 +28,8 @@ TITLE_PX: Final = 56
 COVER_TITLE_PX: Final = 72
 COVER_META_PX: Final = 22
 TAKEAWAY_LABEL_PX: Final = 14
+DISCLOSURE_PX: Final = 14
+SOURCE_FOOTER_PX: Final = 14
 
 # Adaptive floors / ceilings (D12/D14/D51/D59/D171/D172/D225/D288).
 SUBTITLE_FLOOR: Final = 22
@@ -143,11 +145,11 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
 
     sync_roles: dict[str, set[str]] = {}
     for sp in surfaces:
-        if sp._sync_group and sp._fit_role:
+        if sp._sync_group and sp._fit_role and sp._explicit_size is None:
             sync_roles.setdefault(sp._sync_group, set()).add(sp._fit_role)
     invalid_sync = {group for group, roles in sync_roles.items() if len(roles) > 1}
     for sp in surfaces:
-        if sp._sync_group not in invalid_sync:
+        if sp._explicit_size is not None or sp._sync_group not in invalid_sync:
             continue
         events.append(
             event(
@@ -169,6 +171,22 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
 
     # Phase 1 — independent measure at design stage.
     for sp in surfaces:
+        if _uses_fallback_metrics(sp):
+            events.append(
+                event(
+                    code="plan.conservative_metrics",
+                    severity="warning",
+                    phase="plan",
+                    role=sp.role,
+                    path=f"/slides/{sp.slide_index}/{sp.role}",
+                    action="measure",
+                    result="accepted",
+                    slide_number=sp.slide_number,
+                    layout_type=sp.layout_type,
+                    surface_id=sp.surface_id,
+                    expected="unsupported glyphs measured with conservative fallback advances",
+                )
+            )
         _measure_surface(sp, events)
 
     # Phase 2 — synchronize equivalent roles (D3/D4/D26/D69).
@@ -197,10 +215,6 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
                     input_meta={"type": "int", "value": size},
                 )
             )
-
-    # ponytail: synthetic AVG_ADVANCE is the interim engine (not unknown-font
-    # fallback); emit plan.conservative_metrics only when a dual measured path
-    # falls back (D23).
 
     fit_errors = [e for e in events if e.code == "validation.fit"]
     overflow = [s for s in surfaces if s._overflow]
@@ -430,6 +444,56 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             adaptive_surfaces.append(takeaway_plan)
             out.append(takeaway_plan)
 
+        next_slot = 11 + len(blocks)
+        if slide.disclosure is not None:
+            for section in slide.disclosure.sections:
+                items = [(section.title, True)]
+                items.extend((item.text, False) for item in section.items)
+                disclosure = SurfacePlan(
+                    surface_id=f"slide-{sn}-disclosure-{section.surface_id}",
+                    role="disclosure",
+                    slide_number=sn,
+                    slide_index=slide_index,
+                    layout_type=lt,
+                    slot_order=next_slot,
+                    design_stage_region=region,
+                    role_sizes={"body": DISCLOSURE_PX},
+                    _text_items=[
+                        item
+                        for pair in zip(items, [("\n", False)] * len(items))
+                        for item in pair
+                    ][:-1],
+                    _box_w=CONTENT_W,
+                    _fit_role=None,
+                    _mode="fixed",
+                    _margin_boxes=len(items),
+                )
+                next_slot += 1
+                adaptive_surfaces.append(disclosure)
+                out.append(disclosure)
+
+        if slide.source_footer is not None:
+            source_text = "Sources: " + "; ".join(
+                deck.evidence_registry[eid].source_name for eid in slide.source_footer
+            )
+            source = SurfacePlan(
+                surface_id=f"slide-{sn}-source-footer",
+                role="source_footer",
+                slide_number=sn,
+                slide_index=slide_index,
+                layout_type=lt,
+                slot_order=next_slot,
+                design_stage_region=region,
+                role_sizes={"body": SOURCE_FOOTER_PX},
+                _text_items=[(source_text, False)],
+                _box_w=CONTENT_W,
+                _fit_role=None,
+                _mode="fixed",
+                _margin_boxes=1,
+            )
+            adaptive_surfaces.append(source)
+            out.append(source)
+
         _allocate_geometry(adaptive_surfaces, body_h)
 
     # Stable plan order follows authored deck order (D312).
@@ -462,7 +526,13 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             sp._text_items, size, sp._box_w, sp._margin_boxes, sp._indent_em
         )
 
-    floors = [need(sp, sp._default_size or next(iter(sp.role_sizes.values()))) for sp in surfaces]
+    baseline_sizes = [
+        sp._explicit_size
+        if sp._explicit_size is not None
+        else sp._default_size or next(iter(sp.role_sizes.values()))
+        for sp in surfaces
+    ]
+    floors = [need(sp, size) for sp, size in zip(surfaces, baseline_sizes)]
     remaining = max(0, available_h - sum(sp._chrome_h for sp in surfaces))
     allocations = []
     for height in floors:
@@ -727,7 +797,7 @@ def _wrap_lines(
     if not text:
         return [""], False
     advances = [
-        _SOURCE_SANS_ADVANCES[700 if strong else 400].get(char, 1.0)
+        _SOURCE_SANS_ADVANCES[700 if strong else 400].get(char, 1.2)
         for run, strong in items
         for char in run
     ]
@@ -757,6 +827,15 @@ def _wrap_lines(
     if cur:
         lines.append(cur.rstrip())
     return (lines or [""]), width_overflow
+
+
+def _uses_fallback_metrics(sp: SurfacePlan) -> bool:
+    return any(
+        char not in _SOURCE_SANS_ADVANCES[700 if strong else 400]
+        for text, strong in sp._text_items
+        for char in text
+        if char != "\n"
+    )
 
 
 def _line_box(px: int) -> int:

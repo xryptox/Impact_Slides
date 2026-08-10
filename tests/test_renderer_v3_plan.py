@@ -447,6 +447,72 @@ def test_plan_order_and_event_paths_follow_authored_slide_indexes():
     assert growth.path.startswith("/slides/1/")
 
 
+def test_pinned_geometry_is_reserved_before_optional_growth():
+    raw = _minimal()
+    raw["slides"][1]["content"]["subtitle"] = "Pinned subtitle " * 18
+    raw["slides"][1]["content"]["typography"] = {
+        "mode": "adaptive",
+        "subtitle_font_size": 24,
+    }
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    subtitle = plan.by_surface_id()["slide-2-subtitle"]
+    assert subtitle.role_sizes["subtitle"] == 24
+    assert not subtitle._overflow
+
+
+def test_pinned_cross_role_sync_does_not_constrain_automatic_role():
+    raw = _minimal()
+    raw["slides"][1]["content"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "shared",
+        "subtitle_font_size": 24,
+    }
+    raw["slides"][1]["payload"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "shared",
+    }
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    assert plan.by_surface_id()["slide-2-subtitle"].role_sizes["subtitle"] == 24
+    assert not any(e.code == "validation.conflict" for e in plan.events)
+
+
+def test_common_surfaces_are_planned_and_painted(tmp_path: Path):
+    raw = _minimal()
+    raw["slides"][1]["disclosure"] = {
+        "sections": [
+            {
+                "surface_id": "terms",
+                "title": "Terms",
+                "items": [
+                    {"kind": "paragraph", "text": "Forward-looking statement."},
+                    {"kind": "bullet", "text": "Subject to change."},
+                ],
+            }
+        ]
+    }
+    out = tmp_path / "out"
+    render_deck(_write(tmp_path, raw), out)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert "<details" in html
+    assert "Forward-looking statement." in html
+    assert "Sources: Board pack Q4" in html
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    ids = {plan["surface_id"] for plan in meta["plans"]}
+    assert "slide-2-disclosure-terms" in ids
+    assert "slide-2-source-footer" in ids
+
+
+def test_unicode_uses_diagnosed_conservative_metrics():
+    raw = _minimal()
+    raw["slides"][1]["payload"]["blocks"][0]["paragraphs"][0]["runs"][0]["text"] = "Résumé 東京"
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    assert any(
+        e.code == "plan.conservative_metrics"
+        and e.surface_id == "slide-2-block-lead"
+        for e in plan.events
+    )
+
+
 def test_sync_preserves_typography_grown_when_above_floor():
     """Synced body size above role floor must keep plan.typography_grown."""
     deck = validate_handoff(_minimal(), strict=True).deck
