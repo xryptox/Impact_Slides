@@ -8,7 +8,9 @@ Covers D178–D182, D215, D223, D225–D226, D268–D271, D287:
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -31,6 +33,72 @@ def _brand() -> dict:
 
 def _minimal() -> dict:
     return json.loads(MINIMAL.read_text(encoding="utf-8"))
+_VOID_TAGS = {"br", "wbr", "meta", "link", "img", "hr", "input"}
+
+_BRAND_SELECTOR_RULES = [
+    ".cover .subtitle,.cover .period,.cover .date",
+    ".section-divider .divider-meta",
+    ".section-divider .divider-rule",
+    ".legal-notice h1,.legal-notice .legal-continued",
+    ".legal-notice .legal-body p",
+    ".legal-notice .legal-part",
+]
+
+
+def _emitted_rules(html: str) -> dict:
+    """Parse the emitted <style> block into selector-list -> declarations."""
+    style = html.split("<style>", 1)[1].split("</style>", 1)[0]
+    return {
+        m.group(1).strip(): m.group(2)
+        for m in re.finditer(r"([^{}/]+)\{([^{}]*)\}", style)
+    }
+
+
+def _emitted_elements(html: str) -> list:
+    """Collect (tag, classes, parent index) for every painted element."""
+
+    class _Collector(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.elements = []
+            self.stack = []
+
+        def handle_starttag(self, tag, attrs):
+            classes = set(dict(attrs).get("class", "").split())
+            parent = self.stack[-1] if self.stack else None
+            self.elements.append((tag, classes, parent))
+            if tag not in _VOID_TAGS:
+                self.stack.append(len(self.elements) - 1)
+
+        def handle_endtag(self, tag):
+            for i in range(len(self.stack) - 1, -1, -1):
+                if self.elements[self.stack[i]][0] == tag:
+                    del self.stack[i:]
+                    break
+
+    collector = _Collector()
+    collector.feed(html)
+    return collector.elements
+
+
+def _simple_selector_matches(tag, classes, simple):
+    parts = simple.split(".")
+    if parts[0] and parts[0] != tag:
+        return False
+    return all(cls in classes for cls in parts[1:])
+
+
+def _selector_matches(elements, index, selector):
+    simple = selector.split()
+    tag, classes, parent = elements[index]
+    if not _simple_selector_matches(tag, classes, simple[-1]):
+        return False
+    remaining = simple[:-1]
+    while remaining and parent is not None:
+        a_tag, a_classes, parent = elements[parent]
+        if _simple_selector_matches(a_tag, a_classes, remaining[-1]):
+            remaining = remaining[:-1]
+    return not remaining
 
 
 # ---------------------------------------------------------------------------
@@ -254,27 +322,28 @@ def test_nonstrict_keeps_forbidden_semantic_fields(slide_index, field, value):
 
 
 def test_publish_css_selectors_match_brand_markup(tmp_path: Path):
-    """Descendant/comma selectors must match painted parent/child classes."""
+    """Every brand selector alternative must resolve against painted markup."""
     out = tmp_path / "out"
     assert render_deck(FIXTURE, out, strict=True)["ok"] is True
     html = (out / "presentation.html").read_text(encoding="utf-8")
-    # Correct selector forms (spaces + commas) — mutation of compounds fails these.
-    assert ".cover .subtitle,.cover .period,.cover .date{" in html
-    assert ".section-divider .divider-meta{" in html
-    assert ".section-divider .divider-rule{" in html
-    assert ".legal-notice h1,.legal-notice .legal-continued{" in html
-    assert ".legal-notice .legal-body p{" in html
-    assert "white-space:pre-wrap" in html
-    assert ".legal-notice .legal-part{" in html
-    assert ".legal-overflow,.cover-overflow,.divider-overflow{" in html
-    # Markup classes the selectors target.
-    assert 'class="subtitle"' in html
-    assert "divider-meta" in html and "divider-rule" in html
-    assert "legal-body" in html and "legal-continued" in html
+    elements = _emitted_elements(html)
+    rules = _emitted_rules(html)
+    for selector_list in _BRAND_SELECTOR_RULES:
+        assert selector_list in rules, selector_list
+        for alternative in selector_list.split(","):
+            matched = any(
+                _selector_matches(elements, i, alternative)
+                for i in range(len(elements))
+            )
+            assert matched, alternative
+    assert "white-space:pre-wrap" in rules[".legal-notice .legal-body p"]
+    overflow_rule = ".legal-overflow,.cover-overflow,.divider-overflow"
+    assert overflow_rule in rules
+    assert "outline" in rules[overflow_rule]
 
 
 def test_overflow_fallback_gets_visible_diagnosed_class():
-    """Each overflow alternative is a separate class matched by the CSS rule."""
+    """Fallback surfaces get an overflow class covered by the outline rule."""
     from impact_slides.renderer_v3.publish import build_presentation_html
 
     raw = _brand()
@@ -283,8 +352,19 @@ def test_overflow_fallback_gets_visible_diagnosed_class():
     plan = plan_deck(deck, strict=False)
     assert any(s.fallback for s in plan.surfaces)
     html = build_presentation_html(deck, deck_plan=plan)
-    assert "divider-overflow" in html
-    assert ".legal-overflow,.cover-overflow,.divider-overflow{" in html
+    elements = _emitted_elements(html)
+    overflow_classes = {"legal-overflow", "cover-overflow", "divider-overflow"}
+    overflowed = [i for i in range(len(elements)) if elements[i][1] & overflow_classes]
+    assert overflowed
+    rules = _emitted_rules(html)
+    overflow_rule = ".legal-overflow,.cover-overflow,.divider-overflow"
+    assert overflow_rule in rules
+    assert "outline" in rules[overflow_rule]
+    assert any(
+        _selector_matches(elements, i, alternative)
+        for i in overflowed
+        for alternative in overflow_rule.split(",")
+    )
 
 
 def test_misplaced_opening_cover_stays_failed_not_moved():
