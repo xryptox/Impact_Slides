@@ -9,7 +9,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 
 | layout_type | recipe | source | fixture | tests |
 |---|---|---|---|---|
-| `annex_table` | `render_annex_table` | impact_slides/renderer_v2/layout/recipes/metrics.py:417 | `amex_annex_33_37_restored_handoff.json`, `amex_annex_33_37_v10_broken_handoff.json`, `amex_v10_44_slide_handoff.json` | `amex_annex_33_37_handoff.py`, `grouped_annex_table.py`, `layout_dispatch_parity.py` +1 |
+| `annex_table` | `render_annex_table` | impact_slides/renderer_v2/layout/recipes/metrics.py:417 | `amex_annex_33_37_restored_handoff.json`, `amex_annex_33_37_v10_broken_handoff.json`, `amex_v10_44_slide_handoff.json` +1 | `AGENTS.md`, `amex_annex_33_37_handoff.py`, `grouped_annex_table.py` +3 |
 | `before_after` | `render_before_after` | impact_slides/renderer_v2/layout/recipes/comparison.py:233 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
 | `before_after_detailed` | `render_before_after_detailed` | impact_slides/renderer_v2/layout/recipes/comparison.py:259 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave3a_layouts.py` |
 | `brand_cover` | `render_brand_cover` | impact_slides/renderer_v2/layout/recipes/covers.py:60 | `amex_v10_44_slide_handoff.json` | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
@@ -28,7 +28,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `ecosystem_map` | `render_ecosystem_map` | impact_slides/renderer_v2/layout/recipes/diagrams.py:147 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4a_layouts.py` |
 | `evidence_cards` | `render_evidence_cards` | impact_slides/renderer_v2/layout/recipes/cards.py:23 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave1a_layouts.py` |
 | `full_process_flow` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | — | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_validation.py` +1 |
-| `grouped_annex_table` | `render_grouped_annex_table` | impact_slides/renderer_v2/layout/recipes/metrics.py:374 | `amex_slide32_grouped_annex.json` | `layout_dispatch_parity.py` |
+| `grouped_annex_table` | `render_grouped_annex_table` | impact_slides/renderer_v2/layout/recipes/metrics.py:374 | `amex_slide32_grouped_annex.json`, `annex_and_comparison_tables.json` | `AGENTS.md`, `layout_dispatch_parity.py`, `renderer_v3_annex_comparison.py` |
 | `grouped_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:361 | `amex_s13_s14_corrected.json`, `amex_v10_44_slide_handoff.json`, `golden_mvp1_handoff.json` +1 | `amex_s24_growth_handoff_contract.py`, `auto_chart_typography.py`, `bar_group_brackets.py` +17 |
 | `guidance_statement_card` | `render_guidance_statement_card` | impact_slides/renderer_v2/layout/recipes/metrics.py:535 | `amex_v10_44_slide_handoff.json` | `layout_dispatch_parity.py`, `renderer_v2_charts_js.py` |
 | `heatmap` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:361 | — | `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py`, `renderer_v2_validation.py` |

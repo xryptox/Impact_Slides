@@ -131,7 +131,7 @@ def build_presentation_html(
             # D173: notes stay off the visible slide; HTML/notes artifact stay exact.
             ".notes{display:none;white-space:pre-wrap}",
             ".disclosures summary{padding-left:1.25em}",
-            # data_table (D8/D42/D104/D105/D183/D257)
+            # data_table + annex/comparison compositions (D8/D42/D104/D183–D187)
             # Pads must match plan.TABLE_CELL_PAD_* (8+8 x, 6+6 y).
             "table.data-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
             "table.data-table th,table.data-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule);vertical-align:middle;font-weight:400}",
@@ -142,13 +142,45 @@ def build_presentation_html(
             "table.data-table th.align-center,table.data-table td.align-center{text-align:center}",
             "table.data-table td.num,table.data-table th.num{font-variant-numeric:tabular-nums lining-nums}",
             "table.data-table th.stub,table.data-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
+            # Period comparison bounded columns (D186/D260).
+            "table.period-comparison{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
+            "table.period-comparison th,table.period-comparison td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-panel-border);vertical-align:middle;background:var(--color-panel)}",
+            "table.period-comparison thead th{background:var(--color-band);color:var(--color-band-ink);font-weight:var(--font-weight-emphasis);border-color:var(--color-band)}",
+            "table.period-comparison th.stub,table.period-comparison td.stub{background:transparent;border:none;text-align:left;font-weight:var(--font-weight-emphasis)}",
+            "table.period-comparison th.align-left,table.period-comparison td.align-left{text-align:left}",
+            "table.period-comparison th.align-right,table.period-comparison td.align-right{text-align:right}",
+            "table.period-comparison td.num{font-variant-numeric:tabular-nums lining-nums}",
             ".table-scale{font-size:var(--text-xs);margin:0 0 var(--space-sm);color:var(--color-navy)}",
             ".table-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
+            ".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+            # Grouped annex peers (D185/D259).
+            ".grouped-annex{display:flex;position:relative;flex-direction:row;gap:24px;width:100%;margin:0 0 var(--space-sm)}",
+            ".grouped-annex.sequential{flex-direction:column;gap:var(--space-md)}",
+            ".grouped-annex-peer{flex:1 1 0;min-width:0}",
+            ".grouped-annex-peer h2{margin:0 0 var(--space-sm)}",
+            ".grouped-annex-divider{position:absolute;inset:0 auto 0 50%;width:1px;background:var(--color-rule)}",
+            # Metric strip (D165/D265).
+            ".metric-strip{display:flex;flex-direction:row;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".metric-strip .metric-cell{flex:1 1 0;min-width:0;padding:8px;border:var(--border-width-hairline) solid var(--color-rule);box-sizing:border-box}",
+            ".metric-strip .metric-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis)}",
+            ".metric-strip .metric-value{margin:0 0 4px;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis)}",
+            ".metric-strip .metric-detail{margin:0}",
+            # Comparison cards (D187/D261).
+            ".comparison-cards{display:grid;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".comparison-cards.cols-2{grid-template-columns:1fr 1fr}",
+            ".comparison-cards.cols-3{grid-template-columns:1fr 1fr 1fr}",
+            ".comparison-card{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:16px;box-sizing:border-box;min-width:0}",
+            ".comparison-card h2{margin:0 0 var(--space-sm);font-size:inherit}",
+            ".comparison-card .fact{margin:0 0 8px}",
+            ".comparison-card .fact-label{margin:0 0 2px}",
+            ".comparison-card .fact-value{margin:0;font-variant-numeric:tabular-nums lining-nums}",
             "@media print{"
             "details:not([open])>summary~*{display:block}"
             "html,body{width:auto;height:auto;overflow:visible}"
             ".deck-stage{width:1920px!important;transform:none!important}"
             ".slide{width:1920px!important;height:1080px!important;transform:none!important;margin:0!important;page-break-after:always}"
+            ".comparison-cards{display:none}"
+            ".sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}"
             "}",
             "</style>",
             "</head>",
@@ -334,7 +366,14 @@ def _paint_slide_body(
             )
         out.append("</div>")
         return out
-    if lt in ("narrative", "data_table"):
+    if lt in (
+        "narrative",
+        "data_table",
+        "annex_table",
+        "grouped_annex_table",
+        "period_comparison",
+        "comparison_cards",
+    ):
         title_sp = plans_by_id.get(f"slide-{sn}-title")
         title_px = title_sp.role_sizes.get("title") if title_sp else None
         out.append(
@@ -347,11 +386,26 @@ def _paint_slide_body(
                 f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
                 f"{_soft_break_html(slide.content.subtitle)}</p>"
             )
-        if lt == "data_table":
-            out.extend(_paint_data_table(slide, plans_by_id, events_by_surface))
-        else:
+        if lt == "narrative":
             out.extend(_paint_narrative_blocks(slide, plans_by_id, events_by_surface))
-        if slide.takeaway is not None:
+        elif lt == "grouped_annex_table":
+            out.extend(_paint_grouped_annex(slide, plans_by_id, events_by_surface))
+        elif lt == "comparison_cards":
+            out.extend(_paint_comparison_cards(slide, plans_by_id, events_by_surface))
+        elif lt == "period_comparison":
+            out.extend(_paint_period_comparison(slide, plans_by_id, events_by_surface))
+        else:
+            # data_table + annex_table share the canonical table painter.
+            out.extend(
+                _paint_table_surface(
+                    slide.payload.table,
+                    plans_by_id,
+                    events_by_surface,
+                    table_class="data-table",
+                )
+            )
+        takeaway = getattr(slide, "takeaway", None)
+        if takeaway is not None:
             tsp = plans_by_id.get(f"slide-{sn}-takeaway")
             body_px = tsp.role_sizes.get("body") if tsp else None
             label_px = tsp.role_sizes.get("label") if tsp else None
@@ -361,7 +415,7 @@ def _paint_slide_body(
             )
             out.append(
                 f'<p class="takeaway-text"{_style_font(body_px)}>' 
-                f"{_soft_break_html(slide.takeaway.text)}</p>"
+                f"{_soft_break_html(takeaway.text)}</p>"
             )
             out.append("</aside>")
         if slide.disclosure is not None:
@@ -443,8 +497,28 @@ def _paint_data_table(
     plans_by_id: dict[str, Any],
     events_by_surface: dict[str, list[DiagnosticEvent]],
 ) -> list[str]:
-    """Paint one ordinary data_table from frozen plan (D69/D183/D255/D257)."""
-    table = slide.payload.table
+    """Back-compat wrapper — ordinary data_table paint."""
+    return _paint_table_surface(
+        slide.payload.table,
+        plans_by_id,
+        events_by_surface,
+        table_class="data-table",
+    )
+
+
+def _paint_table_surface(
+    table: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    *,
+    table_class: str = "data-table",
+    heading: str | None = None,
+    heading_px: int | None = None,
+    heading_title: str | None = None,
+    include_plan_attrs: bool = True,
+    extra_table_class: str = "",
+) -> list[str]:
+    """Paint one D255 table from frozen plan (D69/D183/D255–D260)."""
     sp = plans_by_id.get(table.surface_id)
     if sp is None or not getattr(sp, "table_paint", None):
         raise RuntimeError(
@@ -454,8 +528,20 @@ def _paint_data_table(
     px = sp.role_sizes.get("table")
     style = _style_font(px)
     out: list[str] = []
-    attrs = _plan_attrs(sp, events_by_surface)
+    attrs = _plan_attrs(sp, events_by_surface) if include_plan_attrs else ""
     overflow_cls = " table-overflow" if sp._overflow else ""
+
+    if heading is not None:
+        h_style = _style_font(heading_px)
+        title_attr = (
+            f' title="{_escape(heading_title)}"' if heading_title else ""
+        )
+        aria_attr = (
+            f' aria-label="{_escape(heading_title)}"' if heading_title else ""
+        )
+        out.append(
+            f"<h2{title_attr}{aria_attr}{h_style}>{_soft_break_html(heading)}</h2>"
+        )
 
     headers = list(paint["display_headers"])
     row_labels = list(paint["display_row_labels"])
@@ -469,9 +555,10 @@ def _paint_data_table(
     leaf_hids = [f"{table.surface_id}-h-{cid}" for cid in col_ids]
     group_hids: dict[str, str] = {}
 
+    extra = f" {extra_table_class}" if extra_table_class else ""
     out.append(
-        f'<table class="data-table{overflow_cls}" {attrs}{style} '
-        f'data-table-surface="{_escape(table.surface_id)}">'
+        f'<table class="{table_class}{overflow_cls}{extra}" {attrs}{style} '
+        f'data-table-surface="{_escape(table.surface_id)}">' 
     )
     if widths:
         out.append("<colgroup>")
@@ -599,6 +686,195 @@ def _paint_data_table(
     return out
 
 
+def _paint_metric_strip(
+    strip: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    sp = plans_by_id.get(strip.surface_id)
+    if sp is None or not getattr(sp, "table_paint", None):
+        raise RuntimeError(
+            f"missing frozen metric_strip plan for {strip.surface_id!r}"
+        )
+    paint = sp.table_paint
+    metrics = paint.get("metrics") or []
+    label_px = sp.role_sizes.get("label")
+    value_px = sp.role_sizes.get("value")
+    detail_px = sp.role_sizes.get("detail")
+    out = [
+        f'<div class="metric-strip" {_plan_attrs(sp, events_by_surface)} '
+        f'data-metric-strip="{_escape(strip.surface_id)}">' 
+    ]
+    for m in metrics:
+        out.append(
+            f'<div class="metric-cell" data-metric-id="{_escape(m["metric_id"])}">' 
+        )
+        out.append(
+            f'<p class="metric-label"{_style_font(label_px)}>' 
+            f"{_soft_break_html(m['label'])}</p>"
+        )
+        aria = (
+            f' aria-label="{_escape(m["accessible"])}"' 
+            if m["accessible"] != m["visible"]
+            else ""
+        )
+        out.append(
+            f'<p class="metric-value"{_style_font(value_px)}{aria}>' 
+            f"{_escape(m['visible'])}</p>"
+        )
+        if m.get("detail"):
+            out.append(
+                f'<p class="metric-detail"{_style_font(detail_px)}>' 
+                f"{_soft_break_html(m['detail'])}</p>"
+            )
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+def _paint_period_comparison(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    out: list[str] = []
+    strip = slide.payload.metric_strip
+    if strip is not None:
+        out.extend(_paint_metric_strip(strip, plans_by_id, events_by_surface))
+    table = slide.payload.table
+    sp = plans_by_id.get(table.surface_id)
+    paint_as = None
+    if sp is not None and getattr(sp, "table_paint", None):
+        paint_as = sp.table_paint.get("paint_as")
+    table_class = "data-table" if paint_as == "data_table" else "period-comparison"
+    out.extend(
+        _paint_table_surface(
+            table,
+            plans_by_id,
+            events_by_surface,
+            table_class=table_class,
+        )
+    )
+    return out
+
+
+def _paint_grouped_annex(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    peers = list(slide.payload.tables)
+    sequential = any(
+        (plans_by_id.get(p.table.surface_id) and plans_by_id[p.table.surface_id].fallback)
+        for p in peers
+    )
+    cls = "grouped-annex sequential" if sequential else "grouped-annex"
+    out = [f'<div class="{cls}">']
+    for i, peer in enumerate(peers):
+        if i and not sequential:
+            out.append('<div class="grouped-annex-divider" aria-hidden="true"></div>')
+        sp = plans_by_id.get(peer.table.surface_id)
+        paint = getattr(sp, "table_paint", None) or {}
+        heading = paint.get("display_heading") or peer.heading
+        heading_px = paint.get("heading_px") or 18
+        full_h = paint.get("heading_full")
+        out.append(
+            f'<div class="grouped-annex-peer" data-peer-index="{i}">'
+        )
+        out.extend(
+            _paint_table_surface(
+                peer.table,
+                plans_by_id,
+                events_by_surface,
+                table_class="data-table",
+                heading=heading,
+                heading_px=int(heading_px),
+                heading_title=full_h if full_h and full_h != heading else None,
+            )
+        )
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+def _paint_comparison_cards(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    table = slide.payload.table
+    sp = plans_by_id.get(table.surface_id)
+    if sp is None or not getattr(sp, "table_paint", None):
+        raise RuntimeError(
+            f"missing frozen table_paint for surface {table.surface_id!r}"
+        )
+    paint = sp.table_paint
+    # Non-strict complete-table fallback (D187/D208).
+    if paint.get("paint_as") == "data_table" or sp.fallback == "ordinary_data_table":
+        return _paint_table_surface(
+            table, plans_by_id, events_by_surface, table_class="data-table"
+        )
+    n_peers = paint.get("peer_count") or len(table.rows)
+    cols = paint.get("grid_cols") or (2 if n_peers == 4 else n_peers)
+    heading_px = sp.role_sizes.get("heading")
+    label_px = sp.role_sizes.get("label")
+    value_px = sp.role_sizes.get("value")
+    overflow_cls = " table-overflow" if sp._overflow else ""
+    out = [
+        f'<div class="comparison-cards cols-{int(cols)}{overflow_cls}" '
+        f'aria-hidden="true" {_plan_attrs(sp, events_by_surface)} '
+        f'data-table-surface="{_escape(table.surface_id)}">' 
+    ]
+    # Cards are visual-only; the sr-only D255 table below is the single
+    # accessibility source and the print source.
+    col_ids = list(paint["col_ids"])
+    fact_labels = list(paint["header_full"][1:])
+    for r_i, row in enumerate(table.rows):
+        out.append(
+            f'<article class="comparison-card" data-row-id="{_escape(row.row_id)}">' 
+        )
+        heading = paint["display_row_labels"][r_i]
+        full_h = paint["row_labels_full"][r_i]
+        out.append(
+            f'<h2 title="{_escape(full_h)}"{_style_font(heading_px)}>' 
+            f"{_soft_break_html(heading)}</h2>"
+        )
+        for c_i, cid in enumerate(col_ids):
+            visible = paint["cells_vis"][r_i][c_i]
+            accessible = paint["cells_acc"][r_i][c_i]
+            out.append(f'<div class="fact" data-column-id="{_escape(cid)}">')
+            out.append(
+                f'<p class="fact-label"{_style_font(label_px)}>' 
+                f"{_soft_break_html(fact_labels[c_i])}</p>"
+            )
+            aria = (
+                f' aria-label="{_escape(accessible)}"' 
+                if accessible != visible
+                else ""
+            )
+            out.append(
+                f'<p class="fact-value"{_style_font(value_px)}{aria}>' 
+                f"{_escape(visible)}</p>"
+            )
+            out.append("</div>")
+        out.append("</article>")
+    out.append("</div>")
+    # Complete D255 table is the a11y/print source (D261); cards are visual.
+    out.append('<div class="sr-only">')
+    out.extend(
+        _paint_table_surface(
+            table,
+            plans_by_id,
+            events_by_surface,
+            table_class="data-table",
+            include_plan_attrs=False,
+            extra_table_class="sr-only-table",
+        )
+    )
+    out.append("</div>")
+    return out
+
+
 def _prose_html(prose: Any) -> str:
     chunks: list[str] = []
     runs = list(prose.runs)
@@ -715,7 +991,14 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
             surface_ids.append(f"slide-{slide.slide_number}-divider")
         elif slide.layout_type == "legal_notice":
             surface_ids.append(f"slide-{slide.slide_number}-legal")
-        elif slide.layout_type in ("narrative", "data_table"):
+        elif slide.layout_type in (
+            "narrative",
+            "data_table",
+            "annex_table",
+            "grouped_annex_table",
+            "period_comparison",
+            "comparison_cards",
+        ):
             # Composition-slot order: title, subtitle, body/table, takeaway, disclosure.
             tid = f"slide-{slide.slide_number}-title"
             if tid in planned:
@@ -727,9 +1010,17 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                     f"slide-{slide.slide_number}-block-{b.block_id}"
                     for b in slide.payload.blocks
                 )
+            elif slide.layout_type == "grouped_annex_table":
+                surface_ids.extend(
+                    peer.table.surface_id for peer in slide.payload.tables
+                )
             else:
+                strip = getattr(slide.payload, "metric_strip", None)
+                if strip is not None:
+                    surface_ids.append(strip.surface_id)
                 surface_ids.append(slide.payload.table.surface_id)
-            if slide.takeaway is not None:
+            takeaway = getattr(slide, "takeaway", None)
+            if takeaway is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-takeaway")
             disclosure = getattr(slide, "disclosure", None)
             if disclosure is not None:

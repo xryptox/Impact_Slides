@@ -14,6 +14,16 @@ from typing import Any, Final, Optional
 from .diagnostics import DiagnosticEvent, RendererValidationError, event, sort_events
 from .models import Deck, Typography
 
+KERNEL_TABLE_LAYOUTS = frozenset(
+    {
+        "data_table",
+        "annex_table",
+        "grouped_annex_table",
+        "period_comparison",
+        "comparison_cards",
+    }
+)
+
 from ._version import __version__ as RENDERER_VERSION
 
 DESIGN_STAGE_W: Final = 1920
@@ -42,8 +52,23 @@ BODY_FLOOR: Final = 22
 BODY_CEIL: Final = 28
 TAKEAWAY_FLOOR: Final = 22
 TAKEAWAY_CEIL: Final = 28
-TABLE_FLOOR: Final = 20  # D44 ordinary data_table
+TABLE_FLOOR: Final = 20  # D44 ordinary data_table / period / cards
 TABLE_CEIL: Final = 24
+ANNEX_TABLE_FLOOR: Final = 12  # D44 annex + grouped annex
+ANNEX_TABLE_CEIL: Final = 24
+METRIC_STRIP_FLOOR: Final = 14  # D265 support labels
+METRIC_STRIP_CEIL: Final = 24
+METRIC_STRIP_VALUE_PX: Final = 28  # fixed KPI display (not 70px hero)
+METRIC_STRIP_GAP: Final = 16
+METRIC_STRIP_PAD_Y: Final = 16
+METRIC_STRIP_PAD_X: Final = 16
+GROUPED_ANNEX_GAP: Final = 24  # divider gutter between peers
+GROUPED_ANNEX_HEADING_PX: Final = 18
+COMPARISON_CARD_GAP: Final = 16
+COMPARISON_CARD_PAD: Final = 16
+COMPARISON_CARD_HEADING_FLOOR: Final = 22
+COMPARISON_CARD_LABEL_FLOOR: Final = 14
+COMPARISON_CARD_VALUE_FLOOR: Final = 22
 TABLE_MAX_LABEL_LINES: Final = 2
 # Must match publish CSS padding on table.data-table th/td (8px*2, 6px*2).
 TABLE_CELL_PAD_X: Final = 16
@@ -254,9 +279,27 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
             renderer_version=RENDERER_VERSION,
         )
     if not strict and overflow:
+        # Grouped annex: one peer overflow replaces the whole composition (D185).
+        grouped_slides = {
+            s.slide_number
+            for s in overflow
+            if s.role == "grouped_annex_table"
+        }
+        if grouped_slides:
+            for s in surfaces:
+                if (
+                    s.slide_number in grouped_slides
+                    and s.role == "grouped_annex_table"
+                ):
+                    s._overflow = True
+                    _apply_composition_fallback(s)
+            overflow = [s for s in surfaces if s._overflow]
         for s in overflow:
             events.append(_overflow_event(s))
-            s.fallback = "fallback_unresolved"
+            if s.fallback is None:
+                s.fallback = "fallback_unresolved"
+            # Composition-specific complete-data fallbacks already set above.
+            _apply_composition_fallback(s)
 
     # Non-strict D28/D49: convert fit errors to policy-default warnings.
     if not strict and fit_errors:
@@ -425,7 +468,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             )
             continue
 
-        if lt not in ("narrative", "data_table"):
+        if lt not in ("narrative",) and lt not in KERNEL_TABLE_LAYOUTS:
             continue
 
         # Slot order: title chrome (fixed), subtitle, body/table, takeaway.
@@ -481,9 +524,11 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             out.append(subtitle_plan)
 
         # Takeaway reserved before body so body cannot steal its slot (D172/D288).
+        # Annex variants forbid takeaway at the model layer (D258/D259).
         takeaway_plan: SurfacePlan | None = None
-        if slide.takeaway is not None:
-            typo = slide.takeaway.typography
+        takeaway = getattr(slide, "takeaway", None)
+        if takeaway is not None:
+            typo = takeaway.typography
             mode, sync, explicit = _typo_fields(typo, "body_font_size")
             # Outer reservation includes chrome; fitter sees only text box (D172).
             chrome = (
@@ -506,7 +551,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     "body": TAKEAWAY_FLOOR,
                     "label": TAKEAWAY_LABEL_PX,
                 },
-                _text_items=[(slide.takeaway.text, False)],
+                _text_items=[(takeaway.text, False)],
                 _box_w=CONTENT_W - TAKEAWAY_PAD_X - TAKEAWAY_BORDER_X,
                 _fit_role="body",
                 _typo=typo,
@@ -558,39 +603,28 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     )
                 )
                 adaptive_surfaces.append(out[-1])
-        else:
-            # data_table: one full-width table surface (D183/D257).
-            body_slots = 1
-            table = slide.payload.table
-            table_typo = table.typography
-            mode, sync, explicit = _typo_fields(table_typo, "table_font_size")
-            table_spec = _build_table_spec(table, deck.number_formats)
-            # All labels + values feed conservative-metrics + digest.
-            text_items = [(t, False) for t in table_spec["all_texts"]]
-            out.append(
-                SurfacePlan(
-                    surface_id=table.surface_id,
-                    role="data_table",
-                    slide_number=sn,
-                    slide_index=slide_index,
-                    layout_type=lt,
-                    slot_order=10,
-                    design_stage_region=region,
-                    role_sizes={"table": TABLE_FLOOR},
-                    _text_items=text_items,
-                    _box_w=CONTENT_W,
-                    _fit_role="table",
-                    _typo=table_typo,
-                    _mode=mode,
-                    _sync_group=sync,
-                    _explicit_size=explicit,
-                    _margin_boxes=0,
-                    _default_size=TABLE_FLOOR,
-                    _maximum_size=TABLE_CEIL,
-                    _table_spec=table_spec,
-                )
+        elif lt == "grouped_annex_table":
+            body_slots, body_plans = _collect_grouped_annex_body(
+                slide, deck, sn, slide_index, lt, region
             )
-            adaptive_surfaces.append(out[-1])
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
+        elif lt == "comparison_cards":
+            body_slots, body_plans = _collect_comparison_cards_body(
+                slide, deck, sn, slide_index, lt, region
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
+        else:
+            # data_table / annex_table / period_comparison table surface(s).
+            body_slots, body_plans = _collect_single_table_body(
+                slide, deck, sn, slide_index, lt, region
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
 
         if takeaway_plan is not None:
             takeaway_plan.slot_order = 10 + body_slots
@@ -689,9 +723,31 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         return
 
     def need(sp: SurfacePlan, size: int) -> int:
-        if sp._table_spec is not None:
+        if _is_rectangular_table_spec(sp._table_spec):
+            assert sp._table_spec is not None
+            if sp.role == "comparison_cards":
+                ok, _ = _comparison_cards_fit_detail(sp, size)
+                roles = (sp._table_spec or {}).get("card_role_sizes") or {}
+                card_h = int(roles.get("card_h") or size * 6)
+                rows = 2 if sp._table_spec.get("peer_count") == 4 else 1
+                h = rows * card_h + (rows - 1) * COMPARISON_CARD_GAP
+                return h if ok else 10**9
             ok, _, height = _table_fit_detail(sp._table_spec, size, sp._box_w, 10**9)
             return height if ok else 10**9
+        if sp._table_spec is not None and sp._table_spec.get("kind") == "metric_strip":
+            # Estimate from label size + fixed value + optional detail.
+            metrics = sp._table_spec["metrics"]
+            value_px = sp.role_sizes.get("value", METRIC_STRIP_VALUE_PX)
+            h = 0
+            for m in metrics:
+                lab = max(1, len(_wrap_label_lines(m["label"], size, sp._box_w)))
+                det = (
+                    len(_wrap_label_lines(m["detail"], size, sp._box_w))
+                    if m.get("detail")
+                    else 0
+                )
+                h = max(h, lab * _line_box(size) + _line_box(value_px) + det * _line_box(size))
+            return h
         return _required_height(
             sp._text_items, size, sp._box_w, sp._margin_boxes, sp._indent_em, sp._unit_indent_ems
         )
@@ -776,15 +832,23 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             sp._overflow = True
         return
 
-    floor = sp.role_sizes[fit]
+    floor = sp._default_size if sp._default_size is not None else sp.role_sizes[fit]
     ceil_map = {
         "subtitle": SUBTITLE_CEIL,
         "body": BODY_CEIL,
         "table": TABLE_CEIL,
+        "label": METRIC_STRIP_CEIL,
     }
-    ceil = ceil_map[fit]
+    ceil = (
+        sp._maximum_size
+        if sp._maximum_size is not None
+        else ceil_map.get(fit, BODY_CEIL)
+    )
     if fit == "body" and sp.role == "takeaway":
         floor, ceil = TAKEAWAY_FLOOR, TAKEAWAY_CEIL
+        sp.role_sizes[fit] = floor
+    # Keep role_sizes[fit] at floor before grow so pins/overflow share one baseline.
+    if fit in sp.role_sizes and sp.role != "takeaway":
         sp.role_sizes[fit] = floor
 
     # Explicit size validation (D49): out of role range is malformed.
@@ -812,20 +876,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         sp._malformed_explicit = True
 
     def _fits(size: int) -> tuple[bool, bool]:
-        if sp._table_spec is not None:
-            ok, codes, _h = _table_fit_detail(
-                sp._table_spec, size, sp._box_w, sp._box_h
-            )
-            return ok, "plan.text_wrapped" in codes
-        return _text_fits_detail(
-            sp._text_items,
-            size,
-            sp._box_w,
-            sp._box_h,
-            margin_boxes=sp._margin_boxes,
-            indent_em=sp._indent_em,
-            unit_indent_ems=sp._unit_indent_ems,
-        )
+        return _surface_fits_detail(sp, size)
 
     if sp._mode == "fixed":
         size = sp._explicit_size if sp._explicit_size is not None else floor
@@ -833,10 +884,10 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         ok, _ = _fits(size)
         if not ok:
             sp._overflow = True
-            if sp._table_spec is not None:
-                _apply_table_floor_adaptations(sp, size, events)
-        elif sp._table_spec is not None:
-            _record_table_adaptations(sp, size, events)
+            _apply_surface_floor_adaptations(sp, size, events)
+        else:
+            _record_surface_adaptations(sp, size, events)
+        _finalize_composition_roles(sp, size)
         return
 
     # Adaptive grow-only (D2): try ceiling down to floor; pick largest that fits.
@@ -848,10 +899,10 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         if not ok:
             # Spec: explicit that does not fit → normal strict/non-strict (D27).
             sp._overflow = True
-            if sp._table_spec is not None:
-                _apply_table_floor_adaptations(sp, size, events)
-        elif sp._table_spec is not None:
-            _record_table_adaptations(sp, size, events)
+            _apply_surface_floor_adaptations(sp, size, events)
+        else:
+            _record_surface_adaptations(sp, size, events)
+        _finalize_composition_roles(sp, size)
         return
 
     chosen = floor
@@ -866,15 +917,14 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         # Floor does not fit.
         sp._overflow = True
         chosen = floor
-        if sp._table_spec is not None:
-            _apply_table_floor_adaptations(sp, chosen, events)
+        _apply_surface_floor_adaptations(sp, chosen, events)
 
     sp.role_sizes[fit] = chosen
     if chosen > floor:
         sp.adaptation_codes.append("plan.typography_grown")
-    if sp._table_spec is not None and not sp._overflow:
-        _record_table_adaptations(sp, chosen, events)
-    elif wrapped:
+    if not sp._overflow:
+        _record_surface_adaptations(sp, chosen, events)
+    elif wrapped and "plan.text_wrapped" not in sp.adaptation_codes:
         sp.adaptation_codes.append("plan.text_wrapped")
         events.append(
             event(
@@ -890,6 +940,8 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
                 surface_id=sp.surface_id,
             )
         )
+    _finalize_composition_roles(sp, chosen)
+    _apply_composition_fallback(sp)
 
 
 def _unit_indent(unit_index: int, indent_em: float, unit_indent_ems: list[float]) -> float:
@@ -1141,74 +1193,51 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
         if fit is None:
             continue
         # Role floor (not the already-chosen size) — preserve typography_grown.
-        role_floor = {
-            "subtitle": SUBTITLE_FLOOR,
-            "body": TAKEAWAY_FLOOR if members[0].role == "takeaway" else BODY_FLOOR,
-            "table": TABLE_FLOOR,
-        }[fit]
+        # Bound at the max member floor so no member freezes below its own
+        # documented fit range (D44).
+        member_floors = [
+            m._default_size if m._default_size is not None else m.role_sizes[fit]
+            for m in members
+        ]
+        role_floor = max(member_floors)
         # Start from min of independently chosen sizes, then try grow to max
         # of those if all fit — D3: largest that safely fits every member.
         independent = [m.role_sizes[fit] for m in members]
-        target = min(independent)
+        target = max(min(independent), role_floor)
         upper = max(independent)
 
         def _sync_member_fits(m: SurfacePlan, size: int) -> bool:
-            if m._table_spec is not None:
-                ok, _, _ = _table_fit_detail(m._table_spec, size, m._box_w, m._box_h)
-                return ok
-            return _text_fits(
-                m._text_items,
-                size,
-                m._box_w,
-                m._box_h,
-                margin_boxes=m._margin_boxes,
-                indent_em=m._indent_em,
-                unit_indent_ems=m._unit_indent_ems,
-            )
+            ok, _ = _surface_fits_detail(m, size)
+            return ok
 
         for size in range(upper, role_floor - 1, -1):
             if all(_sync_member_fits(m, size) for m in members):
                 target = size
                 break
         changed = False
-        for m in members:
+        for m, m_floor in zip(members, member_floors):
             if m.role_sizes[fit] != target:
                 changed = True
             m.role_sizes[fit] = target
-            # Drop grow code only when frozen size is the role floor.
-            if target == role_floor:
+            # Drop grow code only when frozen size is the member's own floor.
+            if target == m_floor:
                 m.adaptation_codes = [
                     c for c in m.adaptation_codes if c != "plan.typography_grown"
                 ]
-            elif "plan.typography_grown" not in m.adaptation_codes and target > role_floor:
+            elif "plan.typography_grown" not in m.adaptation_codes and target > m_floor:
                 m.adaptation_codes.append("plan.typography_grown")
             # Table paint must match the frozen synchronized size (D69/D70).
             if m._table_spec is not None:
-                ok, codes, _ = _table_fit_detail(
-                    m._table_spec, target, m._box_w, m._box_h
-                )
+                ok, codes_wrapped = _surface_fits_detail(m, target)
                 if ok:
                     m._overflow = False
-                    for code in codes:
-                        if code not in m.adaptation_codes:
-                            m.adaptation_codes.append(code)
-                            events.append(
-                                event(
-                                    code=code,  # type: ignore[arg-type]
-                                    severity="info",
-                                    phase="plan",
-                                    role=m.role,
-                                    path=f"/slides/{m.slide_index}/{m.role}",
-                                    action="measure",
-                                    result="accepted",
-                                    slide_number=m.slide_number,
-                                    layout_type=m.layout_type,
-                                    surface_id=m.surface_id,
-                                )
-                            )
+                    _record_surface_adaptations(m, target, events)
+                    _finalize_composition_roles(m, target)
                 else:
                     m._overflow = True
-                    _apply_table_floor_adaptations(m, target, events)
+                    _apply_surface_floor_adaptations(m, target, events)
+                    _apply_composition_fallback(m)
+                _ = codes_wrapped
         if changed or len(members) > 1:
             for m in members:
                 if "plan.synchronized" not in m.adaptation_codes:
@@ -1287,6 +1316,270 @@ def _block_text_items(block: Any) -> list[tuple[str, bool]]:
                 items.append(("\n", False))
             items.extend(_prose_items(prose))
     return items
+
+
+# ---------------------------------------------------------------------------
+# Composition body collectors (#180)
+# ---------------------------------------------------------------------------
+
+
+def _table_floor_ceil(lt: str) -> tuple[int, int]:
+    if lt in ("annex_table", "grouped_annex_table"):
+        return ANNEX_TABLE_FLOOR, ANNEX_TABLE_CEIL
+    return TABLE_FLOOR, TABLE_CEIL
+
+
+def _table_surface_plan(
+    *,
+    table: Any,
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    slot_order: int,
+    box_w: int,
+    role: str,
+    extra_spec: dict[str, Any] | None = None,
+) -> SurfacePlan:
+    floor, ceil = _table_floor_ceil(lt)
+    table_typo = table.typography
+    mode, sync, explicit = _typo_fields(table_typo, "table_font_size")
+    table_spec = _build_table_spec(table, deck.number_formats)
+    if extra_spec:
+        table_spec.update(extra_spec)
+    text_items = [(t, False) for t in table_spec["all_texts"]]
+    return SurfacePlan(
+        surface_id=table.surface_id,
+        role=role,
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=slot_order,
+        design_stage_region=region,
+        role_sizes={"table": floor},
+        _text_items=text_items,
+        _box_w=box_w,
+        _fit_role="table",
+        _typo=table_typo,
+        _mode=mode,
+        _sync_group=sync,
+        _explicit_size=explicit,
+        _margin_boxes=0,
+        _default_size=floor,
+        _maximum_size=ceil,
+        _table_spec=table_spec,
+    )
+
+
+def _collect_single_table_body(
+    slide: Any,
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+) -> tuple[int, list[SurfacePlan]]:
+    """data_table / annex_table / period_comparison body surfaces."""
+    plans: list[SurfacePlan] = []
+    table = slide.payload.table
+    role = {
+        "data_table": "data_table",
+        "annex_table": "annex_table",
+        "period_comparison": "period_comparison",
+    }[lt]
+    # Period comparison: reserve exterior metric strip above the table (D186).
+    strip = getattr(slide.payload, "metric_strip", None)
+    slot = 10
+    if strip is not None:
+        plans.append(
+            _metric_strip_plan(
+                strip,
+                deck,
+                sn=sn,
+                slide_index=slide_index,
+                lt=lt,
+                region=region,
+                slot_order=slot,
+            )
+        )
+        slot += 1
+    plans.append(
+        _table_surface_plan(
+            table=table,
+            deck=deck,
+            sn=sn,
+            slide_index=slide_index,
+            lt=lt,
+            region=region,
+            slot_order=slot,
+            box_w=CONTENT_W,
+            role=role,
+            extra_spec={"variant": lt},
+        )
+    )
+    return len(plans), plans
+
+
+def _metric_strip_plan(
+    strip: Any,
+    deck: Deck,
+    *,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    slot_order: int,
+) -> SurfacePlan:
+    from .format import format_semantic_value
+
+    typo = strip.typography
+    mode, sync, explicit = _typo_fields(typo, "body_font_size")
+    metrics = []
+    texts: list[tuple[str, bool]] = []
+    for m in strip.metrics:
+        fv = format_semantic_value(m.value, deck.number_formats)
+        metrics.append(
+            {
+                "metric_id": m.metric_id,
+                "label": m.label,
+                "detail": m.detail,
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+                "role": fv.role,
+                "align": fv.align,
+            }
+        )
+        texts.append((m.label, False))
+        texts.append((fv.visible, True))
+        if m.detail:
+            texts.append((m.detail, False))
+    n = max(1, len(metrics))
+    cell_w = (CONTENT_W - METRIC_STRIP_GAP * (n - 1)) // n
+    return SurfacePlan(
+        surface_id=strip.surface_id,
+        role="metric_strip",
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=slot_order,
+        design_stage_region=region,
+        role_sizes={
+            "label": METRIC_STRIP_FLOOR,
+            "value": METRIC_STRIP_VALUE_PX,
+            "detail": METRIC_STRIP_FLOOR,
+        },
+        _text_items=texts,
+        _box_w=cell_w - METRIC_STRIP_PAD_X,
+        _fit_role="label",
+        _typo=typo,
+        _mode=mode,
+        _sync_group=sync,
+        _explicit_size=explicit,
+        _margin_boxes=0,
+        _chrome_h=METRIC_STRIP_PAD_Y + BLOCK_MARGIN_Y,
+        _default_size=METRIC_STRIP_FLOOR,
+        _maximum_size=METRIC_STRIP_CEIL,
+        _table_spec={"kind": "metric_strip", "metrics": metrics, "n": n},
+    )
+
+
+def _collect_grouped_annex_body(
+    slide: Any,
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+) -> tuple[int, list[SurfacePlan]]:
+    peers = list(slide.payload.tables)
+    n = len(peers)
+    if n == 1:
+        peer_w = CONTENT_W
+    else:
+        peer_w = (CONTENT_W - GROUPED_ANNEX_GAP) // 2
+    # Shared sync so both peers freeze one common annex size (D185).
+    plans: list[SurfacePlan] = []
+    for i, peer in enumerate(peers):
+        heading = peer.heading
+        short = peer.short_heading or peer.heading
+        # Prefer short heading only when full heading cannot fit (D259).
+        full_h = _required_height([(heading, True)], GROUPED_ANNEX_HEADING_PX, peer_w, 1)
+        short_h = _required_height([(short, True)], GROUPED_ANNEX_HEADING_PX, peer_w, 1)
+        full_lines = _wrap_lines([(heading, True)], GROUPED_ANNEX_HEADING_PX, peer_w)[0]
+        use_short = len(full_lines) > 2 and short != heading
+        display_heading = short if use_short else heading
+        heading_h = short_h if use_short else full_h
+        sp = _table_surface_plan(
+            table=peer.table,
+            deck=deck,
+            sn=sn,
+            slide_index=slide_index,
+            lt=lt,
+            region=region,
+            slot_order=10 + i,
+            box_w=peer_w,
+            role="grouped_annex_table",
+            extra_spec={
+                "variant": "grouped_annex_table",
+                "peer_index": i,
+                "peer_count": n,
+                "heading_full": heading,
+                "heading_short": short,
+                "display_heading": display_heading,
+                "heading_px": GROUPED_ANNEX_HEADING_PX,
+            },
+        )
+        sp._chrome_h = heading_h + BLOCK_MARGIN_Y
+        sp._text_items = [(heading, True), (short, True)] + sp._text_items
+        # Equivalent annex peers share one common adaptive size (D185).
+        if sp._mode == "adaptive" and sp._explicit_size is None:
+            sp._sync_group = sp._sync_group or f"slide-{sn}-grouped-annex"
+        plans.append(sp)
+    return len(plans), plans
+
+
+def _collect_comparison_cards_body(
+    slide: Any,
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+) -> tuple[int, list[SurfacePlan]]:
+    """One surface owns the peer table; paint derives card geometry (D187/D261)."""
+    table = slide.payload.table
+    n_peers = len(table.rows)
+    cols = 2 if n_peers == 4 else n_peers
+    card_w = (CONTENT_W - COMPARISON_CARD_GAP * (cols - 1)) // cols
+    sp = _table_surface_plan(
+        table=table,
+        deck=deck,
+        sn=sn,
+        slide_index=slide_index,
+        lt=lt,
+        region=region,
+        slot_order=10,
+        box_w=card_w - 2 * COMPARISON_CARD_PAD,
+        role="comparison_cards",
+        extra_spec={
+            "variant": "comparison_cards",
+            "peer_count": n_peers,
+            "grid_cols": cols,
+            "card_w": card_w,
+        },
+    )
+    # Multi-role fit: heading / label / value share grow decisions via table size
+    # for the a11y table fallback path; card paint uses role_sizes below.
+    sp.role_sizes = {
+        "table": TABLE_FLOOR,  # fallback ordinary table size
+        "heading": COMPARISON_CARD_HEADING_FLOOR,
+        "label": COMPARISON_CARD_LABEL_FLOOR,
+        "value": COMPARISON_CARD_VALUE_FLOOR,
+    }
+    sp._default_size = TABLE_FLOOR
+    sp._maximum_size = TABLE_CEIL
+    return 1, [sp]
 
 
 # ---------------------------------------------------------------------------
@@ -1712,6 +2005,204 @@ def _table_fit_detail(
         return commit(h, r, g, w, short=sh, ellipsis=el, adapt_codes=ad, height=ht, fits=False)
 
     return False, codes, 10**9
+
+
+def _is_rectangular_table_spec(spec: dict[str, Any] | None) -> bool:
+    return bool(spec) and spec.get("kind") != "metric_strip" and "col_ids" in (spec or {})
+
+
+def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
+    """Return (fits, wrapped) for table / metric_strip / prose surfaces."""
+    spec = sp._table_spec
+    if _is_rectangular_table_spec(spec):
+        assert spec is not None
+        if sp.role == "comparison_cards":
+            return _comparison_cards_fit_detail(sp, size)
+        ok, codes, _h = _table_fit_detail(spec, size, sp._box_w, sp._box_h)
+        return ok, "plan.text_wrapped" in codes
+    if spec is not None and spec.get("kind") == "metric_strip":
+        return _metric_strip_fit_detail(sp, size)
+    return _text_fits_detail(
+        sp._text_items,
+        size,
+        sp._box_w,
+        sp._box_h,
+        margin_boxes=sp._margin_boxes,
+        indent_em=sp._indent_em,
+        unit_indent_ems=sp._unit_indent_ems,
+    )
+
+
+def _metric_strip_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
+    """Labels/details share adaptive size; values stay fixed KPI (D265)."""
+    assert sp._table_spec is not None
+    metrics = sp._table_spec["metrics"]
+    cell_w = sp._box_w
+    value_px = sp.role_sizes.get("value", METRIC_STRIP_VALUE_PX)
+    wrapped = False
+    # Two label lines + value + optional two detail lines + pads.
+    total_h = METRIC_STRIP_PAD_Y
+    for m in metrics:
+        lab_lines = _wrap_label_lines(m["label"], size, cell_w)
+        if len(lab_lines) > 2:
+            return False, True
+        if len(lab_lines) > 1:
+            wrapped = True
+        total_h = max(
+            total_h,
+            METRIC_STRIP_PAD_Y
+            + len(lab_lines) * _line_box(size)
+            + _line_box(value_px)
+            + (
+                len(_wrap_label_lines(m["detail"], size, cell_w)) * _line_box(size)
+                if m.get("detail")
+                else 0
+            )
+            + BLOCK_MARGIN_Y,
+        )
+        if m.get("detail"):
+            d_lines = _wrap_label_lines(m["detail"], size, cell_w)
+            if len(d_lines) > 2:
+                return False, True
+            if len(d_lines) > 1:
+                wrapped = True
+        if _text_width(m["visible"], value_px, strong=True) > cell_w:
+            return False, wrapped
+    fits = total_h <= sp._box_h + sp._chrome_h if sp._box_h else True
+    # Height is allocated via chrome + fit box; when box_h still 0 pre-allocate, allow.
+    if sp._box_h <= 0:
+        fits = True
+    else:
+        # Recompute height into the text box only (chrome already reserved).
+        text_h = total_h - METRIC_STRIP_PAD_Y - BLOCK_MARGIN_Y
+        fits = text_h <= sp._box_h and not any(
+            _text_width(m["visible"], value_px, strong=True) > cell_w for m in metrics
+        )
+    return fits, wrapped
+
+
+def _comparison_cards_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
+    """Fit peer cards; size drives ordinary-table fallback floor simultaneously."""
+    assert sp._table_spec is not None
+    spec = sp._table_spec
+    card_w = sp._box_w
+    heading_px = max(COMPARISON_CARD_HEADING_FLOOR, min(size + 2, 28))
+    label_px = max(COMPARISON_CARD_LABEL_FLOOR, min(size - 6, 20))
+    value_px = max(COMPARISON_CARD_VALUE_FLOOR, min(size, 28))
+    n_peers = spec["peer_count"]
+    cols = spec["grid_cols"]
+    rows_of_cards = 2 if n_peers == 4 else 1
+    # Measure one card height from tallest peer.
+    max_card_h = 0
+    wrapped = False
+    for r_i, row_lab in enumerate(spec["row_labels_full"]):
+        h_lines = _wrap_label_lines(row_lab, heading_px, card_w, strong=True)
+        if len(h_lines) > 2:
+            return False, True
+        if len(h_lines) > 1:
+            wrapped = True
+        h = len(h_lines) * _line_box(heading_px) + COMPARISON_CARD_PAD
+        for c_i, col_lab in enumerate(spec["header_full"][1:]):
+            l_lines = _wrap_label_lines(col_lab, label_px, card_w)
+            if len(l_lines) > 2:
+                return False, True
+            if len(l_lines) > 1:
+                wrapped = True
+            val = spec["cells_vis"][r_i][c_i]
+            if _text_width(val, value_px) > card_w:
+                return False, wrapped
+            h += len(l_lines) * _line_box(label_px) + _line_box(value_px) + 8
+        max_card_h = max(max_card_h, h + COMPARISON_CARD_PAD)
+    total_h = rows_of_cards * max_card_h + (rows_of_cards - 1) * COMPARISON_CARD_GAP
+    fits = total_h <= sp._box_h if sp._box_h > 0 else True
+    # Stash card role sizes for paint when this size wins.
+    if fits or sp._box_h <= 0:
+        spec["card_role_sizes"] = {
+            "heading": heading_px,
+            "label": label_px,
+            "value": value_px,
+            "card_h": max_card_h,
+        }
+    return fits, wrapped
+
+
+def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
+    """Propagate frozen multi-role sizes after the primary fit key is chosen."""
+    if sp.role == "metric_strip":
+        sp.role_sizes["label"] = size
+        sp.role_sizes["detail"] = size
+        sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
+    elif sp.role == "comparison_cards" and sp._table_spec:
+        roles = sp._table_spec.get("card_role_sizes") or {}
+        if roles:
+            sp.role_sizes["heading"] = roles["heading"]
+            sp.role_sizes["label"] = roles["label"]
+            sp.role_sizes["value"] = roles["value"]
+        sp.role_sizes["table"] = size
+
+
+def _apply_composition_fallback(sp: SurfacePlan) -> None:
+    """Non-strict composition fallbacks preserve complete data (D185/D186/D187)."""
+    if not sp._overflow:
+        return
+    if sp.role == "comparison_cards":
+        sp.fallback = "ordinary_data_table"
+        if sp._table_spec is not None:
+            sp._table_spec["paint_as"] = "data_table"
+            # Re-fit as full-width ordinary table for complete accessible paint.
+            sp._box_w = CONTENT_W
+            floor = TABLE_FLOOR
+            _table_fit_detail(sp._table_spec, floor, CONTENT_W, 10**9)
+            sp.role_sizes["table"] = floor
+    elif sp.role == "period_comparison":
+        sp.fallback = "ordinary_data_table"
+        if sp._table_spec is not None:
+            sp._table_spec["paint_as"] = "data_table"
+            sp._table_spec["variant"] = "data_table"
+    elif sp.role == "grouped_annex_table":
+        sp.fallback = "sequential_flat_tables"
+        if sp._table_spec is not None:
+            sp._table_spec["paint_as"] = "sequential_annex"
+            sp._box_w = CONTENT_W
+            floor = ANNEX_TABLE_FLOOR
+            _table_fit_detail(sp._table_spec, floor, CONTENT_W, 10**9)
+            sp.role_sizes["table"] = floor
+
+
+def _record_surface_adaptations(
+    sp: SurfacePlan, size: int, events: list[DiagnosticEvent]
+) -> None:
+    if _is_rectangular_table_spec(sp._table_spec) and sp.role != "comparison_cards":
+        _record_table_adaptations(sp, size, events)
+        return
+    ok, wrapped = _surface_fits_detail(sp, size)
+    if ok and wrapped and "plan.text_wrapped" not in sp.adaptation_codes:
+        sp.adaptation_codes.append("plan.text_wrapped")
+        events.append(
+            event(
+                code="plan.text_wrapped",
+                severity="info",
+                phase="plan",
+                role=sp.role,
+                path=f"/slides/{sp.slide_index}/{sp.role}",
+                action="measure",
+                result="accepted",
+                slide_number=sp.slide_number,
+                layout_type=sp.layout_type,
+                surface_id=sp.surface_id,
+            )
+        )
+
+
+def _apply_surface_floor_adaptations(
+    sp: SurfacePlan, size: int, events: list[DiagnosticEvent]
+) -> None:
+    if _is_rectangular_table_spec(sp._table_spec) and sp.role != "comparison_cards":
+        _apply_table_floor_adaptations(sp, size, events)
+        return
+    # Metric strip / cards: still freeze display payload at floor.
+    _surface_fits_detail(sp, size)
+    _finalize_composition_roles(sp, size)
 
 
 def _record_table_adaptations(

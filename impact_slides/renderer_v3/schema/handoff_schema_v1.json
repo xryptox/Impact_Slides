@@ -4,6 +4,128 @@
   "title": "Deck",
   "description": "Minimal top-level deck envelope (D211).",
   "$defs": {
+    "AnnexTablePayload": {
+      "additionalProperties": false,
+      "description": "Dense full-width annex table (D184/D258).",
+      "properties": {
+        "table": {
+          "$ref": "#/$defs/TableData"
+        }
+      },
+      "required": [
+        "table"
+      ],
+      "title": "AnnexTablePayload",
+      "type": "object"
+    },
+    "AnnexTableSlide": {
+      "additionalProperties": false,
+      "description": "Dense annex: one table + disclosure notes; no takeaway (D184/D258).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "annex_table",
+          "default": "annex_table",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AnnexTablePayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "AnnexTableSlide",
+      "type": "object"
+    },
     "ClosingCoverSlide": {
       "additionalProperties": false,
       "properties": {
@@ -102,6 +224,139 @@
         "column_ids"
       ],
       "title": "ColumnGroup",
+      "type": "object"
+    },
+    "ComparisonCardsPayload": {
+      "additionalProperties": false,
+      "description": "Peer comparison cards derived from one rectangular table (D187/D261).",
+      "properties": {
+        "table": {
+          "$ref": "#/$defs/TableData"
+        }
+      },
+      "required": [
+        "table"
+      ],
+      "title": "ComparisonCardsPayload",
+      "type": "object"
+    },
+    "ComparisonCardsSlide": {
+      "additionalProperties": false,
+      "description": "Peer cards from one rectangular fact table (D187/D208/D261).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "comparison_cards",
+          "default": "comparison_cards",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ComparisonCardsPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "ComparisonCardsSlide",
       "type": "object"
     },
     "CoverPayload": {
@@ -408,6 +663,167 @@
       "title": "EvidenceEntry",
       "type": "object"
     },
+    "GroupedAnnexPeer": {
+      "additionalProperties": false,
+      "description": "One headed peer matrix inside grouped_annex_table (D185/D259).",
+      "properties": {
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "short_heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Heading"
+        },
+        "table": {
+          "$ref": "#/$defs/TableData"
+        }
+      },
+      "required": [
+        "heading",
+        "table"
+      ],
+      "title": "GroupedAnnexPeer",
+      "type": "object"
+    },
+    "GroupedAnnexTablePayload": {
+      "additionalProperties": false,
+      "description": "One or two ordered peer annex surfaces (D185/D259).",
+      "properties": {
+        "tables": {
+          "items": {
+            "$ref": "#/$defs/GroupedAnnexPeer"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Tables",
+          "type": "array"
+        }
+      },
+      "required": [
+        "tables"
+      ],
+      "title": "GroupedAnnexTablePayload",
+      "type": "object"
+    },
+    "GroupedAnnexTableSlide": {
+      "additionalProperties": false,
+      "description": "1–2 peer annex matrices; no takeaway (D185/D259).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "grouped_annex_table",
+          "default": "grouped_annex_table",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/GroupedAnnexTablePayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "GroupedAnnexTableSlide",
+      "type": "object"
+    },
     "LegalNoticePayload": {
       "additionalProperties": false,
       "description": "Multipart legal notice sequence payload (D226/D271).",
@@ -519,6 +935,105 @@
         "section_id"
       ],
       "title": "LegalNoticeSlide",
+      "type": "object"
+    },
+    "MetricItem": {
+      "additionalProperties": false,
+      "description": "One directionless metric in a strip (D165/D265).",
+      "properties": {
+        "metric_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Metric Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "discriminator": {
+            "mapping": {
+              "missing": "#/$defs/MissingValue",
+              "number": "#/$defs/NumberValue",
+              "range": "#/$defs/RangeValue",
+              "text": "#/$defs/TextValue"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumberValue"
+            },
+            {
+              "$ref": "#/$defs/RangeValue"
+            },
+            {
+              "$ref": "#/$defs/TextValue"
+            },
+            {
+              "$ref": "#/$defs/MissingValue"
+            }
+          ],
+          "title": "Value"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        }
+      },
+      "required": [
+        "metric_id",
+        "label",
+        "value"
+      ],
+      "title": "MetricItem",
+      "type": "object"
+    },
+    "MetricStrip": {
+      "additionalProperties": false,
+      "description": "Compact exterior metric row (D165/D265); period_comparison caps at 3.",
+      "properties": {
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricItem"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Metrics",
+          "type": "array"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Typography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "surface_id",
+        "metrics"
+      ],
+      "title": "MetricStrip",
       "type": "object"
     },
     "MissingValue": {
@@ -922,6 +1437,150 @@
         "payload"
       ],
       "title": "OpeningCoverSlide",
+      "type": "object"
+    },
+    "PeriodComparisonPayload": {
+      "additionalProperties": false,
+      "description": "Financial period comparison with fixed role columns (D186/D260).",
+      "properties": {
+        "table": {
+          "$ref": "#/$defs/TableData"
+        },
+        "metric_strip": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MetricStrip"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "table"
+      ],
+      "title": "PeriodComparisonPayload",
+      "type": "object"
+    },
+    "PeriodComparisonSlide": {
+      "additionalProperties": false,
+      "description": "Period roles + optional exterior metric strip (D186/D260).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "period_comparison",
+          "default": "period_comparison",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PeriodComparisonPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "PeriodComparisonSlide",
       "type": "object"
     },
     "Prose": {
@@ -1460,11 +2119,15 @@
       "items": {
         "discriminator": {
           "mapping": {
+            "annex_table": "#/$defs/AnnexTableSlide",
             "closing_cover": "#/$defs/ClosingCoverSlide",
+            "comparison_cards": "#/$defs/ComparisonCardsSlide",
             "data_table": "#/$defs/DataTableSlide",
+            "grouped_annex_table": "#/$defs/GroupedAnnexTableSlide",
             "legal_notice": "#/$defs/LegalNoticeSlide",
             "narrative": "#/$defs/NarrativeSlide",
             "opening_cover": "#/$defs/OpeningCoverSlide",
+            "period_comparison": "#/$defs/PeriodComparisonSlide",
             "section_divider": "#/$defs/SectionDividerSlide"
           },
           "propertyName": "layout_type"
@@ -1487,6 +2150,18 @@
           },
           {
             "$ref": "#/$defs/DataTableSlide"
+          },
+          {
+            "$ref": "#/$defs/AnnexTableSlide"
+          },
+          {
+            "$ref": "#/$defs/GroupedAnnexTableSlide"
+          },
+          {
+            "$ref": "#/$defs/PeriodComparisonSlide"
+          },
+          {
+            "$ref": "#/$defs/ComparisonCardsSlide"
           }
         ]
       },
