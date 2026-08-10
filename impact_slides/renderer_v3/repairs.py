@@ -131,6 +131,26 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "grouped_annex_table": {"tables"},
                 "period_comparison": {"table", "metric_strip"},
             }.get(layout, {"table"})
+        elif layout in {
+            "process_flow",
+            "timeline",
+            "layered_architecture",
+            "data_pipeline",
+        }:
+            allowed = common | {
+                "section_id",
+                "title",
+                "content",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            }
+            payload_allowed = {
+                "process_flow": {"steps"},
+                "timeline": {"milestones"},
+                "layered_architecture": {"layers"},
+                "data_pipeline": {"stages"},
+            }[layout]
         else:
             return True
         if set(slide) - allowed:
@@ -210,6 +230,10 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "period_comparison",
                 "comparison_cards",
                 "single_chart",
+                "process_flow",
+                "timeline",
+                "layered_architecture",
+                "data_pipeline",
             }:
                 allowed = common | {
                     "section_id",
@@ -297,6 +321,10 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "grouped_annex_table": {"tables"},
                 "period_comparison": {"table", "metric_strip"},
                 "comparison_cards": {"table"},
+                "process_flow": {"steps"},
+                "timeline": {"milestones"},
+                "layered_architecture": {"layers"},
+                "data_pipeline": {"stages"},
             }
             if isinstance(payload, dict) and layout in payload_fields:
                 _drop_unknown_object(
@@ -616,6 +644,10 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             "period_comparison",
             "comparison_cards",
             "single_chart",
+            "process_flow",
+            "timeline",
+            "layered_architecture",
+            "data_pipeline",
         }:
             continue
 
@@ -659,6 +691,14 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                         payload,
                     )
                 )
+            elif layout in {
+                "process_flow",
+                "timeline",
+                "layered_architecture",
+                "data_pipeline",
+            }:
+                # D60 fixed type — no authored typography on these payloads.
+                pass
             else:
                 tables = [payload.get("table")]
                 if layout == "grouped_annex_table" and isinstance(
@@ -773,6 +813,10 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
             "period_comparison",
             "comparison_cards",
             "single_chart",
+            "process_flow",
+            "timeline",
+            "layered_architecture",
+            "data_pipeline",
         }:
             continue
         if "disclosure" not in slide:

@@ -180,6 +180,27 @@ def build_presentation_html(
             ".comparison-card .fact{margin:0 0 8px}",
             ".comparison-card .fact-label{margin:0 0 2px}",
             ".comparison-card .fact-value{margin:0;font-variant-numeric:tabular-nums lining-nums}",
+            # Linear + grouping compositions (D192/D193/D196/D197/D272–D277).
+            ".process-flow,.timeline,.data-pipeline{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
+            ".process-flow.horizontal,.timeline.horizontal,.data-pipeline.horizontal{flex-direction:row}",
+            ".process-flow.vertical,.timeline.vertical,.data-pipeline.vertical{flex-direction:column}",
+            ".process-step,.timeline-milestone,.pipeline-stage{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px}",
+            ".linear-card{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:16px;box-sizing:border-box;min-width:0}",
+            ".linear-card h3,.linear-card h4{margin:0 0 4px;font-size:inherit;font-weight:var(--font-weight-emphasis)}",
+            ".linear-meta{margin:0 0 4px;font-weight:var(--font-weight-emphasis);letter-spacing:0.04em}",
+            ".linear-detail{margin:0}",
+            ".linear-connector{flex:0 0 24px;display:flex;align-items:center;justify-content:center;color:var(--color-ink)}",
+            ".linear-connector[aria-hidden=\"true\"]{user-select:none}",
+            ".layered-architecture{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm)}",
+            ".arch-layer{display:flex;flex-direction:column;gap:8px}",
+            ".arch-layer-heading{margin:0;font-weight:var(--font-weight-emphasis)}",
+            ".arch-components{display:flex;flex-direction:row;gap:16px;width:100%}",
+            ".arch-component{flex:1 1 0;min-width:0}",
+            ".pipeline-components{display:flex;flex-direction:column;gap:8px}",
+            ".pipeline-transfer{margin:4px 0 0;font-style:italic}",
+            ".linear-fallback{margin:0 0 var(--space-sm)}",
+            ".linear-fallback ol,.linear-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
+            ".linear-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             # line chart (D5/D6/D63/D106/D247)
             ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
             ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
@@ -419,6 +440,10 @@ def _paint_slide_body(
         "period_comparison",
         "comparison_cards",
         "single_chart",
+        "process_flow",
+        "timeline",
+        "layered_architecture",
+        "data_pipeline",
     ):
         title_sp = plans_by_id.get(f"slide-{sn}-title")
         title_px = title_sp.role_sizes.get("title") if title_sp else None
@@ -446,6 +471,13 @@ def _paint_slide_body(
             out.extend(_paint_comparison_cards(slide, plans_by_id, events_by_surface))
         elif lt == "period_comparison":
             out.extend(_paint_period_comparison(slide, plans_by_id, events_by_surface))
+        elif lt in (
+            "process_flow",
+            "timeline",
+            "layered_architecture",
+            "data_pipeline",
+        ):
+            out.extend(_paint_linear_composition(slide, plans_by_id, events_by_surface))
         else:
             # data_table + annex_table share the canonical table painter.
             out.extend(
@@ -948,6 +980,283 @@ def _paint_comparison_cards(
     return out
 
 
+def _paint_linear_composition(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    """Paint process_flow / timeline / layered_architecture / data_pipeline."""
+    lt = slide.layout_type
+    sn = slide.slide_number
+    surface_ids = {
+        "process_flow": f"slide-{sn}-process-flow",
+        "timeline": f"slide-{sn}-timeline",
+        "layered_architecture": f"slide-{sn}-layered-architecture",
+        "data_pipeline": f"slide-{sn}-data-pipeline",
+    }
+    sp = plans_by_id.get(surface_ids[lt])
+    if sp is None or not getattr(sp, "_linear_spec", None):
+        raise RuntimeError(f"missing frozen linear plan for {lt}")
+    spec = sp._linear_spec
+    heading_px = sp.role_sizes.get("heading")
+    detail_px = sp.role_sizes.get("detail")
+    meta_px = sp.role_sizes.get("meta")
+    overflow_cls = " linear-overflow" if sp._overflow else ""
+    plan_attrs = _plan_attrs(sp, events_by_surface)
+
+    # Non-strict complete accessible fallbacks omit connectors/geometry.
+    if sp.fallback or spec.get("paint_as") == "fallback_list":
+        return _paint_linear_fallback(
+            lt, spec, sp, events_by_surface, heading_px, detail_px, meta_px, overflow_cls
+        )
+
+    if lt == "process_flow":
+        orientation = spec.get("orientation", "horizontal")
+        items = spec["items"]
+        out = [
+            f'<div class="process-flow {orientation}{overflow_cls}" '
+            f'role="list" {plan_attrs}>'
+        ]
+        for i, it in enumerate(items):
+            if i:
+                arrow = "→" if orientation == "horizontal" else "↓"
+                out.append(
+                    f'<div class="linear-connector" aria-hidden="true">{arrow}</div>'
+                )
+            out.append(
+                f'<div class="process-step" role="listitem" '
+                f'data-step-id="{_escape(it["id"])}">'
+            )
+            out.append('<div class="linear-card card-panel">')
+            out.append(
+                f'<p class="linear-meta"{_style_font(meta_px)}>' 
+                f'{int(it["ordinal"])}</p>'
+            )
+            out.append(
+                f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>'
+            )
+            if it.get("detail"):
+                out.append(
+                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'{_soft_break_html(it["detail"])}</p>'
+                )
+            out.append("</div></div>")
+        out.append("</div>")
+        return out
+
+    if lt == "timeline":
+        orientation = spec.get("orientation", "horizontal")
+        items = spec["items"]
+        out = [
+            f'<div class="timeline {orientation}{overflow_cls}" '
+            f'role="list" {plan_attrs}>'
+        ]
+        for i, it in enumerate(items):
+            if i:
+                arrow = "→" if orientation == "horizontal" else "↓"
+                out.append(
+                    f'<div class="linear-connector" aria-hidden="true">{arrow}</div>'
+                )
+            out.append(
+                f'<div class="timeline-milestone" role="listitem" '
+                f'data-milestone-id="{_escape(it["id"])}">'
+            )
+            out.append('<div class="linear-card card-panel">')
+            out.append(
+                f'<p class="linear-meta"{_style_font(meta_px)}>' 
+                f'{_soft_break_html(it["time_label"])}</p>'
+            )
+            out.append(
+                f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>'
+            )
+            if it.get("detail"):
+                out.append(
+                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'{_soft_break_html(it["detail"])}</p>'
+                )
+            out.append("</div></div>")
+        out.append("</div>")
+        return out
+
+    if lt == "layered_architecture":
+        out = [
+            f'<div class="layered-architecture{overflow_cls}" {plan_attrs}>'
+        ]
+        for layer in spec["layers"]:
+            out.append(
+                f'<section class="arch-layer" data-layer-id="{_escape(layer["id"])}">'
+            )
+            out.append(
+                f'<h3 class="arch-layer-heading"{_style_font(heading_px)}>' 
+                f'{_soft_break_html(layer["heading"])}</h3>'
+            )
+            out.append('<div class="arch-components">')
+            for c in layer["components"]:
+                out.append(
+                    f'<div class="arch-component linear-card card-panel" '
+                    f'data-component-id="{_escape(c["id"])}">'
+                )
+                out.append(
+                    f'<h4{_style_font(heading_px)}>{_soft_break_html(c["heading"])}</h4>'
+                )
+                if c.get("detail"):
+                    out.append(
+                        f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                        f'{_soft_break_html(c["detail"])}</p>'
+                    )
+                out.append("</div>")
+            out.append("</div></section>")
+        out.append("</div>")
+        return out
+
+    # data_pipeline
+    orientation = spec.get("orientation", "horizontal")
+    stages = spec["stages"]
+    out = [
+        f'<div class="data-pipeline {orientation}{overflow_cls}" '
+        f'role="list" {plan_attrs}>'
+    ]
+    for i, st in enumerate(stages):
+        if i:
+            arrow = "→" if orientation == "horizontal" else "↓"
+            out.append(
+                f'<div class="linear-connector" aria-hidden="true">{arrow}</div>'
+            )
+        out.append(
+            f'<div class="pipeline-stage" role="listitem" '
+            f'data-stage-id="{_escape(st["id"])}">'
+        )
+        out.append(
+            f'<h3{_style_font(heading_px)}>{_soft_break_html(st["heading"])}</h3>'
+        )
+        out.append('<div class="pipeline-components">')
+        for c in st["components"]:
+            out.append(
+                f'<div class="linear-card card-panel" '
+                f'data-component-id="{_escape(c["id"])}">'
+            )
+            out.append(
+                f'<h4{_style_font(detail_px)}>{_soft_break_html(c["heading"])}</h4>'
+            )
+            if c.get("detail"):
+                out.append(
+                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'{_soft_break_html(c["detail"])}</p>'
+                )
+            out.append("</div>")
+        out.append("</div>")
+        if st.get("transfer_label"):
+            nxt = stages[i + 1]["heading"] if i + 1 < len(stages) else ""
+            out.append(
+                f'<p class="pipeline-transfer"{_style_font(meta_px)}>' 
+                f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
+                f'{_soft_break_html(st["transfer_label"])}</p>'
+            )
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+def _paint_linear_fallback(
+    lt: str,
+    spec: dict[str, Any],
+    sp: Any,
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+    overflow_cls: str,
+) -> list[str]:
+    """Accessible ordered/nested list preserving every item and relationship."""
+    plan_attrs = _plan_attrs(sp, events_by_surface)
+    out = [
+        f'<div class="linear-fallback{overflow_cls}" {plan_attrs} '
+        f'data-fallback="{_escape(sp.fallback or "fallback_list")}">'
+    ]
+    if lt == "process_flow":
+        out.append("<ol>")
+        for it in spec["items"]:
+            out.append(f'<li data-step-id="{_escape(it["id"])}">')
+            out.append(
+                f'<strong{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</strong>'
+            )
+            if it.get("detail"):
+                out.append(
+                    f' — <span{_style_font(detail_px)}>{_soft_break_html(it["detail"])}</span>'
+                )
+            out.append("</li>")
+        out.append("</ol>")
+    elif lt == "timeline":
+        out.append('<ol class="chronological">')
+        for it in spec["items"]:
+            out.append(f'<li data-milestone-id="{_escape(it["id"])}">')
+            out.append(
+                f'<time{_style_font(meta_px)}>{_soft_break_html(it["time_label"])}</time> '
+            )
+            out.append(
+                f'<strong{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</strong>'
+            )
+            if it.get("detail"):
+                out.append(
+                    f' — <span{_style_font(detail_px)}>{_soft_break_html(it["detail"])}</span>'
+                )
+            out.append("</li>")
+        out.append("</ol>")
+    elif lt == "layered_architecture":
+        out.append("<ul>")
+        for layer in spec["layers"]:
+            out.append(f'<li data-layer-id="{_escape(layer["id"])}">')
+            out.append(
+                f'<strong{_style_font(heading_px)}>{_soft_break_html(layer["heading"])}</strong>'
+            )
+            out.append("<ul>")
+            for c in layer["components"]:
+                out.append(f'<li data-component-id="{_escape(c["id"])}">')
+                out.append(
+                    f'<span{_style_font(heading_px)}>{_soft_break_html(c["heading"])}</span>'
+                )
+                if c.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(detail_px)}>' 
+                        f'{_soft_break_html(c["detail"])}</span>'
+                    )
+                out.append("</li>")
+            out.append("</ul></li>")
+        out.append("</ul>")
+    else:  # data_pipeline ordered flow with explicit transfer wording
+        out.append("<ol>")
+        stages = spec["stages"]
+        for i, st in enumerate(stages):
+            out.append(f'<li data-stage-id="{_escape(st["id"])}">')
+            out.append(
+                f'<strong{_style_font(heading_px)}>{_soft_break_html(st["heading"])}</strong>'
+            )
+            out.append("<ul>")
+            for c in st["components"]:
+                out.append(f'<li data-component-id="{_escape(c["id"])}">')
+                out.append(
+                    f'<span{_style_font(detail_px)}>{_soft_break_html(c["heading"])}</span>'
+                )
+                if c.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(detail_px)}>' 
+                        f'{_soft_break_html(c["detail"])}</span>'
+                    )
+                out.append("</li>")
+            out.append("</ul>")
+            if st.get("transfer_label") and i + 1 < len(stages):
+                nxt = stages[i + 1]["heading"]
+                out.append(
+                    f'<p class="pipeline-transfer"{_style_font(meta_px)}>' 
+                    f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
+                    f'{_soft_break_html(st["transfer_label"])}</p>'
+                )
+            out.append("</li>")
+        out.append("</ol>")
+    out.append("</div>")
+    return out
+
+
 def _prose_html(prose: Any) -> str:
     chunks: list[str] = []
     runs = list(prose.runs)
@@ -1072,6 +1381,10 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
             "period_comparison",
             "comparison_cards",
             "single_chart",
+            "process_flow",
+            "timeline",
+            "layered_architecture",
+            "data_pipeline",
         ):
             # Composition-slot order: title, subtitle, body/table/chart, takeaway, disclosure.
             tid = f"slide-{slide.slide_number}-title"
@@ -1090,6 +1403,14 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                 )
             elif slide.layout_type == "single_chart":
                 surface_ids.append(slide.payload.primary_visual.surface_id)
+            elif slide.layout_type == "process_flow":
+                surface_ids.append(f"slide-{slide.slide_number}-process-flow")
+            elif slide.layout_type == "timeline":
+                surface_ids.append(f"slide-{slide.slide_number}-timeline")
+            elif slide.layout_type == "layered_architecture":
+                surface_ids.append(f"slide-{slide.slide_number}-layered-architecture")
+            elif slide.layout_type == "data_pipeline":
+                surface_ids.append(f"slide-{slide.slide_number}-data-pipeline")
             else:
                 strip = getattr(slide.payload, "metric_strip", None)
                 if strip is not None:

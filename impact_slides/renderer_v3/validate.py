@@ -316,8 +316,9 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                             "kernel implements opening_cover, section_divider, "
                             "closing_cover, narrative, legal_notice, data_table, "
                             "annex_table, grouped_annex_table, period_comparison, "
-                            "comparison_cards; other D210 compositions "
-                            "arrive in later tickets"
+                            "comparison_cards, process_flow, timeline, "
+                            "layered_architecture, data_pipeline, single_chart; "
+                            "other D210 compositions arrive in later tickets"
                         ),
                     )
                 )

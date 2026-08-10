@@ -23,6 +23,14 @@ KERNEL_TABLE_LAYOUTS = frozenset(
         "comparison_cards",
     }
 )
+KERNEL_LINEAR_LAYOUTS = frozenset(
+    {
+        "process_flow",
+        "timeline",
+        "layered_architecture",
+        "data_pipeline",
+    }
+)
 
 from ._version import __version__ as RENDERER_VERSION
 
@@ -76,6 +84,14 @@ COMPARISON_CARD_PAD: Final = 16
 COMPARISON_CARD_HEADING_FLOOR: Final = 22
 COMPARISON_CARD_LABEL_FLOOR: Final = 14
 COMPARISON_CARD_VALUE_FLOOR: Final = 22
+# D60 fixed first-delivery type for geometry-specialized linear/grouping comps.
+LINEAR_HEADING_PX: Final = 22
+LINEAR_DETAIL_PX: Final = 16
+LINEAR_META_PX: Final = 14  # step numbers / time labels
+LINEAR_GAP: Final = 16
+LINEAR_CARD_PAD: Final = 16
+LINEAR_CONNECTOR_H: Final = 24
+LINEAR_LAYER_GAP: Final = 20
 TABLE_MAX_LABEL_LINES: Final = 2
 # Must match publish CSS padding on table.data-table th/td (8px*2, 6px*2).
 TABLE_CELL_PAD_X: Final = 16
@@ -154,6 +170,8 @@ class SurfacePlan:
     _maximum_size: Optional[int] = None
     # data_table fit payload (formatted cells + labels); None for non-tables.
     _table_spec: Optional[dict[str, Any]] = None
+    # Linear/grouping composition measure + paint payload (D272–D277).
+    _linear_spec: Optional[dict[str, Any]] = None
     # CSS white-space:pre-wrap surfaces preserve authored hard line breaks.
     _preserve_newlines: bool = False
     # Frozen paint input for data_table (public to painters; set at seal).
@@ -494,7 +512,11 @@ def _collect_surfaces(
             )
             continue
 
-        if lt not in ("narrative", "single_chart") and lt not in KERNEL_TABLE_LAYOUTS:
+        if (
+            lt not in ("narrative", "single_chart")
+            and lt not in KERNEL_TABLE_LAYOUTS
+            and lt not in KERNEL_LINEAR_LAYOUTS
+        ):
             continue
 
         # Slot order: title chrome (fixed), subtitle, body/table, takeaway.
@@ -639,6 +661,13 @@ def _collect_surfaces(
         elif lt == "comparison_cards":
             body_slots, body_plans = _collect_comparison_cards_body(
                 slide, deck, sn, slide_index, lt, region
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
+        elif lt in KERNEL_LINEAR_LAYOUTS:
+            body_slots, body_plans = _collect_linear_body(
+                slide, sn, slide_index, lt, region
             )
             for bp in body_plans:
                 out.append(bp)
@@ -853,6 +882,9 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     def need(sp: SurfacePlan, size: int) -> int:
         if sp._chart_spec is not None and sp.role == "line_chart":
             return CHART_VIEW_MIN_H
+        if sp._linear_spec is not None:
+            ok, height = _linear_fit_detail(sp)
+            return height if ok else 10**9
         if _is_rectangular_table_spec(sp._table_spec):
             assert sp._table_spec is not None
             if sp.role == "comparison_cards":
@@ -980,6 +1012,12 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         if sp._cover_items:
             if not _cover_fits(sp):
                 sp._overflow = True
+            return
+        if sp._linear_spec is not None:
+            ok, _h = _linear_fit_detail(sp)
+            if not ok:
+                sp._overflow = True
+                _apply_composition_fallback(sp)
             return
         px = next(iter(sp.role_sizes.values()))
         if not _text_fits(
@@ -1771,6 +1809,140 @@ def _collect_comparison_cards_body(
     return 1, [sp]
 
 
+def _collect_linear_body(
+    slide: Any,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+) -> tuple[int, list[SurfacePlan]]:
+    """One fixed-type surface for process/timeline/layers/pipeline (D272–D277)."""
+    payload = slide.payload
+    text_items: list[tuple[str, bool]] = []
+    if lt == "process_flow":
+        items = [
+            {
+                "id": s.step_id,
+                "heading": s.heading,
+                "detail": s.detail,
+                "ordinal": i + 1,
+            }
+            for i, s in enumerate(payload.steps)
+        ]
+        for it in items:
+            text_items.append((it["heading"], True))
+            if it["detail"]:
+                text_items.append((it["detail"], False))
+        spec: dict[str, Any] = {
+            "kind": "process_flow",
+            "items": items,
+            "orientation": "horizontal" if len(items) <= 4 else "vertical",
+        }
+        role = "process_flow"
+        surface_id = f"slide-{sn}-process-flow"
+    elif lt == "timeline":
+        items = [
+            {
+                "id": m.milestone_id,
+                "time_label": m.time_label,
+                "heading": m.heading,
+                "detail": m.detail,
+            }
+            for m in payload.milestones
+        ]
+        for it in items:
+            text_items.append((it["time_label"], True))
+            text_items.append((it["heading"], True))
+            if it["detail"]:
+                text_items.append((it["detail"], False))
+        spec = {
+            "kind": "timeline",
+            "items": items,
+            "orientation": "horizontal" if len(items) <= 4 else "vertical",
+        }
+        role = "timeline"
+        surface_id = f"slide-{sn}-timeline"
+    elif lt == "layered_architecture":
+        layers = []
+        for ly in payload.layers:
+            comps = [
+                {
+                    "id": c.component_id,
+                    "heading": c.heading,
+                    "detail": c.detail,
+                }
+                for c in ly.components
+            ]
+            layers.append(
+                {"id": ly.layer_id, "heading": ly.heading, "components": comps}
+            )
+            text_items.append((ly.heading, True))
+            for c in comps:
+                text_items.append((c["heading"], True))
+                if c["detail"]:
+                    text_items.append((c["detail"], False))
+        spec = {"kind": "layered_architecture", "layers": layers}
+        role = "layered_architecture"
+        surface_id = f"slide-{sn}-layered-architecture"
+    else:  # data_pipeline
+        stages = []
+        for st in payload.stages:
+            comps = [
+                {
+                    "id": c.component_id,
+                    "heading": c.heading,
+                    "detail": c.detail,
+                }
+                for c in st.components
+            ]
+            stages.append(
+                {
+                    "id": st.stage_id,
+                    "heading": st.heading,
+                    "components": comps,
+                    "transfer_label": st.transfer_label,
+                }
+            )
+            text_items.append((st.heading, True))
+            if st.transfer_label:
+                text_items.append((st.transfer_label, False))
+            for c in comps:
+                text_items.append((c["heading"], True))
+                if c["detail"]:
+                    text_items.append((c["detail"], False))
+        spec = {
+            "kind": "data_pipeline",
+            "stages": stages,
+            "orientation": "horizontal" if len(stages) <= 4 else "vertical",
+        }
+        role = "data_pipeline"
+        surface_id = f"slide-{sn}-data-pipeline"
+
+    sp = SurfacePlan(
+        surface_id=surface_id,
+        role=role,
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=10,
+        design_stage_region=region,
+        role_sizes={
+            "heading": LINEAR_HEADING_PX,
+            "detail": LINEAR_DETAIL_PX,
+            "meta": LINEAR_META_PX,
+        },
+        _text_items=text_items,
+        _box_w=CONTENT_W,
+        _fit_role=None,
+        _mode="fixed",
+        _margin_boxes=0,
+        _default_size=LINEAR_HEADING_PX,
+        _maximum_size=LINEAR_HEADING_PX,
+        _linear_spec=spec,
+    )
+    return 1, [sp]
+
+
 # ---------------------------------------------------------------------------
 # data_table measure (D24/D25/D44/D104)
 # ---------------------------------------------------------------------------
@@ -2311,6 +2483,9 @@ def _is_rectangular_table_spec(spec: dict[str, Any] | None) -> bool:
 
 def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     """Return (fits, wrapped) for table / metric_strip / prose surfaces."""
+    if sp._linear_spec is not None:
+        ok, _h = _linear_fit_detail(sp)
+        return ok, False
     spec = sp._table_spec
     if _is_rectangular_table_spec(spec):
         assert spec is not None
@@ -2379,6 +2554,219 @@ def _metric_strip_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     return fits, wrapped
 
 
+def _linear_lines(
+    text: str, px: int, inner_w: int, *, strong: bool = False, max_lines: int = 3
+) -> tuple[list[str], bool]:
+    """Wrap label; False when unbreakable overflow or too many lines for fixed chrome."""
+    lines = _wrap_label_lines(text, px, inner_w, strong=strong)
+    if not lines:
+        return lines, True
+    if any(_text_width(line, px, strong=strong) > inner_w for line in lines):
+        return lines, False
+    if len(lines) > max_lines:
+        return lines, False
+    return lines, True
+
+
+def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
+    """Fixed D60 geometry fit for process/timeline/layers/pipeline (D272–D277)."""
+    assert sp._linear_spec is not None
+    spec = sp._linear_spec
+    kind = spec["kind"]
+    heading_px = sp.role_sizes.get("heading", LINEAR_HEADING_PX)
+    detail_px = sp.role_sizes.get("detail", LINEAR_DETAIL_PX)
+    meta_px = sp.role_sizes.get("meta", LINEAR_META_PX)
+    box_w = sp._box_w
+    box_h = sp._box_h if sp._box_h > 0 else 10**9
+    ok = True
+
+    if kind in ("process_flow", "timeline"):
+        items = spec["items"]
+        n = len(items)
+        orientation = spec.get("orientation", "horizontal")
+        if orientation == "horizontal":
+            col_w = max(40, (box_w - LINEAR_GAP * (n - 1)) // n)
+            heights = []
+            for it in items:
+                meta = (
+                    str(it.get("ordinal", ""))
+                    if kind == "process_flow"
+                    else it.get("time_label")
+                )
+                inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
+                h = LINEAR_CARD_PAD
+                if meta:
+                    lines, fit = _linear_lines(
+                        str(meta), meta_px, inner_w, strong=True, max_lines=2
+                    )
+                    ok = ok and fit
+                    h += len(lines) * _line_box(meta_px)
+                lines, fit = _linear_lines(
+                    it["heading"], heading_px, inner_w, strong=True, max_lines=3
+                )
+                ok = ok and fit
+                h += len(lines) * _line_box(heading_px)
+                if it.get("detail"):
+                    lines, fit = _linear_lines(
+                        it["detail"], detail_px, inner_w, max_lines=4
+                    )
+                    ok = ok and fit
+                    h += len(lines) * _line_box(detail_px)
+                h += LINEAR_CARD_PAD
+                heights.append(h)
+            total = max(heights) + LINEAR_CONNECTOR_H + BLOCK_MARGIN_Y
+        else:
+            total = 0
+            for it in items:
+                meta = (
+                    str(it.get("ordinal", ""))
+                    if kind == "process_flow"
+                    else it.get("time_label")
+                )
+                inner_w = max(40, box_w - 2 * LINEAR_CARD_PAD)
+                h = LINEAR_CARD_PAD
+                if meta:
+                    lines, fit = _linear_lines(
+                        str(meta), meta_px, inner_w, strong=True, max_lines=2
+                    )
+                    ok = ok and fit
+                    h += len(lines) * _line_box(meta_px)
+                lines, fit = _linear_lines(
+                    it["heading"], heading_px, inner_w, strong=True, max_lines=3
+                )
+                ok = ok and fit
+                h += len(lines) * _line_box(heading_px)
+                if it.get("detail"):
+                    lines, fit = _linear_lines(
+                        it["detail"], detail_px, inner_w, max_lines=4
+                    )
+                    ok = ok and fit
+                    h += len(lines) * _line_box(detail_px)
+                h += LINEAR_CARD_PAD + LINEAR_CONNECTOR_H
+                total += h
+            total = total - LINEAR_CONNECTOR_H + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    if kind == "layered_architecture":
+        total = 0
+        for layer in spec["layers"]:
+            comps = layer["components"]
+            n = max(1, len(comps))
+            col_w = max(40, (box_w - LINEAR_GAP * (n - 1)) // n)
+            lines, fit = _linear_lines(
+                layer["heading"], heading_px, box_w, strong=True, max_lines=2
+            )
+            ok = ok and fit
+            layer_h = len(lines) * _line_box(heading_px)
+            comp_heights = []
+            for c in comps:
+                inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
+                ch = LINEAR_CARD_PAD
+                lines, fit = _linear_lines(
+                    c["heading"], heading_px, inner_w, strong=True, max_lines=3
+                )
+                ok = ok and fit
+                ch += len(lines) * _line_box(heading_px)
+                if c.get("detail"):
+                    lines, fit = _linear_lines(
+                        c["detail"], detail_px, inner_w, max_lines=4
+                    )
+                    ok = ok and fit
+                    ch += len(lines) * _line_box(detail_px)
+                ch += LINEAR_CARD_PAD
+                comp_heights.append(ch)
+            layer_h += max(comp_heights) if comp_heights else 0
+            total += layer_h + LINEAR_LAYER_GAP
+        total = total - LINEAR_LAYER_GAP + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    # data_pipeline
+    stages = spec["stages"]
+    n = len(stages)
+    orientation = spec.get("orientation", "horizontal")
+    if orientation == "horizontal":
+        col_w = max(
+            40,
+            (box_w - LINEAR_GAP * (n - 1) - LINEAR_CONNECTOR_H * (n - 1)) // n,
+        )
+        heights = []
+        for st in stages:
+            inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
+            h = LINEAR_CARD_PAD
+            lines, fit = _linear_lines(
+                st["heading"], heading_px, inner_w, strong=True, max_lines=3
+            )
+            ok = ok and fit
+            h += len(lines) * _line_box(heading_px)
+            for c in st["components"]:
+                lines, fit = _linear_lines(
+                    c["heading"], detail_px, inner_w, strong=True, max_lines=3
+                )
+                ok = ok and fit
+                h += len(lines) * _line_box(detail_px)
+                if c.get("detail"):
+                    lines, fit = _linear_lines(
+                        c["detail"], detail_px, inner_w, max_lines=3
+                    )
+                    ok = ok and fit
+                    h += len(lines) * _line_box(detail_px)
+            if st.get("transfer_label"):
+                lines, fit = _linear_lines(
+                    st["transfer_label"], meta_px, inner_w, max_lines=2
+                )
+                ok = ok and fit
+                h += len(lines) * _line_box(meta_px)
+            h += LINEAR_CARD_PAD
+            heights.append(h)
+        total = max(heights) + BLOCK_MARGIN_Y
+    else:
+        total = 0
+        for st in stages:
+            h = LINEAR_CARD_PAD
+            lines, fit = _linear_lines(
+                st["heading"], heading_px, box_w, strong=True, max_lines=3
+            )
+            ok = ok and fit
+            h += len(lines) * _line_box(heading_px)
+            for c in st["components"]:
+                lines, fit = _linear_lines(
+                    c["heading"], detail_px, box_w, strong=True, max_lines=3
+                )
+                ok = ok and fit
+                h += len(lines) * _line_box(detail_px)
+                if c.get("detail"):
+                    lines, fit = _linear_lines(
+                        c["detail"], detail_px, box_w, max_lines=3
+                    )
+                    ok = ok and fit
+                    h += len(lines) * _line_box(detail_px)
+            if st.get("transfer_label"):
+                lines, fit = _linear_lines(
+                    st["transfer_label"], meta_px, box_w, max_lines=2
+                )
+                ok = ok and fit
+                h += len(lines) * _line_box(meta_px) + LINEAR_CONNECTOR_H
+            h += LINEAR_CARD_PAD + LINEAR_LAYER_GAP
+            total += h
+        total = total - LINEAR_LAYER_GAP + BLOCK_MARGIN_Y
+    if not ok:
+        return False, 10**9
+    return total <= box_h, total
+
+
+def _linear_item_count(spec: dict[str, Any]) -> int:
+    kind = spec["kind"]
+    if kind in ("process_flow", "timeline"):
+        return max(1, len(spec["items"]))
+    if kind == "layered_architecture":
+        return max(1, max((len(ly["components"]) for ly in spec["layers"]), default=1))
+    return max(1, len(spec["stages"]))
+
+
 def _comparison_cards_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     """Fit peer cards; size drives ordinary-table fallback floor simultaneously."""
     assert sp._table_spec is not None
@@ -2440,7 +2828,7 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
 
 
 def _apply_composition_fallback(sp: SurfacePlan) -> None:
-    """Non-strict composition fallbacks preserve complete data (D185/D186/D187)."""
+    """Non-strict composition fallbacks preserve complete data (D185/D186/D187/D272–D277)."""
     if not sp._overflow:
         return
     if sp.role == "comparison_cards":
@@ -2474,6 +2862,16 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
             floor = HEATMAP_TABLE_FLOOR
             _table_fit_detail(sp._table_spec, floor, CONTENT_W, 10**9)
             sp.role_sizes["table"] = floor
+    elif sp.role in KERNEL_LINEAR_LAYOUTS and sp._linear_spec is not None:
+        # Accessible ordered/nested list; omit connectors/geometry (D272–D277).
+        fallback_by_role = {
+            "process_flow": "accessible_ordered_list",
+            "timeline": "accessible_chronological_list",
+            "layered_architecture": "accessible_nested_outline",
+            "data_pipeline": "accessible_ordered_flow",
+        }
+        sp.fallback = fallback_by_role[sp.role]
+        sp._linear_spec["paint_as"] = "fallback_list"
 
 
 def _record_surface_adaptations(
