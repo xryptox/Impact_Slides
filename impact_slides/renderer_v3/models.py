@@ -1678,10 +1678,12 @@ class SingleChartSlide(_SlideBase):
 
 
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
-# plus annex/comparison tables (#180), single_chart line tracer (#182), and
-# linear/grouping compositions (#192). Other D210 layout_type values are
-# recognized at the envelope and rejected with a clear "not yet implemented"
-# structure error so the closed vocabulary stays honest.
+# plus annex/comparison tables (#180), single_chart axis charts
+# (line #182; grouped/horizontal bars #183), and linear/grouping
+# compositions (#192).
+# Other D210 layout_type values are recognized at the envelope and rejected
+# with a clear "not yet implemented in kernel" structure error so the closed
+# vocabulary stays honest without shipping empty payload shells.
 Slide = Annotated[
     Union[
         OpeningCoverSlide,

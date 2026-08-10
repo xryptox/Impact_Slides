@@ -202,8 +202,7 @@ def build_presentation_html(
             ".linear-fallback{margin:0 0 var(--space-sm)}",
             ".linear-fallback ol,.linear-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
             ".linear-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
-            # line chart (D5/D6/D63/D106/D247)
-            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
+            # axis charts: line + grouped/horizontal bars (D5/D6/D63/D106/D247)            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
             ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
             ".chart-pane-title{display:flex;flex-direction:column;gap:4px;padding:10px 16px;margin:0 0 var(--space-sm)}",
             ".chart-pane-title>span:first-child{font-size:40px;font-weight:var(--font-weight-title);color:var(--color-band-ink)}",

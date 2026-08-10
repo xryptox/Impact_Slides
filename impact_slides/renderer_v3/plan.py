@@ -181,7 +181,7 @@ class SurfacePlan:
     _preserve_newlines: bool = False
     # Frozen paint input for data_table (public to painters; set at seal).
     table_paint: Optional[dict[str, Any]] = None
-    # Frozen line-chart plan (public to Chart.js + SVG painters; set at seal).
+    # Frozen axis-chart plan (public to Chart.js + SVG painters; set at seal).
     _chart_spec: Optional[dict[str, Any]] = None
     _chart_visual: Any = None
     _chart_formats: Any = None
