@@ -371,7 +371,8 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             legal_items: list[tuple[str, str]] = [(heading, "title")]
             for para in p.paragraphs:
                 legal_items.append((para, "body"))
-            legal_items.append((f"Part {p.part} of {p.total_parts}", "meta"))
+            if p.part > 1:
+                legal_items.append((f"Part {p.part} of {p.total_parts}", "meta"))
             out.append(
                 SurfacePlan(
                     surface_id=f"slide-{sn}-legal",

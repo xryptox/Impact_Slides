@@ -45,7 +45,7 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _slide_heading(slide: Any) -> str:
+def _slide_heading(slide: Any, sections: list[Any] | None = None) -> str:
     title = getattr(slide, "title", None)
     if title:
         return title
@@ -53,11 +53,17 @@ def _slide_heading(slide: Any) -> str:
     if payload is not None and getattr(payload, "title", None):
         return payload.title
     if slide.layout_type == "section_divider":
-        return f"section:{payload.section_id}"
+        # D269: accessibility/notes wording from registry label, not id token.
+        sec_id = payload.section_id
+        if sections:
+            for sec in sections:
+                if sec.section_id == sec_id:
+                    return sec.label
+        return sec_id
     if slide.layout_type == "legal_notice":
         if payload.part == 1 and payload.title:
             return payload.title
-        return f"{payload.notice_id} — continued"
+        return "— continued"
     return slide.layout_type
 
 
@@ -80,7 +86,7 @@ def build_presentation_html(
         '<html lang="en">',
         "<head>",
         '<meta charset="utf-8"/>',
-        f"<title>{_escape(_slide_heading(deck.slides[0]))}</title>",
+        f"<title>{_escape(_slide_heading(deck.slides[0], deck.sections))}</title>",
         f'<meta name="generator" content="impact_slides.renderer_v3/{RENDERER_VERSION}"/>',
         f'<meta name="theme-id" content="{THEME_ID}"/>',
         f'<meta name="design-stage" content="{1920}x{1080}"/>',
@@ -106,6 +112,7 @@ def build_presentation_html(
             "p,ul{font-size:var(--text-body);line-height:1.4;margin:0 0 var(--space-sm);padding:0}",
             "li{margin:0;padding:0;margin-left:1.25em}",
             # Brand / divider / legal chrome (D223/D268/D269/D271) — renderer-owned.
+            # Descendant selectors; frozen sizes still applied inline from plan role_sizes.
             ".cover{display:flex;flex-direction:column;justify-content:center;height:100%;gap:var(--space-sm)}",
             ".cover h1{font-size:var(--text-display);margin:0 0 var(--space-md)}",
             ".cover .subtitle,.cover .period,.cover .date{font-size:var(--text-body);margin:0}",
@@ -115,10 +122,9 @@ def build_presentation_html(
             ".section-divider h1{font-size:var(--text-title);margin:0}",
             ".section-divider .divider-rule{height:4px;width:120px;background:var(--color-band);margin:var(--space-md) 0 0}",
             ".legal-notice{height:100%;overflow:visible}",
-            ".legal-notice h1{font-size:28px;margin:0 0 var(--space-md)}",
-            ".legal-notice .legal-continued{font-size:28px;margin:0 0 var(--space-md);font-weight:var(--font-weight-title)}",
-            ".legal-notice .legal-body p{font-size:16px;margin:0 0 var(--space-sm);white-space:pre-wrap}",
-            ".legal-notice .legal-part{font-size:16px;margin:var(--space-md) 0 0;color:var(--color-ink)}",
+            ".legal-notice h1,.legal-notice .legal-continued{margin:0 0 var(--space-md);font-weight:var(--font-weight-title)}",
+            ".legal-notice .legal-body p{margin:0 0 var(--space-sm);white-space:pre-wrap}",
+            ".legal-notice .legal-part{margin:var(--space-md) 0 0;color:var(--color-ink)}",
             ".legal-overflow,.cover-overflow,.divider-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
             ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
@@ -320,10 +326,12 @@ def _paint_slide_body(
             # Exact paragraphs; only safe escaping + soft-break markers.
             out.append(f"<p{_style_font(body_px)}>{_soft_break_html(para)}</p>")
         out.append("</div>")
-        out.append(
-            f'<p class="legal-part"{_style_font(meta_px)}>'
-            f"Part {p.part} of {p.total_parts}</p>"
-        )
+        # D271: visible part-of-total chrome is for continuation parts.
+        if p.part > 1:
+            out.append(
+                f'<p class="legal-part"{_style_font(meta_px)}>'
+                f"Part {p.part} of {p.total_parts}</p>"
+            )
         out.append("</div>")
         return out
     if lt in ("narrative", "data_table"):
@@ -640,7 +648,7 @@ def build_slide_notes_md(deck: Deck) -> str:
     """
     chunks: list[str] = []
     for slide in deck.slides:
-        heading = _slide_heading(slide)
+        heading = _slide_heading(slide, deck.sections)
         chunks.append(f"# Slide {slide.slide_number} — {heading}")
         chunks.append("")
         notes = getattr(slide, "speaker_notes", None)

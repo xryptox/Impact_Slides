@@ -834,13 +834,9 @@ class Deck(ClosedModel):
                         f"legal_notice {nid!r} section_id must match across parts"
                     )
                 seen_parts.append(slide.payload.part)
-            if sorted(seen_parts) != list(range(1, total + 1)):
+            if seen_parts != list(range(1, total + 1)):
                 raise ValueError(
-                    f"legal_notice {nid!r} parts must be exactly 1..{total}"
-                )
-            if [p for p in seen_parts] != list(range(1, total + 1)):
-                raise ValueError(
-                    f"legal_notice {nid!r} parts must appear in ascending order"
+                    f"legal_notice {nid!r} parts must be exactly 1..{total} in order"
                 )
 
         # Evidence: every registry entry referenced; every slide ref resolves (D216/D217)

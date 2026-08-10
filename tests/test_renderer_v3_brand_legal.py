@@ -93,7 +93,8 @@ def test_publish_paints_registry_label_and_legal_continuation(tmp_path: Path):
     assert "divider-rule" in html
     notes = (out / "slide_notes.md").read_text(encoding="utf-8")
     assert "Important disclosures" in notes
-    assert "disclaimer — continued" in notes
+    assert "— continued" in notes
+    assert "Overview" in notes  # divider notes heading uses registry label
     assert "Read the full notice aloud if asked." in notes
 
 
