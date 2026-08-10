@@ -1089,8 +1089,6 @@ class LineChartVisual(ClosedModel):
                 raise ValueError(
                     f"series {s.series_id!r} requires at least two finite values"
                 )
-            if s.style is not None:
-                pass  # line styles valid
         _common_chart_heading_rules(self)
         _leading_break_rules(self, allow=True)
         _domain_contains_finite(self)
@@ -1224,7 +1222,9 @@ class GroupedBarChartVisual(ClosedModel):
     value_axes: ValueAxes
     display: Optional[ChartDisplay] = None
     typography: Optional[ChartTypography] = None
-    category_groups: Optional[list[CategoryGroup]] = Field(default=None, min_length=1)
+    category_groups: Optional[list[CategoryGroup]] = Field(
+        default=None, min_length=1, max_length=6
+    )
     auxiliary_series: Optional[list[BoxedLabelAuxiliary]] = Field(
         default=None, min_length=1
     )
@@ -1266,7 +1266,9 @@ class HorizontalBarChartVisual(ClosedModel):
     value_axes: ValueAxes
     display: Optional[ChartDisplay] = None
     typography: Optional[ChartTypography] = None
-    category_groups: Optional[list[CategoryGroup]] = Field(default=None, min_length=1)
+    category_groups: Optional[list[CategoryGroup]] = Field(
+        default=None, min_length=1, max_length=6
+    )
     auxiliary_series: Optional[list[BoxedLabelAuxiliary]] = Field(
         default=None, min_length=1
     )

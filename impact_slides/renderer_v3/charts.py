@@ -519,6 +519,7 @@ def freeze_bar_chart(
             "view_h": pad_t + plot_h + pad_b,
             "thickness": geom["thickness"],
             "category_pitch": geom["category_pitch"],
+            "series_gap": geom["series_gap"],
             "horizontal": horizontal,
             "zero_x": zero_x,
             "zero_y": zero_y,
@@ -964,31 +965,34 @@ def _paint_bar_svg(
                 continue
             kind = place.get("kind")
             if kind == "value" and plan["show_ordinary_values"]:
-                color = series_by_id[place["series_id"]]["color"]
+                # D80/D303: ordinary bar values are navy; leaders may use series color.
+                series_color = series_by_id[place["series_id"]]["color"]
+                label_color = series_color if place["class"] == "leader" else ink
                 tx, ty = place["x"], place["y"]
                 if place["class"] == "leader":
                     parts.append(
                         f'<line x1="{place.get("anchor_x", tx):.1f}" '
                         f'y1="{place.get("anchor_y", ty):.1f}" '
                         f'x2="{tx:.1f}" y2="{ty:.1f}" '
-                        f'stroke="{_e(color)}" stroke-width="1" opacity="0.7"/>'
+                        f'stroke="{_e(series_color)}" stroke-width="1" opacity="0.7"/>'
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
                     f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
-                    f'fill="{_e(color)}" data-placement="{place["class"]}">'
+                    f'fill="{_e(label_color)}" data-placement="{place["class"]}">'
                     f'{_e(place["text"])}</text>'
                 )
             elif kind == "boxed_label":
                 tx, ty = place["x"], place["y"]
                 tw = place.get("box_w", 40)
                 th = place.get("box_h", lab_px + 8)
+                surface = resolve_color("white", role="surface")
                 parts.append(
                     f'<g class="boxed-label" data-series="{_e(place["series_id"])}" '
                     f'data-category="{_e(place["category_id"])}">'
                     f'<rect x="{tx - tw / 2:.1f}" y="{ty - th / 2:.1f}" '
                     f'width="{tw:.1f}" height="{th:.1f}" '
-                    f'fill="#ffffff" stroke="{_e(border)}" stroke-width="1" rx="2"/>'
+                    f'fill="{_e(surface)}" stroke="{_e(border)}" stroke-width="1" rx="2"/>'
                     f'<text x="{tx:.1f}" y="{ty + lab_px * 0.35:.1f}" text-anchor="middle" '
                     f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(ink)}" data-placement="boxed">{_e(place["text"])}</text>'
@@ -1207,6 +1211,8 @@ def _resolve_domain(
             hi_f = Decimal(0)
     target = axis.domain.target_ticks or 5
     ticks = _nice_ticks(float(lo_f), float(hi_f), target)
+    source_min = float(data_min)
+    source_max = float(data_max)
     if leading is not None:
         # First visible tick equals break target (D157/D230).
         br = float(Decimal(leading.to))
@@ -1224,6 +1230,8 @@ def _resolve_domain(
         "min": _plain_decimal(ticks[0]),
         "max": _plain_decimal(ticks[-1]),
         "ticks": [_plain_decimal(t) for t in ticks],
+        "source_min": _plain_decimal(source_min),
+        "source_max": _plain_decimal(source_max),
     }
 
 
@@ -1364,8 +1372,11 @@ def _place_bar_labels(
         end_y = p.get("end_y", p["y"])
         sign = p.get("sign", 1)
         if horizontal:
-            # Beyond terminal edge in value direction (D71).
-            if sign < 0:
+            # Beyond terminal edge in value direction (D71); zero just past baseline.
+            if sign == 0:
+                x = end_x + w / 2 + 6
+                cls = "beyond_zero"
+            elif sign < 0:
                 x = end_x - w / 2 - 6
                 cls = "beyond_neg"
             else:
@@ -1374,7 +1385,12 @@ def _place_bar_labels(
             y = end_y + label_px * 0.35
             box = (x - w / 2, y - h, x + w / 2, y)
         else:
-            if sign < 0:
+            if sign == 0:
+                # Zero label just above the zero baseline (D78/D240).
+                x = end_x
+                y = end_y - 4
+                cls = "above_zero"
+            elif sign < 0:
                 x = end_x
                 y = end_y + h + 4
                 cls = "below"
@@ -1382,6 +1398,14 @@ def _place_bar_labels(
                 x = end_x
                 y = end_y - 4
                 cls = "above"
+            box = (x - w / 2, y - h, x + w / 2, y)
+        # Prefer in-plot labels; edges may extend slightly for outside values (D71).
+        if not _fits(box, plot) and not p.get("_edge") and sign != 0:
+            # Nudge inward once before collision handling.
+            if horizontal:
+                x = min(max(x, plot[0] + w / 2), plot[2] - w / 2)
+            else:
+                y = min(max(y, plot[1] + h), plot[3])
             box = (x - w / 2, y - h, x + w / 2, y)
         if _overlaps(box, occupied) and not p.get("_edge"):
             # Small lateral stagger then leader (D72).
@@ -1438,7 +1462,6 @@ def _place_bar_labels(
                 "priority": p.get("_rank", "coverage"),
             }
         )
-    _ = plot  # reserved for future clip checks
     return placements
 
 
@@ -1460,7 +1483,8 @@ def _freeze_boxed_labels(
     if b.format_id not in formats:
         return {"placements": [], "labels": [], "facts": []}
     bar_by = {(bar["series_id"], bar["category_id"]): bar for bar in bars}
-    px = role_sizes["ordinary_values"]
+    # Boxed labels fit 12–24px (D52); clamp from ordinary/annotation roles.
+    px = max(12, min(24, role_sizes.get("annotations", role_sizes["ordinary_values"])))
     placements: list[dict[str, Any]] = []
     labels: list[dict[str, Any]] = []
     facts: list[str] = []
@@ -2397,12 +2421,16 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
     horizontal = bool(plan["geometry"].get("horizontal"))
     g = plan["geometry"]
     n_ser = max(1, len(plan["series"]))
-    # Mirror freeze thickness → Chart.js category/bar percentages (D160).
+    # Mirror freeze thickness/gap → Chart.js category/bar percentages (D160).
     pitch = g.get("category_pitch") or 1.0
     thick = g.get("thickness") or BAR_MIN_THICKNESS
-    cluster = n_ser * thick + max(0, n_ser - 1) * thick * BAR_SERIES_GAP_RATIO
+    ser_gap = g.get("series_gap")
+    if ser_gap is None:
+        ser_gap = thick * BAR_SERIES_GAP_RATIO
+    cluster = n_ser * thick + max(0, n_ser - 1) * ser_gap
     category_pct = min(1.0, max(0.1, cluster / pitch))
-    bar_pct = min(1.0, max(0.1, thick / (cluster / n_ser))) if n_ser else 0.9
+    slot = (cluster / n_ser) if n_ser else thick
+    bar_pct = min(1.0, max(0.1, thick / slot)) if slot else 0.9
     datasets = []
     for s in plan["series"]:
         data = [None if v is None else float(Decimal(v)) for v in s["values"]]

@@ -1717,6 +1717,7 @@
               "items": {
                 "$ref": "#/$defs/CategoryGroup"
               },
+              "maxItems": 6,
               "minItems": 1,
               "type": "array"
             },
@@ -1914,6 +1915,7 @@
               "items": {
                 "$ref": "#/$defs/CategoryGroup"
               },
+              "maxItems": 6,
               "minItems": 1,
               "type": "array"
             },
