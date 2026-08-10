@@ -887,7 +887,7 @@ The test suite lives in `tests/` and uses `pytest`.
 
 ```bash
 python -m pip install pytest pytest-mock
-python -m pytest                 # full suite (~73s; 430 passed + 8 skipped = 438 collected)
+python -m pytest                 # full suite
 python -m pytest tests/ -v       # verbose
 python -m pytest -k ocr -v       # just OCR-regression tests
 ```
