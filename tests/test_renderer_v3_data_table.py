@@ -343,3 +343,69 @@ def test_byte_identical_rerun(tmp_path: Path):
     render_deck(FIXTURE, b, strict=True)
     for name in ("presentation.html", "slide_notes.md", "evidence_manifest.json"):
         assert (a / name).read_bytes() == (b / name).read_bytes()
+
+
+def test_table_sync_group_uses_grid_fit_not_prose():
+    """Synced tables must share a size every grid can fit (D69/D70)."""
+    raw = _table_raw()
+    # Compact table that can grow independently.
+    raw["slides"][1]["payload"]["table"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "tables",
+    }
+    # Wide sibling: many fat numeric columns force a lower independent size.
+    wide_cols = [
+        {"column_id": f"c{i}", "label": f"Metric {i}", "short_label": f"M{i}"}
+        for i in range(8)
+    ]
+    wide_cells = {
+        f"c{i}": {"type": "number", "value": "1234567.8", "format_id": "usd_1"}
+        for i in range(8)
+    }
+    wide_slide = {
+        "slide_number": 3,
+        "layout_type": "data_table",
+        "section_id": "overview",
+        "title": "Wide metrics",
+        "payload": {
+            "table": {
+                "surface_id": "wide-perf",
+                "typography": {"mode": "adaptive", "sync_group": "tables"},
+                "stub_header": {"label": "Segment", "short_label": "Seg"},
+                "columns": wide_cols,
+                "rows": [
+                    {
+                        "row_id": "r0",
+                        "label": "Card Member",
+                        "short_label": "Cards",
+                        "cells": wide_cells,
+                    }
+                ],
+            }
+        },
+        "evidence_ids": ["src-board-pack"],
+        "source_footer": ["src-board-pack"],
+    }
+    # Keep closing cover after the pair.
+    raw["slides"].insert(2, wide_slide)
+    raw["slides"][3]["slide_number"] = 4
+
+    deck = validate_handoff(raw, strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    tables = [s for s in plan.surfaces if s.role == "data_table"]
+    assert len(tables) == 2
+    sizes = {s.surface_id: s.role_sizes["table"] for s in tables}
+    assert sizes["seg-perf"] == sizes["wide-perf"]
+    for sp in tables:
+        assert not sp._overflow
+        assert sp.table_paint is not None
+        assert sp.table_paint["col_widths"]
+        # Frozen paint widths must still hold every value at the synced size.
+        px = sp.role_sizes["table"]
+        from impact_slides.renderer_v3.plan import _table_fit_detail
+
+        ok, _, _ = _table_fit_detail(
+            dict(sp.table_paint), px, sp._box_w, sp._box_h
+        )
+        assert ok
+        assert "plan.synchronized" in sp.adaptation_codes

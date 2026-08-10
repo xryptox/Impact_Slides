@@ -1046,19 +1046,23 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
         independent = [m.role_sizes[fit] for m in members]
         target = min(independent)
         upper = max(independent)
+
+        def _sync_member_fits(m: SurfacePlan, size: int) -> bool:
+            if m._table_spec is not None:
+                ok, _, _ = _table_fit_detail(m._table_spec, size, m._box_w, m._box_h)
+                return ok
+            return _text_fits(
+                m._text_items,
+                size,
+                m._box_w,
+                m._box_h,
+                margin_boxes=m._margin_boxes,
+                indent_em=m._indent_em,
+                unit_indent_ems=m._unit_indent_ems,
+            )
+
         for size in range(upper, role_floor - 1, -1):
-            if all(
-                _text_fits(
-                    m._text_items,
-                    size,
-                    m._box_w,
-                    m._box_h,
-                    margin_boxes=m._margin_boxes,
-                    indent_em=m._indent_em,
-            unit_indent_ems=m._unit_indent_ems,
-                )
-                for m in members
-            ):
+            if all(_sync_member_fits(m, size) for m in members):
                 target = size
                 break
         changed = False
@@ -1073,6 +1077,33 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                 ]
             elif "plan.typography_grown" not in m.adaptation_codes and target > role_floor:
                 m.adaptation_codes.append("plan.typography_grown")
+            # Table paint must match the frozen synchronized size (D69/D70).
+            if m._table_spec is not None:
+                ok, codes, _ = _table_fit_detail(
+                    m._table_spec, target, m._box_w, m._box_h
+                )
+                if ok:
+                    m._overflow = False
+                    for code in codes:
+                        if code not in m.adaptation_codes:
+                            m.adaptation_codes.append(code)
+                            events.append(
+                                event(
+                                    code=code,  # type: ignore[arg-type]
+                                    severity="info",
+                                    phase="plan",
+                                    role=m.role,
+                                    path=f"/slides/{m.slide_index}/{m.role}",
+                                    action="measure",
+                                    result="accepted",
+                                    slide_number=m.slide_number,
+                                    layout_type=m.layout_type,
+                                    surface_id=m.surface_id,
+                                )
+                            )
+                else:
+                    m._overflow = True
+                    _apply_table_floor_adaptations(m, target, events)
         if changed or len(members) > 1:
             for m in members:
                 if "plan.synchronized" not in m.adaptation_codes:
