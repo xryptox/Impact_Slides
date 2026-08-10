@@ -160,7 +160,7 @@ def test_strict_rejects_unused_format():
     joined = " ".join(
         (e.expected.contract if e.expected else "") + e.code for e in ei.value.events
     )
-    assert "unused" in joined or "number_formats" in joined or ei.value.events
+    assert "unused" in joined and "validation.reference" in joined
 
 
 def test_strict_rejects_overlapping_groups():

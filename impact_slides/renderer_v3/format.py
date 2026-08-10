@@ -1,6 +1,7 @@
 """Decimal-safe number formatting (D70/D77/D78/D103/D213/D214/D293)."""
 from __future__ import annotations
 
+import decimal
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Any, Literal, Mapping
@@ -77,12 +78,23 @@ def _format_number(raw: str, fmt: NumberFormat) -> tuple[str, str]:
         raise ValueError(f"invalid canonical decimal {raw!r}") from exc
 
     scale = Decimal(fmt.value_scale) if fmt.value_scale is not None else Decimal(1)
-    scaled = amount * scale
-    quant = Decimal(1).scaleb(-fmt.value_decimals)  # 10 ** -decimals
-    # Half away from zero: quantize with ROUND_HALF_UP on the absolute value,
-    # then re-apply sign. ROUND_HALF_UP is half-away for positive numbers.
-    negative = scaled < 0
-    rounded = abs(scaled).quantize(quant, rounding=ROUND_HALF_UP)
+    precision = (
+        len(amount.as_tuple().digits)
+        + len(scale.as_tuple().digits)
+        + fmt.value_decimals
+        + 6
+    )
+    try:
+        with decimal.localcontext() as ctx:
+            ctx.prec = precision
+            scaled = amount * scale
+            quant = Decimal(1).scaleb(-fmt.value_decimals)  # 10 ** -decimals
+            # Half away from zero: quantize with ROUND_HALF_UP on the absolute
+            # value, then re-apply sign. ROUND_HALF_UP is half-away for positives.
+            negative = scaled < 0
+            rounded = abs(scaled).quantize(quant, rounding=ROUND_HALF_UP)
+    except InvalidOperation as exc:
+        raise ValueError(f"cannot format canonical decimal {raw!r}") from exc
     if rounded == 0:
         negative = False  # rounded zero is unsigned (D293)
 

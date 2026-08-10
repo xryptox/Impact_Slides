@@ -681,9 +681,6 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
     if fit == "body" and sp.role == "takeaway":
         floor, ceil = TAKEAWAY_FLOOR, TAKEAWAY_CEIL
         sp.role_sizes[fit] = floor
-    if fit == "table":
-        floor, ceil = TABLE_FLOOR, TABLE_CEIL
-        sp.role_sizes[fit] = floor
 
     # Explicit size validation (D49): out of role range is malformed.
     if sp._explicit_size is not None and not (floor <= sp._explicit_size <= ceil):
@@ -948,11 +945,10 @@ def _wrap_lines(
     text = "".join(t for t, _ in items)
     if not text:
         return [""], False
-    advances = [
-        _advance_map(strong).get(char, 1.2)
-        for run, strong in items
-        for char in run
-    ]
+    advances: list[float] = []
+    for run, strong in items:
+        amap = _advance_map(strong)
+        advances.extend(amap.get(char, 1.2) for char in run)
 
     def width(start: int, length: int) -> float:
         measured = sum(advances[start : start + length]) * px
@@ -988,18 +984,22 @@ _EXTRA_ADVANCES: Final = {
 }
 
 
+_ADVANCE_MAPS: Final = {
+    strong: {**_SOURCE_SANS_ADVANCES[700 if strong else 400], **_EXTRA_ADVANCES}
+    for strong in (False, True)
+}
+
+
 def _advance_map(strong: bool) -> dict[str, float]:
-    base = _SOURCE_SANS_ADVANCES[700 if strong else 400]
-    return {**base, **_EXTRA_ADVANCES}
+    return _ADVANCE_MAPS[strong]
 
 
 def _uses_fallback_metrics(sp: SurfacePlan) -> bool:
-    return any(
-        char not in _advance_map(strong)
-        for text, strong in sp._text_items
-        for char in text
-        if char != "\n"
-    )
+    for text, strong in sp._text_items:
+        amap = _advance_map(strong)
+        if any(char not in amap for char in text if char != "\n"):
+            return True
+    return False
 
 
 def _line_box(px: int) -> int:
@@ -1253,6 +1253,7 @@ def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:
         + row_labels_short
         + [v for row in cells_vis for v in row]
         + [g["label"] for g in (groups or [])]
+        + [g["short_label"] for g in (groups or [])]
         + scale_labels
     )
     # Column header alignment follows body column role (D104).
@@ -1346,31 +1347,6 @@ def _table_fit_detail(
             w = _text_width(spec["cells_vis"][r][c], px) + TABLE_CELL_PAD_X
             if w > value_mins[c]:
                 value_mins[c] = w
-    stub_min = max(
-        (_text_width(h, px, strong=True) for h in [headers[0]]),
-        default=0.0,
-    )
-    for lab in row_labels:
-        # Allow two-line wrap: min width is longest unbreakable token.
-        tokens = _wrap_tokens(lab)
-        tok_w = max(
-            (_text_width(tok.rstrip(), px) for _, tok in tokens),
-            default=_text_width(lab, px),
-        )
-        stub_min = max(stub_min, tok_w + TABLE_CELL_PAD_X)
-    # Header leaf mins (prefer full labels).
-    header_mins = [0.0] * total_cols
-    for c, h in enumerate(headers):
-        tokens = _wrap_tokens(h)
-        tok_w = max(
-            (_text_width(tok.rstrip(), px, strong=True) for _, tok in tokens),
-            default=_text_width(h, px, strong=True),
-        )
-        header_mins[c] = tok_w + TABLE_CELL_PAD_X
-    header_mins[0] = max(header_mins[0], stub_min)
-    for c in range(n_value_cols):
-        header_mins[c + 1] = max(header_mins[c + 1], value_mins[c])
-
     def try_widths(h_labels: list[str], r_labels: list[str], g_labels: list[str] | None):
         mins = [0.0] * total_cols
         # Recompute label-driven mins for current label set.
@@ -1658,10 +1634,6 @@ def _record_table_adaptations(
                 surface_id=sp.surface_id,
             )
         )
-    if sp._table_spec.get("short_label_used") or sp._table_spec.get("ellipsized"):
-        if "plan.geometry_reallocated" not in sp.adaptation_codes:
-            # Width redistribution is implicit in successful fit.
-            pass
 
 
 def _apply_table_floor_adaptations(
