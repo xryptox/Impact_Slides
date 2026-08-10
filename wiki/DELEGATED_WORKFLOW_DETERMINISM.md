@@ -61,7 +61,7 @@ Percentages are approximate assessments of the control plane, not measured relia
 | Standards/Spec reviews | **70%** | Invocation is fixed and parallel, but findings are model-generated. |
 | No-mistakes gate | **80%** | Stage order and custody are deterministic; findings and conflict resolution may need decisions. |
 | `watch-visible-implementers.ps1` | **92%** | Binds pane, worktree, PR, and exact-branch no-mistakes state. Parsing still depends on stable Herdr and no-mistakes output formats. |
-| `watch-ticket-wave.ps1` + follow-up extension | **95%** | Singleton per manifest via named mutex, automatically rearms, and delivers an append-only event queue with persistent offsets, signature dedup, and an audit log. |
+| `watch-ticket-wave.ps1` + follow-up extension | **95%** | Singleton per manifest via named mutex, automatically rearms, and delivers an append-only event queue with persistent offsets, signature dedup, an audit log, and one bare JSON event per line. |
 | `inspect-ticket-wave.ps1` | **96%** | Read-only derivation from `wave.json`, Git, GitHub, exact-branch no-mistakes state, and PR closing metadata. |
 | Repair launcher | **80%** | IDs and launch are derived; validated host findings are copied into an authoritative repair prompt that supersedes the original prompt. |
 | `Invoke-ApprovedMerge.ps1` | **97%** | Requires explicit exact-head human approval, then performs deterministic preflight and merge outside PEW journal persistence. |
@@ -121,6 +121,11 @@ The August 2026 automation pass added and smoke-tested:
 11. Loop-limit derivation only from explicit `fix N` active-step rows; historical rows from failed or completed runs are ignored.
 12. Per-phase quiet limits (25 minutes initial review, 10 minutes fix rounds) with CPU-delta stall confirmation before escalation.
 13. Cleanup resilience: transient lock-failure retries, watcher-process-tree termination before worktree removal, cwd-holder termination via PEB probe for orphaned pane shells, residual-directory cleanup after Git registration disappears, and idempotent empty-manifest exit.
+14. Bare-JSON follow-up writer plus defensive legacy unwrap and head extraction from quoted/short formats; this fixed the empty-signature corruption that suppressed every event after the first.
+15. `pr-ready` event for the exact-head merge-approval handoff (once per run/head/PR), with the CI monitoring phase exempt from quiet limits.
+16. Quiet-escalation hysteresis: a `quietpending` marker must persist 60 seconds before a loop-limit event, and loop-limit dedup signs by breached-limit kind rather than drifting elapsed values.
+17. Pane-loss resilience: a vanished implementer pane is replaced by a placeholder so gate/terminal supervision never drops; closing a pane loses only steering, never the daemon pipeline, detached gate drivers, the watcher, or cleanup.
+18. Every `awaiting_approval` gate step (rebase, document, others) surfaces through the ask-user path, not only review gates.
 
 Smoke coverage includes PowerShell 5.1 parsing, queued follow-up delivery, stale-event suppression, two-event automatic rearming, exact-branch run selection, repair-prompt precedence, closing-reference boundaries, already-merged merge rejection, selected-ticket cleanup, preservation of another active worktree, and cleanup with an already-absent origin branch.
 
@@ -155,13 +160,15 @@ In short: default PEW is simpler and better for self-contained agent workflows; 
 
 ## Current limitations
 
-- The inner watcher still returns after one unseen event, but `watch-ticket-wave.ps1` now rearms it automatically; `watcher-state.json` prevents duplicate delivery, the append-only follow-up file plus persistent byte offsets prevent event overwrite and replay after restarts, an `actions.jsonl` audit log records delivery decisions, and a named mutex keeps one watcher per manifest.
+- The inner watcher still returns after one unseen event, but `watch-ticket-wave.ps1` now rearms it automatically; `watcher-state.json` prevents duplicate delivery, the append-only follow-up file plus persistent byte offsets prevent event overwrite and replay after restarts, an `actions.jsonl` audit log records delivery decisions, and a named mutex keeps one watcher per manifest. It emits idle/done/blocked, ask-user, gate-parked, `pr-ready` (merge-approval handoff; CI monitoring is exempt from quiet limits), and loop-limit events, keeps supervising through a placeholder pane when the implementer pane has vanished, and covers every `awaiting_approval` gate step, not only review.
 - The watcher enforces operational loop ceilings: more than 5 no-mistakes review-fix rounds, more than 90 minutes in review fixing, or CPU-confirmed stalled quiet time (more than 10 minutes in a fix round, more than 25 minutes in the initial review) emits `loop-limit` and requires controlled recovery. Quiet only escalates when a CPU-delta sample finds the agent dead or CPU-flat; growing CPU means a long model call. These are orchestration safety limits, not native PEW budgets.
 - PEW aggregate budgets (`tokens`, `costUsd`, `durationMs`, `agentLaunches`) constrain workflow-owned `agent()` work, but visible Herdr Pi and no-mistakes subprocesses run outside those agent budgets; the watcher limits cover that gap.
 - Herdr and no-mistakes state is parsed from CLI output, so upstream output-format changes can break detection.
 - LLM implementation and review cannot be made fully deterministic.
 - A wave created before the manifest architecture may have manual branch names, no valid `wave.json`, and no automatic cleanup path.
 - The #151/#155 production wave completed the manifest-driven implementation-to-cleanup lifecycle, but the latest exception-path hardening above has isolated smoke proof rather than a second full production wave.
+- Shell/LLM transport can display file bytes incorrectly; verification of already-applied fixes must compare actual bytes (hex dump or object hash) rather than displayed output, or repeated false re-flags burn fix rounds (REV-04).
+- no-mistakes CLI output formats changed in v1.46.0 (pretty text instead of JSON). The watcher reads SQLite directly, but ad-hoc parsing and future upstream format changes remain a dependency.
 
 ## Overall assessment
 
