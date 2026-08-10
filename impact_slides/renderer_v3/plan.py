@@ -1663,4 +1663,3 @@ def _apply_table_floor_adaptations(
                 surface_id=sp.surface_id,
             )
         )
-

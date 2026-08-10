@@ -137,6 +137,3 @@ def _group_thousands(digits: str) -> str:
         parts.append(digits[-3:])
         digits = digits[:-3]
     return ",".join(reversed(parts))
-
-
-
