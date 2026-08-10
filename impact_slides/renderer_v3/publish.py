@@ -198,7 +198,6 @@ def build_presentation_html(
             ".comparison-cards{display:none}"
             ".sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}"
             ".chart-plot canvas{display:block}"
-            ".chart-plot noscript{display:none}"
             "}",
             "</style>",
             "</head>",

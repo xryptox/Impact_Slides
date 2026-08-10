@@ -328,6 +328,21 @@ def paint_line_chart_svg(
                     f'fill="{_e(resolve_color("navy", role="text_on_light"))}">'
                     f"{_e(label)}</text>"
                 )
+        title_px = plan["role_sizes"]["axis_titles"]
+        ink = resolve_color("navy", role="text_on_light")
+        cat_title = plan["category_axis"].get("title")
+        if plan["category_axis"]["visible"] and cat_title:
+            parts.append(
+                f'<text x="{pl + pw / 2}" y="{pt + ph + 52}" text-anchor="middle" '
+                f'font-size="{title_px}" fill="{_e(ink)}">{_e(cat_title)}</text>'
+            )
+        val_title = plan["value_axis"].get("title")
+        if plan["value_axis"]["visible"] and val_title:
+            cy = pt + ph / 2
+            parts.append(
+                f'<text x="16" y="{cy}" text-anchor="middle" font-size="{title_px}" '
+                f'transform="rotate(-90 16 {cy})" fill="{_e(ink)}">{_e(val_title)}</text>'
+            )
 
     by_series: dict[str, list[dict[str, Any]]] = {}
     for p in plan["points"]:
@@ -602,10 +617,14 @@ def _nice_ticks(lo: float, hi: float, target: int) -> list[float]:
     raw = span / max(2, target - 1)
     exp = math.floor(math.log10(raw)) if raw > 0 else 0
     base = 10**exp
-    step = base
-    for mult in (1, 2, 2.5, 5, 10):
+    step = base * 100
+    for mult in (1, 2, 2.5, 5, 10, 20, 25, 50, 100):
         cand = base * mult
-        if cand >= raw * 0.8:
+        if cand < raw * 0.8:
+            continue
+        c_start = math.floor(lo / cand) * cand
+        c_end = math.ceil(hi / cand) * cand
+        if round((c_end - c_start) / cand) + 1 <= 8:
             step = cand
             break
     start = math.floor(lo / step) * step
@@ -620,7 +639,7 @@ def _nice_ticks(lo: float, hi: float, target: int) -> list[float]:
         x += step
     if ticks[-1] < hi:
         ticks.append(round(end, 10))
-    return ticks[:8]
+    return ticks
 
 
 def _place_point_labels(
@@ -933,6 +952,7 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
                 "fill": False,
             }
         )
+    g = plan["geometry"]
     y_min = float(Decimal(plan["domain"]["min"]))
     y_max = float(Decimal(plan["domain"]["max"]))
     show_legend = plan["identity_strategy"] == "legend"
@@ -950,7 +970,7 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
             },
             "scales": {
                 "x": {
-                    "display": plan["category_axis"]["visible"],
+                    "display": False,
                     "grid": {"display": False, "drawBorder": True},
                     "ticks": {
                         "font": {"size": plan["role_sizes"]["category_ticks"]},
@@ -962,7 +982,7 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
                     },
                 },
                 "y": {
-                    "display": plan["value_axis"]["visible"],
+                    "display": False,
                     "min": y_min,
                     "max": y_max,
                     "grid": {"display": False, "drawBorder": True},
@@ -977,7 +997,14 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
                     },
                 },
             },
-            "layout": {"padding": 8},
+            "layout": {
+                "padding": {
+                    "left": g["pad_l"],
+                    "right": g["pad_r"],
+                    "top": g["pad_t"],
+                    "bottom": g["pad_b"],
+                }
+            },
         },
         "v3": {
             "tick_labels": plan["tick_labels"],

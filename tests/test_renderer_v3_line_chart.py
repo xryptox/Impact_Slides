@@ -333,3 +333,73 @@ def test_v2_not_imported_by_charts_module(monkeypatch: pytest.MonkeyPatch):
     charts = importlib.import_module("impact_slides.renderer_v3.charts")
     deck = validate_handoff(_raw(), strict=True).deck
     assert charts.freeze_line_chart(deck.slides[1].payload.primary_visual, deck.number_formats)
+
+
+def test_chartjs_chart_area_pinned_to_frozen_plot(tmp_path: Path):
+    """Chart.js chartArea must equal the frozen plot rect (painter parity)."""
+    out = tmp_path / "out"
+    result = render_deck(FIXTURE, out, strict=True)
+    assert result["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    deck = validate_handoff(_raw(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    g = cp["geometry"]
+    m = re.search(
+        r'<script type="application/json" id="cfg-vol-trend">(.*?)</script>',
+        html,
+        re.S,
+    )
+    assert m is not None
+    cfg = json.loads(m.group(1))
+    opts = cfg["options"]
+    assert opts["layout"]["padding"] == {
+        "left": g["pad_l"],
+        "right": g["pad_r"],
+        "top": g["pad_t"],
+        "bottom": g["pad_b"],
+    }
+    assert opts["scales"]["x"]["display"] is False
+    assert opts["scales"]["y"]["display"] is False
+    assert opts["scales"]["y"]["min"] == float(cp["domain"]["min"])
+    assert opts["scales"]["y"]["max"] == float(cp["domain"]["max"])
+    assert "chart-label-overlay" in html
+
+
+def test_svg_chrome_paints_axis_titles():
+    deck = validate_handoff(_raw(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    chrome = paint_line_chart_svg(cp, marks=False)
+    assert "Quarter" in chrome
+    assert "YoY %" in chrome
+    assert "Quarter" in paint_line_chart_svg(cp)
+    raw = _raw()
+    raw["slides"][1]["payload"]["primary_visual"]["category_axis"]["visible"] = False
+    deck2 = validate_handoff(raw, strict=True).deck
+    cp2 = plan_deck(deck2, strict=True).by_surface_id()["vol-trend"].chart_paint
+    chrome2 = paint_line_chart_svg(cp2, marks=False)
+    assert "Quarter" not in chrome2
+    assert "YoY %" in chrome2
+
+
+def test_generated_domain_covers_data_at_max_target_ticks():
+    raw = _raw()
+    visual = raw["slides"][1]["payload"]["primary_visual"]
+    visual["value_axes"]["primary"]["domain"]["target_ticks"] = 8
+    visual["chart_data"]["series"][0]["values"] = ["0", "20", "40", "70"]
+    visual["chart_data"]["series"][1]["values"] = ["5", "15", "25", "35"]
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    domain_min = float(cp["domain"]["min"])
+    domain_max = float(cp["domain"]["max"])
+    values = [
+        float(v)
+        for s in visual["chart_data"]["series"]
+        for v in s["values"]
+        if v is not None
+    ]
+    assert domain_min <= min(values)
+    assert domain_max >= max(values)
+    assert len(cp["domain"]["ticks"]) <= 8
+    g = cp["geometry"]
+    ys = [p["y"] for p in cp["points"] if p["finite"]]
+    assert all(g["pad_t"] <= y <= g["pad_t"] + g["plot_h"] for y in ys)
