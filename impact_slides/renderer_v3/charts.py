@@ -9,9 +9,8 @@ from typing import Any, Mapping, Optional
 
 from .format import MISSING_ACCESSIBLE, MISSING_VISIBLE, format_semantic_value
 from .models import (
-    _LINE_STYLE_PAIRS,
+    LINE_STYLE_PAIRS,
     ChartData,
-    GeneratedDomain,
     LineChartVisual,
     MissingValue,
     NumberFormat,
@@ -71,7 +70,6 @@ def freeze_line_chart(
     domain = _resolve_domain(chart, data)
     ticks = list(domain["ticks"])
     show_values = _ordinary_values_show(chart)
-    identity = _identity_strategy(chart, series_plans)
 
     # Geometry
     plot_w = max(200, min(PLOT_W, box_w - PAD_L - PAD_R))
@@ -126,12 +124,21 @@ def freeze_line_chart(
             )
 
     role_sizes = _role_sizes(chart)
+    # Endpoint lane fit: each series name must clear the right exterior pad (D15/D37).
+    ser_px = role_sizes["series_labels"]
+    endpoints_fit = all(
+        len(sp["name"]) * ser_px * 0.55 <= PAD_R - 16 for sp in series_plans
+    )
+    identity = _identity_strategy(
+        chart, series_plans, endpoints_fit=endpoints_fit
+    )
     placements = _place_point_labels(
         points,
         series_plans,
         show_values=show_values,
         label_px=role_sizes["ordinary_values"],
         plot=(PAD_L, PAD_T, PAD_L + plot_w, PAD_T + plot_h),
+        identity=identity,
     )
 
     tick_labels = [
@@ -239,6 +246,9 @@ def paint_line_chart_html(
     svg = paint_line_chart_svg(plan)
     table_html = paint_semantic_table(plan)
 
+    # Label/axis chrome SVG shares frozen plan with both painters (D248/D53).
+    chrome_svg = paint_line_chart_svg(plan, marks=False)
+    marks_svg = paint_line_chart_svg(plan, marks=True, chrome=False)
     if svg_only:
         out.append(
             f'<div class="chart-plot" style="width:{vw}px;height:{vh}px" aria-hidden="true">'
@@ -247,21 +257,35 @@ def paint_line_chart_html(
     else:
         cfg = _chartjs_config(plan)
         payload = json.dumps(cfg, ensure_ascii=False).replace("<", "\\u003c")
+        # Chart.js paints series marks; frozen SVG chrome+labels overlay for parity.
         out.append(
             f'<div class="chart-plot" style="position:relative;width:{vw}px;height:{vh}px">'
             f'<canvas id="cjs-{_e(sid)}" class="chartjs-canvas" width="{vw}" height="{vh}" '
+            f'style="position:absolute;inset:0;width:{vw}px;height:{vh}px" '
             f'aria-hidden="true" data-chart-ready="pending"></canvas>'
+            f'<div class="chart-label-overlay" style="position:absolute;inset:0;pointer-events:none" '
+            f'aria-hidden="true">{chrome_svg}</div>'
             f"<script type=\"application/json\" id=\"cfg-{_e(sid)}\">{payload}</script>"
             f"<noscript>{svg}</noscript>"
             f"</div>"
         )
+        _ = marks_svg  # reserved if canvas fails; noscript carries full SVG
     out.append(table_html)
     out.append("</div>")
     return out
 
 
-def paint_line_chart_svg(plan: dict[str, Any]) -> str:
-    """No-JS SVG painter consuming the frozen plan (D57/D248)."""
+def paint_line_chart_svg(
+    plan: dict[str, Any],
+    *,
+    marks: bool = True,
+    chrome: bool = True,
+) -> str:
+    """No-JS SVG painter consuming the frozen plan (D57/D248).
+
+    ``marks`` = series paths/markers; ``chrome`` = axes/ticks/labels/identities.
+    Chart.js path overlays chrome SVG on the canvas for placement parity.
+    """
     g = plan["geometry"]
     vw, vh = g["view_w"], g["view_h"]
     pl, pt, pw, ph = g["pad_l"], g["pad_t"], g["plot_w"], g["plot_h"]
@@ -270,101 +294,114 @@ def paint_line_chart_svg(plan: dict[str, Any]) -> str:
         f'role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'
         f'<rect class="chart-plot-bg" x="0" y="0" width="{vw}" height="{vh}" fill="none"/>'
     ]
-    # Axes only — no gridlines (D63).
-    if plan["category_axis"]["visible"] or plan["value_axis"]["visible"]:
-        parts.append(
-            f'<line x1="{pl}" y1="{pt + ph}" x2="{pl + pw}" y2="{pt + ph}" '
-            f'stroke="{_e(resolve_color("navy", role="border"))}" stroke-width="1"/>'
-        )
-        parts.append(
-            f'<line x1="{pl}" y1="{pt}" x2="{pl}" y2="{pt + ph}" '
-            f'stroke="{_e(resolve_color("navy", role="border"))}" stroke-width="1"/>'
-        )
-
-    cat_px = plan["role_sizes"]["category_ticks"]
-    val_px = plan["role_sizes"]["value_ticks"]
-    if plan["category_axis"]["visible"]:
-        for cat in plan["categories"]:
+    if chrome:
+        # Axes only — no gridlines (D63).
+        if plan["category_axis"]["visible"] or plan["value_axis"]["visible"]:
             parts.append(
-                f'<text x="{cat["x"]:.1f}" y="{pt + ph + 22}" text-anchor="middle" '
-                f'font-size="{cat_px}" fill="{_e(resolve_color("navy", role="text_on_light"))}">'
-                f'{_e(cat["label"])}</text>'
+                f'<line x1="{pl}" y1="{pt + ph}" x2="{pl + pw}" y2="{pt + ph}" '
+                f'stroke="{_e(resolve_color("navy", role="border"))}" stroke-width="1"/>'
             )
-    if plan["value_axis"]["visible"]:
-        y_min = float(plan["domain"]["min"])
-        y_max = float(plan["domain"]["max"])
-        span = y_max - y_min or 1.0
-        for tick, label in zip(plan["domain"]["ticks"], plan["tick_labels"]):
-            tv = float(Decimal(tick))
-            y = pt + ph - ((tv - y_min) / span) * ph
             parts.append(
-                f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
-                f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
-                f'fill="{_e(resolve_color("navy", role="text_on_light"))}">'
-                f"{_e(label)}</text>"
+                f'<line x1="{pl}" y1="{pt}" x2="{pl}" y2="{pt + ph}" '
+                f'stroke="{_e(resolve_color("navy", role="border"))}" stroke-width="1"/>'
             )
 
-    # Series paths + markers
+        cat_px = plan["role_sizes"]["category_ticks"]
+        val_px = plan["role_sizes"]["value_ticks"]
+        if plan["category_axis"]["visible"]:
+            for cat in plan["categories"]:
+                parts.append(
+                    f'<text x="{cat["x"]:.1f}" y="{pt + ph + 22}" text-anchor="middle" '
+                    f'font-size="{cat_px}" fill="{_e(resolve_color("navy", role="text_on_light"))}">'
+                    f'{_e(cat["label"])}</text>'
+                )
+        if plan["value_axis"]["visible"]:
+            y_min = float(plan["domain"]["min"])
+            y_max = float(plan["domain"]["max"])
+            span = y_max - y_min or 1.0
+            for tick, label in zip(plan["domain"]["ticks"], plan["tick_labels"]):
+                tv = float(Decimal(tick))
+                y = pt + ph - ((tv - y_min) / span) * ph
+                parts.append(
+                    f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
+                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(resolve_color("navy", role="text_on_light"))}">'
+                    f"{_e(label)}</text>"
+                )
+
     by_series: dict[str, list[dict[str, Any]]] = {}
     for p in plan["points"]:
         by_series.setdefault(p["series_id"], []).append(p)
 
-    for sp in plan["series"]:
-        pts = by_series[sp["series_id"]]
-        color = sp["color"]
-        dash = _DASHARRAY.get(sp["line_style"])
-        dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
-        # Break path on nulls (D92).
-        segment: list[str] = []
-        for p in pts:
-            if not p["finite"]:
-                if len(segment) >= 2:
-                    parts.append(
-                        f'<polyline fill="none" stroke="{_e(color)}" stroke-width="2.5" '
-                        f'points="{" ".join(segment)}"{dash_attr}/>'
-                    )
-                segment = []
-                continue
-            segment.append(f'{p["x"]:.1f},{p["y"]:.1f}')
-        if len(segment) >= 2:
-            parts.append(
-                f'<polyline fill="none" stroke="{_e(color)}" stroke-width="2.5" '
-                f'points="{" ".join(segment)}"{dash_attr}/>'
-            )
-        for p in pts:
-            if not p["finite"]:
-                continue
-            parts.append(_marker_svg(p["x"], p["y"], sp["marker"], color))
+    if marks:
+        for sp in plan["series"]:
+            pts = by_series[sp["series_id"]]
+            color = sp["color"]
+            dash = _DASHARRAY.get(sp["line_style"])
+            dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+            # Break path on nulls (D92).
+            segment: list[str] = []
+            for p in pts:
+                if not p["finite"]:
+                    if len(segment) >= 2:
+                        parts.append(
+                            f'<polyline fill="none" stroke="{_e(color)}" stroke-width="2.5" '
+                            f'points="{" ".join(segment)}"{dash_attr}/>'
+                        )
+                    segment = []
+                    continue
+                segment.append(f'{p["x"]:.1f},{p["y"]:.1f}')
+            if len(segment) >= 2:
+                parts.append(
+                    f'<polyline fill="none" stroke="{_e(color)}" stroke-width="2.5" '
+                    f'points="{" ".join(segment)}"{dash_attr}/>'
+                )
+            for p in pts:
+                if not p["finite"]:
+                    continue
+                parts.append(_marker_svg(p["x"], p["y"], sp["marker"], color))
 
-    # Point labels + endpoint identities
-    lab_px = plan["role_sizes"]["ordinary_values"]
-    ser_px = plan["role_sizes"]["series_labels"]
-    place_by_key = {
-        (pl["series_id"], pl["category_id"]): pl for pl in plan["placements"]
-    }
-    series_by_id = {s["series_id"]: s for s in plan["series"]}
-    for p in plan["points"]:
-        if not p["finite"]:
-            continue
-        place = place_by_key.get((p["series_id"], p["category_id"]))
-        if place is None or place["class"] == "suppressed":
-            continue
-        if place.get("kind") == "value" and plan["show_ordinary_values"]:
-            tx, ty = place["x"], place["y"]
-            parts.append(
-                f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
-                f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
-                f'data-placement="{place["class"]}">{_e(p["visible"])}</text>'
-            )
-        if place.get("kind") == "identity" and plan["identity_strategy"] == "endpoints":
-            tx, ty = place["x"], place["y"]
-            name = series_by_id[p["series_id"]]["name"]
-            parts.append(
-                f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="start" '
-                f'font-size="{ser_px}" fill="{_e(series_by_id[p["series_id"]]["color"])}" '
-                f'data-placement="endpoint">{_e(name)}</text>'
-            )
+    if chrome:
+        # Point labels + endpoint identities from frozen placements (D53).
+        lab_px = plan["role_sizes"]["ordinary_values"]
+        ser_px = plan["role_sizes"]["series_labels"]
+        series_by_id = {s["series_id"]: s for s in plan["series"]}
+        point_lookup = {
+            (p["series_id"], p["category_id"]): p for p in plan["points"]
+        }
+        for place in plan["placements"]:
+            if place["class"] == "suppressed":
+                continue
+            p = point_lookup.get((place["series_id"], place["category_id"]))
+            if p is None or not p.get("finite"):
+                continue
+            if place.get("kind") == "value" and plan["show_ordinary_values"]:
+                tx, ty = place["x"], place["y"]
+                if place["class"] == "leader":
+                    parts.append(
+                        f'<line x1="{p["x"]:.1f}" y1="{p["y"]:.1f}" '
+                        f'x2="{tx:.1f}" y2="{ty:.1f}" '
+                        f'stroke="{_e(series_by_id[p["series_id"]]["color"])}" '
+                        f'stroke-width="1" opacity="0.7"/>'
+                    )
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
+                    f'data-placement="{place["class"]}">{_e(p["visible"])}</text>'
+                )
+            if (
+                place.get("kind") == "identity"
+                and plan["identity_strategy"] == "endpoints"
+            ):
+                tx, ty = place["x"], place["y"]
+                name = series_by_id[p["series_id"]]["name"]
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="start" '
+                    f'font-size="{ser_px}" '
+                    f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
+                    f'data-placement="endpoint">{_e(name)}</text>'
+                )
 
     parts.append("</svg>")
     return "".join(parts)
@@ -410,11 +447,13 @@ def paint_semantic_table(plan: dict[str, Any]) -> str:
 
 
 def chart_boot_script() -> str:
-    """Tiny inline boot: instantiate Chart.js from embedded JSON configs."""
+    """Boot Chart.js from embedded configs; mark capture readiness (D108/D109)."""
     return (
         "<script>(function(){"
-        "function boot(){"
         "if(typeof Chart==='undefined')return;"
+        "function markReady(c){c.dataset.chartReady='ready';c.setAttribute('data-chart-ready','ready');"
+        "requestAnimationFrame(function(){c.setAttribute('data-chart-frame','1');});}"
+        "function boot(){"
         "document.querySelectorAll('script[id^=\"cfg-\"]').forEach(function(el){"
         "var sid=el.id.slice(4);"
         "var canvas=document.getElementById('cjs-'+sid);"
@@ -425,9 +464,13 @@ def chart_boot_script() -> str:
         "cfg.options.animation=false;"
         "cfg.options.responsive=false;"
         "cfg.options.maintainAspectRatio=false;"
+        "/* ticks/labels come from frozen SVG overlay — hide Chart.js tick text */"
+        "if(cfg.options.scales){['x','y'].forEach(function(ax){"
+        "if(cfg.options.scales[ax]&&cfg.options.scales[ax].ticks)"
+        "{cfg.options.scales[ax].ticks.display=false;cfg.options.scales[ax].border={display:false};"
+        "cfg.options.scales[ax].grid={display:false};}});}"
         "new Chart(canvas.getContext('2d'),cfg);"
-        "canvas.dataset.chartReady='ready';"
-        "canvas.setAttribute('data-chart-ready','ready');"
+        "markReady(canvas);"
         "}catch(e){canvas.dataset.chartReady='error';}"
         "});"
         "}"
@@ -452,19 +495,21 @@ def _ordinary_values_show(chart: LineChartVisual) -> bool:
     return chart.display.ordinary_values == "show"
 
 
-def _identity_strategy(chart: LineChartVisual, series_plans: list[dict[str, Any]]) -> str:
+def _identity_strategy(
+    chart: LineChartVisual,
+    series_plans: list[dict[str, Any]],
+    *,
+    endpoints_fit: bool = True,
+) -> str:
     if chart.display is not None and chart.display.series_identity is not None:
         pol = chart.display.series_identity
         if pol == "pane_title":
             return "pane_title"
         if pol == "legend":
             return "legend"
-    # auto: multi-series → endpoints if few series fit, else legend (D15/D37).
-    # Tracer: endpoints for ≤2 series, legend otherwise (conservative lane).
-    if len(series_plans) <= 2 and (
-        chart.display is None or chart.display.series_identity != "legend"
-    ):
-        # Single series with heading may still use endpoints unless pane_title.
+    # auto (D15/D37): all endpoint labels only when every series endpoint fits;
+    # otherwise one complete legend — never a partial mix.
+    if endpoints_fit:
         return "endpoints"
     return "legend"
 
@@ -497,7 +542,7 @@ def _resolve_series(data: ChartData) -> list[dict[str, Any]]:
         if s.style is not None:
             line_style, marker = s.style.line_style, s.style.marker
         else:
-            line_style, marker = _LINE_STYLE_PAIRS[i % len(_LINE_STYLE_PAIRS)]
+            line_style, marker = LINE_STYLE_PAIRS[i % len(LINE_STYLE_PAIRS)]
         out.append(
             {
                 "series_id": s.series_id,
@@ -585,6 +630,7 @@ def _place_point_labels(
     show_values: bool,
     label_px: int,
     plot: tuple[float, float, float, float],
+    identity: str = "endpoints",
 ) -> list[dict[str, Any]]:
     """Deterministic D7/D36/D53 placement; first/last never suppressed."""
     placements: list[dict[str, Any]] = []
@@ -661,23 +707,24 @@ def _place_point_labels(
             }
         )
 
-    # Endpoint identity labels (right of last finite point).
-    for sp in series_plans:
-        pts = [p for p in by_series[sp["series_id"]] if p["finite"]]
-        if not pts:
-            continue
-        last = pts[-1]
-        placements.append(
-            {
-                "series_id": sp["series_id"],
-                "category_id": last["category_id"],
-                "kind": "identity",
-                "class": "endpoint",
-                "x": last["x"] + MARKER_R + 8,
-                "y": last["y"] + label_px / 3,
-                "priority": "identity",
-            }
-        )
+    # Endpoint identity labels only under complete-endpoint strategy (D15/D37).
+    if identity == "endpoints":
+        for sp in series_plans:
+            pts = [p for p in by_series[sp["series_id"]] if p["finite"]]
+            if not pts:
+                continue
+            last = pts[-1]
+            placements.append(
+                {
+                    "series_id": sp["series_id"],
+                    "category_id": last["category_id"],
+                    "kind": "identity",
+                    "class": "endpoint",
+                    "x": last["x"] + MARKER_R + 8,
+                    "y": last["y"] + label_px / 3,
+                    "priority": "identity",
+                }
+            )
     return placements
 
 
@@ -761,10 +808,19 @@ def _marker_svg(x: float, y: float, marker: str, color: str) -> str:
 
 def _legend_html(plan: dict[str, Any]) -> str:
     items = []
+    leg_px = plan["role_sizes"].get("legend", 16)
     for s in plan["series"]:
+        # Swatch approximates line+marker pair (D99).
+        dash = _DASHARRAY.get(s["line_style"]) or ""
         items.append(
-            f'<li class="legend-item" data-series-id="{_e(s["series_id"])}">'
-            f'<span class="legend-swatch" style="background:{_e(s["color"])}"></span>'
+            f'<li class="legend-item" data-series-id="{_e(s["series_id"])}" '
+            f'style="font-size:{leg_px}px">'
+            f'<svg width="28" height="12" aria-hidden="true">'
+            f'<line x1="0" y1="6" x2="28" y2="6" stroke="{_e(s["color"])}" '
+            f'stroke-width="2"'
+            f'{f" stroke-dasharray=\"{dash}\"" if dash else ""}/>'
+            f'{_marker_svg(14, 6, s["marker"], s["color"])}'
+            f"</svg>"
             f'<span class="legend-label">{_e(s["name"])}</span></li>'
         )
     return f'<ul class="chart-legend" aria-hidden="true">{"".join(items)}</ul>'
@@ -807,21 +863,31 @@ def _semantic_table(
                 "cells": cells,
             }
         )
+    fmt = formats[fmt_id]
+    unit_words = {
+        "usd": "US dollars",
+        "percent": "percent",
+        "percentage_points": "percentage points",
+        "basis_points": "basis points",
+    }.get(fmt.unit or "", "unitless")
     facts = [
-        f"Chart type: line",
-        f"Identity strategy: {identity}",
-        f"Value format: {fmt_id}",
-        f"Domain: {domain['min']} to {domain['max']}",
+        "Chart type: line trend",
+        f"Series identity: {identity.replace('_', ' ')}",
+        f"Values in {unit_words}, {fmt.value_decimals} decimal places",
+        f"Value domain from {domain['min']} to {domain['max']}",
     ]
+    if chart.heading:
+        facts.insert(0, f"Chart: {chart.heading}")
     if chart.value_axes.primary.title:
-        facts.append(f"Value axis: {chart.value_axes.primary.title}")
+        facts.append(f"Value axis title: {chart.value_axes.primary.title}")
     if chart.category_axis.title:
-        facts.append(f"Category axis: {chart.category_axis.title}")
+        facts.append(f"Category axis title: {chart.category_axis.title}")
     if scale_label:
-        facts.append(f"Scale: {scale_label}")
+        facts.append(f"Display scale: {scale_label}")
     if chart.value_axes.primary.leading_break:
         facts.append(
-            f"Leading break to {chart.value_axes.primary.leading_break.to}"
+            f"Leading axis break omits values below "
+            f"{chart.value_axes.primary.leading_break.to}"
         )
     return {
         "columns": columns,
@@ -878,17 +944,9 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
             "responsive": False,
             "maintainAspectRatio": False,
             "plugins": {
-                "legend": {"display": show_legend, "position": "bottom"},
+                # HTML owns legend; frozen SVG overlay owns labels (D248/D53).
+                "legend": {"display": False},
                 "tooltip": {"enabled": True},
-                "v3PointLabels": {
-                    "placements": [
-                        p
-                        for p in plan["placements"]
-                        if p.get("kind") == "value" and p.get("class") != "suppressed"
-                    ],
-                    "show": plan["show_ordinary_values"],
-                    "fontSize": plan["role_sizes"]["ordinary_values"],
-                },
             },
             "scales": {
                 "x": {

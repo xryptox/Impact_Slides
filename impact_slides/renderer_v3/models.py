@@ -121,7 +121,7 @@ PERIOD_COMPARISON_COLUMN_IDS: tuple[str, str, str] = (
 )
 
 # Default non-color identity pairs for multi-series lines (D99/D302).
-_LINE_STYLE_PAIRS: tuple[tuple[str, str], ...] = (
+LINE_STYLE_PAIRS: tuple[tuple[str, str], ...] = (
     ("solid", "circle"),
     ("dashed", "square"),
     ("dotted", "triangle"),

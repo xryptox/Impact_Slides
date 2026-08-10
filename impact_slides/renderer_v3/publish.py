@@ -182,7 +182,7 @@ def build_presentation_html(
             ".chart-pane-title>span:first-child{font-size:40px;font-weight:var(--font-weight-title);color:var(--color-band-ink)}",
             ".chart-pane-subtitle{font-size:22px;font-weight:var(--font-weight-emphasis);color:var(--color-band-ink)}",
             ".chart-legend{list-style:none;display:flex;flex-wrap:wrap;gap:16px;margin:0 0 var(--space-sm);padding:0}",
-            ".legend-item{display:flex;align-items:center;gap:8px;font-size:var(--text-sm)}",
+            ".legend-item{display:flex;align-items:center;gap:8px}",
             ".legend-swatch{display:inline-block;width:16px;height:4px}",
             ".chart-semantic-table.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
             ".chart-semantic-table{width:100%;border-collapse:collapse;margin:0 0 var(--space-sm)}",
@@ -246,16 +246,10 @@ def build_presentation_html(
 
 
 def _embedded_chart_js() -> str:
-    """Load vendored Chart.js UMD; empty string if unavailable."""
-    # Prefer v3-local copy; fall back to immutable v2 vendor path (not imported).
-    here = Path(__file__).resolve().parent
-    candidates = [
-        here / "assets" / "libs" / "chart.umd.min.js",
-        here.parent / "renderer_v2" / "assets" / "libs" / "chart.umd.min.js",
-    ]
-    for path in candidates:
-        if path.is_file():
-            return path.read_text(encoding="utf-8")
+    """Load v3-local vendored Chart.js UMD; empty string if unavailable."""
+    path = Path(__file__).resolve().parent / "assets" / "libs" / "chart.umd.min.js"
+    if path.is_file():
+        return path.read_text(encoding="utf-8")
     return ""
 
 
