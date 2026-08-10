@@ -1395,7 +1395,6 @@ def _table_fit_detail(
             mins[c + 1] = max(tw + TABLE_CELL_PAD_X, value_mins[c])
         # Group labels need span width.
         if g_labels is not None and groups is not None:
-            cursor = 1  # after stub
             # Map leaf index → width slot; groups only cover value cols possibly including gaps.
             leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
             for g, glab in zip(groups, g_labels):
@@ -1418,29 +1417,186 @@ def _table_fit_detail(
             widths[0] += box_w - sum(widths)
         return widths
 
+    def ellipsize_labels(
+        h_labels: list[str], r_labels: list[str], g_labels: list[str] | None, widths: list[int]
+    ) -> tuple[list[str], list[str], list[str] | None, bool]:
+        changed = False
+        new_headers = []
+        for c, h in enumerate(h_labels):
+            cell_w = widths[c] - TABLE_CELL_PAD_X
+            lines = _wrap_label_lines(h, px, max(1, cell_w), strong=True)
+            if len(lines) > TABLE_MAX_LABEL_LINES or any(
+                _text_width(ln, px, strong=True) > cell_w for ln in lines
+            ):
+                h2 = _ellipsis_to_width(h, px, max(1, cell_w), strong=True)
+                if h2 != h:
+                    changed = True
+                new_headers.append(h2)
+            else:
+                new_headers.append(h)
+        new_rows = []
+        cell_w0 = widths[0] - TABLE_CELL_PAD_X
+        for lab in r_labels:
+            lines = _wrap_label_lines(lab, px, max(1, cell_w0))
+            if len(lines) > TABLE_MAX_LABEL_LINES or any(
+                _text_width(ln, px) > cell_w0 for ln in lines
+            ):
+                lab2 = _ellipsis_to_width(lab, px, max(1, cell_w0))
+                if lab2 != lab:
+                    changed = True
+                new_rows.append(lab2)
+            else:
+                new_rows.append(lab)
+        new_g = g_labels
+        if g_labels is not None and groups is not None:
+            leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
+            new_g = []
+            for g, glab in zip(groups, g_labels):
+                slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
+                span_w = sum(widths[s] for s in slots) - TABLE_CELL_PAD_X
+                g2 = _ellipsis_to_width(glab, px, max(1, span_w), strong=True)
+                if g2 != glab:
+                    changed = True
+                new_g.append(g2)
+        return new_headers, new_rows, new_g, changed
+
+    def measure(
+        h_labels: list[str], r_labels: list[str], g_labels: list[str] | None, widths: list[int]
+    ) -> tuple[bool, list[str], int]:
+        """Return (fits, adaptation_codes, height) for one label/width assignment."""
+        local_codes: list[str] = []
+        line_h = _line_box(px)
+        geometry_ok = True
+        header_lines = 0
+        for c, h in enumerate(h_labels):
+            cell_w = max(1, widths[c] - TABLE_CELL_PAD_X)
+            lines = _wrap_label_lines(h, px, cell_w, strong=True)
+            if len(lines) > TABLE_MAX_LABEL_LINES:
+                geometry_ok = False
+                lines = lines[:TABLE_MAX_LABEL_LINES] or [h]
+            header_lines = max(header_lines, max(len(lines), 1))
+            if len(lines) > 1 and "plan.text_wrapped" not in local_codes:
+                local_codes.append("plan.text_wrapped")
+        group_lines = 0
+        if g_labels is not None and groups is not None:
+            leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
+            for g, glab in zip(groups, g_labels):
+                slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
+                span_w = max(1, sum(widths[s] for s in slots) - TABLE_CELL_PAD_X)
+                lines = _wrap_label_lines(glab, px, span_w, strong=True)
+                if len(lines) > TABLE_MAX_LABEL_LINES:
+                    geometry_ok = False
+                    lines = lines[:TABLE_MAX_LABEL_LINES] or [glab]
+                group_lines = max(group_lines, max(len(lines), 1))
+                if len(lines) > 1 and "plan.text_wrapped" not in local_codes:
+                    local_codes.append("plan.text_wrapped")
+
+        body_lines_total = 0
+        for r, lab in enumerate(r_labels):
+            cell_w = max(1, widths[0] - TABLE_CELL_PAD_X)
+            lines = _wrap_label_lines(lab, px, cell_w)
+            if len(lines) > TABLE_MAX_LABEL_LINES:
+                geometry_ok = False
+                lines = lines[:TABLE_MAX_LABEL_LINES] or [lab]
+            row_lines = max(len(lines), 1)
+            body_lines_total += row_lines
+            if len(lines) > 1 and "plan.text_wrapped" not in local_codes:
+                local_codes.append("plan.text_wrapped")
+            for c in range(n_value_cols):
+                if _text_width(spec["cells_vis"][r][c], px) > widths[c + 1] - TABLE_CELL_PAD_X:
+                    geometry_ok = False
+
+        scale_h = 0
+        if spec["scale_labels"]:
+            scale_h = _line_box(max(12, px - 4)) + BLOCK_MARGIN_Y
+
+        n_header_rows = (1 if group_lines else 0) + 1
+        height = (
+            (group_lines + header_lines) * line_h
+            + body_lines_total * line_h
+            + (spec["n_rows"] + n_header_rows) * TABLE_CELL_PAD_Y
+            + (spec["n_rows"] + n_header_rows) * TABLE_RULE_Y
+            + scale_h
+            + BLOCK_MARGIN_Y
+        )
+        fits = geometry_ok and height <= box_h and sum(widths) <= box_w
+        return fits, local_codes, height
+
+    def commit(
+        h_labels: list[str],
+        r_labels: list[str],
+        g_labels: list[str] | None,
+        widths: list[int],
+        *,
+        short: bool,
+        ellipsis: bool,
+        adapt_codes: list[str],
+        height: int,
+        fits: bool,
+    ) -> tuple[bool, list[str], int]:
+        spec["display_headers"] = h_labels
+        spec["display_row_labels"] = r_labels
+        spec["col_widths"] = widths
+        spec["ellipsized"] = ellipsis
+        spec["short_label_used"] = short
+        if groups is not None and g_labels is not None:
+            spec["display_groups"] = [
+                {**g, "display_label": glab}
+                for g, glab in zip(groups, g_labels)
+            ]
+        else:
+            spec["display_groups"] = None
+        return fits, adapt_codes, height
+
+    best: tuple[list[str], list[str], list[str] | None, list[int], bool, bool, list[str], int] | None = None
+
+    def consider(
+        h_labels: list[str],
+        r_labels: list[str],
+        g_labels: list[str] | None,
+        widths: list[int],
+        *,
+        short: bool,
+        ellipsis: bool,
+    ) -> bool:
+        nonlocal best, codes
+        fits_now, stage_codes, height = measure(h_labels, r_labels, g_labels, widths)
+        adapt = list(stage_codes)
+        if short and "plan.short_label_used" not in adapt:
+            adapt.append("plan.short_label_used")
+        if ellipsis and "plan.label_ellipsized" not in adapt:
+            adapt.append("plan.label_ellipsized")
+        best = (h_labels, r_labels, g_labels, widths, short, ellipsis, adapt, height)
+        if fits_now:
+            codes = adapt
+            return True
+        return False
+
     widths = try_widths(headers, row_labels, group_labels)
-    if widths is None and allow_short:
+    if widths is not None and consider(
+        headers, row_labels, group_labels, widths, short=False, ellipsis=False
+    ):
+        h, r, g, w, sh, el, ad, ht = best  # type: ignore[misc]
+        return commit(h, r, g, w, short=sh, ellipsis=el, adapt_codes=ad, height=ht, fits=True)
+
+    if allow_short:
         headers = list(spec["header_short"])
         row_labels = list(spec["row_labels_short"])
         group_labels = (
-            None
-            if groups is None
-            else [g["short_label"] for g in groups]
+            None if groups is None else [g["short_label"] for g in groups]
         )
         widths = try_widths(headers, row_labels, group_labels)
-        if widths is not None:
-            short_used = True
-            codes.append("plan.short_label_used")
+        if widths is not None and consider(
+            headers, row_labels, group_labels, widths, short=True, ellipsis=False
+        ):
+            h, r, g, w, sh, el, ad, ht = best  # type: ignore[misc]
+            return commit(h, r, g, w, short=sh, ellipsis=el, adapt_codes=ad, height=ht, fits=True)
 
-    if widths is None and allow_ellipsis:
-        # Force columns then ellipsize labels into them (D25).
-        short_used = True
+    if allow_ellipsis:
         headers = list(spec["header_short"])
         row_labels = list(spec["row_labels_short"])
         group_labels = (
-            None
-            if groups is None
-            else [g["short_label"] for g in groups]
+            None if groups is None else [g["short_label"] for g in groups]
         )
         # Values keep ceil mins whenever they fit the box; leftover may be
         # only a few px on the stub (labels ellipsize). Equal-split only when
@@ -1453,126 +1609,27 @@ def _table_fit_detail(
             base = max(1, box_w // total_cols)
             widths = [base] * total_cols
             widths[0] += box_w - sum(widths)
-        # Ellipsize headers + row labels into column widths.
-        new_headers = []
-        for c, h in enumerate(headers):
-            cell_w = widths[c] - TABLE_CELL_PAD_X
-            lines = _wrap_label_lines(h, px, max(1, cell_w), strong=True)
-            if len(lines) > TABLE_MAX_LABEL_LINES or any(
-                _text_width(ln, px, strong=True) > cell_w for ln in lines
-            ):
-                h2 = _ellipsis_to_width(h, px, max(1, cell_w), strong=True)
-                if h2 != h:
-                    ellipsized = True
-                new_headers.append(h2)
-            else:
-                new_headers.append(h)
-        headers = new_headers
-        new_rows = []
-        cell_w0 = widths[0] - TABLE_CELL_PAD_X
-        for lab in row_labels:
-            lines = _wrap_label_lines(lab, px, max(1, cell_w0))
-            if len(lines) > TABLE_MAX_LABEL_LINES or any(
-                _text_width(ln, px) > cell_w0 for ln in lines
-            ):
-                lab2 = _ellipsis_to_width(lab, px, max(1, cell_w0))
-                if lab2 != lab:
-                    ellipsized = True
-                new_rows.append(lab2)
-            else:
-                new_rows.append(lab)
-        row_labels = new_rows
-        if group_labels is not None and groups is not None:
-            leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
-            new_g = []
-            for g, glab in zip(groups, group_labels):
-                slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
-                span_w = sum(widths[s] for s in slots) - TABLE_CELL_PAD_X
-                g2 = _ellipsis_to_width(glab, px, max(1, span_w), strong=True)
-                if g2 != glab:
-                    ellipsized = True
-                new_g.append(g2)
-            group_labels = new_g
-        if ellipsized:
-            codes.append("plan.label_ellipsized")
-        if short_used and "plan.short_label_used" not in codes:
-            codes.append("plan.short_label_used")
+        headers, row_labels, group_labels, ellipsized = ellipsize_labels(
+            headers, row_labels, group_labels, widths
+        )
+        short_used = True
+        if consider(
+            headers,
+            row_labels,
+            group_labels,
+            widths,
+            short=True,
+            ellipsis=ellipsized,
+        ):
+            h, r, g, w, sh, el, ad, ht = best  # type: ignore[misc]
+            return commit(h, r, g, w, short=sh, ellipsis=el, adapt_codes=ad, height=ht, fits=True)
 
-    if widths is None:
-        return False, codes, 10**9
+    if best is not None:
+        h, r, g, w, sh, el, ad, ht = best
+        codes = ad
+        return commit(h, r, g, w, short=sh, ellipsis=el, adapt_codes=ad, height=ht, fits=False)
 
-    # Height: header rows + body rows + optional scale disclosure + rules.
-    line_h = _line_box(px)
-    geometry_ok = True
-    header_lines = 0
-    for c, h in enumerate(headers):
-        cell_w = max(1, widths[c] - TABLE_CELL_PAD_X)
-        lines = _wrap_label_lines(h, px, cell_w, strong=True)
-        if len(lines) > TABLE_MAX_LABEL_LINES:
-            geometry_ok = False
-            lines = lines[:TABLE_MAX_LABEL_LINES] or [h]
-        header_lines = max(header_lines, max(len(lines), 1))
-        if len(lines) > 1 and "plan.text_wrapped" not in codes:
-            codes.append("plan.text_wrapped")
-    group_lines = 0
-    if group_labels is not None and groups is not None:
-        leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
-        for g, glab in zip(groups, group_labels):
-            slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
-            span_w = max(1, sum(widths[s] for s in slots) - TABLE_CELL_PAD_X)
-            lines = _wrap_label_lines(glab, px, span_w, strong=True)
-            if len(lines) > TABLE_MAX_LABEL_LINES:
-                geometry_ok = False
-                lines = lines[:TABLE_MAX_LABEL_LINES] or [glab]
-            group_lines = max(group_lines, max(len(lines), 1))
-            if len(lines) > 1 and "plan.text_wrapped" not in codes:
-                codes.append("plan.text_wrapped")
-
-    body_lines_total = 0
-    for r, lab in enumerate(row_labels):
-        cell_w = max(1, widths[0] - TABLE_CELL_PAD_X)
-        lines = _wrap_label_lines(lab, px, cell_w)
-        if len(lines) > TABLE_MAX_LABEL_LINES:
-            geometry_ok = False
-            lines = lines[:TABLE_MAX_LABEL_LINES] or [lab]
-        # Values are single-line; row height is max(label lines, 1).
-        row_lines = max(len(lines), 1)
-        body_lines_total += row_lines
-        if len(lines) > 1 and "plan.text_wrapped" not in codes:
-            codes.append("plan.text_wrapped")
-        # Value width check (must not overflow for a true fit).
-        for c in range(n_value_cols):
-            if _text_width(spec["cells_vis"][r][c], px) > widths[c + 1] - TABLE_CELL_PAD_X:
-                geometry_ok = False
-
-    scale_h = 0
-    if spec["scale_labels"]:
-        scale_h = _line_box(max(12, px - 4)) + BLOCK_MARGIN_Y
-
-    n_header_rows = (1 if group_lines else 0) + 1
-    height = (
-        (group_lines + header_lines) * line_h
-        + body_lines_total * line_h
-        + (spec["n_rows"] + n_header_rows) * TABLE_CELL_PAD_Y
-        + (spec["n_rows"] + n_header_rows) * TABLE_RULE_Y
-        + scale_h
-        + BLOCK_MARGIN_Y
-    )
-    fits = geometry_ok and height <= box_h and sum(widths) <= box_w
-    # Always freeze best-effort display so non-strict paint keeps full structure (D25).
-    spec["display_headers"] = headers
-    spec["display_row_labels"] = row_labels
-    spec["col_widths"] = widths
-    spec["ellipsized"] = ellipsized
-    spec["short_label_used"] = short_used
-    if groups is not None and group_labels is not None:
-        spec["display_groups"] = [
-            {**g, "display_label": glab}
-            for g, glab in zip(groups, group_labels)
-        ]
-    else:
-        spec["display_groups"] = None
-    return fits, codes, height
+    return False, codes, 10**9
 
 
 def _record_table_adaptations(

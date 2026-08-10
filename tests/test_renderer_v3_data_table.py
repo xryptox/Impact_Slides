@@ -384,6 +384,47 @@ def test_ellipsis_pack_keeps_value_ceil_widths_when_float_mins_fit():
         assert _text_width(cell, px) <= spec["col_widths"][c + 1] - TABLE_CELL_PAD_X
 
 
+def test_label_line_budget_falls_through_to_short():
+    """Full labels that wrap past 2 lines must try short/ellipsis before overflow."""
+    from impact_slides.renderer_v3.plan import CONTENT_W, _table_fit_detail
+
+    spec = {
+        "n_cols": 3,
+        "n_rows": 2,
+        "header_full": [
+            "Segment",
+            "Revenue growth versus prior year period",
+            "Net income margin percentage",
+            "Operating expense ratio trend",
+        ],
+        "header_short": ["Seg", "Rev", "NIM", "Opex"],
+        "row_labels_full": ["Card Member Loans", "Auto Finance Book"],
+        "row_labels_short": ["Cards", "Auto"],
+        "cells_vis": [["$1,234.6", "2.5%", "12.0%"], ["$980.1", "1.8%", "11.2%"]],
+        "cells_acc": [["$1,234.6", "2.5%", "12.0%"], ["$980.1", "1.8%", "11.2%"]],
+        "cells_role": [["metric"] * 3] * 2,
+        "cells_align": [["right"] * 3] * 2,
+        "col_ids": ["a", "b", "c"],
+        "groups": None,
+        "scale_labels": [],
+        "col_widths": [],
+        "display_headers": None,
+        "display_row_labels": None,
+        "display_groups": None,
+        "ellipsized": False,
+        "short_label_used": False,
+        "all_texts": [],
+    }
+    for px in (20, 22, 24):
+        s = dict(spec)
+        s["cells_vis"] = [list(r) for r in spec["cells_vis"]]
+        ok, codes, _h = _table_fit_detail(s, px, CONTENT_W, 10**9)
+        assert ok, (px, codes, s.get("display_headers"))
+        assert s["short_label_used"] is True
+        assert s["display_headers"] == ["Seg", "Rev", "NIM", "Opex"]
+        assert "plan.short_label_used" in codes
+
+
 def test_table_sync_group_uses_grid_fit_not_prose():
     """Synced tables must share a size every grid can fit (D69/D70)."""
     raw = _table_raw()
