@@ -2585,7 +2585,10 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
         n = len(items)
         orientation = spec.get("orientation", "horizontal")
         if orientation == "horizontal":
-            col_w = max(40, (box_w - LINEAR_GAP * (n - 1)) // n)
+            col_w = max(
+                40,
+                (box_w - LINEAR_GAP * (n - 1) - LINEAR_CONNECTOR_H * (n - 1)) // n,
+            )
             heights = []
             for it in items:
                 meta = (

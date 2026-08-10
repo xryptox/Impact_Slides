@@ -180,7 +180,7 @@ def build_presentation_html(
             ".comparison-card .fact{margin:0 0 8px}",
             ".comparison-card .fact-label{margin:0 0 2px}",
             ".comparison-card .fact-value{margin:0;font-variant-numeric:tabular-nums lining-nums}",
-            # Linear + grouping compositions (D192/D193/D196/D197/D272–D277).
+            # Linear + grouping compositions (D192/D193/D196/D197/D272-D277).
             ".process-flow,.timeline,.data-pipeline{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
             ".process-flow.horizontal,.timeline.horizontal,.data-pipeline.horizontal{flex-direction:row}",
             ".process-flow.vertical,.timeline.vertical,.data-pipeline.vertical{flex-direction:column}",
