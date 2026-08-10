@@ -1,0 +1,259 @@
+{
+  "meta": {"handoff_schema_version": 1},
+  "sections": [{"section_id": "annex", "label": "Annex"}],
+  "number_formats": {
+    "usd_1": {"unit": "usd", "value_decimals": 1, "negative_style": "parentheses"},
+    "pct_1": {"unit": "percent", "value_decimals": 1, "negative_style": "minus"},
+    "pp_1": {"unit": "percentage_points", "value_decimals": 1, "negative_style": "minus"}
+  },
+  "evidence_registry": {
+    "src-board-pack": {"source_name": "Board pack Q4"}
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {"title": "Annex compositions"},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "annex_table",
+      "section_id": "annex",
+      "title": "Dense annex matrix",
+      "content": {"subtitle": "All periods retained"},
+      "payload": {
+        "table": {
+          "surface_id": "annex-main",
+          "stub_header": {"label": "Metric", "short_label": "Met"},
+          "columns": [
+            {"column_id": "q1", "label": "Q1'25", "short_label": "Q1"},
+            {"column_id": "q2", "label": "Q2'25", "short_label": "Q2"},
+            {"column_id": "q3", "label": "Q3'25", "short_label": "Q3"}
+          ],
+          "column_groups": [
+            {
+              "group_id": "y25",
+              "label": "FY 2025",
+              "short_label": "FY25",
+              "column_ids": ["q1", "q2", "q3"]
+            }
+          ],
+          "rows": [
+            {
+              "row_id": "rev",
+              "label": "Revenue",
+              "short_label": "Rev",
+              "cells": {
+                "q1": {"type": "number", "value": "100.5", "format_id": "usd_1"},
+                "q2": {"type": "number", "value": "110.0", "format_id": "usd_1"},
+                "q3": {"type": "number", "value": "120.25", "format_id": "usd_1"}
+              }
+            },
+            {
+              "row_id": "margin",
+              "label": "Margin",
+              "cells": {
+                "q1": {"type": "number", "value": "12.5", "format_id": "pct_1"},
+                "q2": {"type": "missing"},
+                "q3": {"type": "number", "value": "13.0", "format_id": "pct_1"}
+              }
+            }
+          ]
+        }
+      },
+      "disclosure": {
+        "sections": [
+          {
+            "surface_id": "annex-notes",
+            "title": "Annex notes",
+            "items": [
+              {"kind": "paragraph", "text": "Missing margin cells stay em-dash."}
+            ]
+          }
+        ]
+      },
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "grouped_annex_table",
+      "section_id": "annex",
+      "title": "Peer annex matrices",
+      "payload": {
+        "tables": [
+          {
+            "heading": "US Consumer",
+            "short_heading": "US",
+            "table": {
+              "surface_id": "peer-us",
+              "stub_header": {"label": "Line"},
+              "columns": [
+                {"column_id": "a", "label": "Actual"},
+                {"column_id": "b", "label": "Plan"}
+              ],
+              "rows": [
+                {
+                  "row_id": "vol",
+                  "label": "Volume",
+                  "cells": {
+                    "a": {"type": "number", "value": "10.0", "format_id": "usd_1"},
+                    "b": {"type": "number", "value": "9.5", "format_id": "usd_1"}
+                  }
+                },
+                {
+                  "row_id": "nna",
+                  "label": "NNA",
+                  "cells": {
+                    "a": {"type": "number", "value": "1.2", "format_id": "pct_1"},
+                    "b": {"type": "number", "value": "1.0", "format_id": "pct_1"}
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "heading": "International",
+            "short_heading": "Intl",
+            "table": {
+              "surface_id": "peer-intl",
+              "stub_header": {"label": "Line"},
+              "columns": [
+                {"column_id": "a", "label": "Actual"},
+                {"column_id": "b", "label": "Plan"}
+              ],
+              "rows": [
+                {
+                  "row_id": "vol",
+                  "label": "Volume",
+                  "cells": {
+                    "a": {"type": "number", "value": "4.0", "format_id": "usd_1"},
+                    "b": {"type": "number", "value": "3.8", "format_id": "usd_1"}
+                  }
+                },
+                {
+                  "row_id": "nna",
+                  "label": "NNA",
+                  "cells": {
+                    "a": {"type": "number", "value": "0.8", "format_id": "pct_1"},
+                    "b": {"type": "missing"}
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "period_comparison",
+      "section_id": "annex",
+      "title": "Period comparison",
+      "payload": {
+        "table": {
+          "surface_id": "period-main",
+          "stub_header": {"label": "Metric"},
+          "columns": [
+            {"column_id": "current_period", "label": "Q4'25"},
+            {"column_id": "comparison_period", "label": "Q4'24"},
+            {"column_id": "variance", "label": "Var"}
+          ],
+          "rows": [
+            {
+              "row_id": "rev",
+              "label": "Revenue",
+              "cells": {
+                "current_period": {"type": "number", "value": "200.0", "format_id": "usd_1"},
+                "comparison_period": {"type": "number", "value": "180.0", "format_id": "usd_1"},
+                "variance": {"type": "number", "value": "11.1", "format_id": "pct_1"}
+              }
+            },
+            {
+              "row_id": "opx",
+              "label": "OpEx",
+              "cells": {
+                "current_period": {"type": "number", "value": "90.0", "format_id": "usd_1"},
+                "comparison_period": {"type": "number", "value": "88.0", "format_id": "usd_1"},
+                "variance": {"type": "number", "value": "2.3", "format_id": "pct_1"}
+              }
+            }
+          ]
+        },
+        "metric_strip": {
+          "surface_id": "period-strip",
+          "metrics": [
+            {
+              "metric_id": "eps",
+              "label": "EPS",
+              "value": {"type": "number", "value": "2.5", "format_id": "usd_1"},
+              "detail": "Diluted"
+            },
+            {
+              "metric_id": "roe",
+              "label": "ROE",
+              "value": {"type": "number", "value": "18.0", "format_id": "pct_1"}
+            }
+          ]
+        }
+      },
+      "takeaway": {"text": "Revenue growth leads the print."},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "comparison_cards",
+      "section_id": "annex",
+      "title": "Peer comparison cards",
+      "payload": {
+        "table": {
+          "surface_id": "cards-main",
+          "stub_header": {"label": "Peer"},
+          "columns": [
+            {"column_id": "share", "label": "Share"},
+            {"column_id": "growth", "label": "Growth"},
+            {"column_id": "note", "label": "Note"}
+          ],
+          "rows": [
+            {
+              "row_id": "amex",
+              "label": "Amex",
+              "cells": {
+                "share": {"type": "number", "value": "24.0", "format_id": "pct_1"},
+                "growth": {"type": "number", "value": "3.2", "format_id": "pp_1"},
+                "note": {"type": "text", "text": "Lead"}
+              }
+            },
+            {
+              "row_id": "visa",
+              "label": "Visa",
+              "cells": {
+                "share": {"type": "number", "value": "40.0", "format_id": "pct_1"},
+                "growth": {"type": "number", "value": "1.1", "format_id": "pp_1"},
+                "note": {"type": "text", "text": "Scale"}
+              }
+            },
+            {
+              "row_id": "mc",
+              "label": "Mastercard",
+              "cells": {
+                "share": {"type": "number", "value": "28.0", "format_id": "pct_1"},
+                "growth": {"type": "missing"},
+                "note": {"type": "text", "text": "Watch"}
+              }
+            }
+          ]
+        }
+      },
+      "takeaway": {"text": "Share leadership remains concentrated."},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "closing_cover",
+      "payload": {"title": "Close"}
+    }
+  ]
+}

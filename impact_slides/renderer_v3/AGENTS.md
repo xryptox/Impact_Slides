@@ -6,7 +6,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 
 ## Ownership
 
-- Closed schema-v1 handoff models (`models.py`) including D213 semantic values + D255 `table` + `data_table` composition
+- Closed schema-v1 handoff models (`models.py`) including D213 semantic values + D255 `table` + table compositions (`data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`)
 - Decimal-safe format registry (`format.py`) for D77/D78/D103/D214/D293
 - Aggregating validation + allowlisted non-strict repairs (`validate.py`, `repairs.py`, `diagnostics.py`)
 - Deck-wide adaptive measure/plan freeze (`plan.py`) for narrative prose, data tables, subtitles, takeaways, disclosures, source footers, and fixed chrome (D1–D4, D22–D25, D44, D59, D68–D70)
@@ -33,11 +33,14 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Non-strict `drop_unknown_fields` may strip noise keys only: on brand/legal layouts it **retains** forbidden D287 ordinary semantic roots (`title`/`content`/`takeaway`/`disclosure`/`source_footer`, and `section_id` on covers/dividers) so revalidation fails without deleting authored content; typed D180 unresolved-slide fallback is not yet implemented
 - `_wrap_lines` breaks at spaces and after `-,:;.` when more content follows; paint inserts matching `<wbr>` via `_soft_break_html` (R178-029). Disclosure units measure summary/list indent separately from full-width paragraphs
 - Print media expands closed disclosures and resets viewport stage scale to fixed 1920×1080
-- Kernel compositions: `opening_cover`, `section_divider`, `closing_cover`, `narrative`, `legal_notice`, `data_table` (D178–D183/D210/D215/D223/D226/D251/D257/D268–D271/D287)
+- Kernel compositions: `opening_cover`, `section_divider`, `closing_cover`, `narrative`, `legal_notice`, `data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards` (D178–D187/D208/D210/D215/D223/D226/D251/D257–D261/D268–D271/D287)
 - Brand slides: covers share one `CoverPayload` (title + optional subtitle/period/date); divider payload is only `section_id` with registry-derived label + section ordinal; renderer owns bands/rules/chrome (descendant CSS + per-type `*-overflow` outline classes); no root title/section/takeaway/disclosure/source_footer
 - `legal_notice`: multipart `notice_id` + adjacent `part`/`total_parts`, plain paragraphs only; part 1 owns title, later parts paint renderer `— continued` + part-of-total; fixed 28/16px type, no adaptive growth or common takeaway/disclosure/footer
 - Envelope: `meta`, `sections`, `number_formats`, `evidence_registry`, `slides` (D211); `number_formats` uses closed unit vocabulary (`usd`/`percent`/`percentage_points`/`basis_points`)
 - `data_table` paints one full-width D255 table: navy headers, transparent body, native `scope`/`headers`, one common 20–24px fit, em-dash missing, no row/column/value loss (D24–D25/D103–D105)
+- `annex_table` reuses the table surface at 12–24px with disclosure-only notes (no takeaway); `grouped_annex_table` paints 1–2 equal-width headed peers with shared annex size and sequential flat-table non-strict fallback (D184/D185/D258/D259)
+- `period_comparison` enforces ordered `current_period`/`comparison_period`/`variance` columns, optional exterior `metric_strip` (1–3 metrics), and ordinary-table non-strict fallback that keeps the strip (D186/D260/D265)
+- `comparison_cards` derives equal-rank cards from 2–4 peer rows × 2–4 fact columns; non-strict falls back to the complete accessible table (D187/D208/D261)
 - Must not import `impact_slides.renderer_v2` or mutate v2 behavior
 - Schema artifact is generated: `python -m impact_slides.renderer_v3.schema_export` (write) or `--check` (CI)
 - Theme CSS artifact is generated from the Python manifest: `python -m impact_slides.renderer_v3.theme_export` (write) or `--check` (CI); painters resolve colors via `theme.resolve_color` / CSS `var(--color-*)` only (D129-D131)
@@ -56,7 +59,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 
 ## Verification
 
-- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py`
+- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py`
 - `python -m impact_slides.renderer_v3.schema_export --check`
 - `python -m impact_slides.renderer_v3.theme_export --check`
 - Full suite: `python -m pytest -q`

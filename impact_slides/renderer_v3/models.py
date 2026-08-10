@@ -106,7 +106,27 @@ KERNEL_LAYOUTS = frozenset(
         "narrative",
         "legal_notice",
         "data_table",
+        "annex_table",
+        "grouped_annex_table",
+        "period_comparison",
+        "comparison_cards",
     }
+)
+
+# Ordinary full-width table compositions that share chrome (title/subtitle/…).
+ORDINARY_TABLE_LAYOUTS = frozenset(
+    {
+        "data_table",
+        "annex_table",
+        "period_comparison",
+        "comparison_cards",
+    }
+)
+
+PERIOD_COMPARISON_COLUMN_IDS: tuple[str, str, str] = (
+    "current_period",
+    "comparison_period",
+    "variance",
 )
 
 
@@ -490,6 +510,101 @@ class DataTablePayload(ClosedModel):
     table: TableData
 
 
+class AnnexTablePayload(ClosedModel):
+    """Dense full-width annex table (D184/D258)."""
+
+    table: TableData
+
+
+class GroupedAnnexPeer(ClosedModel):
+    """One headed peer matrix inside grouped_annex_table (D185/D259)."""
+
+    heading: NonEmptyStr
+    short_heading: Optional[NonEmptyStr] = None
+    table: TableData
+
+
+class GroupedAnnexTablePayload(ClosedModel):
+    """One or two ordered peer annex surfaces (D185/D259)."""
+
+    tables: list[GroupedAnnexPeer] = Field(min_length=1, max_length=2)
+
+
+class MetricItem(ClosedModel):
+    """One directionless metric in a strip (D165/D265)."""
+
+    metric_id: SemanticId
+    label: NonEmptyStr
+    value: SemanticValue
+    detail: Optional[NonEmptyStr] = None
+
+
+class MetricStrip(ClosedModel):
+    """Compact exterior metric row (D165/D265); period_comparison caps at 3."""
+
+    surface_id: SemanticId
+    metrics: list[MetricItem] = Field(min_length=1, max_length=3)
+    typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _unique_metrics_and_typo(self) -> MetricStrip:
+        ids = [m.metric_id for m in self.metrics]
+        if len(ids) != len(set(ids)):
+            raise ValueError("metric_id values must be unique within the strip")
+        if self.typography is not None:
+            t = self.typography
+            if t.subtitle_font_size is not None or t.table_font_size is not None:
+                raise ValueError(
+                    "metric_strip typography allows only mode, sync_group, body_font_size"
+                )
+        return self
+
+
+class PeriodComparisonPayload(ClosedModel):
+    """Financial period comparison with fixed role columns (D186/D260)."""
+
+    table: TableData
+    metric_strip: Optional[MetricStrip] = None
+
+    @model_validator(mode="after")
+    def _fixed_roles(self) -> PeriodComparisonPayload:
+        cols = [c.column_id for c in self.table.columns]
+        expected = list(PERIOD_COMPARISON_COLUMN_IDS)
+        if cols != expected:
+            raise ValueError(
+                "period_comparison columns must be exactly ordered "
+                f"{expected}; got {cols}"
+            )
+        if not (1 <= len(self.table.rows) <= 8):
+            raise ValueError("period_comparison requires 1–8 metric rows")
+        if self.table.column_groups is not None:
+            raise ValueError("period_comparison forbids column_groups (D256/D260)")
+        if self.metric_strip is not None:
+            if self.metric_strip.surface_id == self.table.surface_id:
+                raise ValueError(
+                    "metric_strip.surface_id must differ from table.surface_id"
+                )
+        return self
+
+
+class ComparisonCardsPayload(ClosedModel):
+    """Peer comparison cards derived from one rectangular table (D187/D261)."""
+
+    table: TableData
+
+    @model_validator(mode="after")
+    def _peer_fact_bounds(self) -> ComparisonCardsPayload:
+        n_rows = len(self.table.rows)
+        n_cols = len(self.table.columns)
+        if not (2 <= n_rows <= 4):
+            raise ValueError("comparison_cards requires 2–4 peer rows")
+        if not (2 <= n_cols <= 4):
+            raise ValueError("comparison_cards requires 2–4 fact columns")
+        if self.table.column_groups is not None:
+            raise ValueError("comparison_cards forbids column_groups (D256/D261)")
+        return self
+
+
 # ---------------------------------------------------------------------------
 # Slides
 # ---------------------------------------------------------------------------
@@ -652,7 +767,96 @@ class DataTableSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
-# Kernel compositions: covers + divider + narrative + legal + data_table (#191).
+class AnnexTableSlide(_SlideBase):
+    """Dense annex: one table + disclosure notes; no takeaway (D184/D258)."""
+
+    layout_type: Literal["annex_table"] = "annex_table"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: AnnexTablePayload
+    content: Optional[SubtitleContent] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_takeaway(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "takeaway" in data:
+            raise ValueError("annex_table forbids takeaway (D258)")
+        return data
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> AnnexTableSlide:
+        return _ordinary_footer_subset(self)
+
+
+class GroupedAnnexTableSlide(_SlideBase):
+    """1–2 peer annex matrices; no takeaway (D185/D259)."""
+
+    layout_type: Literal["grouped_annex_table"] = "grouped_annex_table"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: GroupedAnnexTablePayload
+    content: Optional[SubtitleContent] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_takeaway(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "takeaway" in data:
+            raise ValueError("grouped_annex_table forbids takeaway (D259)")
+        return data
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> GroupedAnnexTableSlide:
+        return _ordinary_footer_subset(self)
+
+
+class PeriodComparisonSlide(_SlideBase):
+    """Period roles + optional exterior metric strip (D186/D260)."""
+
+    layout_type: Literal["period_comparison"] = "period_comparison"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: PeriodComparisonPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> PeriodComparisonSlide:
+        return _ordinary_footer_subset(self)
+
+
+class ComparisonCardsSlide(_SlideBase):
+    """Peer cards from one rectangular fact table (D187/D208/D261)."""
+
+    layout_type: Literal["comparison_cards"] = "comparison_cards"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: ComparisonCardsPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> ComparisonCardsSlide:
+        return _ordinary_footer_subset(self)
+
+
+# Kernel compositions: covers + divider + narrative + legal + data_table (#191)
+# plus annex/comparison tables (#180).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
@@ -664,9 +868,61 @@ Slide = Annotated[
         NarrativeSlide,
         LegalNoticeSlide,
         DataTableSlide,
+        AnnexTableSlide,
+        GroupedAnnexTableSlide,
+        PeriodComparisonSlide,
+        ComparisonCardsSlide,
     ],
     Field(discriminator="layout_type"),
 ]
+
+
+def _slide_table_surface_ids(slide: Any) -> list[str]:
+    """Authored table/metric surface IDs owned by one slide."""
+    lt = getattr(slide, "layout_type", None)
+    payload = getattr(slide, "payload", None)
+    if lt in (
+        "data_table",
+        "annex_table",
+        "period_comparison",
+        "comparison_cards",
+    ):
+        ids = [payload.table.surface_id]
+        strip = getattr(payload, "metric_strip", None)
+        if strip is not None:
+            ids.append(strip.surface_id)
+        return ids
+    if lt == "grouped_annex_table":
+        return [peer.table.surface_id for peer in payload.tables]
+    return []
+
+
+def _slide_semantic_values(slide: Any) -> list[Any]:
+    """Every D213 value that may carry a format_id on one slide."""
+    values: list[Any] = []
+    for table in _slide_tables(slide):
+        for row in table.rows:
+            values.extend(row.cells.values())
+    payload = getattr(slide, "payload", None)
+    strip = getattr(payload, "metric_strip", None) if payload is not None else None
+    if strip is not None:
+        values.extend(m.value for m in strip.metrics)
+    return values
+
+
+def _slide_tables(slide: Any) -> list[TableData]:
+    lt = getattr(slide, "layout_type", None)
+    payload = getattr(slide, "payload", None)
+    if lt in (
+        "data_table",
+        "annex_table",
+        "period_comparison",
+        "comparison_cards",
+    ):
+        return [payload.table]
+    if lt == "grouped_annex_table":
+        return [peer.table for peer in payload.tables]
+    return []
 
 
 class Deck(ClosedModel):
@@ -711,8 +967,7 @@ class Deck(ClosedModel):
 
         surface_ids: list[str] = []
         for slide in self.slides:
-            if isinstance(slide, DataTableSlide):
-                surface_ids.append(slide.payload.table.surface_id)
+            surface_ids.extend(_slide_table_surface_ids(slide))
             disclosure = getattr(slide, "disclosure", None)
             if disclosure is not None:
                 surface_ids.extend(section.surface_id for section in disclosure.sections)
@@ -722,17 +977,13 @@ class Deck(ClosedModel):
         # Format references must resolve; unused formats are invalid (D144/D216 style).
         referenced_formats: set[str] = set()
         for slide in self.slides:
-            if not isinstance(slide, DataTableSlide):
-                continue
-            table = slide.payload.table
-            for row in table.rows:
-                for cell in row.cells.values():
-                    fid = getattr(cell, "format_id", None)
-                    if fid is None:
-                        continue
-                    if fid not in self.number_formats:
-                        raise ValueError(f"unresolved format_id {fid!r}")
-                    referenced_formats.add(fid)
+            for value in _slide_semantic_values(slide):
+                fid = getattr(value, "format_id", None)
+                if fid is None:
+                    continue
+                if fid not in self.number_formats:
+                    raise ValueError(f"unresolved format_id {fid!r}")
+                referenced_formats.add(fid)
         unused_fmt = [k for k in self.number_formats if k not in referenced_formats]
         if unused_fmt:
             raise ValueError(f"unused number_formats: {unused_fmt}")

@@ -301,8 +301,10 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                         layout_type=layout if isinstance(layout, str) else None,
                         expected=(
                             "kernel implements opening_cover, section_divider, "
-                            "closing_cover, narrative, legal_notice, data_table; "
-                            "other D210 compositions arrive in later tickets"
+                            "closing_cover, narrative, legal_notice, data_table, "
+                            "annex_table, grouped_annex_table, period_comparison, "
+                            "comparison_cards; other D210 compositions "
+                            "arrive in later tickets"
                         ),
                     )
                 )
@@ -417,7 +419,7 @@ def _loc_to_path(loc: tuple[Any, ...]) -> str:
             if s in KERNEL_LAYOUTS or s in _LAYOUT_SET:
                 continue
             if s.startswith("function-") or s in {
-                "tagged-union[OpeningCoverSlide,ClosingCoverSlide,NarrativeSlide,DataTableSlide]",
+                "tagged-union[OpeningCoverSlide,ClosingCoverSlide,NarrativeSlide,DataTableSlide,AnnexTableSlide,GroupedAnnexTableSlide,PeriodComparisonSlide,ComparisonCardsSlide]",
             }:
                 continue
             parts.append(s)
