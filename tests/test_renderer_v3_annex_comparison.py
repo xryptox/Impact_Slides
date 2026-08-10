@@ -169,11 +169,18 @@ def test_period_fallback_keeps_strip_and_table(tmp_path: Path):
     out = tmp_path / "out"
     result = render_deck(handoff, out, strict=False)
     html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["surface_id"] == "period-main")
     assert 'data-metric-strip="period-strip"' in html
-    assert "EPS" in html
-    assert "XXX" in html or "Revenue" in html
-    assert "$" in html
-    assert result["ok"] in (True, False)
+    assert '<table class="data-table table-overflow"' in html
+    assert "EPS" in html and "XXX" in html and "$" in html
+    assert plan["fallback"] == "ordinary_data_table"
+    assert any(
+        event["code"] == "plan.unresolved_overflow"
+        and event["surface_id"] == "period-main"
+        for event in meta["events"]
+    )
+    assert result["status"] == "degraded"
 
 
 def test_comparison_cards_nonstrict_table_fallback(tmp_path: Path):
@@ -191,11 +198,64 @@ def test_comparison_cards_nonstrict_table_fallback(tmp_path: Path):
     out = tmp_path / "out"
     result = render_deck(handoff, out, strict=False)
     html = (out / "presentation.html").read_text(encoding="utf-8")
-    assert "Peer Name" in html or "Amex" in html
-    assert "Visa" in html or "Peer Name" in html
-    assert "123" in html or "24.0%" in html
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["surface_id"] == "cards-main")
+    assert '<table class="data-table table-overflow"' in html
+    assert "Peer Name" in html and "123" in html
     assert 'data-table-surface="cards-main"' in html
-    assert result["status"] in ("clean", "degraded")
+    assert 'class="comparison-cards' not in html
+    assert plan["fallback"] == "ordinary_data_table"
+    assert any(
+        event["code"] == "plan.unresolved_overflow"
+        and event["surface_id"] == "cards-main"
+        for event in meta["events"]
+    )
+    assert result["status"] == "degraded"
+
+
+def test_nonstrict_repairs_traverse_new_compositions():
+    raw = _raw()
+    new_layouts = {
+        "annex_table",
+        "grouped_annex_table",
+        "period_comparison",
+        "comparison_cards",
+    }
+    for slide in raw["slides"]:
+        if slide["layout_type"] not in new_layouts:
+            continue
+        slide["payload"]["unexpected"] = True
+        slide["disclosure"] = {"sections": ["invalid"]}
+        payload = slide["payload"]
+        tables = (
+            [peer["table"] for peer in payload["tables"]]
+            if slide["layout_type"] == "grouped_annex_table"
+            else [payload["table"]]
+        )
+        for table in tables:
+            table["typography"] = {"body_font_size": 99}
+        if "metric_strip" in payload:
+            payload["metric_strip"]["typography"] = {"table_font_size": 99}
+
+    result = validate_handoff(raw, strict=False)
+
+    assert result.repaired is True
+    repaired = {slide.layout_type: slide for slide in result.deck.slides}
+    for layout in new_layouts:
+        slide = repaired[layout]
+        assert slide.disclosure is None
+        tables = (
+            [peer.table for peer in slide.payload.tables]
+            if layout == "grouped_annex_table"
+            else [slide.payload.table]
+        )
+        assert all(table.typography is None for table in tables)
+    assert repaired["period_comparison"].payload.metric_strip.typography is None
+    assert {event.code for event in result.events} >= {
+        "repair.field_dropped",
+        "repair.item_dropped",
+        "repair.policy_defaulted",
+    }
 
 
 def test_mutation_drop_variance_column_fails():

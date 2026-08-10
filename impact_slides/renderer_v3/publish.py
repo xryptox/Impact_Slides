@@ -143,7 +143,7 @@ def build_presentation_html(
             "table.data-table td.num,table.data-table th.num{font-variant-numeric:tabular-nums lining-nums}",
             "table.data-table th.stub,table.data-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
             # Period comparison bounded columns (D186/D260).
-            "table.period-comparison{width:100%;border-collapse:separate;border-spacing:12px 0;table-layout:fixed;margin:0 0 var(--space-sm)}",
+            "table.period-comparison{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
             "table.period-comparison th,table.period-comparison td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-panel-border);vertical-align:middle;background:var(--color-panel)}",
             "table.period-comparison thead th{background:var(--color-band);color:var(--color-band-ink);font-weight:var(--font-weight-emphasis);border-color:var(--color-band)}",
             "table.period-comparison th.stub,table.period-comparison td.stub{background:transparent;border:none;text-align:left;font-weight:var(--font-weight-emphasis)}",
@@ -154,11 +154,11 @@ def build_presentation_html(
             ".table-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             ".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
             # Grouped annex peers (D185/D259).
-            ".grouped-annex{display:flex;flex-direction:row;gap:24px;width:100%;margin:0 0 var(--space-sm)}",
+            ".grouped-annex{display:flex;position:relative;flex-direction:row;gap:24px;width:100%;margin:0 0 var(--space-sm)}",
             ".grouped-annex.sequential{flex-direction:column;gap:var(--space-md)}",
             ".grouped-annex-peer{flex:1 1 0;min-width:0}",
             ".grouped-annex-peer h2{margin:0 0 var(--space-sm)}",
-            ".grouped-annex-divider{flex:0 0 1px;background:var(--color-rule);align-self:stretch}",
+            ".grouped-annex-divider{position:absolute;inset:0 auto 0 50%;width:1px;background:var(--color-rule)}",
             # Metric strip (D165/D265).
             ".metric-strip{display:flex;flex-direction:row;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
             ".metric-strip .metric-cell{flex:1 1 0;min-width:0;padding:8px;border:var(--border-width-hairline) solid var(--color-rule);box-sizing:border-box}",

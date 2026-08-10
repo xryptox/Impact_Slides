@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Callable  # Callable used by typography surface resolvers
+from typing import Any, Callable
 
 from .diagnostics import DiagnosticEvent, event
 
@@ -106,16 +106,26 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "source_footer",
             }
             payload_allowed = {"blocks", "typography"}
-        elif layout == "data_table":
+        elif layout in {
+            "data_table",
+            "annex_table",
+            "grouped_annex_table",
+            "period_comparison",
+            "comparison_cards",
+        }:
             allowed = common | {
                 "section_id",
                 "title",
                 "content",
-                "takeaway",
                 "disclosure",
                 "source_footer",
             }
-            payload_allowed = {"table"}
+            if layout not in {"annex_table", "grouped_annex_table"}:
+                allowed.add("takeaway")
+            payload_allowed = {
+                "grouped_annex_table": {"tables"},
+                "period_comparison": {"table", "metric_strip"},
+            }.get(layout, {"table"})
         else:
             return True
         if set(slide) - allowed:
@@ -187,18 +197,25 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 allowed = common | {"section_id"}
                 # Legal requires section_id; other ordinary semantic roots stay.
                 protected = _SEMANTIC_COMMON_FIELDS - {"section_id"}
-            elif layout in ("narrative", "data_table"):
+            elif layout in {
+                "narrative",
+                "data_table",
+                "annex_table",
+                "grouped_annex_table",
+                "period_comparison",
+                "comparison_cards",
+            }:
                 allowed = common | {
                     "section_id",
                     "title",
                     "content",
-                    "takeaway",
                     "disclosure",
                     "source_footer",
                 }
+                if layout not in {"annex_table", "grouped_annex_table"}:
+                    allowed.add("takeaway")
                 protected = frozenset()
             else:
-                # Unknown/unimplemented layout: only strip truly global noise keys
                 allowed = common | {
                     "section_id",
                     "title",
@@ -268,13 +285,20 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
-            if isinstance(payload, dict) and layout == "data_table":
+            payload_fields = {
+                "data_table": {"table"},
+                "annex_table": {"table"},
+                "grouped_annex_table": {"tables"},
+                "period_comparison": {"table", "metric_strip"},
+                "comparison_cards": {"table"},
+            }
+            if isinstance(payload, dict) and layout in payload_fields:
                 _drop_unknown_object(
                     payload,
-                    allowed={"table"},
+                    allowed=payload_fields[layout],
                     path=f"/slides/{i}/payload",
                     events=events,
-                    role="data_table_payload",
+                    role=f"{layout}_payload",
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
@@ -338,44 +362,101 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
         if not isinstance(slide, dict):
             continue
         layout = slide.get("layout_type")
-        if layout not in ("narrative", "data_table"):
+        if layout not in {
+            "narrative",
+            "data_table",
+            "annex_table",
+            "grouped_annex_table",
+            "period_comparison",
+            "comparison_cards",
+        }:
             continue
 
-        def _content(s: dict) -> dict | None:
-            c = s.get("content")
-            return c if isinstance(c, dict) else None
-
-        def _takeaway(s: dict) -> dict | None:
-            t = s.get("takeaway")
-            return t if isinstance(t, dict) else None
-
-        def _payload(s: dict) -> dict | None:
-            p = s.get("payload")
-            return p if isinstance(p, dict) else None
-
-        def _table(s: dict) -> dict | None:
-            p = s.get("payload")
-            if not isinstance(p, dict):
-                return None
-            t = p.get("table")
-            return t if isinstance(t, dict) else None
-
-        surfaces_spec: list[tuple[str, str, str, int, int, Callable[[dict], dict | None]]] = [
-            ("content", "subtitle_font_size", "body_font_size|table_font_size", 22, 26, _content),
-            ("takeaway", "body_font_size", "subtitle_font_size|table_font_size", 22, 28, _takeaway),
-        ]
-        if layout == "narrative":
+        surfaces_spec: list[
+            tuple[str, str, str, int, int, dict[str, Any]]
+        ] = []
+        content = slide.get("content")
+        if isinstance(content, dict):
             surfaces_spec.append(
-                ("payload", "body_font_size", "subtitle_font_size|table_font_size", 22, 28, _payload)
+                (
+                    "content",
+                    "subtitle_font_size",
+                    "body_font_size|table_font_size",
+                    22,
+                    26,
+                    content,
+                )
             )
-        else:
+        takeaway = slide.get("takeaway")
+        if isinstance(takeaway, dict):
             surfaces_spec.append(
-                ("table", "table_font_size", "body_font_size|subtitle_font_size", 20, 24, _table)
+                (
+                    "takeaway",
+                    "body_font_size",
+                    "subtitle_font_size|table_font_size",
+                    22,
+                    28,
+                    takeaway,
+                )
             )
-        for owner, size_field, forbidden_csv, floor, ceiling, resolve in surfaces_spec:
-            surface = resolve(slide)
-            if surface is None:
-                continue
+        payload = slide.get("payload")
+        if isinstance(payload, dict):
+            if layout == "narrative":
+                surfaces_spec.append(
+                    (
+                        "payload",
+                        "body_font_size",
+                        "subtitle_font_size|table_font_size",
+                        22,
+                        28,
+                        payload,
+                    )
+                )
+            else:
+                tables = [payload.get("table")]
+                if layout == "grouped_annex_table" and isinstance(
+                    payload.get("tables"), list
+                ):
+                    tables = [
+                        peer.get("table")
+                        for peer in payload["tables"]
+                        if isinstance(peer, dict)
+                    ]
+                for j, table in enumerate(tables):
+                    if isinstance(table, dict):
+                        owner = (
+                            "table"
+                            if layout != "grouped_annex_table"
+                            else f"tables/{j}/table"
+                        )
+                        floor = (
+                            12
+                            if layout in {"annex_table", "grouped_annex_table"}
+                            else 20
+                        )
+                        surfaces_spec.append(
+                            (
+                                owner,
+                                "table_font_size",
+                                "body_font_size|subtitle_font_size",
+                                floor,
+                                24,
+                                table,
+                            )
+                        )
+                strip = payload.get("metric_strip")
+                if isinstance(strip, dict):
+                    surfaces_spec.append(
+                        (
+                            "metric_strip",
+                            "body_font_size",
+                            "subtitle_font_size|table_font_size",
+                            14,
+                            24,
+                            strip,
+                        )
+                    )
+        for owner, size_field, forbidden_csv, floor, ceiling, surface in surfaces_spec:
             has_typography = "typography" in surface
             typo = surface.get("typography")
             forbidden = set(forbidden_csv.split("|"))
@@ -405,8 +486,8 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             if malformed:
                 del surface["typography"]
                 path = (
-                    f"/slides/{i}/payload/table/typography"
-                    if owner == "table"
+                    f"/slides/{i}/payload/{owner}/typography"
+                    if owner in {"table", "metric_strip"} or owner.startswith("tables/")
                     else f"/slides/{i}/{owner}/typography"
                 )
                 events.append(
@@ -437,10 +518,14 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
     out = deepcopy(raw)
     seen_ids: set[str] = set()
     for i, slide in enumerate(out["slides"]):
-        if not isinstance(slide, dict) or slide.get("layout_type") not in (
+        if not isinstance(slide, dict) or slide.get("layout_type") not in {
             "narrative",
             "data_table",
-        ):
+            "annex_table",
+            "grouped_annex_table",
+            "period_comparison",
+            "comparison_cards",
+        }:
             continue
         if "disclosure" not in slide:
             continue
