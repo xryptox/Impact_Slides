@@ -230,6 +230,63 @@ def test_nonstrict_drops_unknown_divider_fields():
     assert "kicker" not in result.deck.slides[1].payload.model_dump()
 
 
+@pytest.mark.parametrize(
+    "slide_index,field,value",
+    [
+        (0, "title", "nope"),  # cover
+        (1, "takeaway", {"text": "nope"}),  # divider
+        (4, "source_footer", ["src-board-pack"]),  # legal
+        (4, "content", {"blocks": []}),
+        (5, "disclosure", {"sections": []}),
+    ],
+)
+def test_nonstrict_keeps_forbidden_semantic_fields(slide_index, field, value):
+    """D287/D180: non-strict must not silently delete forbidden semantic content."""
+    raw = _brand()
+    raw["slides"][slide_index][field] = value
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=False)
+    # And the repair pass alone must leave the field in place.
+    from impact_slides.renderer_v3.repairs import apply_allowlisted_repairs
+
+    repaired, _events = apply_allowlisted_repairs(raw)
+    assert field in repaired["slides"][slide_index]
+
+
+def test_publish_css_selectors_match_brand_markup(tmp_path: Path):
+    """Descendant/comma selectors must match painted parent/child classes."""
+    out = tmp_path / "out"
+    assert render_deck(FIXTURE, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    # Correct selector forms (spaces + commas) — mutation of compounds fails these.
+    assert ".cover .subtitle,.cover .period,.cover .date{" in html
+    assert ".section-divider .divider-meta{" in html
+    assert ".section-divider .divider-rule{" in html
+    assert ".legal-notice h1,.legal-notice .legal-continued{" in html
+    assert ".legal-notice .legal-body p{" in html
+    assert "white-space:pre-wrap" in html
+    assert ".legal-notice .legal-part{" in html
+    assert ".legal-overflow,.cover-overflow,.divider-overflow{" in html
+    # Markup classes the selectors target.
+    assert 'class="subtitle"' in html
+    assert "divider-meta" in html and "divider-rule" in html
+    assert "legal-body" in html and "legal-continued" in html
+
+
+def test_overflow_fallback_gets_visible_diagnosed_class():
+    """Each overflow alternative is a separate class matched by the CSS rule."""
+    from impact_slides.renderer_v3.publish import build_presentation_html
+
+    raw = _brand()
+    raw["sections"][0]["label"] = " ".join(["MMMMMMMMMM"] * 34)
+    deck = validate_handoff(raw, strict=True).deck
+    plan = plan_deck(deck, strict=False)
+    assert any(s.fallback for s in plan.surfaces)
+    html = build_presentation_html(deck, deck_plan=plan)
+    assert "divider-overflow" in html
+    assert ".legal-overflow,.cover-overflow,.divider-overflow{" in html
+
+
 def test_misplaced_opening_cover_stays_failed_not_moved():
     """D268: misplaced covers are not reordered; stay invalid."""
     raw = _minimal()
