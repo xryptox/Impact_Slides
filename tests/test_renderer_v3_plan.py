@@ -530,6 +530,17 @@ def test_hyphen_break_opportunity_in_wrap_lines():
     assert "".join(plines).replace(" ", "") == punct
 
 
+def test_paint_emits_soft_break_wbr_for_plan_punctuation():
+    """R178-029: paint offers the same soft breaks plan measures."""
+    from impact_slides.renderer_v3.publish import _soft_break_html
+
+    html = _soft_break_html("pre-trade,risk;alpha:beta.gamma end")
+    assert html.count("<wbr>") == 5
+    assert html == "pre-<wbr>trade,<wbr>risk;<wbr>alpha:<wbr>beta.<wbr>gamma end"
+    assert _soft_break_html("a, b") == "a, b"
+    assert _soft_break_html("a<b,c") == "a&lt;b,<wbr>c"
+
+
 def test_disclosure_paragraph_not_list_indented():
     """R178-030: paragraphs measure full width; summary/bullets use indent."""
     from impact_slides.renderer_v3.plan import (

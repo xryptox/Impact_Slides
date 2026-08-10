@@ -209,18 +209,18 @@ def _paint_slide_body(
         out.append(
             f'<div class="cover" {_plan_attrs(sp, events_by_surface)}>'  # one cover surface
         )
-        out.append(f"<h1{_style_font(title_px)}>{_escape(p.title)}</h1>")
+        out.append(f"<h1{_style_font(title_px)}>{_soft_break_html(p.title)}</h1>")
         if p.subtitle:
             out.append(
-                f'<p class="subtitle"{_style_font(sub_px)}>{_escape(p.subtitle)}</p>'
+                f'<p class="subtitle"{_style_font(sub_px)}>{_soft_break_html(p.subtitle)}</p>'
             )
         if p.period_label:
             out.append(
-                f'<p class="period"{_style_font(meta_px)}>{_escape(p.period_label)}</p>'
+                f'<p class="period"{_style_font(meta_px)}>{_soft_break_html(p.period_label)}</p>'
             )
         if p.date_label:
             out.append(
-                f'<p class="date"{_style_font(meta_px)}>{_escape(p.date_label)}</p>'
+                f'<p class="date"{_style_font(meta_px)}>{_soft_break_html(p.date_label)}</p>'
             )
         out.append("</div>")
         return out
@@ -228,14 +228,14 @@ def _paint_slide_body(
         title_sp = plans_by_id.get(f"slide-{sn}-title")
         title_px = title_sp.role_sizes.get("title") if title_sp else None
         out.append(
-            f'<h1 {_plan_attrs(title_sp, events_by_surface)}{_style_font(title_px)}>{_escape(slide.title)}</h1>'
+            f'<h1 {_plan_attrs(title_sp, events_by_surface)}{_style_font(title_px)}>{_soft_break_html(slide.title)}</h1>'
         )
         if slide.content is not None:
             sub_sp = plans_by_id.get(f"slide-{sn}-subtitle")
             sub_px = sub_sp.role_sizes.get("subtitle") if sub_sp else None
             out.append(
                 f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
-                f"{_escape(slide.content.subtitle)}</p>"
+                f"{_soft_break_html(slide.content.subtitle)}</p>"
             )
         for block in slide.payload.blocks:
             bid = block.block_id
@@ -268,7 +268,7 @@ def _paint_slide_body(
             )
             out.append(
                 f'<p class="takeaway-text"{_style_font(body_px)}>' 
-                f"{_escape(slide.takeaway.text)}</p>"
+                f"{_soft_break_html(slide.takeaway.text)}</p>"
             )
             out.append("</aside>")
         if slide.disclosure is not None:
@@ -283,7 +283,7 @@ def _paint_slide_body(
                     f'{_plan_attrs(dsp, events_by_surface)}>'
                 )
                 out.append(
-                    f"<summary{_style_font(px)}>{_escape(section.title)}</summary>"
+                    f"<summary{_style_font(px)}>{_soft_break_html(section.title)}</summary>"
                 )
                 in_list = False
                 for item in section.items:
@@ -294,9 +294,9 @@ def _paint_slide_body(
                         out.append("</ul>")
                         in_list = False
                     if item.kind == "bullet":
-                        out.append(f"<li>{_escape(item.text)}</li>")
+                        out.append(f"<li>{_soft_break_html(item.text)}</li>")
                     else:
-                        out.append(f"<p{_style_font(px)}>{_escape(item.text)}</p>")
+                        out.append(f"<p{_style_font(px)}>{_soft_break_html(item.text)}</p>")
                 if in_list:
                     out.append("</ul>")
                 out.append("</details>")
@@ -309,7 +309,7 @@ def _paint_slide_body(
             )
             out.append(
                 f'<footer class="source-footer" {_plan_attrs(fsp, events_by_surface)}'
-                f'{_style_font(px)}>Sources: {_escape(names)}</footer>'
+                f'{_style_font(px)}>Sources: {_soft_break_html(names)}</footer>'
             )
         return out
     out.append(f"<p>Unsupported layout in kernel paint: {_escape(lt)}</p>")
@@ -319,12 +319,29 @@ def _paint_slide_body(
 def _prose_html(prose: Any) -> str:
     chunks: list[str] = []
     for run in prose.runs:
-        text = _escape(run.text)
+        text = _soft_break_html(run.text)
         if run.emphasis == "strong":
             chunks.append(f"<strong>{text}</strong>")
         else:
             chunks.append(text)
     return "".join(chunks)
+
+
+# Must match plan._wrap_tokens soft break set (R178-029 freeze/paint parity).
+_SOFT_BREAK_AFTER = frozenset("-,:;.")
+
+
+def _soft_break_html(text: str) -> str:
+    """Escape text and insert <wbr> after plan soft-break punctuation."""
+    if not text:
+        return ""
+    parts: list[str] = []
+    n = len(text)
+    for i, ch in enumerate(text):
+        parts.append(html.escape(ch, quote=True))
+        if ch in _SOFT_BREAK_AFTER and i + 1 < n and not text[i + 1].isspace():
+            parts.append("<wbr>")
+    return "".join(parts)
 
 
 def _escape(text: str) -> str:

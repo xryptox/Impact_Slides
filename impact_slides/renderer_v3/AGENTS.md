@@ -26,7 +26,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Takeaway outer reservation includes label/pad/border/outer margin; text fitter uses the inner box only. Cover elements measure at their own frozen role sizes. Paragraph/list margins match paint per CSS block box. Planning uses calibrated Source Sans 3 metrics, diagnoses conservative unsupported-glyph fallback, and publication embeds the vendored font.
 - Strict aggregates all detectable errors into `RendererValidationError.events` (D120/D309/D310)
 - Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311); `repair_disclosure_sections` drops malformed/duplicate D222 sections (keep first)
-- `_wrap_lines` breaks at spaces and hyphens; disclosure units measure summary/list indent separately from full-width paragraphs
+- `_wrap_lines` breaks at spaces and after `-,:;.` when more content follows; paint inserts matching `<wbr>` via `_soft_break_html` (R178-029). Disclosure units measure summary/list indent separately from full-width paragraphs
 - Print media expands closed disclosures and resets viewport stage scale to fixed 1920×1080
 - Kernel compositions: `opening_cover`, `narrative`, `closing_cover` (D210/D251/D268/D270)
 - Envelope: `meta`, `sections`, `number_formats`, `evidence_registry`, `slides` (D211)
