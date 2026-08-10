@@ -151,6 +151,9 @@ class SurfacePlan:
     _preserve_newlines: bool = False
     # Frozen paint input for data_table (public to painters; set at seal).
     table_paint: Optional[dict[str, Any]] = None
+    # Frozen line-chart plan (public to Chart.js + SVG painters; set at seal).
+    _chart_spec: Optional[dict[str, Any]] = None
+    chart_paint: Optional[dict[str, Any]] = None
 
     def to_public(self) -> dict[str, Any]:
         sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
@@ -177,6 +180,8 @@ class SurfacePlan:
         }
         if self.display_identity_strategy is not None:
             row["display_identity_strategy"] = self.display_identity_strategy
+        if self.chart_paint is not None:
+            row["chart_type"] = self.chart_paint.get("chart_type")
         return row
 
 
@@ -468,7 +473,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             )
             continue
 
-        if lt not in ("narrative",) and lt not in KERNEL_TABLE_LAYOUTS:
+        if lt not in ("narrative", "single_chart") and lt not in KERNEL_TABLE_LAYOUTS:
             continue
 
         # Slot order: title chrome (fixed), subtitle, body/table, takeaway.
@@ -617,6 +622,59 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             for bp in body_plans:
                 out.append(bp)
                 adaptive_surfaces.append(bp)
+        elif lt == "single_chart":
+            # single_chart line tracer (D239/D302): one chart surface + frozen plan.
+            from .charts import freeze_line_chart
+
+            body_slots = 1
+            chart = slide.payload.primary_visual
+            # Reserve title/subtitle chrome already counted in `used`.
+            remain_h = DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM - used
+            # takeaway/disclosure/footer reserved later via adaptive allocation.
+            chart_spec = freeze_line_chart(
+                chart,
+                deck.number_formats,
+                box_w=CONTENT_W,
+                box_h=max(240, remain_h - 120),
+            )
+            text_items = _chart_text_items(chart_spec)
+            role_sizes = dict(chart_spec["role_sizes"])
+            # Pane title band is fixed chrome when authored (D9/D42).
+            if chart.heading:
+                role_sizes["pane_title"] = 40
+                if chart.subtitle:
+                    role_sizes["pane_subtitle"] = 22
+            out.append(
+                SurfacePlan(
+                    surface_id=chart.surface_id,
+                    role="line_chart",
+                    slide_number=sn,
+                    slide_index=slide_index,
+                    layout_type=lt,
+                    slot_order=10,
+                    design_stage_region=region,
+                    role_sizes=role_sizes,
+                    display_identity_strategy=chart_spec["identity_strategy"],
+                    expected_placement_classes=sorted(
+                        {
+                            p["class"]
+                            for p in chart_spec["placements"]
+                            if p.get("class") and p["class"] != "suppressed"
+                        }
+                    ),
+                    _text_items=text_items,
+                    _box_w=CONTENT_W,
+                    _box_h=max(240, remain_h - 120),
+                    _fit_role=None,  # sizes frozen inside chart planner
+                    _mode=(
+                        chart.typography.mode
+                        if chart.typography is not None
+                        else "adaptive"
+                    ),
+                    _margin_boxes=0,
+                    _chart_spec=chart_spec,
+                )
+            )
         else:
             # data_table / annex_table / period_comparison table surface(s).
             body_slots, body_plans = _collect_single_table_body(
@@ -1280,6 +1338,11 @@ def _seal_digests(sp: SurfacePlan) -> None:
     # Freeze table paint payload so painters never reformat (D69/D70).
     if sp._table_spec is not None:
         sp.table_paint = dict(sp._table_spec)
+    if sp._chart_spec is not None:
+        sp.chart_paint = dict(sp._chart_spec)
+        # Keep role_sizes aligned with sealed chart plan.
+        for k, v in sp._chart_spec.get("role_sizes", {}).items():
+            sp.role_sizes.setdefault(k, v)
 
 
 def _sha(text: str) -> str:
@@ -1585,6 +1648,23 @@ def _collect_comparison_cards_body(
 # ---------------------------------------------------------------------------
 # data_table measure (D24/D25/D44/D104)
 # ---------------------------------------------------------------------------
+
+
+def _chart_text_items(chart_spec: dict[str, Any]) -> list[tuple[str, bool]]:
+    """Digest inputs for line-chart surfaces (labels + formatted values)."""
+    items: list[tuple[str, bool]] = []
+    if chart_spec.get("heading"):
+        items.append((chart_spec["heading"], True))
+    if chart_spec.get("subtitle"):
+        items.append((chart_spec["subtitle"], False))
+    for cat in chart_spec.get("categories") or []:
+        items.append((cat["label"], False))
+    for s in chart_spec.get("series") or []:
+        items.append((s["name"], False))
+    for p in chart_spec.get("points") or []:
+        if p.get("visible"):
+            items.append((p["visible"], False))
+    return items
 
 
 def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:

@@ -418,9 +418,7 @@ def _loc_to_path(loc: tuple[Any, ...]) -> str:
             s = str(p)
             if s in KERNEL_LAYOUTS or s in _LAYOUT_SET:
                 continue
-            if s.startswith("function-") or s in {
-                "tagged-union[OpeningCoverSlide,ClosingCoverSlide,NarrativeSlide,DataTableSlide,AnnexTableSlide,GroupedAnnexTableSlide,PeriodComparisonSlide,ComparisonCardsSlide]",
-            }:
+            if s.startswith("function-") or s.startswith("tagged-union["):
                 continue
             parts.append(s)
     return "/" + "/".join(parts) if parts else "/"

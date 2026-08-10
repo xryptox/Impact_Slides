@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from .charts import chart_boot_script, paint_line_chart_html
 from .diagnostics import (
     DiagnosticEvent,
     RendererPublicationError,
@@ -174,6 +175,21 @@ def build_presentation_html(
             ".comparison-card .fact{margin:0 0 8px}",
             ".comparison-card .fact-label{margin:0 0 2px}",
             ".comparison-card .fact-value{margin:0;font-variant-numeric:tabular-nums lining-nums}",
+            # line chart (D5/D6/D63/D106/D247)
+            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
+            ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
+            ".chart-pane-title{display:flex;flex-direction:column;gap:4px;padding:10px 16px;margin:0 0 var(--space-sm)}",
+            ".chart-pane-title>span:first-child{font-size:40px;font-weight:var(--font-weight-title);color:var(--color-band-ink)}",
+            ".chart-pane-subtitle{font-size:22px;font-weight:var(--font-weight-emphasis);color:var(--color-band-ink)}",
+            ".chart-legend{list-style:none;display:flex;flex-wrap:wrap;gap:16px;margin:0 0 var(--space-sm);padding:0}",
+            ".legend-item{display:flex;align-items:center;gap:8px;font-size:var(--text-sm)}",
+            ".legend-swatch{display:inline-block;width:16px;height:4px}",
+            ".chart-semantic-table.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+            ".chart-semantic-table{width:100%;border-collapse:collapse;margin:0 0 var(--space-sm)}",
+            ".chart-semantic-table th,.chart-semantic-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule)}",
+            ".chart-semantic-table thead th{background:var(--color-band);color:var(--color-band-ink)}",
+            ".chart-semantic-table td.num{text-align:right;font-variant-numeric:tabular-nums lining-nums}",
+            ".chart-facts{font-size:var(--text-xs)}",
             "@media print{"
             "details:not([open])>summary~*{display:block}"
             "html,body{width:auto;height:auto;overflow:visible}"
@@ -181,6 +197,8 @@ def build_presentation_html(
             ".slide{width:1920px!important;height:1080px!important;transform:none!important;margin:0!important;page-break-after:always}"
             ".comparison-cards{display:none}"
             ".sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}"
+            ".chart-plot canvas{display:block}"
+            ".chart-plot noscript{display:none}"
             "}",
             "</style>",
             "</head>",
@@ -188,6 +206,7 @@ def build_presentation_html(
             '<main class="deck-stage">',
         ]
     )
+    has_chart = any(s.layout_type == "single_chart" for s in deck.slides)
     for slide in deck.slides:
         sid = f"slide-{slide.slide_number}"
         slide_diag = _diag_attrs(events_by_surface.get(sid, []))
@@ -203,20 +222,41 @@ def build_presentation_html(
                 events_by_surface,
                 deck.evidence_registry,
                 sections=deck.sections,
+                svg_only=svg_only,
             )
         )
         notes = getattr(slide, "speaker_notes", None)
         if notes:
             parts.append(f'<aside class="notes">{_escape(notes)}</aside>')
         parts.append("</section>")
+    parts.append("</main>")
+    if has_chart and not svg_only:
+        # Self-contained Chart.js from vendored v2 asset (immutable copy path).
+        chart_js = _embedded_chart_js()
+        if chart_js:
+            parts.append(f"<script>{chart_js}</script>")
+            parts.append(chart_boot_script())
     parts.extend([
-        "</main>",
         "<script>(()=>{const s=document.querySelector('.deck-stage'),a=[...s.children];const fit=()=>{const z=Math.min(innerWidth/1920,innerHeight/1080);s.style.width=`${1920*z}px`;a.forEach(x=>{x.style.transform=`scale(${z})`;x.style.marginBottom=`${1080*(z-1)}px`})};addEventListener('resize',fit);fit()})()</script>",
         "</body>",
         "</html>",
         "",
     ])
     return "\n".join(parts)
+
+
+def _embedded_chart_js() -> str:
+    """Load vendored Chart.js UMD; empty string if unavailable."""
+    # Prefer v3-local copy; fall back to immutable v2 vendor path (not imported).
+    here = Path(__file__).resolve().parent
+    candidates = [
+        here / "assets" / "libs" / "chart.umd.min.js",
+        here.parent / "renderer_v2" / "assets" / "libs" / "chart.umd.min.js",
+    ]
+    for path in candidates:
+        if path.is_file():
+            return path.read_text(encoding="utf-8")
+    return ""
 
 
 def _events_by_surface(
@@ -273,6 +313,8 @@ def _paint_slide_body(
     events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
     evidence_registry: dict[str, Any] | None = None,
     sections: list[Any] | None = None,
+    *,
+    svg_only: bool = False,
 ) -> list[str]:
     events_by_surface = events_by_surface or {}
     evidence_registry = evidence_registry or {}
@@ -373,6 +415,7 @@ def _paint_slide_body(
         "grouped_annex_table",
         "period_comparison",
         "comparison_cards",
+        "single_chart",
     ):
         title_sp = plans_by_id.get(f"slide-{sn}-title")
         title_px = title_sp.role_sizes.get("title") if title_sp else None
@@ -386,7 +429,13 @@ def _paint_slide_body(
                 f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
                 f"{_soft_break_html(slide.content.subtitle)}</p>"
             )
-        if lt == "narrative":
+        if lt == "single_chart":
+            out.extend(
+                _paint_single_chart(
+                    slide, plans_by_id, events_by_surface, svg_only=svg_only
+                )
+            )
+        elif lt == "narrative":
             out.extend(_paint_narrative_blocks(slide, plans_by_id, events_by_surface))
         elif lt == "grouped_annex_table":
             out.extend(_paint_grouped_annex(slide, plans_by_id, events_by_surface))
@@ -490,6 +539,24 @@ def _paint_narrative_blocks(
                 out.append(f"<li>{_prose_html(item)}</li>")
             out.append("</ul>")
     return out
+
+
+def _paint_single_chart(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    *,
+    svg_only: bool = False,
+) -> list[str]:
+    """Paint single_chart line tracer from frozen plan (D69/D248/D302)."""
+    chart = slide.payload.primary_visual
+    sp = plans_by_id.get(chart.surface_id)
+    if sp is None or not getattr(sp, "chart_paint", None):
+        raise RuntimeError(
+            f"missing frozen chart_paint for surface {chart.surface_id!r}"
+        )
+    attrs = _plan_attrs(sp, events_by_surface)
+    return paint_line_chart_html(sp.chart_paint, plan_attrs=attrs, svg_only=svg_only)
 
 
 def _paint_data_table(
@@ -998,8 +1065,9 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
             "grouped_annex_table",
             "period_comparison",
             "comparison_cards",
+            "single_chart",
         ):
-            # Composition-slot order: title, subtitle, body/table, takeaway, disclosure.
+            # Composition-slot order: title, subtitle, body/table/chart, takeaway, disclosure.
             tid = f"slide-{slide.slide_number}-title"
             if tid in planned:
                 surface_ids.append(tid)
@@ -1014,6 +1082,8 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                 surface_ids.extend(
                     peer.table.surface_id for peer in slide.payload.tables
                 )
+            elif slide.layout_type == "single_chart":
+                surface_ids.append(slide.payload.primary_visual.surface_id)
             else:
                 strip = getattr(slide.payload, "metric_strip", None)
                 if strip is not None:
@@ -1043,17 +1113,21 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
 
 
 def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
-    """Pre-publication readiness facts only (D312); no browser measurement."""
+    """Pre-publication readiness facts only (D109/D312); no browser measurement."""
     rows: list[dict[str, Any]] = []
     for slide in deck.slides:
+        is_chart = slide.layout_type == "single_chart"
         rows.append(
             {
                 "slide_number": slide.slide_number,
                 "layout_type": slide.layout_type,
                 "frozen_plan_attached": True,  # kernel plan entries attached in run_meta.plans
                 "required_payload_present": True,
-                "semantic_table_present": False,  # no chart surfaces in kernel compositions
+                "semantic_table_present": bool(is_chart),
                 "stable_ids_resolved": True,
+                "chart_painters": (
+                    ["chartjs", "svg"] if is_chart else []
+                ),
                 "readiness_contract_version": 1,
             }
         )

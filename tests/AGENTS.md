@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison.
+Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart.
 
 ## Ownership
 
@@ -35,6 +35,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 - Renderer v3 data_table (#179): `test_renderer_v3_data_table.py` + fixture `renderer_v3/minimal_data_table.json` (semantic values + format registry, rectangular table identity, navy headers/a11y associations, one common fitted size, strict/non-strict overflow without data loss)
 - Renderer v3 brand/divider/legal (#191): `test_renderer_v3_brand_legal.py` + fixture `renderer_v3/brand_divider_legal.json` (cover/divider placement + registry labels, multipart legal sequence + exact paragraphs, forbidden fields, mutation traps)
 - Renderer v3 annex/comparison tables (#180): `test_renderer_v3_annex_comparison.py` + fixture `renderer_v3/annex_and_comparison_tables.json` (`annex_table`/`grouped_annex_table`/`period_comparison`/`comparison_cards`; grouped headers + disclosure; fixed period roles + metric strip; peer cards; non-strict complete-data fallbacks; pre-validation table cell/group repair; cards a11y/print contract; peer-heading fit threshold; sync floor bound; mutation traps)
+- Renderer v3 line chart (#182): `test_renderer_v3_line_chart.py` + fixture `renderer_v3/minimal_line_chart.json` (typed single_chart line envelope, null gaps, frozen plan, Chart.js + noscript SVG parity, one semantic table, identity/point labels, no gridlines, readiness payloads, mutation traps)
 - Amex #158 handoff + multi_panel pane titles: `test_amex_s28_handoff_contract.py` + `test_multi_panel_pane_headings.py` + fixtures `amex_s28_v10_broken.json` / `amex_s28_corrected.json` (mutation drops slide-28 `top_total` pseudo-titles; renderer multi_panel tiles share #147 heading/subtitle chrome; SVG honors `stack_total_labels`)
 - #151 driver_card + boxed bar labels: `test_driver_card.py` + `test_boxed_labels.py` (schema 1/6/7 rows, malformed direction/tone, overflow strict/non-strict, no-valid-row hero fallback, order/a11y; boxed category mismatch, in-bar/outside+connector, Chart.js+SVG, collision independence). Slide 18 target lives in `amex_v10_44_slide_handoff.json`
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
@@ -43,7 +44,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 ## Verification
 
 - `python -m pytest -q`
-- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py`
+- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py`
 
 ## Child DOX Index
 

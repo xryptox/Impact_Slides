@@ -1,0 +1,76 @@
+{
+  "meta": { "handoff_schema_version": 1 },
+  "sections": [{ "section_id": "trends", "label": "Trends" }],
+  "number_formats": {
+    "pct_1": {
+      "unit": "percent",
+      "value_decimals": 1,
+      "negative_style": "minus"
+    }
+  },
+  "evidence_registry": {
+    "src-board-pack": { "source_name": "Board pack Q4" }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": { "title": "Impact Review" },
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "trends",
+      "title": "Volume trend",
+      "content": { "subtitle": "Reported currency" },
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "vol-trend",
+          "chart_type": "line",
+          "heading": "Billed business",
+          "subtitle": "YoY %",
+          "chart_data": {
+            "categories": [
+              { "category_id": "q1", "label": "Q1'24" },
+              { "category_id": "q2", "label": "Q2'24" },
+              { "category_id": "q3", "label": "Q3'24" },
+              { "category_id": "q4", "label": "Q4'24" }
+            ],
+            "series": [
+              {
+                "series_id": "us",
+                "name": "US",
+                "values": ["3.2", "4.1", null, "5.0"]
+              },
+              {
+                "series_id": "intl",
+                "name": "Intl",
+                "values": ["1.5", "2.0", "2.4", "2.8"]
+              }
+            ]
+          },
+          "category_axis": { "visible": true, "title": "Quarter" },
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "pct_1",
+              "domain": { "kind": "generated", "target_ticks": 5 },
+              "title": "YoY %"
+            }
+          },
+          "display": { "ordinary_values": "show", "series_identity": "auto" }
+        }
+      },
+      "takeaway": { "text": "US leads; Q3 gap is real missing data." },
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": { "title": "Discussion" }
+    }
+  ]
+}

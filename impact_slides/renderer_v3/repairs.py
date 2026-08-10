@@ -209,6 +209,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "grouped_annex_table",
                 "period_comparison",
                 "comparison_cards",
+                "single_chart",
             }:
                 allowed = common | {
                     "section_id",
@@ -601,6 +602,7 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             "grouped_annex_table",
             "period_comparison",
             "comparison_cards",
+            "single_chart",
         }:
             continue
 
@@ -757,6 +759,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
             "grouped_annex_table",
             "period_comparison",
             "comparison_cards",
+            "single_chart",
         }:
             continue
         if "disclosure" not in slide:
