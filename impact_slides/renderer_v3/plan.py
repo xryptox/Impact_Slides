@@ -38,8 +38,14 @@ TAKEAWAY_FLOOR: Final = 22
 TAKEAWAY_CEIL: Final = 28
 
 LINE_HEIGHT: Final = 1.4
-# Must match publish.py narrative CSS box model (R178-003).
-BLOCK_MARGIN_Y: Final = 12  # p/ul margin-bottom in px
+# Must match publish.py / boardroom_amex theme box model.
+BLOCK_MARGIN_Y: Final = 12  # p/ul margin-bottom (== --space-sm)
+TITLE_MARGIN_Y: Final = 12  # h1 margin-bottom (== --space-sm)
+# Takeaway chrome outside the text-fit box (label + pad + border + outer margin).
+TAKEAWAY_PAD_Y: Final = 24  # --space-sm top+bottom
+TAKEAWAY_BORDER_Y: Final = 2  # hairline top+bottom
+TAKEAWAY_OUTER_MT: Final = 20  # --space-md
+TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
 # Conservative average glyph advance as fraction of em (D23; no vendored TTF yet).
 # ponytail: synthetic metrics until fonts ship; swap for measured IBM Plex/Source Sans.
 AVG_ADVANCE: Final = 0.58
@@ -75,6 +81,12 @@ class SurfacePlan:
     _explicit_size: Optional[int] = None
     _overflow: bool = False
     _malformed_explicit: bool = False
+    # Cover multi-role items: (text, role_key) measured at role_sizes[role_key].
+    _cover_items: list[tuple[str, str]] = field(default_factory=list)
+    # CSS block boxes that each contribute trailing margin (p/ul/h1).
+    _margin_boxes: int = 1
+    # Extra chrome height outside the text-fit box (takeaway panel).
+    _chrome_h: int = 0
 
     def to_public(self) -> dict[str, Any]:
         sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
@@ -204,13 +216,13 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
         if lt in ("opening_cover", "closing_cover"):
             region += 1
             p = slide.payload
-            texts: list[tuple[str, bool]] = [(p.title, True)]
+            cover_items: list[tuple[str, str]] = [(p.title, "title")]
             if p.subtitle:
-                texts.append((p.subtitle, False))
+                cover_items.append((p.subtitle, "subtitle"))
             if p.period_label:
-                texts.append((p.period_label, False))
+                cover_items.append((p.period_label, "meta"))
             if p.date_label:
-                texts.append((p.date_label, False))
+                cover_items.append((p.date_label, "meta"))
             # Covers: fixed display chrome (D13/D223) — no adaptive growth.
             out.append(
                 SurfacePlan(
@@ -225,11 +237,13 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                         "subtitle": COVER_META_PX,
                         "meta": COVER_META_PX,
                     },
-                    _text_items=texts,
+                    _cover_items=cover_items,
+                    _text_items=[(t, rk == "title") for t, rk in cover_items],
                     _box_w=CONTENT_W,
                     _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
                     _fit_role=None,
                     _mode="fixed",
+                    _margin_boxes=len(cover_items),
                 )
             )
             continue
@@ -239,7 +253,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
 
         # Slot order: title chrome (fixed), subtitle, body blocks, takeaway.
         region += 1
-        title_h = _line_box(TITLE_PX) + 12
+        title_h = _line_box(TITLE_PX) + TITLE_MARGIN_Y
         used = title_h
 
         # Title is fixed chrome — recorded so painters share one plan.
@@ -257,6 +271,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 _box_h=title_h,
                 _fit_role=None,
                 _mode="fixed",
+                _margin_boxes=1,
             )
         )
 
@@ -265,7 +280,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             typo = slide.content.typography
             mode, sync, explicit = _typo_fields(typo, "subtitle_font_size")
             # Reserve max possible subtitle block so body/takeaway never overlap (D171).
-            subtitle_budget = _line_box(SUBTITLE_CEIL) * 3 + 16
+            subtitle_budget = _line_box(SUBTITLE_CEIL) * 3 + BLOCK_MARGIN_Y
             out.append(
                 SurfacePlan(
                     surface_id=f"slide-{sn}-subtitle",
@@ -283,6 +298,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _mode=mode,
                     _sync_group=sync,
                     _explicit_size=explicit,
+                    _margin_boxes=1,
                 )
             )
             used += subtitle_budget
@@ -293,8 +309,17 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
         if slide.takeaway is not None:
             typo = slide.takeaway.typography
             mode, sync, explicit = _typo_fields(typo, "body_font_size")
-            # Reserve at ceiling so grown text cannot overlap body (D172/D288).
-            takeaway_budget = _line_box(TAKEAWAY_CEIL) * 4 + 48  # label + pad + border
+            # Outer reservation includes chrome; fitter sees only text box (D172).
+            chrome = (
+                _line_box(TAKEAWAY_LABEL_PX)
+                + TAKEAWAY_LABEL_MB
+                + TAKEAWAY_PAD_Y
+                + TAKEAWAY_BORDER_Y
+                + TAKEAWAY_OUTER_MT
+                + BLOCK_MARGIN_Y  # takeaway-text <p> trailing margin
+            )
+            text_h = _line_box(TAKEAWAY_CEIL) * 4
+            takeaway_outer = text_h + chrome
             takeaway_plan = SurfacePlan(
                 surface_id=f"slide-{sn}-takeaway",
                 role="takeaway",
@@ -308,14 +333,16 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 },
                 _text_items=[(slide.takeaway.text, False)],
                 _box_w=CONTENT_W,
-                _box_h=takeaway_budget,
+                _box_h=text_h,
                 _fit_role="body",
                 _typo=typo,
                 _mode=mode,
                 _sync_group=sync,
                 _explicit_size=explicit,
+                _margin_boxes=0,  # text p margin already in chrome
+                _chrome_h=chrome,
             )
-            used += takeaway_budget
+            used += takeaway_outer
 
         body_h = max(80, DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM - used)
         blocks = list(slide.payload.blocks)
@@ -328,6 +355,11 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             items = _block_text_items(block)
             # Deck-unique surface id: block_id is only slide-local (D115/D225).
             surface_id = f"slide-{sn}-block-{block.block_id}"
+            # paragraphs: margin after every <p>; bullet_list: margin after the <ul>.
+            if block.type == "paragraphs":
+                margin_boxes = max(1, len(block.paragraphs))
+            else:
+                margin_boxes = 1
             out.append(
                 SurfacePlan(
                     surface_id=surface_id,
@@ -345,6 +377,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _mode=mode,
                     _sync_group=sync,
                     _explicit_size=explicit,
+                    _margin_boxes=margin_boxes,
                 )
             )
 
@@ -380,9 +413,15 @@ def _typo_fields(
 def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
     fit = sp._fit_role
     if fit is None:
-        # Fixed chrome — still check it fits at its fixed size.
+        # Fixed chrome — measure each cover role at its own frozen size (R178-005).
+        if sp._cover_items:
+            if not _cover_fits(sp):
+                sp._overflow = True
+            return
         px = next(iter(sp.role_sizes.values()))
-        if not _text_fits(sp._text_items, px, sp._box_w, sp._box_h):
+        if not _text_fits(
+            sp._text_items, px, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes
+        ):
             sp._overflow = True
         return
 
@@ -419,7 +458,9 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
     if sp._mode == "fixed":
         size = sp._explicit_size if sp._explicit_size is not None else floor
         sp.role_sizes[fit] = size
-        if not _text_fits(sp._text_items, size, sp._box_w, sp._box_h):
+        if not _text_fits(
+            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes
+        ):
             sp._overflow = True
         return
 
@@ -428,16 +469,23 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         # Pinned role — no growth (D218); still must fit.
         size = sp._explicit_size
         sp.role_sizes[fit] = size
-        if not _text_fits(sp._text_items, size, sp._box_w, sp._box_h):
-            # Try floor only if pin fails? Spec: explicit that does not fit →
-            # normal strict/non-strict (D27). Keep pin; mark overflow.
+        if not _text_fits(
+            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes
+        ):
+            # Spec: explicit that does not fit → normal strict/non-strict (D27).
             sp._overflow = True
         return
 
     chosen = floor
     wrapped = False
     for size in range(ceil, floor - 1, -1):
-        ok, did_wrap = _text_fits_detail(sp._text_items, size, sp._box_w, sp._box_h)
+        ok, did_wrap = _text_fits_detail(
+            sp._text_items,
+            size,
+            sp._box_w,
+            sp._box_h,
+            margin_boxes=sp._margin_boxes,
+        )
         if ok:
             chosen = size
             wrapped = did_wrap
@@ -469,53 +517,65 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
 
 
 def _text_fits(
-    items: list[tuple[str, bool]], px: int, box_w: int, box_h: int
+    items: list[tuple[str, bool]],
+    px: int,
+    box_w: int,
+    box_h: int,
+    *,
+    margin_boxes: int = 1,
 ) -> bool:
-    ok, _ = _text_fits_detail(items, px, box_w, box_h)
+    ok, _ = _text_fits_detail(
+        items, px, box_w, box_h, margin_boxes=margin_boxes
+    )
     return ok
 
 
 def _text_fits_detail(
-    items: list[tuple[str, bool]], px: int, box_w: int, box_h: int
+    items: list[tuple[str, bool]],
+    px: int,
+    box_w: int,
+    box_h: int,
+    *,
+    margin_boxes: int = 1,
 ) -> tuple[bool, bool]:
     """Return (fits, wrapped). Never truncates or drops text (D59)."""
     if box_w <= 0 or box_h <= 0:
         return False, False
-    # Join runs into logical lines (one item-group per paragraph/bullet already
-    # flattened into sequential runs; treat each top-level caller's items as
-    # one or more paragraphs separated by empty marker — we wrap the whole
-    # concatenated text per call site which already splits by block item).
-    # For multi-item lists, each tuple-run stream may include multiple bullets
-    # concatenated; split on a sentinel is unnecessary — callers pass one
-    # prose unit OR we measure total height of wrapped units.
-    # Simpler: wrap each contiguous text chunk (joined runs) separately and sum.
-    # Items are runs of one prose unit when from _prose_items; blocks pass all
-    # runs of all paragraphs/items — separate units by re-wrapping each
-    # paragraph/bullet as independent height addends via blank-run? We pass
-    # flat runs. Reconstruct units by measuring joined full text with
-    # paragraph breaks inserted by callers as "\n" in text? Our collectors
-    # don't insert breaks. Measure each run-joined prose as one unit: for
-    # blocks we need per-paragraph. Fix: _block_text_items should separate.
-    # Using total joined text is conservative (slightly taller if breaks lost).
     units = _split_units(items)
     line_h = _line_box(px)
     total_lines = 0
     wrapped = False
     width_overflow = False
     for unit_items in units:
-        text = "".join(t for t, _ in unit_items)
-        if not text:
+        text_u = "".join(t for t, _ in unit_items)
+        if not text_u:
             continue
         lines, wo = _wrap_lines(unit_items, px, box_w)
         width_overflow = width_overflow or wo
         total_lines += max(1, len(lines))
         if len(lines) > 1:
             wrapped = True
-    # Include the same block margin paint applies between units (publish CSS).
-    unit_count = max(1, sum(1 for u in units if any(t for t, _ in u)))
-    need_h = total_lines * line_h + max(0, unit_count - 1) * BLOCK_MARGIN_Y
+    # Paint applies margin-bottom after every CSS block box (p or ul).
+    # margin_boxes is the count of those boxes for this surface (R178-002).
+    boxes = max(0, margin_boxes)
+    need_h = total_lines * line_h + boxes * BLOCK_MARGIN_Y
     fits = (need_h <= box_h) and not width_overflow
     return fits, wrapped
+
+
+def _cover_fits(sp: SurfacePlan) -> bool:
+    """Measure each cover element at its own frozen role size (R178-005)."""
+    box_w = sp._box_w
+    box_h = sp._box_h
+    need_h = 0
+    for text_c, role_key in sp._cover_items:
+        px = sp.role_sizes[role_key]
+        strong = role_key == "title"
+        lines, wo = _wrap_lines([(text_c, strong)], px, box_w)
+        if wo:
+            return False
+        need_h += max(1, len(lines)) * _line_box(px) + BLOCK_MARGIN_Y
+    return need_h <= box_h
 
 
 def _split_units(
@@ -615,7 +675,14 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
         upper = max(independent)
         for size in range(upper, floor - 1, -1):
             if all(
-                _text_fits(m._text_items, size, m._box_w, m._box_h) for m in members
+                _text_fits(
+                    m._text_items,
+                    size,
+                    m._box_w,
+                    m._box_h,
+                    margin_boxes=m._margin_boxes,
+                )
+                for m in members
             ):
                 target = size
                 break

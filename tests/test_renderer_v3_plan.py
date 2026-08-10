@@ -292,3 +292,95 @@ def test_mutation_floor_change_breaks_grow_only_contract():
     plan = plan_deck(deck, strict=True)
     body = plan.by_surface_id()["slide-2-block-lead"].role_sizes["body"]
     assert body >= plan_mod.BODY_FLOOR
+
+def test_takeaway_outer_reservation_excludes_chrome_from_fit_box():
+    """R178-001: outer reservation includes chrome; fitter box is text-only."""
+    from impact_slides.renderer_v3.plan import (
+        BLOCK_MARGIN_Y,
+        TAKEAWAY_BORDER_Y,
+        TAKEAWAY_LABEL_MB,
+        TAKEAWAY_LABEL_PX,
+        TAKEAWAY_OUTER_MT,
+        TAKEAWAY_PAD_Y,
+        _line_box,
+    )
+
+    deck = validate_handoff(_minimal(), strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    take = plan.by_surface_id()["slide-2-takeaway"]
+    chrome = (
+        _line_box(TAKEAWAY_LABEL_PX)
+        + TAKEAWAY_LABEL_MB
+        + TAKEAWAY_PAD_Y
+        + TAKEAWAY_BORDER_Y
+        + TAKEAWAY_OUTER_MT
+        + BLOCK_MARGIN_Y
+    )
+    assert take._chrome_h == chrome
+    assert take._box_h == _line_box(TAKEAWAY_CEIL) * 4
+    # Mutation: if chrome were folded into the fit box, _box_h would be larger.
+    assert take._box_h + take._chrome_h > take._box_h
+
+
+def test_paragraph_margin_boxes_match_paint_per_element_model():
+    """R178-002: multi-paragraph blocks bill one margin per <p>, lists one per <ul>."""
+    raw = _minimal()
+    # Two paragraphs in the lead block.
+    raw["slides"][1]["payload"]["blocks"][0] = {
+        "type": "paragraphs",
+        "block_id": "lead",
+        "paragraphs": [
+            {"runs": [{"text": "First paragraph."}]},
+            {"runs": [{"text": "Second paragraph."}]},
+        ],
+    }
+    deck = validate_handoff(raw, strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    lead = plan.by_surface_id()["slide-2-block-lead"]
+    bullets = plan.by_surface_id()["slide-2-block-bullets"]
+    assert lead._margin_boxes == 2
+    assert bullets._margin_boxes == 1  # one <ul>
+
+
+def test_html_surface_diagnostics_project_from_events(tmp_path: Path):
+    """R178-004: HTML data-diagnostic-* mirrors run_meta surface events."""
+    raw = _minimal()
+    # Force non-strict overflow on takeaway via unbreakable token.
+    raw["slides"][1]["takeaway"]["text"] = "X" * 5000
+    handoff = _write(tmp_path, raw)
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=False)
+    assert result["status"] == "degraded"
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    overflow_ids = {
+        e["surface_id"]
+        for e in meta["events"]
+        if e.get("code") == "plan.unresolved_overflow" and e.get("surface_id")
+    }
+    assert overflow_ids
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    for sid in overflow_ids:
+        # surface attrs must list the overflow code with non-zero count
+        assert f'data-surface-id="{sid}"' in html
+        # Find the attribute cluster for this surface.
+        idx = html.index(f'data-surface-id="{sid}"')
+        chunk = html[idx : idx + 400]
+        assert "plan.unresolved_overflow" in chunk
+        assert 'data-diagnostic-count="0"' not in chunk.split(">")[0]
+
+
+def test_cover_measures_each_role_at_its_frozen_size():
+    """R178-005: long meta labels must not be measured at the 72px title size."""
+    raw = _minimal()
+    # Long but 22px-safe meta; would fail if measured at 72px title advance.
+    long_meta = " ".join(["Quarter"] * 40)
+    raw["slides"][0]["payload"]["period_label"] = long_meta
+    raw["slides"][0]["payload"]["date_label"] = long_meta
+    deck = validate_handoff(raw, strict=True).deck
+    plan = plan_deck(deck, strict=True)  # must not raise
+    cover = plan.by_surface_id()["slide-1-cover"]
+    assert cover._cover_items
+    assert cover.role_sizes["title"] == 72
+    assert cover.role_sizes["meta"] == 22
+    assert not cover._overflow
+

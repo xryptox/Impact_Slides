@@ -59,9 +59,11 @@ def build_presentation_html(
     debug: bool = False,
     svg_only: bool = False,
     deck_plan: Any = None,
+    events: list[DiagnosticEvent] | None = None,
 ) -> str:
     """Minimal deterministic HTML shell for kernel compositions (paint later)."""
     plans_by_id = deck_plan.by_surface_id() if deck_plan is not None else {}
+    events_by_surface = _events_by_surface(events or [])
     parts: list[str] = [
         "<!DOCTYPE html>",
         '<html lang="en">',
@@ -98,12 +100,13 @@ def build_presentation_html(
     )
     for slide in deck.slides:
         sid = f"slide-{slide.slide_number}"
+        slide_diag = _diag_attrs(events_by_surface.get(sid, []))
         parts.append(
             f'<section class="slide" id="{sid}" data-layout="{slide.layout_type}" '
             f'data-slide-number="{slide.slide_number}" '
-            f'data-surface-id="{sid}" data-diagnostic-count="0">'
+            f'data-surface-id="{sid}" {slide_diag}>'
         )
-        parts.extend(_paint_slide_body(slide, plans_by_id))
+        parts.extend(_paint_slide_body(slide, plans_by_id, events_by_surface))
         notes = getattr(slide, "speaker_notes", None)
         if notes:
             parts.append(f'<aside class="notes">{_escape(notes)}</aside>')
@@ -112,18 +115,44 @@ def build_presentation_html(
     return "\n".join(parts)
 
 
-def _plan_attrs(sp: Any | None) -> str:
+def _events_by_surface(
+    events: list[DiagnosticEvent],
+) -> dict[str, list[DiagnosticEvent]]:
+    """Project plan/paint events onto surfaces by DiagnosticEvent.surface_id."""
+    out: dict[str, list[DiagnosticEvent]] = {}
+    for e in events:
+        sid = e.surface_id
+        if not sid:
+            continue
+        out.setdefault(sid, []).append(e)
+    return out
+
+
+def _diag_attrs(surface_events: list[DiagnosticEvent]) -> str:
+    """Sorted unique diagnostic codes + true count for one surface (R178-004)."""
+    codes = sorted({e.code for e in surface_events})
+    return (
+        f'data-diagnostic-codes="{_escape(",".join(codes))}" '
+        f'data-diagnostic-count="{len(surface_events)}"'
+    )
+
+
+def _plan_attrs(
+    sp: Any | None,
+    events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
+) -> str:
     """Compact D312 data-* diagnostics from a frozen surface plan."""
+    events_by_surface = events_by_surface or {}
     if sp is None:
         return 'data-diagnostic-count="0"'
     sizes = ",".join(f"{k}:{sp.role_sizes[k]}" for k in sorted(sp.role_sizes))
     adap = ",".join(sp.adaptation_codes)
+    diag = _diag_attrs(events_by_surface.get(sp.surface_id, []))
     bits = [
         f'data-surface-id="{_escape(sp.surface_id)}"',
         f'data-plan-sizes="{_escape(sizes)}"',
         f'data-plan-adaptations="{_escape(adap)}"',
-        'data-diagnostic-codes=""',
-        'data-diagnostic-count="0"',
+        diag,
     ]
     return " ".join(bits)
 
@@ -134,7 +163,12 @@ def _style_font(px: int | None) -> str:
     return f' style="font-size:{px}px"'
 
 
-def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
+def _paint_slide_body(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
+) -> list[str]:
+    events_by_surface = events_by_surface or {}
     lt = slide.layout_type
     out: list[str] = []
     sn = slide.slide_number
@@ -145,7 +179,7 @@ def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
         sub_px = sp.role_sizes.get("subtitle") if sp else None
         meta_px = sp.role_sizes.get("meta") if sp else None
         out.append(
-            f'<div class="cover" {_plan_attrs(sp)}>'  # one cover surface
+            f'<div class="cover" {_plan_attrs(sp, events_by_surface)}>'  # one cover surface
         )
         out.append(f"<h1{_style_font(title_px)}>{_escape(p.title)}</h1>")
         if p.subtitle:
@@ -166,13 +200,13 @@ def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
         title_sp = plans_by_id.get(f"slide-{sn}-title")
         title_px = title_sp.role_sizes.get("title") if title_sp else None
         out.append(
-            f'<h1 {_plan_attrs(title_sp)}{_style_font(title_px)}>{_escape(slide.title)}</h1>'
+            f'<h1 {_plan_attrs(title_sp, events_by_surface)}{_style_font(title_px)}>{_escape(slide.title)}</h1>'
         )
         if slide.content is not None:
             sub_sp = plans_by_id.get(f"slide-{sn}-subtitle")
             sub_px = sub_sp.role_sizes.get("subtitle") if sub_sp else None
             out.append(
-                f'<p class="subtitle" {_plan_attrs(sub_sp)}{_style_font(sub_px)}>' 
+                f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
                 f"{_escape(slide.content.subtitle)}</p>"
             )
         for block in slide.payload.blocks:
@@ -180,7 +214,7 @@ def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
             surface_id = f"slide-{sn}-block-{bid}"
             bsp = plans_by_id.get(surface_id)
             body_px = bsp.role_sizes.get("body") if bsp else None
-            attrs = _plan_attrs(bsp)
+            attrs = _plan_attrs(bsp, events_by_surface)
             style = _style_font(body_px)
             if block.type == "paragraphs":
                 out.append(
@@ -200,7 +234,7 @@ def _paint_slide_body(slide: Any, plans_by_id: dict[str, Any]) -> list[str]:
             tsp = plans_by_id.get(f"slide-{sn}-takeaway")
             body_px = tsp.role_sizes.get("body") if tsp else None
             label_px = tsp.role_sizes.get("label") if tsp else None
-            out.append(f'<aside class="takeaway" {_plan_attrs(tsp)} role="note">')
+            out.append(f'<aside class="takeaway" {_plan_attrs(tsp, events_by_surface)} role="note">')
             out.append(
                 f'<p class="takeaway-label"{_style_font(label_px)}>Key takeaway</p>'
             )
@@ -414,7 +448,11 @@ def stage_artifacts(
 ) -> dict[str, bytes]:
     """Build all five artifact payloads in memory (bytes, UTF-8/LF)."""
     html = build_presentation_html(
-        deck, debug=debug, svg_only=svg_only, deck_plan=deck_plan
+        deck,
+        debug=debug,
+        svg_only=svg_only,
+        deck_plan=deck_plan,
+        events=events,
     )
     notes = build_slide_notes_md(deck)
     manifest = dumps_json(build_evidence_manifest(deck))
