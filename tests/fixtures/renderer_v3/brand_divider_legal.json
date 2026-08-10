@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "overview",
+      "label": "Overview"
+    },
+    {
+      "section_id": "legal",
+      "label": "Legal"
+    }
+  ],
+  "number_formats": {},
+  "evidence_registry": {
+    "src-board-pack": {
+      "source_name": "Board pack Q4"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {
+        "title": "Impact Review",
+        "subtitle": "Confidential",
+        "period_label": "Q4 2025",
+        "date_label": "January 2026"
+      },
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "section_divider",
+      "payload": {
+        "section_id": "overview"
+      }
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "narrative",
+      "section_id": "overview",
+      "title": "Where we stand",
+      "payload": {
+        "blocks": [
+          {
+            "block_id": "lead",
+            "type": "paragraphs",
+            "paragraphs": [
+              {
+                "runs": [
+                  {
+                    "text": "Revenue held flat against plan."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "section_divider",
+      "payload": {
+        "section_id": "legal"
+      }
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "payload": {
+        "notice_id": "disclaimer",
+        "part": 1,
+        "total_parts": 2,
+        "title": "Important disclosures",
+        "paragraphs": [
+          "This material is for informational purposes only and does not constitute an offer.",
+          "Past performance is not indicative of future results."
+        ]
+      },
+      "speaker_notes": "Read the full notice aloud if asked."
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "payload": {
+        "notice_id": "disclaimer",
+        "part": 2,
+        "total_parts": 2,
+        "paragraphs": [
+          "Recipients may not redistribute without prior written consent."
+        ]
+      }
+    },
+    {
+      "slide_number": 7,
+      "layout_type": "closing_cover",
+      "payload": {
+        "title": "Discussion"
+      }
+    }
+  ]
+}

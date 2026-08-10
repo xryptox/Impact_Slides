@@ -408,6 +408,119 @@
       "title": "EvidenceEntry",
       "type": "object"
     },
+    "LegalNoticePayload": {
+      "additionalProperties": false,
+      "description": "Multipart legal notice sequence payload (D226/D271).",
+      "properties": {
+        "notice_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Notice Id",
+          "type": "string"
+        },
+        "part": {
+          "exclusiveMinimum": 0,
+          "title": "Part",
+          "type": "integer"
+        },
+        "total_parts": {
+          "exclusiveMinimum": 0,
+          "title": "Total Parts",
+          "type": "integer"
+        },
+        "paragraphs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Paragraphs",
+          "type": "array"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        }
+      },
+      "required": [
+        "notice_id",
+        "part",
+        "total_parts",
+        "paragraphs"
+      ],
+      "title": "LegalNoticePayload",
+      "type": "object"
+    },
+    "LegalNoticeSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "legal_notice",
+          "default": "legal_notice",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/LegalNoticePayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id"
+      ],
+      "title": "LegalNoticeSlide",
+      "type": "object"
+    },
     "MissingValue": {
       "additionalProperties": false,
       "properties": {
@@ -890,6 +1003,77 @@
       "title": "RangeValue",
       "type": "object"
     },
+    "SectionDividerPayload": {
+      "additionalProperties": false,
+      "description": "Divider payload is only the registry section_id (D269).",
+      "properties": {
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "section_id"
+      ],
+      "title": "SectionDividerPayload",
+      "type": "object"
+    },
+    "SectionDividerSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "section_divider",
+          "default": "section_divider",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/SectionDividerPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload"
+      ],
+      "title": "SectionDividerSlide",
+      "type": "object"
+    },
     "SectionEntry": {
       "additionalProperties": false,
       "properties": {
@@ -1278,8 +1462,10 @@
           "mapping": {
             "closing_cover": "#/$defs/ClosingCoverSlide",
             "data_table": "#/$defs/DataTableSlide",
+            "legal_notice": "#/$defs/LegalNoticeSlide",
             "narrative": "#/$defs/NarrativeSlide",
-            "opening_cover": "#/$defs/OpeningCoverSlide"
+            "opening_cover": "#/$defs/OpeningCoverSlide",
+            "section_divider": "#/$defs/SectionDividerSlide"
           },
           "propertyName": "layout_type"
         },
@@ -1288,10 +1474,16 @@
             "$ref": "#/$defs/OpeningCoverSlide"
           },
           {
+            "$ref": "#/$defs/SectionDividerSlide"
+          },
+          {
             "$ref": "#/$defs/ClosingCoverSlide"
           },
           {
             "$ref": "#/$defs/NarrativeSlide"
+          },
+          {
+            "$ref": "#/$defs/LegalNoticeSlide"
           },
           {
             "$ref": "#/$defs/DataTableSlide"

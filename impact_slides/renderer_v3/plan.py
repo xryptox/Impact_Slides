@@ -27,6 +27,10 @@ CONTENT_W: Final = DESIGN_STAGE_W - 2 * PAD_X  # 1728
 TITLE_PX: Final = 56
 COVER_TITLE_PX: Final = 72
 COVER_META_PX: Final = 22
+DIVIDER_TITLE_PX: Final = 56
+DIVIDER_META_PX: Final = 22
+LEGAL_TITLE_PX: Final = 28
+LEGAL_BODY_PX: Final = 16
 TAKEAWAY_LABEL_PX: Final = 14
 DISCLOSURE_PX: Final = 14
 SOURCE_FOOTER_PX: Final = 14
@@ -316,6 +320,79 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _fit_role=None,
                     _mode="fixed",
                     _margin_boxes=len(cover_items),
+                )
+            )
+            continue
+
+        if lt == "section_divider":
+            region += 1
+            # Label + optional registry-order number come from D215 only (D269).
+            sec = next(
+                s for s in deck.sections if s.section_id == slide.payload.section_id
+            )
+            ord_n = next(
+                i + 1
+                for i, s in enumerate(deck.sections)
+                if s.section_id == slide.payload.section_id
+            )
+            label = sec.label
+            meta = f"Section {ord_n}"
+            items: list[tuple[str, str]] = [(label, "title"), (meta, "meta")]
+            out.append(
+                SurfacePlan(
+                    surface_id=f"slide-{sn}-divider",
+                    role="section_divider",
+                    slide_number=sn,
+                    slide_index=slide_index,
+                    layout_type=lt,
+                    slot_order=0,
+                    design_stage_region=region,
+                    role_sizes={
+                        "title": DIVIDER_TITLE_PX,
+                        "meta": DIVIDER_META_PX,
+                    },
+                    _cover_items=items,
+                    _text_items=[(t, rk == "title") for t, rk in items],
+                    _box_w=CONTENT_W,
+                    _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
+                    _fit_role=None,
+                    _mode="fixed",
+                    _margin_boxes=len(items),
+                )
+            )
+            continue
+
+        if lt == "legal_notice":
+            region += 1
+            p = slide.payload
+            # Fixed legal typography (D182/D226/D271): part 1 title; later — continued.
+            heading = p.title if p.part == 1 else "— continued"
+            assert heading is not None
+            legal_items: list[tuple[str, str]] = [(heading, "title")]
+            for para in p.paragraphs:
+                legal_items.append((para, "body"))
+            legal_items.append((f"Part {p.part} of {p.total_parts}", "meta"))
+            out.append(
+                SurfacePlan(
+                    surface_id=f"slide-{sn}-legal",
+                    role="legal_notice",
+                    slide_number=sn,
+                    slide_index=slide_index,
+                    layout_type=lt,
+                    slot_order=0,
+                    design_stage_region=region,
+                    role_sizes={
+                        "title": LEGAL_TITLE_PX,
+                        "body": LEGAL_BODY_PX,
+                        "meta": LEGAL_BODY_PX,
+                    },
+                    _cover_items=legal_items,
+                    _text_items=[(t, rk == "title") for t, rk in legal_items],
+                    _box_w=CONTENT_W,
+                    _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
+                    _fit_role=None,
+                    _mode="fixed",
+                    _margin_boxes=len(legal_items),
                 )
             )
             continue

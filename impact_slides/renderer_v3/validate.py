@@ -300,8 +300,9 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                         slide_number=sn,
                         layout_type=layout if isinstance(layout, str) else None,
                         expected=(
-                            "kernel implements opening_cover, narrative, data_table, "
-                            "closing_cover; other D210 compositions arrive in later tickets"
+                            "kernel implements opening_cover, section_divider, "
+                            "closing_cover, narrative, legal_notice, data_table; "
+                            "other D210 compositions arrive in later tickets"
                         ),
                     )
                 )

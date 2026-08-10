@@ -84,6 +84,18 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
         if layout in ("opening_cover", "closing_cover"):
             allowed = common
             payload_allowed = {"title", "subtitle", "period_label", "date_label"}
+        elif layout == "section_divider":
+            allowed = common
+            payload_allowed = {"section_id"}
+        elif layout == "legal_notice":
+            allowed = common | {"section_id"}
+            payload_allowed = {
+                "notice_id",
+                "part",
+                "total_parts",
+                "paragraphs",
+                "title",
+            }
         elif layout == "narrative":
             allowed = common | {
                 "section_id",
@@ -167,8 +179,10 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "speaker_notes",
                 "evidence_ids",
             }
-            if layout in ("opening_cover", "closing_cover"):
+            if layout in ("opening_cover", "closing_cover", "section_divider"):
                 allowed = common
+            elif layout == "legal_notice":
+                allowed = common | {"section_id"}
             elif layout in ("narrative", "data_table"):
                 allowed = common | {
                     "section_id",
@@ -208,6 +222,32 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     path=f"/slides/{i}/payload",
                     events=events,
                     role="cover_payload",
+                    slide_number=_slide_number(slide),
+                    layout_type=layout,
+                )
+            if isinstance(payload, dict) and layout == "section_divider":
+                _drop_unknown_object(
+                    payload,
+                    allowed={"section_id"},
+                    path=f"/slides/{i}/payload",
+                    events=events,
+                    role="divider_payload",
+                    slide_number=_slide_number(slide),
+                    layout_type=layout,
+                )
+            if isinstance(payload, dict) and layout == "legal_notice":
+                _drop_unknown_object(
+                    payload,
+                    allowed={
+                        "notice_id",
+                        "part",
+                        "total_parts",
+                        "paragraphs",
+                        "title",
+                    },
+                    path=f"/slides/{i}/payload",
+                    events=events,
+                    role="legal_notice_payload",
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
