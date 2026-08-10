@@ -61,7 +61,7 @@ Percentages are approximate assessments of the control plane, not measured relia
 | Standards/Spec reviews | **70%** | Invocation is fixed and parallel, but findings are model-generated. |
 | No-mistakes gate | **80%** | Stage order and custody are deterministic; findings and conflict resolution may need decisions. |
 | `watch-visible-implementers.ps1` | **92%** | Binds pane, worktree, PR, and exact-branch no-mistakes state. Parsing still depends on stable Herdr and no-mistakes output formats. |
-| `watch-ticket-wave.ps1` + follow-up extension | **95%** | Automatically rearms and delivers an append-only event queue to the originating Pi session. |
+| `watch-ticket-wave.ps1` + follow-up extension | **95%** | Singleton per manifest via named mutex, automatically rearms, and delivers an append-only event queue with persistent offsets, signature dedup, and an audit log. |
 | `inspect-ticket-wave.ps1` | **96%** | Read-only derivation from `wave.json`, Git, GitHub, exact-branch no-mistakes state, and PR closing metadata. |
 | Repair launcher | **80%** | IDs and launch are derived; validated host findings are copied into an authoritative repair prompt that supersedes the original prompt. |
 | `Invoke-ApprovedMerge.ps1` | **97%** | Requires explicit exact-head human approval, then performs deterministic preflight and merge outside PEW journal persistence. |
@@ -115,6 +115,12 @@ The August 2026 automation pass added and smoke-tested:
 5. PR closing-keyword inspection and merge blocking for missing `Closes`, `Fixes`, or `Resolves` references.
 6. Deterministic exact-head merge preflight outside PEW journal persistence for Windows `EPERM` recovery.
 7. Partial-wave cleanup plus idempotent handling of GitHub-auto-deleted remote branches.
+8. Manifest-scoped watcher singleton via a named mutex so only one outer watcher runs per wave.
+9. Once-per-signature emission of unchanged idle/done/blocked states; the ask-user pause keeps its separate two-notification policy.
+10. Follow-up extension hardening: persistent on-disk byte offsets, signature-based event dedup, and an `actions.jsonl` audit log.
+11. Loop-limit derivation only from explicit `fix N` active-step rows; historical rows from failed or completed runs are ignored.
+12. Per-phase quiet limits (25 minutes initial review, 10 minutes fix rounds) with CPU-delta stall confirmation before escalation.
+13. Cleanup resilience: transient lock-failure retries, watcher-process-tree termination before worktree removal, residual-directory cleanup after Git registration disappears, and idempotent empty-manifest exit.
 
 Smoke coverage includes PowerShell 5.1 parsing, queued follow-up delivery, stale-event suppression, two-event automatic rearming, exact-branch run selection, repair-prompt precedence, closing-reference boundaries, already-merged merge rejection, selected-ticket cleanup, preservation of another active worktree, and cleanup with an already-absent origin branch.
 
@@ -149,8 +155,8 @@ In short: default PEW is simpler and better for self-contained agent workflows; 
 
 ## Current limitations
 
-- The inner watcher still returns after one unseen event, but `watch-ticket-wave.ps1` now rearms it automatically; `watcher-state.json` prevents duplicate delivery and the append-only follow-up file prevents event overwrite.
-- The watcher enforces operational loop ceilings: more than 5 no-mistakes review-fix rounds, more than 90 minutes in review fixing, or more than 10 minutes without agent/log activity emits `loop-limit` and requires controlled recovery. These are orchestration safety limits, not native PEW budgets.
+- The inner watcher still returns after one unseen event, but `watch-ticket-wave.ps1` now rearms it automatically; `watcher-state.json` prevents duplicate delivery, the append-only follow-up file plus persistent byte offsets prevent event overwrite and replay after restarts, an `actions.jsonl` audit log records delivery decisions, and a named mutex keeps one watcher per manifest.
+- The watcher enforces operational loop ceilings: more than 5 no-mistakes review-fix rounds, more than 90 minutes in review fixing, or CPU-confirmed stalled quiet time (more than 10 minutes in a fix round, more than 25 minutes in the initial review) emits `loop-limit` and requires controlled recovery. Quiet only escalates when a CPU-delta sample finds the agent dead or CPU-flat; growing CPU means a long model call. These are orchestration safety limits, not native PEW budgets.
 - PEW aggregate budgets (`tokens`, `costUsd`, `durationMs`, `agentLaunches`) constrain workflow-owned `agent()` work, but visible Herdr Pi and no-mistakes subprocesses run outside those agent budgets; the watcher limits cover that gap.
 - Herdr and no-mistakes state is parsed from CLI output, so upstream output-format changes can break detection.
 - LLM implementation and review cannot be made fully deterministic.
