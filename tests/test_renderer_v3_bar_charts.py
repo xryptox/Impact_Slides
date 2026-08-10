@@ -328,15 +328,21 @@ def test_svg_bar_geometry_matches_frozen_plan():
         assert f'width="{b["width"]:.1f}"' in svg
 
 
-def test_chartjs_bar_area_pinned_to_frozen_plot(tmp_path: Path):
+@pytest.mark.parametrize(
+    ("fixture", "surface_id"),
+    [(GROUPED, "seg-growth"), (HBAR, "net-share")],
+)
+def test_chartjs_bar_area_pinned_to_frozen_plot(fixture, surface_id, tmp_path: Path):
     out = tmp_path / "out"
-    render_deck(GROUPED, out, strict=True)
+    render_deck(fixture, out, strict=True)
     html = (out / "presentation.html").read_text(encoding="utf-8")
-    deck = validate_handoff(_g(), strict=True).deck
-    cp = plan_deck(deck, strict=True).by_surface_id()["seg-growth"].chart_paint
+    deck = validate_handoff(
+        json.loads(fixture.read_text(encoding="utf-8")), strict=True
+    ).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()[surface_id].chart_paint
     g = cp["geometry"]
     m = re.search(
-        r'<script type="application/json" id="cfg-seg-growth">(.*?)</script>',
+        rf'<script type="application/json" id="cfg-{surface_id}">(.*?)</script>',
         html,
         re.S,
     )
@@ -348,14 +354,66 @@ def test_chartjs_bar_area_pinned_to_frozen_plot(tmp_path: Path):
         "top": g["pad_t"],
         "bottom": g["pad_b"],
     }
-    # Frozen bar geometry embedded for 2px parity asserts
-    v3_bars = {(b["series_id"], b["category_id"]): b for b in cfg["v3"]["bars"]}
+    # Rebuild what Chart.js renders from the emitted config (canvas size,
+    # layout padding, scale min/max, category/bar percentages) and pin it
+    # to the frozen plan within 2px (D160).
+    cm = re.search(
+        rf'<canvas id="cjs-{surface_id}"[^>]*width="(\d+)" height="(\d+)"', html
+    )
+    assert cm is not None
+    canvas_w, canvas_h = int(cm.group(1)), int(cm.group(2))
+    pad = cfg["options"]["layout"]["padding"]
+    plot_x0, plot_y0 = pad["left"], pad["top"]
+    plot_w = canvas_w - pad["left"] - pad["right"]
+    plot_h = canvas_h - pad["top"] - pad["bottom"]
+    horizontal = cfg["options"]["indexAxis"] == "y"
+    datasets = cfg["data"]["datasets"]
+    n_cat = len(cfg["data"]["labels"])
+    n_ser = len(datasets)
+    val_scale = cfg["options"]["scales"]["x" if horizontal else "y"]
+    v_min, v_max = val_scale["min"], val_scale["max"]
+    v_span = (v_max - v_min) or 1.0
+    cat_span = plot_h if horizontal else plot_w
+    cat_start = plot_y0 if horizontal else plot_x0
+    pitch = cat_span / n_cat
+    cluster = datasets[0]["categoryPercentage"] * pitch
+    slot = cluster / n_ser
+    bar_w = datasets[0]["barPercentage"] * slot
+    baseline = v_min if v_min > 0 else (v_max if v_max < 0 else 0.0)
+
+    def value_px(v: float) -> float:
+        if horizontal:
+            return plot_x0 + (v - v_min) / v_span * plot_w
+        return plot_y0 + plot_h - (v - v_min) / v_span * plot_h
+
+    base_px = value_px(baseline)
+    ser_idx = {s["series_id"]: i for i, s in enumerate(cp["series"])}
+    cat_idx = {c["category_id"]: i for i, c in enumerate(cp["categories"])}
+    checked = 0
     for b in cp["bars"]:
-        vb = v3_bars[(b["series_id"], b["category_id"])]
-        assert abs(vb["x"] - b["x"]) <= 2.0
-        assert abs(vb["y"] - b["y"]) <= 2.0
-        assert abs(vb["width"] - b["width"]) <= 2.0
-        assert abs(vb["height"] - b["height"]) <= 2.0
+        if b.get("missing") or not b.get("finite"):
+            continue
+        d_i = ser_idx[b["series_id"]]
+        c_i = cat_idx[b["category_id"]]
+        v = datasets[d_i]["data"][c_i]
+        origin = (
+            cat_start
+            + c_i * pitch
+            + (pitch - cluster) / 2
+            + d_i * slot
+            + (slot - bar_w) / 2
+        )
+        tip = value_px(float(v))
+        if horizontal:
+            rx, ry, rw, rh = min(base_px, tip), origin, abs(tip - base_px), bar_w
+        else:
+            rx, ry, rw, rh = origin, min(base_px, tip), bar_w, abs(tip - base_px)
+        assert abs(rx - b["x"]) <= 2.0
+        assert abs(ry - b["y"]) <= 2.0
+        assert abs(rw - b["width"]) <= 2.0
+        assert abs(rh - b["height"]) <= 2.0
+        checked += 1
+    assert checked > 0
 
 
 def test_byte_identical_rerun_grouped(tmp_path: Path):

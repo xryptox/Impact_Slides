@@ -1270,9 +1270,12 @@ def _bar_slot_geometry(
     thick = max(BAR_MIN_THICKNESS, min(BAR_MAX_THICKNESS, raw_thick))
     cluster = n_ser * thick + max(0, n_ser - 1) * ser_gap
     slots: list[dict[str, Any]] = []
+    ser_slot = cluster / n_ser
     for c_i in range(n_cat):
         base = c_i * pitch + (pitch - cluster) / 2
-        origins = [base + s_i * (thick + ser_gap) for s_i in range(n_ser)]
+        origins = [
+            base + s_i * ser_slot + (ser_slot - thick) / 2 for s_i in range(n_ser)
+        ]
         if horizontal:
             # Categories top → bottom along Y.
             slots.append(
