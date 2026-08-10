@@ -3285,10 +3285,10 @@ table caption/title-band labels are invalid. D220 takeaway, D222 disclosure,
 evidence/source footer and notes remain allowed and planned. Table is full-width.
 Headers use square navy/white semantic separators; transparent body cells use
 semantic separators without stripes/colors/cards/per-cell styling. One common
-20–24px adaptive D44 size covers every header, label and value. D24–D25 fitting
-redistributes renderer-owned widths, wraps labels to two lines, grows rows, uses
-authored short labels, then ellipsizes labels accessibly; values are never
-abbreviated/ellipsized/reformatted outside D214/dropped. Counts are fit-derived,
+20–24px adaptive D44 size covers every header, label, value and scale disclosure.
+D24–D25 fitting redistributes renderer-owned widths, wraps labels to two lines,
+grows rows, uses authored short labels, then ellipsizes labels accessibly; values
+are never abbreviated/ellipsized/reformatted outside D214/dropped. Counts are fit-derived,
 not schema-capped. Strict fails if complete content cannot fit at 20px after all
 reserved chrome/common surfaces. Non-strict paints complete 20px content with
 stable unresolved-overflow diagnosis, no pagination/clipping-by-design/loss/card
@@ -4016,10 +4016,12 @@ rendered once per axis/table. No scaling inference. Value decimals govern all
 ordinary formatted facts/accessibility; tick decimals govern ticks, otherwise
 minimum 0–4 distinguishing precision. Formatting preserves source decimal,
 scales display, rounds half-away-zero, emits trailing zeros/comma separators,
-applies unit then whole-quantity negative style; rounded zero is unsigned.
-Explicit text bypasses formatting. All painters/tables/accessibility/diagnostics
-use one preformatted string. Arbitrary units/templates/locales/symbol/sign/
-accounting/callback/HTML/CSS are invalid. Strict rejects entries/references.
+applies negative style to the whole unit-plus-magnitude quantity: minus precedes
+a prefix unit (`-$...`, never `$-...`) and parentheses wrap the whole quantity;
+rounded zero is unsigned. Explicit text bypasses formatting. All painters,
+tables, accessibility and diagnostics use one preformatted string. Arbitrary
+units/templates/locales/symbol/sign/accounting/callback/HTML/CSS are invalid.
+Strict rejects entries/references.
 Non-strict drops invalid entry, makes dependent non-plotted values diagnosed
 missing and charts D102 fallback, never guessing. Migration converts exact known
 unit/precision/scale only; ambiguous magnitude prose needs humans.

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Callable
+from typing import Any, Callable  # Callable used by typography surface resolvers
 
 from .diagnostics import DiagnosticEvent, event
 
@@ -94,6 +94,16 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "source_footer",
             }
             payload_allowed = {"blocks", "typography"}
+        elif layout == "data_table":
+            allowed = common | {
+                "section_id",
+                "title",
+                "content",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            }
+            payload_allowed = {"table"}
         else:
             return True
         if set(slide) - allowed:
@@ -159,7 +169,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
             }
             if layout in ("opening_cover", "closing_cover"):
                 allowed = common
-            elif layout == "narrative":
+            elif layout in ("narrative", "data_table"):
                 allowed = common | {
                     "section_id",
                     "title",
@@ -211,6 +221,16 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
+            if isinstance(payload, dict) and layout == "data_table":
+                _drop_unknown_object(
+                    payload,
+                    allowed={"table"},
+                    path=f"/slides/{i}/payload",
+                    events=events,
+                    role="data_table_payload",
+                    slide_number=_slide_number(slide),
+                    layout_type=layout,
+                )
     return out
 
 
@@ -249,21 +269,55 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
         return raw
     out = deepcopy(raw)
     for i, slide in enumerate(out["slides"]):
-        if not isinstance(slide, dict) or slide.get("layout_type") != "narrative":
+        if not isinstance(slide, dict):
             continue
-        surfaces = (
-            ("content", "subtitle_font_size", "body_font_size", 22, 26),
-            ("takeaway", "body_font_size", "subtitle_font_size", 22, 28),
-            ("payload", "body_font_size", "subtitle_font_size", 22, 28),
-        )
-        for owner, size_field, forbidden, floor, ceiling in surfaces:
-            surface = slide.get(owner)
-            has_typography = isinstance(surface, dict) and "typography" in surface
-            typo = surface.get("typography") if isinstance(surface, dict) else None
+        layout = slide.get("layout_type")
+        if layout not in ("narrative", "data_table"):
+            continue
+
+        def _content(s: dict) -> dict | None:
+            c = s.get("content")
+            return c if isinstance(c, dict) else None
+
+        def _takeaway(s: dict) -> dict | None:
+            t = s.get("takeaway")
+            return t if isinstance(t, dict) else None
+
+        def _payload(s: dict) -> dict | None:
+            p = s.get("payload")
+            return p if isinstance(p, dict) else None
+
+        def _table(s: dict) -> dict | None:
+            p = s.get("payload")
+            if not isinstance(p, dict):
+                return None
+            t = p.get("table")
+            return t if isinstance(t, dict) else None
+
+        surfaces_spec: list[tuple[str, str, str, int, int, Callable[[dict], dict | None]]] = [
+            ("content", "subtitle_font_size", "body_font_size|table_font_size", 22, 26, _content),
+            ("takeaway", "body_font_size", "subtitle_font_size|table_font_size", 22, 28, _takeaway),
+        ]
+        if layout == "narrative":
+            surfaces_spec.append(
+                ("payload", "body_font_size", "subtitle_font_size|table_font_size", 22, 28, _payload)
+            )
+        else:
+            surfaces_spec.append(
+                ("table", "table_font_size", "body_font_size|subtitle_font_size", 20, 24, _table)
+            )
+        for owner, size_field, forbidden_csv, floor, ceiling, resolve in surfaces_spec:
+            surface = resolve(slide)
+            if surface is None:
+                continue
+            has_typography = "typography" in surface
+            typo = surface.get("typography")
+            forbidden = set(forbidden_csv.split("|"))
+            allowed = {"mode", "sync_group", size_field}
             malformed = has_typography and (
                 not isinstance(typo, dict)
-                or set(typo) - {"mode", "sync_group", size_field}
-                or forbidden in typo
+                or set(typo) - allowed
+                or bool(forbidden.intersection(typo))
                 or typo.get("mode", "adaptive") not in {"adaptive", "fixed"}
                 or (
                     "sync_group" in typo
@@ -284,17 +338,22 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             )
             if malformed:
                 del surface["typography"]
+                path = (
+                    f"/slides/{i}/payload/table/typography"
+                    if owner == "table"
+                    else f"/slides/{i}/{owner}/typography"
+                )
                 events.append(
                     event(
                         code="repair.policy_defaulted",
                         severity="warning",
                         phase="repair",
                         role=owner,
-                        path=f"/slides/{i}/{owner}/typography",
+                        path=path,
                         action="default_typography",
                         result="defaulted",
                         slide_number=_slide_number(slide),
-                        layout_type="narrative",
+                        layout_type=layout if isinstance(layout, str) else None,
                         expected="surface-applicable typography fields",
                     )
                 )
@@ -312,13 +371,17 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
     out = deepcopy(raw)
     seen_ids: set[str] = set()
     for i, slide in enumerate(out["slides"]):
-        if not isinstance(slide, dict) or slide.get("layout_type") != "narrative":
+        if not isinstance(slide, dict) or slide.get("layout_type") not in (
+            "narrative",
+            "data_table",
+        ):
             continue
         if "disclosure" not in slide:
             continue
         disc = slide.get("disclosure")
         path_base = f"/slides/{i}/disclosure"
         sn = _slide_number(slide)
+        layout = slide.get("layout_type") if isinstance(slide.get("layout_type"), str) else None
         if disc is None or not isinstance(disc, dict) or not isinstance(disc.get("sections"), list):
             del slide["disclosure"]
             events.append(
@@ -331,7 +394,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     action="drop_field",
                     result="dropped",
                     slide_number=sn,
-                    layout_type="narrative",
+                    layout_type=layout,
                     expected="disclosure object with 1-4 valid sections",
                 )
             )
@@ -350,7 +413,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                         action="drop_item",
                         result="dropped",
                         slide_number=sn,
-                        layout_type="narrative",
+                        layout_type=layout,
                         expected="at most 4 disclosure sections",
                     )
                 )
@@ -367,7 +430,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                         action="drop_item",
                         result="dropped",
                         slide_number=sn,
-                        layout_type="narrative",
+                        layout_type=layout,
                         expected="disclosure section object",
                     )
                 )
@@ -401,7 +464,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                         action="drop_item",
                         result="dropped",
                         slide_number=sn,
-                        layout_type="narrative",
+                        layout_type=layout,
                         expected="deck-unique surface_id, title, 1-6 plain items",
                     )
                 )
@@ -418,7 +481,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                         action="drop_item",
                         result="dropped",
                         slide_number=sn,
-                        layout_type="narrative",
+                        layout_type=layout,
                         expected="deck-unique disclosure surface_id",
                         input_meta={"surface_id": sid},
                     )
@@ -435,7 +498,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                         action="drop_item",
                         result="dropped",
                         slide_number=sn,
-                        layout_type="narrative",
+                        layout_type=layout,
                         expected="normalized-unique disclosure title",
                         input_meta={"title": title},
                     )
@@ -456,7 +519,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     action="drop_field",
                     result="dropped",
                     slide_number=sn,
-                    layout_type="narrative",
+                    layout_type=layout,
                     expected="at least one valid disclosure section",
                 )
             )

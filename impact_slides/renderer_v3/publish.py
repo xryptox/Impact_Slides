@@ -104,6 +104,19 @@ def build_presentation_html(
             # D173: notes stay off the visible slide; HTML/notes artifact stay exact.
             ".notes{display:none;white-space:pre-wrap}",
             ".disclosures summary{padding-left:1.25em}",
+            # data_table (D8/D42/D104/D105/D183/D257)
+            # Pads must match plan.TABLE_CELL_PAD_* (8+8 x, 6+6 y).
+            "table.data-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
+            "table.data-table th,table.data-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule);vertical-align:middle;font-weight:400}",
+            "table.data-table thead th{background:var(--color-band);color:var(--color-band-ink);font-weight:var(--font-weight-emphasis)}",
+            "table.data-table tbody td,table.data-table tbody th{background:transparent}",
+            "table.data-table th.align-left,table.data-table td.align-left{text-align:left}",
+            "table.data-table th.align-right,table.data-table td.align-right{text-align:right}",
+            "table.data-table th.align-center,table.data-table td.align-center{text-align:center}",
+            "table.data-table td.num,table.data-table th.num{font-variant-numeric:tabular-nums lining-nums}",
+            "table.data-table th.stub,table.data-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
+            ".table-scale{font-size:var(--text-xs);margin:0 0 var(--space-sm);color:var(--color-navy)}",
+            ".table-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             "@media print{"
             "details:not([open])>summary~*{display:block}"
             "html,body{width:auto;height:auto;overflow:visible}"
@@ -126,7 +139,10 @@ def build_presentation_html(
         )
         parts.extend(
             _paint_slide_body(
-                slide, plans_by_id, events_by_surface, deck.evidence_registry
+                slide,
+                plans_by_id,
+                events_by_surface,
+                deck.evidence_registry,
             )
         )
         notes = getattr(slide, "speaker_notes", None)
@@ -226,7 +242,7 @@ def _paint_slide_body(
             )
         out.append("</div>")
         return out
-    if lt == "narrative":
+    if lt in ("narrative", "data_table"):
         title_sp = plans_by_id.get(f"slide-{sn}-title")
         title_px = title_sp.role_sizes.get("title") if title_sp else None
         out.append(
@@ -239,27 +255,10 @@ def _paint_slide_body(
                 f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
                 f"{_soft_break_html(slide.content.subtitle)}</p>"
             )
-        for block in slide.payload.blocks:
-            bid = block.block_id
-            surface_id = f"slide-{sn}-block-{bid}"
-            bsp = plans_by_id.get(surface_id)
-            body_px = bsp.role_sizes.get("body") if bsp else None
-            attrs = _plan_attrs(bsp, events_by_surface)
-            style = _style_font(body_px)
-            if block.type == "paragraphs":
-                out.append(
-                    f'<div class="paragraphs" data-block-id="{_escape(bid)}" {attrs}{style}>'
-                )
-                for prose in block.paragraphs:
-                    out.append(f"<p{style}>{_prose_html(prose)}</p>")
-                out.append("</div>")
-            elif block.type == "bullet_list":
-                out.append(
-                    f'<ul data-block-id="{_escape(bid)}" {attrs}{style}>'
-                )
-                for item in block.items:
-                    out.append(f"<li>{_prose_html(item)}</li>")
-                out.append("</ul>")
+        if lt == "data_table":
+            out.extend(_paint_data_table(slide, plans_by_id, events_by_surface))
+        else:
+            out.extend(_paint_narrative_blocks(slide, plans_by_id, events_by_surface))
         if slide.takeaway is not None:
             tsp = plans_by_id.get(f"slide-{sn}-takeaway")
             body_px = tsp.role_sizes.get("body") if tsp else None
@@ -315,6 +314,196 @@ def _paint_slide_body(
             )
         return out
     out.append(f"<p>Unsupported layout in kernel paint: {_escape(lt)}</p>")
+    return out
+
+
+def _paint_narrative_blocks(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    out: list[str] = []
+    sn = slide.slide_number
+    for block in slide.payload.blocks:
+        bid = block.block_id
+        surface_id = f"slide-{sn}-block-{bid}"
+        bsp = plans_by_id.get(surface_id)
+        body_px = bsp.role_sizes.get("body") if bsp else None
+        attrs = _plan_attrs(bsp, events_by_surface)
+        style = _style_font(body_px)
+        if block.type == "paragraphs":
+            out.append(
+                f'<div class="paragraphs" data-block-id="{_escape(bid)}" {attrs}{style}>'
+            )
+            for prose in block.paragraphs:
+                out.append(f"<p{style}>{_prose_html(prose)}</p>")
+            out.append("</div>")
+        elif block.type == "bullet_list":
+            out.append(f'<ul data-block-id="{_escape(bid)}" {attrs}{style}>')
+            for item in block.items:
+                out.append(f"<li>{_prose_html(item)}</li>")
+            out.append("</ul>")
+    return out
+
+
+def _paint_data_table(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    """Paint one ordinary data_table from frozen plan (D69/D183/D255/D257)."""
+    table = slide.payload.table
+    sp = plans_by_id.get(table.surface_id)
+    if sp is None or not getattr(sp, "table_paint", None):
+        raise RuntimeError(
+            f"missing frozen table_paint for surface {table.surface_id!r}"
+        )
+    paint = sp.table_paint
+    px = sp.role_sizes.get("table")
+    style = _style_font(px)
+    out: list[str] = []
+    attrs = _plan_attrs(sp, events_by_surface)
+    overflow_cls = " table-overflow" if sp._overflow else ""
+
+    headers = list(paint["display_headers"])
+    row_labels = list(paint["display_row_labels"])
+    full_headers = list(paint["header_full"])
+    full_row_labels = list(paint["row_labels_full"])
+    widths = list(paint.get("col_widths") or [])
+    groups = paint.get("display_groups")
+    col_ids = list(paint["col_ids"])
+    col_aligns = list(paint.get("col_aligns") or ["right"] * len(col_ids))
+    stub_hid = f"{table.surface_id}-h-stub"
+    leaf_hids = [f"{table.surface_id}-h-{cid}" for cid in col_ids]
+    group_hids: dict[str, str] = {}
+
+    out.append(
+        f'<table class="data-table{overflow_cls}" {attrs}{style} '
+        f'data-table-surface="{_escape(table.surface_id)}">'
+    )
+    if widths:
+        out.append("<colgroup>")
+        for w in widths:
+            out.append(f'<col style="width:{int(w)}px"/>')
+        out.append("</colgroup>")
+    out.append("<thead>")
+
+    grouped_cols: set[str] = set()
+    if groups:
+        out.append("<tr>")
+        out.append(
+            f'<th id="{_escape(stub_hid)}" scope="col" rowspan="2" '
+            f'class="band-table-header align-left stub" '
+            f'title="{_escape(full_headers[0])}">{_soft_break_html(headers[0])}</th>'
+        )
+        covered: set[str] = set()
+        i = 0
+        while i < len(col_ids):
+            cid = col_ids[i]
+            if cid in covered:
+                i += 1
+                continue
+            owner = next((g for g in groups if cid in g["column_ids"]), None)
+            if owner is None:
+                hid = leaf_hids[i]
+                align = col_aligns[i]
+                out.append(
+                    f'<th id="{_escape(hid)}" scope="col" rowspan="2" '
+                    f'class="band-table-header align-{align}" '
+                    f'title="{_escape(full_headers[i + 1])}">'
+                    f"{_soft_break_html(headers[i + 1])}</th>"
+                )
+                i += 1
+                continue
+            gid = owner["group_id"]
+            ghid = f"{table.surface_id}-g-{gid}"
+            group_hids[gid] = ghid
+            for gc in owner["column_ids"]:
+                covered.add(gc)
+                grouped_cols.add(gc)
+            out.append(
+                f'<th id="{_escape(ghid)}" scope="colgroup" '
+                f'colspan="{owner["colspan"]}" '
+                f'class="band-table-header align-center" '
+                f'title="{_escape(owner["label"])}">'
+                f"{_soft_break_html(owner['display_label'])}</th>"
+            )
+            i += len(owner["column_ids"])
+        out.append("</tr>")
+        out.append("<tr>")
+        for i, cid in enumerate(col_ids):
+            if cid not in grouped_cols:
+                continue
+            hid = leaf_hids[i]
+            align = col_aligns[i]
+            out.append(
+                f'<th id="{_escape(hid)}" scope="col" '
+                f'class="band-table-header align-{align}" '
+                f'title="{_escape(full_headers[i + 1])}">'
+                f"{_soft_break_html(headers[i + 1])}</th>"
+            )
+        out.append("</tr>")
+    else:
+        out.append("<tr>")
+        out.append(
+            f'<th id="{_escape(stub_hid)}" scope="col" '
+            f'class="band-table-header align-left stub" '
+            f'title="{_escape(full_headers[0])}">{_soft_break_html(headers[0])}</th>'
+        )
+        for i, hid in enumerate(leaf_hids):
+            align = col_aligns[i]
+            out.append(
+                f'<th id="{_escape(hid)}" scope="col" '
+                f'class="band-table-header align-{align}" '
+                f'title="{_escape(full_headers[i + 1])}">'
+                f"{_soft_break_html(headers[i + 1])}</th>"
+            )
+        out.append("</tr>")
+    out.append("</thead>")
+
+    out.append("<tbody>")
+    for r_i, row in enumerate(table.rows):
+        out.append("<tr>")
+        rid = f"{table.surface_id}-r-{row.row_id}"
+        out.append(
+            f'<th id="{_escape(rid)}" scope="row" class="stub align-left" '
+            f'title="{_escape(full_row_labels[r_i])}">'
+            f"{_soft_break_html(row_labels[r_i])}</th>"
+        )
+        for c_i, cid in enumerate(col_ids):
+            visible = paint["cells_vis"][r_i][c_i]
+            accessible = paint["cells_acc"][r_i][c_i]
+            role = paint["cells_role"][r_i][c_i]
+            align = paint["cells_align"][r_i][c_i]
+            hrefs = [rid, leaf_hids[c_i]]
+            if groups:
+                owner = next((g for g in groups if cid in g["column_ids"]), None)
+                if owner is not None:
+                    ghid = group_hids.get(owner["group_id"]) or (
+                        f"{table.surface_id}-g-{owner['group_id']}"
+                    )
+                    hrefs.insert(1, ghid)
+            num_cls = " num" if role in ("number", "range", "missing") else ""
+            aria = (
+                f' aria-label="{_escape(accessible)}"'
+                if accessible != visible
+                else ""
+            )
+            out.append(
+                f'<td headers="{_escape(" ".join(hrefs))}" '
+                f'class="align-{align}{num_cls}"{aria}>'
+                f"{_escape(visible)}</td>"
+            )
+        out.append("</tr>")
+    out.append("</tbody>")
+    out.append("</table>")
+
+    scale_labels = paint.get("scale_labels") or []
+    if scale_labels:
+        out.append(
+            f'<p class="table-scale"{style}>'
+            f"{_escape('; '.join(scale_labels))}</p>"
+        )
     return out
 
 
@@ -430,17 +619,20 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
         surface_ids: list[str] = []
         if slide.layout_type in ("opening_cover", "closing_cover"):
             surface_ids.append(f"slide-{slide.slide_number}-cover")
-        elif slide.layout_type == "narrative":
-            # Composition-slot order: title, subtitle, blocks, takeaway, disclosure.
+        elif slide.layout_type in ("narrative", "data_table"):
+            # Composition-slot order: title, subtitle, body/table, takeaway, disclosure.
             tid = f"slide-{slide.slide_number}-title"
             if tid in planned:
                 surface_ids.append(tid)
             if slide.content is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-subtitle")
-            surface_ids.extend(
-                f"slide-{slide.slide_number}-block-{b.block_id}"
-                for b in slide.payload.blocks
-            )
+            if slide.layout_type == "narrative":
+                surface_ids.extend(
+                    f"slide-{slide.slide_number}-block-{b.block_id}"
+                    for b in slide.payload.blocks
+                )
+            else:
+                surface_ids.append(slide.payload.table.surface_id)
             if slide.takeaway is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-takeaway")
             disclosure = getattr(slide, "disclosure", None)
