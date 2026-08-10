@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart/heatmap.
+Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart/heatmap/migrate.
 
 ## Ownership
 
@@ -38,6 +38,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 - Renderer v3 line chart (#182): `test_renderer_v3_line_chart.py` + fixture `renderer_v3/minimal_line_chart.json` (typed single_chart line envelope, null gaps, frozen plan, Chart.js + noscript SVG parity, one semantic table, identity/point labels, no gridlines, readiness payloads, mutation traps)
 - Renderer v3 heatmap (#187): `test_renderer_v3_heatmap.py` + fixture `renderer_v3/minimal_heatmap.json` (typed heatmap visual + shared format + generated/fixed scale, one visible native table, scale key, no canvas/SVG, missing neutral, readiness without chart painters, mutation traps)
 - Renderer v3 linear/grouping (#192): `test_renderer_v3_linear_grouping.py` + fixture `renderer_v3/linear_grouping_compositions.json` (`process_flow`/`timeline`/`layered_architecture`/`data_pipeline`; authored order/grouping/chronology/transfer preserved, fixed D60 geometry, layers without inferred connectors, non-strict accessible fallbacks without connectors, mutation traps)
+- Renderer v3 offline migrator (#195): `test_renderer_v3_migrate.py` (D119/D313 57-input inventory, `--check` non-writing, source immutability, failed-proof → unresolved, v1 marker withhold, clean narrative/table conversion + validation, no render/validate import of migrate)
 - Amex #158 handoff + multi_panel pane titles: `test_amex_s28_handoff_contract.py` + `test_multi_panel_pane_headings.py` + fixtures `amex_s28_v10_broken.json` / `amex_s28_corrected.json` (mutation drops slide-28 `top_total` pseudo-titles; renderer multi_panel tiles share #147 heading/subtitle chrome; SVG honors `stack_total_labels`)
 - #151 driver_card + boxed bar labels: `test_driver_card.py` + `test_boxed_labels.py` (schema 1/6/7 rows, malformed direction/tone, overflow strict/non-strict, no-valid-row hero fallback, order/a11y; boxed category mismatch, in-bar/outside+connector, Chart.js+SVG, collision independence). Slide 18 target lives in `amex_v10_44_slide_handoff.json`
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
@@ -46,7 +47,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 ## Verification
 
 - `python -m pytest -q`
-- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_linear_grouping.py`
+- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_migrate.py`
 
 ## Child DOX Index
 
