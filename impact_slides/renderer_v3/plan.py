@@ -41,7 +41,8 @@ TAKEAWAY_CEIL: Final = 28
 TABLE_FLOOR: Final = 20  # D44 ordinary data_table
 TABLE_CEIL: Final = 24
 TABLE_MAX_LABEL_LINES: Final = 2
-TABLE_CELL_PAD_X: Final = 16  # left+right pad per cell at measure time
+# Must match publish CSS padding on table.data-table th/td (8px*2, 6px*2).
+TABLE_CELL_PAD_X: Final = 16
 TABLE_CELL_PAD_Y: Final = 12
 TABLE_RULE_Y: Final = 1
 
@@ -108,6 +109,8 @@ class SurfacePlan:
     _maximum_size: Optional[int] = None
     # data_table fit payload (formatted cells + labels); None for non-tables.
     _table_spec: Optional[dict[str, Any]] = None
+    # Frozen paint input for data_table (public to painters; set at seal).
+    table_paint: Optional[dict[str, Any]] = None
 
     def to_public(self) -> dict[str, Any]:
         sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
@@ -946,7 +949,7 @@ def _wrap_lines(
     if not text:
         return [""], False
     advances = [
-        _SOURCE_SANS_ADVANCES[700 if strong else 400].get(char, 1.2)
+        _advance_map(strong).get(char, 1.2)
         for run, strong in items
         for char in run
     ]
@@ -977,9 +980,22 @@ def _wrap_lines(
     return (lines or [""]), width_overflow
 
 
+# Extra glyphs used by table paint (em dash, en dash, ellipsis).
+_EXTRA_ADVANCES: Final = {
+    "—": 0.5,  # em dash (D103 missing)
+    "–": 0.5,  # en dash (ranges)
+    "…": 0.75,  # ellipsis (D25 labels)
+}
+
+
+def _advance_map(strong: bool) -> dict[str, float]:
+    base = _SOURCE_SANS_ADVANCES[700 if strong else 400]
+    return {**base, **_EXTRA_ADVANCES}
+
+
 def _uses_fallback_metrics(sp: SurfacePlan) -> bool:
     return any(
-        char not in _SOURCE_SANS_ADVANCES[700 if strong else 400]
+        char not in _advance_map(strong)
         for text, strong in sp._text_items
         for char in text
         if char != "\n"
@@ -1096,6 +1112,9 @@ def _seal_digests(sp: SurfacePlan) -> None:
     sem_src = f"{sp.slide_number}|{sp.role}|{sp.surface_id}|{content}"
     sp.semantic_digest = _sha(sem_src)
     sp.painter_plan_digest = _sha(base)
+    # Freeze table paint payload so painters never reformat (D69/D70).
+    if sp._table_spec is not None:
+        sp.table_paint = dict(sp._table_spec)
 
 
 def _sha(text: str) -> str:
@@ -1141,7 +1160,7 @@ def _block_text_items(block: Any) -> list[tuple[str, bool]]:
 
 def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:
     """Pre-format every cell once; fitting never reformats values (D70)."""
-    from .format import format_scale_disclosure, format_semantic_value
+    from .format import format_semantic_value
 
     columns = list(table.columns)
     rows = list(table.rows)
@@ -1192,7 +1211,7 @@ def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:
 
     scale_labels: list[str] = []
     for fid in format_ids_used:
-        disc = format_scale_disclosure(number_formats[fid])
+        disc = number_formats[fid].scale_label
         if disc and disc not in scale_labels:
             scale_labels.append(disc)
 
@@ -1205,6 +1224,10 @@ def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:
         + [g["label"] for g in (groups or [])]
         + scale_labels
     )
+    # Column header alignment follows body column role (D104).
+    col_aligns = [
+        cells_align[0][c] if cells_align else "right" for c in range(len(col_ids))
+    ]
     return {
         "col_ids": col_ids,
         "n_cols": len(col_ids),
@@ -1217,10 +1240,11 @@ def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:
         "cells_acc": cells_acc,
         "cells_role": cells_role,
         "cells_align": cells_align,
+        "col_aligns": col_aligns,
         "groups": groups,
         "scale_labels": scale_labels,
         "all_texts": all_texts,
-        # Filled by fitter for painter consumption.
+        # Filled by fitter for painter consumption (frozen paint input).
         "display_headers": list(header_full),
         "display_row_labels": list(row_labels_full),
         "display_groups": None,
@@ -1231,7 +1255,7 @@ def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:
 
 
 def _text_width(text: str, px: int, *, strong: bool = False) -> float:
-    advances = _SOURCE_SANS_ADVANCES[700 if strong else 400]
+    advances = _advance_map(strong)
     measured = sum(advances.get(ch, 1.2) for ch in text) * px
     return max(measured * 1.05, measured + 2)
 
@@ -1317,9 +1341,8 @@ def _table_fit_detail(
         header_mins[c + 1] = max(header_mins[c + 1], value_mins[c])
 
     def try_widths(h_labels: list[str], r_labels: list[str], g_labels: list[str] | None):
-        mins = list(header_mins)
+        mins = [0.0] * total_cols
         # Recompute label-driven mins for current label set.
-        mins[0] = value_mins and 0.0 or 0.0
         tokens = _wrap_tokens(h_labels[0])
         mins[0] = max(
             (_text_width(tok.rstrip(), px, strong=True) for _, tok in tokens),

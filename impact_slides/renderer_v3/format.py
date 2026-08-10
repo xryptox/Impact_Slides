@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from typing import Any, Mapping, Optional
+from typing import Any, Literal, Mapping
 
 from .models import NumberFormat, SemanticValue
 
@@ -32,8 +32,8 @@ class FormattedValue:
 
     visible: str
     accessible: str
-    role: str  # "number" | "text" | "missing" | "range"
-    align: str  # "left" | "right"
+    role: Literal["number", "text", "missing", "range"]
+    align: Literal["left", "right"]
 
 
 def format_semantic_value(
@@ -129,8 +129,4 @@ def _group_thousands(digits: str) -> str:
     return ",".join(reversed(parts))
 
 
-def format_scale_disclosure(fmt: NumberFormat) -> Optional[str]:
-    """One scale disclosure string per owning table/axis (D145/D214)."""
-    if fmt.scale_label is None:
-        return None
-    return fmt.scale_label
+

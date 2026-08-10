@@ -240,13 +240,19 @@ def test_render_data_table_html_identity_and_a11y(tmp_path: Path):
     assert "$1.5" in html  # scaled
     assert "USD millions" in html  # scale disclosure once
     assert "1.0%" in html and "2.5%" in html  # range
-    # Tabular numerals class on quantitative cells.
-    assert "font-variant-numeric:tabular-nums" in html or 'class="num"' in html or " num" in html
+    # Tabular numerals + alignment CSS target cells, not the table element.
+    assert "td.num" in html or "td.num,table.data-table th.num" in html
+    assert "td.align-right" in html or "th.align-right,table.data-table td.align-right" in html
+    assert 'class="align-left' in html  # text column body
+    assert "align-left" in html and "Note" in html
     # No raw theme hex in painter output beyond generated CSS vars.
-    assert "#00175A" not in html.split("<main")[1] if "<main" in html else True
+    body = html.split("<main", 1)[1] if "<main" in html else html
+    assert "#00175A" not in body
     # Plan attrs on table surface.
     assert 'data-surface-id="seg-perf"' in html
     assert "data-plan-sizes=" in html
+    # Non-strict overflow marker class present in CSS.
+    assert "table-overflow" in html
 
 
 def test_render_preserves_row_column_count(tmp_path: Path):

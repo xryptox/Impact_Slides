@@ -105,16 +105,18 @@ def build_presentation_html(
             ".notes{display:none;white-space:pre-wrap}",
             ".disclosures summary{padding-left:1.25em}",
             # data_table (D8/D42/D104/D105/D183/D257)
+            # Pads must match plan.TABLE_CELL_PAD_* (8+8 x, 6+6 y).
             "table.data-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
             "table.data-table th,table.data-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule);vertical-align:middle;font-weight:400}",
             "table.data-table thead th{background:var(--color-band);color:var(--color-band-ink);font-weight:var(--font-weight-emphasis)}",
             "table.data-table tbody td,table.data-table tbody th{background:transparent}",
-            "table.data-table .align-left{text-align:left}",
-            "table.data-table .align-right{text-align:right}",
-            "table.data-table .align-center{text-align:center}",
-            "table.data-table .num{font-variant-numeric:tabular-nums lining-nums}",
-            "table.data-table .stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
+            "table.data-table th.align-left,table.data-table td.align-left{text-align:left}",
+            "table.data-table th.align-right,table.data-table td.align-right{text-align:right}",
+            "table.data-table th.align-center,table.data-table td.align-center{text-align:center}",
+            "table.data-table td.num,table.data-table th.num{font-variant-numeric:tabular-nums lining-nums}",
+            "table.data-table th.stub,table.data-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
             ".table-scale{font-size:var(--text-xs);margin:0 0 var(--space-sm);color:var(--color-navy)}",
+            ".table-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             "@media print{"
             "details:not([open])>summary~*{display:block}"
             "html,body{width:auto;height:auto;overflow:visible}"
@@ -357,52 +359,34 @@ def _paint_data_table(
     events_by_surface: dict[str, list[DiagnosticEvent]],
     number_formats: dict[str, Any],
 ) -> list[str]:
-    """Paint one ordinary data_table with native associations (D183/D255/D257)."""
-    from .format import format_semantic_value
-
+    """Paint one ordinary data_table from frozen plan (D69/D183/D255/D257)."""
     table = slide.payload.table
     sp = plans_by_id.get(table.surface_id)
-    px = sp.role_sizes.get("table") if sp else None
+    if sp is None or not getattr(sp, "table_paint", None):
+        raise RuntimeError(
+            f"missing frozen table_paint for surface {table.surface_id!r}"
+        )
+    paint = sp.table_paint
+    px = sp.role_sizes.get("table")
     style = _style_font(px)
-    spec = getattr(sp, "_table_spec", None) if sp is not None else None
     out: list[str] = []
     attrs = _plan_attrs(sp, events_by_surface)
+    overflow_cls = " table-overflow" if sp._overflow else ""
 
-    # Prefer frozen plan display strings; fall back to live format.
-    headers = (
-        list(spec["display_headers"])
-        if spec and spec.get("display_headers")
-        else [table.stub_header.label] + [c.label for c in table.columns]
-    )
-    row_labels = (
-        list(spec["display_row_labels"])
-        if spec and spec.get("display_row_labels")
-        else [r.label for r in table.rows]
-    )
-    full_headers = [table.stub_header.label] + [c.label for c in table.columns]
-    full_row_labels = [r.label for r in table.rows]
-    widths = list(spec["col_widths"]) if spec and spec.get("col_widths") else []
-    groups = spec.get("display_groups") if spec else None
-    if groups is None and table.column_groups:
-        groups = [
-            {
-                "group_id": g.group_id,
-                "label": g.label,
-                "display_label": g.label,
-                "column_ids": list(g.column_ids),
-                "colspan": len(g.column_ids),
-            }
-            for g in table.column_groups
-        ]
-
-    # Column header element ids for headers= associations (D142/D256).
-    col_ids = [c.column_id for c in table.columns]
+    headers = list(paint["display_headers"])
+    row_labels = list(paint["display_row_labels"])
+    full_headers = list(paint["header_full"])
+    full_row_labels = list(paint["row_labels_full"])
+    widths = list(paint.get("col_widths") or [])
+    groups = paint.get("display_groups")
+    col_ids = list(paint["col_ids"])
+    col_aligns = list(paint.get("col_aligns") or ["right"] * len(col_ids))
     stub_hid = f"{table.surface_id}-h-stub"
     leaf_hids = [f"{table.surface_id}-h-{cid}" for cid in col_ids]
     group_hids: dict[str, str] = {}
 
     out.append(
-        f'<table class="data-table" {attrs}{style} '
+        f'<table class="data-table{overflow_cls}" {attrs}{style} '
         f'data-table-surface="{_escape(table.surface_id)}">'
     )
     if widths:
@@ -412,20 +396,15 @@ def _paint_data_table(
         out.append("</colgroup>")
     out.append("<thead>")
 
-    # Group header row (optional).
     grouped_cols: set[str] = set()
     if groups:
         out.append("<tr>")
-        # Stub corner spans two header rows when groups present.
         out.append(
             f'<th id="{_escape(stub_hid)}" scope="col" rowspan="2" '
             f'class="band-table-header align-left stub" '
             f'title="{_escape(full_headers[0])}">{_soft_break_html(headers[0])}</th>'
         )
-        # Emit group cells and ungrouped leaf headers with rowspan.
-        leaf_index = {cid: i for i, cid in enumerate(col_ids)}
-        covered = set()
-        # Walk leaves in order; emit group when hitting its first leaf.
+        covered: set[str] = set()
         i = 0
         while i < len(col_ids):
             cid = col_ids[i]
@@ -434,12 +413,12 @@ def _paint_data_table(
                 continue
             owner = next((g for g in groups if cid in g["column_ids"]), None)
             if owner is None:
-                # Ungrouped leaf: rowspan 2.
                 hid = leaf_hids[i]
+                align = col_aligns[i]
                 out.append(
                     f'<th id="{_escape(hid)}" scope="col" rowspan="2" '
-                    f'class="band-table-header align-right" '
-                    f'title="{_escape(full_headers[i + 1])}">' 
+                    f'class="band-table-header align-{align}" '
+                    f'title="{_escape(full_headers[i + 1])}">'
                     f"{_soft_break_html(headers[i + 1])}</th>"
                 )
                 i += 1
@@ -454,22 +433,21 @@ def _paint_data_table(
                 f'<th id="{_escape(ghid)}" scope="colgroup" '
                 f'colspan="{owner["colspan"]}" '
                 f'class="band-table-header align-center" '
-                f'title="{_escape(owner["label"])}">' 
+                f'title="{_escape(owner["label"])}">'
                 f"{_soft_break_html(owner['display_label'])}</th>"
             )
             i += len(owner["column_ids"])
         out.append("</tr>")
-        # Second header row: leaf headers under groups only.
         out.append("<tr>")
         for i, cid in enumerate(col_ids):
             if cid not in grouped_cols:
                 continue
             hid = leaf_hids[i]
-            # Find parent group id for headers association on body cells.
+            align = col_aligns[i]
             out.append(
                 f'<th id="{_escape(hid)}" scope="col" '
-                f'class="band-table-header align-right" '
-                f'title="{_escape(full_headers[i + 1])}">' 
+                f'class="band-table-header align-{align}" '
+                f'title="{_escape(full_headers[i + 1])}">'
                 f"{_soft_break_html(headers[i + 1])}</th>"
             )
         out.append("</tr>")
@@ -481,12 +459,11 @@ def _paint_data_table(
             f'title="{_escape(full_headers[0])}">{_soft_break_html(headers[0])}</th>'
         )
         for i, hid in enumerate(leaf_hids):
-            # Alignment follows body column role (D104).
-            align = "align-right"  # default quantitative; refined per first row below
+            align = col_aligns[i]
             out.append(
                 f'<th id="{_escape(hid)}" scope="col" '
-                f'class="band-table-header {align}" '
-                f'title="{_escape(full_headers[i + 1])}">' 
+                f'class="band-table-header align-{align}" '
+                f'title="{_escape(full_headers[i + 1])}">'
                 f"{_soft_break_html(headers[i + 1])}</th>"
             )
         out.append("</tr>")
@@ -498,25 +475,14 @@ def _paint_data_table(
         rid = f"{table.surface_id}-r-{row.row_id}"
         out.append(
             f'<th id="{_escape(rid)}" scope="row" class="stub align-left" '
-            f'title="{_escape(full_row_labels[r_i])}">' 
+            f'title="{_escape(full_row_labels[r_i])}">'
             f"{_soft_break_html(row_labels[r_i])}</th>"
         )
         for c_i, cid in enumerate(col_ids):
-            cell = row.cells[cid]
-            if spec and spec.get("cells_vis"):
-                visible = spec["cells_vis"][r_i][c_i]
-                accessible = spec["cells_acc"][r_i][c_i]
-                role = spec["cells_role"][r_i][c_i]
-                align = spec["cells_align"][r_i][c_i]
-            else:
-                fv = format_semantic_value(cell, number_formats)
-                visible, accessible, role, align = (
-                    fv.visible,
-                    fv.accessible,
-                    fv.role,
-                    fv.align,
-                )
-            # headers association: row + leaf (+ group if any)
+            visible = paint["cells_vis"][r_i][c_i]
+            accessible = paint["cells_acc"][r_i][c_i]
+            role = paint["cells_role"][r_i][c_i]
+            align = paint["cells_align"][r_i][c_i]
             hrefs = [rid, leaf_hids[c_i]]
             if groups:
                 owner = next((g for g in groups if cid in g["column_ids"]), None)
@@ -526,7 +492,6 @@ def _paint_data_table(
                     )
                     hrefs.insert(1, ghid)
             num_cls = " num" if role in ("number", "range", "missing") else ""
-            # aria-label carries full accessible text (Missing, units, etc.).
             aria = (
                 f' aria-label="{_escape(accessible)}"'
                 if accessible != visible
@@ -541,10 +506,10 @@ def _paint_data_table(
     out.append("</tbody>")
     out.append("</table>")
 
-    scale_labels = spec.get("scale_labels") if spec else []
+    scale_labels = paint.get("scale_labels") or []
     if scale_labels:
         out.append(
-            f'<p class="table-scale"{style}>' 
+            f'<p class="table-scale"{style}>'
             f"{_escape('; '.join(scale_labels))}</p>"
         )
     return out
