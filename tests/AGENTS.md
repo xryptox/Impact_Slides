@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme.
+Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan.
 
 ## Ownership
 
