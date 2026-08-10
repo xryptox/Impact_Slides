@@ -258,9 +258,11 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
         )
         for owner, size_field, forbidden, floor, ceiling in surfaces:
             surface = slide.get(owner)
+            has_typography = isinstance(surface, dict) and "typography" in surface
             typo = surface.get("typography") if isinstance(surface, dict) else None
-            malformed = isinstance(typo, dict) and (
-                set(typo) - {"mode", "sync_group", size_field}
+            malformed = has_typography and (
+                not isinstance(typo, dict)
+                or set(typo) - {"mode", "sync_group", size_field}
                 or forbidden in typo
                 or typo.get("mode", "adaptive") not in {"adaptive", "fixed"}
                 or (

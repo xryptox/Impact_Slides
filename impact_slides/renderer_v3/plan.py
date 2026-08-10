@@ -49,13 +49,11 @@ TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
 TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
 TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
 LIST_INDENT_EM: Final = 1.25
-GLYPH_ADVANCE: Final = {
-    "narrow": 0.35,
-    "normal": 0.58,
-    "wide": 0.90,
-    "space": 0.28,
+_METRIC_CHARS: Final = ''.join(chr(i) for i in range(32, 127))
+_SOURCE_SANS_ADVANCES: Final = {
+    400: dict(zip(_METRIC_CHARS, (0.2,0.289,0.426,0.497,0.497,0.824,0.609,0.249,0.303,0.303,0.418,0.497,0.249,0.311,0.249,0.35,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.497,0.249,0.249,0.497,0.497,0.497,0.425,0.847,0.543,0.588,0.571,0.615,0.527,0.494,0.617,0.652,0.263,0.479,0.579,0.486,0.727,0.647,0.664,0.566,0.664,0.569,0.534,0.536,0.645,0.515,0.786,0.513,0.476,0.539,0.303,0.35,0.303,0.497,0.5,0.542,0.504,0.553,0.456,0.555,0.496,0.292,0.504,0.544,0.246,0.247,0.495,0.255,0.829,0.547,0.542,0.555,0.555,0.347,0.419,0.338,0.544,0.467,0.719,0.446,0.467,0.425,0.303,0.241,0.303,0.497))),
+    700: dict(zip(_METRIC_CHARS, (0.2,0.34,0.537,0.528,0.528,0.857,0.667,0.3,0.344,0.344,0.457,0.528,0.3,0.332,0.3,0.339,0.528,0.528,0.528,0.528,0.528,0.528,0.528,0.528,0.528,0.528,0.3,0.3,0.528,0.528,0.528,0.463,0.902,0.573,0.605,0.582,0.635,0.548,0.524,0.638,0.674,0.301,0.509,0.614,0.518,0.762,0.665,0.684,0.596,0.684,0.613,0.556,0.556,0.665,0.556,0.813,0.567,0.525,0.541,0.344,0.339,0.344,0.528,0.5,0.555,0.527,0.573,0.468,0.573,0.518,0.341,0.534,0.571,0.276,0.278,0.548,0.286,0.857,0.572,0.555,0.573,0.573,0.398,0.443,0.383,0.568,0.523,0.776,0.514,0.521,0.46,0.344,0.268,0.344,0.528))),
 }
-STRONG_MULTIPLIER: Final = 1.04
 
 
 @dataclass
@@ -65,6 +63,7 @@ class SurfacePlan:
     surface_id: str
     role: str
     slide_number: int
+    slide_index: int
     layout_type: str
     slot_order: int
     design_stage_region: int
@@ -142,6 +141,32 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
     surfaces = _collect_surfaces(deck)
     events: list[DiagnosticEvent] = []
 
+    sync_roles: dict[str, set[str]] = {}
+    for sp in surfaces:
+        if sp._sync_group and sp._fit_role:
+            sync_roles.setdefault(sp._sync_group, set()).add(sp._fit_role)
+    invalid_sync = {group for group, roles in sync_roles.items() if len(roles) > 1}
+    for sp in surfaces:
+        if sp._sync_group not in invalid_sync:
+            continue
+        events.append(
+            event(
+                code="validation.conflict" if strict else "repair.sync_disabled",
+                severity="error" if strict else "warning",
+                phase="plan",
+                role=sp.role,
+                path=f"/slides/{sp.slide_index}/{sp.role}/typography/sync_group",
+                action="reject" if strict else "disable_sync",
+                result="failed" if strict else "independent",
+                slide_number=sp.slide_number,
+                layout_type=sp.layout_type,
+                surface_id=sp.surface_id,
+                expected="sync_group contains one typography role",
+            )
+        )
+        if not strict:
+            sp._sync_group = None
+
     # Phase 1 — independent measure at design stage.
     for sp in surfaces:
         _measure_surface(sp, events)
@@ -162,7 +187,7 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
                     severity="info",
                     phase="plan",
                     role=sp.role,
-                    path=f"/slides/{sp.slide_number}/{sp.role}",
+                    path=f"/slides/{sp.slide_index}/{sp.role}",
                     action="measure",
                     result="accepted",
                     slide_number=sp.slide_number,
@@ -179,7 +204,7 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
 
     fit_errors = [e for e in events if e.code == "validation.fit"]
     overflow = [s for s in surfaces if s._overflow]
-    if strict and (overflow or fit_errors):
+    if strict and (overflow or fit_errors or invalid_sync):
         raise RendererValidationError(
             sort_events(list(events) + [_overflow_event(s) for s in overflow]),
             handoff_schema_version=deck.meta.handoff_schema_version,
@@ -228,7 +253,7 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
 def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
     out: list[SurfacePlan] = []
     region = 0
-    for slide in deck.slides:
+    for slide_index, slide in enumerate(deck.slides):
         lt = slide.layout_type
         sn = slide.slide_number
         if lt in ("opening_cover", "closing_cover"):
@@ -247,6 +272,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     surface_id=f"slide-{sn}-cover",
                     role="cover",
                     slide_number=sn,
+                    slide_index=slide_index,
                     layout_type=lt,
                     slot_order=0,
                     design_stage_region=region,
@@ -280,6 +306,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 surface_id=f"slide-{sn}-title",
                 role="title",
                 slide_number=sn,
+                slide_index=slide_index,
                 layout_type=lt,
                 slot_order=0,
                 design_stage_region=region,
@@ -301,6 +328,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 surface_id=f"slide-{sn}-subtitle",
                 role="subtitle",
                 slide_number=sn,
+                slide_index=slide_index,
                 layout_type=lt,
                 slot_order=1,
                 design_stage_region=region,
@@ -337,6 +365,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 surface_id=f"slide-{sn}-takeaway",
                 role="takeaway",
                 slide_number=sn,
+                slide_index=slide_index,
                 layout_type=lt,
                 slot_order=100,  # after blocks; set final after block count
                 design_stage_region=region,
@@ -376,6 +405,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     surface_id=surface_id,
                     role="narrative_block",
                     slide_number=sn,
+                    slide_index=slide_index,
                     layout_type=lt,
                     slot_order=10 + i,
                     design_stage_region=region,
@@ -402,8 +432,8 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
 
         _allocate_geometry(adaptive_surfaces, body_h)
 
-    # Stable plan order: slide, slot, surface_id (D312).
-    out.sort(key=lambda s: (s.slide_number, s.slot_order, s.surface_id))
+    # Stable plan order follows authored deck order (D312).
+    out.sort(key=lambda s: (s.slide_index, s.slot_order, s.surface_id))
     return out
 
 
@@ -511,7 +541,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
                 severity="error",
                 phase="plan",
                 role=sp.role,
-                path=f"/slides/{sp.slide_number}/typography",
+                path=f"/slides/{sp.slide_index}/typography",
                 action="reject",
                 result="failed",
                 slide_number=sp.slide_number,
@@ -579,7 +609,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
                 severity="info",
                 phase="plan",
                 role=sp.role,
-                path=f"/slides/{sp.slide_number}/{sp.role}",
+                path=f"/slides/{sp.slide_index}/{sp.role}",
                 action="measure",
                 result="accepted",
                 slide_number=sp.slide_number,
@@ -696,36 +726,31 @@ def _wrap_lines(
     text = "".join(t for t, _ in items)
     if not text:
         return [""], False
-    strong_chars = sum(len(run) for run, strong in items if strong)
-    weight = 1 + (STRONG_MULTIPLIER - 1) * strong_chars / max(1, len(text))
+    advances = [
+        _SOURCE_SANS_ADVANCES[700 if strong else 400].get(char, 1.0)
+        for run, strong in items
+        for char in run
+    ]
 
-    def width(value: str) -> float:
-        measured = 0.0
-        for char in value:
-            if char.isspace():
-                advance = GLYPH_ADVANCE["space"]
-            elif char in "ilIjtfr.,:;!'|":
-                advance = GLYPH_ADVANCE["narrow"]
-            elif char in "MW@%&QGmwm":
-                advance = GLYPH_ADVANCE["wide"]
-            else:
-                advance = GLYPH_ADVANCE["normal"]
-            measured += px * advance * weight
+    def width(start: int, length: int) -> float:
+        measured = sum(advances[start : start + length]) * px
         return max(measured * 1.05, measured + 2)
 
-    tokens = re.findall(r"\S+\s*", text)
-    if not tokens:
-        return [text], width(text) > box_w
+    matches = list(re.finditer(r"\S+\s*", text))
+    if not matches:
+        return [text], width(0, len(text)) > box_w
     lines: list[str] = []
+    line_start = matches[0].start()
     cur = ""
     width_overflow = False
-    for tok in tokens:
-        tok_w = width(tok.rstrip())
-        if tok_w > box_w:
+    for match in matches:
+        tok = match.group()
+        if width(match.start(), len(tok.rstrip())) > box_w:
             width_overflow = True
         trial = cur + tok
-        if cur and width(trial) > box_w:
+        if cur and width(line_start, len(trial)) > box_w:
             lines.append(cur.rstrip())
+            line_start = match.start()
             cur = tok
         else:
             cur = trial
@@ -813,7 +838,7 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                         severity="info",
                         phase="plan",
                         role=m.role,
-                        path=f"/slides/{m.slide_number}/{m.role}",
+                        path=f"/slides/{m.slide_index}/{m.role}",
                         action="measure",
                         result="accepted",
                         slide_number=m.slide_number,
@@ -854,7 +879,7 @@ def _overflow_event(sp: SurfacePlan) -> DiagnosticEvent:
         severity="error",
         phase="plan",
         role=sp.role,
-        path=f"/slides/{sp.slide_number}/{sp.role}",
+        path=f"/slides/{sp.slide_index}/{sp.role}",
         action="measure",
         result="failed",
         slide_number=sp.slide_number,

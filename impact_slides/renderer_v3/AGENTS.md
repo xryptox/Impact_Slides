@@ -11,7 +11,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Deck-wide adaptive measure/plan freeze (`plan.py`) for narrative prose, subtitles, takeaways, and fixed chrome (D1–D4, D22, D59, D68–D70)
 - Public `render_deck` + CLI publication (`render.py`, `publish.py`, `cli.py`)
 - Generated JSON Schema artifact `schema/handoff_schema_v1.json` (D121)
-- Canonical `boardroom_amex` theme manifest + generated CSS (`theme/`, `theme_export.py`) (D127-D133)
+- Canonical `boardroom_amex` theme manifest + generated CSS (`theme/`, `theme_export.py`) and self-contained licensed webfonts (`assets/fonts/`) (D127-D133)
 - Does **not** own legacy v2 layouts, recipes, charts, or migration of unversioned handoffs (D119 is a later tool)
 
 ## Local Contracts
@@ -23,7 +23,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - `render_deck(handoff_path, out_dir, *, strict=True, ...)` validates → plans → publishes exactly five UTF-8/LF artifacts: `presentation.html`, `slide_notes.md`, `evidence_manifest.json`, `run_meta.json`, `handoff_schema_v1.json` (D250)
 - Clean → exit 0 / `ok: true`; degraded non-strict → exit 2 / `ok: false`; failed → typed error, exit 1, prior output untouched (D112/D312)
 - HTML surfaces carry compact `data-plan-sizes` / `data-plan-adaptations` plus projected `data-diagnostic-codes` / `data-diagnostic-count` from `DiagnosticEvent.surface_id`; `run_meta.plans` holds one entry per planned surface (D21/D312)
-- Takeaway outer reservation includes label/pad/border/outer margin; text fitter uses the inner box only. Cover elements measure at their own frozen role sizes. Paragraph/list margins match paint per CSS block box.
+- Takeaway outer reservation includes label/pad/border/outer margin; text fitter uses the inner box only. Cover elements measure at their own frozen role sizes. Paragraph/list margins match paint per CSS block box. Planning uses calibrated Source Sans 3 metrics and publication embeds that vendored font.
 - Strict aggregates all detectable errors into `RendererValidationError.events` (D120/D309/D310)
 - Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311)
 - Kernel compositions: `opening_cover`, `narrative`, `closing_cover` (D210/D251/D268/D270)

@@ -328,7 +328,7 @@ def test_geometry_is_reclaimed_across_subtitle_and_uneven_blocks():
     raw["slides"][1]["payload"]["blocks"][0]["paragraphs"][0]["runs"][0]["text"] = "Long body " * 180
     plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
     by = plan.by_surface_id()
-    assert by["slide-2-subtitle"]._box_h > 120
+    assert by["slide-2-subtitle"]._box_h > 60
     assert by["slide-2-block-lead"]._box_h > by["slide-2-block-bullets"]._box_h
 
 
@@ -407,6 +407,44 @@ def test_cover_measures_each_role_at_its_frozen_size():
     assert cover.role_sizes["title"] == 72
     assert cover.role_sizes["meta"] == 22
     assert not cover._overflow
+
+
+@pytest.mark.parametrize("bad", [None, [], "bad"])
+def test_nonstrict_discards_nonobject_typography(bad):
+    raw = _minimal()
+    raw["slides"][1]["content"]["typography"] = bad
+    repaired = validate_handoff(raw, strict=False)
+    assert repaired.deck.slides[1].content.typography is None
+    assert any(e.code == "repair.policy_defaulted" for e in repaired.events)
+
+
+def test_cross_role_sync_group_is_rejected_or_disabled():
+    raw = _minimal()
+    raw["slides"][1]["content"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "shared",
+    }
+    raw["slides"][1]["payload"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "shared",
+    }
+    deck = validate_handoff(raw, strict=True).deck
+    with pytest.raises(RendererValidationError):
+        plan_deck(deck, strict=True)
+    plan = plan_deck(deck, strict=False)
+    assert all(s._sync_group is None for s in plan.surfaces if s._fit_role)
+    assert any(e.code == "repair.sync_disabled" for e in plan.events)
+
+
+def test_plan_order_and_event_paths_follow_authored_slide_indexes():
+    raw = _minimal()
+    raw["slides"][0]["slide_number"] = 10
+    raw["slides"][1]["slide_number"] = 5
+    raw["slides"][2]["slide_number"] = 7
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    assert [s.slide_number for s in plan.surfaces[:2]] == [10, 5]
+    growth = next(e for e in plan.events if e.code == "plan.typography_grown")
+    assert growth.path.startswith("/slides/1/")
 
 
 def test_sync_preserves_typography_grown_when_above_floor():

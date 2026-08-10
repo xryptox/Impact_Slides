@@ -1,6 +1,7 @@
 """Transactional D250 artifact publication (D112/D113/D250/D312)."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import html
 import json
@@ -65,6 +66,9 @@ def build_presentation_html(
     """Minimal deterministic HTML shell for kernel compositions (paint later)."""
     plans_by_id = deck_plan.by_surface_id() if deck_plan is not None else {}
     events_by_surface = _events_by_surface(events or [])
+    font_dir = Path(__file__).with_name("assets") / "fonts"
+    source_sans = base64.b64encode((font_dir / "source-sans-3-latin.woff2").read_bytes()).decode("ascii")
+    ibm_plex = base64.b64encode((font_dir / "ibm-plex-sans-latin.woff2").read_bytes()).decode("ascii")
     parts: list[str] = [
         "<!DOCTYPE html>",
         '<html lang="en">',
@@ -82,12 +86,14 @@ def build_presentation_html(
     parts.extend(
         [
             "<style>",
+            f"@font-face{{font-family:'Source Sans 3';src:url(data:font/woff2;base64,{source_sans}) format('woff2');font-weight:200 900;font-style:normal}}",
+            f"@font-face{{font-family:'IBM Plex Sans';src:url(data:font/woff2;base64,{ibm_plex}) format('woff2');font-weight:100 700;font-style:normal}}",
             generate_theme_css().rstrip("\n"),
             # Fixed 1920×1080 stage; viewport may scale the stage uniformly (D68).
             "html{width:100%;height:100%}",
-            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy);overflow:hidden}",
+            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy);overflow:auto}",
             ".deck-stage{width:1920px;transform-origin:top left}",
-            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always}",
+            ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);transform-origin:top left;page-break-after:always}",
             "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             # Spacing constants must stay aligned with plan.BLOCK_MARGIN_Y.
@@ -116,7 +122,7 @@ def build_presentation_html(
         parts.append("</section>")
     parts.extend([
         "</main>",
-        "<script>(()=>{const s=document.querySelector('.deck-stage');const fit=()=>s.style.transform=`scale(${Math.min(innerWidth/1920,innerHeight/1080)})`;addEventListener('resize',fit);fit()})()</script>",
+        "<script>(()=>{const s=document.querySelector('.deck-stage'),a=[...s.children];const fit=()=>{const z=Math.min(innerWidth/1920,innerHeight/1080);s.style.width=`${1920*z}px`;a.forEach(x=>{x.style.transform=`scale(${z})`;x.style.marginBottom=`${1080*(z-1)}px`})};addEventListener('resize',fit);fit()})()</script>",
         "</body>",
         "</html>",
         "",
