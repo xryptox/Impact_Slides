@@ -61,6 +61,15 @@ TAKEAWAY_OUTER_MT: Final = 20  # --space-md
 TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
 TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
 TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
+COVER_GAP_Y: Final = 12  # --space-sm between flex items
+COVER_TITLE_MARGIN_Y: Final = 20  # --space-md
+COVER_BAND_H: Final = 8
+COVER_BAND_MARGIN_Y: Final = 28  # --space-lg
+DIVIDER_META_MARGIN_Y: Final = 12  # --space-sm
+DIVIDER_RULE_H: Final = 4
+DIVIDER_RULE_MARGIN_Y: Final = 20  # --space-md
+LEGAL_HEADING_MARGIN_Y: Final = 20  # --space-md
+LEGAL_PART_MARGIN_Y: Final = 20  # --space-md
 LIST_INDENT_EM: Final = 1.25
 DISCLOSURE_INDENT_EM: Final = 1.25
 _METRIC_CHARS: Final = ''.join(chr(i) for i in range(32, 127))
@@ -113,6 +122,8 @@ class SurfacePlan:
     _maximum_size: Optional[int] = None
     # data_table fit payload (formatted cells + labels); None for non-tables.
     _table_spec: Optional[dict[str, Any]] = None
+    # CSS white-space:pre-wrap surfaces preserve authored hard line breaks.
+    _preserve_newlines: bool = False
     # Frozen paint input for data_table (public to painters; set at seal).
     table_paint: Optional[dict[str, Any]] = None
 
@@ -319,7 +330,13 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
                     _fit_role=None,
                     _mode="fixed",
-                    _margin_boxes=len(cover_items),
+                    _margin_boxes=0,
+                    _chrome_h=(
+                        COVER_BAND_H
+                        + COVER_BAND_MARGIN_Y
+                        + COVER_TITLE_MARGIN_Y
+                        + COVER_GAP_Y * len(cover_items)
+                    ),
                 )
             )
             continue
@@ -357,7 +374,12 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
                     _fit_role=None,
                     _mode="fixed",
-                    _margin_boxes=len(items),
+                    _margin_boxes=0,
+                    _chrome_h=(
+                        DIVIDER_META_MARGIN_Y
+                        + DIVIDER_RULE_H
+                        + DIVIDER_RULE_MARGIN_Y
+                    ),
                 )
             )
             continue
@@ -393,7 +415,12 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
                     _fit_role=None,
                     _mode="fixed",
-                    _margin_boxes=len(legal_items),
+                    _margin_boxes=len(p.paragraphs),
+                    _chrome_h=(
+                        LEGAL_HEADING_MARGIN_Y
+                        + (LEGAL_PART_MARGIN_Y if p.part > 1 else 0)
+                    ),
+                    _preserve_newlines=True,
                 )
             )
             continue
@@ -957,18 +984,18 @@ def _required_height(
 
 
 def _cover_fits(sp: SurfacePlan) -> bool:
-    """Measure each cover element at its own frozen role size (R178-005)."""
-    box_w = sp._box_w
-    box_h = sp._box_h
-    need_h = 0
+    """Measure each fixed element and its renderer-owned chrome."""
+    need_h = sp._chrome_h
     for text_c, role_key in sp._cover_items:
         px = sp.role_sizes[role_key]
         strong = role_key == "title"
-        lines, wo = _wrap_lines([(text_c, strong)], px, box_w)
-        if wo:
-            return False
-        need_h += max(1, len(lines)) * _line_box(px) + BLOCK_MARGIN_Y
-    return need_h <= box_h
+        hard_lines = text_c.split("\n") if sp._preserve_newlines else [text_c]
+        for hard_line in hard_lines:
+            lines, wo = _wrap_lines([(hard_line, strong)], px, sp._box_w)
+            if wo:
+                return False
+            need_h += max(1, len(lines)) * _line_box(px)
+    return need_h + sp._margin_boxes * BLOCK_MARGIN_Y <= sp._box_h
 
 
 def _split_units(

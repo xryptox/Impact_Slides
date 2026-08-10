@@ -510,6 +510,15 @@ class _SlideBase(ClosedModel):
             raise ValueError("speaker_notes must be non-whitespace plain text")
         return v
 
+    @field_validator("evidence_ids")
+    @classmethod
+    def _evidence_ids_duplicate_free(
+        cls, v: Optional[list[str]]
+    ) -> Optional[list[str]]:
+        if v is not None and len(v) != len(set(v)):
+            raise ValueError("evidence_ids must be duplicate-free")
+        return v
+
 
 class OpeningCoverSlide(_SlideBase):
     layout_type: Literal["opening_cover"] = "opening_cover"
@@ -595,14 +604,6 @@ class LegalNoticeSlide(_SlideBase):
                     raise ValueError(f"legal_notice forbids root field {key!r}")
         return data
 
-    @model_validator(mode="after")
-    def _evidence_dupes(self) -> LegalNoticeSlide:
-        if self.evidence_ids is not None and len(self.evidence_ids) != len(
-            set(self.evidence_ids)
-        ):
-            raise ValueError("evidence_ids must be duplicate-free")
-        return self
-
 
 def _ordinary_footer_subset(slide: Any) -> Any:
     """Shared evidence/source_footer checks for ordinary (non-cover) slides."""
@@ -614,10 +615,6 @@ def _ordinary_footer_subset(slide: Any) -> Any:
         missing = [i for i in slide.source_footer if i not in slide.evidence_ids]
         if missing:
             raise ValueError("source_footer must be a subset of evidence_ids")
-    if slide.evidence_ids is not None and len(slide.evidence_ids) != len(
-        set(slide.evidence_ids)
-    ):
-        raise ValueError("evidence_ids must be duplicate-free")
     return slide
 
 

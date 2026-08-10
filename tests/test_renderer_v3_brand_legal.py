@@ -71,6 +71,20 @@ def test_plan_emits_divider_and_legal_surfaces():
     assert "slide-7-cover" in by
 
 
+def test_fixed_surface_fit_reserves_renderer_chrome():
+    raw = _brand()
+    raw["sections"][0]["label"] = " ".join(["MMMMMMMMMM"] * 34)
+    with pytest.raises(RendererValidationError):
+        plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+
+
+def test_legal_fit_preserves_hard_and_empty_lines():
+    raw = _brand()
+    raw["slides"][4]["payload"]["paragraphs"] = ["\n".join([""] * 51)]
+    with pytest.raises(RendererValidationError):
+        plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+
+
 def test_publish_paints_registry_label_and_legal_continuation(tmp_path: Path):
     out = tmp_path / "out"
     result = render_deck(FIXTURE, out, strict=True)
@@ -172,6 +186,14 @@ def test_legal_parts_must_be_adjacent_complete_sequence():
 def test_legal_forbids_takeaway_disclosure_footer():
     raw = _brand()
     raw["slides"][4]["takeaway"] = {"text": "nope"}
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+@pytest.mark.parametrize("slide_index", [0, 1, 4])
+def test_all_evidence_bearing_compositions_reject_duplicate_ids(slide_index: int):
+    raw = _brand()
+    raw["slides"][slide_index]["evidence_ids"] = ["src-board-pack", "src-board-pack"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
