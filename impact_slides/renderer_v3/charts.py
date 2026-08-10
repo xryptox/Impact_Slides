@@ -25,16 +25,16 @@ from .theme import (
     resolve_series_colors,
 )
 
-# Heatmap sequential light → primary blue (D163/D246/D308); RGB endpoints only.
-_HEAT_LIGHT = (232, 242, 252)  # soft sky wash on white
-_HEAT_PRIMARY = tuple(
-    int(resolve_color("primary_blue", role="fill").lstrip("#")[i : i + 2], 16)
-    for i in (0, 2, 4)
-)
+# Heatmap sequential light → primary blue (D163/D246/D308) — theme palette only.
+def _rgb(key: str, *, role: str) -> tuple[int, int, int]:
+    h = resolve_color(key, role=role).lstrip("#")
+    return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
+
+
+_HEAT_LIGHT = _rgb("sky_blue", role="fill")  # light end of sequential ramp
+_HEAT_PRIMARY = _rgb("primary_blue", role="fill")
 _HEAT_NAVY = resolve_color("navy", role="text_on_light")
 _HEAT_WHITE = resolve_color("white", role="text_on_dark")
-HEATMAP_TABLE_FLOOR = 18
-HEATMAP_TABLE_CEIL = 24
 
 # Plot geometry on the 1920 content width (D68 stage; single_chart body region).
 PLOT_W = 1400
@@ -1053,6 +1053,7 @@ def freeze_heatmap(
     box_w: int = PLOT_W + PAD_L + PAD_R,
     box_h: int | None = None,
     colored: bool = True,
+    table_floor: int = 18,
 ) -> dict[str, Any]:
     """Build one frozen native-heatmap plan (D69/D246/D308)."""
     table = chart.table_data
@@ -1061,6 +1062,7 @@ def freeze_heatmap(
     columns = list(table.columns)
     rows = list(table.rows)
     col_ids = [c.column_id for c in columns]
+    table_sid = table.surface_id
 
     finite: list[Decimal] = []
     for row in rows:
@@ -1177,6 +1179,7 @@ def freeze_heatmap(
     # Geometry is the native table itself — view_h is fitted later in plan.
     return {
         "surface_id": chart.surface_id,
+        "table_surface_id": table_sid,
         "chart_type": "heatmap",
         "heading": chart.heading,
         "subtitle": chart.subtitle,
@@ -1210,41 +1213,14 @@ def freeze_heatmap(
         "col_widths": [],
         "short_label_used": False,
         "ellipsized": False,
-        "role_sizes": {"table": HEATMAP_TABLE_FLOOR},
+        "role_sizes": {"table": table_floor},
         "geometry": {
             "view_w": box_w,
             "view_h": box_h if box_h is not None else 400,
         },
-        # Line-chart fields absent on heatmap (painters/readiness branch on type).
         "identity_strategy": None,
         "placements": [],
-        "series": [],
-        "points": [],
-        "categories": [],
         "gridlines": False,
-        "semantic_table": {
-            "surface_id": chart.surface_id,
-            "stub": table.stub_header.label,
-            "columns": [
-                {"column_id": c.column_id, "label": c.label} for c in columns
-            ],
-            "rows": [
-                {
-                    "row_id": r.row_id,
-                    "label": r.label,
-                    "cells": [
-                        {
-                            "column_id": cid,
-                            "visible": cells[ri][ci]["visible"],
-                            "accessible": cells[ri][ci]["accessible"],
-                            "missing": cells[ri][ci]["missing"],
-                        }
-                        for ci, cid in enumerate(col_ids)
-                    ],
-                }
-                for ri, r in enumerate(rows)
-            ],
-        },
     }
 
 
@@ -1254,12 +1230,14 @@ def paint_heatmap_html(
     plan_attrs: str = "",
 ) -> list[str]:
     """Emit one visible native heatmap table + scale key (D246/D247/D308)."""
-    sid = plan["surface_id"]
-    px = plan.get("role_sizes", {}).get("table", HEATMAP_TABLE_FLOOR)
+    chart_sid = plan["surface_id"]
+    # D255/D308: table DOM uses the nested table surface_id when distinct.
+    table_sid = plan.get("table_surface_id") or chart_sid
+    px = plan.get("role_sizes", {}).get("table", 18)
     style = f' style="font-size:{int(px)}px"' if px else ""
     out: list[str] = []
     out.append(
-        f'<div class="chart-body heatmap-body" data-chart-surface="{_e(sid)}" '
+        f'<div class="chart-body heatmap-body" data-chart-surface="{_e(chart_sid)}" '
         f'data-chart-type="heatmap" {plan_attrs}>'
     )
     if plan.get("heading"):
@@ -1280,13 +1258,13 @@ def paint_heatmap_html(
     widths = list(plan.get("col_widths") or [])
     col_ids = list(plan["col_ids"])
     row_ids = list(plan["row_ids"])
-    stub_hid = f"{sid}-h-stub"
-    leaf_hids = [f"{sid}-h-{cid}" for cid in col_ids]
+    stub_hid = f"{table_sid}-h-stub"
+    leaf_hids = [f"{table_sid}-h-{cid}" for cid in col_ids]
     colored = bool(plan.get("colored"))
 
     out.append(
         f'<table class="data-table heatmap-table"{style} '
-        f'id="{_e(sid)}-table" data-table-surface="{_e(sid)}" '
+        f'id="{_e(table_sid)}-table" data-table-surface="{_e(table_sid)}" '
         f'data-heatmap-colored="{"true" if colored else "false"}">'
     )
     if widths:
@@ -1310,7 +1288,7 @@ def paint_heatmap_html(
 
     for r_i, rid_raw in enumerate(row_ids):
         out.append("<tr>")
-        rid = f"{sid}-r-{rid_raw}"
+        rid = f"{table_sid}-r-{rid_raw}"
         out.append(
             f'<th id="{_e(rid)}" scope="row" class="stub align-left" '
             f'title="{_e(full_row_labels[r_i])}">{_e(row_labels[r_i])}</th>'

@@ -31,6 +31,8 @@ class ValidationResult:
     deck: Deck
     events: list[DiagnosticEvent] = field(default_factory=list)
     repaired: bool = False
+    # Heatmap chart surface_ids whose scale was repaired → paint uncolored (D163/D308).
+    uncolored_heatmap_surfaces: frozenset[str] = field(default_factory=frozenset)
 
     @property
     def ok(self) -> bool:
@@ -115,10 +117,21 @@ def validate_handoff(raw: Any, *, strict: bool = True) -> ValidationResult:
 
     # Successful path: strip validation errors that were repaired away — keep repairs.
     kept = [e for e in events if e.severity != "error"]
+    kept = sort_events(merge_duplicate_events(kept))
+    uncolored = frozenset(
+        e.surface_id
+        for e in kept
+        if (
+            e.code == "repair.domain_replaced"
+            and e.role == "heatmap"
+            and e.surface_id
+        )
+    )
     return ValidationResult(
         deck=deck,
-        events=sort_events(merge_duplicate_events(kept)),
+        events=kept,
         repaired=repaired,
+        uncolored_heatmap_surfaces=uncolored,
     )
 
 

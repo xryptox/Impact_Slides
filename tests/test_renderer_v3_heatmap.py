@@ -185,12 +185,11 @@ def test_paint_is_native_table_only(tmp_path: Path):
     assert 'class="data-table heatmap-table"' in html
     assert 'data-heatmap-colored="true"' in html
     assert "heatmap-scale-key" in html
-    assert "chartjs" not in html.lower() or "chart.umd" not in html
     assert "chart.umd" not in html
     assert "<canvas" not in html
-    assert "<svg" not in html or 'data-chart-type="heatmap"' in html
-    # No second semantic table for the heatmap surface.
-    assert html.count('data-table-surface="region-heat"') == 1
+    # Nested D255 table surface owns the DOM table (D308).
+    assert html.count('data-table-surface="region-heat-table"') == 1
+    assert 'data-chart-surface="region-heat"' in html
     assert MISSING_VISIBLE in html
     assert 'aria-label="Missing"' in html or f'aria-label="{MISSING_ACCESSIBLE}"' in html
     # Values stay visible.
@@ -223,28 +222,31 @@ def test_readiness_has_semantic_table_no_painters(tmp_path: Path):
     assert heat["chart_painters"] == []
 
 
-def test_non_strict_repairs_malformed_heatmap_cell(tmp_path: Path):
+def test_non_strict_invalid_scale_paints_uncolored_table(tmp_path: Path):
     raw = _raw()
-    # Malformed cell → missing via repair_table_data.
-    raw["slides"][1]["payload"]["primary_visual"]["table_data"]["rows"][0]["cells"][
-        "q1"
-    ] = {"type": "number", "value": "not-a-number", "format_id": "pct_1"}
-    handoff = tmp_path / "broken.json"
+    # Fixed scale that fails containment → repaired generated + uncolored paint.
+    raw["slides"][1]["payload"]["primary_visual"]["scale"] = {
+        "mode": "fixed",
+        "min": "0.0",
+        "max": "1.0",
+    }
+    handoff = tmp_path / "bad-scale.json"
     handoff.write_text(json.dumps(raw), encoding="utf-8")
     out = tmp_path / "out"
-    # May still fail if value pattern rejects before repair — exercise repair path.
-    try:
-        result = render_deck(handoff, out, strict=False)
-    except RendererValidationError:
-        # Repair may not recover canonical-decimal pattern failures; ensure
-        # a text-typed malformed cell does.
-        raw2 = _raw()
-        raw2["slides"][1]["payload"]["primary_visual"]["table_data"]["rows"][0]["cells"][
-            "q1"
-        ] = {"type": "bogus"}
-        handoff.write_text(json.dumps(raw2), encoding="utf-8")
-        result = render_deck(handoff, out, strict=False)
-    assert result is not None
+    result = render_deck(handoff, out, strict=False)
+    assert result["ok"] is False  # degraded
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-heatmap-colored="false"' in html
+    # No painted scale-key element (class names still appear in CSS rules).
+    assert 'class="heatmap-scale-key"' not in html
+    assert 'class="heatmap-scale-stop"' not in html
+    # Complete table retained.
+    assert "22.5%" in html
+    assert "US" in html
+    assert MISSING_VISIBLE in html
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    codes = {e["code"] for e in meta["events"]}
+    assert "repair.domain_replaced" in codes
 
 
 def test_schema_export_includes_heatmap():

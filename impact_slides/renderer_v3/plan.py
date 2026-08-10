@@ -206,9 +206,17 @@ class DeckPlan:
         return {s.surface_id: s for s in self.surfaces}
 
 
-def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
+def plan_deck(
+    deck: Deck,
+    *,
+    strict: bool = True,
+    uncolored_heatmap_surfaces: frozenset[str] | None = None,
+) -> DeckPlan:
     """Measure every kernel surface, synchronize, freeze whole-pixel sizes (D69)."""
-    surfaces = _collect_surfaces(deck)
+    surfaces = _collect_surfaces(
+        deck,
+        uncolored_heatmap_surfaces=uncolored_heatmap_surfaces or frozenset(),
+    )
     events: list[DiagnosticEvent] = []
 
     sync_roles: dict[str, set[str]] = {}
@@ -350,7 +358,11 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
 # ---------------------------------------------------------------------------
 
 
-def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
+def _collect_surfaces(
+    deck: Deck,
+    *,
+    uncolored_heatmap_surfaces: frozenset[str] = frozenset(),
+) -> list[SurfacePlan]:
     out: list[SurfacePlan] = []
     region = 0
     for slide_index, slide in enumerate(deck.slides):
@@ -643,6 +655,8 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     chart,
                     deck.number_formats,
                     box_w=CONTENT_W,
+                    table_floor=HEATMAP_TABLE_FLOOR,
+                    colored=chart.surface_id not in uncolored_heatmap_surfaces,
                 )
                 # Heatmap is a native table: fit through table fitter (18–24px).
                 table_spec = _heatmap_table_spec(chart_spec)

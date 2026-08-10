@@ -138,7 +138,11 @@ def render_deck(
 
     # D69: freeze whole-pixel role sizes before any paint/publication.
     # plan_deck raises RendererValidationError on strict overflow — no writes yet.
-    deck_plan = plan_deck(result.deck, strict=strict)
+    deck_plan = plan_deck(
+        result.deck,
+        strict=strict,
+        uncolored_heatmap_surfaces=result.uncolored_heatmap_surfaces,
+    )
     events.extend(deck_plan.events)
 
     degraded = bool(result.repaired) or any(
