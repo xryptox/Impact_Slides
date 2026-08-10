@@ -9,8 +9,11 @@ Seams under test:
 """
 from __future__ import annotations
 
+import builtins
+import importlib
 import json
 import re
+import sys
 from copy import deepcopy
 from pathlib import Path
 
@@ -185,6 +188,25 @@ def test_point_label_candidates_are_closed():
         assert p["class"] in allowed
 
 
+def test_chart_geometry_shares_slide_allocation():
+    raw = _raw()
+    slide = raw["slides"][1]
+    slide["disclosure"] = {
+        "sections": [
+            {
+                "surface_id": "method",
+                "title": "Method",
+                "items": [{"kind": "paragraph", "text": "Reported values."}],
+            }
+        ]
+    }
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    surfaces = [sp for sp in plan.surfaces if sp.slide_number == 2 and sp.role != "title"]
+    chart = plan.by_surface_id()["vol-trend"]
+    assert chart.chart_paint["geometry"]["view_h"] <= chart._box_h
+    assert sum(sp._box_h + sp._chrome_h for sp in surfaces) <= 1080 - 56 - 48 - 91
+
+
 # ---------------------------------------------------------------------------
 # Publication / dual painters
 # ---------------------------------------------------------------------------
@@ -298,8 +320,16 @@ def test_schema_export_check_passes():
     check_schema()
 
 
-def test_v2_not_imported_by_charts_module():
-    import impact_slides.renderer_v3.charts as charts
+def test_v2_not_imported_by_charts_module(monkeypatch: pytest.MonkeyPatch):
+    real_import = builtins.__import__
 
-    src = Path(charts.__file__).read_text(encoding="utf-8")
-    assert "renderer_v2" not in src
+    def guarded_import(name, *args, **kwargs):
+        if name.startswith("impact_slides.renderer_v2"):
+            raise AssertionError(f"renderer_v2 import attempted: {name}")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+    sys.modules.pop("impact_slides.renderer_v3.charts", None)
+    charts = importlib.import_module("impact_slides.renderer_v3.charts")
+    deck = validate_handoff(_raw(), strict=True).deck
+    assert charts.freeze_line_chart(deck.slides[1].payload.primary_visual, deck.number_formats)
