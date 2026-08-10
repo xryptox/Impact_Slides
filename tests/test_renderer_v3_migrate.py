@@ -299,6 +299,140 @@ def test_cli_check_and_migrate(tmp_path: Path, capsys: pytest.CaptureFixture[str
     assert (out / "migration_report.json").is_file()
 
 
+def test_grouped_annex_more_than_two_peers_fails_proof(tmp_path: Path):
+    src = _write(
+        tmp_path,
+        "in.json",
+        _legacy_envelope(
+            [
+                {
+                    "slide_number": 1,
+                    "layout_type": "grouped_annex_table",
+                    "title": "Annex matrices",
+                    "speaker_notes": "Three peers cannot satisfy proof.",
+                    "visual_spec": {
+                        "tables": [
+                            {
+                                "heading": f"Peer {n}",
+                                "steps_or_data": [
+                                    ["Metric", "FY24"],
+                                    [f"Row {n}", "100"],
+                                ],
+                            }
+                            for n in range(1, 4)
+                        ]
+                    },
+                }
+            ]
+        ),
+    )
+    result = migrate_handoff(src, out_dir=tmp_path / "out", check=True)
+    d = result.slide_dispositions[0]
+    assert d.status == "unresolved"
+    assert d.target == "grouped_annex_table"
+    assert d.proof_result == "failed"
+    assert any(
+        u.path == "/slides/0/visual_spec"
+        and u.legacy_input == "grouped_annex_table"
+        and "one or two" in u.reason
+        for u in result.unresolved
+    )
+
+
+def test_section_divider_requires_registered_section(tmp_path: Path):
+    src = _write(
+        tmp_path,
+        "in.json",
+        _legacy_envelope(
+            [
+                {
+                    "slide_number": 1,
+                    "layout_type": "section_divider",
+                    "section": "Ghost",
+                    "speaker_notes": "No slide authors this section.",
+                },
+                {
+                    "slide_number": 2,
+                    "layout_type": "section_divider",
+                    "section": "Overview",
+                    "speaker_notes": "Authored section follows.",
+                },
+                {
+                    "slide_number": 3,
+                    "layout_type": "ir_bullet_sheet",
+                    "title": "Highlights",
+                    "section": "Overview",
+                    "content": {"bullets": ["One fact"]},
+                    "speaker_notes": "Say the bullet.",
+                },
+            ]
+        ),
+    )
+    result = migrate_handoff(src, out_dir=tmp_path / "out", check=True)
+    by_n = {d.slide_number: d for d in result.slide_dispositions}
+    assert by_n[1].status == "unresolved"
+    assert by_n[1].target == "section_divider"
+    assert by_n[1].proof_result == "failed"
+    assert any(
+        u.path == "/slides/0/section"
+        and u.legacy_input == "section_divider"
+        and "registered section" in u.reason
+        for u in result.unresolved
+    )
+    # Divider naming a section authored by a non-divider slide resolves.
+    assert by_n[2].status == "resolved"
+    assert by_n[2].target == "section_divider"
+    assert by_n[3].status == "resolved"
+
+
+def test_reused_out_dir_replaces_stale_handoff_artifacts(tmp_path: Path):
+    clean_src = _write(
+        tmp_path,
+        "clean.json",
+        _legacy_envelope(
+            [
+                {
+                    "slide_number": 1,
+                    "layout_type": "ir_bullet_sheet",
+                    "title": "Highlights",
+                    "section": "Overview",
+                    "content": {"bullets": ["One fact"]},
+                    "speaker_notes": "Say the bullet.",
+                }
+            ]
+        ),
+    )
+    unclean_src = _write(
+        tmp_path,
+        "unclean.json",
+        _legacy_envelope(
+            [
+                {
+                    "slide_number": 1,
+                    "layout_type": "title_or_opening",
+                    "title": "Ambiguous cover",
+                    "speaker_notes": "Human must choose.",
+                }
+            ]
+        ),
+    )
+    out = tmp_path / "out"
+
+    migrate_handoff(clean_src, out_dir=out, check=False)
+    assert {p.name for p in out.iterdir()} == {"handoff_v1.json", "migration_report.json"}
+
+    result = migrate_handoff(unclean_src, out_dir=out, check=False)
+    assert result.version_marked is False
+    assert {p.name for p in out.iterdir()} == {
+        "handoff_candidate.json",
+        "migration_report.json",
+    }
+
+    result = migrate_handoff(clean_src, out_dir=out, check=False)
+    assert result.version_marked is True
+    assert {p.name for p in out.iterdir()} == {"handoff_v1.json", "migration_report.json"}
+
+
 def test_no_hidden_production_path():
     """Importing render/validate must not pull in the migrate module (D119)."""
     code = (
