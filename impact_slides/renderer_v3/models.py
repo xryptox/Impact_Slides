@@ -110,6 +110,7 @@ KERNEL_LAYOUTS = frozenset(
         "grouped_annex_table",
         "period_comparison",
         "comparison_cards",
+        "single_chart",
     }
 )
 
@@ -117,6 +118,14 @@ PERIOD_COMPARISON_COLUMN_IDS: tuple[str, str, str] = (
     "current_period",
     "comparison_period",
     "variance",
+)
+
+# Default non-color identity pairs for multi-series lines (D99/D302).
+LINE_STYLE_PAIRS: tuple[tuple[str, str], ...] = (
+    ("solid", "circle"),
+    ("dashed", "square"),
+    ("dotted", "triangle"),
+    ("dash_dot", "diamond"),
 )
 
 
@@ -596,6 +605,243 @@ class ComparisonCardsPayload(ClosedModel):
 
 
 # ---------------------------------------------------------------------------
+# Line chart + single_chart composition (D227–D239, D290–D302)
+# ---------------------------------------------------------------------------
+
+
+class ChartTypography(ClosedModel):
+    """Semantic chart typography roles (D294) — not prose Typography."""
+
+    mode: Literal["adaptive", "fixed"] = "adaptive"
+    sync_group: Optional[SemanticId] = None
+    category_ticks: Optional[int] = Field(default=None, ge=14, le=24)
+    value_ticks: Optional[int] = Field(default=None, ge=14, le=28)
+    ordinary_values: Optional[int] = Field(default=None, ge=14, le=32)
+    legend: Optional[int] = Field(default=None, ge=16, le=24)
+    series_labels: Optional[int] = Field(default=None, ge=16, le=24)
+    axis_titles: Optional[int] = Field(default=None, ge=13, le=24)
+    context_labels: Optional[int] = Field(default=None, ge=16, le=24)
+    annotations: Optional[int] = Field(default=None, ge=13, le=24)
+
+    @model_validator(mode="after")
+    def _adaptive_sync_only(self) -> ChartTypography:
+        if self.sync_group is not None and self.mode != "adaptive":
+            raise ValueError("sync_group requires adaptive typography")
+        return self
+
+
+class ChartDisplay(ClosedModel):
+    """Sparse line-chart display overrides (D231/D295)."""
+
+    ordinary_values: Optional[Literal["show", "hide"]] = None
+    series_identity: Optional[Literal["auto", "legend", "pane_title"]] = None
+
+    @model_validator(mode="after")
+    def _not_empty_noise(self) -> ChartDisplay:
+        if (
+            self.ordinary_values is None
+            and self.series_identity is None
+        ):
+            raise ValueError("display must declare at least one override")
+        return self
+
+
+class ChartCategory(ClosedModel):
+    category_id: SemanticId
+    label: NonEmptyStr
+    short_label: Optional[NonEmptyStr] = None
+
+
+class ChartSeriesStyle(ClosedModel):
+    """Complete line style + marker pair (D99/D133/D291)."""
+
+    line_style: Literal["solid", "dashed", "dotted", "dash_dot"]
+    marker: Literal["circle", "square", "triangle", "diamond"]
+
+
+class ChartSeries(ClosedModel):
+    series_id: SemanticId
+    name: NonEmptyStr
+    values: list[Optional[CanonicalDecimal]] = Field(min_length=2)
+    color: Optional[NonEmptyStr] = None  # palette key (D130)
+    style: Optional[ChartSeriesStyle] = None
+
+
+class ChartData(ClosedModel):
+    """Ordered category-and-series matrix (D228/D291)."""
+
+    categories: list[ChartCategory] = Field(min_length=2, max_length=24)
+    series: list[ChartSeries] = Field(min_length=1, max_length=4)
+
+    @model_validator(mode="after")
+    def _matrix_invariants(self) -> ChartData:
+        cat_ids = [c.category_id for c in self.categories]
+        if len(cat_ids) != len(set(cat_ids)):
+            raise ValueError("category_id values must be unique within the chart")
+        ser_ids = [s.series_id for s in self.series]
+        if len(ser_ids) != len(set(ser_ids)):
+            raise ValueError("series_id values must be unique within the chart")
+        names_norm = [s.name.casefold().strip() for s in self.series]
+        if len(names_norm) != len(set(names_norm)):
+            raise ValueError("series names must be normalized-unique within the chart")
+        n = len(self.categories)
+        for s in self.series:
+            if len(s.values) != n:
+                raise ValueError(
+                    f"series {s.series_id!r} must supply exactly one value per category"
+                )
+            finite = sum(1 for v in s.values if v is not None)
+            if finite < 2:
+                raise ValueError(
+                    f"series {s.series_id!r} requires at least two finite values"
+                )
+        return self
+
+
+class CategoryAxis(ClosedModel):
+    visible: bool
+    title: Optional[NonEmptyStr] = None
+
+
+class GeneratedDomain(ClosedModel):
+    kind: Literal["generated"] = "generated"
+    min: Optional[CanonicalDecimal] = None
+    max: Optional[CanonicalDecimal] = None
+    target_ticks: Optional[int] = Field(default=None, ge=2, le=8)
+
+
+class FixedDomain(ClosedModel):
+    kind: Literal["fixed"] = "fixed"
+    min: CanonicalDecimal
+    max: CanonicalDecimal
+    ticks: list[CanonicalDecimal] = Field(min_length=2, max_length=8)
+
+    @model_validator(mode="after")
+    def _ticks_span(self) -> FixedDomain:
+        lo = Decimal(self.min)
+        hi = Decimal(self.max)
+        if lo >= hi:
+            raise ValueError("fixed domain requires min < max")
+        vals = [Decimal(t) for t in self.ticks]
+        if vals != sorted(vals) or len(vals) != len(set(vals)):
+            raise ValueError("fixed ticks must be strictly increasing")
+        if vals[0] != lo or vals[-1] != hi:
+            raise ValueError("fixed ticks must span min and max endpoints")
+        return self
+
+
+ValueDomain = Annotated[
+    Union[GeneratedDomain, FixedDomain],
+    Field(discriminator="kind"),
+]
+
+
+class LeadingBreak(ClosedModel):
+    to: CanonicalDecimal
+
+
+class ValueAxis(ClosedModel):
+    visible: bool
+    format_id: SemanticId
+    domain: ValueDomain
+    title: Optional[NonEmptyStr] = None
+    leading_break: Optional[LeadingBreak] = None
+
+    @model_validator(mode="after")
+    def _hidden_domain_rules(self) -> ValueAxis:
+        if not self.visible:
+            if self.domain.kind != "generated":
+                raise ValueError("hidden value axis requires generated domain")
+            if self.domain.target_ticks is not None:
+                raise ValueError("hidden value axis forbids target_ticks")
+            if self.leading_break is not None:
+                raise ValueError("hidden value axis forbids leading_break")
+        if self.leading_break is not None and self.domain.kind == "generated":
+            if self.domain.min is None:
+                raise ValueError("leading_break requires generated domain min")
+            if Decimal(self.domain.min) >= Decimal(self.leading_break.to):
+                raise ValueError("leading_break requires min < to")
+        return self
+
+
+class ValueAxes(ClosedModel):
+    primary: ValueAxis
+
+    @model_validator(mode="before")
+    @classmethod
+    def _no_secondary(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "secondary" in data:
+            raise ValueError("line charts forbid secondary value axis")
+        return data
+
+
+class LineChartVisual(ClosedModel):
+    """Flat line-chart visual envelope (D227/D239/D290/D302)."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["line"] = "line"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    chart_data: ChartData
+    category_axis: CategoryAxis
+    value_axes: ValueAxes
+    display: Optional[ChartDisplay] = None
+    typography: Optional[ChartTypography] = None
+
+    @model_validator(mode="after")
+    def _line_invariants(self) -> LineChartVisual:
+        if self.subtitle is not None and self.heading is None:
+            raise ValueError("subtitle requires heading")
+        identity = (
+            self.display.series_identity if self.display is not None else None
+        )
+        if identity == "pane_title":
+            if self.heading is None:
+                raise ValueError("series_identity pane_title requires heading")
+            if len(self.chart_data.series) != 1:
+                raise ValueError(
+                    "series_identity pane_title requires exactly one series"
+                )
+        if self.value_axes.primary.leading_break is not None:
+            br = Decimal(self.value_axes.primary.leading_break.to)
+            for s in self.chart_data.series:
+                for v in s.values:
+                    if v is not None and Decimal(v) < br:
+                        raise ValueError(
+                            "leading_break.to must be below every finite value"
+                        )
+        domain = self.value_axes.primary.domain
+        lo = Decimal(domain.min) if domain.min is not None else None
+        hi = Decimal(domain.max) if domain.max is not None else None
+        for s in self.chart_data.series:
+            for v in s.values:
+                if v is None:
+                    continue
+                dv = Decimal(v)
+                if (lo is not None and dv < lo) or (hi is not None and dv > hi):
+                    raise ValueError(
+                        "authored domain bounds must contain every finite value"
+                    )
+        return self
+
+
+class SingleChartPayload(ClosedModel):
+    """single_chart composition: one line primary, no support yet (D140)."""
+
+    primary_visual: LineChartVisual
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_support(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "support_visual" in data:
+            raise ValueError(
+                "support_visual is not implemented on single_chart line tracer"
+            )
+        return data
+
+
+# ---------------------------------------------------------------------------
 # Slides
 # ---------------------------------------------------------------------------
 
@@ -845,8 +1091,25 @@ class ComparisonCardsSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
+class SingleChartSlide(_SlideBase):
+    layout_type: Literal["single_chart"] = "single_chart"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: SingleChartPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> SingleChartSlide:
+        return _ordinary_footer_subset(self)
+
+
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
-# plus annex/comparison tables (#180).
+# plus annex/comparison tables (#180) and the single_chart line tracer (#182).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
@@ -862,6 +1125,7 @@ Slide = Annotated[
         GroupedAnnexTableSlide,
         PeriodComparisonSlide,
         ComparisonCardsSlide,
+        SingleChartSlide,
     ],
     Field(discriminator="layout_type"),
 ]
@@ -958,6 +1222,8 @@ class Deck(ClosedModel):
         surface_ids: list[str] = []
         for slide in self.slides:
             surface_ids.extend(_slide_table_surface_ids(slide))
+            if isinstance(slide, SingleChartSlide):
+                surface_ids.append(slide.payload.primary_visual.surface_id)
             disclosure = getattr(slide, "disclosure", None)
             if disclosure is not None:
                 surface_ids.extend(section.surface_id for section in disclosure.sections)
@@ -974,6 +1240,19 @@ class Deck(ClosedModel):
                 if fid not in self.number_formats:
                     raise ValueError(f"unresolved format_id {fid!r}")
                 referenced_formats.add(fid)
+            if isinstance(slide, SingleChartSlide):
+                chart = slide.payload.primary_visual
+                fid = chart.value_axes.primary.format_id
+                if fid not in self.number_formats:
+                    raise ValueError(f"unresolved format_id {fid!r}")
+                referenced_formats.add(fid)
+                # Author series colors must be known palette keys (D16/D98/D130).
+                from .theme import palette_keys  # local import avoids cycle at import
+
+                keys = set(palette_keys())
+                for s in chart.chart_data.series:
+                    if s.color is not None and s.color not in keys:
+                        raise ValueError(f"unknown series color key {s.color!r}")
         unused_fmt = [k for k in self.number_formats if k not in referenced_formats]
         if unused_fmt:
             raise ValueError(f"unused number_formats: {unused_fmt}")

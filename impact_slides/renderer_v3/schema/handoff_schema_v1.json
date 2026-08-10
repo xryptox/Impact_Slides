@@ -126,6 +126,374 @@
       "title": "AnnexTableSlide",
       "type": "object"
     },
+    "CategoryAxis": {
+      "additionalProperties": false,
+      "properties": {
+        "visible": {
+          "title": "Visible",
+          "type": "boolean"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        }
+      },
+      "required": [
+        "visible"
+      ],
+      "title": "CategoryAxis",
+      "type": "object"
+    },
+    "ChartCategory": {
+      "additionalProperties": false,
+      "properties": {
+        "category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Category Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        }
+      },
+      "required": [
+        "category_id",
+        "label"
+      ],
+      "title": "ChartCategory",
+      "type": "object"
+    },
+    "ChartData": {
+      "additionalProperties": false,
+      "description": "Ordered category-and-series matrix (D228/D291).",
+      "properties": {
+        "categories": {
+          "items": {
+            "$ref": "#/$defs/ChartCategory"
+          },
+          "maxItems": 24,
+          "minItems": 2,
+          "title": "Categories",
+          "type": "array"
+        },
+        "series": {
+          "items": {
+            "$ref": "#/$defs/ChartSeries"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Series",
+          "type": "array"
+        }
+      },
+      "required": [
+        "categories",
+        "series"
+      ],
+      "title": "ChartData",
+      "type": "object"
+    },
+    "ChartDisplay": {
+      "additionalProperties": false,
+      "description": "Sparse line-chart display overrides (D231/D295).",
+      "properties": {
+        "ordinary_values": {
+          "anyOf": [
+            {
+              "enum": [
+                "show",
+                "hide"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ordinary Values"
+        },
+        "series_identity": {
+          "anyOf": [
+            {
+              "enum": [
+                "auto",
+                "legend",
+                "pane_title"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Series Identity"
+        }
+      },
+      "title": "ChartDisplay",
+      "type": "object"
+    },
+    "ChartSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "series_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Series Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minItems": 2,
+          "title": "Values",
+          "type": "array"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartSeriesStyle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "series_id",
+        "name",
+        "values"
+      ],
+      "title": "ChartSeries",
+      "type": "object"
+    },
+    "ChartSeriesStyle": {
+      "additionalProperties": false,
+      "description": "Complete line style + marker pair (D99/D133/D291).",
+      "properties": {
+        "line_style": {
+          "enum": [
+            "solid",
+            "dashed",
+            "dotted",
+            "dash_dot"
+          ],
+          "title": "Line Style",
+          "type": "string"
+        },
+        "marker": {
+          "enum": [
+            "circle",
+            "square",
+            "triangle",
+            "diamond"
+          ],
+          "title": "Marker",
+          "type": "string"
+        }
+      },
+      "required": [
+        "line_style",
+        "marker"
+      ],
+      "title": "ChartSeriesStyle",
+      "type": "object"
+    },
+    "ChartTypography": {
+      "additionalProperties": false,
+      "description": "Semantic chart typography roles (D294) — not prose Typography.",
+      "properties": {
+        "mode": {
+          "default": "adaptive",
+          "enum": [
+            "adaptive",
+            "fixed"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "sync_group": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sync Group"
+        },
+        "category_ticks": {
+          "anyOf": [
+            {
+              "maximum": 24,
+              "minimum": 14,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category Ticks"
+        },
+        "value_ticks": {
+          "anyOf": [
+            {
+              "maximum": 28,
+              "minimum": 14,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value Ticks"
+        },
+        "ordinary_values": {
+          "anyOf": [
+            {
+              "maximum": 32,
+              "minimum": 14,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ordinary Values"
+        },
+        "legend": {
+          "anyOf": [
+            {
+              "maximum": 24,
+              "minimum": 16,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Legend"
+        },
+        "series_labels": {
+          "anyOf": [
+            {
+              "maximum": 24,
+              "minimum": 16,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Series Labels"
+        },
+        "axis_titles": {
+          "anyOf": [
+            {
+              "maximum": 24,
+              "minimum": 13,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Axis Titles"
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "maximum": 24,
+              "minimum": 16,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "maximum": 24,
+              "minimum": 13,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        }
+      },
+      "title": "ChartTypography",
+      "type": "object"
+    },
     "ClosingCoverSlide": {
       "additionalProperties": false,
       "properties": {
@@ -663,6 +1031,97 @@
       "title": "EvidenceEntry",
       "type": "object"
     },
+    "FixedDomain": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "fixed",
+          "default": "fixed",
+          "title": "Kind",
+          "type": "string"
+        },
+        "min": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Min",
+          "type": "string"
+        },
+        "max": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max",
+          "type": "string"
+        },
+        "ticks": {
+          "items": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Ticks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "ticks"
+      ],
+      "title": "FixedDomain",
+      "type": "object"
+    },
+    "GeneratedDomain": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "generated",
+          "default": "generated",
+          "title": "Kind",
+          "type": "string"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "target_ticks": {
+          "anyOf": [
+            {
+              "maximum": 8,
+              "minimum": 2,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Ticks"
+        }
+      },
+      "title": "GeneratedDomain",
+      "type": "object"
+    },
     "GroupedAnnexPeer": {
       "additionalProperties": false,
       "description": "One headed peer matrix inside grouped_annex_table (D185/D259).",
@@ -824,6 +1283,21 @@
       "title": "GroupedAnnexTableSlide",
       "type": "object"
     },
+    "LeadingBreak": {
+      "additionalProperties": false,
+      "properties": {
+        "to": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "to"
+      ],
+      "title": "LeadingBreak",
+      "type": "object"
+    },
     "LegalNoticePayload": {
       "additionalProperties": false,
       "description": "Multipart legal notice sequence payload (D226/D271).",
@@ -935,6 +1409,94 @@
         "section_id"
       ],
       "title": "LegalNoticeSlide",
+      "type": "object"
+    },
+    "LineChartVisual": {
+      "additionalProperties": false,
+      "description": "Flat line-chart visual envelope (D227/D239/D290/D302).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "line",
+          "default": "line",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "chart_data": {
+          "$ref": "#/$defs/ChartData"
+        },
+        "category_axis": {
+          "$ref": "#/$defs/CategoryAxis"
+        },
+        "value_axes": {
+          "$ref": "#/$defs/ValueAxes"
+        },
+        "display": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartDisplay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "surface_id",
+        "chart_data",
+        "category_axis",
+        "value_axes"
+      ],
+      "title": "LineChartVisual",
       "type": "object"
     },
     "MetricItem": {
@@ -1754,6 +2316,138 @@
       "title": "SectionEntry",
       "type": "object"
     },
+    "SingleChartPayload": {
+      "additionalProperties": false,
+      "description": "single_chart composition: one line primary, no support yet (D140).",
+      "properties": {
+        "primary_visual": {
+          "$ref": "#/$defs/LineChartVisual"
+        }
+      },
+      "required": [
+        "primary_visual"
+      ],
+      "title": "SingleChartPayload",
+      "type": "object"
+    },
+    "SingleChartSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "single_chart",
+          "default": "single_chart",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/SingleChartPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "SingleChartSlide",
+      "type": "object"
+    },
     "SubtitleContent": {
       "additionalProperties": false,
       "properties": {
@@ -2087,6 +2781,82 @@
       },
       "title": "Typography",
       "type": "object"
+    },
+    "ValueAxes": {
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "$ref": "#/$defs/ValueAxis"
+        }
+      },
+      "required": [
+        "primary"
+      ],
+      "title": "ValueAxes",
+      "type": "object"
+    },
+    "ValueAxis": {
+      "additionalProperties": false,
+      "properties": {
+        "visible": {
+          "title": "Visible",
+          "type": "boolean"
+        },
+        "format_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Format Id",
+          "type": "string"
+        },
+        "domain": {
+          "discriminator": {
+            "mapping": {
+              "fixed": "#/$defs/FixedDomain",
+              "generated": "#/$defs/GeneratedDomain"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/GeneratedDomain"
+            },
+            {
+              "$ref": "#/$defs/FixedDomain"
+            }
+          ],
+          "title": "Domain"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "leading_break": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LeadingBreak"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "visible",
+        "format_id",
+        "domain"
+      ],
+      "title": "ValueAxis",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -2128,7 +2898,8 @@
             "narrative": "#/$defs/NarrativeSlide",
             "opening_cover": "#/$defs/OpeningCoverSlide",
             "period_comparison": "#/$defs/PeriodComparisonSlide",
-            "section_divider": "#/$defs/SectionDividerSlide"
+            "section_divider": "#/$defs/SectionDividerSlide",
+            "single_chart": "#/$defs/SingleChartSlide"
           },
           "propertyName": "layout_type"
         },
@@ -2162,6 +2933,9 @@
           },
           {
             "$ref": "#/$defs/ComparisonCardsSlide"
+          },
+          {
+            "$ref": "#/$defs/SingleChartSlide"
           }
         ]
       },
