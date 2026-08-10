@@ -168,10 +168,22 @@ class SubtitleContent(ClosedModel):
     subtitle: NonEmptyStr
     typography: Optional[Typography] = None
 
+    @model_validator(mode="after")
+    def _subtitle_typography_only(self) -> SubtitleContent:
+        if self.typography and self.typography.body_font_size is not None:
+            raise ValueError("body_font_size is inapplicable to subtitle typography")
+        return self
+
 
 class Takeaway(ClosedModel):
     text: NonEmptyStr
     typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _body_typography_only(self) -> Takeaway:
+        if self.typography and self.typography.subtitle_font_size is not None:
+            raise ValueError("subtitle_font_size is inapplicable to takeaway typography")
+        return self
 
 
 class DisclosureItem(ClosedModel):
@@ -234,6 +246,12 @@ NarrativeBlock = Annotated[
 class NarrativePayload(ClosedModel):
     blocks: list[NarrativeBlock] = Field(min_length=1, max_length=4)
     typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _body_typography_only(self) -> NarrativePayload:
+        if self.typography and self.typography.subtitle_font_size is not None:
+            raise ValueError("subtitle_font_size is inapplicable to narrative typography")
+        return self
 
     @model_validator(mode="after")
     def _unique_block_ids(self) -> NarrativePayload:

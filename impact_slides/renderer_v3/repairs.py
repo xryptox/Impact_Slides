@@ -244,10 +244,45 @@ def _drop_unknown_object(
         )
 
 
+def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> Any:
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    out = deepcopy(raw)
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict) or slide.get("layout_type") != "narrative":
+            continue
+        surfaces = (
+            ("content", "body_font_size"),
+            ("takeaway", "subtitle_font_size"),
+            ("payload", "subtitle_font_size"),
+        )
+        for owner, forbidden in surfaces:
+            surface = slide.get(owner)
+            typo = surface.get("typography") if isinstance(surface, dict) else None
+            if isinstance(typo, dict) and forbidden in typo:
+                del surface["typography"]
+                events.append(
+                    event(
+                        code="repair.policy_defaulted",
+                        severity="warning",
+                        phase="repair",
+                        role=owner,
+                        path=f"/slides/{i}/{owner}/typography",
+                        action="default_typography",
+                        result="defaulted",
+                        slide_number=_slide_number(slide),
+                        layout_type="narrative",
+                        expected="surface-applicable typography fields",
+                    )
+                )
+    return out
+
+
 # Closed registry: name → transform (D123).
 REPAIR_REGISTRY: dict[str, RepairFn] = {
     "assume_schema_v1": assume_schema_v1,
     "drop_unknown_fields": drop_unknown_fields,
+    "discard_inapplicable_typography": discard_inapplicable_typography,
 }
 
 
@@ -259,6 +294,6 @@ def apply_allowlisted_repairs(raw: Any) -> tuple[Any, list[DiagnosticEvent]]:
     """
     events: list[DiagnosticEvent] = []
     current = raw
-    for name in ("assume_schema_v1", "drop_unknown_fields"):
+    for name in REPAIR_REGISTRY:
         current = REPAIR_REGISTRY[name](current, events)
     return current, events

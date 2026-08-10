@@ -46,6 +46,9 @@ TAKEAWAY_PAD_Y: Final = 24  # --space-sm top+bottom
 TAKEAWAY_BORDER_Y: Final = 2  # hairline top+bottom
 TAKEAWAY_OUTER_MT: Final = 20  # --space-md
 TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
+TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
+TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
+LIST_INDENT_EM: Final = 1.25
 # Conservative average glyph advance as fraction of em (D23; no vendored TTF yet).
 # ponytail: synthetic metrics until fonts ship; swap for measured IBM Plex/Source Sans.
 AVG_ADVANCE: Final = 0.58
@@ -87,15 +90,27 @@ class SurfacePlan:
     _margin_boxes: int = 1
     # Extra chrome height outside the text-fit box (takeaway panel).
     _chrome_h: int = 0
+    _indent_em: float = 0
+    _default_size: Optional[int] = None
+    _maximum_size: Optional[int] = None
 
     def to_public(self) -> dict[str, Any]:
         sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
         row: dict[str, Any] = {
             "surface_id": self.surface_id,
             "role": self.role,
+            "slide_number": self.slide_number,
+            "layout_type": self.layout_type,
             "semantic_digest": self.semantic_digest,
             "design_stage_region": self.design_stage_region,
+            "available_geometry": {"width": self._box_w, "height": self._box_h},
             "role_sizes": sizes,
+            "default_size": self._default_size,
+            "selected_size": sizes.get(self._fit_role) if self._fit_role else None,
+            "maximum_size": self._maximum_size,
+            "mode": self._mode,
+            "explicit_override": self._explicit_size,
+            "synchronization_group": self._sync_group,
             "adaptation_codes": list(self.adaptation_codes),
             "reservations": list(self.reservations),
             "fallback": self.fallback,
@@ -275,36 +290,33 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             )
         )
 
-        subtitle_budget = 0
+        adaptive_surfaces: list[SurfacePlan] = []
         if slide.content is not None:
             typo = slide.content.typography
             mode, sync, explicit = _typo_fields(typo, "subtitle_font_size")
-            # Reserve max possible subtitle block so body/takeaway never overlap (D171).
-            subtitle_budget = _line_box(SUBTITLE_CEIL) * 3 + BLOCK_MARGIN_Y
-            out.append(
-                SurfacePlan(
-                    surface_id=f"slide-{sn}-subtitle",
-                    role="subtitle",
-                    slide_number=sn,
-                    layout_type=lt,
-                    slot_order=1,
-                    design_stage_region=region,
-                    role_sizes={"subtitle": SUBTITLE_FLOOR},
-                    _text_items=[(slide.content.subtitle, False)],
-                    _box_w=CONTENT_W,
-                    _box_h=subtitle_budget,
-                    _fit_role="subtitle",
-                    _typo=typo,
-                    _mode=mode,
-                    _sync_group=sync,
-                    _explicit_size=explicit,
-                    _margin_boxes=1,
-                )
+            subtitle_plan = SurfacePlan(
+                surface_id=f"slide-{sn}-subtitle",
+                role="subtitle",
+                slide_number=sn,
+                layout_type=lt,
+                slot_order=1,
+                design_stage_region=region,
+                role_sizes={"subtitle": SUBTITLE_FLOOR},
+                _text_items=[(slide.content.subtitle, False)],
+                _box_w=CONTENT_W,
+                _fit_role="subtitle",
+                _typo=typo,
+                _mode=mode,
+                _sync_group=sync,
+                _explicit_size=explicit,
+                _margin_boxes=1,
+                _default_size=SUBTITLE_FLOOR,
+                _maximum_size=SUBTITLE_CEIL,
             )
-            used += subtitle_budget
+            adaptive_surfaces.append(subtitle_plan)
+            out.append(subtitle_plan)
 
         # Takeaway reserved before body so body cannot steal its slot (D172/D288).
-        takeaway_budget = 0
         takeaway_plan: SurfacePlan | None = None
         if slide.takeaway is not None:
             typo = slide.takeaway.typography
@@ -318,8 +330,6 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 + TAKEAWAY_OUTER_MT
                 + BLOCK_MARGIN_Y  # takeaway-text <p> trailing margin
             )
-            text_h = _line_box(TAKEAWAY_CEIL) * 4
-            takeaway_outer = text_h + chrome
             takeaway_plan = SurfacePlan(
                 surface_id=f"slide-{sn}-takeaway",
                 role="takeaway",
@@ -332,8 +342,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     "label": TAKEAWAY_LABEL_PX,
                 },
                 _text_items=[(slide.takeaway.text, False)],
-                _box_w=CONTENT_W,
-                _box_h=text_h,
+                _box_w=CONTENT_W - TAKEAWAY_PAD_X - TAKEAWAY_BORDER_X,
                 _fit_role="body",
                 _typo=typo,
                 _mode=mode,
@@ -341,16 +350,15 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 _explicit_size=explicit,
                 _margin_boxes=0,  # text p margin already in chrome
                 _chrome_h=chrome,
+                _default_size=TAKEAWAY_FLOOR,
+                _maximum_size=TAKEAWAY_CEIL,
             )
-            used += takeaway_outer
 
-        body_h = max(80, DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM - used)
+        body_h = DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM - used
         blocks = list(slide.payload.blocks)
         # One common body size across all blocks (D225/D270) — shared measure group.
         body_typo = slide.payload.typography
         mode, sync, explicit = _typo_fields(body_typo, "body_font_size")
-        n_blocks = max(1, len(blocks))
-        per_h = body_h // n_blocks
         for i, block in enumerate(blocks):
             items = _block_text_items(block)
             # Deck-unique surface id: block_id is only slide-local (D115/D225).
@@ -371,19 +379,25 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     role_sizes={"body": BODY_FLOOR},
                     _text_items=items,
                     _box_w=CONTENT_W,
-                    _box_h=per_h,
                     _fit_role="body",
                     _typo=body_typo,
                     _mode=mode,
                     _sync_group=sync,
                     _explicit_size=explicit,
                     _margin_boxes=margin_boxes,
+                    _indent_em=LIST_INDENT_EM if block.type == "bullet_list" else 0,
+                    _default_size=BODY_FLOOR,
+                    _maximum_size=BODY_CEIL,
                 )
             )
+            adaptive_surfaces.append(out[-1])
 
         if takeaway_plan is not None:
             takeaway_plan.slot_order = 10 + len(blocks)
+            adaptive_surfaces.append(takeaway_plan)
             out.append(takeaway_plan)
+
+        _allocate_geometry(adaptive_surfaces, body_h)
 
     # Stable plan order: slide, slot, surface_id (D312).
     out.sort(key=lambda s: (s.slide_number, s.slot_order, s.surface_id))
@@ -405,6 +419,50 @@ def _typo_fields(
     return mode, sync, explicit
 
 
+def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
+    """Reserve measured needs jointly so sparse siblings yield unused geometry."""
+    if not surfaces:
+        return
+    floors = [
+        _required_height(
+            sp._text_items,
+            sp._default_size or next(iter(sp.role_sizes.values())),
+            sp._box_w,
+            sp._margin_boxes,
+            sp._indent_em,
+        )
+        for sp in surfaces
+    ]
+    ceilings = [
+        _required_height(
+            sp._text_items,
+            sp._maximum_size or next(iter(sp.role_sizes.values())),
+            sp._box_w,
+            sp._margin_boxes,
+            sp._indent_em,
+        )
+        for sp in surfaces
+    ]
+    remaining = max(0, available_h - sum(sp._chrome_h for sp in surfaces))
+    allocations = []
+    for needed in floors:
+        allocated = min(remaining, needed)
+        allocations.append(allocated)
+        remaining -= allocated
+    for i, wanted in enumerate(ceilings):
+        extra = min(remaining, max(0, wanted - allocations[i]))
+        allocations[i] += extra
+        remaining -= extra
+    for sp, height, floor_h in zip(surfaces, allocations, floors):
+        sp._box_h = height
+        sp.reservations = [
+            {"kind": "text", "height": height},
+            {"kind": "chrome", "height": sp._chrome_h},
+        ]
+        if height > floor_h:
+            sp.adaptation_codes.append("plan.geometry_reallocated")
+
+
 # ---------------------------------------------------------------------------
 # Measure
 # ---------------------------------------------------------------------------
@@ -420,7 +478,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             return
         px = next(iter(sp.role_sizes.values()))
         if not _text_fits(
-            sp._text_items, px, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes
+            sp._text_items, px, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
         ):
             sp._overflow = True
         return
@@ -459,7 +517,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         size = sp._explicit_size if sp._explicit_size is not None else floor
         sp.role_sizes[fit] = size
         if not _text_fits(
-            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes
+            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
         ):
             sp._overflow = True
         return
@@ -470,7 +528,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         size = sp._explicit_size
         sp.role_sizes[fit] = size
         if not _text_fits(
-            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes
+            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
         ):
             # Spec: explicit that does not fit → normal strict/non-strict (D27).
             sp._overflow = True
@@ -485,6 +543,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             sp._box_w,
             sp._box_h,
             margin_boxes=sp._margin_boxes,
+            indent_em=sp._indent_em,
         )
         if ok:
             chosen = size
@@ -523,9 +582,10 @@ def _text_fits(
     box_h: int,
     *,
     margin_boxes: int = 1,
+    indent_em: float = 0,
 ) -> bool:
     ok, _ = _text_fits_detail(
-        items, px, box_w, box_h, margin_boxes=margin_boxes
+        items, px, box_w, box_h, margin_boxes=margin_boxes, indent_em=indent_em
     )
     return ok
 
@@ -537,6 +597,7 @@ def _text_fits_detail(
     box_h: int,
     *,
     margin_boxes: int = 1,
+    indent_em: float = 0,
 ) -> tuple[bool, bool]:
     """Return (fits, wrapped). Never truncates or drops text (D59)."""
     if box_w <= 0 or box_h <= 0:
@@ -550,7 +611,7 @@ def _text_fits_detail(
         text_u = "".join(t for t, _ in unit_items)
         if not text_u:
             continue
-        lines, wo = _wrap_lines(unit_items, px, box_w)
+        lines, wo = _wrap_lines(unit_items, px, box_w - math.ceil(px * indent_em))
         width_overflow = width_overflow or wo
         total_lines += max(1, len(lines))
         if len(lines) > 1:
@@ -561,6 +622,21 @@ def _text_fits_detail(
     need_h = total_lines * line_h + boxes * BLOCK_MARGIN_Y
     fits = (need_h <= box_h) and not width_overflow
     return fits, wrapped
+
+
+def _required_height(
+    items: list[tuple[str, bool]],
+    px: int,
+    box_w: int,
+    margin_boxes: int,
+    indent_em: float = 0,
+) -> int:
+    units = _split_units(items)
+    lines = sum(
+        max(1, len(_wrap_lines(unit, px, box_w - math.ceil(px * indent_em))[0]))
+        for unit in units
+    )
+    return lines * _line_box(px) + max(0, margin_boxes) * BLOCK_MARGIN_Y
 
 
 def _cover_fits(sp: SurfacePlan) -> bool:
@@ -683,6 +759,7 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                     m._box_w,
                     m._box_h,
                     margin_boxes=m._margin_boxes,
+                    indent_em=m._indent_em,
                 )
                 for m in members
             ):

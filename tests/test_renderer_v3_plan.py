@@ -317,9 +317,33 @@ def test_takeaway_outer_reservation_excludes_chrome_from_fit_box():
         + BLOCK_MARGIN_Y
     )
     assert take._chrome_h == chrome
-    assert take._box_h == _line_box(TAKEAWAY_CEIL) * 4
+    assert take._box_h == _line_box(TAKEAWAY_CEIL)
     # Mutation: if chrome were folded into the fit box, _box_h would be larger.
     assert take._box_h + take._chrome_h > take._box_h
+
+
+def test_geometry_is_reclaimed_across_subtitle_and_uneven_blocks():
+    raw = _minimal()
+    raw["slides"][1]["content"]["subtitle"] = "Long subtitle " * 20
+    raw["slides"][1]["payload"]["blocks"][0]["paragraphs"][0]["runs"][0]["text"] = "Long body " * 180
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    by = plan.by_surface_id()
+    assert by["slide-2-subtitle"]._box_h > 120
+    assert by["slide-2-block-lead"]._box_h > by["slide-2-block-bullets"]._box_h
+
+
+def test_surface_inapplicable_typography_is_all_or_nothing():
+    raw = _minimal()
+    raw["slides"][1]["content"]["typography"] = {
+        "mode": "fixed",
+        "subtitle_font_size": 24,
+        "body_font_size": 30,
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+    repaired = validate_handoff(raw, strict=False)
+    assert repaired.deck.slides[1].content.typography is None
+    assert any(e.code == "repair.policy_defaulted" for e in repaired.events)
 
 
 def test_paragraph_margin_boxes_match_paint_per_element_model():
