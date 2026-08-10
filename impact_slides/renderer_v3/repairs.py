@@ -465,12 +465,70 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
     return out
 
 
+def repair_source_footer_names(raw: Any, events: list[DiagnosticEvent]) -> Any:
+    """D217 non-strict: drop later footer IDs whose visible source_name collides."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    registry = raw.get("evidence_registry")
+    if not isinstance(registry, dict):
+        return raw
+    out = deepcopy(raw)
+    reg = out.get("evidence_registry") or {}
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict):
+            continue
+        footer = slide.get("source_footer")
+        if not isinstance(footer, list):
+            continue
+        kept: list[Any] = []
+        seen_names: set[str] = set()
+        changed = False
+        for j, eid in enumerate(footer):
+            entry = reg.get(eid) if isinstance(eid, str) else None
+            name = None
+            if isinstance(entry, dict) and isinstance(entry.get("source_name"), str):
+                name = entry["source_name"].casefold()
+            if name is not None and name in seen_names:
+                changed = True
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="source_footer",
+                        path=f"/slides/{i}/source_footer/{j}",
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=_slide_number(slide),
+                        layout_type=slide.get("layout_type")
+                        if isinstance(slide.get("layout_type"), str)
+                        else None,
+                        expected="normalized-unique source_footer source_name",
+                        input_meta={"evidence_id": eid, "source_name": entry.get("source_name")}
+                        if isinstance(entry, dict)
+                        else {"evidence_id": eid},
+                    )
+                )
+                continue
+            if name is not None:
+                seen_names.add(name)
+            kept.append(eid)
+        if not changed:
+            continue
+        if not kept:
+            del slide["source_footer"]
+        else:
+            slide["source_footer"] = kept
+    return out
+
+
 # Closed registry: name → transform (D123).
 REPAIR_REGISTRY: dict[str, RepairFn] = {
     "assume_schema_v1": assume_schema_v1,
     "drop_unknown_fields": drop_unknown_fields,
     "discard_inapplicable_typography": discard_inapplicable_typography,
     "repair_disclosure_sections": repair_disclosure_sections,
+    "repair_source_footer_names": repair_source_footer_names,
 }
 
 

@@ -23,9 +23,12 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - `render_deck(handoff_path, out_dir, *, strict=True, ...)` validates → plans → publishes exactly five UTF-8/LF artifacts: `presentation.html`, `slide_notes.md`, `evidence_manifest.json`, `run_meta.json`, `handoff_schema_v1.json` (D250)
 - Clean → exit 0 / `ok: true`; degraded non-strict → exit 2 / `ok: false`; failed → typed error, exit 1, prior output untouched (D112/D312)
 - HTML surfaces carry compact `data-plan-sizes` / `data-plan-adaptations` plus projected `data-diagnostic-codes` / `data-diagnostic-count` from `DiagnosticEvent.surface_id`; `run_meta.plans` holds one entry per planned surface (D21/D312)
+- Speaker notes are exact root plain text (D173/D221): no trim/synthesis; whitespace-only rejected; HTML `<aside class="notes">` matches `slide_notes.md` after unescape; notes CSS is `display:none;white-space:pre-wrap` (off-slide)
+- Evidence registry + slide `evidence_ids` / optional `source_footer` (D175–D176/D216–D217): manifest keeps full registry + nested key-sorted locators; visible footers paint authored-order `source_name` only (never IDs/locators); strict rejects normalized-duplicate footer names; non-strict `repair_source_footer_names` keeps first
+- Disclosure is native `<details>` accordion (D174/D222/D289): deterministic `slide-{n}-{surface_id}` IDs, initially closed, print CSS expands bodies; no-JS markup remains complete
 - Takeaway outer reservation includes label/pad/border/outer margin; text fitter uses the inner box only. Cover elements measure at their own frozen role sizes. Paragraph/list margins match paint per CSS block box. Planning uses calibrated Source Sans 3 metrics, diagnoses conservative unsupported-glyph fallback, and publication embeds the vendored font.
 - Strict aggregates all detectable errors into `RendererValidationError.events` (D120/D309/D310)
-- Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311); `repair_disclosure_sections` drops malformed/duplicate D222 sections (keep first)
+- Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311); `repair_disclosure_sections` drops malformed/duplicate D222 sections (keep first); `repair_source_footer_names` drops later duplicate visible footer names
 - `_wrap_lines` breaks at spaces and after `-,:;.` when more content follows; paint inserts matching `<wbr>` via `_soft_break_html` (R178-029). Disclosure units measure summary/list indent separately from full-width paragraphs
 - Print media expands closed disclosures and resets viewport stage scale to fixed 1920×1080
 - Kernel compositions: `opening_cover`, `narrative`, `closing_cover` (D210/D251/D268/D270)

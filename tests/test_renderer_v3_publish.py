@@ -164,6 +164,131 @@ def test_notes_preserve_exact_text_or_placeholder(tmp_path: Path):
     assert "# Slide 3 — Discussion" in notes
 
 
+def test_notes_match_html_and_md_exactly_once(tmp_path: Path):
+    """D173/D221/D250: exact notes across artifacts; HTML escapes only; hidden on slide."""
+    import html as html_lib
+    import re
+
+    raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    exact = (
+        "Line one.\n\n  stage direction\n"
+        "Keep <script>alert(1)</script> and ID src-board-pack  "
+    )
+    last_exact = "Close with Q&A.\n\n  leave two spaces here  "
+    raw["slides"][1]["speaker_notes"] = exact
+    raw["slides"][0]["speaker_notes"] = "Cover cue — do not invent."
+    raw["slides"][2]["speaker_notes"] = last_exact
+    out = tmp_path / "out"
+    render_deck(_write_handoff(tmp_path, raw), out)
+
+    notes_md = (out / "slide_notes.md").read_text(encoding="utf-8")
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+
+    # Exact authored bodies appear once in MD (no trim/synthesis).
+    assert notes_md.count("Cover cue — do not invent.") == 1
+    assert exact in notes_md
+    assert last_exact in notes_md
+    assert notes_md.count(exact) == 1
+    assert notes_md.count(last_exact) == 1
+
+    asides = re.findall(r'<aside class="notes">(.*?)</aside>', html, flags=re.S)
+    assert len(asides) == 3
+    assert html_lib.unescape(asides[0]) == "Cover cue — do not invent."
+    assert html_lib.unescape(asides[1]) == exact
+    assert html_lib.unescape(asides[2]) == last_exact
+    # Markup stays literal in notes artifact; HTML escapes only (never executes).
+    assert "<script>" in exact and "<script>" in notes_md
+    assert "&lt;script&gt;" in asides[1]
+    assert re.search(r"\.notes\s*\{[^}]*display\s*:\s*none", html) is not None
+    # Visible chrome must not paint evidence IDs or locators (aside excluded).
+    body = re.sub(r'<aside class="notes">.*?</aside>', "", html, flags=re.S)
+    assert "src-board-pack" not in body
+
+
+def test_evidence_manifest_and_footer_hide_ids_sort_locators(tmp_path: Path):
+    """D175/D176/D216/D217/D250: full registry in manifest; names-only footer."""
+    import re
+
+    raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    raw["evidence_registry"] = {
+        "src-board-pack": {
+            "source_name": "Board pack Q4",
+            "locator": {"page": 3, "nested": {"b": 1, "a": 2}, "zone": "A", "hits": [{"b": 2, "a": 1}]},
+        },
+        "src-annex": {"source_name": "Annex 1"},
+    }
+    raw["slides"][0]["evidence_ids"] = ["src-board-pack", "src-annex"]
+    raw["slides"][1]["evidence_ids"] = ["src-board-pack", "src-annex"]
+    raw["slides"][1]["source_footer"] = ["src-annex", "src-board-pack"]
+    out = tmp_path / "out"
+    render_deck(_write_handoff(tmp_path, raw), out)
+
+    manifest = json.loads((out / "evidence_manifest.json").read_text(encoding="utf-8"))
+    assert [e["evidence_id"] for e in manifest["evidence_registry"]] == [
+        "src-board-pack",
+        "src-annex",
+    ]
+    assert manifest["evidence_registry"][0]["locator"] == {
+        "hits": [{"a": 1, "b": 2}],
+        "nested": {"a": 2, "b": 1},
+        "page": 3,
+        "zone": "A",
+    }
+    assert manifest["slides"][1]["evidence_ids"] == ["src-board-pack", "src-annex"]
+
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    footers = re.findall(
+        r'<footer class="source-footer"[^>]*>(.*?)</footer>', html, flags=re.S
+    )
+    assert len(footers) == 1
+    assert footers[0] == "Sources: Annex 1; Board pack Q4"
+    assert "src-annex" not in footers[0]
+    assert "src-board-pack" not in footers[0]
+    assert "page" not in footers[0]
+    body = re.sub(r"<aside class=\"notes\">.*?</aside>", "", html, flags=re.S)
+    assert "src-board-pack" not in body and "src-annex" not in body
+
+
+def test_disclosure_native_details_deterministic_and_complete(tmp_path: Path):
+    """D174/D222/D289: closed native details, deterministic IDs, full no-JS body."""
+    import re
+
+    raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    raw["slides"][1]["disclosure"] = {
+        "sections": [
+            {
+                "surface_id": "terms",
+                "title": "Terms",
+                "items": [
+                    {"kind": "paragraph", "text": "P1 exact"},
+                    {"kind": "bullet", "text": "B1"},
+                    {"kind": "bullet", "text": "B2"},
+                    {"kind": "paragraph", "text": "P2 exact"},
+                ],
+            },
+            {
+                "surface_id": "scope",
+                "title": "Scope",
+                "items": [{"kind": "paragraph", "text": "Only scope"}],
+            },
+        ]
+    }
+    out = tmp_path / "out"
+    render_deck(_write_handoff(tmp_path, raw), out)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+
+    assert 'id="slide-2-terms"' in html
+    assert 'id="slide-2-scope"' in html
+    assert 'data-surface-id="slide-2-disclosure-terms"' in html
+    assert re.search(r"<details[^>]*\sopen", html) is None
+    assert "uuid" not in html.lower()
+    # Bodies present without JS interaction (static/no-JS complete).
+    assert "<p" in html and "P1 exact" in html and "P2 exact" in html
+    assert "<li>B1</li>" in html and "<li>B2</li>" in html
+    assert "Only scope" in html
+    assert "@media print" in html and "details:not([open])" in html
+
+
 def test_equivalent_renders_are_byte_identical(tmp_path: Path):
     handoff = _write_handoff(tmp_path)
     out_a = tmp_path / "a"

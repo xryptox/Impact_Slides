@@ -101,6 +101,8 @@ def build_presentation_html(
             "li{margin:0;padding:0;margin-left:1.25em}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
             ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
+            # D173: notes stay off the visible slide; HTML/notes artifact stay exact.
+            ".notes{display:none;white-space:pre-wrap}",
             ".disclosures summary{padding-left:1.25em}",
             "@media print{"
             "details:not([open])>summary~*{display:block}"
@@ -359,7 +361,10 @@ def _escape(text: str) -> str:
 
 
 def build_slide_notes_md(deck: Deck) -> str:
-    """Authored slide order/headings; exact D221 text or _(no notes)_ (D250)."""
+    """Authored slide order/headings; exact D221 text or _(no notes)_ (D250).
+
+    Never trims notes content — only ensures the artifact ends with one LF.
+    """
     chunks: list[str] = []
     for slide in deck.slides:
         heading = _slide_heading(slide)
@@ -368,14 +373,17 @@ def build_slide_notes_md(deck: Deck) -> str:
         notes = getattr(slide, "speaker_notes", None)
         chunks.append(notes if notes else "_(no notes)_")
         chunks.append("")
-    return "\n".join(chunks).rstrip() + "\n"
+    body = "\n".join(chunks)
+    return body if body.endswith("\n") else body + "\n"
 
 
-def _sorted_locator(locator: dict[str, Any] | None) -> dict[str, Any] | None:
-    if locator is None:
-        return None
-    # D113: sort locator object keys for byte stability.
-    return {k: locator[k] for k in sorted(locator)}
+def _sorted_locator(locator: Any) -> Any:
+    """D113/D216: recursively sort object keys; arrays order preserved, values walked."""
+    if isinstance(locator, dict):
+        return {k: _sorted_locator(locator[k]) for k in sorted(locator)}
+    if isinstance(locator, list):
+        return [_sorted_locator(item) for item in locator]
+    return locator
 
 
 def build_evidence_manifest(deck: Deck) -> dict[str, Any]:
