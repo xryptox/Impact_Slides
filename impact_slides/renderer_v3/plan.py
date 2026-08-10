@@ -1405,7 +1405,7 @@ def _table_fit_detail(
             codes.append("plan.short_label_used")
 
     if widths is None and allow_ellipsis:
-        # Force equal-ish columns then ellipsize labels into them (D25).
+        # Force columns then ellipsize labels into them (D25).
         short_used = True
         headers = list(spec["header_short"])
         row_labels = list(spec["row_labels_short"])
@@ -1414,18 +1414,17 @@ def _table_fit_detail(
             if groups is None
             else [g["short_label"] for g in groups]
         )
-        # Values keep mins; remaining width split across label columns.
+        # Values keep mins when they fit; otherwise equal-split the floor box.
         value_total = sum(int(math.ceil(v)) for v in value_mins)
         remaining = box_w - value_total
-        if remaining < total_cols:  # need at least 1px stub
-            return False, codes, 10**9
-        stub_w = max(1, remaining // 2)
-        # Distribute remaining after stub across value headers already min-sized.
-        widths = [stub_w] + [int(math.ceil(v)) for v in value_mins]
-        # Absorb drift into stub.
-        widths[0] += box_w - sum(widths)
-        if widths[0] < 1:
-            return False, codes, 10**9
+        if remaining >= total_cols:
+            stub_w = max(1, remaining // 2)
+            widths = [stub_w] + [int(math.ceil(v)) for v in value_mins]
+            widths[0] += box_w - sum(widths)
+        if widths is None or widths[0] < 1:
+            base = max(1, box_w // total_cols)
+            widths = [base] * total_cols
+            widths[0] += box_w - sum(widths)
         # Ellipsize headers + row labels into column widths.
         new_headers = []
         for c, h in enumerate(headers):
@@ -1476,13 +1475,15 @@ def _table_fit_detail(
 
     # Height: header rows + body rows + optional scale disclosure + rules.
     line_h = _line_box(px)
+    geometry_ok = True
     header_lines = 0
     for c, h in enumerate(headers):
         cell_w = max(1, widths[c] - TABLE_CELL_PAD_X)
         lines = _wrap_label_lines(h, px, cell_w, strong=True)
         if len(lines) > TABLE_MAX_LABEL_LINES:
-            return False, codes, 10**9
-        header_lines = max(header_lines, len(lines))
+            geometry_ok = False
+            lines = lines[:TABLE_MAX_LABEL_LINES] or [h]
+        header_lines = max(header_lines, max(len(lines), 1))
         if len(lines) > 1 and "plan.text_wrapped" not in codes:
             codes.append("plan.text_wrapped")
     group_lines = 0
@@ -1493,8 +1494,9 @@ def _table_fit_detail(
             span_w = max(1, sum(widths[s] for s in slots) - TABLE_CELL_PAD_X)
             lines = _wrap_label_lines(glab, px, span_w, strong=True)
             if len(lines) > TABLE_MAX_LABEL_LINES:
-                return False, codes, 10**9
-            group_lines = max(group_lines, len(lines))
+                geometry_ok = False
+                lines = lines[:TABLE_MAX_LABEL_LINES] or [glab]
+            group_lines = max(group_lines, max(len(lines), 1))
             if len(lines) > 1 and "plan.text_wrapped" not in codes:
                 codes.append("plan.text_wrapped")
 
@@ -1503,16 +1505,17 @@ def _table_fit_detail(
         cell_w = max(1, widths[0] - TABLE_CELL_PAD_X)
         lines = _wrap_label_lines(lab, px, cell_w)
         if len(lines) > TABLE_MAX_LABEL_LINES:
-            return False, codes, 10**9
+            geometry_ok = False
+            lines = lines[:TABLE_MAX_LABEL_LINES] or [lab]
         # Values are single-line; row height is max(label lines, 1).
         row_lines = max(len(lines), 1)
         body_lines_total += row_lines
         if len(lines) > 1 and "plan.text_wrapped" not in codes:
             codes.append("plan.text_wrapped")
-        # Value width check (must not overflow).
+        # Value width check (must not overflow for a true fit).
         for c in range(n_value_cols):
             if _text_width(spec["cells_vis"][r][c], px) > widths[c + 1] - TABLE_CELL_PAD_X:
-                return False, codes, 10**9
+                geometry_ok = False
 
     scale_h = 0
     if spec["scale_labels"]:
@@ -1527,21 +1530,20 @@ def _table_fit_detail(
         + scale_h
         + BLOCK_MARGIN_Y
     )
-    fits = height <= box_h and sum(widths) <= box_w
-    if fits:
-        # Commit display fields for painter.
-        spec["display_headers"] = headers
-        spec["display_row_labels"] = row_labels
-        spec["col_widths"] = widths
-        spec["ellipsized"] = ellipsized
-        spec["short_label_used"] = short_used
-        if groups is not None and group_labels is not None:
-            spec["display_groups"] = [
-                {**g, "display_label": glab}
-                for g, glab in zip(groups, group_labels)
-            ]
-        else:
-            spec["display_groups"] = None
+    fits = geometry_ok and height <= box_h and sum(widths) <= box_w
+    # Always freeze best-effort display so non-strict paint keeps full structure (D25).
+    spec["display_headers"] = headers
+    spec["display_row_labels"] = row_labels
+    spec["col_widths"] = widths
+    spec["ellipsized"] = ellipsized
+    spec["short_label_used"] = short_used
+    if groups is not None and group_labels is not None:
+        spec["display_groups"] = [
+            {**g, "display_label": glab}
+            for g, glab in zip(groups, group_labels)
+        ]
+    else:
+        spec["display_groups"] = None
     return fits, codes, height
 
 
@@ -1582,7 +1584,7 @@ def _apply_table_floor_adaptations(
 ) -> None:
     """Non-strict path: still apply short/ellipsis at floor for complete paint (D25)."""
     assert sp._table_spec is not None
-    # Commit best-effort display even when height overflows.
+    # Commit best-effort display even when width/height overflow (fit returns False).
     _ok, codes, _h = _table_fit_detail(
         sp._table_spec, size, sp._box_w, 10**9, allow_short=True, allow_ellipsis=True
     )

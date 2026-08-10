@@ -143,7 +143,6 @@ def build_presentation_html(
                 plans_by_id,
                 events_by_surface,
                 deck.evidence_registry,
-                deck.number_formats,
             )
         )
         notes = getattr(slide, "speaker_notes", None)
@@ -213,11 +212,9 @@ def _paint_slide_body(
     plans_by_id: dict[str, Any],
     events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
     evidence_registry: dict[str, Any] | None = None,
-    number_formats: dict[str, Any] | None = None,
 ) -> list[str]:
     events_by_surface = events_by_surface or {}
     evidence_registry = evidence_registry or {}
-    number_formats = number_formats or {}
     lt = slide.layout_type
     out: list[str] = []
     sn = slide.slide_number
@@ -259,11 +256,7 @@ def _paint_slide_body(
                 f"{_soft_break_html(slide.content.subtitle)}</p>"
             )
         if lt == "data_table":
-            out.extend(
-                _paint_data_table(
-                    slide, plans_by_id, events_by_surface, number_formats
-                )
-            )
+            out.extend(_paint_data_table(slide, plans_by_id, events_by_surface))
         else:
             out.extend(_paint_narrative_blocks(slide, plans_by_id, events_by_surface))
         if slide.takeaway is not None:
@@ -357,7 +350,6 @@ def _paint_data_table(
     slide: Any,
     plans_by_id: dict[str, Any],
     events_by_surface: dict[str, list[DiagnosticEvent]],
-    number_formats: dict[str, Any],
 ) -> list[str]:
     """Paint one ordinary data_table from frozen plan (D69/D183/D255/D257)."""
     table = slide.payload.table
