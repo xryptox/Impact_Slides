@@ -950,6 +950,7 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
                 "spanGaps": False,
                 "tension": 0,
                 "fill": False,
+                "clip": False,
             }
         )
     g = plan["geometry"]

@@ -230,7 +230,7 @@ def build_presentation_html(
         parts.append("</section>")
     parts.append("</main>")
     if has_chart and not svg_only:
-        # Self-contained Chart.js from vendored v2 asset (immutable copy path).
+        # Self-contained Chart.js from renderer_v3's vendored asset (immutable copy path).
         chart_js = _embedded_chart_js()
         if chart_js:
             parts.append(f"<script>{chart_js}</script>")
