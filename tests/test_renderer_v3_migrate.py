@@ -41,6 +41,10 @@ def test_inventory_has_exactly_57_unique_inputs():
     assert sum(1 for e in LEGACY_INVENTORY.values() if e.classification == "deterministic") == 37
     assert sum(1 for e in LEGACY_INVENTORY.values() if e.classification == "human") == 17
     assert sum(1 for e in LEGACY_INVENTORY.values() if e.classification == "removed_sentinel") == 3
+    # D313 "separate slides" is prose only — not a single composition target token.
+    cwm = LEGACY_INVENTORY["comparison_with_metrics"]
+    assert cwm.candidates == ("comparison_cards", "metric_overview")
+    assert "separate_slides" not in cwm.candidates
 
 
 def test_check_writes_nothing_and_sources_untouched(tmp_path: Path):
@@ -270,6 +274,70 @@ def test_dense_data_table_converts(tmp_path: Path):
     assert len(table["columns"]) == 2
     assert len(table["rows"]) == 2
     assert table["rows"][0]["cells"]["revenue"]["type"] == "text"
+
+
+def test_authored_disclosure_is_preserved(tmp_path: Path):
+    """Legacy disclosure panels must map into v1 slide.disclosure (not dropped)."""
+    src = _write(
+        tmp_path,
+        "in.json",
+        _legacy_envelope(
+            [
+                {
+                    "slide_number": 1,
+                    "layout_type": "annex_table",
+                    "title": "Annex A",
+                    "section": "Annex",
+                    "visual_spec": {
+                        "primary_visual": {
+                            "type": "annex_table",
+                            "steps_or_data": [
+                                ["Metric", "Value"],
+                                ["Revenue", "100"],
+                            ],
+                        }
+                    },
+                    "disclosure": {
+                        "pattern": "detail",
+                        "panels": [
+                            {
+                                "title": "FX-adjusted note",
+                                "body": "* See Slide 3 for FX-adjusted information.",
+                            }
+                        ],
+                    },
+                    "speaker_notes": "Footnote stays.",
+                },
+                {
+                    "slide_number": 2,
+                    "layout_type": "ir_bullet_sheet",
+                    "title": "Notes",
+                    "section": "Annex",
+                    "content": {"bullets": ["Only bullet"]},
+                    "disclosure": {
+                        "pattern": "detail",
+                        "panels": [
+                            {
+                                "title": "Statistical Tables reference",
+                                "body": "Refer to the Statistical Tables.",
+                            }
+                        ],
+                    },
+                    "speaker_notes": "Cite tables.",
+                },
+            ]
+        ),
+    )
+    result = migrate_handoff(src, out_dir=tmp_path / "out", check=False)
+    assert result.unresolved == []
+    assert result.version_marked is True
+    annex, narrative = result.candidate["slides"]
+    assert annex["layout_type"] == "annex_table"
+    assert "disclosure" in annex
+    assert annex["disclosure"]["sections"][0]["title"] == "FX-adjusted note"
+    assert "FX-adjusted" in annex["disclosure"]["sections"][0]["items"][0]["text"]
+    assert narrative["layout_type"] == "narrative"
+    assert narrative["disclosure"]["sections"][0]["title"] == "Statistical Tables reference"
 
 
 def test_cli_check_and_migrate(tmp_path: Path, capsys: pytest.CaptureFixture[str]):

@@ -103,6 +103,8 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     _human("brand_cover", ("opening_cover", "closing_cover"), "One recipe served both deck boundaries."),
     _human("brand_divider", ("section_divider", "closing_cover"), "Current Amex uses both meanings."),
     _human("causal_loop", ("feedback_loop",), "Legacy arrows do not prove causal edge polarity."),
+    # D313 prose also names "separate slides"; omitted deliberately — not a single
+    # composition target, so it is not a candidate token in this inventory.
     _human(
         "comparison_with_metrics",
         ("comparison_cards", "metric_overview"),
@@ -448,12 +450,49 @@ def _evidence_from_slide(
     return ids or None
 
 
+def _disclosure_from_legacy(
+    slide: Mapping[str, Any],
+    *,
+    slide_number: int = 0,
+) -> Optional[dict[str, Any]]:
+    """Map authored legacy disclosure panels → v1 Disclosure; never invent."""
+    raw = slide.get("disclosure")
+    if not isinstance(raw, dict):
+        return None
+    panels = raw.get("panels")
+    if not isinstance(panels, list) or not panels:
+        return None
+    sections: list[dict[str, Any]] = []
+    used: set[str] = set()
+    for i, panel in enumerate(panels[:4]):
+        if not isinstance(panel, dict):
+            continue
+        title = _text(panel.get("title"))
+        body = _text(panel.get("body"))
+        if not title or not body:
+            continue
+        sid = _unique_slug(
+            title, used, fallback=f"disc-{slide_number or 0}-{i + 1}"
+        )
+        # Split body on blank lines into paragraph items (cap 6).
+        parts = [p.strip() for p in re.split(r"\n\s*\n", body) if p.strip()]
+        if not parts:
+            parts = [body]
+        items = [{"kind": "paragraph", "text": p} for p in parts[:6]]
+        sections.append({"surface_id": sid, "title": title, "items": items})
+    if not sections:
+        return None
+    return {"sections": sections}
+
+
 def _common_fields(
     slide: Mapping[str, Any],
     *,
     section_id: Optional[str],
     title: Optional[str],
     include_takeaway: bool,
+    include_disclosure: bool = True,
+    slide_number: int = 0,
 ) -> dict[str, Any]:
     out: dict[str, Any] = {}
     if section_id is not None:
@@ -468,6 +507,10 @@ def _common_fields(
         so = _text(c.get("so_what")) or _text(c.get("takeaway"))
         if so:
             out["takeaway"] = {"text": so}
+    if include_disclosure:
+        disc = _disclosure_from_legacy(slide, slide_number=slide_number)
+        if disc is not None:
+            out["disclosure"] = disc
     notes = _text(slide.get("speaker_notes"))
     if notes:
         out["speaker_notes"] = notes
@@ -547,7 +590,13 @@ def _convert_narrative(
         "slide_number": slide_number,
         "layout_type": "narrative",
         "payload": {"blocks": blocks},
-        **_common_fields(slide, section_id=section_id, title=title, include_takeaway=True),
+        **_common_fields(
+            slide,
+            section_id=section_id,
+            title=title,
+            include_takeaway=True,
+            slide_number=slide_number,
+        ),
     }
     return out, None
 
@@ -600,6 +649,7 @@ def _convert_table_family(
             section_id=section_id,
             title=title,
             include_takeaway=target == "data_table",
+            slide_number=slide_number,
         ),
     }
     if require_insight and insight and "takeaway" not in out:
@@ -676,7 +726,13 @@ def _convert_grouped_annex(
         "slide_number": slide_number,
         "layout_type": "grouped_annex_table",
         "payload": {"tables": peers_out},
-        **_common_fields(slide, section_id=section_id, title=title, include_takeaway=False),
+        **_common_fields(
+            slide,
+            section_id=section_id,
+            title=title,
+            include_takeaway=False,
+            slide_number=slide_number,
+        ),
     }
     out.pop("takeaway", None)
     return out, None
@@ -773,7 +829,13 @@ def _convert_period_comparison(
                 "rows": rows,
             }
         },
-        **_common_fields(slide, section_id=section_id, title=title, include_takeaway=True),
+        **_common_fields(
+            slide,
+            section_id=section_id,
+            title=title,
+            include_takeaway=True,
+            slide_number=slide_number,
+        ),
     }
     return out, None
 
@@ -820,7 +882,13 @@ def _convert_comparison_cards(
         "slide_number": slide_number,
         "layout_type": "comparison_cards",
         "payload": payload,
-        **_common_fields(slide, section_id=section_id, title=title, include_takeaway=True),
+        **_common_fields(
+            slide,
+            section_id=section_id,
+            title=title,
+            include_takeaway=True,
+            slide_number=slide_number,
+        ),
     }
     return out, None
 
@@ -927,7 +995,13 @@ def _convert_line_chart(
         "slide_number": slide_number,
         "layout_type": "single_chart",
         "payload": {"primary_visual": visual},
-        **_common_fields(slide, section_id=section_id, title=title, include_takeaway=True),
+        **_common_fields(
+            slide,
+            section_id=section_id,
+            title=title,
+            include_takeaway=True,
+            slide_number=slide_number,
+        ),
     }
     return out, None
 
