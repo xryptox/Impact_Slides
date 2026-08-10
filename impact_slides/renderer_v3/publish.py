@@ -102,7 +102,12 @@ def build_presentation_html(
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
             ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
             ".disclosures summary{padding-left:1.25em}",
-            "@media print{details:not([open])>summary~*{display:block}}",
+            "@media print{"
+            "details:not([open])>summary~*{display:block}"
+            "html,body{width:auto;height:auto;overflow:visible}"
+            ".deck-stage{width:1920px!important;transform:none!important}"
+            ".slide{width:1920px!important;height:1080px!important;transform:none!important;margin:0!important;page-break-after:always}"
+            "}",
             "</style>",
             "</head>",
             "<body>",

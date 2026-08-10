@@ -488,6 +488,75 @@ def test_duplicate_disclosure_surface_ids_are_rejected():
         validate_handoff(raw, strict=True)
 
 
+def test_nonstrict_repairs_duplicate_disclosure_keeps_first():
+    """R178-028 / D222: non-strict drops duplicate section, keeps first."""
+    raw = _minimal()
+    first = {
+        "surface_id": "terms",
+        "title": "Terms",
+        "items": [{"kind": "paragraph", "text": "Keep me."}],
+    }
+    second = {
+        "surface_id": "terms",
+        "title": "Terms again",
+        "items": [{"kind": "paragraph", "text": "Drop me."}],
+    }
+    raw["slides"][1]["disclosure"] = {"sections": [first, second]}
+    result = validate_handoff(raw, strict=False)
+    assert result.repaired
+    disc = result.deck.slides[1].disclosure
+    assert disc is not None
+    assert len(disc.sections) == 1
+    assert disc.sections[0].title == "Terms"
+    assert any(
+        e.code == "repair.item_dropped" and e.role == "disclosure" for e in result.events
+    )
+
+
+def test_hyphen_break_opportunity_in_wrap_lines():
+    """R178-029: long hyphenated phrases wrap; not one unbreakable token."""
+    from impact_slides.renderer_v3.plan import _wrap_lines
+
+    phrase = "pre-trade-risk-assessment-framework"
+    items = [(phrase, False)]
+    lines, wo = _wrap_lines(items, 22, 140)
+    assert not wo
+    assert len(lines) >= 2
+    assert "".join(lines).replace(" ", "") == phrase
+
+
+def test_disclosure_paragraph_not_list_indented():
+    """R178-030: paragraphs measure full width; summary/bullets use indent."""
+    from impact_slides.renderer_v3.plan import (
+        CONTENT_W,
+        DISCLOSURE_INDENT_EM,
+        LIST_INDENT_EM,
+    )
+
+    raw = _minimal()
+    long_para = ("Word " * 80).strip()
+    raw["slides"][1]["disclosure"] = {
+        "sections": [
+            {
+                "surface_id": "terms",
+                "title": "Terms",
+                "items": [
+                    {"kind": "paragraph", "text": long_para},
+                    {"kind": "bullet", "text": "Short bullet."},
+                ],
+            }
+        ]
+    }
+    deck = validate_handoff(raw, strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    disc = plan.by_surface_id()["slide-2-disclosure-terms"]
+    assert disc._unit_indent_ems[0] == DISCLOSURE_INDENT_EM  # summary
+    assert disc._unit_indent_ems[1] == 0.0  # paragraph
+    assert disc._unit_indent_ems[2] == LIST_INDENT_EM  # bullet
+    assert disc._box_w == CONTENT_W
+    assert not disc._overflow
+
+
 def test_common_surfaces_are_planned_and_painted(tmp_path: Path):
     raw = _minimal()
     raw["slides"][1]["disclosure"] = {
@@ -508,7 +577,9 @@ def test_common_surfaces_are_planned_and_painted(tmp_path: Path):
     assert "<details" in html
     assert "Forward-looking statement." in html
     assert "Sources: Board pack Q4" in html
-    assert "@media print{details:not([open])>summary~*{display:block}}" in html
+    assert "details:not([open])>summary~*{display:block}" in html
+    assert "@media print{" in html
+    assert ".slide{width:1920px!important" in html
     meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
     ids = {plan["surface_id"] for plan in meta["plans"]}
     assert "slide-2-disclosure-terms" in ids
@@ -518,6 +589,72 @@ def test_common_surfaces_are_planned_and_painted(tmp_path: Path):
         "slide-2-disclosure-terms",
         "slide-2-source-footer",
     ]
+
+
+def test_print_media_shows_closed_disclosure_and_resets_scale(tmp_path: Path):
+    """R178-031/032: browser print media expands disclosure; stage unscaled."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    raw = _minimal()
+    raw["slides"][1]["disclosure"] = {
+        "sections": [
+            {
+                "surface_id": "terms",
+                "title": "Terms",
+                "items": [
+                    {"kind": "paragraph", "text": "PRINT_VISIBLE_BODY"},
+                    {"kind": "bullet", "text": "PRINT_VISIBLE_BULLET"},
+                ],
+            }
+        ]
+    }
+    out = tmp_path / "out"
+    render_deck(_write(tmp_path, raw), out)
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 800, "height": 450})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        page.wait_for_timeout(100)
+        screen = page.evaluate(
+            """() => {
+              const d = document.querySelector('details');
+              return {open: d && d.open};
+            }"""
+        )
+        assert screen["open"] is False
+        page.emulate_media(media="print")
+        printed = page.evaluate(
+            """() => {
+              const slide = document.querySelector('.slide');
+              const p = [...document.querySelectorAll('details p')]
+                .find(el => el.textContent.includes('PRINT_VISIBLE_BODY'));
+              const li = [...document.querySelectorAll('details li')]
+                .find(el => el.textContent.includes('PRINT_VISIBLE_BULLET'));
+              const cs = el => el ? getComputedStyle(el) : null;
+              const visible = el => {
+                if (!el) return false;
+                const s = cs(el);
+                if (!s || s.display === 'none' || s.visibility === 'hidden') return false;
+                const r = el.getBoundingClientRect();
+                return r.width > 0 && r.height > 0;
+              };
+              return {
+                bodyVisible: visible(p),
+                bulletVisible: visible(li),
+                transform: slide ? cs(slide).transform : null,
+                width: slide ? slide.getBoundingClientRect().width : null,
+                height: slide ? slide.getBoundingClientRect().height : null,
+              };
+            }"""
+        )
+        browser.close()
+    assert printed["bodyVisible"] is True
+    assert printed["bulletVisible"] is True
+    assert printed["transform"] in (None, "none")
+    assert printed["width"] is not None and abs(printed["width"] - 1920) < 2
+    assert printed["height"] is not None and abs(printed["height"] - 1080) < 2
 
 
 def test_unicode_uses_diagnosed_conservative_metrics():

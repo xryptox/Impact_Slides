@@ -96,6 +96,8 @@ class SurfacePlan:
     # Extra chrome height outside the text-fit box (takeaway panel).
     _chrome_h: int = 0
     _indent_em: float = 0
+    # Per-unit painted indents (disclosure summary/list vs paragraph).
+    _unit_indent_ems: list[float] = field(default_factory=list)
     _default_size: Optional[int] = None
     _maximum_size: Optional[int] = None
 
@@ -450,6 +452,12 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             for section in slide.disclosure.sections:
                 items = [(section.title, True)]
                 items.extend((item.text, False) for item in section.items)
+                # Summary + list items indented in paint; plain paragraphs full width.
+                unit_indents = [DISCLOSURE_INDENT_EM]
+                unit_indents.extend(
+                    LIST_INDENT_EM if item.kind == "bullet" else 0.0
+                    for item in section.items
+                )
                 bullet_groups = sum(
                     item.kind == "bullet"
                     and (i == 0 or section.items[i - 1].kind != "bullet")
@@ -474,7 +482,8 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                     _fit_role=None,
                     _mode="fixed",
                     _margin_boxes=paragraph_boxes + bullet_groups,
-                    _indent_em=DISCLOSURE_INDENT_EM,
+                    _indent_em=0,
+                    _unit_indent_ems=unit_indents,
                 )
                 next_slot += 1
                 adaptive_surfaces.append(disclosure)
@@ -531,7 +540,7 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
 
     def need(sp: SurfacePlan, size: int) -> int:
         return _required_height(
-            sp._text_items, size, sp._box_w, sp._margin_boxes, sp._indent_em
+            sp._text_items, size, sp._box_w, sp._margin_boxes, sp._indent_em, sp._unit_indent_ems
         )
 
     baseline_sizes = [
@@ -609,7 +618,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             return
         px = next(iter(sp.role_sizes.values()))
         if not _text_fits(
-            sp._text_items, px, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
+            sp._text_items, px, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em, unit_indent_ems=sp._unit_indent_ems
         ):
             sp._overflow = True
         return
@@ -648,7 +657,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         size = sp._explicit_size if sp._explicit_size is not None else floor
         sp.role_sizes[fit] = size
         if not _text_fits(
-            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
+            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em, unit_indent_ems=sp._unit_indent_ems
         ):
             sp._overflow = True
         return
@@ -659,7 +668,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         size = sp._explicit_size
         sp.role_sizes[fit] = size
         if not _text_fits(
-            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
+            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em, unit_indent_ems=sp._unit_indent_ems
         ):
             # Spec: explicit that does not fit → normal strict/non-strict (D27).
             sp._overflow = True
@@ -675,6 +684,7 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             sp._box_h,
             margin_boxes=sp._margin_boxes,
             indent_em=sp._indent_em,
+            unit_indent_ems=sp._unit_indent_ems,
         )
         if ok:
             chosen = size
@@ -706,6 +716,12 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         )
 
 
+def _unit_indent(unit_index: int, indent_em: float, unit_indent_ems: list[float]) -> float:
+    if unit_indent_ems and unit_index < len(unit_indent_ems):
+        return unit_indent_ems[unit_index]
+    return indent_em
+
+
 def _text_fits(
     items: list[tuple[str, bool]],
     px: int,
@@ -714,9 +730,16 @@ def _text_fits(
     *,
     margin_boxes: int = 1,
     indent_em: float = 0,
+    unit_indent_ems: list[float] | None = None,
 ) -> bool:
     ok, _ = _text_fits_detail(
-        items, px, box_w, box_h, margin_boxes=margin_boxes, indent_em=indent_em
+        items,
+        px,
+        box_w,
+        box_h,
+        margin_boxes=margin_boxes,
+        indent_em=indent_em,
+        unit_indent_ems=unit_indent_ems,
     )
     return ok
 
@@ -729,20 +752,23 @@ def _text_fits_detail(
     *,
     margin_boxes: int = 1,
     indent_em: float = 0,
+    unit_indent_ems: list[float] | None = None,
 ) -> tuple[bool, bool]:
     """Return (fits, wrapped). Never truncates or drops text (D59)."""
     if box_w <= 0 or box_h <= 0:
         return False, False
     units = _split_units(items)
+    indents = unit_indent_ems or []
     line_h = _line_box(px)
     total_lines = 0
     wrapped = False
     width_overflow = False
-    for unit_items in units:
+    for i, unit_items in enumerate(units):
         text_u = "".join(t for t, _ in unit_items)
         if not text_u:
             continue
-        lines, wo = _wrap_lines(unit_items, px, box_w - math.ceil(px * indent_em))
+        indent = _unit_indent(i, indent_em, indents)
+        lines, wo = _wrap_lines(unit_items, px, box_w - math.ceil(px * indent))
         width_overflow = width_overflow or wo
         total_lines += max(1, len(lines))
         if len(lines) > 1:
@@ -761,11 +787,22 @@ def _required_height(
     box_w: int,
     margin_boxes: int,
     indent_em: float = 0,
+    unit_indent_ems: list[float] | None = None,
 ) -> int:
     units = _split_units(items)
+    indents = unit_indent_ems or []
     lines = sum(
-        max(1, len(_wrap_lines(unit, px, box_w - math.ceil(px * indent_em))[0]))
-        for unit in units
+        max(
+            1,
+            len(
+                _wrap_lines(
+                    unit,
+                    px,
+                    box_w - math.ceil(px * _unit_indent(i, indent_em, indents)),
+                )[0]
+            ),
+        )
+        for i, unit in enumerate(units)
     )
     return lines * _line_box(px) + max(0, margin_boxes) * BLOCK_MARGIN_Y
 
@@ -802,10 +839,34 @@ def _split_units(
     return [u for u in units if u]
 
 
+def _wrap_tokens(text: str) -> list[tuple[int, str]]:
+    """Break opportunities after whitespace and after hyphens (browser-like)."""
+    tokens: list[tuple[int, str]] = []
+    i = 0
+    n = len(text)
+    while i < n:
+        while i < n and text[i].isspace():
+            i += 1
+        if i >= n:
+            break
+        start = i
+        while i < n and not text[i].isspace():
+            i += 1
+            # Soft break after hyphen when more non-space content follows.
+            if text[i - 1] == "-" and i < n and not text[i].isspace():
+                break
+        end = i
+        while end < n and text[end].isspace():
+            end += 1
+        tokens.append((start, text[start:end]))
+        i = end
+    return tokens
+
+
 def _wrap_lines(
     items: list[tuple[str, bool]], px: int, box_w: int
 ) -> tuple[list[str], bool]:
-    """Word-wrap at spaces/punctuation; never split words (D24/D59).
+    """Word-wrap at spaces/hyphens; never mid-word split or truncate (D24/D59).
 
     Returns (lines, width_overflow). Width overflow means an unbreakable token
     exceeds the box — still kept intact, never truncated.
@@ -823,21 +884,20 @@ def _wrap_lines(
         measured = sum(advances[start : start + length]) * px
         return max(measured * 1.05, measured + 2)
 
-    matches = list(re.finditer(r"\S+\s*", text))
-    if not matches:
+    tokens = _wrap_tokens(text)
+    if not tokens:
         return [text], width(0, len(text)) > box_w
     lines: list[str] = []
-    line_start = matches[0].start()
+    line_start = tokens[0][0]
     cur = ""
     width_overflow = False
-    for match in matches:
-        tok = match.group()
-        if width(match.start(), len(tok.rstrip())) > box_w:
+    for start, tok in tokens:
+        if width(start, len(tok.rstrip())) > box_w:
             width_overflow = True
         trial = cur + tok
         if cur and width(line_start, len(trial)) > box_w:
             lines.append(cur.rstrip())
-            line_start = match.start()
+            line_start = start
             cur = tok
         else:
             cur = trial
@@ -907,6 +967,7 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                     m._box_h,
                     margin_boxes=m._margin_boxes,
                     indent_em=m._indent_em,
+            unit_indent_ems=m._unit_indent_ems,
                 )
                 for m in members
             ):
