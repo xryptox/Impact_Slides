@@ -120,7 +120,7 @@ The August 2026 automation pass added and smoke-tested:
 10. Follow-up extension hardening: persistent on-disk byte offsets, signature-based event dedup, and an `actions.jsonl` audit log.
 11. Loop-limit derivation only from explicit `fix N` active-step rows; historical rows from failed or completed runs are ignored.
 12. Per-phase quiet limits (25 minutes initial review, 10 minutes fix rounds) with CPU-delta stall confirmation before escalation.
-13. Cleanup resilience: transient lock-failure retries, watcher-process-tree termination before worktree removal, residual-directory cleanup after Git registration disappears, and idempotent empty-manifest exit.
+13. Cleanup resilience: transient lock-failure retries, watcher-process-tree termination before worktree removal, cwd-holder termination via PEB probe for orphaned pane shells, residual-directory cleanup after Git registration disappears, and idempotent empty-manifest exit.
 
 Smoke coverage includes PowerShell 5.1 parsing, queued follow-up delivery, stale-event suppression, two-event automatic rearming, exact-branch run selection, repair-prompt precedence, closing-reference boundaries, already-merged merge rejection, selected-ticket cleanup, preservation of another active worktree, and cleanup with an already-absent origin branch.
 
