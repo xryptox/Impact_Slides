@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from copy import deepcopy
 from decimal import Decimal, InvalidOperation
-from typing import Any, Callable
+from typing import Any, Callable  # Callable used by typography surface resolvers
 
 from .diagnostics import DiagnosticEvent, event
 
@@ -971,6 +971,70 @@ def repair_source_footer_names(raw: Any, events: list[DiagnosticEvent]) -> Any:
     return out
 
 
+def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) -> Any:
+    """D230 non-strict: a fixed domain that does not contain every finite chart
+    value is replaced by a diagnosed safe generated domain (strict rejects)."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    out = deepcopy(raw)
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict) or slide.get("layout_type") != "single_chart":
+            continue
+        payload = slide.get("payload")
+        visual = payload.get("primary_visual") if isinstance(payload, dict) else None
+        if not isinstance(visual, dict) or visual.get("chart_type") != "line":
+            continue
+        axes = visual.get("value_axes")
+        primary = axes.get("primary") if isinstance(axes, dict) else None
+        domain = primary.get("domain") if isinstance(primary, dict) else None
+        if not isinstance(domain, dict) or domain.get("kind") != "fixed":
+            continue
+        data = visual.get("chart_data")
+        series = data.get("series") if isinstance(data, dict) else None
+        if not isinstance(series, list):
+            continue
+        try:
+            lo = Decimal(str(domain.get("min")))
+            hi = Decimal(str(domain.get("max")))
+        except (InvalidOperation, TypeError, ValueError):
+            continue
+        uncontained = False
+        for s in series:
+            values = s.get("values") if isinstance(s, dict) else None
+            if not isinstance(values, list):
+                continue
+            for v in values:
+                if v is None:
+                    continue
+                try:
+                    dv = Decimal(str(v))
+                except (InvalidOperation, TypeError, ValueError):
+                    continue
+                if dv < lo or dv > hi:
+                    uncontained = True
+                    break
+            if uncontained:
+                break
+        if not uncontained:
+            continue
+        primary["domain"] = {"kind": "generated"}
+        events.append(
+            event(
+                code="repair.domain_replaced",
+                severity="warning",
+                phase="repair",
+                role="value_axis",
+                path=f"/slides/{i}/payload/primary_visual/value_axes/primary/domain",
+                action="replace_domain",
+                result="generated",
+                slide_number=_slide_number(slide),
+                layout_type="single_chart",
+                expected="fixed domain containing every finite value",
+            )
+        )
+    return out
+
+
 # Closed registry: name → transform (D123).
 REPAIR_REGISTRY: dict[str, RepairFn] = {
     "assume_schema_v1": assume_schema_v1,
@@ -979,6 +1043,7 @@ REPAIR_REGISTRY: dict[str, RepairFn] = {
     "discard_inapplicable_typography": discard_inapplicable_typography,
     "repair_disclosure_sections": repair_disclosure_sections,
     "repair_source_footer_names": repair_source_footer_names,
+    "repair_uncontained_fixed_domains": repair_uncontained_fixed_domains,
 }
 
 

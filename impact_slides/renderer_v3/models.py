@@ -811,6 +811,19 @@ class LineChartVisual(ClosedModel):
                         raise ValueError(
                             "leading_break.to must be below every finite value"
                         )
+        domain = self.value_axes.primary.domain
+        if domain.kind == "fixed":
+            lo = Decimal(domain.min)
+            hi = Decimal(domain.max)
+            for s in self.chart_data.series:
+                for v in s.values:
+                    if v is None:
+                        continue
+                    dv = Decimal(v)
+                    if dv < lo or dv > hi:
+                        raise ValueError(
+                            "fixed domain must contain every finite value"
+                        )
         return self
 
 

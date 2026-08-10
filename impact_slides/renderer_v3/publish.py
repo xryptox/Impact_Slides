@@ -184,7 +184,7 @@ def build_presentation_html(
             ".chart-legend{list-style:none;display:flex;flex-wrap:wrap;gap:16px;margin:0 0 var(--space-sm);padding:0}",
             ".legend-item{display:flex;align-items:center;gap:8px}",
             ".legend-swatch{display:inline-block;width:16px;height:4px}",
-            ".chart-semantic-table.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+            ".chart-semantic-table.visually-hidden,.chart-facts.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
             ".chart-semantic-table{width:100%;border-collapse:collapse;margin:0 0 var(--space-sm)}",
             ".chart-semantic-table th,.chart-semantic-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule)}",
             ".chart-semantic-table thead th{background:var(--color-band);color:var(--color-band-ink)}",

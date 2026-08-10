@@ -20,7 +20,11 @@ from pathlib import Path
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
-from impact_slides.renderer_v3.charts import freeze_line_chart, paint_line_chart_svg
+from impact_slides.renderer_v3.charts import (
+    freeze_line_chart,
+    paint_line_chart_svg,
+    paint_semantic_table,
+)
 from impact_slides.renderer_v3.format import MISSING_ACCESSIBLE, MISSING_VISIBLE
 from impact_slides.renderer_v3.models import LineChartVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
@@ -403,3 +407,101 @@ def test_generated_domain_covers_data_at_max_target_ticks():
     g = cp["geometry"]
     ys = [p["y"] for p in cp["points"] if p["finite"]]
     assert all(g["pad_t"] <= y <= g["pad_t"] + g["plot_h"] for y in ys)
+
+
+# ---------------------------------------------------------------------------
+# Review-gate repairs: REV-13 tick formatting, REV-14 fixed-domain containment
+# ---------------------------------------------------------------------------
+
+_CANONICAL_DECIMAL = re.compile(r"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")
+
+
+def _chart_slide(raw: dict) -> dict:
+    return next(s for s in raw["slides"] if s.get("layout_type") == "single_chart")
+
+
+def test_rev13_generated_ticks_are_plain_canonical_decimals():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["chart_data"]["series"][0]["values"] = ["0", "250000", "1000000", "1250000"]
+    vis["chart_data"]["series"][1]["values"] = ["100000", "300000", "900000", "1100000"]
+    deck = validate_handoff(raw, strict=True).deck
+    frozen = freeze_line_chart(deck.slides[1].payload.primary_visual, deck.number_formats)
+    domain = frozen["domain"]
+    assert domain["kind"] == "generated"
+    for text in [domain["min"], domain["max"], *domain["ticks"]]:
+        assert _CANONICAL_DECIMAL.match(text), text
+    assert float(domain["max"]) >= 1250000
+
+
+def test_rev14_strict_rejects_value_outside_fixed_domain():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "4",
+        "ticks": ["0", "1", "2", "3", "4"],
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_rev14_non_strict_repairs_uncontained_fixed_domain():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    expected_series = [list(s["values"]) for s in vis["chart_data"]["series"]]
+    expected_categories = [c["category_id"] for c in vis["chart_data"]["categories"]]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "4",
+        "ticks": ["0", "1", "2", "3", "4"],
+    }
+    result = validate_handoff(raw, strict=False)
+    assert result.ok
+    assert result.repaired
+    matched = [e for e in result.events if e.code == "repair.domain_replaced"]
+    assert len(matched) == 1
+    ev = matched[0]
+    assert ev.action.name == "replace_domain"
+    assert ev.result.name == "generated"
+    assert ev.phase == "repair"
+    assert ev.path.endswith("/value_axes/primary/domain")
+    repaired_vis = result.deck.slides[1].payload.primary_visual
+    assert repaired_vis.value_axes.primary.domain.kind == "generated"
+    # Non-semantic repair: only the domain changes; chart facts are preserved.
+    assert [list(s.values) for s in repaired_vis.chart_data.series] == expected_series
+    assert [c.category_id for c in repaired_vis.chart_data.categories] == expected_categories
+
+
+def test_rev12_facts_follow_semantic_table_visibility():
+    deck = validate_handoff(_raw(), strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    cp = plan.by_surface_id()["vol-trend"].chart_paint
+    hidden_html = paint_semantic_table(
+        {"semantic_table": cp["semantic_table"], "surface_id": "vol-trend"}
+    )
+    assert 'class="chart-semantic-table visually-hidden"' in hidden_html
+    assert 'class="chart-facts visually-hidden"' in hidden_html
+    visible_html = paint_semantic_table(
+        {
+            "semantic_table": dict(cp["semantic_table"], visible=True),
+            "surface_id": "vol-trend",
+        }
+    )
+    assert 'class="chart-semantic-table"' in visible_html
+    assert 'class="chart-facts"' in visible_html
+    assert "visually-hidden" not in visible_html
+
+
+def test_rev14_fixed_domain_containing_values_passes():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "6",
+        "ticks": ["0", "2", "4", "6"],
+    }
+    assert validate_handoff(raw, strict=True).ok

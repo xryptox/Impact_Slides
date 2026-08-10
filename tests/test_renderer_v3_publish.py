@@ -606,3 +606,25 @@ def test_package_export_includes_render_deck():
 
     assert hasattr(pkg, "render_deck")
     assert "render_deck" in pkg.__all__
+
+
+def test_semantic_table_chrome_and_facts_visibility(tmp_path: Path):
+    """REV-04 selector, REV-12 facts follow the semantic table hidden state."""
+    line_chart = ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json"
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(line_chart.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    out = tmp_path / "out"
+    render_deck(handoff, out)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    # REV-12: facts block carries the visually-hidden class with the table.
+    assert 'class="chart-facts visually-hidden"' in html
+    facts_rule = ".chart-semantic-table.visually-hidden," + ".chart-facts.visually-hidden{"
+    facts_chained = "visually-hidden." + "chart-facts"
+    assert facts_rule in html
+    assert facts_chained not in html
+    # REV-04 regression pin: th and td are selected directly. Assert via
+    # byte membership so no display layer can mask the comma.
+    fixed = ".chart-semantic-table th," + ".chart-semantic-table td{"
+    broken = "th.chart-semantic-table td{"
+    assert fixed in html
+    assert broken not in html

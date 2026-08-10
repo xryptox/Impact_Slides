@@ -451,7 +451,9 @@ def paint_semantic_table(plan: dict[str, Any]) -> str:
         f"<li>{_e(f)}</li>" for f in t.get("facts") or []
     )
     facts_block = (
-        f'<div class="chart-facts"><ul>{facts}</ul></div>' if facts else ""
+        f'<div class="chart-facts{" visually-hidden" if hidden else ""}"><ul>{facts}</ul></div>'
+        if facts
+        else ""
     )
     return (
         f'<table id="{_e(tid)}" class="{cls}" data-semantic-table="1" '
@@ -604,10 +606,22 @@ def _resolve_domain(chart: LineChartVisual, data: ChartData) -> dict[str, Any]:
     ticks = _nice_ticks(float(lo_f), float(hi_f), target)
     return {
         "kind": "generated",
-        "min": f"{ticks[0]:.6g}",
-        "max": f"{ticks[-1]:.6g}",
-        "ticks": [f"{t:.6g}" for t in ticks],
+        "min": _plain_decimal(ticks[0]),
+        "max": _plain_decimal(ticks[-1]),
+        "ticks": [_plain_decimal(t) for t in ticks],
     }
+
+
+def _plain_decimal(value: float) -> str:
+    """Canonical decimal text without scientific notation (D77/D291).
+
+    ``:.6g`` switches to '1.25e+06' for |value| >= 1e6, which CanonicalDecimal
+    rejects; format with fixed decimals and strip trailing zeros instead.
+    """
+    text = f"{value:.10f}".rstrip("0").rstrip(".")
+    if text in ("", "-0"):
+        return "0"
+    return text
 
 
 def _nice_ticks(lo: float, hi: float, target: int) -> list[float]:
