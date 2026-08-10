@@ -91,6 +91,7 @@ LINEAR_META_PX: Final = 14  # step numbers / time labels
 LINEAR_GAP: Final = 16
 LINEAR_CARD_PAD: Final = 16
 LINEAR_CONNECTOR_H: Final = 24
+LINEAR_INNER_GAP: Final = 8
 LINEAR_LAYER_GAP: Final = 20
 TABLE_MAX_LABEL_LINES: Final = 2
 # Must match publish CSS padding on table.data-table th/td (8px*2, 6px*2).
@@ -2587,7 +2588,12 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
         if orientation == "horizontal":
             col_w = max(
                 40,
-                (box_w - LINEAR_GAP * (n - 1) - LINEAR_CONNECTOR_H * (n - 1)) // n,
+                (
+                    box_w
+                    - 2 * LINEAR_GAP * (n - 1)
+                    - LINEAR_CONNECTOR_H * (n - 1)
+                )
+                // n,
             )
             heights = []
             for it in items:
@@ -2645,9 +2651,9 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     )
                     ok = ok and fit
                     h += len(lines) * _line_box(detail_px)
-                h += LINEAR_CARD_PAD + LINEAR_CONNECTOR_H
+                h += LINEAR_CARD_PAD + LINEAR_CONNECTOR_H + 2 * LINEAR_GAP
                 total += h
-            total = total - LINEAR_CONNECTOR_H + BLOCK_MARGIN_Y
+            total = total - LINEAR_CONNECTOR_H - 2 * LINEAR_GAP + BLOCK_MARGIN_Y
         if not ok:
             return False, 10**9
         return total <= box_h, total
@@ -2662,7 +2668,7 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                 layer["heading"], heading_px, box_w, strong=True, max_lines=2
             )
             ok = ok and fit
-            layer_h = len(lines) * _line_box(heading_px)
+            layer_h = len(lines) * _line_box(heading_px) + LINEAR_INNER_GAP
             comp_heights = []
             for c in comps:
                 inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
@@ -2694,7 +2700,12 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
     if orientation == "horizontal":
         col_w = max(
             40,
-            (box_w - LINEAR_GAP * (n - 1) - LINEAR_CONNECTOR_H * (n - 1)) // n,
+            (
+                box_w
+                - 2 * LINEAR_GAP * (n - 1)
+                - LINEAR_CONNECTOR_H * (n - 1)
+            )
+            // n,
         )
         heights = []
         for st in stages:
@@ -2704,7 +2715,7 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                 st["heading"], heading_px, inner_w, strong=True, max_lines=3
             )
             ok = ok and fit
-            h += len(lines) * _line_box(heading_px)
+            h += len(lines) * _line_box(heading_px) + LINEAR_INNER_GAP
             for c in st["components"]:
                 lines, fit = _linear_lines(
                     c["heading"], detail_px, inner_w, strong=True, max_lines=3
@@ -2722,7 +2733,7 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     st["transfer_label"], meta_px, inner_w, max_lines=2
                 )
                 ok = ok and fit
-                h += len(lines) * _line_box(meta_px)
+                h += LINEAR_INNER_GAP + len(lines) * _line_box(meta_px)
             h += LINEAR_CARD_PAD
             heights.append(h)
         total = max(heights) + BLOCK_MARGIN_Y
@@ -2734,7 +2745,7 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                 st["heading"], heading_px, box_w, strong=True, max_lines=3
             )
             ok = ok and fit
-            h += len(lines) * _line_box(heading_px)
+            h += len(lines) * _line_box(heading_px) + LINEAR_INNER_GAP
             for c in st["components"]:
                 lines, fit = _linear_lines(
                     c["heading"], detail_px, box_w, strong=True, max_lines=3
@@ -2752,22 +2763,13 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     st["transfer_label"], meta_px, box_w, max_lines=2
                 )
                 ok = ok and fit
-                h += len(lines) * _line_box(meta_px) + LINEAR_CONNECTOR_H
-            h += LINEAR_CARD_PAD + LINEAR_LAYER_GAP
+                h += LINEAR_INNER_GAP + len(lines) * _line_box(meta_px)
+            h += LINEAR_CARD_PAD + LINEAR_CONNECTOR_H + 2 * LINEAR_GAP
             total += h
-        total = total - LINEAR_LAYER_GAP + BLOCK_MARGIN_Y
+        total = total - LINEAR_CONNECTOR_H - 2 * LINEAR_GAP + BLOCK_MARGIN_Y
     if not ok:
         return False, 10**9
     return total <= box_h, total
-
-
-def _linear_item_count(spec: dict[str, Any]) -> int:
-    kind = spec["kind"]
-    if kind in ("process_flow", "timeline"):
-        return max(1, len(spec["items"]))
-    if kind == "layered_architecture":
-        return max(1, max((len(ly["components"]) for ly in spec["layers"]), default=1))
-    return max(1, len(spec["stages"]))
 
 
 def _comparison_cards_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
