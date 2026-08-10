@@ -14,6 +14,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Public `render_deck` + CLI publication (`render.py`, `publish.py`, `cli.py`)
 - Generated JSON Schema artifact `schema/handoff_schema_v1.json` (D121)
 - Canonical `boardroom_amex` theme manifest + generated CSS (`theme/`, `theme_export.py`) and self-contained licensed webfonts (`assets/fonts/`) (D127-D133)
+- Vendored Chart.js UMD + license (`assets/libs/chart.umd.min.js`, `assets/libs/CHART_JS_LICENSE.md`) inlined into published decks
 - Does **not** own legacy v2 layouts, recipes, charts, or migration of unversioned handoffs (D119 is a later tool)
 
 ## Local Contracts
