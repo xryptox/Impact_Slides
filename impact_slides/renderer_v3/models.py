@@ -5,6 +5,7 @@ JSON Schema is generated from these models (D121).
 """
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Annotated, Any, Literal, Optional, Union
 
 from pydantic import (
@@ -27,6 +28,12 @@ SemanticId = Annotated[
     StringConstraints(pattern=r"^[a-z][a-z0-9_-]{0,63}$"),
 ]
 NonEmptyStr = Annotated[str, StringConstraints(min_length=1, strip_whitespace=False)]
+
+# Canonical undecorated decimal: optional leading minus, digits, optional fraction.
+_CANONICAL_DECIMAL = r"^-?(?:0|[1-9]\d*)(?:\.\d+)?$"
+CanonicalDecimal = Annotated[str, StringConstraints(pattern=_CANONICAL_DECIMAL)]
+
+UnitKind = Literal["usd", "percent", "percentage_points", "basis_points"]
 
 LAYOUT_TYPES = (
     "opening_cover",
@@ -91,7 +98,9 @@ LayoutTypeName = Literal[
     "state_transition",
 ]
 
-KERNEL_LAYOUTS = frozenset({"opening_cover", "closing_cover", "narrative"})
+KERNEL_LAYOUTS = frozenset(
+    {"opening_cover", "closing_cover", "narrative", "data_table"}
+)
 
 
 class ClosedModel(BaseModel):
@@ -140,27 +149,29 @@ class EvidenceEntry(ClosedModel):
         return v
 
 
-class UnitSpec(ClosedModel):
-    text: NonEmptyStr
-    position: Literal["prefix", "suffix"]
-    spacing: Literal["none", "space"]
-    accessible_name: NonEmptyStr
-
-
 class NumberFormat(ClosedModel):
-    unit: Optional[UnitSpec] = None
+    """Closed deck-level format registry entry (D144/D214/D293)."""
+
+    unit: Optional[UnitKind] = None
     value_decimals: int = Field(ge=0, le=4)
     tick_decimals: Optional[int] = Field(default=None, ge=0, le=4)
     negative_style: Literal["minus", "parentheses"]
-    value_scale: float = Field(default=1.0, gt=0)
+    # Omitted means 1; present only when display scale differs from source (D293).
+    value_scale: Optional[CanonicalDecimal] = None
     scale_label: Optional[NonEmptyStr] = None
 
     @model_validator(mode="after")
     def _scale_label_rule(self) -> NumberFormat:
-        if self.value_scale != 1 and not self.scale_label:
-            raise ValueError("scale_label required when value_scale != 1")
-        if self.value_scale == 1 and self.scale_label is not None:
-            raise ValueError("scale_label forbidden when value_scale == 1")
+        if self.value_scale is not None:
+            scale = Decimal(self.value_scale)
+            if scale <= 0:
+                raise ValueError("value_scale must be positive")
+            if scale == 1:
+                raise ValueError("value_scale must be omitted when scale is 1")
+            if not self.scale_label:
+                raise ValueError("scale_label required when value_scale is set")
+        elif self.scale_label is not None:
+            raise ValueError("scale_label forbidden when value_scale is omitted")
         return self
 
 
@@ -169,6 +180,7 @@ class Typography(ClosedModel):
     sync_group: Optional[SemanticId] = None
     body_font_size: Optional[int] = Field(default=None, ge=8, le=48)
     subtitle_font_size: Optional[int] = Field(default=None, ge=8, le=48)
+    table_font_size: Optional[int] = Field(default=None, ge=12, le=24)
 
     @model_validator(mode="after")
     def _adaptive_sync_only(self) -> Typography:
@@ -183,8 +195,13 @@ class SubtitleContent(ClosedModel):
 
     @model_validator(mode="after")
     def _subtitle_typography_only(self) -> SubtitleContent:
-        if self.typography and self.typography.body_font_size is not None:
-            raise ValueError("body_font_size is inapplicable to subtitle typography")
+        if self.typography and (
+            self.typography.body_font_size is not None
+            or self.typography.table_font_size is not None
+        ):
+            raise ValueError(
+                "body_font_size/table_font_size inapplicable to subtitle typography"
+            )
         return self
 
 
@@ -194,8 +211,13 @@ class Takeaway(ClosedModel):
 
     @model_validator(mode="after")
     def _body_typography_only(self) -> Takeaway:
-        if self.typography and self.typography.subtitle_font_size is not None:
-            raise ValueError("subtitle_font_size is inapplicable to takeaway typography")
+        if self.typography and (
+            self.typography.subtitle_font_size is not None
+            or self.typography.table_font_size is not None
+        ):
+            raise ValueError(
+                "subtitle_font_size/table_font_size inapplicable to takeaway typography"
+            )
         return self
 
 
@@ -262,8 +284,13 @@ class NarrativePayload(ClosedModel):
 
     @model_validator(mode="after")
     def _body_typography_only(self) -> NarrativePayload:
-        if self.typography and self.typography.subtitle_font_size is not None:
-            raise ValueError("subtitle_font_size is inapplicable to narrative typography")
+        if self.typography and (
+            self.typography.subtitle_font_size is not None
+            or self.typography.table_font_size is not None
+        ):
+            raise ValueError(
+                "subtitle_font_size/table_font_size inapplicable to narrative typography"
+            )
         return self
 
     @model_validator(mode="after")
@@ -285,6 +312,152 @@ class CoverPayload(ClosedModel):
 
 class SectionDividerPayload(ClosedModel):
     section_id: SemanticId
+
+
+# ---------------------------------------------------------------------------
+# Semantic values + table model (D141–D145, D213, D255–D257)
+# ---------------------------------------------------------------------------
+
+
+class NumberValue(ClosedModel):
+    type: Literal["number"] = "number"
+    value: CanonicalDecimal
+    format_id: SemanticId
+
+
+class RangeValue(ClosedModel):
+    type: Literal["range"] = "range"
+    lower: CanonicalDecimal
+    upper: CanonicalDecimal
+    format_id: SemanticId
+
+    @model_validator(mode="after")
+    def _ordered_bounds(self) -> RangeValue:
+        if Decimal(self.lower) >= Decimal(self.upper):
+            raise ValueError("range requires lower < upper")
+        return self
+
+
+class TextValue(ClosedModel):
+    type: Literal["text"] = "text"
+    text: NonEmptyStr
+
+
+class MissingValue(ClosedModel):
+    type: Literal["missing"] = "missing"
+
+
+SemanticValue = Annotated[
+    Union[NumberValue, RangeValue, TextValue, MissingValue],
+    Field(discriminator="type"),
+]
+
+
+class TableLabel(ClosedModel):
+    label: NonEmptyStr
+    short_label: Optional[NonEmptyStr] = None
+
+
+class TableColumn(ClosedModel):
+    column_id: SemanticId
+    label: NonEmptyStr
+    short_label: Optional[NonEmptyStr] = None
+
+
+class TableRow(ClosedModel):
+    row_id: SemanticId
+    label: NonEmptyStr
+    short_label: Optional[NonEmptyStr] = None
+    cells: dict[str, SemanticValue]
+
+
+class ColumnGroup(ClosedModel):
+    group_id: SemanticId
+    label: NonEmptyStr
+    short_label: Optional[NonEmptyStr] = None
+    column_ids: list[SemanticId] = Field(min_length=1, max_length=12)
+
+
+class TableData(ClosedModel):
+    """Canonical rectangular table (D141/D255)."""
+
+    surface_id: SemanticId
+    stub_header: TableLabel
+    columns: list[TableColumn] = Field(min_length=1)
+    rows: list[TableRow] = Field(min_length=1)
+    column_groups: Optional[list[ColumnGroup]] = None
+    typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _rectangular_identity(self) -> TableData:
+        col_ids = [c.column_id for c in self.columns]
+        if len(col_ids) != len(set(col_ids)):
+            raise ValueError("column_id values must be unique within the table")
+        row_ids = [r.row_id for r in self.rows]
+        if len(row_ids) != len(set(row_ids)):
+            raise ValueError("row_id values must be unique within the table")
+        col_set = set(col_ids)
+        for row in self.rows:
+            keys = set(row.cells)
+            missing = col_set - keys
+            extra = keys - col_set
+            if missing or extra:
+                raise ValueError(
+                    f"row {row.row_id!r} cells must match columns exactly; "
+                    f"missing={sorted(missing)} extra={sorted(extra)}"
+                )
+            for key in row.cells:
+                if not is_semantic_id(key):
+                    raise ValueError(f"invalid cell key {key!r}")
+        if self.typography is not None:
+            t = self.typography
+            if t.body_font_size is not None or t.subtitle_font_size is not None:
+                raise ValueError(
+                    "table typography allows only mode, sync_group, table_font_size"
+                )
+        if self.column_groups is not None:
+            self._validate_groups(col_ids)
+        return self
+
+    def _validate_groups(self, col_ids: list[str]) -> None:
+        groups = self.column_groups or []
+        if not groups:
+            raise ValueError("column_groups must be non-empty when present")
+        gids = [g.group_id for g in groups]
+        if len(gids) != len(set(gids)):
+            raise ValueError("group_id values must be unique within the table")
+        seen: set[str] = set()
+        index = {cid: i for i, cid in enumerate(col_ids)}
+        first_leaf_order: list[int] = []
+        for g in groups:
+            idxs = []
+            for cid in g.column_ids:
+                if cid not in index:
+                    raise ValueError(
+                        f"column_groups reference unknown column_id {cid!r}"
+                    )
+                if cid in seen:
+                    raise ValueError(f"column_id {cid!r} appears in multiple groups")
+                seen.add(cid)
+                idxs.append(index[cid])
+            lo, hi = min(idxs), max(idxs)
+            if hi - lo + 1 != len(idxs) or sorted(idxs) != list(range(lo, hi + 1)):
+                raise ValueError(
+                    f"group {g.group_id!r} column_ids must be a contiguous leaf span"
+                )
+            if [col_ids[i] for i in range(lo, hi + 1)] != list(g.column_ids):
+                raise ValueError(
+                    f"group {g.group_id!r} column_ids must follow leaf column order"
+                )
+            first_leaf_order.append(lo)
+        if first_leaf_order != sorted(first_leaf_order):
+            raise ValueError("column_groups must be ordered by first leaf column")
+
+
+class DataTablePayload(ClosedModel):
+    """Ordinary full-width table composition payload (D183/D257)."""
+
+    table: TableData
 
 
 # ---------------------------------------------------------------------------
@@ -351,6 +524,23 @@ class ClosingCoverSlide(_SlideBase):
         return data
 
 
+def _ordinary_footer_subset(slide: Any) -> Any:
+    """Shared evidence/source_footer checks for ordinary (non-cover) slides."""
+    if slide.source_footer is not None:
+        if slide.evidence_ids is None:
+            raise ValueError("source_footer requires evidence_ids")
+        if len(slide.source_footer) != len(set(slide.source_footer)):
+            raise ValueError("source_footer must be duplicate-free")
+        missing = [i for i in slide.source_footer if i not in slide.evidence_ids]
+        if missing:
+            raise ValueError("source_footer must be a subset of evidence_ids")
+    if slide.evidence_ids is not None and len(slide.evidence_ids) != len(
+        set(slide.evidence_ids)
+    ):
+        raise ValueError("evidence_ids must be duplicate-free")
+    return slide
+
+
 class NarrativeSlide(_SlideBase):
     layout_type: Literal["narrative"] = "narrative"
     section_id: SemanticId
@@ -359,31 +549,38 @@ class NarrativeSlide(_SlideBase):
     content: Optional[SubtitleContent] = None
     takeaway: Optional[Takeaway] = None
     disclosure: Optional[Disclosure] = None
-    source_footer: Optional[list[SemanticId]] = Field(default=None, min_length=1, max_length=4)
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
 
     @model_validator(mode="after")
     def _footer_subset(self) -> NarrativeSlide:
-        if self.source_footer is not None:
-            if self.evidence_ids is None:
-                raise ValueError("source_footer requires evidence_ids")
-            if len(self.source_footer) != len(set(self.source_footer)):
-                raise ValueError("source_footer must be duplicate-free")
-            missing = [i for i in self.source_footer if i not in self.evidence_ids]
-            if missing:
-                raise ValueError("source_footer must be a subset of evidence_ids")
-        if self.evidence_ids is not None and len(self.evidence_ids) != len(
-            set(self.evidence_ids)
-        ):
-            raise ValueError("evidence_ids must be duplicate-free")
-        return self
+        return _ordinary_footer_subset(self)
 
 
-# Kernel validates the three compositions needed for the minimal deck.
+class DataTableSlide(_SlideBase):
+    layout_type: Literal["data_table"] = "data_table"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: DataTablePayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> DataTableSlide:
+        return _ordinary_footer_subset(self)
+
+
+# Kernel compositions: covers + narrative + data_table (#179).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
-# vocabulary stays honest without shipping 29 empty payload shells.
+# vocabulary stays honest without shipping empty payload shells.
 Slide = Annotated[
-    Union[OpeningCoverSlide, ClosingCoverSlide, NarrativeSlide],
+    Union[OpeningCoverSlide, ClosingCoverSlide, NarrativeSlide, DataTableSlide],
     Field(discriminator="layout_type"),
 ]
 
@@ -423,17 +620,38 @@ class Deck(ClosedModel):
         if len(labels_norm) != len(set(labels_norm)):
             raise ValueError("section labels must be unique after normalization")
 
-        # Slide numbers and authored disclosure identities are deck-unique.
+        # Slide numbers and authored surface identities are deck-unique.
         nums = [s.slide_number for s in self.slides]
         if len(nums) != len(set(nums)):
             raise ValueError("slide_number values must be deck-unique")
-        disclosure_ids = [
-            section.surface_id
-            for slide in self.slides
-            for section in (slide.disclosure.sections if isinstance(slide, NarrativeSlide) and slide.disclosure else [])
-        ]
-        if len(disclosure_ids) != len(set(disclosure_ids)):
-            raise ValueError("disclosure surface_id values must be deck-unique")
+
+        surface_ids: list[str] = []
+        for slide in self.slides:
+            if isinstance(slide, DataTableSlide):
+                surface_ids.append(slide.payload.table.surface_id)
+            disclosure = getattr(slide, "disclosure", None)
+            if disclosure is not None:
+                surface_ids.extend(section.surface_id for section in disclosure.sections)
+        if len(surface_ids) != len(set(surface_ids)):
+            raise ValueError("surface_id values must be deck-unique")
+
+        # Format references must resolve; unused formats are invalid (D144/D216 style).
+        referenced_formats: set[str] = set()
+        for slide in self.slides:
+            if not isinstance(slide, DataTableSlide):
+                continue
+            table = slide.payload.table
+            for row in table.rows:
+                for cell in row.cells.values():
+                    fid = getattr(cell, "format_id", None)
+                    if fid is None:
+                        continue
+                    if fid not in self.number_formats:
+                        raise ValueError(f"unresolved format_id {fid!r}")
+                    referenced_formats.add(fid)
+        unused_fmt = [k for k in self.number_formats if k not in referenced_formats]
+        if unused_fmt:
+            raise ValueError(f"unused number_formats: {unused_fmt}")
 
         # Cover placement (D223/D268)
         openings = [

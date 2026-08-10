@@ -38,6 +38,12 @@ BODY_FLOOR: Final = 22
 BODY_CEIL: Final = 28
 TAKEAWAY_FLOOR: Final = 22
 TAKEAWAY_CEIL: Final = 28
+TABLE_FLOOR: Final = 20  # D44 ordinary data_table
+TABLE_CEIL: Final = 24
+TABLE_MAX_LABEL_LINES: Final = 2
+TABLE_CELL_PAD_X: Final = 16  # left+right pad per cell at measure time
+TABLE_CELL_PAD_Y: Final = 12
+TABLE_RULE_Y: Final = 1
 
 LINE_HEIGHT: Final = 1.4
 # Must match publish.py / boardroom_amex theme box model.
@@ -100,6 +106,8 @@ class SurfacePlan:
     _unit_indent_ems: list[float] = field(default_factory=list)
     _default_size: Optional[int] = None
     _maximum_size: Optional[int] = None
+    # data_table fit payload (formatted cells + labels); None for non-tables.
+    _table_spec: Optional[dict[str, Any]] = None
 
     def to_public(self) -> dict[str, Any]:
         sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
@@ -309,10 +317,10 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             )
             continue
 
-        if lt != "narrative":
+        if lt not in ("narrative", "data_table"):
             continue
 
-        # Slot order: title chrome (fixed), subtitle, body blocks, takeaway.
+        # Slot order: title chrome (fixed), subtitle, body/table, takeaway.
         region += 1
         title_h = _required_height([(slide.title, True)], TITLE_PX, CONTENT_W, 1)
         used = title_h
@@ -384,7 +392,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 slide_number=sn,
                 slide_index=slide_index,
                 layout_type=lt,
-                slot_order=100,  # after blocks; set final after block count
+                slot_order=100,  # after body; set final after body slots
                 design_stage_region=region,
                 role_sizes={
                     "body": TAKEAWAY_FLOOR,
@@ -404,50 +412,84 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
             )
 
         body_h = DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM - used
-        blocks = list(slide.payload.blocks)
-        # One common body size across all blocks (D225/D270) — shared measure group.
-        body_typo = slide.payload.typography
-        mode, sync, explicit = _typo_fields(body_typo, "body_font_size")
-        for i, block in enumerate(blocks):
-            items = _block_text_items(block)
-            # Deck-unique surface id: block_id is only slide-local (D115/D225).
-            surface_id = f"slide-{sn}-block-{block.block_id}"
-            # paragraphs: margin after every <p>; bullet_list: margin after the <ul>.
-            if block.type == "paragraphs":
-                margin_boxes = max(1, len(block.paragraphs))
-            else:
-                margin_boxes = 1
+        body_slots = 0
+        if lt == "narrative":
+            blocks = list(slide.payload.blocks)
+            body_slots = len(blocks)
+            # One common body size across all blocks (D225/D270).
+            body_typo = slide.payload.typography
+            mode, sync, explicit = _typo_fields(body_typo, "body_font_size")
+            for i, block in enumerate(blocks):
+                items = _block_text_items(block)
+                surface_id = f"slide-{sn}-block-{block.block_id}"
+                if block.type == "paragraphs":
+                    margin_boxes = max(1, len(block.paragraphs))
+                else:
+                    margin_boxes = 1
+                out.append(
+                    SurfacePlan(
+                        surface_id=surface_id,
+                        role="narrative_block",
+                        slide_number=sn,
+                        slide_index=slide_index,
+                        layout_type=lt,
+                        slot_order=10 + i,
+                        design_stage_region=region,
+                        role_sizes={"body": BODY_FLOOR},
+                        _text_items=items,
+                        _box_w=CONTENT_W,
+                        _fit_role="body",
+                        _typo=body_typo,
+                        _mode=mode,
+                        _sync_group=sync,
+                        _explicit_size=explicit,
+                        _margin_boxes=margin_boxes,
+                        _indent_em=LIST_INDENT_EM if block.type == "bullet_list" else 0,
+                        _default_size=BODY_FLOOR,
+                        _maximum_size=BODY_CEIL,
+                    )
+                )
+                adaptive_surfaces.append(out[-1])
+        else:
+            # data_table: one full-width table surface (D183/D257).
+            body_slots = 1
+            table = slide.payload.table
+            table_typo = table.typography
+            mode, sync, explicit = _typo_fields(table_typo, "table_font_size")
+            table_spec = _build_table_spec(table, deck.number_formats)
+            # All labels + values feed conservative-metrics + digest.
+            text_items = [(t, False) for t in table_spec["all_texts"]]
             out.append(
                 SurfacePlan(
-                    surface_id=surface_id,
-                    role="narrative_block",
+                    surface_id=table.surface_id,
+                    role="data_table",
                     slide_number=sn,
                     slide_index=slide_index,
                     layout_type=lt,
-                    slot_order=10 + i,
+                    slot_order=10,
                     design_stage_region=region,
-                    role_sizes={"body": BODY_FLOOR},
-                    _text_items=items,
+                    role_sizes={"table": TABLE_FLOOR},
+                    _text_items=text_items,
                     _box_w=CONTENT_W,
-                    _fit_role="body",
-                    _typo=body_typo,
+                    _fit_role="table",
+                    _typo=table_typo,
                     _mode=mode,
                     _sync_group=sync,
                     _explicit_size=explicit,
-                    _margin_boxes=margin_boxes,
-                    _indent_em=LIST_INDENT_EM if block.type == "bullet_list" else 0,
-                    _default_size=BODY_FLOOR,
-                    _maximum_size=BODY_CEIL,
+                    _margin_boxes=0,
+                    _default_size=TABLE_FLOOR,
+                    _maximum_size=TABLE_CEIL,
+                    _table_spec=table_spec,
                 )
             )
             adaptive_surfaces.append(out[-1])
 
         if takeaway_plan is not None:
-            takeaway_plan.slot_order = 10 + len(blocks)
+            takeaway_plan.slot_order = 10 + body_slots
             adaptive_surfaces.append(takeaway_plan)
             out.append(takeaway_plan)
 
-        next_slot = 11 + len(blocks)
+        next_slot = 11 + body_slots
         if slide.disclosure is not None:
             for section in slide.disclosure.sections:
                 items = [(section.title, True)]
@@ -539,6 +581,9 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         return
 
     def need(sp: SurfacePlan, size: int) -> int:
+        if sp._table_spec is not None:
+            ok, _, height = _table_fit_detail(sp._table_spec, size, sp._box_w, 10**9)
+            return height if ok else 10**9
         return _required_height(
             sp._text_items, size, sp._box_w, sp._margin_boxes, sp._indent_em, sp._unit_indent_ems
         )
@@ -624,9 +669,17 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         return
 
     floor = sp.role_sizes[fit]
-    ceil = {"subtitle": SUBTITLE_CEIL, "body": BODY_CEIL}[fit]
+    ceil_map = {
+        "subtitle": SUBTITLE_CEIL,
+        "body": BODY_CEIL,
+        "table": TABLE_CEIL,
+    }
+    ceil = ceil_map[fit]
     if fit == "body" and sp.role == "takeaway":
         floor, ceil = TAKEAWAY_FLOOR, TAKEAWAY_CEIL
+        sp.role_sizes[fit] = floor
+    if fit == "table":
+        floor, ceil = TABLE_FLOOR, TABLE_CEIL
         sp.role_sizes[fit] = floor
 
     # Explicit size validation (D49): out of role range is malformed.
@@ -653,31 +706,13 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         sp._sync_group = None
         sp._malformed_explicit = True
 
-    if sp._mode == "fixed":
-        size = sp._explicit_size if sp._explicit_size is not None else floor
-        sp.role_sizes[fit] = size
-        if not _text_fits(
-            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em, unit_indent_ems=sp._unit_indent_ems
-        ):
-            sp._overflow = True
-        return
-
-    # Adaptive grow-only (D2): try ceiling down to floor; pick largest that fits.
-    if sp._explicit_size is not None:
-        # Pinned role — no growth (D218); still must fit.
-        size = sp._explicit_size
-        sp.role_sizes[fit] = size
-        if not _text_fits(
-            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em, unit_indent_ems=sp._unit_indent_ems
-        ):
-            # Spec: explicit that does not fit → normal strict/non-strict (D27).
-            sp._overflow = True
-        return
-
-    chosen = floor
-    wrapped = False
-    for size in range(ceil, floor - 1, -1):
-        ok, did_wrap = _text_fits_detail(
+    def _fits(size: int) -> tuple[bool, bool]:
+        if sp._table_spec is not None:
+            ok, codes, _h = _table_fit_detail(
+                sp._table_spec, size, sp._box_w, sp._box_h
+            )
+            return ok, "plan.text_wrapped" in codes
+        return _text_fits_detail(
             sp._text_items,
             size,
             sp._box_w,
@@ -686,6 +721,38 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             indent_em=sp._indent_em,
             unit_indent_ems=sp._unit_indent_ems,
         )
+
+    if sp._mode == "fixed":
+        size = sp._explicit_size if sp._explicit_size is not None else floor
+        sp.role_sizes[fit] = size
+        ok, _ = _fits(size)
+        if not ok:
+            sp._overflow = True
+            if sp._table_spec is not None:
+                _apply_table_floor_adaptations(sp, size, events)
+        elif sp._table_spec is not None:
+            _record_table_adaptations(sp, size, events)
+        return
+
+    # Adaptive grow-only (D2): try ceiling down to floor; pick largest that fits.
+    if sp._explicit_size is not None:
+        # Pinned role — no growth (D218); still must fit.
+        size = sp._explicit_size
+        sp.role_sizes[fit] = size
+        ok, _ = _fits(size)
+        if not ok:
+            # Spec: explicit that does not fit → normal strict/non-strict (D27).
+            sp._overflow = True
+            if sp._table_spec is not None:
+                _apply_table_floor_adaptations(sp, size, events)
+        elif sp._table_spec is not None:
+            _record_table_adaptations(sp, size, events)
+        return
+
+    chosen = floor
+    wrapped = False
+    for size in range(ceil, floor - 1, -1):
+        ok, did_wrap = _fits(size)
         if ok:
             chosen = size
             wrapped = did_wrap
@@ -694,11 +761,15 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         # Floor does not fit.
         sp._overflow = True
         chosen = floor
+        if sp._table_spec is not None:
+            _apply_table_floor_adaptations(sp, chosen, events)
 
     sp.role_sizes[fit] = chosen
     if chosen > floor:
         sp.adaptation_codes.append("plan.typography_grown")
-    if wrapped:
+    if sp._table_spec is not None and not sp._overflow:
+        _record_table_adaptations(sp, chosen, events)
+    elif wrapped:
         sp.adaptation_codes.append("plan.text_wrapped")
         events.append(
             event(
@@ -952,6 +1023,7 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
         role_floor = {
             "subtitle": SUBTITLE_FLOOR,
             "body": TAKEAWAY_FLOOR if members[0].role == "takeaway" else BODY_FLOOR,
+            "table": TABLE_FLOOR,
         }[fit]
         # Start from min of independently chosen sizes, then try grow to max
         # of those if all fit — D3: largest that safely fits every member.
@@ -1060,3 +1132,452 @@ def _block_text_items(block: Any) -> list[tuple[str, bool]]:
                 items.append(("\n", False))
             items.extend(_prose_items(prose))
     return items
+
+
+# ---------------------------------------------------------------------------
+# data_table measure (D24/D25/D44/D104)
+# ---------------------------------------------------------------------------
+
+
+def _build_table_spec(table: Any, number_formats: Any) -> dict[str, Any]:
+    """Pre-format every cell once; fitting never reformats values (D70)."""
+    from .format import format_scale_disclosure, format_semantic_value
+
+    columns = list(table.columns)
+    rows = list(table.rows)
+    col_ids = [c.column_id for c in columns]
+    header_full = [table.stub_header.label] + [c.label for c in columns]
+    header_short = [
+        table.stub_header.short_label or table.stub_header.label
+    ] + [c.short_label or c.label for c in columns]
+    row_labels_full = [r.label for r in rows]
+    row_labels_short = [r.short_label or r.label for r in rows]
+
+    cells_vis: list[list[str]] = []
+    cells_acc: list[list[str]] = []
+    cells_role: list[list[str]] = []
+    cells_align: list[list[str]] = []
+    format_ids_used: list[str] = []
+    for r in rows:
+        vis_row: list[str] = []
+        acc_row: list[str] = []
+        role_row: list[str] = []
+        align_row: list[str] = []
+        for cid in col_ids:
+            fv = format_semantic_value(r.cells[cid], number_formats)
+            vis_row.append(fv.visible)
+            acc_row.append(fv.accessible)
+            role_row.append(fv.role)
+            align_row.append(fv.align)
+            fid = getattr(r.cells[cid], "format_id", None)
+            if fid is not None and fid not in format_ids_used:
+                format_ids_used.append(fid)
+        cells_vis.append(vis_row)
+        cells_acc.append(acc_row)
+        cells_role.append(role_row)
+        cells_align.append(align_row)
+
+    groups = None
+    if table.column_groups:
+        groups = [
+            {
+                "group_id": g.group_id,
+                "label": g.label,
+                "short_label": g.short_label or g.label,
+                "column_ids": list(g.column_ids),
+                "colspan": len(g.column_ids),
+            }
+            for g in table.column_groups
+        ]
+
+    scale_labels: list[str] = []
+    for fid in format_ids_used:
+        disc = format_scale_disclosure(number_formats[fid])
+        if disc and disc not in scale_labels:
+            scale_labels.append(disc)
+
+    all_texts = (
+        header_full
+        + header_short
+        + row_labels_full
+        + row_labels_short
+        + [v for row in cells_vis for v in row]
+        + [g["label"] for g in (groups or [])]
+        + scale_labels
+    )
+    return {
+        "col_ids": col_ids,
+        "n_cols": len(col_ids),
+        "n_rows": len(rows),
+        "header_full": header_full,
+        "header_short": header_short,
+        "row_labels_full": row_labels_full,
+        "row_labels_short": row_labels_short,
+        "cells_vis": cells_vis,
+        "cells_acc": cells_acc,
+        "cells_role": cells_role,
+        "cells_align": cells_align,
+        "groups": groups,
+        "scale_labels": scale_labels,
+        "all_texts": all_texts,
+        # Filled by fitter for painter consumption.
+        "display_headers": list(header_full),
+        "display_row_labels": list(row_labels_full),
+        "display_groups": None,
+        "col_widths": [],
+        "ellipsized": False,
+        "short_label_used": False,
+    }
+
+
+def _text_width(text: str, px: int, *, strong: bool = False) -> float:
+    advances = _SOURCE_SANS_ADVANCES[700 if strong else 400]
+    measured = sum(advances.get(ch, 1.2) for ch in text) * px
+    return max(measured * 1.05, measured + 2)
+
+
+def _wrap_label_lines(text: str, px: int, box_w: int, *, strong: bool = False) -> list[str]:
+    lines, _wo = _wrap_lines([(text, strong)], px, box_w)
+    return lines or [""]
+
+
+def _ellipsis_to_width(text: str, px: int, box_w: int, *, strong: bool = False) -> str:
+    """Ellipsize label only; values never call this (D25)."""
+    if _text_width(text, px, strong=strong) <= box_w:
+        return text
+    ell = "\u2026"
+    if _text_width(ell, px, strong=strong) > box_w:
+        return ell
+    lo, hi = 0, len(text)
+    best = ell
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        cand = text[:mid].rstrip() + ell
+        if _text_width(cand, px, strong=strong) <= box_w:
+            best = cand
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return best
+
+
+def _table_fit_detail(
+    spec: dict[str, Any],
+    px: int,
+    box_w: int,
+    box_h: int,
+    *,
+    allow_short: bool = True,
+    allow_ellipsis: bool = True,
+) -> tuple[bool, list[str], int]:
+    """Try to fit table at one common size. Mutates spec display fields on success path callers."""
+    codes: list[str] = []
+    n_cols = spec["n_cols"]
+    n_value_cols = n_cols
+    # Stub + value columns.
+    total_cols = n_value_cols + 1
+
+    headers = list(spec["header_full"])
+    row_labels = list(spec["row_labels_full"])
+    groups = spec["groups"]
+    group_labels = None if groups is None else [g["label"] for g in groups]
+    short_used = False
+    ellipsized = False
+
+    # Minimum widths from values (never wrap/ellipsize values — D25/D70).
+    value_mins = [0.0] * n_value_cols
+    for r in range(spec["n_rows"]):
+        for c in range(n_value_cols):
+            w = _text_width(spec["cells_vis"][r][c], px) + TABLE_CELL_PAD_X
+            if w > value_mins[c]:
+                value_mins[c] = w
+    stub_min = max(
+        (_text_width(h, px, strong=True) for h in [headers[0]]),
+        default=0.0,
+    )
+    for lab in row_labels:
+        # Allow two-line wrap: min width is longest unbreakable token.
+        tokens = _wrap_tokens(lab)
+        tok_w = max(
+            (_text_width(tok.rstrip(), px) for _, tok in tokens),
+            default=_text_width(lab, px),
+        )
+        stub_min = max(stub_min, tok_w + TABLE_CELL_PAD_X)
+    # Header leaf mins (prefer full labels).
+    header_mins = [0.0] * total_cols
+    for c, h in enumerate(headers):
+        tokens = _wrap_tokens(h)
+        tok_w = max(
+            (_text_width(tok.rstrip(), px, strong=True) for _, tok in tokens),
+            default=_text_width(h, px, strong=True),
+        )
+        header_mins[c] = tok_w + TABLE_CELL_PAD_X
+    header_mins[0] = max(header_mins[0], stub_min)
+    for c in range(n_value_cols):
+        header_mins[c + 1] = max(header_mins[c + 1], value_mins[c])
+
+    def try_widths(h_labels: list[str], r_labels: list[str], g_labels: list[str] | None):
+        mins = list(header_mins)
+        # Recompute label-driven mins for current label set.
+        mins[0] = value_mins and 0.0 or 0.0
+        tokens = _wrap_tokens(h_labels[0])
+        mins[0] = max(
+            (_text_width(tok.rstrip(), px, strong=True) for _, tok in tokens),
+            default=_text_width(h_labels[0], px, strong=True),
+        ) + TABLE_CELL_PAD_X
+        for lab in r_labels:
+            toks = _wrap_tokens(lab)
+            tw = max(
+                (_text_width(tok.rstrip(), px) for _, tok in toks),
+                default=_text_width(lab, px),
+            )
+            mins[0] = max(mins[0], tw + TABLE_CELL_PAD_X)
+        for c in range(n_value_cols):
+            toks = _wrap_tokens(h_labels[c + 1])
+            tw = max(
+                (_text_width(tok.rstrip(), px, strong=True) for _, tok in toks),
+                default=_text_width(h_labels[c + 1], px, strong=True),
+            )
+            mins[c + 1] = max(tw + TABLE_CELL_PAD_X, value_mins[c])
+        # Group labels need span width.
+        if g_labels is not None and groups is not None:
+            cursor = 1  # after stub
+            # Map leaf index → width slot; groups only cover value cols possibly including gaps.
+            leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
+            for g, glab in zip(groups, g_labels):
+                slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
+                span_min = sum(mins[s] for s in slots)
+                need = _text_width(glab, px, strong=True) + TABLE_CELL_PAD_X
+                if need > span_min and slots:
+                    # Grow last slot in span.
+                    mins[slots[-1]] += need - span_min
+        total = sum(mins)
+        if total > box_w:
+            return None
+        # Distribute leftover to text-heavy (stub) first, then headers.
+        leftover = box_w - total
+        widths = [int(round(m)) for m in mins]
+        # Fix rounding drift.
+        drift = box_w - sum(widths)
+        if widths:
+            widths[0] += drift
+        if leftover > 0:
+            widths[0] += int(leftover)
+            # re-fix after leftover to stub
+            widths[0] += box_w - sum(widths)
+        return widths
+
+    widths = try_widths(headers, row_labels, group_labels)
+    if widths is None and allow_short:
+        headers = list(spec["header_short"])
+        row_labels = list(spec["row_labels_short"])
+        group_labels = (
+            None
+            if groups is None
+            else [g["short_label"] for g in groups]
+        )
+        widths = try_widths(headers, row_labels, group_labels)
+        if widths is not None:
+            short_used = True
+            codes.append("plan.short_label_used")
+
+    if widths is None and allow_ellipsis:
+        # Force equal-ish columns then ellipsize labels into them (D25).
+        short_used = True
+        headers = list(spec["header_short"])
+        row_labels = list(spec["row_labels_short"])
+        group_labels = (
+            None
+            if groups is None
+            else [g["short_label"] for g in groups]
+        )
+        # Values keep mins; remaining width split across label columns.
+        value_total = sum(int(math.ceil(v)) for v in value_mins)
+        remaining = box_w - value_total
+        if remaining < total_cols:  # need at least 1px stub
+            return False, codes, 10**9
+        stub_w = max(1, remaining // 2)
+        # Distribute remaining after stub across value headers already min-sized.
+        widths = [stub_w] + [int(math.ceil(v)) for v in value_mins]
+        # Absorb drift into stub.
+        widths[0] += box_w - sum(widths)
+        if widths[0] < 1:
+            return False, codes, 10**9
+        # Ellipsize headers + row labels into column widths.
+        new_headers = []
+        for c, h in enumerate(headers):
+            cell_w = widths[c] - TABLE_CELL_PAD_X
+            lines = _wrap_label_lines(h, px, max(1, cell_w), strong=True)
+            if len(lines) > TABLE_MAX_LABEL_LINES or any(
+                _text_width(ln, px, strong=True) > cell_w for ln in lines
+            ):
+                h2 = _ellipsis_to_width(h, px, max(1, cell_w), strong=True)
+                if h2 != h:
+                    ellipsized = True
+                new_headers.append(h2)
+            else:
+                new_headers.append(h)
+        headers = new_headers
+        new_rows = []
+        cell_w0 = widths[0] - TABLE_CELL_PAD_X
+        for lab in row_labels:
+            lines = _wrap_label_lines(lab, px, max(1, cell_w0))
+            if len(lines) > TABLE_MAX_LABEL_LINES or any(
+                _text_width(ln, px) > cell_w0 for ln in lines
+            ):
+                lab2 = _ellipsis_to_width(lab, px, max(1, cell_w0))
+                if lab2 != lab:
+                    ellipsized = True
+                new_rows.append(lab2)
+            else:
+                new_rows.append(lab)
+        row_labels = new_rows
+        if group_labels is not None and groups is not None:
+            leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
+            new_g = []
+            for g, glab in zip(groups, group_labels):
+                slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
+                span_w = sum(widths[s] for s in slots) - TABLE_CELL_PAD_X
+                g2 = _ellipsis_to_width(glab, px, max(1, span_w), strong=True)
+                if g2 != glab:
+                    ellipsized = True
+                new_g.append(g2)
+            group_labels = new_g
+        if ellipsized:
+            codes.append("plan.label_ellipsized")
+        if short_used and "plan.short_label_used" not in codes:
+            codes.append("plan.short_label_used")
+
+    if widths is None:
+        return False, codes, 10**9
+
+    # Height: header rows + body rows + optional scale disclosure + rules.
+    line_h = _line_box(px)
+    header_lines = 0
+    for c, h in enumerate(headers):
+        cell_w = max(1, widths[c] - TABLE_CELL_PAD_X)
+        lines = _wrap_label_lines(h, px, cell_w, strong=True)
+        if len(lines) > TABLE_MAX_LABEL_LINES:
+            return False, codes, 10**9
+        header_lines = max(header_lines, len(lines))
+        if len(lines) > 1 and "plan.text_wrapped" not in codes:
+            codes.append("plan.text_wrapped")
+    group_lines = 0
+    if group_labels is not None and groups is not None:
+        leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
+        for g, glab in zip(groups, group_labels):
+            slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
+            span_w = max(1, sum(widths[s] for s in slots) - TABLE_CELL_PAD_X)
+            lines = _wrap_label_lines(glab, px, span_w, strong=True)
+            if len(lines) > TABLE_MAX_LABEL_LINES:
+                return False, codes, 10**9
+            group_lines = max(group_lines, len(lines))
+            if len(lines) > 1 and "plan.text_wrapped" not in codes:
+                codes.append("plan.text_wrapped")
+
+    body_lines_total = 0
+    for r, lab in enumerate(row_labels):
+        cell_w = max(1, widths[0] - TABLE_CELL_PAD_X)
+        lines = _wrap_label_lines(lab, px, cell_w)
+        if len(lines) > TABLE_MAX_LABEL_LINES:
+            return False, codes, 10**9
+        # Values are single-line; row height is max(label lines, 1).
+        row_lines = max(len(lines), 1)
+        body_lines_total += row_lines
+        if len(lines) > 1 and "plan.text_wrapped" not in codes:
+            codes.append("plan.text_wrapped")
+        # Value width check (must not overflow).
+        for c in range(n_value_cols):
+            if _text_width(spec["cells_vis"][r][c], px) > widths[c + 1] - TABLE_CELL_PAD_X:
+                return False, codes, 10**9
+
+    scale_h = 0
+    if spec["scale_labels"]:
+        scale_h = _line_box(max(12, px - 4)) + BLOCK_MARGIN_Y
+
+    n_header_rows = (1 if group_lines else 0) + 1
+    height = (
+        (group_lines + header_lines) * line_h
+        + body_lines_total * line_h
+        + (spec["n_rows"] + n_header_rows) * TABLE_CELL_PAD_Y
+        + (spec["n_rows"] + n_header_rows) * TABLE_RULE_Y
+        + scale_h
+        + BLOCK_MARGIN_Y
+    )
+    fits = height <= box_h and sum(widths) <= box_w
+    if fits:
+        # Commit display fields for painter.
+        spec["display_headers"] = headers
+        spec["display_row_labels"] = row_labels
+        spec["col_widths"] = widths
+        spec["ellipsized"] = ellipsized
+        spec["short_label_used"] = short_used
+        if groups is not None and group_labels is not None:
+            spec["display_groups"] = [
+                {**g, "display_label": glab}
+                for g, glab in zip(groups, group_labels)
+            ]
+        else:
+            spec["display_groups"] = None
+    return fits, codes, height
+
+
+def _record_table_adaptations(
+    sp: SurfacePlan, size: int, events: list[DiagnosticEvent]
+) -> None:
+    assert sp._table_spec is not None
+    ok, codes, _h = _table_fit_detail(
+        sp._table_spec, size, sp._box_w, sp._box_h
+    )
+    if not ok:
+        return
+    for code in codes:
+        if code not in sp.adaptation_codes:
+            sp.adaptation_codes.append(code)
+        events.append(
+            event(
+                code=code,  # type: ignore[arg-type]
+                severity="info",
+                phase="plan",
+                role=sp.role,
+                path=f"/slides/{sp.slide_index}/{sp.role}",
+                action="measure",
+                result="accepted",
+                slide_number=sp.slide_number,
+                layout_type=sp.layout_type,
+                surface_id=sp.surface_id,
+            )
+        )
+    if sp._table_spec.get("short_label_used") or sp._table_spec.get("ellipsized"):
+        if "plan.geometry_reallocated" not in sp.adaptation_codes:
+            # Width redistribution is implicit in successful fit.
+            pass
+
+
+def _apply_table_floor_adaptations(
+    sp: SurfacePlan, size: int, events: list[DiagnosticEvent]
+) -> None:
+    """Non-strict path: still apply short/ellipsis at floor for complete paint (D25)."""
+    assert sp._table_spec is not None
+    # Commit best-effort display even when height overflows.
+    _ok, codes, _h = _table_fit_detail(
+        sp._table_spec, size, sp._box_w, 10**9, allow_short=True, allow_ellipsis=True
+    )
+    for code in codes:
+        if code not in sp.adaptation_codes:
+            sp.adaptation_codes.append(code)
+        events.append(
+            event(
+                code=code,  # type: ignore[arg-type]
+                severity="info",
+                phase="plan",
+                role=sp.role,
+                path=f"/slides/{sp.slide_index}/{sp.role}",
+                action="measure",
+                result="accepted",
+                slide_number=sp.slide_number,
+                layout_type=sp.layout_type,
+                surface_id=sp.surface_id,
+            )
+        )
+

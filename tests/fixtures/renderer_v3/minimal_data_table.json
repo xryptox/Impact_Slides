@@ -1,0 +1,98 @@
+{
+  "meta": { "handoff_schema_version": 1 },
+  "sections": [{ "section_id": "overview", "label": "Overview" }],
+  "number_formats": {
+    "usd_1": {
+      "unit": "usd",
+      "value_decimals": 1,
+      "negative_style": "parentheses"
+    },
+    "pct_1": {
+      "unit": "percent",
+      "value_decimals": 1,
+      "negative_style": "minus"
+    },
+    "scaled_m": {
+      "unit": "usd",
+      "value_decimals": 1,
+      "negative_style": "minus",
+      "value_scale": "0.000001",
+      "scale_label": "USD millions"
+    }
+  },
+  "evidence_registry": {
+    "src-board-pack": { "source_name": "Board pack Q4" }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": { "title": "Impact Review" },
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "data_table",
+      "section_id": "overview",
+      "title": "Segment performance",
+      "content": { "subtitle": "Reported currency" },
+      "payload": {
+        "table": {
+          "surface_id": "seg-perf",
+          "stub_header": { "label": "Segment", "short_label": "Seg" },
+          "columns": [
+            { "column_id": "rev", "label": "Revenue", "short_label": "Rev" },
+            { "column_id": "growth", "label": "Growth", "short_label": "Gr" },
+            { "column_id": "note", "label": "Note" }
+          ],
+          "column_groups": [
+            {
+              "group_id": "money",
+              "label": "Financials",
+              "short_label": "Fin",
+              "column_ids": ["rev", "growth"]
+            }
+          ],
+          "rows": [
+            {
+              "row_id": "cards",
+              "label": "Card Member",
+              "short_label": "Cards",
+              "cells": {
+                "rev": { "type": "number", "value": "1234.56", "format_id": "usd_1" },
+                "growth": { "type": "number", "value": "2.5", "format_id": "pct_1" },
+                "note": { "type": "text", "text": "Core" }
+              }
+            },
+            {
+              "row_id": "ics",
+              "label": "ICS",
+              "cells": {
+                "rev": { "type": "number", "value": "-89.1", "format_id": "usd_1" },
+                "growth": { "type": "missing" },
+                "note": { "type": "text", "text": "Watch" }
+              }
+            },
+            {
+              "row_id": "nna",
+              "label": "NNA",
+              "cells": {
+                "rev": { "type": "number", "value": "1500000", "format_id": "scaled_m" },
+                "growth": { "type": "number", "value": "0", "format_id": "pct_1" },
+                "note": { "type": "range", "lower": "1.0", "upper": "2.5", "format_id": "pct_1" }
+              }
+            }
+          ]
+        }
+      },
+      "takeaway": { "text": "Cards carry the print; ICS needs attention." },
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": { "title": "Discussion" }
+    }
+  ]
+}

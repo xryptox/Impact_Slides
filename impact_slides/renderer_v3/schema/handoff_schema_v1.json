@@ -59,6 +59,51 @@
       "title": "ClosingCoverSlide",
       "type": "object"
     },
+    "ColumnGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "group_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Group Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        },
+        "column_ids": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+            "type": "string"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Column Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "group_id",
+        "label",
+        "column_ids"
+      ],
+      "title": "ColumnGroup",
+      "type": "object"
+    },
     "CoverPayload": {
       "additionalProperties": false,
       "description": "Shared opening/closing cover payload (D268).",
@@ -112,6 +157,138 @@
         "title"
       ],
       "title": "CoverPayload",
+      "type": "object"
+    },
+    "DataTablePayload": {
+      "additionalProperties": false,
+      "description": "Ordinary full-width table composition payload (D183/D257).",
+      "properties": {
+        "table": {
+          "$ref": "#/$defs/TableData"
+        }
+      },
+      "required": [
+        "table"
+      ],
+      "title": "DataTablePayload",
+      "type": "object"
+    },
+    "DataTableSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "data_table",
+          "default": "data_table",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DataTablePayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "DataTableSlide",
       "type": "object"
     },
     "DeckMeta": {
@@ -229,6 +406,19 @@
         "source_name"
       ],
       "title": "EvidenceEntry",
+      "type": "object"
+    },
+    "MissingValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "missing",
+          "default": "missing",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "MissingValue",
       "type": "object"
     },
     "NarrativeBulletListBlock": {
@@ -457,17 +647,25 @@
     },
     "NumberFormat": {
       "additionalProperties": false,
+      "description": "Closed deck-level format registry entry (D144/D214/D293).",
       "properties": {
         "unit": {
           "anyOf": [
             {
-              "$ref": "#/$defs/UnitSpec"
+              "enum": [
+                "usd",
+                "percent",
+                "percentage_points",
+                "basis_points"
+              ],
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Unit"
         },
         "value_decimals": {
           "maximum": 4,
@@ -498,10 +696,17 @@
           "type": "string"
         },
         "value_scale": {
-          "default": 1.0,
-          "exclusiveMinimum": 0,
-          "title": "Value Scale",
-          "type": "number"
+          "anyOf": [
+            {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value Scale"
         },
         "scale_label": {
           "anyOf": [
@@ -522,6 +727,33 @@
         "negative_style"
       ],
       "title": "NumberFormat",
+      "type": "object"
+    },
+    "NumberValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "number",
+          "default": "number",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Value",
+          "type": "string"
+        },
+        "format_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Format Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "format_id"
+      ],
+      "title": "NumberValue",
       "type": "object"
     },
     "OpeningCoverSlide": {
@@ -625,6 +857,39 @@
       "title": "ProseRun",
       "type": "object"
     },
+    "RangeValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "range",
+          "default": "range",
+          "title": "Type",
+          "type": "string"
+        },
+        "lower": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Lower",
+          "type": "string"
+        },
+        "upper": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Upper",
+          "type": "string"
+        },
+        "format_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Format Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "lower",
+        "upper",
+        "format_id"
+      ],
+      "title": "RangeValue",
+      "type": "object"
+    },
     "SectionEntry": {
       "additionalProperties": false,
       "properties": {
@@ -672,6 +937,196 @@
       "title": "SubtitleContent",
       "type": "object"
     },
+    "TableColumn": {
+      "additionalProperties": false,
+      "properties": {
+        "column_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Column Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        }
+      },
+      "required": [
+        "column_id",
+        "label"
+      ],
+      "title": "TableColumn",
+      "type": "object"
+    },
+    "TableData": {
+      "additionalProperties": false,
+      "description": "Canonical rectangular table (D141/D255).",
+      "properties": {
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "stub_header": {
+          "$ref": "#/$defs/TableLabel"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/$defs/TableColumn"
+          },
+          "minItems": 1,
+          "title": "Columns",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/TableRow"
+          },
+          "minItems": 1,
+          "title": "Rows",
+          "type": "array"
+        },
+        "column_groups": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ColumnGroup"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column Groups"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Typography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "surface_id",
+        "stub_header",
+        "columns",
+        "rows"
+      ],
+      "title": "TableData",
+      "type": "object"
+    },
+    "TableLabel": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "title": "TableLabel",
+      "type": "object"
+    },
+    "TableRow": {
+      "additionalProperties": false,
+      "properties": {
+        "row_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Row Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        },
+        "cells": {
+          "additionalProperties": {
+            "discriminator": {
+              "mapping": {
+                "missing": "#/$defs/MissingValue",
+                "number": "#/$defs/NumberValue",
+                "range": "#/$defs/RangeValue",
+                "text": "#/$defs/TextValue"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/NumberValue"
+              },
+              {
+                "$ref": "#/$defs/RangeValue"
+              },
+              {
+                "$ref": "#/$defs/TextValue"
+              },
+              {
+                "$ref": "#/$defs/MissingValue"
+              }
+            ]
+          },
+          "title": "Cells",
+          "type": "object"
+        }
+      },
+      "required": [
+        "row_id",
+        "label",
+        "cells"
+      ],
+      "title": "TableRow",
+      "type": "object"
+    },
     "Takeaway": {
       "additionalProperties": false,
       "properties": {
@@ -696,6 +1151,27 @@
         "text"
       ],
       "title": "Takeaway",
+      "type": "object"
+    },
+    "TextValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "text",
+          "default": "text",
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "TextValue",
       "type": "object"
     },
     "Typography": {
@@ -750,48 +1226,23 @@
           ],
           "default": null,
           "title": "Subtitle Font Size"
+        },
+        "table_font_size": {
+          "anyOf": [
+            {
+              "maximum": 24,
+              "minimum": 12,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Table Font Size"
         }
       },
       "title": "Typography",
-      "type": "object"
-    },
-    "UnitSpec": {
-      "additionalProperties": false,
-      "properties": {
-        "text": {
-          "minLength": 1,
-          "title": "Text",
-          "type": "string"
-        },
-        "position": {
-          "enum": [
-            "prefix",
-            "suffix"
-          ],
-          "title": "Position",
-          "type": "string"
-        },
-        "spacing": {
-          "enum": [
-            "none",
-            "space"
-          ],
-          "title": "Spacing",
-          "type": "string"
-        },
-        "accessible_name": {
-          "minLength": 1,
-          "title": "Accessible Name",
-          "type": "string"
-        }
-      },
-      "required": [
-        "text",
-        "position",
-        "spacing",
-        "accessible_name"
-      ],
-      "title": "UnitSpec",
       "type": "object"
     }
   },
@@ -826,6 +1277,7 @@
         "discriminator": {
           "mapping": {
             "closing_cover": "#/$defs/ClosingCoverSlide",
+            "data_table": "#/$defs/DataTableSlide",
             "narrative": "#/$defs/NarrativeSlide",
             "opening_cover": "#/$defs/OpeningCoverSlide"
           },
@@ -840,6 +1292,9 @@
           },
           {
             "$ref": "#/$defs/NarrativeSlide"
+          },
+          {
+            "$ref": "#/$defs/DataTableSlide"
           }
         ]
       },
