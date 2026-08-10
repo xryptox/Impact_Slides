@@ -660,20 +660,22 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
 
     for (_fit, _key), members in sorted(groups.items(), key=lambda kv: kv[0]):
         if len(members) < 2:
-            # Still unify single-member narrative body (one block) — no-op size.
-            if members:
-                pass
             continue
         # Largest common size that every member can fit.
         fit = members[0]._fit_role
-        assert fit is not None
-        floor = members[0].role_sizes[fit]
+        if fit is None:
+            continue
+        # Role floor (not the already-chosen size) — preserve typography_grown.
+        role_floor = {
+            "subtitle": SUBTITLE_FLOOR,
+            "body": TAKEAWAY_FLOOR if members[0].role == "takeaway" else BODY_FLOOR,
+        }[fit]
         # Start from min of independently chosen sizes, then try grow to max
         # of those if all fit — D3: largest that safely fits every member.
         independent = [m.role_sizes[fit] for m in members]
         target = min(independent)
         upper = max(independent)
-        for size in range(upper, floor - 1, -1):
+        for size in range(upper, role_floor - 1, -1):
             if all(
                 _text_fits(
                     m._text_items,
@@ -691,12 +693,12 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
             if m.role_sizes[fit] != target:
                 changed = True
             m.role_sizes[fit] = target
-            # If sync reduced a grown size, drop grow code if no longer grown.
-            if target == floor:
+            # Drop grow code only when frozen size is the role floor.
+            if target == role_floor:
                 m.adaptation_codes = [
                     c for c in m.adaptation_codes if c != "plan.typography_grown"
                 ]
-            elif "plan.typography_grown" not in m.adaptation_codes and target > floor:
+            elif "plan.typography_grown" not in m.adaptation_codes and target > role_floor:
                 m.adaptation_codes.append("plan.typography_grown")
         if changed or len(members) > 1:
             for m in members:

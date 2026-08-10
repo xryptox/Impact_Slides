@@ -17,6 +17,7 @@ from .diagnostics import (
     sort_events,
 )
 from .models import Deck
+from .plan import DeckPlan
 from .schema_export import schema_path
 from .theme import THEME_ID, generate_theme_css
 
@@ -58,7 +59,7 @@ def build_presentation_html(
     *,
     debug: bool = False,
     svg_only: bool = False,
-    deck_plan: Any = None,
+    deck_plan: DeckPlan | None = None,
     events: list[DiagnosticEvent] | None = None,
 ) -> str:
     """Minimal deterministic HTML shell for kernel compositions (paint later)."""
@@ -89,7 +90,7 @@ def build_presentation_html(
             "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             # Spacing constants must stay aligned with plan.BLOCK_MARGIN_Y.
-            "p,ul{font-size:var(--text-body);line-height:1.4;margin:0 0 12px;padding:0}",
+            "p,ul{font-size:var(--text-body);line-height:1.4;margin:0 0 var(--space-sm);padding:0}",
             "li{margin:0;padding:0;margin-left:1.25em}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
             ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
@@ -320,7 +321,7 @@ def build_evidence_manifest(deck: Deck) -> dict[str, Any]:
     }
 
 
-def build_slide_summaries(deck: Deck, deck_plan: Any = None) -> list[dict[str, Any]]:
+def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     planned = deck_plan.by_surface_id() if deck_plan is not None else {}
     for slide in deck.slides:
@@ -373,7 +374,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
     return rows
 
 
-def build_plans(deck: Deck, deck_plan: Any = None) -> list[dict[str, Any]]:
+def build_plans(deck: Deck, deck_plan: DeckPlan | None = None) -> list[dict[str, Any]]:
     """One plan entry per planned surface from the frozen deck plan (D69/D312)."""
     if deck_plan is not None:
         return deck_plan.public_plans()
@@ -391,7 +392,7 @@ def build_run_meta(
     svg_only: bool,
     events: list[DiagnosticEvent],
     artifact_bytes: dict[str, bytes],
-    deck_plan: Any = None,
+    deck_plan: DeckPlan | None = None,
 ) -> dict[str, Any]:
     severity = {"info": 0, "warning": 0, "error": 0}
     for e in events:
@@ -444,7 +445,7 @@ def stage_artifacts(
     svg_only: bool,
     events: list[DiagnosticEvent],
     schema_source: Path,
-    deck_plan: Any = None,
+    deck_plan: DeckPlan | None = None,
 ) -> dict[str, bytes]:
     """Build all five artifact payloads in memory (bytes, UTF-8/LF)."""
     html = build_presentation_html(

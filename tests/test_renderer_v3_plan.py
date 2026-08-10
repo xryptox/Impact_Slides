@@ -384,3 +384,16 @@ def test_cover_measures_each_role_at_its_frozen_size():
     assert cover.role_sizes["meta"] == 22
     assert not cover._overflow
 
+
+def test_sync_preserves_typography_grown_when_above_floor():
+    """Synced body size above role floor must keep plan.typography_grown."""
+    deck = validate_handoff(_minimal(), strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    lead = plan.by_surface_id()["slide-2-block-lead"]
+    body = lead.role_sizes["body"]
+    if body > BODY_FLOOR:
+        assert "plan.typography_grown" in lead.adaptation_codes
+    else:
+        # Short fixture may stay at floor; still must not crash and stay in band.
+        assert body == BODY_FLOOR
+
