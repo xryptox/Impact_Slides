@@ -361,7 +361,10 @@ def _escape(text: str) -> str:
 
 
 def build_slide_notes_md(deck: Deck) -> str:
-    """Authored slide order/headings; exact D221 text or _(no notes)_ (D250)."""
+    """Authored slide order/headings; exact D221 text or _(no notes)_ (D250).
+
+    Never trims notes content — only ensures the artifact ends with one LF.
+    """
     chunks: list[str] = []
     for slide in deck.slides:
         heading = _slide_heading(slide)
@@ -370,17 +373,17 @@ def build_slide_notes_md(deck: Deck) -> str:
         notes = getattr(slide, "speaker_notes", None)
         chunks.append(notes if notes else "_(no notes)_")
         chunks.append("")
-    return "\n".join(chunks).rstrip() + "\n"
+    body = "\n".join(chunks)
+    return body if body.endswith("\n") else body + "\n"
 
 
 def _sorted_locator(locator: Any) -> Any:
-    """D113/D216: recursively sort locator object keys; arrays/scalars unchanged."""
-    if not isinstance(locator, dict):
-        return locator
-    return {
-        k: _sorted_locator(locator[k]) if isinstance(locator[k], dict) else locator[k]
-        for k in sorted(locator)
-    }
+    """D113/D216: recursively sort object keys; arrays order preserved, values walked."""
+    if isinstance(locator, dict):
+        return {k: _sorted_locator(locator[k]) for k in sorted(locator)}
+    if isinstance(locator, list):
+        return [_sorted_locator(item) for item in locator]
+    return locator
 
 
 def build_evidence_manifest(deck: Deck) -> dict[str, Any]:

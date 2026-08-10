@@ -170,35 +170,38 @@ def test_notes_match_html_and_md_exactly_once(tmp_path: Path):
     import re
 
     raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
-    exact = "Line one.\n\n  stage direction\nKeep <script>alert(1)</script> and ID src-board-pack"
+    exact = (
+        "Line one.\n\n  stage direction\n"
+        "Keep <script>alert(1)</script> and ID src-board-pack  "
+    )
+    last_exact = "Close with Q&A.\n\n  leave two spaces here  "
     raw["slides"][1]["speaker_notes"] = exact
     raw["slides"][0]["speaker_notes"] = "Cover cue — do not invent."
+    raw["slides"][2]["speaker_notes"] = last_exact
     out = tmp_path / "out"
     render_deck(_write_handoff(tmp_path, raw), out)
 
     notes_md = (out / "slide_notes.md").read_text(encoding="utf-8")
     html = (out / "presentation.html").read_text(encoding="utf-8")
 
-    def _md_body(slide_no: int) -> str:
-        parts = re.split(r"(?m)^# Slide ", notes_md)
-        for part in parts[1:]:
-            if part.startswith(f"{slide_no} "):
-                body = part.split("\n", 1)[1]
-                if body.startswith("\n"):
-                    body = body[1:]
-                return body.rstrip("\n")
-        raise AssertionError(f"missing slide {slide_no} notes heading")
+    # Exact authored bodies appear once in MD (no trim/synthesis).
+    assert notes_md.count("Cover cue — do not invent.") == 1
+    assert exact in notes_md
+    assert last_exact in notes_md
+    assert notes_md.count(exact) == 1
+    assert notes_md.count(last_exact) == 1
 
     asides = re.findall(r'<aside class="notes">(.*?)</aside>', html, flags=re.S)
-    assert len(asides) == 2
-    assert html_lib.unescape(asides[0]) == _md_body(1) == "Cover cue — do not invent."
-    assert html_lib.unescape(asides[1]) == _md_body(2) == exact
+    assert len(asides) == 3
+    assert html_lib.unescape(asides[0]) == "Cover cue — do not invent."
+    assert html_lib.unescape(asides[1]) == exact
+    assert html_lib.unescape(asides[2]) == last_exact
     # Markup stays literal in notes artifact; HTML escapes only (never executes).
-    assert "<script>" in _md_body(2)
+    assert "<script>" in exact and "<script>" in notes_md
     assert "&lt;script&gt;" in asides[1]
     assert re.search(r"\.notes\s*\{[^}]*display\s*:\s*none", html) is not None
     # Visible chrome must not paint evidence IDs or locators (aside excluded).
-    body = re.sub(r"<aside class=\"notes\">.*?</aside>", "", html, flags=re.S)
+    body = re.sub(r'<aside class="notes">.*?</aside>', "", html, flags=re.S)
     assert "src-board-pack" not in body
 
 
@@ -210,7 +213,7 @@ def test_evidence_manifest_and_footer_hide_ids_sort_locators(tmp_path: Path):
     raw["evidence_registry"] = {
         "src-board-pack": {
             "source_name": "Board pack Q4",
-            "locator": {"page": 3, "nested": {"b": 1, "a": 2}, "zone": "A"},
+            "locator": {"page": 3, "nested": {"b": 1, "a": 2}, "zone": "A", "hits": [{"b": 2, "a": 1}]},
         },
         "src-annex": {"source_name": "Annex 1"},
     }
@@ -226,6 +229,7 @@ def test_evidence_manifest_and_footer_hide_ids_sort_locators(tmp_path: Path):
         "src-annex",
     ]
     assert manifest["evidence_registry"][0]["locator"] == {
+        "hits": [{"a": 1, "b": 2}],
         "nested": {"a": 2, "b": 1},
         "page": 3,
         "zone": "A",
