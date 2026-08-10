@@ -275,6 +275,32 @@ def _unique_slug(base: str, used: set[str], fallback: str) -> str:
         n += 1
 
 
+def _register_surface_ids(node: Any, used: set[str]) -> None:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "surface_id" and isinstance(value, str):
+                node[key] = _unique_slug(value, used, fallback=value)
+            else:
+                _register_surface_ids(value, used)
+    elif isinstance(node, list):
+        for item in node:
+            _register_surface_ids(item, used)
+
+
+def _referenced_format_ids(node: Any) -> set[str]:
+    ids: set[str] = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "format_id" and isinstance(value, str):
+                ids.add(value)
+            else:
+                ids |= _referenced_format_ids(value)
+    elif isinstance(node, list):
+        for item in node:
+            ids |= _referenced_format_ids(item)
+    return ids
+
+
 def _raw_layout(slide: Mapping[str, Any]) -> str:
     """Return the inventory key for a slide without collapsing aliases."""
     if _has_freeform(slide):
@@ -1146,6 +1172,7 @@ def migrate_handoff(
         raise ValueError("handoff must contain a non-empty slides array")
 
     section_ids_used: set[str] = set()
+    surface_ids_used: set[str] = set()
     sections: dict[str, str] = {}
     evidence_registry: dict[str, dict[str, Any]] = {}
     number_formats: dict[str, Any] = {}
@@ -1272,13 +1299,7 @@ def migrate_handoff(
             continue
 
         assert converted is not None
-        # Pull number_formats if line chart referenced any — leave empty unless
-        # source already had a formats map we can copy without invention.
-        src_formats = raw.get("number_formats")
-        if isinstance(src_formats, dict):
-            for k, v in src_formats.items():
-                if isinstance(k, str) and is_semantic_id(k) and k not in number_formats:
-                    number_formats[k] = v
+        _register_surface_ids(converted, surface_ids_used)
 
         out_slides.append(converted)
         dispositions.append(
@@ -1292,6 +1313,13 @@ def migrate_handoff(
                 source_path=path,
             )
         )
+
+    src_formats = raw.get("number_formats")
+    if isinstance(src_formats, dict):
+        referenced = _referenced_format_ids(out_slides)
+        for k, v in src_formats.items():
+            if isinstance(k, str) and is_semantic_id(k) and k in referenced:
+                number_formats[k] = v
 
     inventory_report = []
     for key in sorted(LEGACY_INVENTORY.keys(), key=lambda k: (k == "", k)):

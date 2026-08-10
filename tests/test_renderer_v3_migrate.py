@@ -340,6 +340,107 @@ def test_authored_disclosure_is_preserved(tmp_path: Path):
     assert narrative["disclosure"]["sections"][0]["title"] == "Statistical Tables reference"
 
 
+def _annex_slide(number: int, title: str, panel_title: str) -> dict:
+    return {
+        "slide_number": number,
+        "layout_type": "annex_table",
+        "title": title,
+        "section": "Annex",
+        "visual_spec": {
+            "primary_visual": {
+                "type": "annex_table",
+                "steps_or_data": [
+                    ["Metric", "Value"],
+                    ["Revenue", "100"],
+                ],
+            }
+        },
+        "disclosure": {
+            "pattern": "detail",
+            "panels": [{"title": panel_title, "body": "FX-adjusted figures."}],
+        },
+    }
+
+
+def test_repeated_disclosure_titles_get_deck_unique_surface_ids(tmp_path: Path):
+    src = _write(
+        tmp_path,
+        "in.json",
+        _legacy_envelope(
+            [_annex_slide(1, "Annex A", "FX-adjusted note"), _annex_slide(2, "Annex B", "FX-adjusted note")]
+        ),
+    )
+    result = migrate_handoff(src, out_dir=tmp_path / "out", check=False)
+    assert result.unresolved == []
+    assert result.version_marked is True
+    slides = result.candidate["slides"]
+    ids = [s["disclosure"]["sections"][0]["surface_id"] for s in slides]
+    assert ids[0] == "fx-adjusted-note"
+    assert ids[1] == "fx-adjusted-note-2"
+    assert all(s["disclosure"]["sections"][0]["title"] == "FX-adjusted note" for s in slides)
+
+
+def test_corpus_repeated_fx_note_deck_marks_v1():
+    src = (
+        Path(__file__).resolve().parent
+        / "fixtures"
+        / "renderer_v2"
+        / "amex_annex_33_37_restored_handoff.json"
+    )
+    result = migrate_handoff(src, check=True)
+    assert result.version_marked is True
+    slides = result.candidate["slides"]
+    ids = [s["disclosure"]["sections"][0]["surface_id"] for s in slides]
+    assert len(ids) == len(set(ids)) == 5
+    assert ids[0] == "fx-adjusted-note"
+    assert all(s["disclosure"]["sections"][0]["title"] == "FX-adjusted note" for s in slides)
+
+
+def test_unused_number_formats_not_copied(tmp_path: Path):
+    deck = _legacy_envelope(
+        [
+            {
+                "slide_number": 1,
+                "layout_type": "line_chart",
+                "title": "Trend",
+                "section": "S",
+                "visual_spec": {
+                    "primary_visual": {
+                        "type": "chart",
+                        "surface_id": "rev-trend",
+                        "chart_data": {
+                            "categories": [
+                                {"category_id": "q1", "label": "Q1"},
+                                {"category_id": "q2", "label": "Q2"},
+                            ],
+                            "series": [
+                                {"series_id": "revenue", "name": "Revenue", "values": ["1.0", "2.0"]}
+                            ],
+                        },
+                        "value_axes": {
+                            "primary": {
+                                "visible": True,
+                                "format_id": "pct-1",
+                                "domain": {"kind": "generated"},
+                            }
+                        },
+                        "category_axis": {"visible": True},
+                    }
+                },
+            }
+        ]
+    )
+    deck["number_formats"] = {
+        "pct-1": {"value_decimals": 1, "negative_style": "minus"},
+        "orphan-format": {"value_decimals": 0, "negative_style": "minus"},
+    }
+    src = _write(tmp_path, "in.json", deck)
+    result = migrate_handoff(src, out_dir=tmp_path / "out", check=False)
+    assert result.unresolved == []
+    assert result.version_marked is True
+    assert list(result.candidate["number_formats"]) == ["pct-1"]
+
+
 def test_cli_check_and_migrate(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
     src = _write(
         tmp_path,
