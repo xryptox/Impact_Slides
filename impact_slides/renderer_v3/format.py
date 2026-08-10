@@ -112,19 +112,17 @@ def _format_number(raw: str, fmt: NumberFormat) -> tuple[str, str]:
         prefix, suffix = _UNIT_VISIBLE[fmt.unit]
         accessible_unit = _UNIT_ACCESSIBLE[fmt.unit]
 
-    signed_core = core
     if negative:
         if fmt.negative_style == "parentheses":
             # Whole-quantity negative style wraps unit+magnitude (D293).
             visible = f"({prefix}{core}{suffix})"
             accessible = f"negative {core}{(' ' + accessible_unit) if accessible_unit else ''}".rstrip()
             return visible, accessible
-        signed_core = f"-{core}"
-
-    visible = f"{prefix}{signed_core}{suffix}"
-    if negative:
+        # Conventional minus sits before a prefix unit: -$1,234.6 (D293).
+        visible = f"-{prefix}{core}{suffix}"
         accessible = f"negative {core}"
     else:
+        visible = f"{prefix}{core}{suffix}"
         accessible = core
     if accessible_unit:
         accessible = f"{accessible} {accessible_unit}"

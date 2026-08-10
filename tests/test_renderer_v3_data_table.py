@@ -57,6 +57,19 @@ def test_format_usd_parentheses_and_grouping():
     assert fv.align == "right"
 
 
+def test_format_usd_minus_before_prefix_unit():
+    """Minus-style USD places the sign before the unit (D293): -$1,234.6."""
+    fmt = {"usd": NumberFormat(unit="usd", value_decimals=1, negative_style="minus")}
+    fv = format_semantic_value(NumberValue(value="-1234.56", format_id="usd"), fmt)
+    assert fv.visible == "-$1,234.6"
+    assert not fv.visible.startswith("$")
+    assert "negative" in fv.accessible
+    assert "US dollars" in fv.accessible
+    z = format_semantic_value(NumberValue(value="-0.04", format_id="usd"), fmt)
+    assert z.visible == "$0.0"  # rounded zero stays unsigned
+    assert "negative" not in z.accessible
+
+
 def test_format_percent_minus_and_zero_unsigned():
     fmt = {"pct": NumberFormat(unit="percent", value_decimals=1, negative_style="minus")}
     assert format_semantic_value(NumberValue(value="-2.5", format_id="pct"), fmt).visible == "-2.5%"
@@ -256,6 +269,28 @@ def test_render_data_table_html_identity_and_a11y(tmp_path: Path):
     assert "table-overflow" in html
 
 
+def test_render_minus_usd_prefix_and_scale_at_table_size(tmp_path: Path):
+    raw = _table_raw()
+    raw["number_formats"]["usd_1"]["negative_style"] = "minus"
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    result = render_deck(path, tmp_path / "out", strict=True)
+    assert result["ok"] is True
+    html = (tmp_path / "out" / "presentation.html").read_text(encoding="utf-8")
+    assert "-$89.1" in html
+    assert "$-89.1" not in html
+    assert 'aria-label="negative 89.1 US dollars"' in html
+    # Scale disclosure inherits the resolved table font size (inline style).
+    assert "USD millions" in html
+    deck = validate_handoff(raw, strict=True).deck
+    px = next(
+        s.role_sizes["table"]
+        for s in plan_deck(deck, strict=True).surfaces
+        if s.role == "data_table"
+    )
+    assert f'class="table-scale" style="font-size:{px}px"' in html
+
+
 def test_render_preserves_row_column_count(tmp_path: Path):
     render_deck(FIXTURE, tmp_path, strict=True)
     html = (tmp_path / "presentation.html").read_text(encoding="utf-8")
@@ -424,6 +459,71 @@ def test_label_line_budget_falls_through_to_short():
         assert s["short_label_used"] is True
         assert s["display_headers"] == ["Seg", "Rev", "NIM", "Opex"]
         assert "plan.short_label_used" in codes
+
+
+def test_scale_line_reserves_full_resolved_table_size():
+    """Scale disclosure height must match painted table px, not px-4 (D22/D44/D257)."""
+    from impact_slides.renderer_v3.plan import (
+        BLOCK_MARGIN_Y,
+        CONTENT_W,
+        _line_box,
+        _table_fit_detail,
+    )
+
+    def _spec(scale_labels: list[str]) -> dict:
+        return {
+            "n_cols": 1,
+            "n_rows": 1,
+            "header_full": ["S", "A"],
+            "header_short": ["S", "A"],
+            "row_labels_full": ["R"],
+            "row_labels_short": ["R"],
+            "cells_vis": [["1"]],
+            "cells_acc": [["1"]],
+            "cells_role": [["metric"]],
+            "cells_align": [["right"]],
+            "col_ids": ["a"],
+            "groups": None,
+            "scale_labels": list(scale_labels),
+            "col_widths": [],
+            "display_headers": None,
+            "display_row_labels": None,
+            "display_groups": None,
+            "ellipsized": False,
+            "short_label_used": False,
+            "all_texts": [],
+        }
+
+    for px in (20, 22, 24):
+        full_scale_h = _line_box(px) + BLOCK_MARGIN_Y
+        old_scale_h = _line_box(max(12, px - 4)) + BLOCK_MARGIN_Y
+        assert full_scale_h > old_scale_h
+
+        with_scale = _spec(["$ in millions"])
+        ok, _, h_with = _table_fit_detail(
+            with_scale, px, CONTENT_W, 10**9, allow_short=False, allow_ellipsis=False
+        )
+        assert ok
+        bare = _spec([])
+        ok_bare, _, h_bare = _table_fit_detail(
+            bare, px, CONTENT_W, 10**9, allow_short=False, allow_ellipsis=False
+        )
+        assert ok_bare
+        assert h_with - h_bare == full_scale_h
+
+        # Tight box: full scale overflows; shrunken old reserve would still "fit".
+        tight = h_with - 1
+        assert h_bare + old_scale_h <= tight < h_with
+        fail_spec = _spec(["$ in millions"])
+        ok_fail, _, _ = _table_fit_detail(
+            fail_spec, px, CONTENT_W, tight, allow_short=False, allow_ellipsis=False
+        )
+        assert not ok_fail
+        pass_spec = _spec(["$ in millions"])
+        ok_pass, _, _ = _table_fit_detail(
+            pass_spec, px, CONTENT_W, h_with, allow_short=False, allow_ellipsis=False
+        )
+        assert ok_pass
 
 
 def test_stub_labels_use_emphasis_metrics():

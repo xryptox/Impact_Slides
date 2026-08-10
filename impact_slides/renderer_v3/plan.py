@@ -1484,7 +1484,8 @@ def _table_fit_detail(
 
         scale_h = 0
         if spec["scale_labels"]:
-            scale_h = _line_box(max(12, px - 4)) + BLOCK_MARGIN_Y
+            # Scale disclosure paints at the resolved table size (D22/D44/D257).
+            scale_h = _line_box(px) + BLOCK_MARGIN_Y
 
         n_header_rows = (1 if group_lines else 0) + 1
         height = (
