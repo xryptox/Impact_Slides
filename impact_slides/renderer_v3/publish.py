@@ -318,12 +318,22 @@ def _paint_slide_body(
 
 def _prose_html(prose: Any) -> str:
     chunks: list[str] = []
-    for run in prose.runs:
+    runs = list(prose.runs)
+    for i, run in enumerate(runs):
         text = _soft_break_html(run.text)
         if run.emphasis == "strong":
             chunks.append(f"<strong>{text}</strong>")
         else:
             chunks.append(text)
+        # Plan joins runs before wrap; emit trailing <wbr> at soft-break run edges.
+        nxt = runs[i + 1].text if i + 1 < len(runs) else ""
+        if (
+            run.text
+            and run.text[-1] in _SOFT_BREAK_AFTER
+            and nxt
+            and not nxt[0].isspace()
+        ):
+            chunks.append("<wbr>")
     return "".join(chunks)
 
 

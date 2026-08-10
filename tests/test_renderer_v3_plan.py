@@ -541,6 +541,33 @@ def test_paint_emits_soft_break_wbr_for_plan_punctuation():
     assert _soft_break_html("a<b,c") == "a&lt;b,<wbr>c"
 
 
+def test_prose_soft_break_wbr_across_run_boundary():
+    """R178-029: plan joins runs; paint must wbr at soft-break run edges."""
+    from impact_slides.renderer_v3.models import Prose, ProseRun
+    from impact_slides.renderer_v3.plan import _wrap_lines
+    from impact_slides.renderer_v3.publish import _prose_html
+
+    prose = Prose(
+        runs=[
+            ProseRun(text="assessment,"),
+            ProseRun(text="framework", emphasis="strong"),
+        ]
+    )
+    items = [(r.text, r.emphasis == "strong") for r in prose.runs]
+    lines, wo = _wrap_lines(items, 22, 120)
+    assert not wo
+    assert len(lines) >= 2
+    html = _prose_html(prose)
+    assert html == "assessment,<wbr><strong>framework</strong>"
+    spaced = Prose(
+        runs=[
+            ProseRun(text="a, "),
+            ProseRun(text="b", emphasis="strong"),
+        ]
+    )
+    assert _prose_html(spaced) == "a, <strong>b</strong>"
+
+
 def test_disclosure_paragraph_not_list_indented():
     """R178-030: paragraphs measure full width; summary/bullets use indent."""
     from impact_slides.renderer_v3.plan import (
