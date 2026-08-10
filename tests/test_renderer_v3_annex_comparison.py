@@ -163,7 +163,7 @@ def test_period_fallback_keeps_strip_and_table(tmp_path: Path):
         row["label"] = "X" * 200
         for cell in row["cells"].values():
             if cell.get("type") == "number":
-                cell["value"] = "999999999.9"
+                cell["value"] = "9" * 40 + ".9"
     handoff = tmp_path / "handoff.json"
     handoff.write_text(json.dumps(raw), encoding="utf-8")
     out = tmp_path / "out"
@@ -267,6 +267,148 @@ def test_mutation_drop_variance_column_fails():
         row["cells"].pop("variance", None)
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
+
+
+def test_nonstrict_table_repair_cells_and_groups():
+    raw = _raw()
+    slide = next(s for s in raw["slides"] if s["layout_type"] == "annex_table")
+    table = slide["payload"]["table"]
+    table["rows"][0]["cells"]["q1"] = {"type": "number"}
+    table["rows"][0]["cells"]["q2"] = None
+    table["rows"][0]["cells"]["not_a_column"] = {"type": "missing"}
+    del table["rows"][1]["cells"]["q3"]
+    table["column_groups"][0]["column_ids"].append("not_a_column")
+
+    with pytest.raises(RendererValidationError):
+        validate_handoff(deepcopy(raw), strict=True)
+    result = validate_handoff(raw, strict=False)
+
+    repaired = next(
+        s for s in result.deck.slides if s.layout_type == "annex_table"
+    ).payload.table
+    assert repaired.column_groups is None
+    assert [c.column_id for c in repaired.columns] == ["q1", "q2", "q3"]
+    for row in repaired.rows:
+        assert set(row.cells) == {"q1", "q2", "q3"}
+    assert repaired.rows[0].cells["q1"].type == "missing"
+    assert repaired.rows[0].cells["q2"].type == "missing"
+    assert repaired.rows[0].cells["q3"].type != "missing"
+    assert repaired.rows[1].cells["q3"].type == "missing"
+    assert {e.code for e in result.events} >= {
+        "repair.value_to_missing",
+        "repair.field_dropped",
+        "repair.structure_flattened",
+    }
+
+
+def test_nonstrict_table_repair_traverses_grouped_peers():
+    raw = _raw()
+    slide = next(
+        s for s in raw["slides"] if s["layout_type"] == "grouped_annex_table"
+    )
+    slide["payload"]["tables"][1]["table"]["rows"][0]["cells"]["a"] = {
+        "type": "text"
+    }
+    result = validate_handoff(raw, strict=False)
+    peer = next(
+        s for s in result.deck.slides if s.layout_type == "grouped_annex_table"
+    ).payload.tables[1].table
+    assert peer.rows[0].cells["a"].type == "missing"
+
+
+def test_comparison_cards_a11y_and_print_contract(tmp_path: Path):
+    out = tmp_path / "out"
+    render_deck(FIXTURE, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    container_start = html.index('class="comparison-cards cols-3')
+    container_tag = html[container_start : html.index(">", container_start)]
+    assert 'aria-hidden="true"' in container_tag
+    assert "sr-only-table" in html
+    print_block = html[html.index("@media print{") : html.index("</style>")]
+    assert ".comparison-cards{display:none}" in print_block
+    assert ".sr-only{position:static" in print_block
+    assert "clip:auto" in print_block
+
+
+def _heading_wrapping_lines(lines: int) -> str:
+    from impact_slides.renderer_v3.plan import (
+        CONTENT_W,
+        GROUPED_ANNEX_GAP,
+        GROUPED_ANNEX_HEADING_PX,
+        _wrap_lines,
+    )
+
+    peer_w = (CONTENT_W - GROUPED_ANNEX_GAP) // 2
+    heading = "Quarterly performance overview of the consumer business segment"
+    while len(_wrap_lines([(heading, True)], GROUPED_ANNEX_HEADING_PX, peer_w)[0]) < lines:
+        heading += " review"
+    return heading
+
+
+def test_grouped_annex_short_heading_only_after_fit_failure(tmp_path: Path):
+    two_lines = _heading_wrapping_lines(2)
+    raw = _raw()
+    slide = next(
+        s for s in raw["slides"] if s["layout_type"] == "grouped_annex_table"
+    )
+    slide["payload"]["tables"][0]["heading"] = two_lines
+    slide["payload"]["tables"][0]["short_heading"] = "US"
+    result = validate_handoff(deepcopy(raw), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    peer = next(s for s in plan.surfaces if s.surface_id == "peer-us")
+    assert peer.table_paint["display_heading"] == two_lines
+
+    three_lines = _heading_wrapping_lines(3)
+    slide["payload"]["tables"][0]["heading"] = three_lines
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    peer_start = html.index('class="grouped-annex-peer"')
+    heading_tag = html[peer_start : html.index("</h2>", peer_start)]
+    assert f'title="{three_lines}"' in heading_tag
+    assert f'aria-label="{three_lines}"' in heading_tag
+    assert heading_tag.rsplit(">", 1)[1].startswith("US")
+
+
+def test_sync_floor_never_below_member_floors():
+    raw = _raw()
+    annex = next(s for s in raw["slides"] if s["layout_type"] == "annex_table")
+    cards = next(s for s in raw["slides"] if s["layout_type"] == "comparison_cards")
+    annex["payload"]["table"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "shared-x",
+    }
+    cards["payload"]["table"]["typography"] = {
+        "mode": "adaptive",
+        "sync_group": "shared-x",
+    }
+    table = annex["payload"]["table"]
+    for i in range(6):
+        table["columns"].append(
+            {"column_id": f"x{i}", "label": f"Extended dimension {i}"}
+        )
+        for row in table["rows"]:
+            row["cells"][f"x{i}"] = {
+                "type": "number",
+                "value": "1234567890123.45",
+                "format_id": "usd_1",
+            }
+    for row in table["rows"]:
+        for cell in row["cells"].values():
+            if cell.get("type") == "number":
+                cell["value"] = "1234567890123.45"
+
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=False)
+    sizes = {
+        s.surface_id: s.role_sizes["table"]
+        for s in plan.surfaces
+        if s.surface_id in {"annex-main", "cards-main"}
+    }
+    assert sizes["cards-main"] >= 20
+    assert sizes["annex-main"] == sizes["cards-main"]
 
 
 def test_grouped_annex_single_peer_full_width(tmp_path: Path):

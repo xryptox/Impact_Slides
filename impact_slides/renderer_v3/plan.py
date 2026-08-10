@@ -1193,14 +1193,17 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
         if fit is None:
             continue
         # Role floor (not the already-chosen size) — preserve typography_grown.
-        role_floor = min(
-            (m._default_size if m._default_size is not None else m.role_sizes[fit])
+        # Bound at the max member floor so no member freezes below its own
+        # documented fit range (D44).
+        member_floors = [
+            m._default_size if m._default_size is not None else m.role_sizes[fit]
             for m in members
-        )
+        ]
+        role_floor = max(member_floors)
         # Start from min of independently chosen sizes, then try grow to max
         # of those if all fit — D3: largest that safely fits every member.
         independent = [m.role_sizes[fit] for m in members]
-        target = min(independent)
+        target = max(min(independent), role_floor)
         upper = max(independent)
 
         def _sync_member_fits(m: SurfacePlan, size: int) -> bool:
@@ -1212,16 +1215,16 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                 target = size
                 break
         changed = False
-        for m in members:
+        for m, m_floor in zip(members, member_floors):
             if m.role_sizes[fit] != target:
                 changed = True
             m.role_sizes[fit] = target
-            # Drop grow code only when frozen size is the role floor.
-            if target == role_floor:
+            # Drop grow code only when frozen size is the member's own floor.
+            if target == m_floor:
                 m.adaptation_codes = [
                     c for c in m.adaptation_codes if c != "plan.typography_grown"
                 ]
-            elif "plan.typography_grown" not in m.adaptation_codes and target > role_floor:
+            elif "plan.typography_grown" not in m.adaptation_codes and target > m_floor:
                 m.adaptation_codes.append("plan.typography_grown")
             # Table paint must match the frozen synchronized size (D69/D70).
             if m._table_spec is not None:
@@ -1503,7 +1506,8 @@ def _collect_grouped_annex_body(
         # Prefer short heading only when full heading cannot fit (D259).
         full_h = _required_height([(heading, True)], GROUPED_ANNEX_HEADING_PX, peer_w, 1)
         short_h = _required_height([(short, True)], GROUPED_ANNEX_HEADING_PX, peer_w, 1)
-        use_short = full_h > _line_box(GROUPED_ANNEX_HEADING_PX) * 2 and short != heading
+        full_lines = _wrap_lines([(heading, True)], GROUPED_ANNEX_HEADING_PX, peer_w)[0]
+        use_short = len(full_lines) > 2 and short != heading
         display_heading = short if use_short else heading
         heading_h = short_h if use_short else full_h
         sp = _table_surface_plan(

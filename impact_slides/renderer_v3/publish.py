@@ -179,6 +179,8 @@ def build_presentation_html(
             "html,body{width:auto;height:auto;overflow:visible}"
             ".deck-stage{width:1920px!important;transform:none!important}"
             ".slide{width:1920px!important;height:1080px!important;transform:none!important;margin:0!important;page-break-after:always}"
+            ".comparison-cards{display:none}"
+            ".sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}"
             "}",
             "</style>",
             "</head>",
@@ -534,8 +536,11 @@ def _paint_table_surface(
         title_attr = (
             f' title="{_escape(heading_title)}"' if heading_title else ""
         )
+        aria_attr = (
+            f' aria-label="{_escape(heading_title)}"' if heading_title else ""
+        )
         out.append(
-            f"<h2{title_attr}{h_style}>{_soft_break_html(heading)}</h2>"
+            f"<h2{title_attr}{aria_attr}{h_style}>{_soft_break_html(heading)}</h2>"
         )
 
     headers = list(paint["display_headers"])
@@ -817,11 +822,11 @@ def _paint_comparison_cards(
     overflow_cls = " table-overflow" if sp._overflow else ""
     out = [
         f'<div class="comparison-cards cols-{int(cols)}{overflow_cls}" '
-        f'{_plan_attrs(sp, events_by_surface)} '
+        f'aria-hidden="true" {_plan_attrs(sp, events_by_surface)} '
         f'data-table-surface="{_escape(table.surface_id)}">' 
     ]
-    # Also emit the semantic table for a11y/print (visually hidden via CSS class).
-    # Keep facts once in cards; duplicate table would re-announce — skip duplicate.
+    # Cards are visual-only; the sr-only D255 table below is the single
+    # accessibility source and the print source.
     col_ids = list(paint["col_ids"])
     fact_labels = list(paint["header_full"][1:])
     for r_i, row in enumerate(table.rows):
