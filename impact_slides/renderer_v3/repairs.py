@@ -252,14 +252,35 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
         if not isinstance(slide, dict) or slide.get("layout_type") != "narrative":
             continue
         surfaces = (
-            ("content", "body_font_size"),
-            ("takeaway", "subtitle_font_size"),
-            ("payload", "subtitle_font_size"),
+            ("content", "subtitle_font_size", "body_font_size", 22, 26),
+            ("takeaway", "body_font_size", "subtitle_font_size", 22, 28),
+            ("payload", "body_font_size", "subtitle_font_size", 22, 28),
         )
-        for owner, forbidden in surfaces:
+        for owner, size_field, forbidden, floor, ceiling in surfaces:
             surface = slide.get(owner)
             typo = surface.get("typography") if isinstance(surface, dict) else None
-            if isinstance(typo, dict) and forbidden in typo:
+            malformed = isinstance(typo, dict) and (
+                set(typo) - {"mode", "sync_group", size_field}
+                or forbidden in typo
+                or typo.get("mode", "adaptive") not in {"adaptive", "fixed"}
+                or (
+                    "sync_group" in typo
+                    and (
+                        typo.get("mode", "adaptive") != "adaptive"
+                        or not isinstance(typo["sync_group"], str)
+                        or not typo["sync_group"].strip()
+                    )
+                )
+                or (
+                    size_field in typo
+                    and (
+                        not isinstance(typo[size_field], int)
+                        or isinstance(typo[size_field], bool)
+                        or not floor <= typo[size_field] <= ceiling
+                    )
+                )
+            )
+            if malformed:
                 del surface["typography"]
                 events.append(
                     event(

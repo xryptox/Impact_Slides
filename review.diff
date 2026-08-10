@@ -1,0 +1,1945 @@
+diff --git a/impact_slides/renderer_v3/diagnostics.py b/impact_slides/renderer_v3/diagnostics.py
+index c0f1981..652dd50 100644
+--- a/impact_slides/renderer_v3/diagnostics.py
++++ b/impact_slides/renderer_v3/diagnostics.py
+@@ -24,101 +24,137 @@ VALIDATION_CODES = frozenset(
+         "validation.identity",
+         "validation.reference",
+         "validation.structure",
+         "validation.conflict",
+         "validation.fit",
+         "validation.accessibility",
+     }
+ )
+ REPAIR_CODES = frozenset(
+     {
+         "repair.schema_version_assumed",
+         "repair.field_dropped",
+         "repair.item_dropped",
+         "repair.reference_dropped",
+         "repair.id_generated",
+         "repair.position_repaired",
+         "repair.value_to_missing",
+         "repair.value_canonicalized",
+         "repair.prose_flattened",
+         "repair.format_dropped",
+         "repair.domain_replaced",
+         "repair.axis_restored",
+         "repair.policy_defaulted",
+         "repair.color_substituted",
+         "repair.sync_disabled",
+         "repair.structure_flattened",
+         "repair.chrome_omitted",
+         "repair.locator_dropped",
+     }
+ )
++PLAN_CODES = frozenset(
++    {
++        "plan.typography_grown",
++        "plan.synchronized",
++        "plan.geometry_reallocated",
++        "plan.gutter_reserved",
++        "plan.text_wrapped",
++        "plan.text_rotated",
++        "plan.label_repositioned",
++        "plan.chrome_deduplicated",
++        "plan.identity_selected",
++        "plan.short_label_used",
++        "plan.ticks_skipped",
++        "plan.label_ellipsized",
++        "plan.label_suppressed",
++        "plan.surface_relocated",
++        "plan.conservative_metrics",
++        "plan.unresolved_overflow",
++    }
++)
+ PUBLICATION_CODES = frozenset(
+     {
+         "publication.transaction_failed",
+         "publication.rollback_failed",
+     }
+ )
+-# Kernel emits validation + repair + publication; plan/paint codes arrive later.
+-CLOSED_CODES = VALIDATION_CODES | REPAIR_CODES | PUBLICATION_CODES
++# Kernel emits validation + repair + plan + publication; paint codes arrive later.
++CLOSED_CODES = VALIDATION_CODES | REPAIR_CODES | PLAN_CODES | PUBLICATION_CODES
+ DiagnosticCode = Literal[
+     "validation.schema_version",
+     "validation.configuration",
+     "validation.required",
+     "validation.unknown_field",
+     "validation.inapplicable_field",
+     "validation.type",
+     "validation.value",
+     "validation.cardinality",
+     "validation.identity",
+     "validation.reference",
+     "validation.structure",
+     "validation.conflict",
+     "validation.fit",
+     "validation.accessibility",
+     "repair.schema_version_assumed",
+     "repair.field_dropped",
+     "repair.item_dropped",
+     "repair.reference_dropped",
+     "repair.id_generated",
+     "repair.position_repaired",
+     "repair.value_to_missing",
+     "repair.value_canonicalized",
+     "repair.prose_flattened",
+     "repair.format_dropped",
+     "repair.domain_replaced",
+     "repair.axis_restored",
+     "repair.policy_defaulted",
+     "repair.color_substituted",
+     "repair.sync_disabled",
+     "repair.structure_flattened",
+     "repair.chrome_omitted",
+     "repair.locator_dropped",
++    "plan.typography_grown",
++    "plan.synchronized",
++    "plan.geometry_reallocated",
++    "plan.gutter_reserved",
++    "plan.text_wrapped",
++    "plan.text_rotated",
++    "plan.label_repositioned",
++    "plan.chrome_deduplicated",
++    "plan.identity_selected",
++    "plan.short_label_used",
++    "plan.ticks_skipped",
++    "plan.label_ellipsized",
++    "plan.label_suppressed",
++    "plan.surface_relocated",
++    "plan.conservative_metrics",
++    "plan.unresolved_overflow",
+     "publication.transaction_failed",
+     "publication.rollback_failed",
+ ]
+ 
+ ActionName = Literal[
+     "assume_schema_v1",
+     "drop_field",
+     "drop_item",
+     "drop_reference",
+     "drop_optional_fact",
+     "generate_positional_id",
+     "pad_trailing_null",
+     "drop_surplus_tail",
+     "replace_with_missing",
+     "collapse_equal_range",
+     "flatten_prose_runs",
+     "drop_format",
+     "replace_domain",
+     "restore_category_axis",
+     "default_typography",
+     "default_display",
+     "substitute_theme_color",
+     "disable_sync",
+     "accept",
+     "reject",
+     "measure",
+     "select_candidate",
+     "reserve",
+     "reallocate",
+     "deduplicate",
+diff --git a/impact_slides/renderer_v3/models.py b/impact_slides/renderer_v3/models.py
+index d5b49fc..a8805c7 100644
+--- a/impact_slides/renderer_v3/models.py
++++ b/impact_slides/renderer_v3/models.py
+@@ -141,65 +141,77 @@ class UnitSpec(ClosedModel):
+ 
+ 
+ class NumberFormat(ClosedModel):
+     unit: Optional[UnitSpec] = None
+     value_decimals: int = Field(ge=0, le=4)
+     tick_decimals: Optional[int] = Field(default=None, ge=0, le=4)
+     negative_style: Literal["minus", "parentheses"]
+     value_scale: float = Field(default=1.0, gt=0)
+     scale_label: Optional[NonEmptyStr] = None
+ 
+     @model_validator(mode="after")
+     def _scale_label_rule(self) -> NumberFormat:
+         if self.value_scale != 1 and not self.scale_label:
+             raise ValueError("scale_label required when value_scale != 1")
+         if self.value_scale == 1 and self.scale_label is not None:
+             raise ValueError("scale_label forbidden when value_scale == 1")
+         return self
+ 
+ 
+ class Typography(ClosedModel):
+     mode: Literal["adaptive", "fixed"] = "adaptive"
+     sync_group: Optional[SemanticId] = None
+     body_font_size: Optional[int] = Field(default=None, ge=8, le=48)
+     subtitle_font_size: Optional[int] = Field(default=None, ge=8, le=48)
+ 
+ 
+ class SubtitleContent(ClosedModel):
+     subtitle: NonEmptyStr
+     typography: Optional[Typography] = None
+ 
++    @model_validator(mode="after")
++    def _subtitle_typography_only(self) -> SubtitleContent:
++        if self.typography and self.typography.body_font_size is not None:
++            raise ValueError("body_font_size is inapplicable to subtitle typography")
++        return self
++
+ 
+ class Takeaway(ClosedModel):
+     text: NonEmptyStr
+     typography: Optional[Typography] = None
+ 
++    @model_validator(mode="after")
++    def _body_typography_only(self) -> Takeaway:
++        if self.typography and self.typography.subtitle_font_size is not None:
++            raise ValueError("subtitle_font_size is inapplicable to takeaway typography")
++        return self
++
+ 
+ class DisclosureItem(ClosedModel):
+     kind: Literal["paragraph", "bullet"]
+     text: NonEmptyStr
+ 
+ 
+ class DisclosureSection(ClosedModel):
+     surface_id: SemanticId
+     title: NonEmptyStr
+     items: list[DisclosureItem] = Field(min_length=1, max_length=6)
+ 
+ 
+ class Disclosure(ClosedModel):
+     sections: list[DisclosureSection] = Field(min_length=1, max_length=4)
+ 
+ 
+ class ProseRun(ClosedModel):
+     text: NonEmptyStr
+     emphasis: Optional[Literal["strong"]] = None
+ 
+ 
+ class Prose(ClosedModel):
+     runs: list[ProseRun] = Field(min_length=1)
+ 
+     @model_validator(mode="after")
+     def _no_adjacent_equal_emphasis(self) -> Prose:
+         prev_emph: object = object()
+         for run in self.runs:
+             emph = run.emphasis or None
+             if emph == prev_emph and emph is not None:
+@@ -208,60 +220,66 @@ class Prose(ClosedModel):
+                 # ordinary-ordinary as invalid to force one ordinary run.
+                 raise ValueError("adjacent equal-emphasis runs are invalid")
+             if emph is None and prev_emph is None:
+                 raise ValueError("adjacent ordinary runs are invalid; use one run")
+             prev_emph = emph
+         return self
+ 
+ 
+ class NarrativeParagraphsBlock(ClosedModel):
+     block_id: SemanticId
+     type: Literal["paragraphs"]
+     paragraphs: list[Prose] = Field(min_length=1, max_length=6)
+ 
+ 
+ class NarrativeBulletListBlock(ClosedModel):
+     block_id: SemanticId
+     type: Literal["bullet_list"]
+     items: list[Prose] = Field(min_length=1, max_length=8)
+ 
+ 
+ NarrativeBlock = Annotated[
+     Union[NarrativeParagraphsBlock, NarrativeBulletListBlock],
+     Field(discriminator="type"),
+ ]
+ 
+ 
+ class NarrativePayload(ClosedModel):
+     blocks: list[NarrativeBlock] = Field(min_length=1, max_length=4)
+     typography: Optional[Typography] = None
+ 
++    @model_validator(mode="after")
++    def _body_typography_only(self) -> NarrativePayload:
++        if self.typography and self.typography.subtitle_font_size is not None:
++            raise ValueError("subtitle_font_size is inapplicable to narrative typography")
++        return self
++
+     @model_validator(mode="after")
+     def _unique_block_ids(self) -> NarrativePayload:
+         ids = [b.block_id for b in self.blocks]
+         if len(ids) != len(set(ids)):
+             raise ValueError("block_id values must be unique within the slide")
+         return self
+ 
+ 
+ class CoverPayload(ClosedModel):
+     """Shared opening/closing cover payload (D268)."""
+ 
+     title: NonEmptyStr
+     subtitle: Optional[NonEmptyStr] = None
+     period_label: Optional[NonEmptyStr] = None
+     date_label: Optional[NonEmptyStr] = None
+ 
+ 
+ class SectionDividerPayload(ClosedModel):
+     section_id: SemanticId
+ 
+ 
+ # ---------------------------------------------------------------------------
+ # Slides
+ # ---------------------------------------------------------------------------
+ 
+ 
+ class _SlideBase(ClosedModel):
+     slide_number: int = Field(gt=0)
+     layout_type: LayoutTypeName
+     payload: Any  # narrowed per subclass
+diff --git a/impact_slides/renderer_v3/plan.py b/impact_slides/renderer_v3/plan.py
+new file mode 100644
+index 0000000..06a27a7
+--- /dev/null
++++ b/impact_slides/renderer_v3/plan.py
+@@ -0,0 +1,854 @@
++"""Deck-wide measure/plan phase for kernel compositions (D1–D4, D22, D59, D68–D70).
++
++Freezes whole-pixel role sizes against the fixed 1920×1080 design stage before
++paint. Runtime may only consume these plans — never replan.
++"""
++from __future__ import annotations
++
++import hashlib
++import math
++import re
++from dataclasses import dataclass, field
++from typing import Any, Final, Optional
++
++from .diagnostics import DiagnosticEvent, RendererValidationError, event, sort_events
++from .models import Deck, Typography
++
++from ._version import __version__ as RENDERER_VERSION
++
++DESIGN_STAGE_W: Final = 1920
++DESIGN_STAGE_H: Final = 1080
++PAD_X: Final = 96
++PAD_TOP: Final = 56
++PAD_BOTTOM: Final = 48
++CONTENT_W: Final = DESIGN_STAGE_W - 2 * PAD_X  # 1728
++
++# Fixed chrome (D13) — never grow.
++TITLE_PX: Final = 56
++COVER_TITLE_PX: Final = 72
++COVER_META_PX: Final = 22
++TAKEAWAY_LABEL_PX: Final = 14
++
++# Adaptive floors / ceilings (D12/D14/D51/D59/D171/D172/D225/D288).
++SUBTITLE_FLOOR: Final = 22
++SUBTITLE_CEIL: Final = 26
++BODY_FLOOR: Final = 22
++BODY_CEIL: Final = 28
++TAKEAWAY_FLOOR: Final = 22
++TAKEAWAY_CEIL: Final = 28
++
++LINE_HEIGHT: Final = 1.4
++# Must match publish.py / boardroom_amex theme box model.
++BLOCK_MARGIN_Y: Final = 12  # p/ul margin-bottom (== --space-sm)
++TITLE_MARGIN_Y: Final = 12  # h1 margin-bottom (== --space-sm)
++# Takeaway chrome outside the text-fit box (label + pad + border + outer margin).
++TAKEAWAY_PAD_Y: Final = 24  # --space-sm top+bottom
++TAKEAWAY_BORDER_Y: Final = 2  # hairline top+bottom
++TAKEAWAY_OUTER_MT: Final = 20  # --space-md
++TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
++TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
++TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
++LIST_INDENT_EM: Final = 1.25
++# Conservative average glyph advance as fraction of em (D23; no vendored TTF yet).
++# ponytail: synthetic metrics until fonts ship; swap for measured IBM Plex/Source Sans.
++AVG_ADVANCE: Final = 0.58
++STRONG_ADVANCE: Final = 0.62
++
++
++@dataclass
++class SurfacePlan:
++    """Frozen plan for one semantic surface (D312)."""
++
++    surface_id: str
++    role: str
++    slide_number: int
++    layout_type: str
++    slot_order: int
++    design_stage_region: int
++    role_sizes: dict[str, int]
++    adaptation_codes: list[str] = field(default_factory=list)
++    reservations: list[dict[str, Any]] = field(default_factory=list)
++    fallback: Optional[str] = None
++    expected_placement_classes: list[str] = field(default_factory=list)
++    display_identity_strategy: Optional[str] = None
++    semantic_digest: str = ""
++    painter_plan_digest: str = ""
++    # Internal measure fields (not published).
++    _text_items: list[tuple[str, bool]] = field(default_factory=list)  # (text, strong)
++    _box_w: int = CONTENT_W
++    _box_h: int = 0
++    _fit_role: Optional[str] = None  # which role_sizes key is adaptive text
++    _typo: Optional[Typography] = None
++    _mode: str = "adaptive"
++    _sync_group: Optional[str] = None
++    _explicit_size: Optional[int] = None
++    _overflow: bool = False
++    _malformed_explicit: bool = False
++    # Cover multi-role items: (text, role_key) measured at role_sizes[role_key].
++    _cover_items: list[tuple[str, str]] = field(default_factory=list)
++    # CSS block boxes that each contribute trailing margin (p/ul/h1).
++    _margin_boxes: int = 1
++    # Extra chrome height outside the text-fit box (takeaway panel).
++    _chrome_h: int = 0
++    _indent_em: float = 0
++    _default_size: Optional[int] = None
++    _maximum_size: Optional[int] = None
++
++    def to_public(self) -> dict[str, Any]:
++        sizes = {k: self.role_sizes[k] for k in sorted(self.role_sizes)}
++        row: dict[str, Any] = {
++            "surface_id": self.surface_id,
++            "role": self.role,
++            "slide_number": self.slide_number,
++            "layout_type": self.layout_type,
++            "semantic_digest": self.semantic_digest,
++            "design_stage_region": self.design_stage_region,
++            "available_geometry": {"width": self._box_w, "height": self._box_h},
++            "role_sizes": sizes,
++            "default_size": self._default_size,
++            "selected_size": sizes.get(self._fit_role) if self._fit_role else None,
++            "maximum_size": self._maximum_size,
++            "mode": self._mode,
++            "explicit_override": self._explicit_size,
++            "synchronization_group": self._sync_group,
++            "adaptation_codes": list(self.adaptation_codes),
++            "reservations": list(self.reservations),
++            "fallback": self.fallback,
++            "expected_placement_classes": list(self.expected_placement_classes),
++            "painter_plan_digest": self.painter_plan_digest,
++        }
++        if self.display_identity_strategy is not None:
++            row["display_identity_strategy"] = self.display_identity_strategy
++        return row
++
++
++@dataclass
++class DeckPlan:
++    surfaces: list[SurfacePlan]
++    events: list[DiagnosticEvent] = field(default_factory=list)
++
++    def public_plans(self) -> list[dict[str, Any]]:
++        return [s.to_public() for s in self.surfaces]
++
++    def by_surface_id(self) -> dict[str, SurfacePlan]:
++        return {s.surface_id: s for s in self.surfaces}
++
++
++def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
++    """Measure every kernel surface, synchronize, freeze whole-pixel sizes (D69)."""
++    surfaces = _collect_surfaces(deck)
++    events: list[DiagnosticEvent] = []
++
++    # Phase 1 — independent measure at design stage.
++    for sp in surfaces:
++        _measure_surface(sp, events)
++
++    # Phase 2 — synchronize equivalent roles (D3/D4/D26/D69).
++    _synchronize(surfaces, events)
++
++    # Size-dependent events must describe the synchronized frozen sizes.
++    events = [e for e in events if e.code != "plan.typography_grown"]
++    for sp in surfaces:
++        if "plan.typography_grown" in sp.adaptation_codes:
++            fit = sp._fit_role
++            assert fit is not None
++            size = sp.role_sizes[fit]
++            events.append(
++                event(
++                    code="plan.typography_grown",
++                    severity="info",
++                    phase="plan",
++                    role=sp.role,
++                    path=f"/slides/{sp.slide_number}/{sp.role}",
++                    action="measure",
++                    result="accepted",
++                    slide_number=sp.slide_number,
++                    layout_type=sp.layout_type,
++                    surface_id=sp.surface_id,
++                    expected=f"{fit} grew to {size}px",
++                    input_meta={"type": "int", "value": size},
++                )
++            )
++
++    # ponytail: synthetic AVG_ADVANCE is the interim engine (not unknown-font
++    # fallback); emit plan.conservative_metrics only when a dual measured path
++    # falls back (D23).
++
++    fit_errors = [e for e in events if e.code == "validation.fit"]
++    overflow = [s for s in surfaces if s._overflow]
++    if strict and (overflow or fit_errors):
++        raise RendererValidationError(
++            sort_events(list(events) + [_overflow_event(s) for s in overflow]),
++            handoff_schema_version=deck.meta.handoff_schema_version,
++            renderer_version=RENDERER_VERSION,
++        )
++    if not strict and overflow:
++        for s in overflow:
++            events.append(_overflow_event(s))
++            s.fallback = "fallback_unresolved"
++
++    # Non-strict D28/D49: convert fit errors to policy-default warnings.
++    if not strict and fit_errors:
++        rewritten: list[DiagnosticEvent] = []
++        for e in events:
++            if e.code == "validation.fit":
++                rewritten.append(
++                    event(
++                        code="repair.policy_defaulted",
++                        severity="warning",
++                        phase="plan",
++                        role=e.role,
++                        path=e.path,
++                        action="default_typography",
++                        result="defaulted",
++                        slide_number=e.slide_number,
++                        layout_type=e.layout_type,
++                        surface_id=e.surface_id,
++                        expected="role size within floor..ceiling",
++                    )
++                )
++            else:
++                rewritten.append(e)
++        events = rewritten
++
++    for sp in surfaces:
++        _seal_digests(sp)
++
++    return DeckPlan(surfaces=surfaces, events=sort_events(events))
++
++
++# ---------------------------------------------------------------------------
++# Surface collection (composition slot order)
++# ---------------------------------------------------------------------------
++
++
++def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
++    out: list[SurfacePlan] = []
++    region = 0
++    for slide in deck.slides:
++        lt = slide.layout_type
++        sn = slide.slide_number
++        if lt in ("opening_cover", "closing_cover"):
++            region += 1
++            p = slide.payload
++            cover_items: list[tuple[str, str]] = [(p.title, "title")]
++            if p.subtitle:
++                cover_items.append((p.subtitle, "subtitle"))
++            if p.period_label:
++                cover_items.append((p.period_label, "meta"))
++            if p.date_label:
++                cover_items.append((p.date_label, "meta"))
++            # Covers: fixed display chrome (D13/D223) — no adaptive growth.
++            out.append(
++                SurfacePlan(
++                    surface_id=f"slide-{sn}-cover",
++                    role="cover",
++                    slide_number=sn,
++                    layout_type=lt,
++                    slot_order=0,
++                    design_stage_region=region,
++                    role_sizes={
++                        "title": COVER_TITLE_PX,
++                        "subtitle": COVER_META_PX,
++                        "meta": COVER_META_PX,
++                    },
++                    _cover_items=cover_items,
++                    _text_items=[(t, rk == "title") for t, rk in cover_items],
++                    _box_w=CONTENT_W,
++                    _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
++                    _fit_role=None,
++                    _mode="fixed",
++                    _margin_boxes=len(cover_items),
++                )
++            )
++            continue
++
++        if lt != "narrative":
++            continue
++
++        # Slot order: title chrome (fixed), subtitle, body blocks, takeaway.
++        region += 1
++        title_h = _line_box(TITLE_PX) + TITLE_MARGIN_Y
++        used = title_h
++
++        # Title is fixed chrome — recorded so painters share one plan.
++        out.append(
++            SurfacePlan(
++                surface_id=f"slide-{sn}-title",
++                role="title",
++                slide_number=sn,
++                layout_type=lt,
++                slot_order=0,
++                design_stage_region=region,
++                role_sizes={"title": TITLE_PX},
++                _text_items=[(slide.title, True)],
++                _box_w=CONTENT_W,
++                _box_h=title_h,
++                _fit_role=None,
++                _mode="fixed",
++                _margin_boxes=1,
++            )
++        )
++
++        adaptive_surfaces: list[SurfacePlan] = []
++        if slide.content is not None:
++            typo = slide.content.typography
++            mode, sync, explicit = _typo_fields(typo, "subtitle_font_size")
++            subtitle_plan = SurfacePlan(
++                surface_id=f"slide-{sn}-subtitle",
++                role="subtitle",
++                slide_number=sn,
++                layout_type=lt,
++                slot_order=1,
++                design_stage_region=region,
++                role_sizes={"subtitle": SUBTITLE_FLOOR},
++                _text_items=[(slide.content.subtitle, False)],
++                _box_w=CONTENT_W,
++                _fit_role="subtitle",
++                _typo=typo,
++                _mode=mode,
++                _sync_group=sync,
++                _explicit_size=explicit,
++                _margin_boxes=1,
++                _default_size=SUBTITLE_FLOOR,
++                _maximum_size=SUBTITLE_CEIL,
++            )
++            adaptive_surfaces.append(subtitle_plan)
++            out.append(subtitle_plan)
++
++        # Takeaway reserved before body so body cannot steal its slot (D172/D288).
++        takeaway_plan: SurfacePlan | None = None
++        if slide.takeaway is not None:
++            typo = slide.takeaway.typography
++            mode, sync, explicit = _typo_fields(typo, "body_font_size")
++            # Outer reservation includes chrome; fitter sees only text box (D172).
++            chrome = (
++                _line_box(TAKEAWAY_LABEL_PX)
++                + TAKEAWAY_LABEL_MB
++                + TAKEAWAY_PAD_Y
++                + TAKEAWAY_BORDER_Y
++                + TAKEAWAY_OUTER_MT
++                + BLOCK_MARGIN_Y  # takeaway-text <p> trailing margin
++            )
++            takeaway_plan = SurfacePlan(
++                surface_id=f"slide-{sn}-takeaway",
++                role="takeaway",
++                slide_number=sn,
++                layout_type=lt,
++                slot_order=100,  # after blocks; set final after block count
++                design_stage_region=region,
++                role_sizes={
++                    "body": TAKEAWAY_FLOOR,
++                    "label": TAKEAWAY_LABEL_PX,
++                },
++                _text_items=[(slide.takeaway.text, False)],
++                _box_w=CONTENT_W - TAKEAWAY_PAD_X - TAKEAWAY_BORDER_X,
++                _fit_role="body",
++                _typo=typo,
++                _mode=mode,
++                _sync_group=sync,
++                _explicit_size=explicit,
++                _margin_boxes=0,  # text p margin already in chrome
++                _chrome_h=chrome,
++                _default_size=TAKEAWAY_FLOOR,
++                _maximum_size=TAKEAWAY_CEIL,
++            )
++
++        body_h = DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM - used
++        blocks = list(slide.payload.blocks)
++        # One common body size across all blocks (D225/D270) — shared measure group.
++        body_typo = slide.payload.typography
++        mode, sync, explicit = _typo_fields(body_typo, "body_font_size")
++        for i, block in enumerate(blocks):
++            items = _block_text_items(block)
++            # Deck-unique surface id: block_id is only slide-local (D115/D225).
++            surface_id = f"slide-{sn}-block-{block.block_id}"
++            # paragraphs: margin after every <p>; bullet_list: margin after the <ul>.
++            if block.type == "paragraphs":
++                margin_boxes = max(1, len(block.paragraphs))
++            else:
++                margin_boxes = 1
++            out.append(
++                SurfacePlan(
++                    surface_id=surface_id,
++                    role="narrative_block",
++                    slide_number=sn,
++                    layout_type=lt,
++                    slot_order=10 + i,
++                    design_stage_region=region,
++                    role_sizes={"body": BODY_FLOOR},
++                    _text_items=items,
++                    _box_w=CONTENT_W,
++                    _fit_role="body",
++                    _typo=body_typo,
++                    _mode=mode,
++                    _sync_group=sync,
++                    _explicit_size=explicit,
++                    _margin_boxes=margin_boxes,
++                    _indent_em=LIST_INDENT_EM if block.type == "bullet_list" else 0,
++                    _default_size=BODY_FLOOR,
++                    _maximum_size=BODY_CEIL,
++                )
++            )
++            adaptive_surfaces.append(out[-1])
++
++        if takeaway_plan is not None:
++            takeaway_plan.slot_order = 10 + len(blocks)
++            adaptive_surfaces.append(takeaway_plan)
++            out.append(takeaway_plan)
++
++        _allocate_geometry(adaptive_surfaces, body_h)
++
++    # Stable plan order: slide, slot, surface_id (D312).
++    out.sort(key=lambda s: (s.slide_number, s.slot_order, s.surface_id))
++    return out
++
++
++def _prose_items(prose: Any) -> list[tuple[str, bool]]:
++    return [(run.text, run.emphasis == "strong") for run in prose.runs]
++
++
++def _typo_fields(
++    typo: Optional[Typography], size_field: str
++) -> tuple[str, Optional[str], Optional[int]]:
++    if typo is None:
++        return "adaptive", None, None
++    mode = typo.mode
++    sync = typo.sync_group if mode == "adaptive" else None
++    explicit = getattr(typo, size_field, None)
++    return mode, sync, explicit
++
++
++def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
++    """Reserve measured needs jointly so sparse siblings yield unused geometry."""
++    if not surfaces:
++        return
++    floors = [
++        _required_height(
++            sp._text_items,
++            sp._default_size or next(iter(sp.role_sizes.values())),
++            sp._box_w,
++            sp._margin_boxes,
++            sp._indent_em,
++        )
++        for sp in surfaces
++    ]
++    ceilings = [
++        _required_height(
++            sp._text_items,
++            sp._maximum_size or next(iter(sp.role_sizes.values())),
++            sp._box_w,
++            sp._margin_boxes,
++            sp._indent_em,
++        )
++        for sp in surfaces
++    ]
++    remaining = max(0, available_h - sum(sp._chrome_h for sp in surfaces))
++    allocations = []
++    for needed in floors:
++        allocated = min(remaining, needed)
++        allocations.append(allocated)
++        remaining -= allocated
++    for i, wanted in enumerate(ceilings):
++        extra = min(remaining, max(0, wanted - allocations[i]))
++        allocations[i] += extra
++        remaining -= extra
++    for sp, height, floor_h in zip(surfaces, allocations, floors):
++        sp._box_h = height
++        sp.reservations = [
++            {"kind": "text", "height": height},
++            {"kind": "chrome", "height": sp._chrome_h},
++        ]
++        if height > floor_h:
++            sp.adaptation_codes.append("plan.geometry_reallocated")
++
++
++# ---------------------------------------------------------------------------
++# Measure
++# ---------------------------------------------------------------------------
++
++
++def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
++    fit = sp._fit_role
++    if fit is None:
++        # Fixed chrome — measure each cover role at its own frozen size (R178-005).
++        if sp._cover_items:
++            if not _cover_fits(sp):
++                sp._overflow = True
++            return
++        px = next(iter(sp.role_sizes.values()))
++        if not _text_fits(
++            sp._text_items, px, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
++        ):
++            sp._overflow = True
++        return
++
++    floor = sp.role_sizes[fit]
++    ceil = {"subtitle": SUBTITLE_CEIL, "body": BODY_CEIL}[fit]
++    if fit == "body" and sp.role == "takeaway":
++        floor, ceil = TAKEAWAY_FLOOR, TAKEAWAY_CEIL
++        sp.role_sizes[fit] = floor
++
++    # Explicit size validation (D49): out of role range is malformed.
++    if sp._explicit_size is not None and not (floor <= sp._explicit_size <= ceil):
++        events.append(
++            event(
++                code="validation.fit",
++                severity="error",
++                phase="plan",
++                role=sp.role,
++                path=f"/slides/{sp.slide_number}/typography",
++                action="reject",
++                result="failed",
++                slide_number=sp.slide_number,
++                layout_type=sp.layout_type,
++                surface_id=sp.surface_id,
++                expected=f"{fit} size within {floor}..{ceil}",
++                input_meta={"type": "int", "value": sp._explicit_size},
++            )
++        )
++        # Discard pin now so measure continues with defaults; strict raises later.
++        sp._explicit_size = None
++        sp._mode = "adaptive"
++        sp._sync_group = None
++        sp._malformed_explicit = True
++
++    if sp._mode == "fixed":
++        size = sp._explicit_size if sp._explicit_size is not None else floor
++        sp.role_sizes[fit] = size
++        if not _text_fits(
++            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
++        ):
++            sp._overflow = True
++        return
++
++    # Adaptive grow-only (D2): try ceiling down to floor; pick largest that fits.
++    if sp._explicit_size is not None:
++        # Pinned role — no growth (D218); still must fit.
++        size = sp._explicit_size
++        sp.role_sizes[fit] = size
++        if not _text_fits(
++            sp._text_items, size, sp._box_w, sp._box_h, margin_boxes=sp._margin_boxes, indent_em=sp._indent_em
++        ):
++            # Spec: explicit that does not fit → normal strict/non-strict (D27).
++            sp._overflow = True
++        return
++
++    chosen = floor
++    wrapped = False
++    for size in range(ceil, floor - 1, -1):
++        ok, did_wrap = _text_fits_detail(
++            sp._text_items,
++            size,
++            sp._box_w,
++            sp._box_h,
++            margin_boxes=sp._margin_boxes,
++            indent_em=sp._indent_em,
++        )
++        if ok:
++            chosen = size
++            wrapped = did_wrap
++            break
++    else:
++        # Floor does not fit.
++        sp._overflow = True
++        chosen = floor
++
++    sp.role_sizes[fit] = chosen
++    if chosen > floor:
++        sp.adaptation_codes.append("plan.typography_grown")
++    if wrapped:
++        sp.adaptation_codes.append("plan.text_wrapped")
++        events.append(
++            event(
++                code="plan.text_wrapped",
++                severity="info",
++                phase="plan",
++                role=sp.role,
++                path=f"/slides/{sp.slide_number}/{sp.role}",
++                action="measure",
++                result="accepted",
++                slide_number=sp.slide_number,
++                layout_type=sp.layout_type,
++                surface_id=sp.surface_id,
++            )
++        )
++
++
++def _text_fits(
++    items: list[tuple[str, bool]],
++    px: int,
++    box_w: int,
++    box_h: int,
++    *,
++    margin_boxes: int = 1,
++    indent_em: float = 0,
++) -> bool:
++    ok, _ = _text_fits_detail(
++        items, px, box_w, box_h, margin_boxes=margin_boxes, indent_em=indent_em
++    )
++    return ok
++
++
++def _text_fits_detail(
++    items: list[tuple[str, bool]],
++    px: int,
++    box_w: int,
++    box_h: int,
++    *,
++    margin_boxes: int = 1,
++    indent_em: float = 0,
++) -> tuple[bool, bool]:
++    """Return (fits, wrapped). Never truncates or drops text (D59)."""
++    if box_w <= 0 or box_h <= 0:
++        return False, False
++    units = _split_units(items)
++    line_h = _line_box(px)
++    total_lines = 0
++    wrapped = False
++    width_overflow = False
++    for unit_items in units:
++        text_u = "".join(t for t, _ in unit_items)
++        if not text_u:
++            continue
++        lines, wo = _wrap_lines(unit_items, px, box_w - math.ceil(px * indent_em))
++        width_overflow = width_overflow or wo
++        total_lines += max(1, len(lines))
++        if len(lines) > 1:
++            wrapped = True
++    # Paint applies margin-bottom after every CSS block box (p or ul).
++    # margin_boxes is the count of those boxes for this surface (R178-002).
++    boxes = max(0, margin_boxes)
++    need_h = total_lines * line_h + boxes * BLOCK_MARGIN_Y
++    fits = (need_h <= box_h) and not width_overflow
++    return fits, wrapped
++
++
++def _required_height(
++    items: list[tuple[str, bool]],
++    px: int,
++    box_w: int,
++    margin_boxes: int,
++    indent_em: float = 0,
++) -> int:
++    units = _split_units(items)
++    lines = sum(
++        max(1, len(_wrap_lines(unit, px, box_w - math.ceil(px * indent_em))[0]))
++        for unit in units
++    )
++    return lines * _line_box(px) + max(0, margin_boxes) * BLOCK_MARGIN_Y
++
++
++def _cover_fits(sp: SurfacePlan) -> bool:
++    """Measure each cover element at its own frozen role size (R178-005)."""
++    box_w = sp._box_w
++    box_h = sp._box_h
++    need_h = 0
++    for text_c, role_key in sp._cover_items:
++        px = sp.role_sizes[role_key]
++        strong = role_key == "title"
++        lines, wo = _wrap_lines([(text_c, strong)], px, box_w)
++        if wo:
++            return False
++        need_h += max(1, len(lines)) * _line_box(px) + BLOCK_MARGIN_Y
++    return need_h <= box_h
++
++
++def _split_units(
++    items: list[tuple[str, bool]],
++) -> list[list[tuple[str, bool]]]:
++    """Split on explicit newline markers; otherwise one unit (single prose).
++
++    Block collectors insert a ('\\n', False) sentinel between paragraphs/items.
++    """
++    units: list[list[tuple[str, bool]]] = [[]]
++    for text, strong in items:
++        if text == "\n" and not strong:
++            if units[-1]:
++                units.append([])
++            continue
++        units[-1].append((text, strong))
++    return [u for u in units if u]
++
++
++def _wrap_lines(
++    items: list[tuple[str, bool]], px: int, box_w: int
++) -> tuple[list[str], bool]:
++    """Word-wrap at spaces/punctuation; never split words (D24/D59).
++
++    Returns (lines, width_overflow). Width overflow means an unbreakable token
++    exceeds the box — still kept intact, never truncated.
++    """
++    text = "".join(t for t, _ in items)
++    if not text:
++        return [""], False
++    strong_chars = sum(len(t) for t, s in items if s)
++    total_chars = max(1, sum(len(t) for t, _ in items))
++    adv = AVG_ADVANCE + (STRONG_ADVANCE - AVG_ADVANCE) * (strong_chars / total_chars)
++    char_w = px * adv
++
++    tokens = re.findall(r"\S+\s*", text)
++    if not tokens:
++        return [text], len(text) * char_w > box_w
++    lines: list[str] = []
++    cur = ""
++    width_overflow = False
++    for tok in tokens:
++        tok_w = len(tok.rstrip()) * char_w
++        if tok_w > box_w:
++            width_overflow = True
++        trial = cur + tok
++        if cur and len(trial) * char_w > box_w:
++            lines.append(cur.rstrip())
++            cur = tok
++        else:
++            cur = trial
++    if cur:
++        lines.append(cur.rstrip())
++    return (lines or [""]), width_overflow
++
++
++def _line_box(px: int) -> int:
++    return int(math.ceil(px * LINE_HEIGHT))
++
++
++# ---------------------------------------------------------------------------
++# Synchronize
++# ---------------------------------------------------------------------------
++
++
++def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> None:
++    """Equivalent roles share the largest common safe size (D3/D26/D69)."""
++    # Group by (fit_role_name, sync_key). Same-slide narrative body blocks share
++    # an implicit group so D225 one-size-across-blocks holds even without key.
++    groups: dict[tuple[str, str], list[SurfacePlan]] = {}
++    for sp in surfaces:
++        fit = sp._fit_role
++        if fit is None or sp._mode != "adaptive" or sp._explicit_size is not None:
++            continue
++        if sp._sync_group:
++            key = (fit, f"g:{sp._sync_group}")
++        elif sp.role == "narrative_block":
++            key = (fit, f"slide:{sp.slide_number}:body")
++        else:
++            continue  # independent
++        groups.setdefault(key, []).append(sp)
++
++    for (_fit, _key), members in sorted(groups.items(), key=lambda kv: kv[0]):
++        if len(members) < 2:
++            continue
++        # Largest common size that every member can fit.
++        fit = members[0]._fit_role
++        if fit is None:
++            continue
++        # Role floor (not the already-chosen size) — preserve typography_grown.
++        role_floor = {
++            "subtitle": SUBTITLE_FLOOR,
++            "body": TAKEAWAY_FLOOR if members[0].role == "takeaway" else BODY_FLOOR,
++        }[fit]
++        # Start from min of independently chosen sizes, then try grow to max
++        # of those if all fit — D3: largest that safely fits every member.
++        independent = [m.role_sizes[fit] for m in members]
++        target = min(independent)
++        upper = max(independent)
++        for size in range(upper, role_floor - 1, -1):
++            if all(
++                _text_fits(
++                    m._text_items,
++                    size,
++                    m._box_w,
++                    m._box_h,
++                    margin_boxes=m._margin_boxes,
++                    indent_em=m._indent_em,
++                )
++                for m in members
++            ):
++                target = size
++                break
++        changed = False
++        for m in members:
++            if m.role_sizes[fit] != target:
++                changed = True
++            m.role_sizes[fit] = target
++            # Drop grow code only when frozen size is the role floor.
++            if target == role_floor:
++                m.adaptation_codes = [
++                    c for c in m.adaptation_codes if c != "plan.typography_grown"
++                ]
++            elif "plan.typography_grown" not in m.adaptation_codes and target > role_floor:
++                m.adaptation_codes.append("plan.typography_grown")
++        if changed or len(members) > 1:
++            for m in members:
++                if "plan.synchronized" not in m.adaptation_codes:
++                    m.adaptation_codes.append("plan.synchronized")
++                events.append(
++                    event(
++                        code="plan.synchronized",
++                        severity="info",
++                        phase="plan",
++                        role=m.role,
++                        path=f"/slides/{m.slide_number}/{m.role}",
++                        action="measure",
++                        result="accepted",
++                        slide_number=m.slide_number,
++                        layout_type=m.layout_type,
++                        surface_id=m.surface_id,
++                        expected=f"{fit} synchronized to {target}px",
++                        input_meta={"type": "int", "value": target},
++                    )
++                )
++
++
++# ---------------------------------------------------------------------------
++# Digests / events
++# ---------------------------------------------------------------------------
++
++
++def _seal_digests(sp: SurfacePlan) -> None:
++    sizes = ",".join(f"{k}:{sp.role_sizes[k]}" for k in sorted(sp.role_sizes))
++    adap = ",".join(sp.adaptation_codes)
++    base = (
++        f"{sp.slide_number}|{sp.layout_type}|{sp.role}|{sp.surface_id}|"
++        f"{sp.design_stage_region}|{sizes}|{adap}|{sp.fallback or ''}"
++    )
++    # Semantic digest: identity + content fingerprint (not sizes).
++    content = "|".join(t for t, _ in sp._text_items)
++    sem_src = f"{sp.slide_number}|{sp.role}|{sp.surface_id}|{content}"
++    sp.semantic_digest = _sha(sem_src)
++    sp.painter_plan_digest = _sha(base)
++
++
++def _sha(text: str) -> str:
++    return hashlib.sha256(text.encode("utf-8")).hexdigest()
++
++
++def _overflow_event(sp: SurfacePlan) -> DiagnosticEvent:
++    return event(
++        code="plan.unresolved_overflow",
++        severity="error",
++        phase="plan",
++        role=sp.role,
++        path=f"/slides/{sp.slide_number}/{sp.role}",
++        action="measure",
++        result="failed",
++        slide_number=sp.slide_number,
++        layout_type=sp.layout_type,
++        surface_id=sp.surface_id,
++        expected="complete text fits at role floor without truncation",
++    )
++
++
++def _block_text_items(block: Any) -> list[tuple[str, bool]]:
++    """Flatten block prose with unit separators for multi-unit height."""
++    items: list[tuple[str, bool]] = []
++    if block.type == "paragraphs":
++        for i, prose in enumerate(block.paragraphs):
++            if i:
++                items.append(("\n", False))
++            items.extend(_prose_items(prose))
++    else:
++        for i, prose in enumerate(block.items):
++            if i:
++                items.append(("\n", False))
++            items.extend(_prose_items(prose))
++    return items
+diff --git a/impact_slides/renderer_v3/publish.py b/impact_slides/renderer_v3/publish.py
+index 77962df..28d212c 100644
+--- a/impact_slides/renderer_v3/publish.py
++++ b/impact_slides/renderer_v3/publish.py
+@@ -1,163 +1,276 @@
+ """Transactional D250 artifact publication (D112/D113/D250/D312)."""
+ from __future__ import annotations
+ 
+ import hashlib
+ import html
+ import json
+ import os
+ import shutil
+ import tempfile
+ from pathlib import Path
+ from typing import Any
+ 
+ from .diagnostics import (
+     DiagnosticEvent,
+     RendererPublicationError,
+     event,
+     sort_events,
+ )
+ from .models import Deck
++from .plan import DeckPlan
+ from .schema_export import schema_path
+ from .theme import THEME_ID, generate_theme_css
+ 
+ from ._version import __version__ as RENDERER_VERSION
+ 
+ CANONICAL_ARTIFACTS = (
+     "presentation.html",
+     "slide_notes.md",
+     "evidence_manifest.json",
+     "run_meta.json",
+     "handoff_schema_v1.json",
+ )
+ 
+ # Artifacts hashed inside run_meta (excludes run_meta itself).
+ _HASHED_ARTIFACTS = tuple(n for n in CANONICAL_ARTIFACTS if n != "run_meta.json")
+ 
+ 
+ def dumps_json(obj: Any) -> str:
+     """UTF-8/LF JSON, two-space indent, trailing newline (D250/D312)."""
+     return json.dumps(obj, indent=2, ensure_ascii=False) + "\n"
+ 
+ 
+ def sha256_bytes(data: bytes) -> str:
+     return hashlib.sha256(data).hexdigest()
+ 
+ 
+ def _slide_heading(slide: Any) -> str:
+     title = getattr(slide, "title", None)
+     if title:
+         return title
+     payload = getattr(slide, "payload", None)
+     if payload is not None and getattr(payload, "title", None):
+         return payload.title
+     return slide.layout_type
+ 
+ 
+-def build_presentation_html(deck: Deck, *, debug: bool = False, svg_only: bool = False) -> str:
++def build_presentation_html(
++    deck: Deck,
++    *,
++    debug: bool = False,
++    svg_only: bool = False,
++    deck_plan: DeckPlan | None = None,
++    events: list[DiagnosticEvent] | None = None,
++) -> str:
+     """Minimal deterministic HTML shell for kernel compositions (paint later)."""
++    plans_by_id = deck_plan.by_surface_id() if deck_plan is not None else {}
++    events_by_surface = _events_by_surface(events or [])
+     parts: list[str] = [
+         "<!DOCTYPE html>",
+         '<html lang="en">',
+         "<head>",
+         '<meta charset="utf-8"/>',
+         f"<title>{_escape(deck.slides[0].payload.title if hasattr(deck.slides[0].payload, 'title') else 'Impact Slides')}</title>",
+         f'<meta name="generator" content="impact_slides.renderer_v3/{RENDERER_VERSION}"/>',
+         f'<meta name="theme-id" content="{THEME_ID}"/>',
++        f'<meta name="design-stage" content="{1920}x{1080}"/>',
+     ]
+     if debug:
+         parts.append('<meta name="renderer-debug" content="1"/>')
+     if svg_only:
+         parts.append('<meta name="svg-only" content="1"/>')
+     parts.extend(
+         [
+             "<style>",
+             generate_theme_css().rstrip("\n"),
+-            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy)}",
++            # Fixed 1920×1080 stage; viewport may scale the stage uniformly (D68).
++            "html{width:100%;height:100%}",
++            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy);transform-origin:top left}",
+             ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always}",
+             "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
+             "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
+-            "p,li{font-size:var(--text-body);line-height:1.4}",
++            # Spacing constants must stay aligned with plan.BLOCK_MARGIN_Y.
++            "p,ul{font-size:var(--text-body);line-height:1.4;margin:0 0 var(--space-sm);padding:0}",
++            "li{margin:0;padding:0;margin-left:1.25em}",
++            ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
++            ".takeaway-label{font-size:var(--text-xs);font-weight:var(--font-weight-emphasis);margin:0 0 var(--space-xs)}",
+             "</style>",
+             "</head>",
+             "<body>",
+         ]
+     )
+     for slide in deck.slides:
+         sid = f"slide-{slide.slide_number}"
++        slide_diag = _diag_attrs(events_by_surface.get(sid, []))
+         parts.append(
+             f'<section class="slide" id="{sid}" data-layout="{slide.layout_type}" '
+             f'data-slide-number="{slide.slide_number}" '
+-            f'data-surface-id="{sid}" data-diagnostic-count="0">'
++            f'data-surface-id="{sid}" {slide_diag}>'
+         )
+-        parts.extend(_paint_slide_body(slide))
++        parts.extend(_paint_slide_body(slide, plans_by_id, events_by_surface))
+         notes = getattr(slide, "speaker_notes", None)
+         if notes:
+             parts.append(f'<aside class="notes">{_escape(notes)}</aside>')
+         parts.append("</section>")
+     parts.extend(["</body>", "</html>", ""])
+     return "\n".join(parts)
+ 
+ 
+-def _paint_slide_body(slide: Any) -> list[str]:
++def _events_by_surface(
++    events: list[DiagnosticEvent],
++) -> dict[str, list[DiagnosticEvent]]:
++    """Project plan/paint events onto surfaces by DiagnosticEvent.surface_id."""
++    out: dict[str, list[DiagnosticEvent]] = {}
++    for e in events:
++        sid = e.surface_id
++        if not sid:
++            continue
++        out.setdefault(sid, []).append(e)
++    return out
++
++
++def _diag_attrs(surface_events: list[DiagnosticEvent]) -> str:
++    """Sorted unique diagnostic codes + true count for one surface (R178-004)."""
++    codes = sorted({e.code for e in surface_events})
++    return (
++        f'data-diagnostic-codes="{_escape(",".join(codes))}" '
++        f'data-diagnostic-count="{len(surface_events)}"'
++    )
++
++
++def _plan_attrs(
++    sp: Any | None,
++    events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
++) -> str:
++    """Compact D312 data-* diagnostics from a frozen surface plan."""
++    events_by_surface = events_by_surface or {}
++    if sp is None:
++        return 'data-diagnostic-count="0"'
++    sizes = ",".join(f"{k}:{sp.role_sizes[k]}" for k in sorted(sp.role_sizes))
++    adap = ",".join(sp.adaptation_codes)
++    diag = _diag_attrs(events_by_surface.get(sp.surface_id, []))
++    bits = [
++        f'data-surface-id="{_escape(sp.surface_id)}"',
++        f'data-plan-sizes="{_escape(sizes)}"',
++        f'data-plan-adaptations="{_escape(adap)}"',
++        diag,
++    ]
++    return " ".join(bits)
++
++
++def _style_font(px: int | None) -> str:
++    if px is None:
++        return ""
++    return f' style="font-size:{px}px"'
++
++
++def _paint_slide_body(
++    slide: Any,
++    plans_by_id: dict[str, Any],
++    events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
++) -> list[str]:
++    events_by_surface = events_by_surface or {}
+     lt = slide.layout_type
+     out: list[str] = []
++    sn = slide.slide_number
+     if lt in ("opening_cover", "closing_cover"):
+         p = slide.payload
+-        out.append(f"<h1>{_escape(p.title)}</h1>")
++        sp = plans_by_id.get(f"slide-{sn}-cover")
++        title_px = sp.role_sizes.get("title") if sp else None
++        sub_px = sp.role_sizes.get("subtitle") if sp else None
++        meta_px = sp.role_sizes.get("meta") if sp else None
++        out.append(
++            f'<div class="cover" {_plan_attrs(sp, events_by_surface)}>'  # one cover surface
++        )
++        out.append(f"<h1{_style_font(title_px)}>{_escape(p.title)}</h1>")
+         if p.subtitle:
+-            out.append(f"<p class=\"subtitle\">{_escape(p.subtitle)}</p>")
++            out.append(
++                f'<p class="subtitle"{_style_font(sub_px)}>{_escape(p.subtitle)}</p>'
++            )
+         if p.period_label:
+-            out.append(f"<p class=\"period\">{_escape(p.period_label)}</p>")
++            out.append(
++                f'<p class="period"{_style_font(meta_px)}>{_escape(p.period_label)}</p>'
++            )
+         if p.date_label:
+-            out.append(f"<p class=\"date\">{_escape(p.date_label)}</p>")
++            out.append(
++                f'<p class="date"{_style_font(meta_px)}>{_escape(p.date_label)}</p>'
++            )
++        out.append("</div>")
+         return out
+     if lt == "narrative":
+-        out.append(f"<h1>{_escape(slide.title)}</h1>")
++        title_sp = plans_by_id.get(f"slide-{sn}-title")
++        title_px = title_sp.role_sizes.get("title") if title_sp else None
++        out.append(
++            f'<h1 {_plan_attrs(title_sp, events_by_surface)}{_style_font(title_px)}>{_escape(slide.title)}</h1>'
++        )
+         if slide.content is not None:
+-            out.append(f"<p class=\"subtitle\">{_escape(slide.content.subtitle)}</p>")
++            sub_sp = plans_by_id.get(f"slide-{sn}-subtitle")
++            sub_px = sub_sp.role_sizes.get("subtitle") if sub_sp else None
++            out.append(
++                f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
++                f"{_escape(slide.content.subtitle)}</p>"
++            )
+         for block in slide.payload.blocks:
+             bid = block.block_id
++            surface_id = f"slide-{sn}-block-{bid}"
++            bsp = plans_by_id.get(surface_id)
++            body_px = bsp.role_sizes.get("body") if bsp else None
++            attrs = _plan_attrs(bsp, events_by_surface)
++            style = _style_font(body_px)
+             if block.type == "paragraphs":
++                out.append(
++                    f'<div class="paragraphs" data-block-id="{_escape(bid)}" {attrs}{style}>'
++                )
+                 for prose in block.paragraphs:
+-                    out.append(
+-                        f'<p data-block-id="{_escape(bid)}" data-surface-id="{_escape(bid)}">{_prose_html(prose)}</p>'
+-                    )
++                    out.append(f"<p{style}>{_prose_html(prose)}</p>")
++                out.append("</div>")
+             elif block.type == "bullet_list":
+-                out.append(f'<ul data-block-id="{_escape(bid)}" data-surface-id="{_escape(bid)}">')
++                out.append(
++                    f'<ul data-block-id="{_escape(bid)}" {attrs}{style}>'
++                )
+                 for item in block.items:
+                     out.append(f"<li>{_prose_html(item)}</li>")
+                 out.append("</ul>")
+         if slide.takeaway is not None:
++            tsp = plans_by_id.get(f"slide-{sn}-takeaway")
++            body_px = tsp.role_sizes.get("body") if tsp else None
++            label_px = tsp.role_sizes.get("label") if tsp else None
++            out.append(f'<aside class="takeaway" {_plan_attrs(tsp, events_by_surface)} role="note">')
+             out.append(
+-                f'<p class="takeaway" data-role="takeaway">{_escape(slide.takeaway.text)}</p>'
++                f'<p class="takeaway-label"{_style_font(label_px)}>Key takeaway</p>'
+             )
++            out.append(
++                f'<p class="takeaway-text"{_style_font(body_px)}>' 
++                f"{_escape(slide.takeaway.text)}</p>"
++            )
++            out.append("</aside>")
+         return out
+     out.append(f"<p>Unsupported layout in kernel paint: {_escape(lt)}</p>")
+     return out
+ 
+ 
+ def _prose_html(prose: Any) -> str:
+     chunks: list[str] = []
+     for run in prose.runs:
+         text = _escape(run.text)
+         if run.emphasis == "strong":
+             chunks.append(f"<strong>{text}</strong>")
+         else:
+             chunks.append(text)
+     return "".join(chunks)
+ 
+ 
+ def _escape(text: str) -> str:
+     return html.escape(text, quote=True)
+ 
+ 
+ def build_slide_notes_md(deck: Deck) -> str:
+     """Authored slide order/headings; exact D221 text or _(no notes)_ (D250)."""
+     chunks: list[str] = []
+     for slide in deck.slides:
+         heading = _slide_heading(slide)
+         chunks.append(f"# Slide {slide.slide_number} — {heading}")
+         chunks.append("")
+         notes = getattr(slide, "speaker_notes", None)
+         chunks.append(notes if notes else "_(no notes)_")
+         chunks.append("")
+@@ -181,222 +294,215 @@ def build_evidence_manifest(deck: Deck) -> dict[str, Any]:
+         }
+         loc = _sorted_locator(entry.locator)
+         if loc is not None:
+             item["locator"] = loc
+         registry.append(item)
+     # Preserve authored registry iteration order (dict insertion order).
+ 
+     slides = []
+     for slide in deck.slides:
+         row: dict[str, Any] = {
+             "slide_number": slide.slide_number,
+             "layout_type": slide.layout_type,
+         }
+         section_id = getattr(slide, "section_id", None)
+         if section_id is not None:
+             row["section_id"] = section_id
+         eids = list(getattr(slide, "evidence_ids", None) or [])
+         if eids:
+             row["evidence_ids"] = eids
+         slides.append(row)
+ 
+     return {
+         "renderer_version": RENDERER_VERSION,
+         "handoff_schema_version": deck.meta.handoff_schema_version,
+         "theme_id": THEME_ID,
+         "evidence_registry": registry,
+         "slides": slides,
+     }
+ 
+ 
+-def build_slide_summaries(deck: Deck) -> list[dict[str, Any]]:
++def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list[dict[str, Any]]:
+     rows: list[dict[str, Any]] = []
++    planned = deck_plan.by_surface_id() if deck_plan is not None else {}
+     for slide in deck.slides:
+         surface_ids: list[str] = []
+         if slide.layout_type in ("opening_cover", "closing_cover"):
+             surface_ids.append(f"slide-{slide.slide_number}-cover")
+         elif slide.layout_type == "narrative":
+-            surface_ids.extend(b.block_id for b in slide.payload.blocks)
++            # Composition-slot order: title, subtitle, blocks, takeaway, disclosure.
++            tid = f"slide-{slide.slide_number}-title"
++            if tid in planned:
++                surface_ids.append(tid)
++            if slide.content is not None:
++                surface_ids.append(f"slide-{slide.slide_number}-subtitle")
++            surface_ids.extend(
++                f"slide-{slide.slide_number}-block-{b.block_id}"
++                for b in slide.payload.blocks
++            )
+             if slide.takeaway is not None:
+                 surface_ids.append(f"slide-{slide.slide_number}-takeaway")
+             disclosure = getattr(slide, "disclosure", None)
+             if disclosure is not None:
+                 surface_ids.extend(s.surface_id for s in disclosure.sections)
+         row: dict[str, Any] = {
+             "slide_number": slide.slide_number,
+             "layout_type": slide.layout_type,
+             "surface_ids": surface_ids,
+         }
+         section_id = getattr(slide, "section_id", None)
+         if section_id is not None:
+             row["section_id"] = section_id
+         rows.append(row)
+     return rows
+ 
+ 
+ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
+     """Pre-publication readiness facts only (D312); no browser measurement."""
+     rows: list[dict[str, Any]] = []
+     for slide in deck.slides:
+         rows.append(
+             {
+                 "slide_number": slide.slide_number,
+                 "layout_type": slide.layout_type,
+                 "frozen_plan_attached": True,  # kernel plan entries attached in run_meta.plans
+                 "required_payload_present": True,
+                 "semantic_table_present": False,  # no chart surfaces in kernel compositions
+                 "stable_ids_resolved": True,
+                 "readiness_contract_version": 1,
+             }
+         )
+     return rows
+ 
+ 
+-def build_plans(deck: Deck) -> list[dict[str, Any]]:
+-    """One plan entry per planned surface; kernel compositions use slot digests."""
+-    plans: list[dict[str, Any]] = []
+-    for slide in deck.slides:
+-        if slide.layout_type in ("opening_cover", "closing_cover"):
+-            surface_id = f"slide-{slide.slide_number}-cover"
+-            plans.append(_plan_entry(surface_id, "cover", slide))
+-        elif slide.layout_type == "narrative":
+-            for block in slide.payload.blocks:
+-                plans.append(_plan_entry(block.block_id, "narrative_block", slide))
+-            if slide.takeaway is not None:
+-                plans.append(
+-                    _plan_entry(f"slide-{slide.slide_number}-takeaway", "takeaway", slide)
+-                )
+-    return plans
+-
+-
+-def _plan_entry(surface_id: str, role: str, slide: Any) -> dict[str, Any]:
+-    digest_src = f"{slide.slide_number}:{slide.layout_type}:{role}:{surface_id}"
+-    digest = sha256_bytes(digest_src.encode("utf-8"))
+-    return {
+-        "surface_id": surface_id,
+-        "role": role,
+-        "semantic_digest": digest,
+-        "design_stage_region": 0,
+-        "role_sizes": {},
+-        "adaptation_codes": [],
+-        "reservations": [],
+-        "fallback": None,
+-        "expected_placement_classes": [],
+-        "painter_plan_digest": digest,
+-    }
++def build_plans(deck: Deck, deck_plan: DeckPlan | None = None) -> list[dict[str, Any]]:
++    """One plan entry per planned surface from the frozen deck plan (D69/D312)."""
++    if deck_plan is not None:
++        return deck_plan.public_plans()
++    # Fallback stub only if called without a plan (should not happen in render_deck).
++    return []
+ 
+ 
+ def build_run_meta(
+     *,
+     deck: Deck,
+     status: str,
+     ok: bool,
+     strict: bool,
+     debug: bool,
+     svg_only: bool,
+     events: list[DiagnosticEvent],
+     artifact_bytes: dict[str, bytes],
++    deck_plan: DeckPlan | None = None,
+ ) -> dict[str, Any]:
+     severity = {"info": 0, "warning": 0, "error": 0}
+     for e in events:
+         severity[e.severity] = severity.get(e.severity, 0) + e.occurrences
+ 
+     artifacts = []
+     for name in _HASHED_ARTIFACTS:
+         data = artifact_bytes[name]
+         artifacts.append(
+             {
+                 "name": name,
+                 "bytes": len(data),
+                 "sha256": sha256_bytes(data),
+             }
+         )
+ 
+     return {
+         "renderer_version": RENDERER_VERSION,
+         "handoff_schema_version": deck.meta.handoff_schema_version,
+         "theme_id": THEME_ID,
+         "status": status,
+         "ok": ok,
+         "options": {"strict": strict, "debug": debug, "svg_only": svg_only},
+         "slide_count": len(deck.slides),
+-        "slides": build_slide_summaries(deck),
++        "slides": build_slide_summaries(deck, deck_plan),
+         "severity_counts": severity,
+         "events": [e.model_dump(mode="json", exclude_none=True) for e in sort_events(events)],
+-        "plans": build_plans(deck),
++        "plans": build_plans(deck, deck_plan),
+         "static_readiness": build_static_readiness(deck),
+         "artifacts": artifacts,
+     }
+ 
+ 
+ def canonical_schema_bytes(schema_source: Path) -> bytes:
+     """D121/D250 schema bytes: repository-canonical UTF-8/LF."""
+     data = schema_source.read_bytes()
+     # Working trees may checkout CRLF; publish the LF form of the git blob.
+     if b"\r\n" in data:
+         data = data.replace(b"\r\n", b"\n")
+     return data
+ 
+ 
+ def stage_artifacts(
+     *,
+     deck: Deck,
+     status: str,
+     ok: bool,
+     strict: bool,
+     debug: bool,
+     svg_only: bool,
+     events: list[DiagnosticEvent],
+     schema_source: Path,
++    deck_plan: DeckPlan | None = None,
+ ) -> dict[str, bytes]:
+     """Build all five artifact payloads in memory (bytes, UTF-8/LF)."""
+-    html = build_presentation_html(deck, debug=debug, svg_only=svg_only)
++    html = build_presentation_html(
++        deck,
++        debug=debug,
++        svg_only=svg_only,
++        deck_plan=deck_plan,
++        events=events,
++    )
+     notes = build_slide_notes_md(deck)
+     manifest = dumps_json(build_evidence_manifest(deck))
+     schema_bytes = canonical_schema_bytes(schema_source)
+ 
+     partial = {
+         "presentation.html": html.encode("utf-8"),
+         "slide_notes.md": notes.encode("utf-8"),
+         "evidence_manifest.json": manifest.encode("utf-8"),
+         "handoff_schema_v1.json": schema_bytes,
+     }
+     run_meta = dumps_json(
+         build_run_meta(
+             deck=deck,
+             status=status,
+             ok=ok,
+             strict=strict,
+             debug=debug,
+             svg_only=svg_only,
+             events=events,
+             artifact_bytes=partial,
++            deck_plan=deck_plan,
+         )
+     )
+     partial["run_meta.json"] = run_meta.encode("utf-8")
+     return partial
+ 
+ 
+ def publish_transaction(out_dir: Path, artifacts: dict[str, bytes]) -> None:
+     """Stage complete set, then directory-swap into destination (D250/D312)."""
+     out_dir = Path(out_dir)
+     parent = out_dir.parent if out_dir.parent != Path("") else Path(".")
+     parent.mkdir(parents=True, exist_ok=True)
+ 
+     staging = Path(
+         tempfile.mkdtemp(prefix=".renderer_v3_stage_", dir=str(parent))
+     )
+     backup: Path | None = None
+     retired: Path | None = None
+     staging_pending = True
+     preserve_backup = False
+     try:
+         for name in CANONICAL_ARTIFACTS:
+             if name not in artifacts:
+                 raise RendererPublicationError(
+                     [
+                         event(
+                             code="publication.transaction_failed",
+                             severity="error",
+                             phase="publication",
+                             role="publisher",
+                             path=f"/artifacts/{name}",
+diff --git a/impact_slides/renderer_v3/render.py b/impact_slides/renderer_v3/render.py
+index ce99095..05d4751 100644
+--- a/impact_slides/renderer_v3/render.py
++++ b/impact_slides/renderer_v3/render.py
+@@ -1,44 +1,45 @@
+ """Public render_deck API — validate, stage, publish (D125/D249/D250/D312)."""
+ from __future__ import annotations
+ 
+ import json
+ from pathlib import Path
+ from typing import Any, Final
+ 
+ from ._version import __version__ as RENDERER_VERSION
+ from .diagnostics import (
+     RendererConfigurationError,
+     RendererPublicationError,
+     RendererValidationError,
+     event,
+ )
++from .plan import plan_deck
+ from .publish import (
+     THEME_ID,
+     publish_transaction,
+     resolved_schema_source,
+     stage_artifacts,
+ )
+ from .validate import validate_handoff
+ 
+ SELF_CONTAINED: Final = "self-contained"
+ 
+ 
+ def render_deck(
+     handoff_path: str | Path,
+     out_dir: str | Path,
+     *,
+     seed_path: str | Path | None = None,
+     debug: bool = False,
+     strict: bool = True,
+     theme: Any = None,
+     chrome_level: Any = None,
+     delivery: str = SELF_CONTAINED,
+     force_features: list[str] | None = None,
+     suppress_features: list[str] | None = None,
+ ) -> dict[str, Any]:
+     """Render a schema-v1 handoff into the five canonical artifacts.
+ 
+     Strict is the default. Failed calls raise a typed renderer error and leave
+     prior output byte-identical. Successful returns include operational paths
+     plus clean/degraded status (D112/D249/D250).
+     """
+@@ -107,94 +108,101 @@ def render_deck(
+                     result="failed",
+                     expected="readable handoff JSON path",
+                     input_meta={"type": type(exc).__name__},
+                 )
+             ],
+             handoff_schema_version=None,
+             renderer_version=RENDERER_VERSION,
+         ) from exc
+     except json.JSONDecodeError as exc:
+         raise RendererValidationError(
+             [
+                 event(
+                     code="validation.type",
+                     severity="error",
+                     phase="validation",
+                     role="deck",
+                     path="/",
+                     action="reject",
+                     result="failed",
+                     expected="JSON object deck envelope",
+                     input_meta={"type": "json_decode_error"},
+                 )
+             ],
+             handoff_schema_version=None,
+             renderer_version=RENDERER_VERSION,
+         ) from exc
+ 
+     # validate_handoff raises RendererValidationError on failure — no writes yet.
+     result = validate_handoff(raw, strict=strict)
+     events = list(result.events)
++
++    # D69: freeze whole-pixel role sizes before any paint/publication.
++    # plan_deck raises RendererValidationError on strict overflow — no writes yet.
++    deck_plan = plan_deck(result.deck, strict=strict)
++    events.extend(deck_plan.events)
++
+     degraded = bool(result.repaired) or any(
+         e.severity in ("warning", "error") for e in events
+     )
+     status = "degraded" if degraded else "clean"
+     ok = not degraded
+ 
+     schema_src = resolved_schema_source()
+     if not schema_src.is_file():
+         raise RendererPublicationError(
+             [
+                 event(
+                     code="publication.transaction_failed",
+                     severity="error",
+                     phase="publication",
+                     role="publisher",
+                     path="/handoff_schema_v1.json",
+                     action="publish",
+                     result="failed",
+                     expected="checked-in D121 schema artifact",
+                 )
+             ],
+             handoff_schema_version=result.deck.meta.handoff_schema_version,
+             renderer_version=RENDERER_VERSION,
+         )
+ 
+     artifacts = stage_artifacts(
+         deck=result.deck,
+         status=status,
+         ok=ok,
+         strict=strict,
+         debug=bool(debug),
+         svg_only=svg_only,
+         events=events,
+         schema_source=schema_src,
++        deck_plan=deck_plan,
+     )
+     publish_transaction(out, artifacts)
+ 
+     # D249: stable diagnostic codes only (not free-form validator strings).
+     codes = sorted({e.code for e in events if e.severity in ("error", "warning")})
+ 
+     severity = {"info": 0, "warning": 0, "error": 0}
+     for e in events:
+         severity[e.severity] = severity.get(e.severity, 0) + e.occurrences
+ 
+     return {
+         "out_dir": str(out),
+         "presentation": str(out / "presentation.html"),
+         "slide_notes": str(out / "slide_notes.md"),
+         "evidence_manifest": str(out / "evidence_manifest.json"),
+         "run_meta": str(out / "run_meta.json"),
+         "handoff_schema": str(out / "handoff_schema_v1.json"),
+         "status": status,
+         "ok": ok,
+         "renderer_version": RENDERER_VERSION,
+         "handoff_schema_version": result.deck.meta.handoff_schema_version,
+         "theme_id": THEME_ID,
+         "slide_count": len(result.deck.slides),
+         "severity_counts": severity,
+         "errors": codes,
+     }
+ 
+ 
+ def _resolve_options(
+     *,
+diff --git a/impact_slides/renderer_v3/repairs.py b/impact_slides/renderer_v3/repairs.py
+index fea0c5b..c3a2486 100644
+--- a/impact_slides/renderer_v3/repairs.py
++++ b/impact_slides/renderer_v3/repairs.py
+@@ -217,48 +217,83 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
+ def _drop_unknown_object(
+     obj: dict[str, Any],
+     *,
+     allowed: set[str],
+     path: str,
+     events: list[DiagnosticEvent],
+     role: str,
+     slide_number: int | None = None,
+     layout_type: str | None = None,
+ ) -> None:
+     unknown = [k for k in list(obj.keys()) if k not in allowed]
+     for key in unknown:
+         del obj[key]
+         events.append(
+             event(
+                 code="repair.field_dropped",
+                 severity="warning",
+                 phase="repair",
+                 role=role,
+                 path=f"{path}/{key}" if path else f"/{key}",
+                 action="drop_field",
+                 result="dropped",
+                 slide_number=slide_number,
+                 layout_type=layout_type,
+                 expected=f"closed object fields: {sorted(allowed)}",
+                 input_meta={"field": key},
+             )
+         )
+ 
+ 
++def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> Any:
++    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
++        return raw
++    out = deepcopy(raw)
++    for i, slide in enumerate(out["slides"]):
++        if not isinstance(slide, dict) or slide.get("layout_type") != "narrative":
++            continue
++        surfaces = (
++            ("content", "body_font_size"),
++            ("takeaway", "subtitle_font_size"),
++            ("payload", "subtitle_font_size"),
++        )
++        for owner, forbidden in surfaces:
++            surface = slide.get(owner)
++            typo = surface.get("typography") if isinstance(surface, dict) else None
++            if isinstance(typo, dict) and forbidden in typo:
++                del surface["typography"]
++                events.append(
++                    event(
++                        code="repair.policy_defaulted",
++                        severity="warning",
++                        phase="repair",
++                        role=owner,
++                        path=f"/slides/{i}/{owner}/typography",
++                        action="default_typography",
++                        result="defaulted",
++                        slide_number=_slide_number(slide),
++                        layout_type="narrative",
++                        expected="surface-applicable typography fields",
++                    )
++                )
++    return out
++
++
+ # Closed registry: name → transform (D123).
+ REPAIR_REGISTRY: dict[str, RepairFn] = {
+     "assume_schema_v1": assume_schema_v1,
+     "drop_unknown_fields": drop_unknown_fields,
++    "discard_inapplicable_typography": discard_inapplicable_typography,
+ }
+ 
+ 
+ def apply_allowlisted_repairs(raw: Any) -> tuple[Any, list[DiagnosticEvent]]:
+     """Apply every kernel allowlisted repair in stable order; collect events.
+ 
+     ``assume_schema_v1`` runs first and only keeps the edit when the rest of the
+     input is already exact v1 (D311). Unknown-field drops never unlock assume.
+     """
+     events: list[DiagnosticEvent] = []
+     current = raw
+-    for name in ("assume_schema_v1", "drop_unknown_fields"):
++    for name in REPAIR_REGISTRY:
+         current = REPAIR_REGISTRY[name](current, events)
+     return current, events

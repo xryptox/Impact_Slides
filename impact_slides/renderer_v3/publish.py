@@ -85,7 +85,8 @@ def build_presentation_html(
             generate_theme_css().rstrip("\n"),
             # Fixed 1920×1080 stage; viewport may scale the stage uniformly (D68).
             "html{width:100%;height:100%}",
-            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy);transform-origin:top left}",
+            "body{margin:0;font-family:var(--font-body);background:var(--color-surface);color:var(--color-navy);overflow:hidden}",
+            ".deck-stage{width:1920px;transform-origin:top left}",
             ".slide{box-sizing:border-box;width:1920px;height:1080px;padding:var(--space-pad-top) var(--space-pad-x) var(--space-pad-bottom);page-break-after:always}",
             "h1{font-size:var(--text-title);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
             "h2{font-size:var(--text-insight);font-weight:var(--font-weight-title);margin:0 0 var(--space-sm)}",
@@ -97,6 +98,7 @@ def build_presentation_html(
             "</style>",
             "</head>",
             "<body>",
+            '<main class="deck-stage">',
         ]
     )
     for slide in deck.slides:
@@ -112,7 +114,13 @@ def build_presentation_html(
         if notes:
             parts.append(f'<aside class="notes">{_escape(notes)}</aside>')
         parts.append("</section>")
-    parts.extend(["</body>", "</html>", ""])
+    parts.extend([
+        "</main>",
+        "<script>(()=>{const s=document.querySelector('.deck-stage');const fit=()=>s.style.transform=`scale(${Math.min(innerWidth/1920,innerHeight/1080)})`;addEventListener('resize',fit);fit()})()</script>",
+        "</body>",
+        "</html>",
+        "",
+    ])
     return "\n".join(parts)
 
 

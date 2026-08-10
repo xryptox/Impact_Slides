@@ -49,10 +49,13 @@ TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
 TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
 TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
 LIST_INDENT_EM: Final = 1.25
-# Conservative average glyph advance as fraction of em (D23; no vendored TTF yet).
-# ponytail: synthetic metrics until fonts ship; swap for measured IBM Plex/Source Sans.
-AVG_ADVANCE: Final = 0.58
-STRONG_ADVANCE: Final = 0.62
+GLYPH_ADVANCE: Final = {
+    "narrow": 0.35,
+    "normal": 0.58,
+    "wide": 0.90,
+    "space": 0.28,
+}
+STRONG_MULTIPLIER: Final = 1.04
 
 
 @dataclass
@@ -268,7 +271,7 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
 
         # Slot order: title chrome (fixed), subtitle, body blocks, takeaway.
         region += 1
-        title_h = _line_box(TITLE_PX) + TITLE_MARGIN_Y
+        title_h = _required_height([(slide.title, True)], TITLE_PX, CONTENT_W, 1)
         used = title_h
 
         # Title is fixed chrome — recorded so painters share one plan.
@@ -423,36 +426,47 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     """Reserve measured needs jointly so sparse siblings yield unused geometry."""
     if not surfaces:
         return
-    floors = [
-        _required_height(
-            sp._text_items,
-            sp._default_size or next(iter(sp.role_sizes.values())),
-            sp._box_w,
-            sp._margin_boxes,
-            sp._indent_em,
+
+    def need(sp: SurfacePlan, size: int) -> int:
+        return _required_height(
+            sp._text_items, size, sp._box_w, sp._margin_boxes, sp._indent_em
         )
-        for sp in surfaces
-    ]
-    ceilings = [
-        _required_height(
-            sp._text_items,
-            sp._maximum_size or next(iter(sp.role_sizes.values())),
-            sp._box_w,
-            sp._margin_boxes,
-            sp._indent_em,
-        )
-        for sp in surfaces
-    ]
+
+    floors = [need(sp, sp._default_size or next(iter(sp.role_sizes.values()))) for sp in surfaces]
     remaining = max(0, available_h - sum(sp._chrome_h for sp in surfaces))
     allocations = []
-    for needed in floors:
-        allocated = min(remaining, needed)
-        allocations.append(allocated)
-        remaining -= allocated
-    for i, wanted in enumerate(ceilings):
+    for height in floors:
+        allocations.append(min(remaining, height))
+        remaining -= allocations[-1]
+
+    groups: dict[tuple[str, str], list[int]] = {}
+    for i, sp in enumerate(surfaces):
+        if sp._mode != "adaptive" or sp._explicit_size is not None or not sp._fit_role:
+            continue
+        key = sp._sync_group or (
+            f"slide:{sp.slide_number}:body" if sp.role == "narrative_block" else sp.surface_id
+        )
+        groups.setdefault((sp._fit_role, key), []).append(i)
+
+    for indexes in groups.values():
+        members = [surfaces[i] for i in indexes]
+        floor = max(sp._default_size or 0 for sp in members)
+        ceiling = min(sp._maximum_size or floor for sp in members)
+        for size in range(ceiling, floor - 1, -1):
+            wanted = [need(sp, size) for sp in members]
+            extra = sum(max(0, height - allocations[i]) for i, height in zip(indexes, wanted))
+            if extra <= remaining:
+                for i, height in zip(indexes, wanted):
+                    remaining -= max(0, height - allocations[i])
+                    allocations[i] = max(allocations[i], height)
+                break
+
+    for i, sp in enumerate(surfaces):
+        wanted = need(sp, sp._maximum_size or next(iter(sp.role_sizes.values())))
         extra = min(remaining, max(0, wanted - allocations[i]))
         allocations[i] += extra
         remaining -= extra
+
     for sp, height, floor_h in zip(surfaces, allocations, floors):
         sp._box_h = height
         sp.reservations = [
@@ -682,23 +696,35 @@ def _wrap_lines(
     text = "".join(t for t, _ in items)
     if not text:
         return [""], False
-    strong_chars = sum(len(t) for t, s in items if s)
-    total_chars = max(1, sum(len(t) for t, _ in items))
-    adv = AVG_ADVANCE + (STRONG_ADVANCE - AVG_ADVANCE) * (strong_chars / total_chars)
-    char_w = px * adv
+    strong_chars = sum(len(run) for run, strong in items if strong)
+    weight = 1 + (STRONG_MULTIPLIER - 1) * strong_chars / max(1, len(text))
+
+    def width(value: str) -> float:
+        measured = 0.0
+        for char in value:
+            if char.isspace():
+                advance = GLYPH_ADVANCE["space"]
+            elif char in "ilIjtfr.,:;!'|":
+                advance = GLYPH_ADVANCE["narrow"]
+            elif char in "MW@%&QGmwm":
+                advance = GLYPH_ADVANCE["wide"]
+            else:
+                advance = GLYPH_ADVANCE["normal"]
+            measured += px * advance * weight
+        return max(measured * 1.05, measured + 2)
 
     tokens = re.findall(r"\S+\s*", text)
     if not tokens:
-        return [text], len(text) * char_w > box_w
+        return [text], width(text) > box_w
     lines: list[str] = []
     cur = ""
     width_overflow = False
     for tok in tokens:
-        tok_w = len(tok.rstrip()) * char_w
+        tok_w = width(tok.rstrip())
         if tok_w > box_w:
             width_overflow = True
         trial = cur + tok
-        if cur and len(trial) * char_w > box_w:
+        if cur and width(trial) > box_w:
             lines.append(cur.rstrip())
             cur = tok
         else:

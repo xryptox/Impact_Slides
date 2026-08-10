@@ -163,6 +163,12 @@ class Typography(ClosedModel):
     body_font_size: Optional[int] = Field(default=None, ge=8, le=48)
     subtitle_font_size: Optional[int] = Field(default=None, ge=8, le=48)
 
+    @model_validator(mode="after")
+    def _adaptive_sync_only(self) -> Typography:
+        if self.sync_group is not None and self.mode != "adaptive":
+            raise ValueError("sync_group requires adaptive typography")
+        return self
+
 
 class SubtitleContent(ClosedModel):
     subtitle: NonEmptyStr
