@@ -523,6 +523,11 @@ def test_hyphen_break_opportunity_in_wrap_lines():
     assert not wo
     assert len(lines) >= 2
     assert "".join(lines).replace(" ", "") == phrase
+    punct = "alpha,beta;gamma:delta.epsilon"
+    plines, pwo = _wrap_lines([(punct, False)], 22, 100)
+    assert not pwo
+    assert len(plines) >= 2
+    assert "".join(plines).replace(" ", "") == punct
 
 
 def test_disclosure_paragraph_not_list_indented():

@@ -337,7 +337,24 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
             )
             continue
         kept: list[dict[str, Any]] = []
+        seen_titles: set[str] = set()
         for j, section in enumerate(disc["sections"]):
+            if len(kept) >= 4:
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="disclosure",
+                        path=f"{path_base}/sections/{j}",
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=sn,
+                        layout_type="narrative",
+                        expected="at most 4 disclosure sections",
+                    )
+                )
+                continue
             spath = f"{path_base}/sections/{j}"
             if not isinstance(section, dict):
                 events.append(
@@ -389,6 +406,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     )
                 )
                 continue
+            title_key = title.casefold()
             if sid in seen_ids:
                 events.append(
                     event(
@@ -406,7 +424,25 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     )
                 )
                 continue
+            if title_key in seen_titles:
+                events.append(
+                    event(
+                        code="repair.item_dropped",
+                        severity="warning",
+                        phase="repair",
+                        role="disclosure",
+                        path=spath,
+                        action="drop_item",
+                        result="dropped",
+                        slide_number=sn,
+                        layout_type="narrative",
+                        expected="normalized-unique disclosure title",
+                        input_meta={"title": title},
+                    )
+                )
+                continue
             seen_ids.add(sid)
+            seen_titles.add(title_key)
             kept.append(section)
         if not kept:
             del slide["disclosure"]

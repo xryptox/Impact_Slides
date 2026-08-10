@@ -840,7 +840,8 @@ def _split_units(
 
 
 def _wrap_tokens(text: str) -> list[tuple[int, str]]:
-    """Break opportunities after whitespace and after hyphens (browser-like)."""
+    """Break after whitespace and after - , ; : . when more content follows."""
+    soft = frozenset("-,:;.")
     tokens: list[tuple[int, str]] = []
     i = 0
     n = len(text)
@@ -852,8 +853,7 @@ def _wrap_tokens(text: str) -> list[tuple[int, str]]:
         start = i
         while i < n and not text[i].isspace():
             i += 1
-            # Soft break after hyphen when more non-space content follows.
-            if text[i - 1] == "-" and i < n and not text[i].isspace():
+            if text[i - 1] in soft and i < n and not text[i].isspace():
                 break
         end = i
         while end < n and text[end].isspace():
