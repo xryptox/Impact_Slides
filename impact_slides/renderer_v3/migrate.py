@@ -33,10 +33,19 @@ class InventoryEntry:
     candidates: tuple[str, ...] = ()
     proof: str = ""
     reason: str = ""
+    chart_family: Optional[str] = None  # D313 single_chart/<family> branch
 
 
-def _det(name: str, target: str, proof: str) -> InventoryEntry:
-    return InventoryEntry(name, "deterministic", target=target, proof=proof)
+def _det(
+    name: str,
+    target: str,
+    proof: str,
+    *,
+    chart_family: Optional[str] = None,
+) -> InventoryEntry:
+    return InventoryEntry(
+        name, "deterministic", target=target, proof=proof, chart_family=chart_family
+    )
 
 
 def _human(name: str, candidates: tuple[str, ...], reason: str) -> InventoryEntry:
@@ -58,7 +67,7 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     _det("before_after_detailed", "state_transition", "Explicit before/after boundaries; optional steps."),
     _det("chart_hero_dual", "chart_hero_dual", "Exactly one chart, recognized hero, at most one typed support."),
     _det("circular_process", "feedback_loop", "One explicit ordered cycle."),
-    _det("combo_chart", "single_chart", "Explicit combo marks/axes/categories/values/formats/identities."),
+    _det("combo_chart", "single_chart", "Explicit combo marks/axes/categories/values/formats/identities.", chart_family="combo"),
     _det("comparison_grid", "comparison_cards", "One complete 2–4 peer by 2–4 shared-fact table."),
     _det("three_column_comparison", "comparison_cards", "One complete 2–4 peer by 2–4 shared-fact table."),
     _det("data_table", "data_table", "One complete typed ordinary table."),
@@ -71,13 +80,13 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     _det("full_process_flow", "process_flow", "Genuinely linear ordered steps."),
     _det("horizontal_process", "process_flow", "Genuinely linear ordered steps."),
     _det("grouped_annex_table", "grouped_annex_table", "One or two explicitly headed complete annex matrices."),
-    _det("grouped_bar_chart", "single_chart", "Explicit vertical non-stacked data, format, and identity."),
-    _det("heatmap", "single_chart", "Rectangular identities, numeric/missing cells, one format, explicit scale."),
+    _det("grouped_bar_chart", "single_chart", "Explicit vertical non-stacked data, format, and identity.", chart_family="grouped_bar"),
+    _det("heatmap", "single_chart", "Rectangular identities, numeric/missing cells, one format, explicit scale.", chart_family="heatmap"),
     _det("hierarchy_tree", "hierarchy", "Explicit root, uniform relation, links, and sibling order."),
-    _det("horizontal_bar_chart", "single_chart", "Explicit grouped horizontal semantics."),
+    _det("horizontal_bar_chart", "single_chart", "Explicit grouped horizontal semantics.", chart_family="horizontal_bar"),
     _det("icon_grid", "feature_cards", "Equal-rank cards and decorative icons from the closed registry."),
     _det("ir_bullet_sheet", "narrative", "Text-only with explicit paragraph/list boundaries."),
-    _det("line_chart", "single_chart", "Explicit categories, series, values, axes, formats, and identities."),
+    _det("line_chart", "single_chart", "Explicit categories, series, values, axes, formats, and identities.", chart_family="line"),
     _det("metric", "metric_overview", "One canonical 2–6 metric source without unresolved duplicates."),
     _det("metric_dashboard", "metric_overview", "One canonical 2–6 metric source without unresolved duplicates."),
     _det("metric_row_with_breakdown", "metric_overview", "Explicit metric and narrative-detail boundaries."),
@@ -87,9 +96,9 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     _det("recommendation_with_rationale", "recommendation_case", "One exact recommendation and explicit rationales."),
     _det("risk_opportunity", "risk_opportunity_review", "Explicit risk/opportunity membership."),
     _det("section_divider", "section_divider", "Registered section and correct immediate placement."),
-    _det("stacked_bar_chart", "single_chart", "Explicit stack order/data/format/display."),
+    _det("stacked_bar_chart", "single_chart", "Explicit stack order/data/format/display.", chart_family="stacked_bar"),
     _det("timeline", "timeline", "Explicit milestones/time labels in authored order."),
-    _det("waterfall_chart", "single_chart", "Explicit ordered step roles, values, format, and resets."),
+    _det("waterfall_chart", "single_chart", "Explicit ordered step roles, values, format, and resets.", chart_family="waterfall"),
     # Human (17)
     _human("brand_cover", ("opening_cover", "closing_cover"), "One recipe served both deck boundaries."),
     _human("brand_divider", ("section_divider", "closing_cover"), "Current Amex uses both meanings."),
@@ -99,13 +108,21 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
         ("comparison_cards", "metric_overview"),
         "Detached metric ownership is ambiguous.",
     ),
-    _human("cover", ("opening_cover", "closing_cover"), "Alias of ambiguous title_or_opening."),
+    _human(
+        "cover",
+        ("opening_cover", "closing_cover", "other"),
+        "Alias of ambiguous title_or_opening.",
+    ),
     _human(
         "data_flow_diagram",
-        ("data_pipeline", "process_flow", "layered_architecture"),
+        ("data_pipeline", "process_flow", "layered_architecture", "future"),
         "Generic graph does not prove relationship semantics.",
     ),
-    _human("freeform_grid", (), "Coordinates are presentation, not semantics."),
+    _human(
+        "freeform_grid",
+        ("any_d210_composition",),
+        "Coordinates are presentation, not semantics.",
+    ),
     _human(
         "guidance_statement_card",
         ("metric_overview",),
@@ -113,7 +130,7 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     ),
     _human(
         "insight_with_evidence",
-        ("evidence_review", "recommendation_case", "narrative"),
+        ("evidence_review", "recommendation_case", "narrative", "other"),
         "Insight and evidence ownership are ambiguous.",
     ),
     _human(
@@ -123,33 +140,37 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     ),
     _human(
         "multi_panel",
-        ("dual_chart", "chart_hero_dual"),
+        ("dual_chart", "chart_hero_dual", "named_composition", "future"),
         "Only exact recognized semantic shapes can convert.",
     ),
     _human(
         "process_with_decisions",
-        ("decision_tree", "process_flow"),
+        ("decision_tree", "process_flow", "future"),
         "Branch targets and node roles are not explicit.",
     ),
-    _human("roadmap", ("timeline", "process_flow"), "Chronology versus procedure/phases is ambiguous."),
+    _human(
+        "roadmap",
+        ("timeline", "process_flow", "future"),
+        "Chronology versus procedure/phases is ambiguous.",
+    ),
     _human(
         "source_deep_dive",
-        ("evidence_review", "quotation", "narrative"),
+        ("evidence_review", "quotation", "narrative", "other"),
         "Finding, quotation, and provenance ownership are unclear.",
     ),
     _human(
         "split_text_visual",
-        ("narrative", "state_transition", "comparison_cards"),
+        ("narrative", "state_transition", "comparison_cards", "other"),
         "Split geometry does not identify semantic roles.",
     ),
     _human(
         "system_architecture",
-        ("layered_architecture", "hierarchy", "data_pipeline", "stakeholder_map"),
+        ("layered_architecture", "hierarchy", "data_pipeline", "stakeholder_map", "future"),
         "Nodes and links do not prove grouping, parentage, flow, or spokes.",
     ),
     _human(
         "title_or_opening",
-        ("opening_cover", "closing_cover", "section_divider"),
+        ("opening_cover", "closing_cover", "section_divider", "ordinary"),
         "Legacy name conflates title and deck role.",
     ),
     # Removed sentinels (3)
@@ -161,24 +182,21 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
 LEGACY_INVENTORY: dict[str, InventoryEntry] = {e.legacy_input: e for e in _LEGACY_ENTRIES}
 assert len(LEGACY_INVENTORY) == INVENTORY_SIZE
 
-# Kernel compositions that can be fully built + validated today.
-_KERNEL_CONVERTIBLE = frozenset(
-    {
-        "narrative",
-        "data_table",
-        "annex_table",
-        "grouped_annex_table",
-        "period_comparison",
-        "comparison_cards",
-        "section_divider",
-        "single_chart",  # line only when proof holds
-        "opening_cover",
-        "closing_cover",
-        "legal_notice",
-    }
-)
-
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+_PERIOD_ROLE_ALIASES: dict[str, str] = {
+    "current_period": "current_period",
+    "current": "current_period",
+    "curr": "current_period",
+    "comparison_period": "comparison_period",
+    "comparison": "comparison_period",
+    "prior": "comparison_period",
+    "previous": "comparison_period",
+    "variance": "variance",
+    "var": "variance",
+    "yoy": "variance",
+    "delta": "variance",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -457,6 +475,26 @@ def _common_fields(
 # ---------------------------------------------------------------------------
 
 
+def _require_title(
+    slide: Mapping[str, Any],
+    *,
+    slide_number: int,
+    path: str,
+    legacy_input: str,
+    target: str,
+) -> tuple[Optional[str], Optional[UnresolvedDecision]]:
+    title = _text(slide.get("title"))
+    if not title:
+        return None, UnresolvedDecision(
+            slide_number,
+            f"{path}/title",
+            legacy_input,
+            "Proof failed: authored title required (migrator never invents headings).",
+            target=target,
+        )
+    return title, None
+
+
 def _convert_narrative(
     slide: Mapping[str, Any],
     *,
@@ -492,7 +530,15 @@ def _convert_narrative(
             "Proof failed: text-only narrative needs paragraph or list boundaries.",
             target="narrative",
         )
-    title = _text(slide.get("title")) or _text(c.get("headline")) or "Narrative"
+    title, err = _require_title(
+        slide,
+        slide_number=slide_number,
+        path=path,
+        legacy_input="ir_bullet_sheet",
+        target="narrative",
+    )
+    if err:
+        return None, err
     out = {
         "slide_number": slide_number,
         "layout_type": "narrative",
@@ -531,7 +577,15 @@ def _convert_table_family(
             "Proof failed: data_table_with_insight needs one unambiguous slide-level insight.",
             target=target,
         )
-    title = _text(slide.get("title")) or "Table"
+    title, err = _require_title(
+        slide,
+        slide_number=slide_number,
+        path=path,
+        legacy_input=legacy_input,
+        target=target,
+    )
+    if err:
+        return None, err
     payload = _table_payload_from_matrix(matrix, surface_fallback=f"slide-{slide_number}-table")
     out = {
         "slide_number": slide_number,
@@ -597,7 +651,15 @@ def _convert_grouped_annex(
             "Proof failed: need one or two explicitly headed complete annex matrices.",
             target="grouped_annex_table",
         )
-    title = _text(slide.get("title")) or "Grouped annex"
+    title, err = _require_title(
+        slide,
+        slide_number=slide_number,
+        path=path,
+        legacy_input=legacy_input,
+        target="grouped_annex_table",
+    )
+    if err:
+        return None, err
     out = {
         "slide_number": slide_number,
         "layout_type": "grouped_annex_table",
@@ -606,6 +668,29 @@ def _convert_grouped_annex(
     }
     out.pop("takeaway", None)
     return out, None
+
+
+def _map_period_roles(
+    header: list[str],
+) -> Optional[list[tuple[str, str]]]:
+    """Map header labels to the three D186 roles; None if any role is ambiguous."""
+    roles: dict[str, str] = {}
+    for label in header[1:]:
+        key = _SLUG_RE.sub("_", label.strip().lower()).strip("_")
+        # try full key then tokens
+        role = _PERIOD_ROLE_ALIASES.get(key)
+        if role is None:
+            tokens = [t for t in key.replace("-", "_").split("_") if t]
+            hits = {_PERIOD_ROLE_ALIASES[t] for t in tokens if t in _PERIOD_ROLE_ALIASES}
+            if len(hits) == 1:
+                role = next(iter(hits))
+        if role is None or role in roles:
+            return None
+        roles[role] = label
+    needed = ("current_period", "comparison_period", "variance")
+    if set(roles) != set(needed):
+        return None
+    return [(rid, roles[rid]) for rid in needed]
 
 
 def _convert_period_comparison(
@@ -618,7 +703,6 @@ def _convert_period_comparison(
 ) -> tuple[Optional[dict[str, Any]], Optional[UnresolvedDecision]]:
     matrix = _matrix_from_steps(_primary_steps(slide))
     if matrix is None:
-        # try content.rows style
         return None, UnresolvedDecision(
             slide_number,
             f"{path}/visual_spec/primary_visual/steps_or_data",
@@ -627,7 +711,6 @@ def _convert_period_comparison(
             target="period_comparison",
         )
     header, body = matrix
-    # Expect stub + 3 role columns named current/comparison/variance (flexible labels)
     if len(header) != 4:
         return None, UnresolvedDecision(
             slide_number,
@@ -636,22 +719,37 @@ def _convert_period_comparison(
             "Proof failed: period_comparison needs stub + current/comparison/variance columns.",
             target="period_comparison",
         )
-    role_ids = ("current_period", "comparison_period", "variance")
-    columns = [
-        {"column_id": role_ids[i], "label": header[i + 1]} for i in range(3)
-    ]
+    mapped = _map_period_roles(header)
+    if mapped is None:
+        return None, UnresolvedDecision(
+            slide_number,
+            f"{path}/visual_spec/primary_visual/steps_or_data",
+            legacy_input,
+            "Proof failed: column labels must explicitly identify current/comparison/variance roles.",
+            target="period_comparison",
+        )
+    label_to_idx = {lab: i for i, lab in enumerate(header)}
+    columns = [{"column_id": rid, "label": lab} for rid, lab in mapped]
     used_rows: set[str] = set()
     rows = []
     for i, brow in enumerate(body):
         rid = _unique_slug(brow[0] or f"row-{i+1}", used_rows, fallback=f"row-{i+1}")
         cells = {}
-        for j, rid_col in enumerate(role_ids):
-            raw = brow[j + 1]
-            cells[rid_col] = (
+        for role_id, lab in mapped:
+            raw = brow[label_to_idx[lab]]
+            cells[role_id] = (
                 {"type": "missing"} if raw is None else {"type": "text", "text": raw}
             )
         rows.append({"row_id": rid, "label": brow[0], "cells": cells})
-    title = _text(slide.get("title")) or "Period comparison"
+    title, err = _require_title(
+        slide,
+        slide_number=slide_number,
+        path=path,
+        legacy_input=legacy_input,
+        target="period_comparison",
+    )
+    if err:
+        return None, err
     out = {
         "slide_number": slide_number,
         "layout_type": "period_comparison",
@@ -697,7 +795,15 @@ def _convert_comparison_cards(
             target="comparison_cards",
         )
     payload = _table_payload_from_matrix(matrix, surface_fallback=f"slide-{slide_number}-cards")
-    title = _text(slide.get("title")) or "Comparison"
+    title, err = _require_title(
+        slide,
+        slide_number=slide_number,
+        path=path,
+        legacy_input=legacy_input,
+        target="comparison_cards",
+    )
+    if err:
+        return None, err
     out = {
         "slide_number": slide_number,
         "layout_type": "comparison_cards",
@@ -774,7 +880,15 @@ def _convert_line_chart(
             "Proof failed: chart_data missing categories/series.",
             target="single_chart",
         )
-    title = _text(slide.get("title")) or "Chart"
+    title, err = _require_title(
+        slide,
+        slide_number=slide_number,
+        path=path,
+        legacy_input=legacy_input,
+        target="single_chart",
+    )
+    if err:
+        return None, err
     fmt = pv.get("value_axes") or {}
     # Require format_id on primary axis — no default invention.
     primary_axis = fmt.get("primary") if isinstance(fmt, dict) else None
@@ -901,14 +1015,15 @@ def _try_convert(
             legacy_input=legacy_input,
         )
 
+    family = f"/{entry.chart_family}" if entry.chart_family else ""
     return None, UnresolvedDecision(
         slide_number,
         path,
         legacy_input,
-        f"Proof deferred: deterministic target {target!r} is not mechanically "
-        "convertible from this legacy shape yet (composition or chart family pending).",
+        f"Proof failed: required semantic proof for target {target}{family!s} "
+        f"not satisfied by legacy payload ({entry.proof})",
         target=target,
-        candidates=(target,),
+        candidates=(f"{target}{family}" if family else target,),
     )
 
 
@@ -979,11 +1094,26 @@ def migrate_handoff(
         seen_inputs.add(legacy_input)
         entry = LEGACY_INVENTORY.get(legacy_input)
         if entry is None:
-            entry = InventoryEntry(
-                legacy_input,
-                "human",
-                reason="Unknown legacy layout_type; not in D313 inventory.",
+            # Outside the 57 — still one disposition, never a guessed target.
+            unresolved.append(
+                UnresolvedDecision(
+                    slide_number,
+                    path,
+                    legacy_input,
+                    "Unknown legacy layout_type; not in the D313 57-input inventory.",
+                )
             )
+            dispositions.append(
+                SlideDisposition(
+                    slide_number=slide_number,
+                    legacy_input=legacy_input,
+                    classification="human",
+                    status="unresolved",
+                    proof_result="n/a",
+                    source_path=path,
+                )
+            )
+            continue
 
         # Pre-register section labels so dividers can resolve.
         sec_label = _text(slide.get("section"))
@@ -1009,14 +1139,27 @@ def migrate_handoff(
         eids = _evidence_from_slide(slide, evidence_registry)
         if converted is not None and eids:
             converted["evidence_ids"] = eids
-            # footers only when ordinary layout allows
-            if converted.get("layout_type") not in {
-                "opening_cover",
-                "closing_cover",
-                "section_divider",
-                "legal_notice",
-            }:
-                converted.setdefault("source_footer", eids[:4])
+            # Never invent source_footer ownership (D119); only keep an authored list.
+            authored_footer = slide.get("source_footer")
+            if (
+                isinstance(authored_footer, list)
+                and authored_footer
+                and converted.get("layout_type")
+                not in {
+                    "opening_cover",
+                    "closing_cover",
+                    "section_divider",
+                    "legal_notice",
+                }
+            ):
+                kept = [x for x in authored_footer if isinstance(x, str) and x in eids]
+                # de-dupe preserve order
+                seen_f: list[str] = []
+                for x in kept:
+                    if x not in seen_f:
+                        seen_f.append(x)
+                if seen_f:
+                    converted["source_footer"] = seen_f[:4]
 
         if unres is not None:
             unresolved.append(unres)
@@ -1074,11 +1217,14 @@ def migrate_handoff(
         else:
             decision_status = "not_present"
             proof = "n/a"
+        target_label = e.target
+        if e.target and e.chart_family:
+            target_label = f"{e.target}/{e.chart_family}"
         inventory_report.append(
             {
                 "legacy_input": key,
                 "classification": e.classification,
-                "target": e.target,
+                "target": target_label,
                 "candidates": list(e.candidates),
                 "proof": e.proof or e.reason,
                 "proof_result": proof,
@@ -1092,39 +1238,30 @@ def migrate_handoff(
     version_marked = False
     validation_errors: list[str] = []
 
+    def _envelope(meta: dict[str, Any], slides: list[dict[str, Any]]) -> dict[str, Any]:
+        # Ensure every referenced section_id is registered (no invented labels).
+        sec = dict(sections)
+        for s in slides:
+            sid = s.get("section_id") or (s.get("payload") or {}).get("section_id")
+            if isinstance(sid, str) and sid not in sec:
+                sec[sid] = sid
+        return {
+            "meta": meta,
+            "sections": [{"section_id": sid, "label": lab} for sid, lab in sec.items()],
+            "number_formats": number_formats,
+            "evidence_registry": evidence_registry,
+            "slides": slides,
+        }
+
     # Build candidate only when every slide resolved.
     all_resolved = bool(dispositions) and all(d.status == "resolved" for d in dispositions)
     if all_resolved and not unresolved:
-        if not sections:
-            # Ordinary slides always register; pure-cover decks need a placeholder
-            # only when a section_id is required — kernel covers need none.
-            pass
-        section_list = [
-            {"section_id": sid, "label": lab} for sid, lab in sections.items()
-        ]
-        # Ensure every section_id referenced exists
-        for s in out_slides:
-            sid = s.get("section_id") or (s.get("payload") or {}).get("section_id")
-            if isinstance(sid, str) and sid not in sections:
-                sections[sid] = sid
-                section_list.append({"section_id": sid, "label": sid})
-
-        # number_formats may be required by charts — if empty and charts need them,
-        # validation will fail and we withhold the marker.
-        draft = {
-            "meta": {"handoff_schema_version": 1},
-            "sections": section_list,
-            "number_formats": number_formats,
-            "evidence_registry": evidence_registry,
-            "slides": out_slides,
-        }
+        draft = _envelope({"handoff_schema_version": 1}, out_slides)
+        # D121: generated schema is the machine-readable contract the migrator
+        # consumes via the same typed models that produce it (validate_handoff).
         try:
             result = validate_handoff(draft, strict=True)
-            # serialize via model for stable shape
-            candidate = json.loads(
-                result.deck.model_dump_json(exclude_none=True)
-            )
-            # model_dump_json may not keep key order; ensure marker present
+            candidate = json.loads(result.deck.model_dump_json(exclude_none=True))
             candidate["meta"] = {"handoff_schema_version": 1}
             version_marked = True
         except RendererValidationError as exc:
@@ -1141,28 +1278,11 @@ def migrate_handoff(
                     + "; ".join(validation_errors[:5]),
                 )
             )
-            # Keep unmarked draft for inspection only when writing
-            candidate = {
-                "meta": {"migration_candidate": True},
-                "sections": section_list,
-                "number_formats": number_formats,
-                "evidence_registry": evidence_registry,
-                "slides": out_slides,
-            }
+            candidate = _envelope({"migration_candidate": True}, out_slides)
             version_marked = False
     else:
-        # Partial draft without v1 marker for human review (write path only).
-        section_list = [
-            {"section_id": sid, "label": lab} for sid, lab in sections.items()
-        ]
-        candidate = {
-            "meta": {"migration_candidate": True},
-            "sections": section_list,
-            "number_formats": number_formats,
-            "evidence_registry": evidence_registry,
-            "slides": out_slides,
-            "unresolved_decisions": [asdict(u) for u in unresolved],
-        }
+        candidate = _envelope({"migration_candidate": True}, out_slides)
+        candidate["unresolved_decisions"] = [asdict(u) for u in unresolved]
         version_marked = False
 
     ok = version_marked and not unresolved and not validation_errors
