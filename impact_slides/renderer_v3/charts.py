@@ -1374,16 +1374,20 @@ def _heatmap_fill(t: Decimal) -> str:
 
 
 def _heatmap_ink(fill_hex: str) -> str:
-    """Contrast-safe navy/white text on the fill (D246/D308)."""
+    """Contrast-safe navy/white text on the fill (D246/D308).
+
+    White only for dark fills (relative L <= 0.18); navy otherwise.
+    Navy reaches WCAG AA 4.5:1 near L >= 0.236; white only near L <= 0.183.
+    """
     h = fill_hex.lstrip("#")
     r, g, b = (int(h[i : i + 2], 16) for i in (0, 2, 4))
-    # Relative luminance (sRGB) — navy on light, white on dark blue.
+
     def lin(c: int) -> float:
         x = c / 255.0
         return x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4
 
     L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-    return _HEAT_NAVY if L > 0.45 else _HEAT_WHITE
+    return _HEAT_WHITE if L <= 0.18 else _HEAT_NAVY
 
 
 def _heatmap_unit_note(fmt: NumberFormat) -> str | None:

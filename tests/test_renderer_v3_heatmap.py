@@ -11,12 +11,19 @@ from __future__ import annotations
 import json
 import re
 from copy import deepcopy
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
-from impact_slides.renderer_v3.charts import freeze_heatmap, paint_heatmap_html
+from impact_slides.renderer_v3.charts import (
+    _heatmap_fill,
+    _heatmap_ink,
+    freeze_heatmap,
+    paint_heatmap_html,
+)
+from impact_slides.renderer_v3.theme import resolve_color
 from impact_slides.renderer_v3.format import MISSING_ACCESSIBLE, MISSING_VISIBLE
 from impact_slides.renderer_v3.models import HeatmapVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
@@ -152,11 +159,30 @@ def test_freeze_assigns_fills_and_scale_key():
     assert miss["visible"] == MISSING_VISIBLE
     assert miss["accessible"] == MISSING_ACCESSIBLE
     assert miss["fill"] is None
-    # Max finite cell is darkest (t=1).
+    # Max finite cell is darkest (t=1) — white ink on primary blue.
     us_q3 = frozen["cells"][0][2]
     assert us_q3["t"] == 1 or float(us_q3["t"]) == 1.0
     assert us_q3["fill"].startswith("#")
-    assert us_q3["ink"].startswith("#")
+    assert us_q3["ink"] == resolve_color("white", role="text_on_dark")
+    # Light end (min) uses navy ink.
+    min_cell = next(
+        c for row in frozen["cells"] for c in row if not c["missing"] and float(c["t"]) == 0.0
+    )
+    assert min_cell["ink"] == resolve_color("navy", role="text_on_light")
+
+
+def test_heatmap_ink_contrast_threshold():
+    """White ink only on dark fills (L <= ~0.18); navy otherwise (OPTION A)."""
+    navy = resolve_color("navy", role="text_on_light")
+    white = resolve_color("white", role="text_on_dark")
+    # Primary-blue endpoint is dark enough for white.
+    assert _heatmap_ink(_heatmap_fill(1)) == white
+    # Light / mid ramp stays navy (prior 0.45 threshold wrongly chose white).
+    assert _heatmap_ink(_heatmap_fill(0)) == navy
+    assert _heatmap_ink(_heatmap_fill(Decimal("0.5"))) == navy
+    # Explicit dark vs light hexes.
+    assert _heatmap_ink("#00175a") == white
+    assert _heatmap_ink("#80c8ff") == navy
 
 
 def test_equal_values_use_midpoint_key():
