@@ -8,6 +8,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 
 - `gen_layout_index.py` — builds/checks `wiki/renderer_v2_LAYOUTS.md`
 - `simulation_probe.py` — Playwright helpers for simulation geometry probes (#137 identity, #146 paint-ready charts)
+- `build_canonical_amex_v1.py` — rebuilds `tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json` (D314/#196) from corrected fixtures + worksheet; not a production migrator
 - `amex_handoff_mutations.py` — bounded Amex handoff authoring fixes applied before a fidelity pass (#148 slides 13–14 bars/pane order; #154 slide 24 growth bars, groups, support row, and reporting note; #155 slide 21 capital-return combo + ROE support row + right KPIs; #156 slide 27 three scenarios / Q1'25–Q1'28 / source note / E0026 PDF citation; #157 slides 33–37 annex matrices; #159 slide 32 grouped peer annex tables; #158 slide 28 pane subtitles / drop pseudo `top_total`); does not change renderer defaults. CLI: `python scripts/amex_handoff_mutations.py IN.json -o OUT.json`
 - `../artifacts/issue_156_slide27/` — #156 source-evidence E0026 and reproducible archived-v10/corrected 1920×1080 paint-ready recaptures.
 - Ad-hoc helpers (`render_slide_shot.py`, shell sims)

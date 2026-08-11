@@ -141,6 +141,20 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "source_footer",
             }
             payload_allowed = {"primary_visual", "support"}
+        elif layout in {"dual_chart", "chart_hero_dual", "metric_overview"}:
+            allowed = common | {
+                "section_id",
+                "title",
+                "content",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            }
+            payload_allowed = {
+                "dual_chart": {"panes"},
+                "chart_hero_dual": {"primary_visual", "hero_visual", "support_visual"},
+                "metric_overview": {"surface_id", "heading", "metrics", "detail"},
+            }[layout]
         elif layout in {
             "process_flow",
             "timeline",
@@ -262,6 +276,9 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "period_comparison",
                 "comparison_cards",
                 "single_chart",
+                "dual_chart",
+                "chart_hero_dual",
+                "metric_overview",
                 "process_flow",
                 "timeline",
                 "layered_architecture",
@@ -380,6 +397,9 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "stakeholder_map": {"focal", "stakeholders"},
                 "quadrant_matrix": {"x_axis", "y_axis", "items"},
                 "single_chart": {"primary_visual", "support"},
+        "dual_chart": {"panes"},
+        "chart_hero_dual": {"primary_visual", "hero_visual", "support_visual"},
+        "metric_overview": {"surface_id", "heading", "metrics", "detail"},
             }
             if isinstance(payload, dict) and layout in payload_fields:
                 _drop_unknown_object(
@@ -412,6 +432,25 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                             slide_number=_slide_number(slide),
                             layout_type=layout,
                         )
+    if layout == "chart_hero_dual":
+        support = payload.get("support_visual")
+        if isinstance(support, dict):
+            st = support.get("type")
+            if st == "metric_strip":
+                allowed_s = {"type", "surface_id", "metrics", "typography"}
+            elif st in {"support_table", "outlined_support"}:
+                allowed_s = {"type", "surface_id", "table"}
+            else:
+                allowed_s = set(support.keys())
+            _drop_unknown_object(
+                support,
+                allowed=allowed_s,
+                path=f"/slides/{i}/payload/support_visual",
+                events=events,
+                role="chart_support",
+                slide_number=_slide_number(slide),
+                layout_type=layout,
+            )
     return out
 
 
@@ -600,6 +639,12 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 located.append(
                     (f"/slides/{i}/payload/support/table", support["table"])
                 )
+        elif layout == "chart_hero_dual":
+            support = payload.get("support_visual")
+            if isinstance(support, dict) and isinstance(support.get("table"), dict):
+                located.append(
+                    (f"/slides/{i}/payload/support_visual/table", support["table"])
+                )
         elif layout == "grouped_annex_table":
             peers = payload.get("tables")
             if isinstance(peers, list):
@@ -725,6 +770,9 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             "period_comparison",
             "comparison_cards",
             "single_chart",
+            "dual_chart",
+            "chart_hero_dual",
+            "metric_overview",
             "process_flow",
             "timeline",
             "layered_architecture",
@@ -946,6 +994,9 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
             "period_comparison",
             "comparison_cards",
             "single_chart",
+            "dual_chart",
+            "chart_hero_dual",
+            "metric_overview",
             "process_flow",
             "timeline",
             "layered_architecture",

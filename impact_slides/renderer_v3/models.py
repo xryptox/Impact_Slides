@@ -111,6 +111,9 @@ KERNEL_LAYOUTS = frozenset(
         "period_comparison",
         "comparison_cards",
         "single_chart",
+        "dual_chart",
+        "chart_hero_dual",
+        "metric_overview",
         "process_flow",
         "timeline",
         "layered_architecture",
@@ -577,6 +580,7 @@ class MetricItem(ClosedModel):
 class MetricStrip(ClosedModel):
     """Compact exterior metric row (D165/D265); period_comparison caps at 3."""
 
+    type: Literal["metric_strip"] = "metric_strip"
     surface_id: SemanticId
     metrics: list[MetricItem] = Field(min_length=1, max_length=6)
     typography: Optional[Typography] = None
@@ -2122,6 +2126,185 @@ ChartVisual = Annotated[
 ]
 
 
+# ---------------------------------------------------------------------------
+# Dual / hero / metric compositions (D149-D153/D189-D190)
+# ---------------------------------------------------------------------------
+
+
+class DualChartPayload(ClosedModel):
+    """Exactly two ordered equal-width chart panes (D149)."""
+
+    panes: list[ChartVisual] = Field(min_length=2, max_length=2)
+
+    @model_validator(mode="after")
+    def _two_charts(self) -> DualChartPayload:
+        ids = [p.surface_id for p in self.panes]
+        if len(ids) != len(set(ids)):
+            raise ValueError("dual_chart pane surface_id values must be unique")
+        for p in self.panes:
+            if getattr(p, "chart_type", None) == "heatmap":
+                raise ValueError("dual_chart panes must be axis charts (D149)")
+        return self
+
+
+class MetricStackMetric(ClosedModel):
+    """One prominent metric in a metric_stack hero (D152)."""
+
+    metric_id: SemanticId
+    label: NonEmptyStr
+    value: SemanticValue
+    detail: Optional[NonEmptyStr] = None
+
+
+class MetricStackVisual(ClosedModel):
+    """Ordered 1-3 prominent metrics (D152)."""
+
+    type: Literal["metric_stack"] = "metric_stack"
+    surface_id: SemanticId
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    metrics: list[MetricStackMetric] = Field(min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def _stack_rules(self) -> MetricStackVisual:
+        if self.subtitle is not None and self.heading is None:
+            raise ValueError("metric_stack subtitle requires heading")
+        ids = [m.metric_id for m in self.metrics]
+        if len(ids) != len(set(ids)):
+            raise ValueError("metric_id values must be unique within metric_stack")
+        return self
+
+
+class DriverCardRow(ClosedModel):
+    """One typed driver-card fact row (D151)."""
+
+    row_id: SemanticId
+    label: NonEmptyStr
+    value: SemanticValue
+    detail: Optional[NonEmptyStr] = None
+    direction: Optional[Literal["up", "down", "flat"]] = None
+    tone: Optional[Literal["positive", "negative", "neutral", "accent"]] = None
+
+
+class DriverCardVisual(ClosedModel):
+    """Structured explanatory rows (D151)."""
+
+    type: Literal["driver_card"] = "driver_card"
+    surface_id: SemanticId
+    heading: NonEmptyStr
+    subtitle: Optional[NonEmptyStr] = None
+    rows: list[DriverCardRow] = Field(min_length=1, max_length=6)
+
+    @model_validator(mode="after")
+    def _row_ids(self) -> DriverCardVisual:
+        ids = [r.row_id for r in self.rows]
+        if len(ids) != len(set(ids)):
+            raise ValueError("row_id values must be unique within driver_card")
+        return self
+
+
+HeroVisual = Annotated[
+    Union[MetricStackVisual, DriverCardVisual],
+    Field(discriminator="type"),
+]
+
+
+class HeroSupportTableVisual(ClosedModel):
+    """Category-aligned support under chart_hero_dual (D140/D153)."""
+
+    type: Literal["support_table"] = "support_table"
+    surface_id: SemanticId
+    table: TableData
+
+
+class HeroOutlinedSupportVisual(ClosedModel):
+    """Outlined support under chart_hero_dual (D140/D153)."""
+
+    type: Literal["outlined_support"] = "outlined_support"
+    surface_id: SemanticId
+    table: TableData
+
+
+class HeroMetricStripVisual(ClosedModel):
+    """Metric strip under chart_hero_dual (D140/D153)."""
+
+    type: Literal["metric_strip"] = "metric_strip"
+    surface_id: SemanticId
+    metrics: list[MetricItem] = Field(min_length=1, max_length=6)
+    typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _unique_metrics(self) -> HeroMetricStripVisual:
+        ids = [m.metric_id for m in self.metrics]
+        if len(ids) != len(set(ids)):
+            raise ValueError("metric_id values must be unique within the strip")
+        return self
+
+
+HeroSupportVisual = Annotated[
+    Union[HeroSupportTableVisual, HeroOutlinedSupportVisual, HeroMetricStripVisual],
+    Field(discriminator="type"),
+]
+
+
+class ChartHeroDualPayload(ClosedModel):
+    """One left chart + right hero + optional left support (D150/D153)."""
+
+    primary_visual: ChartVisual
+    hero_visual: HeroVisual
+    support_visual: Optional[HeroSupportVisual] = None
+
+    @model_validator(mode="after")
+    def _hero_ids(self) -> ChartHeroDualPayload:
+        ids = [
+            self.primary_visual.surface_id,
+            self.hero_visual.surface_id,
+        ]
+        if self.support_visual is not None:
+            sid = self.support_visual.surface_id
+            ids.append(sid)
+            table = getattr(self.support_visual, "table", None)
+            if table is not None:
+                ids.append(table.surface_id)
+        if len(ids) != len(set(ids)):
+            raise ValueError("chart_hero_dual surface_id values must be unique")
+        if getattr(self.primary_visual, "chart_type", None) == "heatmap":
+            raise ValueError("chart_hero_dual primary must be an axis chart")
+        return self
+
+
+class MetricOverviewDetail(ClosedModel):
+    """Optional detail surface under metric_overview metrics (D189)."""
+
+    surface_id: SemanticId
+    heading: NonEmptyStr
+    blocks: list[NarrativeBlock] = Field(min_length=1, max_length=4)
+
+
+class MetricOverviewPayload(ClosedModel):
+    """2-6 equal-rank metrics with optional detail (D189/D190)."""
+
+    surface_id: SemanticId
+    heading: NonEmptyStr
+    metrics: list[MetricStackMetric] = Field(min_length=2, max_length=6)
+    detail: Optional[MetricOverviewDetail] = None
+
+    @model_validator(mode="after")
+    def _metric_ids(self) -> MetricOverviewPayload:
+        ids = [m.metric_id for m in self.metrics]
+        if len(ids) != len(set(ids)):
+            raise ValueError(
+                "metric_id values must be unique within metric_overview"
+            )
+        if (
+            self.detail is not None
+            and self.detail.surface_id == self.surface_id
+        ):
+            raise ValueError(
+                "detail.surface_id must differ from metrics surface_id"
+            )
+        return self
+
 class SupportTableVisual(ClosedModel):
     """Chart support table with explicit category/independent alignment (D140/D167/D266)."""
 
@@ -2696,13 +2879,6 @@ class SingleChartSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
-# Kernel compositions: covers + divider + narrative + legal + data_table (#191)
-# plus annex/comparison tables (#180), single_chart axis charts
-# (line #182; grouped/horizontal bars #183; stacked_bar #184; waterfall #186;
-# heatmap #187), linear/grouping compositions (#192), and relationship/decision compositions (#193).
-# Other D210 layout_type values are recognized at the envelope and rejected
-# with a clear "not yet implemented in kernel" structure error so the closed
-# vocabulary stays honest without shipping empty payload shells.
 class FeatureCardsSlide(_SlideBase):
     """Equal-rank icon cards (D201/D281)."""
 
@@ -2845,10 +3021,63 @@ class StateTransitionSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
+class DualChartSlide(_SlideBase):
+    layout_type: Literal["dual_chart"] = "dual_chart"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: DualChartPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> DualChartSlide:
+        return _ordinary_footer_subset(self)
+
+
+class ChartHeroDualSlide(_SlideBase):
+    layout_type: Literal["chart_hero_dual"] = "chart_hero_dual"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: ChartHeroDualPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> ChartHeroDualSlide:
+        return _ordinary_footer_subset(self)
+
+
+class MetricOverviewSlide(_SlideBase):
+    layout_type: Literal["metric_overview"] = "metric_overview"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: MetricOverviewPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> MetricOverviewSlide:
+        return _ordinary_footer_subset(self)
+
+
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
 # plus annex/comparison tables (#180), single_chart axis charts
-# (line #182; grouped/horizontal bars #183), linear/grouping (#192),
-# and cards/reviews/quotations/state transitions (#194).
+# (line #182; grouped/horizontal bars #183; stacked_bar #184; waterfall #186;
+# heatmap #187), linear/grouping compositions (#192), relationship/decision
+# compositions (#193), dual/hero/metric compositions (#196), and
+# cards/reviews/quotations/state transitions (#194/#219).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
@@ -2874,6 +3103,9 @@ Slide = Annotated[
         StakeholderMapSlide,
         QuadrantMatrixSlide,
         SingleChartSlide,
+        DualChartSlide,
+        ChartHeroDualSlide,
+        MetricOverviewSlide,
         FeatureCardsSlide,
         QuotationSlide,
         EvidenceReviewSlide,
@@ -2885,94 +3117,17 @@ Slide = Annotated[
 ]
 
 
-def _slide_table_surface_ids(slide: Any) -> list[str]:
-    """Authored table/metric surface IDs owned by one slide."""
+def _axis_charts_on_slide(slide: Any) -> list[Any]:
+    """Axis-chart / heatmap visuals owned by one slide (formats + surface ids)."""
     lt = getattr(slide, "layout_type", None)
     payload = getattr(slide, "payload", None)
-    if lt in (
-        "data_table",
-        "annex_table",
-        "period_comparison",
-        "comparison_cards",
-    ):
-        ids = [payload.table.surface_id]
-        strip = getattr(payload, "metric_strip", None)
-        if strip is not None:
-            ids.append(strip.surface_id)
-        return ids
-    if lt == "grouped_annex_table":
-        return [peer.table.surface_id for peer in payload.tables]
     if lt == "single_chart":
-        chart = payload.primary_visual
-        # Heatmap owns a nested D255 table with its own deck-unique surface (D308).
-        table = getattr(chart, "table_data", None)
-        if table is not None:
-            return [table.surface_id]
+        return [payload.primary_visual]
+    if lt == "dual_chart":
+        return list(payload.panes)
+    if lt == "chart_hero_dual":
+        return [payload.primary_visual]
     return []
-
-
-def _slide_semantic_values(slide: Any) -> list[Any]:
-    """Every D213 value that may carry a format_id on one slide."""
-    values: list[Any] = []
-    for table in _slide_tables(slide):
-        for row in table.rows:
-            values.extend(row.cells.values())
-    payload = getattr(slide, "payload", None)
-    strip = getattr(payload, "metric_strip", None) if payload is not None else None
-    if strip is not None:
-        values.extend(m.value for m in strip.metrics)
-    return values
-
-
-def _slide_tables(slide: Any) -> list[TableData]:
-    lt = getattr(slide, "layout_type", None)
-    payload = getattr(slide, "payload", None)
-    if lt in (
-        "data_table",
-        "annex_table",
-        "period_comparison",
-        "comparison_cards",
-    ):
-        return [payload.table]
-    if lt == "grouped_annex_table":
-        return [peer.table for peer in payload.tables]
-    if lt == "single_chart":
-        table = getattr(payload.primary_visual, "table_data", None)
-        if table is not None:
-            return [table]
-    return []
-
-Slide = Annotated[
-    Union[
-        OpeningCoverSlide,
-        SectionDividerSlide,
-        ClosingCoverSlide,
-        NarrativeSlide,
-        LegalNoticeSlide,
-        DataTableSlide,
-        AnnexTableSlide,
-        GroupedAnnexTableSlide,
-        PeriodComparisonSlide,
-        ComparisonCardsSlide,
-        ProcessFlowSlide,
-        TimelineSlide,
-        LayeredArchitectureSlide,
-        DataPipelineSlide,
-        DecisionTreeSlide,
-        FeedbackLoopSlide,
-        HierarchySlide,
-        StakeholderMapSlide,
-        QuadrantMatrixSlide,
-        SingleChartSlide,
-        FeatureCardsSlide,
-        QuotationSlide,
-        EvidenceReviewSlide,
-        RiskOpportunityReviewSlide,
-        RecommendationCaseSlide,
-        StateTransitionSlide,
-    ],
-    Field(discriminator="layout_type"),
-]
 
 
 def _slide_table_surface_ids(slide: Any) -> list[str]:
@@ -3006,6 +3161,21 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
             else:
                 ids.append(support.table.surface_id)
         return ids
+    if lt == "chart_hero_dual":
+        ids: list[str] = []
+        support = getattr(payload, "support_visual", None)
+        if support is not None:
+            ids.append(support.surface_id)
+            table = getattr(support, "table", None)
+            if table is not None and table.surface_id not in ids:
+                ids.append(table.surface_id)
+        ids.append(payload.hero_visual.surface_id)
+        return ids
+    if lt == "metric_overview":
+        ids = [payload.surface_id]
+        if payload.detail is not None:
+            ids.append(payload.detail.surface_id)
+        return ids
     return []
 
 
@@ -3022,6 +3192,18 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
     support = getattr(payload, "support", None) if payload is not None else None
     if isinstance(support, MetricStripSupport):
         values.extend(m.value for m in support.metrics)
+    lt = getattr(slide, "layout_type", None)
+    if lt == "chart_hero_dual" and payload is not None:
+        hero = payload.hero_visual
+        if getattr(hero, "type", None) == "metric_stack":
+            values.extend(m.value for m in hero.metrics)
+        elif getattr(hero, "type", None) == "driver_card":
+            values.extend(r.value for r in hero.rows)
+        hsv = getattr(payload, "support_visual", None)
+        if hsv is not None and getattr(hsv, "type", None) == "metric_strip":
+            values.extend(m.value for m in hsv.metrics)
+    if lt == "metric_overview" and payload is not None:
+        values.extend(m.value for m in payload.metrics)
     return values
 
 
@@ -3046,6 +3228,11 @@ def _slide_tables(slide: Any) -> list[TableData]:
         if support is not None and not isinstance(support, MetricStripSupport):
             tables.append(support.table)
         return tables
+    if lt == "chart_hero_dual":
+        support = getattr(payload, "support_visual", None)
+        if support is not None and getattr(support, "type", None) != "metric_strip":
+            return [support.table]
+        return []
     return []
 
 
@@ -3092,8 +3279,8 @@ class Deck(ClosedModel):
         surface_ids: list[str] = []
         for slide in self.slides:
             surface_ids.extend(_slide_table_surface_ids(slide))
-            if isinstance(slide, SingleChartSlide):
-                surface_ids.append(slide.payload.primary_visual.surface_id)
+            for chart in _axis_charts_on_slide(slide):
+                surface_ids.append(chart.surface_id)
             disclosure = getattr(slide, "disclosure", None)
             if disclosure is not None:
                 surface_ids.extend(section.surface_id for section in disclosure.sections)
@@ -3110,8 +3297,7 @@ class Deck(ClosedModel):
                 if fid not in self.number_formats:
                     raise ValueError(f"unresolved format_id {fid!r}")
                 referenced_formats.add(fid)
-            if isinstance(slide, SingleChartSlide):
-                chart = slide.payload.primary_visual
+            for chart in _axis_charts_on_slide(slide):
                 if isinstance(
                     chart,
                     (

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart/heatmap/bar_charts/stacked_bar/waterfall/chart_support/linear_grouping/relationship/cards_reviews/migrate.
+Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart/heatmap/bar_charts/stacked_bar/waterfall/chart_support/linear_grouping/relationship/cards_reviews/migrate/canonical_amex.
 
 ## Ownership
 
@@ -53,7 +53,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 ## Verification
 
 - `python -m pytest -q`
-- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_bar_charts.py tests/test_renderer_v3_stacked_bar.py tests/test_renderer_v3_waterfall.py tests/test_renderer_v3_chart_support.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_relationship.py tests/test_renderer_v3_cards_reviews.py tests/test_renderer_v3_migrate.py`
+- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_bar_charts.py tests/test_renderer_v3_stacked_bar.py tests/test_renderer_v3_waterfall.py tests/test_renderer_v3_chart_support.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_relationship.py tests/test_renderer_v3_cards_reviews.py tests/test_renderer_v3_migrate.py tests/test_renderer_v3_canonical_amex.py`
 
 ## Child DOX Index
 
