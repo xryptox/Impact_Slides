@@ -830,8 +830,9 @@ def _freeze_stacked_bar_chart(
                 "format_id": fmt_for,
             }
 
-        # Always record computed sign-side totals for D247 (D304); withhold when
-        # any contributor is missing (D92). Authored is a separate fact (D241).
+        # Always record both computed sign-side totals for D247 (D304), including
+        # plain 0 when a side has no non-zero contributors. Withhold only when any
+        # contributor is missing (D92). Authored is a separate fact (D241).
         if pos_missing:
             stack_totals.append(
                 _total_entry(
@@ -843,7 +844,7 @@ def _freeze_stacked_bar_chart(
                     fmt_for=fmt_id,
                 )
             )
-        elif pos_sum > 0:
+        else:
             stack_totals.append(
                 _total_entry(
                     side="positive",
@@ -865,7 +866,7 @@ def _freeze_stacked_bar_chart(
                     fmt_for=fmt_id,
                 )
             )
-        elif neg_sum < 0:
+        else:
             stack_totals.append(
                 _total_entry(
                     side="negative",
@@ -1725,8 +1726,6 @@ def _paint_bar_svg(
             vx, vy = cov["x"], cov["y"]
             v_px = cov["value_px"]
             t_px = cov["text_px"]
-            # Approximate value width for sequential label placement.
-            v_w = max(24.0, len(cov["value_visible"]) * v_px * 0.55)
             label_parts = [cov["label"]]
             if cov.get("period"):
                 label_parts.append(cov["period"])
@@ -2540,15 +2539,24 @@ def _place_stack_labels(
                 }
             )
 
+    # D241/D299/D304: finite authored total replaces computed total labels for
+    # that category only. D247 still keeps computed sides in stack_totals.
+    authored_override = {
+        t["category_id"]
+        for t in stack_totals
+        if t.get("source") == "authored"
+        and not t.get("missing")
+        and t.get("value") is not None
+    }
     for t in stack_totals:
         if t.get("missing") or t.get("withheld"):
             # Withheld/missing stay in D106 only — no visual label.
             continue
+        if t.get("source") == "computed" and t["category_id"] in authored_override:
+            continue
         if not show_totals and t.get("source") != "authored":
             continue
         # Authored implies show; computed follows policy.
-        if not show_totals and t.get("source") == "authored":
-            pass  # still show
         text = t["visible"]
         placements.append(
             {
