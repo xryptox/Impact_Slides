@@ -70,6 +70,8 @@ _HEAT_WHITE = resolve_color("white", role="text_on_dark")
 # Plot geometry on the 1920 content width (D68 stage; single_chart body region).
 PLOT_W = 1400
 PLOT_H = 620
+PLOT_FLOOR_W = 320  # D47 absolute plot floor
+PLOT_FLOOR_H = 240
 PAD_L = 88
 PAD_R = 160  # exterior identity/context lane
 PAD_T = 28
@@ -122,8 +124,9 @@ def freeze_line_chart(
     show_values = _ordinary_values_show(chart)
 
     # Geometry
-    plot_w = max(200, min(PLOT_W, box_w - PAD_L - PAD_R))
-    plot_h = max(160, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
+    # D47 absolute plot floor; only surplus above may feed support.
+    plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - PAD_L - PAD_R))
+    plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
     n = len(cats)
     xs = [
         PAD_L + (plot_w * i / (n - 1) if n > 1 else plot_w / 2) for i in range(n)
@@ -314,8 +317,9 @@ def _freeze_grouped_bar_chart(
         pad_t = max(PAD_T, 40)  # outside value headroom
         pad_b = PAD_B + group_pad
 
-    plot_w = max(200, min(PLOT_W, box_w - pad_l - pad_r))
-    plot_h = max(160, min(PLOT_H, box_h - pad_t - pad_b - 40))
+    # D47 absolute plot floor; only surplus above may feed support.
+    plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - pad_l - pad_r))
+    plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - pad_t - pad_b - 40))
     n_cat = len(cats)
     n_ser = len(series_plans)
     geom = _bar_slot_geometry(

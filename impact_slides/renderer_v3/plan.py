@@ -57,6 +57,10 @@ CHART_PANE_SUBTITLE_PX: Final = 22
 CHART_PANE_PAD_Y: Final = 20
 CHART_PANE_GAP: Final = 4
 CHART_VIEW_MIN_H: Final = 252
+# D47 absolute plot floor 320×240; view min keeps pads around that plot.
+CHART_PLOT_FLOOR_W: Final = 320
+CHART_PLOT_FLOOR_H: Final = 240
+CHART_VIEW_FLOOR_H: Final = CHART_PLOT_FLOOR_H + 28 + 64  # plot + PAD_T + PAD_B
 _AXIS_CHART_ROLES: Final = frozenset(
     {
         "line_chart",
@@ -66,6 +70,17 @@ _AXIS_CHART_ROLES: Final = frozenset(
         "waterfall_chart",
     }
 )
+SUPPORT_TABLE_FLOOR: Final = 14  # D44/D167 chart support tables
+SUPPORT_TABLE_CEIL: Final = 24
+OUTLINED_SUPPORT_FLOOR: Final = 22  # D166/D267
+OUTLINED_SUPPORT_CEIL: Final = 24
+OUTLINED_BOX_MIN: Final = 48
+OUTLINED_BOX_MAX: Final = 120  # content-sized; not full category pitch
+OUTLINED_BOX_GAP: Final = 8
+OUTLINED_LABEL_LANE_MIN: Final = 40  # grows with label; capped by first-box edge
+OUTLINED_PAD_Y: Final = 12
+OUTLINED_BOX_PAD_Y: Final = 16
+OUTLINED_ROW_EXTRA: Final = 12
 
 # Adaptive floors / ceilings (D12/D14/D51/D59/D171/D172/D225/D288).
 SUBTITLE_FLOOR: Final = 22
@@ -378,8 +393,38 @@ def plan_deck(
                 rewritten.append(e)
         events = rewritten
 
+    late_overflow: list[SurfacePlan] = []
     for sp in surfaces:
+        # Final category-center pass after measure/fit wrote col_widths.
+        if (
+            sp.role == "support_table"
+            and sp._table_spec is not None
+            and sp._table_spec.get("alignment") == "category"
+            and sp._table_spec.get("centers")
+        ):
+            if not _apply_category_table_widths(
+                sp._table_spec,
+                list(sp._table_spec["centers"]),
+                sp._box_w or CONTENT_W,
+            ):
+                was = sp._overflow
+                _fail_category_table_alignment(sp)
+                if not was and sp._overflow:
+                    late_overflow.append(sp)
+        if sp.role == "outlined_support" and sp._table_spec is not None:
+            size = sp.role_sizes.get("table") or OUTLINED_SUPPORT_FLOOR
+            _freeze_outlined_geometry(sp._table_spec, size)
         _seal_digests(sp)
+
+    if late_overflow:
+        for s in late_overflow:
+            events.append(_overflow_event(s))
+        if strict:
+            raise RendererValidationError(
+                sort_events(events),
+                handoff_schema_version=deck.meta.handoff_schema_version,
+                renderer_version=RENDERER_VERSION,
+            )
 
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
 
@@ -700,107 +745,19 @@ def _collect_surfaces(
                 out.append(bp)
                 adaptive_surfaces.append(bp)
         elif lt == "single_chart":
-            # single_chart axis charts + heatmap (D239/D240/D242–D243/D245/D246/D302/D304/D307/D308).
-            from .charts import freeze_chart, freeze_heatmap
-            from .models import HeatmapVisual
-
-            body_slots = 1
-            chart = slide.payload.primary_visual
-            if isinstance(chart, HeatmapVisual):
-                chart_spec = freeze_heatmap(
-                    chart,
-                    deck.number_formats,
-                    box_w=CONTENT_W,
-                    table_floor=HEATMAP_TABLE_FLOOR,
-                    colored=chart.surface_id not in uncolored_heatmap_surfaces,
-                )
-                # Heatmap is a native table: fit through table fitter (18–24px).
-                table_spec = _heatmap_table_spec(chart_spec)
-                text_items = [(t, False) for t in chart_spec["all_texts"]]
-                role_sizes = {"table": HEATMAP_TABLE_FLOOR}
-                if chart.heading:
-                    role_sizes["pane_title"] = 40
-                    if chart.subtitle:
-                        role_sizes["pane_subtitle"] = 22
-                out.append(
-                    SurfacePlan(
-                        surface_id=chart.surface_id,
-                        role="heatmap",
-                        slide_number=sn,
-                        slide_index=slide_index,
-                        layout_type=lt,
-                        slot_order=10,
-                        design_stage_region=region,
-                        role_sizes=role_sizes,
-                        _text_items=text_items,
-                        _box_w=CONTENT_W,
-                        _fit_role="table",
-                        _mode="adaptive",
-                        _margin_boxes=0,
-                        _default_size=HEATMAP_TABLE_FLOOR,
-                        _maximum_size=HEATMAP_TABLE_CEIL,
-                        _chrome_h=_heatmap_chrome_height(chart_spec),
-                        _table_spec=table_spec,
-                        _chart_spec=chart_spec,
-                        _chart_visual=chart,
-                        _chart_formats=deck.number_formats,
-                    )
-                )
-            else:
-                chart_spec = freeze_chart(
-                    chart,
-                    deck.number_formats,
-                    box_w=CONTENT_W,
-                )
-                text_items = _chart_text_items(chart_spec)
-                role_sizes = dict(chart_spec["role_sizes"])
-                # Pane title band is fixed chrome when authored (D9/D42).
-                if chart.heading:
-                    role_sizes["pane_title"] = 40
-                    if chart.subtitle:
-                        role_sizes["pane_subtitle"] = 22
-                chart_role = {
-                    "line": "line_chart",
-                    "grouped_bar": "grouped_bar_chart",
-                    "horizontal_bar": "horizontal_bar_chart",
-                    "stacked_bar": "stacked_bar_chart",
-                    "waterfall": "waterfall_chart",
-                }.get(chart.chart_type, f"{chart.chart_type}_chart")
-                out.append(
-                    SurfacePlan(
-                        surface_id=chart.surface_id,
-                        role=chart_role,
-                        slide_number=sn,
-                        slide_index=slide_index,
-                        layout_type=lt,
-                        slot_order=10,
-                        design_stage_region=region,
-                        role_sizes=role_sizes,
-                        display_identity_strategy=chart_spec["identity_strategy"],
-                        expected_placement_classes=sorted(
-                            {
-                                p["class"]
-                                for p in chart_spec["placements"]
-                                if p.get("class") and p["class"] != "suppressed"
-                            }
-                        ),
-                        _text_items=text_items,
-                        _box_w=CONTENT_W,
-                        _box_h=math.ceil(chart_spec["geometry"]["view_h"]),
-                        _fit_role=None,  # sizes frozen inside chart planner
-                        _mode=(
-                            chart.typography.mode
-                            if chart.typography is not None
-                            else "adaptive"
-                        ),
-                        _margin_boxes=0,
-                        _chrome_h=_chart_chrome_height(chart_spec),
-                        _chart_spec=chart_spec,
-                        _chart_visual=chart,
-                        _chart_formats=deck.number_formats,
-                    )
-                )
-            adaptive_surfaces.append(out[-1])
+            # single_chart axis charts + heatmap + optional support (D140/D252).
+            body_slots, body_plans = _collect_single_chart_body(
+                slide,
+                deck,
+                sn,
+                slide_index,
+                lt,
+                region,
+                uncolored_heatmap_surfaces=uncolored_heatmap_surfaces,
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
         else:
             # data_table / annex_table / period_comparison table surface(s).
             body_slots, body_plans = _collect_single_table_body(
@@ -914,7 +871,16 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
 
     def need(sp: SurfacePlan, size: int) -> int:
         if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES:
-            return CHART_VIEW_MIN_H
+            # D47: only space above the solved chart floor may feed support.
+            return max(CHART_VIEW_MIN_H, CHART_VIEW_FLOOR_H)
+        if sp._table_spec is not None and sp._table_spec.get("kind") == "outlined_support":
+            lab_px = size
+            val_px = sp.role_sizes.get("table", size)
+            label = sp._table_spec.get("label") or ""
+            lane_w = int(sp._table_spec.get("label_lane_w") or OUTLINED_LABEL_LANE_MIN)
+            lab_lines = _wrap_label_lines(label, lab_px, max(1, lane_w - 8))
+            box_h = max(OUTLINED_BOX_MIN, _line_box(val_px) + 16)
+            return max(len(lab_lines) * _line_box(lab_px), box_h) + OUTLINED_PAD_Y
         if sp._linear_spec is not None:
             ok, height = _linear_fit_detail(sp)
             return height if ok else 10**9
@@ -1027,6 +993,49 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                     if p.get("class") and p["class"] != "suppressed"
                 }
             )
+
+    # Rebind category-aligned support centers to the final frozen chart geometry.
+    chart_by_id = {
+        sp.surface_id: sp
+        for sp in surfaces
+        if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES
+    }
+    for sp in surfaces:
+        spec = sp._table_spec
+        if not spec:
+            continue
+        if spec.get("kind") not in {"outlined_support", "support_table"}:
+            continue
+        if spec.get("alignment") != "category" and spec.get("kind") != "outlined_support":
+            continue
+        chart_sp = chart_by_id.get(spec.get("chart_surface_id") or "")
+        if chart_sp is None or not chart_sp._chart_spec:
+            continue
+        cats = list(chart_sp._chart_spec.get("categories") or [])
+        g = chart_sp._chart_spec.get("geometry") or {}
+        centers = [
+            {"category_id": c["category_id"], "x": float(c.get("x") or 0.0)}
+            for c in cats
+            if "x" in c
+        ]
+        sp._table_spec = dict(spec)
+        sp._table_spec["centers"] = centers
+        sp._table_spec["chart_view_w"] = int(g.get("view_w") or CONTENT_W)
+        if centers and sp._table_spec.get("kind") == "outlined_support":
+            label = sp._table_spec.get("label") or ""
+            label_need = int(math.ceil(_text_width(label, OUTLINED_SUPPORT_FLOOR))) + 8
+            box_w = int(sp._table_spec.get("box_w") or OUTLINED_BOX_MIN)
+            first_left = centers[0]["x"] - box_w / 2
+            lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
+            sp._table_spec["label_lane_w"] = min(
+                max(OUTLINED_LABEL_LANE_MIN, label_need), lane_cap
+            )
+            _freeze_outlined_geometry(sp._table_spec, OUTLINED_SUPPORT_FLOOR)
+        elif centers and sp._table_spec.get("kind") == "support_table":
+            if not _apply_category_table_widths(
+                sp._table_spec, centers, sp._box_w or CONTENT_W
+            ):
+                _fail_category_table_alignment(sp)
 
 
 # ---------------------------------------------------------------------------
@@ -1583,7 +1592,11 @@ def _block_text_items(block: Any) -> list[tuple[str, bool]]:
 # ---------------------------------------------------------------------------
 
 
-def _table_floor_ceil(lt: str) -> tuple[int, int]:
+def _table_floor_ceil(lt: str, *, role: str | None = None) -> tuple[int, int]:
+    if role == "support_table":
+        return SUPPORT_TABLE_FLOOR, SUPPORT_TABLE_CEIL
+    if role == "outlined_support":
+        return OUTLINED_SUPPORT_FLOOR, OUTLINED_SUPPORT_CEIL
     if lt in ("annex_table", "grouped_annex_table"):
         return ANNEX_TABLE_FLOOR, ANNEX_TABLE_CEIL
     return TABLE_FLOOR, TABLE_CEIL
@@ -1602,7 +1615,7 @@ def _table_surface_plan(
     role: str,
     extra_spec: dict[str, Any] | None = None,
 ) -> SurfacePlan:
-    floor, ceil = _table_floor_ceil(lt)
+    floor, ceil = _table_floor_ceil(lt, role=role)
     table_typo = table.typography
     mode, sync, explicit = _typo_fields(table_typo, "table_font_size")
     table_spec = _build_table_spec(table, deck.number_formats)
@@ -1629,6 +1642,288 @@ def _table_surface_plan(
         _default_size=floor,
         _maximum_size=ceil,
         _table_spec=table_spec,
+    )
+
+
+def _collect_single_chart_body(
+    slide: Any,
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    *,
+    uncolored_heatmap_surfaces: set[str],
+) -> tuple[int, list[SurfacePlan]]:
+    """Chart primary + optional typed support under D10/D47/D140/D252."""
+    from .charts import freeze_chart, freeze_heatmap
+    from .models import (
+        HeatmapVisual,
+        MetricStripSupport,
+        OutlinedSupportVisual,
+        SupportTableVisual,
+    )
+
+    plans: list[SurfacePlan] = []
+    chart = slide.payload.primary_visual
+    slot = 10
+    if isinstance(chart, HeatmapVisual):
+        chart_spec = freeze_heatmap(
+            chart,
+            deck.number_formats,
+            box_w=CONTENT_W,
+            table_floor=HEATMAP_TABLE_FLOOR,
+            colored=chart.surface_id not in uncolored_heatmap_surfaces,
+        )
+        table_spec = _heatmap_table_spec(chart_spec)
+        text_items = [(t, False) for t in chart_spec["all_texts"]]
+        role_sizes = {"table": HEATMAP_TABLE_FLOOR}
+        if chart.heading:
+            role_sizes["pane_title"] = 40
+            if chart.subtitle:
+                role_sizes["pane_subtitle"] = 22
+        plans.append(
+            SurfacePlan(
+                surface_id=chart.surface_id,
+                role="heatmap",
+                slide_number=sn,
+                slide_index=slide_index,
+                layout_type=lt,
+                slot_order=slot,
+                design_stage_region=region,
+                role_sizes=role_sizes,
+                _text_items=text_items,
+                _box_w=CONTENT_W,
+                _fit_role="table",
+                _mode="adaptive",
+                _margin_boxes=0,
+                _default_size=HEATMAP_TABLE_FLOOR,
+                _maximum_size=HEATMAP_TABLE_CEIL,
+                _chrome_h=_heatmap_chrome_height(chart_spec),
+                _table_spec=table_spec,
+                _chart_spec=chart_spec,
+                _chart_visual=chart,
+                _chart_formats=deck.number_formats,
+            )
+        )
+    else:
+        chart_spec = freeze_chart(
+            chart,
+            deck.number_formats,
+            box_w=CONTENT_W,
+        )
+        text_items = _chart_text_items(chart_spec)
+        role_sizes = dict(chart_spec["role_sizes"])
+        if chart.heading:
+            role_sizes["pane_title"] = 40
+            if chart.subtitle:
+                role_sizes["pane_subtitle"] = 22
+        chart_role = {
+            "line": "line_chart",
+            "grouped_bar": "grouped_bar_chart",
+            "horizontal_bar": "horizontal_bar_chart",
+            "stacked_bar": "stacked_bar_chart",
+            "waterfall": "waterfall_chart",
+        }.get(chart.chart_type, f"{chart.chart_type}_chart")
+        plans.append(
+            SurfacePlan(
+                surface_id=chart.surface_id,
+                role=chart_role,
+                slide_number=sn,
+                slide_index=slide_index,
+                layout_type=lt,
+                slot_order=slot,
+                design_stage_region=region,
+                role_sizes=role_sizes,
+                display_identity_strategy=chart_spec["identity_strategy"],
+                expected_placement_classes=sorted(
+                    {
+                        p["class"]
+                        for p in chart_spec["placements"]
+                        if p.get("class") and p["class"] != "suppressed"
+                    }
+                ),
+                _text_items=text_items,
+                _box_w=CONTENT_W,
+                _box_h=math.ceil(chart_spec["geometry"]["view_h"]),
+                _fit_role=None,
+                _mode=(
+                    chart.typography.mode
+                    if chart.typography is not None
+                    else "adaptive"
+                ),
+                _margin_boxes=0,
+                _chrome_h=_chart_chrome_height(chart_spec),
+                _chart_spec=chart_spec,
+                _chart_visual=chart,
+                _chart_formats=deck.number_formats,
+            )
+        )
+    slot += 1
+
+    support = getattr(slide.payload, "support", None)
+    if support is None:
+        return len(plans), plans
+
+    if isinstance(support, MetricStripSupport):
+        # MetricStripSupport is duck-compatible with MetricStrip plan fields.
+        plans.append(
+            _metric_strip_plan(
+                support,
+                deck,
+                sn=sn,
+                slide_index=slide_index,
+                lt=lt,
+                region=region,
+                slot_order=slot,
+            )
+        )
+    elif isinstance(support, SupportTableVisual):
+        # Category alignment may omit visual header when chart owns categories.
+        hide_header = False
+        alignment = support.alignment
+        if alignment == "category" and not isinstance(chart, HeatmapVisual):
+            hide_header = bool(getattr(chart.category_axis, "visible", False))
+        plans.append(
+            _table_surface_plan(
+                table=support.table,
+                deck=deck,
+                sn=sn,
+                slide_index=slide_index,
+                lt=lt,
+                region=region,
+                slot_order=slot,
+                box_w=CONTENT_W,
+                role="support_table",
+                extra_spec={
+                    "kind": "support_table",
+                    "alignment": alignment,
+                    "hide_header": hide_header,
+                    "paint_as": "support_table",
+                    "chart_surface_id": chart.surface_id,
+                },
+            )
+        )
+    elif isinstance(support, OutlinedSupportVisual):
+        plans.append(
+            _outlined_support_plan(
+                support=support,
+                chart=chart,
+                chart_spec=plans[0]._chart_spec or {},
+                deck=deck,
+                sn=sn,
+                slide_index=slide_index,
+                lt=lt,
+                region=region,
+                slot_order=slot,
+            )
+        )
+    return len(plans), plans
+
+
+def _outlined_support_plan(
+    *,
+    support: Any,
+    chart: Any,
+    chart_spec: dict[str, Any],
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    slot_order: int,
+) -> SurfacePlan:
+    """Category-aligned outlined boxes under a chart (D166/D267)."""
+    from .format import format_semantic_value
+
+    table = support.table
+    row = table.rows[0]
+    cats = list(chart_spec.get("categories") or [])
+    centers = []
+    values = []
+    texts: list[tuple[str, bool]] = [(table.stub_header.label, True)]
+    for col in table.columns:
+        fv = format_semantic_value(row.cells[col.column_id], deck.number_formats)
+        values.append(
+            {
+                "column_id": col.column_id,
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+                "role": fv.role,
+            }
+        )
+        texts.append((fv.visible, True))
+    for cat in cats:
+        centers.append(
+            {
+                "category_id": cat["category_id"],
+                "x": float(cat.get("x") or 0.0),
+            }
+        )
+    g = chart_spec.get("geometry") or {}
+    view_w = int(g.get("view_w") or CONTENT_W)
+    # Chart plot is left-aligned inside the content column at its view width.
+    chart_offset_x = 0
+    label = table.stub_header.label
+    # Content-sized boxes centered on frozen category centers (D166).
+    box_w = OUTLINED_BOX_MIN
+    for v in values:
+        need = int(math.ceil(_text_width(v["visible"], OUTLINED_SUPPORT_FLOOR, strong=True))) + 16
+        box_w = max(box_w, min(OUTLINED_BOX_MAX, need))
+    label_need = int(math.ceil(_text_width(label, OUTLINED_SUPPORT_FLOOR))) + 8
+    if centers:
+        first_left = centers[0]["x"] + chart_offset_x - box_w / 2
+        lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
+        lane_w = min(max(OUTLINED_LABEL_LANE_MIN, label_need), lane_cap)
+    else:
+        lane_w = max(OUTLINED_LABEL_LANE_MIN, label_need)
+    base = _build_table_spec(table, deck.number_formats)
+    base.update(
+        {
+            "kind": "outlined_support",
+            "paint_as": "outlined_support",
+            "label": label,
+            "label_lane_w": lane_w,
+            "values": values,
+            "centers": centers,
+            "chart_offset_x": chart_offset_x,
+            "chart_view_w": view_w,
+            "chart_surface_id": chart.surface_id,
+            "box_min": OUTLINED_BOX_MIN,
+            "box_w": box_w,
+            "alignment": "category",
+        }
+    )
+    _freeze_outlined_geometry(base, OUTLINED_SUPPORT_FLOOR)
+    return SurfacePlan(
+        surface_id=table.surface_id,
+        role="outlined_support",
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=slot_order,
+        design_stage_region=region,
+        role_sizes={"table": OUTLINED_SUPPORT_FLOOR},
+        _text_items=texts,
+        _box_w=CONTENT_W,
+        _fit_role="table",
+        _typo=table.typography,
+        _mode=(
+            table.typography.mode if table.typography is not None else "adaptive"
+        ),
+        _sync_group=(
+            table.typography.sync_group
+            if table.typography is not None and table.typography.mode == "adaptive"
+            else None
+        ),
+        _explicit_size=(
+            table.typography.table_font_size if table.typography is not None else None
+        ),
+        _margin_boxes=0,
+        _chrome_h=OUTLINED_PAD_Y,
+        _default_size=OUTLINED_SUPPORT_FLOOR,
+        _maximum_size=OUTLINED_SUPPORT_CEIL,
+        _table_spec=base,
     )
 
 
@@ -2599,9 +2894,16 @@ def _table_fit_detail(
             # Scale disclosure paints at the resolved table size (D22/D44/D257).
             scale_h = _line_box(px) + BLOCK_MARGIN_Y
 
-        n_header_rows = (1 if group_lines else 0) + 1
+        # Category-aligned support may omit visual header when chart owns cats (D167).
+        hide_header = bool(spec.get("hide_header"))
+        if hide_header:
+            n_header_rows = 0
+            header_block = 0
+        else:
+            n_header_rows = (1 if group_lines else 0) + 1
+            header_block = (group_lines + header_lines) * line_h
         height = (
-            (group_lines + header_lines) * line_h
+            header_block
             + body_lines_total * line_h
             + (spec["n_rows"] + n_header_rows) * TABLE_CELL_PAD_Y
             + (spec["n_rows"] + n_header_rows) * TABLE_RULE_Y
@@ -2722,7 +3024,9 @@ def _table_fit_detail(
 
 
 def _is_rectangular_table_spec(spec: dict[str, Any] | None) -> bool:
-    return bool(spec) and spec.get("kind") != "metric_strip" and "col_ids" in (spec or {})
+    if not spec or "col_ids" not in spec:
+        return False
+    return spec.get("kind") not in {"metric_strip", "outlined_support"}
 
 
 def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
@@ -2739,6 +3043,8 @@ def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
         return ok, "plan.text_wrapped" in codes
     if spec is not None and spec.get("kind") == "metric_strip":
         return _metric_strip_fit_detail(sp, size)
+    if spec is not None and spec.get("kind") == "outlined_support":
+        return _outlined_support_fit_detail(sp, size)
     return _text_fits_detail(
         sp._text_items,
         size,
@@ -2748,6 +3054,130 @@ def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
         indent_em=sp._indent_em,
         unit_indent_ems=sp._unit_indent_ems,
     )
+
+
+def _outlined_support_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
+    """Label lane + one outlined box per category center (D166/D267)."""
+    assert sp._table_spec is not None
+    spec = sp._table_spec
+    label = spec.get("label") or ""
+    lane_w = int(spec.get("label_lane_w") or OUTLINED_LABEL_LANE_MIN)
+    centers = list(spec.get("centers") or [])
+    values = list(spec.get("values") or [])
+    box_min = int(spec.get("box_min") or OUTLINED_BOX_MIN)
+    box_w = int(spec.get("box_w") or box_min)
+    # Recompute content-sized width at the candidate type size.
+    for v in values:
+        need = int(math.ceil(_text_width(v["visible"], size, strong=True))) + 16
+        box_w = max(box_w, min(OUTLINED_BOX_MAX, need))
+    lab_lines = _wrap_label_lines(label, size, max(1, lane_w - 8))
+    if len(lab_lines) > 2:
+        return False, True
+    wrapped = len(lab_lines) > 1
+    box_h = max(box_min, _line_box(size) + 16)
+    for v in values:
+        if _text_width(v["visible"], size, strong=True) > box_w - 8:
+            return False, wrapped
+    # Label lane must not overlap first box (within 2px tolerance).
+    if centers:
+        first_left = centers[0]["x"] + float(spec.get("chart_offset_x") or 0) - box_w / 2
+        if lane_w > first_left + 2:  # allow 2px alignment tolerance (D166)
+            return False, wrapped
+    need_h = max(len(lab_lines) * _line_box(size), box_h) + OUTLINED_PAD_Y
+    fits = True if sp._box_h <= 0 else need_h <= sp._box_h + sp._chrome_h
+    # Stash resolved box width for paint.
+    if fits or sp._box_h <= 0:
+        spec["box_w"] = box_w
+        _freeze_outlined_geometry(spec, size)
+    return fits, wrapped
+
+
+def _freeze_outlined_geometry(spec: dict[str, Any], size: int) -> None:
+    """Seal painter-consumed outlined geometry at plan time (D69/D166)."""
+    box_min = int(spec.get("box_min") or OUTLINED_BOX_MIN)
+    box_w = int(spec.get("box_w") or box_min)
+    box_h = max(box_min, _line_box(size) + OUTLINED_BOX_PAD_Y)
+    spec["box_w"] = box_w
+    spec["box_h"] = box_h
+    spec["row_h"] = max(box_h + OUTLINED_ROW_EXTRA, box_min)
+    if "label" not in spec or not spec["label"]:
+        spec["label"] = ""
+
+
+def _apply_category_table_widths(
+    spec: dict[str, Any],
+    centers: list[dict[str, Any]],
+    box_w: int,
+) -> bool:
+    """Freeze content-sized cell width + lane for center-positioned paint (D167/D266).
+
+    Contiguous HTML colgroups cannot center on chart x when cat0 sits at pad_l;
+    painters place cells at frozen centers instead (same contract as outlined_support).
+    Returns True when category-centered geometry is sealed; False when freeze fails
+    (caller must demote to independent / mark overflow).
+    """
+    n = len(centers)
+    if n == 0 or n != int(spec.get("n_cols") or 0):
+        spec.pop("category_centered", None)
+        return False
+    px = SUPPORT_TABLE_FLOOR
+    headers = list(spec.get("display_headers") or spec.get("header_full") or [])
+    cells = list(spec.get("cells_vis") or [])
+    row_labs = list(spec.get("display_row_labels") or spec.get("row_labels_full") or [])
+    stub_need = 24.0
+    if headers:
+        stub_need = max(stub_need, _text_width(headers[0], px, strong=True) + 16)
+    for lab in row_labs:
+        stub_need = max(stub_need, _text_width(lab, px, strong=True) + 16)
+    cell_w = 40.0
+    for i in range(n):
+        if len(headers) > i + 1 and not spec.get("hide_header"):
+            cell_w = max(cell_w, _text_width(headers[i + 1], px, strong=True) + 16)
+        for row in cells:
+            if i < len(row):
+                cell_w = max(cell_w, _text_width(row[i], px) + 16)
+    cell_w = int(math.ceil(min(float(OUTLINED_BOX_MAX), max(40.0, cell_w))))
+    xs = [float(c["x"]) for c in centers]
+    first_left = xs[0] - cell_w / 2.0
+    lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
+    lane_w = min(max(int(math.ceil(stub_need)), OUTLINED_LABEL_LANE_MIN), lane_cap)
+    if lane_w > first_left + 2:
+        spec.pop("category_centered", None)
+        return False
+    # Ensure cells don't overlap neighbors when pitch is tight.
+    if n >= 2:
+        pitch = min(xs[i + 1] - xs[i] for i in range(n - 1))
+        if cell_w > pitch - OUTLINED_BOX_GAP:
+            cell_w = max(24, int(math.floor(pitch - OUTLINED_BOX_GAP)))
+            first_left = xs[0] - cell_w / 2.0
+            lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
+            lane_w = min(lane_w, lane_cap)
+            if lane_w > first_left + 2 or cell_w < 24:
+                spec.pop("category_centered", None)
+                return False
+    if xs[-1] + cell_w / 2.0 > box_w + 2:
+        spec.pop("category_centered", None)
+        return False
+    spec["cell_w"] = cell_w
+    spec["label_lane_w"] = lane_w
+    spec["category_centered"] = True
+    return True
+
+
+def _fail_category_table_alignment(sp: SurfacePlan) -> None:
+    """Category-center freeze failed: mark overflow and force independent demotion."""
+    sp._overflow = True
+    if sp._table_spec is not None:
+        sp._table_spec = dict(sp._table_spec)
+        sp._table_spec.pop("category_centered", None)
+        if sp._table_spec.get("alignment") == "category":
+            sp._table_spec["alignment"] = "independent"
+            sp._table_spec["hide_header"] = False
+            sp.fallback = "independent_support_table"
+            if "plan.support_alignment_independent" not in sp.adaptation_codes:
+                sp.adaptation_codes.append("plan.support_alignment_independent")
+            return
+    _apply_composition_fallback(sp)
 
 
 def _metric_strip_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
@@ -3247,6 +3677,23 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
         sp.role_sizes["label"] = size
         sp.role_sizes["detail"] = size
         sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
+    elif sp.role == "outlined_support":
+        sp.role_sizes["table"] = size
+        sp.role_sizes["label"] = size
+        if sp._table_spec is not None:
+            _freeze_outlined_geometry(sp._table_spec, size)
+    elif sp.role == "support_table" and sp._table_spec is not None:
+        # After table fit freezes col_widths, re-center on category x (D167).
+        if (
+            sp._table_spec.get("alignment") == "category"
+            and sp._table_spec.get("centers")
+        ):
+            if not _apply_category_table_widths(
+                sp._table_spec,
+                list(sp._table_spec["centers"]),
+                sp._box_w or CONTENT_W,
+            ):
+                _fail_category_table_alignment(sp)
     elif sp.role == "comparison_cards" and sp._table_spec:
         roles = sp._table_spec.get("card_role_sizes") or {}
         if roles:
@@ -3259,6 +3706,39 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
 def _apply_composition_fallback(sp: SurfacePlan) -> None:
     """Non-strict composition fallbacks preserve complete data (D185/D186/D187/D272–D277)."""
     if not sp._overflow:
+        return
+    if sp.fallback is not None and sp.fallback != "fallback_unresolved":
+        return
+    if sp.role == "outlined_support" and sp._table_spec is not None:
+        # D267: whole surface → support_table; keep category when IDs/centers survive.
+        sp.fallback = "support_table"
+        sp._table_spec = dict(sp._table_spec)
+        sp._table_spec["kind"] = "support_table"
+        sp._table_spec["paint_as"] = "support_table"
+        centers = list(sp._table_spec.get("centers") or [])
+        n_cols = int(sp._table_spec.get("n_cols") or 0)
+        keep_cat = bool(centers) and n_cols == len(centers)
+        sp._table_spec["alignment"] = "category" if keep_cat else "independent"
+        # Category keeps chart-owned header omission only when still category.
+        if not keep_cat:
+            sp._table_spec["hide_header"] = False
+        sp.role = "support_table"
+        sp.role_sizes["table"] = SUPPORT_TABLE_FLOOR
+        sp._default_size = SUPPORT_TABLE_FLOOR
+        sp._maximum_size = SUPPORT_TABLE_CEIL
+        return
+    if (
+        sp.role == "support_table"
+        and sp._table_spec is not None
+        and sp._table_spec.get("alignment") == "category"
+    ):
+        # D167: invalid/unfit category alignment → diagnosed independent table.
+        sp.fallback = "independent_support_table"
+        sp._table_spec = dict(sp._table_spec)
+        sp._table_spec["alignment"] = "independent"
+        sp._table_spec["hide_header"] = False
+        sp._table_spec.pop("category_centered", None)
+        sp.adaptation_codes.append("plan.support_alignment_independent")
         return
     if sp.role == "comparison_cards":
         sp.fallback = "ordinary_data_table"

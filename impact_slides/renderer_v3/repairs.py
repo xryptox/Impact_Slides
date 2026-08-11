@@ -131,6 +131,16 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "grouped_annex_table": {"tables"},
                 "period_comparison": {"table", "metric_strip"},
             }.get(layout, {"table"})
+        elif layout == "single_chart":
+            allowed = common | {
+                "section_id",
+                "title",
+                "content",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            }
+            payload_allowed = {"primary_visual", "support"}
         elif layout in {
             "process_flow",
             "timeline",
@@ -345,6 +355,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "hierarchy": {"relationship", "root_id", "nodes"},
                 "stakeholder_map": {"focal", "stakeholders"},
                 "quadrant_matrix": {"x_axis", "y_axis", "items"},
+                "single_chart": {"primary_visual", "support"},
             }
             if isinstance(payload, dict) and layout in payload_fields:
                 _drop_unknown_object(
@@ -356,6 +367,27 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
+                if layout == "single_chart":
+                    support = payload.get("support")
+                    if isinstance(support, dict):
+                        st = support.get("support_type")
+                        if st == "metric_strip":
+                            allowed_s = {"support_type", "surface_id", "metrics", "typography"}
+                        elif st == "support_table":
+                            allowed_s = {"support_type", "alignment", "table"}
+                        elif st == "outlined_support":
+                            allowed_s = {"support_type", "table"}
+                        else:
+                            allowed_s = set(support.keys())
+                        _drop_unknown_object(
+                            support,
+                            allowed=allowed_s,
+                            path=f"/slides/{i}/payload/support",
+                            events=events,
+                            role="chart_support",
+                            slide_number=_slide_number(slide),
+                            layout_type=layout,
+                        )
     return out
 
 
@@ -538,6 +570,11 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
                         f"/slides/{i}/payload/primary_visual/table_data",
                         visual["table_data"],
                     )
+                )
+            support = payload.get("support")
+            if isinstance(support, dict) and isinstance(support.get("table"), dict):
+                located.append(
+                    (f"/slides/{i}/payload/support/table", support["table"])
                 )
         elif layout == "grouped_annex_table":
             peers = payload.get("tables")
@@ -729,6 +766,35 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             }:
                 # D60 fixed type — no authored typography on these payloads.
                 pass
+            elif layout == "single_chart":
+                support = payload.get("support")
+                if isinstance(support, dict):
+                    st = support.get("support_type")
+                    if st == "metric_strip":
+                        surfaces_spec.append(
+                            (
+                                "support",
+                                "body_font_size",
+                                "subtitle_font_size|table_font_size",
+                                14,
+                                24,
+                                support,
+                            )
+                        )
+                    elif st in {"support_table", "outlined_support"}:
+                        table = support.get("table")
+                        if isinstance(table, dict):
+                            floor = 22 if st == "outlined_support" else 14
+                            surfaces_spec.append(
+                                (
+                                    "support/table",
+                                    "table_font_size",
+                                    "body_font_size|subtitle_font_size",
+                                    floor,
+                                    24,
+                                    table,
+                                )
+                            )
             else:
                 tables = [payload.get("table")]
                 if layout == "grouped_annex_table" and isinstance(
@@ -804,7 +870,8 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                 del surface["typography"]
                 path = (
                     f"/slides/{i}/payload/{owner}/typography"
-                    if owner in {"table", "metric_strip"} or owner.startswith("tables/")
+                    if owner in {"table", "metric_strip", "support", "support/table"}
+                    or owner.startswith("tables/")
                     else f"/slides/{i}/{owner}/typography"
                 )
                 events.append(
