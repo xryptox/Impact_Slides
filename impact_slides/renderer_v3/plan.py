@@ -3700,6 +3700,8 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
     """Non-strict composition fallbacks preserve complete data (D185/D186/D187/D272–D277)."""
     if not sp._overflow:
         return
+    if sp.fallback is not None and sp.fallback != "fallback_unresolved":
+        return
     if sp.role == "outlined_support" and sp._table_spec is not None:
         # D267: whole surface → support_table; keep category when IDs/centers survive.
         sp.fallback = "support_table"

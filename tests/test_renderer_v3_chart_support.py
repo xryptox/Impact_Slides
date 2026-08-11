@@ -399,6 +399,29 @@ def test_strict_rejects_outlined_support_on_horizontal_bar():
         validate_handoff(raw, strict=True)
 
 
+def test_non_strict_outlined_overflow_keeps_category():
+    from impact_slides.renderer_v3 import plan as plan_mod
+
+    result = validate_handoff(_with_support(_outlined_support()), strict=True)
+    real = plan_mod._outlined_support_fit_detail
+
+    def never_fits(sp, size):
+        return False, True
+
+    plan_mod._outlined_support_fit_detail = never_fits  # type: ignore[assignment]
+    try:
+        plan = plan_deck(result.deck, strict=False)
+    finally:
+        plan_mod._outlined_support_fit_detail = real  # type: ignore[assignment]
+    support = next(s for s in plan.surfaces if s.surface_id == "vol-outlined")
+    assert support.role == "support_table"
+    assert support.fallback == "support_table"
+    assert support.table_paint.get("alignment") == "category"
+    assert support.table_paint.get("kind") == "support_table"
+    centers = support.table_paint.get("centers") or []
+    assert len(centers) == 4
+
+
 def test_category_width_freeze_failure_demotes_non_strict():
     from impact_slides.renderer_v3 import plan as plan_mod
 
