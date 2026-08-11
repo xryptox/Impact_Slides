@@ -692,14 +692,8 @@ def _freeze_stacked_bar_chart(
                         "end_y": zero_y,
                     }
                 )
-                # Missing contributor: both signs may still receive later values;
-                # a null does not own a sign until we know its intended side, so
-                # it withholds any side that has no other finite contributor of
-                # that sign only when that side had a missing-tagged series.
-                # Spec: null invalidates the computed total for that sign/category
-                # — without a sign we mark both incomplete only if no finite of
-                # either side later; practical rule used here: null withholds
-                # both sides' computed totals (safe; D242/D304).
+                # D92: any missing contributor withholds computed stack totals.
+                # Null has no sign, so both sign-side totals are incomplete (D242/D304).
                 pos_missing = True
                 neg_missing = True
                 continue
@@ -715,7 +709,7 @@ def _freeze_stacked_bar_chart(
                 pos_sum += num_d
                 y0 = value_to_y(base)
                 y1 = value_to_y(top)
-                top_y, bot_y = (y1, y0) if y1 <= y0 else (y0, y1)
+                top_y = min(y0, y1)
                 height = abs(y1 - y0)
                 sign = 1
                 end_y = y1
@@ -726,16 +720,16 @@ def _freeze_stacked_bar_chart(
                 neg_sum += num_d
                 y0 = value_to_y(base)
                 y1 = value_to_y(top)
-                top_y, bot_y = (y1, y0) if y1 <= y0 else (y0, y1)
+                top_y = min(y0, y1)
                 height = abs(y1 - y0)
                 sign = -1
                 end_y = y1
             else:
-                # Zero is data without area — distinct zero anchor (D304).
+                # Zero is data without area — zero-height anchor only (D304).
                 base = 0.0
                 top = 0.0
-                height = 2.0
-                top_y = zero_y - 1.0
+                height = 0.0
+                top_y = zero_y
                 sign = 0
                 end_y = zero_y
             bar = {
@@ -757,7 +751,7 @@ def _freeze_stacked_bar_chart(
                 "stack_top": top,
                 "end_x": cx,
                 "end_y": end_y,
-                "mid_y": top_y + height / 2,
+                "mid_y": top_y + height / 2 if height else zero_y,
             }
             bars.append(bar)
             points.append(
@@ -774,13 +768,10 @@ def _freeze_stacked_bar_chart(
                 }
             )
 
-        # Computed sign-side totals (axis format); withhold incomplete sides.
         pos_ext = float(pos_sum)
         neg_ext = float(neg_sum)
-        authored = None
         aux = chart.auxiliary_series or []
-        if aux:
-            authored = aux[0].values[c_i]
+        authored = aux[0].values[c_i] if aux else None
 
         def _total_entry(
             *,
@@ -839,128 +830,73 @@ def _freeze_stacked_bar_chart(
                 "format_id": fmt_for,
             }
 
-        if authored is not None:
-            # Finite authored total visually overrides computed category total.
-            num_a = float(Decimal(authored))
+        # Always record computed sign-side totals for D247 (D304); withhold when
+        # any contributor is missing (D92). Authored is a separate fact (D241).
+        if pos_missing:
             stack_totals.append(
                 _total_entry(
-                    side="authored",
-                    raw_val=authored,
-                    numeric=num_a,
-                    source="authored",
-                    withheld=False,
-                    fmt_for=aux[0].format_id,
+                    side="positive",
+                    raw_val=None,
+                    numeric=pos_ext,
+                    source="computed",
+                    withheld=True,
+                    fmt_for=fmt_id,
                 )
             )
-        elif authored is None and aux:
-            # Null authored slot: Missing in D106, does not suppress computation.
+        elif pos_sum > 0:
             stack_totals.append(
-                {
-                    "category_id": cat.category_id,
-                    "side": "authored",
-                    "value": None,
-                    "numeric": None,
-                    "visible": MISSING_VISIBLE,
-                    "accessible": MISSING_ACCESSIBLE,
-                    "missing": True,
-                    "withheld": False,
-                    "source": "authored",
-                    "x": cx,
-                    "y": zero_y,
-                    "format_id": aux[0].format_id,
-                }
+                _total_entry(
+                    side="positive",
+                    raw_val=_plain_decimal(pos_sum),
+                    numeric=pos_ext,
+                    source="computed",
+                    withheld=False,
+                    fmt_for=fmt_id,
+                )
             )
-            # Still emit complete computed sides when contributors allow.
-            if pos_sum > 0 and not pos_missing:
-                stack_totals.append(
-                    _total_entry(
-                        side="positive",
-                        raw_val=_plain_decimal(pos_sum),
-                        numeric=pos_ext,
-                        source="computed",
-                        withheld=False,
-                        fmt_for=fmt_id,
-                    )
+        if neg_missing:
+            stack_totals.append(
+                _total_entry(
+                    side="negative",
+                    raw_val=None,
+                    numeric=neg_ext,
+                    source="computed",
+                    withheld=True,
+                    fmt_for=fmt_id,
                 )
-            elif pos_missing and pos_sum >= 0:
+            )
+        elif neg_sum < 0:
+            stack_totals.append(
+                _total_entry(
+                    side="negative",
+                    raw_val=_plain_decimal(neg_sum),
+                    numeric=neg_ext,
+                    source="computed",
+                    withheld=False,
+                    fmt_for=fmt_id,
+                )
+            )
+        if aux:
+            if authored is None:
                 stack_totals.append(
                     _total_entry(
-                        side="positive",
+                        side="authored",
                         raw_val=None,
-                        numeric=pos_ext,
-                        source="computed",
-                        withheld=True,
-                        fmt_for=fmt_id,
-                    )
-                )
-            if neg_sum < 0 and not neg_missing:
-                stack_totals.append(
-                    _total_entry(
-                        side="negative",
-                        raw_val=_plain_decimal(neg_sum),
-                        numeric=neg_ext,
-                        source="computed",
+                        numeric=0.0,
+                        source="authored",
                         withheld=False,
-                        fmt_for=fmt_id,
+                        fmt_for=aux[0].format_id,
                     )
                 )
-            elif neg_missing and neg_sum <= 0:
+            else:
                 stack_totals.append(
                     _total_entry(
-                        side="negative",
-                        raw_val=None,
-                        numeric=neg_ext,
-                        source="computed",
-                        withheld=True,
-                        fmt_for=fmt_id,
-                    )
-                )
-        else:
-            # No authored totals: pure computed sides.
-            if pos_sum > 0 and not pos_missing:
-                stack_totals.append(
-                    _total_entry(
-                        side="positive",
-                        raw_val=_plain_decimal(pos_sum),
-                        numeric=pos_ext,
-                        source="computed",
+                        side="authored",
+                        raw_val=authored,
+                        numeric=float(Decimal(authored)),
+                        source="authored",
                         withheld=False,
-                        fmt_for=fmt_id,
-                    )
-                )
-            elif pos_missing:
-                # Only record withheld if there was a positive contributor intent.
-                # Null withholds the side even with zero sum (incomplete).
-                stack_totals.append(
-                    _total_entry(
-                        side="positive",
-                        raw_val=None,
-                        numeric=pos_ext,
-                        source="computed",
-                        withheld=True,
-                        fmt_for=fmt_id,
-                    )
-                )
-            if neg_sum < 0 and not neg_missing:
-                stack_totals.append(
-                    _total_entry(
-                        side="negative",
-                        raw_val=_plain_decimal(neg_sum),
-                        numeric=neg_ext,
-                        source="computed",
-                        withheld=False,
-                        fmt_for=fmt_id,
-                    )
-                )
-            elif neg_missing:
-                stack_totals.append(
-                    _total_entry(
-                        side="negative",
-                        raw_val=None,
-                        numeric=neg_ext,
-                        source="computed",
-                        withheld=True,
-                        fmt_for=fmt_id,
+                        fmt_for=aux[0].format_id,
                     )
                 )
 
@@ -1038,6 +974,7 @@ def _freeze_stacked_bar_chart(
         chart_type="stacked_bar",
         groups=groups_plan,
         boxed=extra_facts,
+        stack_totals=stack_totals,
     )
 
     return {
@@ -1782,15 +1719,27 @@ def _paint_bar_svg(
                     f'{_e(place["text"])}</text>'
                 )
 
-        # Coverage callout chrome (D50/D301) — aria-hidden visual only.
+        # Coverage callout chrome (D50/D301) — value then label/period; aria-hidden.
         cov = plan.get("coverage_callout")
         if cov:
+            vx, vy = cov["x"], cov["y"]
+            v_px = cov["value_px"]
+            t_px = cov["text_px"]
+            # Approximate value width for sequential label placement.
+            v_w = max(24.0, len(cov["value_visible"]) * v_px * 0.55)
+            label_parts = [cov["label"]]
+            if cov.get("period"):
+                label_parts.append(cov["period"])
+            label_text = " · ".join(label_parts)
             parts.append(
                 f'<g class="coverage-callout" data-callout-id="{_e(cov["callout_id"])}" '
                 f'aria-hidden="true">'
-                f'<text x="{cov["x"]:.1f}" y="{cov["y"]:.1f}" text-anchor="middle" '
-                f'font-size="{cov["value_px"]}" font-weight="700" '
-                f'fill="{_e(ink)}">{_e(cov["wording"])}</text>'
+                f'<text x="{vx - 4:.1f}" y="{vy:.1f}" text-anchor="end" '
+                f'font-size="{v_px}" font-weight="700" '
+                f'fill="{_e(ink)}">{_e(cov["value_visible"])}</text>'
+                f'<text x="{vx + 4:.1f}" y="{vy:.1f}" text-anchor="start" '
+                f'font-size="{t_px}" font-weight="700" '
+                f'fill="{_e(ink)}">{_e(label_text)}</text>'
                 f"</g>"
             )
 
@@ -2534,10 +2483,14 @@ def _place_stack_labels(
                 }
             )
             continue
-        # Prefer inside when segment tall enough and fill is dark enough.
+        # Prefer inside when tall enough AND white-on-fill contrast holds (D304).
         h = float(b["height"])
         w_est = max(20.0, len(text) * segment_px * 0.55)
-        inside_ok = h >= segment_px + 6 and b.get("sign", 0) != 0
+        fill = series_by_id[b["series_id"]]["color"]
+        contrast_ok = contrast_ratio(white, fill) >= 3.0
+        inside_ok = (
+            h >= segment_px + 6 and b.get("sign", 0) != 0 and contrast_ok
+        )
         cx = b["end_x"]
         if inside_ok:
             placements.append(
@@ -2630,20 +2583,15 @@ def _freeze_coverage_callout(
     fv = format_semantic_value(
         NumberValue(value=cov.value, format_id=cov.format_id), formats
     )
-    # D50/D301 fixed chrome: value then label then optional period; top exterior.
-    y = max(18.0, pad_t - 28)
+    # D50/D301 fixed chrome: value (26/700) then label/period (24/700); top exterior.
+    y = max(22.0, pad_t - 30)
     x = pad_l + plot_w / 2
-    parts = [fv.visible, cov.label]
-    if cov.period:
-        parts.append(cov.period)
-    wording = " · ".join(parts)
     return {
         "callout_id": cov.callout_id,
         "value_visible": fv.visible,
         "value_accessible": fv.accessible,
         "label": cov.label,
         "period": cov.period,
-        "wording": wording,
         "x": x,
         "y": y,
         "value_px": 26,
@@ -3233,10 +3181,28 @@ def _semantic_table(
     chart_type: str = "line",
     groups: Optional[list[dict[str, Any]]] = None,
     boxed: Optional[list[str]] = None,
+    stack_totals: Optional[list[dict[str, Any]]] = None,
 ) -> dict[str, Any]:
     fmt_id = chart.value_axes.primary.format_id
     columns = [{"series_id": s["series_id"], "label": s["name"]} for s in series_plans]
+    # D247 stacked: series columns then positive/negative computed totals + authored.
+    if chart_type == "stacked_bar":
+        columns.extend(
+            [
+                {"series_id": "_pos_total", "label": "Positive total"},
+                {"series_id": "_neg_total", "label": "Negative total"},
+            ]
+        )
+        if any(
+            t.get("source") == "authored" for t in (stack_totals or [])
+        ):
+            columns.append(
+                {"series_id": "_authored_total", "label": "Authored total"}
+            )
     rows = []
+    totals_by_cat: dict[str, dict[str, dict[str, Any]]] = {}
+    for t in stack_totals or []:
+        totals_by_cat.setdefault(t["category_id"], {})[t["side"]] = t
     for c_i, cat in enumerate(chart.chart_data.categories):
         cells = []
         for s_i, s in enumerate(chart.chart_data.series):
@@ -3255,6 +3221,34 @@ def _semantic_table(
                     "missing": raw is None,
                 }
             )
+        if chart_type == "stacked_bar":
+            sides = totals_by_cat.get(cat.category_id) or {}
+            for side_key, col_id in (
+                ("positive", "_pos_total"),
+                ("negative", "_neg_total"),
+                ("authored", "_authored_total"),
+            ):
+                if not any(c["series_id"] == col_id for c in columns):
+                    continue
+                t = sides.get(side_key)
+                if t is None:
+                    cells.append(
+                        {
+                            "series_id": col_id,
+                            "visible": MISSING_VISIBLE,
+                            "accessible": MISSING_ACCESSIBLE,
+                            "missing": True,
+                        }
+                    )
+                else:
+                    cells.append(
+                        {
+                            "series_id": col_id,
+                            "visible": t["visible"],
+                            "accessible": t["accessible"],
+                            "missing": bool(t.get("missing") or t.get("withheld")),
+                        }
+                    )
         rows.append(
             {
                 "category_id": cat.category_id,

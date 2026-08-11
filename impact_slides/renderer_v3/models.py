@@ -1083,12 +1083,6 @@ class AuthoredStackTotalAuxiliary(ClosedModel):
         return data
 
 
-BarAuxiliary = Annotated[
-    Union[BoxedLabelAuxiliary, AuthoredStackTotalAuxiliary],
-    Field(discriminator="role"),
-]
-
-
 class CoverageCallout(ClosedModel):
     """One stacked-bar percentage coverage fact (D156/D236/D301)."""
 
@@ -1324,14 +1318,6 @@ def _validate_nonstacked_display(chart: Any) -> None:
         raise ValueError(
             f"{chart.chart_type} forbids stack_segments/stack_totals display (D295)"
         )
-
-
-def _validate_coverage_callout(chart: Any, formats: Any = None) -> None:
-    """Shape-only coverage rules; percent range checked at Deck when formats known."""
-    cov = getattr(chart, "coverage_callout", None)
-    if cov is None:
-        return
-    # Value is CanonicalDecimal already; range gate needs format scale (Deck).
 
 
 def _finite_values(chart: Any) -> list[Decimal]:

@@ -265,12 +265,12 @@ def test_stacked_plan_sign_separated_order_and_missing():
     assert n["stack_top"] == -10.0
     assert n["y"] + n["height"] >= cp["geometry"]["zero_y"] - 0.5
 
-    # zero runoff@q3 is real zero-height stub
+    # zero runoff@q3 is data without area (D304)
     z = by[("runoff", "q3")]
     assert z["finite"] is True
     assert z["numeric"] == 0.0
     assert z["sign"] == 0
-    assert z["height"] >= 2.0
+    assert z["height"] == 0.0
 
     # series legend order is author order
     assert [s["series_id"] for s in cp["series"]] == [
@@ -285,8 +285,7 @@ def test_stacked_plan_sign_separated_order_and_missing():
     assert "72" in cp["coverage_callout"]["value_visible"]
     assert "FDIC" in cp["coverage_callout"]["label"]
 
-    # Authored totals replace computed for finite categories; null authored slot
-    # remains Missing and does not suppress computation for complete sides.
+    # Authored totals are separate facts; computed sides always recorded (D241/D247).
     totals = cp["stack_totals"]
     authored = [t for t in totals if t.get("source") == "authored"]
     assert len(authored) == 4
@@ -297,19 +296,28 @@ def test_stacked_plan_sign_separated_order_and_missing():
     assert q3_a["missing"] is True
     assert q3_a["visible"] == MISSING_VISIBLE
 
-    # Authored finite total on Q4 replaces computed; withheld sides appear when
-    # no finite authored override exists (see test_null_withholds_computed_totals).
+    # Q4 null retail withholds computed sides even with authored total present.
+    q4_withheld = [
+        t for t in totals if t["category_id"] == "q4" and t.get("withheld")
+    ]
+    assert q4_withheld
     q4_authored = next(t for t in authored if t["category_id"] == "q4")
     assert q4_authored["missing"] is False
 
     table = cp["semantic_table"]
-    assert len(table["columns"]) == 3
+    # 3 series + pos total + neg total + authored total
+    assert len(table["columns"]) == 6
     assert len(table["rows"]) == 4
     assert table["rows"][3]["cells"][0]["missing"] is True
+    # Q1 positive total column present
+    col_ids = [c["series_id"] for c in table["columns"]]
+    assert "_pos_total" in col_ids and "_neg_total" in col_ids
+    pos_i = col_ids.index("_pos_total")
+    assert "70" in table["rows"][0]["cells"][pos_i]["visible"]
     facts = " ".join(table["facts"])
     assert "stacked" in facts.lower() or "sign-separated" in facts.lower()
     assert "Coverage" in facts or "FDIC" in facts
-    assert "Missing" in facts or MISSING_ACCESSIBLE in facts
+    assert "withheld" in facts.lower() or "Missing" in facts
 
 
 def test_null_withholds_computed_totals():
@@ -474,8 +482,8 @@ def test_chartjs_stack_config_and_geometry_parity():
                 base, top = neg_c, neg_c + v
                 neg_c = top
             else:
-                # zero stub — geometry soft-check only
-                assert abs(b["height"] - 2.0) <= 2.0 or b["height"] >= 0
+                # zero is data without area
+                assert b["height"] == 0.0
                 checked += 1
                 continue
             y0, y1 = value_y(base), value_y(top)
