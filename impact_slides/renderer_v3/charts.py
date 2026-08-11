@@ -1,7 +1,7 @@
-"""Chart freeze + painters: axis charts (line/grouped/horizontal bars) + native heatmap.
+"""Chart freeze + painters: axis charts (line/bars/waterfall) + native heatmap.
 
-Covers D239/D240/D243/D247/D248/D302, shared D71–D73/D160 bar geometry, and
-D163/D246–D248/D308 semantic heatmaps.
+Covers D239/D240/D243/D245/D247/D248/D302/D307, shared D71–D73/D160 geometry,
+and D163/D246–D248/D308 semantic heatmaps.
 """
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from .models import (
     MissingValue,
     NumberFormat,
     NumberValue,
+    WaterfallChartVisual,
 )
 from .theme import (
     chart_js_tokens,
@@ -32,9 +33,23 @@ from .theme import (
 )
 
 AxisChartVisual = Union[
-    LineChartVisual, GroupedBarChartVisual, HorizontalBarChartVisual
+    LineChartVisual,
+    GroupedBarChartVisual,
+    HorizontalBarChartVisual,
+    WaterfallChartVisual,
 ]
 BarChartVisual = Union[GroupedBarChartVisual, HorizontalBarChartVisual]
+
+# Theme-owned waterfall role fills (D162/D245/D307).
+_WATERFALL_ROLE_COLOR = {
+    "total": "navy",
+    "computed_total": "navy",
+    "increase": "primary_blue",
+    "decrease": "neutral",
+}
+WATERFALL_SERIES_ID = "waterfall"
+# Structural waterfall labels: 18–24px (D52/D307), not ordinary_values.
+_WATERFALL_LABEL_BOUNDS = (18, 24)
 
 # Heatmap sequential light → primary blue (D163/D246/D308) — theme palette only.
 def _rgb(key: str, *, role: str) -> tuple[int, int, int]:
@@ -545,6 +560,205 @@ def freeze_bar_chart(
     }
 
 
+def freeze_waterfall_chart(
+    chart: WaterfallChartVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+) -> dict[str, Any]:
+    """Frozen painter-neutral plan for explicit arithmetic waterfalls (D245/D307)."""
+    fmt = formats[chart.value_axes.primary.format_id]
+    steps = list(chart.waterfall_data.steps)
+    resolved = _resolve_waterfall_steps(steps, formats, fmt_id=chart.value_axes.primary.format_id)
+    domain = _resolve_waterfall_domain(chart, resolved)
+    ticks = list(domain["ticks"])
+
+    pad_l = PAD_L
+    pad_r = max(PAD_R // 2, 48)
+    pad_t = max(PAD_T, 40)
+    pad_b = PAD_B
+    plot_w = max(200, min(PLOT_W, box_w - pad_l - pad_r))
+    plot_h = max(160, min(PLOT_H, box_h - pad_t - pad_b - 40))
+    n = len(resolved)
+    geom = _bar_slot_geometry(
+        plot_w=plot_w,
+        plot_h=plot_h,
+        n_cat=n,
+        n_ser=1,
+        horizontal=False,
+        pad_l=pad_l,
+        pad_t=pad_t,
+    )
+
+    v_min = float(domain["min"])
+    v_max = float(domain["max"])
+    span = (v_max - v_min) or 1.0
+
+    def value_to_y(v: float) -> float:
+        return pad_t + plot_h - ((v - v_min) / span) * plot_h
+
+    zero_y = value_to_y(0.0)
+    bars: list[dict[str, Any]] = []
+    connectors: list[dict[str, Any]] = []
+    placements: list[dict[str, Any]] = []
+    role_sizes = _waterfall_role_sizes(chart)
+    lab_px = role_sizes["structural_values"]
+    thick = geom["thickness"]
+
+    prev_end_level: Optional[float] = None
+    for i, step in enumerate(resolved):
+        slot = geom["slots"][i]
+        x = slot["origins"][0]
+        cx = slot["center"]
+        y0 = float(step["y0"])
+        y1 = float(step["y1"])
+        top = value_to_y(max(y0, y1))
+        bot = value_to_y(min(y0, y1))
+        height = max(2.0, abs(bot - top))
+        color_key = step["color_role"]
+        color = resolve_color(_WATERFALL_ROLE_COLOR[color_key], role="fill")
+        bar = {
+            "series_id": WATERFALL_SERIES_ID,
+            "category_id": step["category_id"],
+            "role": step["role"],
+            "color_role": color_key,
+            "color": color,
+            "x": x,
+            "y": top,
+            "width": thick,
+            "height": height,
+            "thickness": thick,
+            "value": step["display_value"],
+            "numeric": float(step["display_numeric"]),
+            "level": float(step["level"]),
+            "y0": y0,
+            "y1": y1,
+            "visible": step["visible"],
+            "accessible": step["accessible"],
+            "finite": True,
+            "missing": False,
+            "sign": step["sign"],
+            "end_x": cx,
+            "end_y": top,
+            "resets_level": step["role"] == "total",
+        }
+        bars.append(bar)
+        # Connector from previous step end level to this bar start (continuity only).
+        if prev_end_level is not None and step["role"] == "change":
+            cy = value_to_y(prev_end_level)
+            prev_cx = geom["slots"][i - 1]["center"]
+            connectors.append(
+                {
+                    "from_category_id": resolved[i - 1]["category_id"],
+                    "to_category_id": step["category_id"],
+                    "y": cy,
+                    "x1": prev_cx + thick / 2,
+                    "x2": x,
+                }
+            )
+        # Structural label above bar (mandatory; never suppressed).
+        placements.append(
+            {
+                "kind": "structural",
+                "class": "above",
+                "series_id": WATERFALL_SERIES_ID,
+                "category_id": step["category_id"],
+                "text": step["visible"],
+                "x": cx,
+                "y": top - 8,
+                "priority": "structural",
+            }
+        )
+        prev_end_level = float(step["level"])
+
+    cat_centers = []
+    for i, step in enumerate(resolved):
+        slot = geom["slots"][i]
+        cat_centers.append(
+            {
+                "category_id": step["category_id"],
+                "label": step["label"],
+                "short_label": step["short_label"],
+                "x": slot["center"],
+                "y": pad_t + plot_h + 22,
+                "role": step["role"],
+            }
+        )
+
+    tick_labels = [
+        format_semantic_value(
+            NumberValue(value=t, format_id=chart.value_axes.primary.format_id),
+            formats,
+        ).visible
+        for t in ticks
+    ]
+    table = _waterfall_semantic_table(chart, resolved, domain, formats, fmt)
+    series_plans = [
+        {
+            "series_id": WATERFALL_SERIES_ID,
+            "name": "Waterfall",
+            "color": resolve_color("navy", role="series_identity"),
+            "line_style": "solid",
+            "marker": "circle",
+            "values": [s["display_value"] for s in resolved],
+        }
+    ]
+
+    return {
+        "surface_id": chart.surface_id,
+        "chart_type": "waterfall",
+        "heading": chart.heading,
+        "subtitle": chart.subtitle,
+        "categories": cat_centers,
+        "series": series_plans,
+        "steps": resolved,
+        "points": [],
+        "bars": bars,
+        "connectors": connectors,
+        "placements": placements,
+        "show_ordinary_values": False,
+        "identity_strategy": "roles",
+        "role_sizes": role_sizes,
+        "geometry": {
+            "pad_l": pad_l,
+            "pad_r": pad_r,
+            "pad_t": pad_t,
+            "pad_b": pad_b,
+            "plot_w": plot_w,
+            "plot_h": plot_h,
+            "marker_r": 0,
+            "view_w": pad_l + plot_w + pad_r,
+            "view_h": pad_t + plot_h + pad_b,
+            "thickness": thick,
+            "category_pitch": geom["category_pitch"],
+            "series_gap": geom["series_gap"],
+            "horizontal": False,
+            "zero_x": pad_l,
+            "zero_y": zero_y,
+        },
+        "domain": domain,
+        "tick_labels": tick_labels,
+        "category_axis": {
+            "visible": chart.category_axis.visible,
+            "title": chart.category_axis.title,
+        },
+        "value_axis": {
+            "visible": chart.value_axes.primary.visible,
+            "title": chart.value_axes.primary.title,
+            "format_id": chart.value_axes.primary.format_id,
+            "leading_break": None,
+            "scale_label": fmt.scale_label,
+        },
+        "category_groups": [],
+        "boxed_labels": [],
+        "semantic_table": table,
+        "theme": chart_js_tokens(),
+        "gridlines": False,
+        "structural_label_px": lab_px,
+    }
+
+
 def freeze_chart(
     chart: AxisChartVisual,
     formats: Mapping[str, NumberFormat],
@@ -555,6 +769,8 @@ def freeze_chart(
     """Dispatch freeze by chart_type (D238)."""
     if isinstance(chart, LineChartVisual):
         return freeze_line_chart(chart, formats, box_w=box_w, box_h=box_h)
+    if isinstance(chart, WaterfallChartVisual):
+        return freeze_waterfall_chart(chart, formats, box_w=box_w, box_h=box_h)
     return freeze_bar_chart(chart, formats, box_w=box_w, box_h=box_h)
 
 
@@ -643,6 +859,8 @@ def paint_chart_svg(
     Chart.js path overlays chrome SVG on the canvas for placement parity.
     """
     ctype = plan.get("chart_type", "line")
+    if ctype == "waterfall":
+        return _paint_waterfall_svg(plan, marks=marks, chrome=chrome)
     if ctype in ("grouped_bar", "horizontal_bar"):
         return _paint_bar_svg(plan, marks=marks, chrome=chrome)
     return _paint_line_svg(plan, marks=marks, chrome=chrome)
@@ -1044,6 +1262,139 @@ def paint_semantic_table(plan: dict[str, Any]) -> str:
     )
 
 
+def _paint_waterfall_svg(
+    plan: dict[str, Any],
+    *,
+    marks: bool = True,
+    chrome: bool = True,
+) -> str:
+    """No-JS SVG for waterfall bars + connectors + structural labels (D245/D248)."""
+    g = plan["geometry"]
+    vw, vh = g["view_w"], g["view_h"]
+    pl, pt, pw, ph = g["pad_l"], g["pad_t"], g["plot_w"], g["plot_h"]
+    ink = resolve_color("navy", role="text_on_light")
+    border = resolve_color("navy", role="border")
+    connector_c = resolve_color("ink_faint", role="fill")
+    parts = [
+        f'<svg class="chart-svg" viewBox="0 0 {vw} {vh}" width="{vw}" height="{vh}" '
+        f'role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect class="chart-plot-bg" x="0" y="0" width="{vw}" height="{vh}" fill="none"/>'
+    ]
+    if chrome:
+        if plan["category_axis"]["visible"] or plan["value_axis"]["visible"]:
+            parts.append(
+                f'<line x1="{pl}" y1="{pt + ph}" x2="{pl + pw}" y2="{pt + ph}" '
+                f'stroke="{_e(border)}" stroke-width="1"/>'
+            )
+            parts.append(
+                f'<line x1="{pl}" y1="{pt}" x2="{pl}" y2="{pt + ph}" '
+                f'stroke="{_e(border)}" stroke-width="1"/>'
+            )
+        d_min = float(Decimal(plan["domain"]["min"]))
+        d_max = float(Decimal(plan["domain"]["max"]))
+        # Waterfall bridging requires zero; draw when zero is in the domain (D84/D245).
+        if d_min <= 0 <= d_max:
+            zy = g["zero_y"]
+            parts.append(
+                f'<line class="zero-line" x1="{pl}" y1="{zy:.1f}" '
+                f'x2="{pl + pw}" y2="{zy:.1f}" stroke="{_e(border)}" '
+                f'stroke-width="1" stroke-dasharray="4 3"/>'
+            )
+        cat_px = plan["role_sizes"]["category_ticks"]
+        val_px = plan["role_sizes"]["value_ticks"]
+        if plan["category_axis"]["visible"]:
+            for cat in plan["categories"]:
+                parts.append(
+                    f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
+                    f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                )
+        if plan["value_axis"]["visible"]:
+            span = (d_max - d_min) or 1.0
+            for tick, label in zip(plan["domain"]["ticks"], plan["tick_labels"]):
+                tv = float(Decimal(tick))
+                y = pt + ph - ((tv - d_min) / span) * ph
+                parts.append(
+                    f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
+                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(ink)}">{_e(label)}</text>'
+                )
+        title_px = plan["role_sizes"]["axis_titles"]
+        cat_title = plan["category_axis"].get("title")
+        val_title = plan["value_axis"].get("title")
+        if plan["category_axis"]["visible"] and cat_title:
+            parts.append(
+                f'<text x="{pl + pw / 2}" y="{pt + ph + 52}" text-anchor="middle" '
+                f'font-size="{title_px}" fill="{_e(ink)}">{_e(cat_title)}</text>'
+            )
+        if plan["value_axis"]["visible"] and val_title:
+            cy = pt + ph / 2
+            parts.append(
+                f'<text x="16" y="{cy}" text-anchor="middle" font-size="{title_px}" '
+                f'transform="rotate(-90 16 {cy})" fill="{_e(ink)}">{_e(val_title)}</text>'
+            )
+        # Connectors + structural labels ride the chrome overlay so settled
+        # Chart.js path retains bridges/labels (D245/D248/D307); bars stay on marks.
+        for conn in plan.get("connectors") or []:
+            parts.append(
+                f'<line class="waterfall-connector" '
+                f'data-from="{_e(conn["from_category_id"])}" '
+                f'data-to="{_e(conn["to_category_id"])}" '
+                f'x1="{conn["x1"]:.1f}" y1="{conn["y"]:.1f}" '
+                f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
+                f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
+            )
+        lab_px = plan["role_sizes"].get(
+            "structural_values", plan.get("structural_label_px", 18)
+        )
+        for place in plan["placements"]:
+            if place.get("kind") != "structural":
+                continue
+            parts.append(
+                f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
+                f'text-anchor="middle" font-size="{lab_px}" font-weight="700" '
+                f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
+                f'data-placement="structural" data-category="{_e(place["category_id"])}">'
+                f'{_e(place["text"])}</text>'
+            )
+
+    if marks:
+        for bar in plan.get("bars") or []:
+            parts.append(
+                f'<rect class="bar waterfall-bar" data-series="{_e(bar["series_id"])}" '
+                f'data-category="{_e(bar["category_id"])}" data-role="{_e(bar["role"])}" '
+                f'x="{bar["x"]:.1f}" y="{bar["y"]:.1f}" '
+                f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
+                f'fill="{_e(bar["color"])}"/>'
+            )
+        # Full SVG (noscript) still needs connectors/labels when chrome=False.
+        if not chrome:
+            for conn in plan.get("connectors") or []:
+                parts.append(
+                    f'<line class="waterfall-connector" '
+                    f'data-from="{_e(conn["from_category_id"])}" '
+                    f'data-to="{_e(conn["to_category_id"])}" '
+                    f'x1="{conn["x1"]:.1f}" y1="{conn["y"]:.1f}" '
+                    f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
+                    f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
+                )
+            lab_px = plan["role_sizes"].get(
+                "structural_values", plan.get("structural_label_px", 18)
+            )
+            for place in plan["placements"]:
+                if place.get("kind") != "structural":
+                    continue
+                parts.append(
+                    f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
+                    f'text-anchor="middle" font-size="{lab_px}" font-weight="700" '
+                    f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
+                    f'data-placement="structural" data-category="{_e(place["category_id"])}">'
+                    f'{_e(place["text"])}</text>'
+                )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def chart_boot_script() -> str:
     """Boot Chart.js from embedded configs; mark capture readiness (D108/D109)."""
     return (
@@ -1127,6 +1478,241 @@ def _role_sizes(chart: AxisChartVisual) -> dict[str, int]:
             lo, hi = _ROLE_BOUNDS[key]
             sizes[key] = min(hi, lo + 2)
     return sizes
+
+
+def _waterfall_role_sizes(chart: WaterfallChartVisual) -> dict[str, int]:
+    sizes = _role_sizes(chart)  # type: ignore[arg-type]
+    lo, hi = _WATERFALL_LABEL_BOUNDS
+    # Structural labels own 18–24px; ordinary_values is inapplicable (D52/D307).
+    sizes["structural_values"] = lo
+    typo = chart.typography
+    if typo is not None and typo.mode == "adaptive":
+        sizes["structural_values"] = min(hi, lo + 2)
+    return sizes
+
+
+def _resolve_waterfall_steps(
+    steps: list[Any],
+    formats: Mapping[str, NumberFormat],
+    *,
+    fmt_id: str,
+) -> list[dict[str, Any]]:
+    """Placement arithmetic only — authored totals stay authoritative (D307)."""
+    level = Decimal(0)
+    out: list[dict[str, Any]] = []
+    for step in steps:
+        role = step.role
+        if role == "total":
+            authored = Decimal(step.value)
+            y0, y1 = Decimal(0), authored
+            level = authored
+            display_num = authored
+            display_raw = step.value
+            color_role = "total"
+            sign = 0 if authored == 0 else (1 if authored > 0 else -1)
+        elif role == "change":
+            authored = Decimal(step.value)
+            start = level
+            level = level + authored
+            y0, y1 = start, level
+            display_num = authored
+            display_raw = step.value
+            color_role = "increase" if authored >= 0 else "decrease"
+            sign = 0 if authored == 0 else (1 if authored > 0 else -1)
+        else:  # computed_total
+            y0, y1 = Decimal(0), level
+            display_num = level
+            # Keep canonical decimal text — never float-round (D70/D77/D307).
+            display_raw = format(level, "f")
+            color_role = "computed_total"
+            sign = 0 if level == 0 else (1 if level > 0 else -1)
+        fv = format_semantic_value(
+            NumberValue(value=display_raw, format_id=fmt_id), formats
+        )
+        # Change direction chrome: keep sign in accessibility wording.
+        accessible = fv.accessible
+        if role == "change" and sign > 0 and not accessible.startswith("+"):
+            accessible = f"increase {accessible}"
+        elif role == "change" and sign < 0:
+            accessible = f"decrease {accessible}"
+        elif role == "computed_total":
+            accessible = f"computed total {accessible}"
+        elif role == "total":
+            accessible = f"total {accessible}"
+        out.append(
+            {
+                "category_id": step.category_id,
+                "label": step.label,
+                "short_label": step.short_label,
+                "role": role,
+                "authored_value": step.value,
+                "display_value": display_raw,
+                "display_numeric": display_num,
+                "level": level,
+                "y0": y0,
+                "y1": y1,
+                "color_role": color_role,
+                "sign": sign,
+                "visible": fv.visible,
+                "accessible": accessible,
+            }
+        )
+    return out
+
+
+def _resolve_waterfall_domain(
+    chart: WaterfallChartVisual, resolved: list[dict[str, Any]]
+) -> dict[str, Any]:
+    axis = chart.value_axes.primary
+    levels: list[Decimal] = [Decimal(0)]
+    for step in resolved:
+        levels.append(Decimal(step["y0"]))
+        levels.append(Decimal(step["y1"]))
+        levels.append(Decimal(step["level"]))
+    data_min = min(levels)
+    data_max = max(levels)
+    if axis.domain.kind == "fixed":
+        return {
+            "kind": "fixed",
+            "min": axis.domain.min,
+            "max": axis.domain.max,
+            "ticks": list(axis.domain.ticks),
+            "source_min": _plain_decimal(float(data_min)),
+            "source_max": _plain_decimal(float(data_max)),
+        }
+    lo = Decimal(axis.domain.min) if axis.domain.min is not None else data_min
+    hi = Decimal(axis.domain.max) if axis.domain.max is not None else data_max
+    if lo > 0:
+        lo = Decimal(0)
+    if hi < 0:
+        hi = Decimal(0)
+    if lo == hi:
+        lo -= Decimal("1")
+        hi += Decimal("1")
+    pad = (hi - lo) * Decimal("0.08")
+    lo_f = Decimal(0) if lo == 0 else lo - pad
+    hi_f = hi + pad
+    if lo_f > 0:
+        lo_f = Decimal(0)
+    if hi_f < 0:
+        hi_f = Decimal(0)
+    target = axis.domain.target_ticks or 5
+    ticks = _nice_ticks(float(lo_f), float(hi_f), target)
+    if 0.0 not in ticks and ticks[0] <= 0 <= ticks[-1]:
+        ticks = sorted(set(ticks + [0.0]))
+    return {
+        "kind": "generated",
+        "min": _plain_decimal(ticks[0]),
+        "max": _plain_decimal(ticks[-1]),
+        "ticks": [_plain_decimal(t) for t in ticks],
+        "source_min": _plain_decimal(float(data_min)),
+        "source_max": _plain_decimal(float(data_max)),
+    }
+
+
+def _waterfall_semantic_table(
+    chart: WaterfallChartVisual,
+    resolved: list[dict[str, Any]],
+    domain: dict[str, Any],
+    formats: Mapping[str, NumberFormat],
+    fmt: NumberFormat,
+) -> dict[str, Any]:
+    """D247 columns: step, role, authored/computed value, running level."""
+    fmt_id = chart.value_axes.primary.format_id
+    columns = [
+        {"series_id": "role", "label": "Role"},
+        {"series_id": "value", "label": "Value"},
+        {"series_id": "level", "label": "Running level"},
+    ]
+    rows = []
+    for step in resolved:
+        role_vis = {
+            "change": "Change",
+            "total": "Total",
+            "computed_total": "Computed total",
+        }[step["role"]]
+        if step["authored_value"] is None:
+            val_vis = step["visible"]
+            val_acc = step["accessible"]
+            missing = False
+        else:
+            fv = format_semantic_value(
+                NumberValue(value=step["authored_value"], format_id=fmt_id),
+                formats,
+            )
+            val_vis, val_acc, missing = fv.visible, step["accessible"], False
+        level_raw = (
+            step["authored_value"]
+            if step["role"] == "total" and step["authored_value"] is not None
+            else format(Decimal(step["level"]), "f")
+        )
+        lv = format_semantic_value(
+            NumberValue(value=level_raw, format_id=fmt_id),
+            formats,
+        )
+        rows.append(
+            {
+                "category_id": step["category_id"],
+                "label": step["label"],
+                "cells": [
+                    {
+                        "series_id": "role",
+                        "visible": role_vis,
+                        "accessible": role_vis,
+                        "missing": False,
+                    },
+                    {
+                        "series_id": "value",
+                        "visible": val_vis,
+                        "accessible": val_acc,
+                        "missing": missing,
+                    },
+                    {
+                        "series_id": "level",
+                        "visible": lv.visible,
+                        "accessible": lv.accessible,
+                        "missing": False,
+                    },
+                ],
+            }
+        )
+    unit_words = {
+        "usd": "US dollars",
+        "percent": "percent",
+        "percentage_points": "percentage points",
+        "basis_points": "basis points",
+    }.get(fmt.unit or "", "unitless")
+    facts = [
+        "Chart type: waterfall",
+        "Series identity: step roles",
+        f"Values in {unit_words}, {fmt.value_decimals} decimal places",
+        f"Value domain from {domain['min']} to {domain['max']}",
+        "Structural labels mandatory; ordinary value display inapplicable",
+    ]
+    if chart.heading:
+        facts.insert(0, f"Chart: {chart.heading}")
+    if chart.value_axes.primary.title:
+        facts.append(f"Value axis title: {chart.value_axes.primary.title}")
+    if chart.category_axis.title:
+        facts.append(f"Category axis title: {chart.category_axis.title}")
+    if fmt.scale_label:
+        facts.append(f"Display scale: {fmt.scale_label}")
+    for step in resolved:
+        fact_level = (
+            step["authored_value"]
+            if step["role"] == "total" and step["authored_value"] is not None
+            else format(Decimal(step["level"]), "f")
+        )
+        facts.append(
+            f"Step {step['label']}: {step['role']} value {step['visible']} "
+            f"level {fact_level}"
+        )
+    return {
+        "columns": columns,
+        "rows": rows,
+        "facts": facts,
+        "visible": False,
+    }
 
 
 def _resolve_series(
@@ -1954,9 +2540,119 @@ def _semantic_table(
 def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     """Settled Chart.js config — animation off, no gridlines (D63/D108)."""
     ctype = plan.get("chart_type", "line")
+    if ctype == "waterfall":
+        return _chartjs_waterfall_config(plan)
     if ctype in ("grouped_bar", "horizontal_bar"):
         return _chartjs_bar_config(plan)
     return _chartjs_line_config(plan)
+
+
+def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
+    """Floating bars via [base, tip] pairs so Chart.js matches freeze (D160/D245)."""
+    labels = [c["label"] for c in plan["categories"]]
+    g = plan["geometry"]
+    pitch = g.get("category_pitch") or 1.0
+    thick = g.get("thickness") or BAR_MIN_THICKNESS
+    category_pct = min(1.0, max(0.1, thick / pitch))
+    bar_pct = 1.0
+    data = []
+    colors = []
+    for bar in plan.get("bars") or []:
+        # Chart.js bar [start, end] on the value axis.
+        data.append([float(bar["y0"]), float(bar["y1"])])
+        colors.append(bar["color"])
+    d_min = float(Decimal(plan["domain"]["min"]))
+    d_max = float(Decimal(plan["domain"]["max"]))
+    return {
+        "type": "bar",
+        "data": {
+            "labels": labels,
+            "datasets": [
+                {
+                    "label": "Waterfall",
+                    "data": data,
+                    "backgroundColor": colors,
+                    "borderColor": colors,
+                    "borderWidth": 0,
+                    "barPercentage": bar_pct,
+                    "categoryPercentage": category_pct,
+                    "clip": False,
+                    "indexAxis": "x",
+                }
+            ],
+        },
+        "options": {
+            "indexAxis": "x",
+            "animation": False,
+            "responsive": False,
+            "maintainAspectRatio": False,
+            "plugins": {
+                "legend": {"display": False},
+                "tooltip": {"enabled": True},
+            },
+            "scales": {
+                "x": {
+                    "display": False,
+                    "grid": {"display": False, "drawBorder": True},
+                    "ticks": {
+                        "font": {"size": plan["role_sizes"]["category_ticks"]},
+                        "color": resolve_color("navy", role="text_on_light"),
+                    },
+                    "title": {
+                        "display": bool(plan["category_axis"].get("title")),
+                        "text": plan["category_axis"].get("title") or "",
+                    },
+                },
+                "y": {
+                    "display": False,
+                    "min": d_min,
+                    "max": d_max,
+                    "grid": {"display": False, "drawBorder": True},
+                    "stacked": False,
+                    "ticks": {
+                        "font": {"size": plan["role_sizes"]["value_ticks"]},
+                        "color": resolve_color("navy", role="text_on_light"),
+                    },
+                    "title": {
+                        "display": bool(plan["value_axis"].get("title")),
+                        "text": plan["value_axis"].get("title") or "",
+                    },
+                },
+            },
+            "layout": {
+                "padding": {
+                    "left": g["pad_l"],
+                    "right": g["pad_r"],
+                    "top": g["pad_t"],
+                    "bottom": g["pad_b"],
+                }
+            },
+        },
+        "v3": {
+            "tick_labels": plan["tick_labels"],
+            "domain_ticks": plan["domain"]["ticks"],
+            "surface_id": plan["surface_id"],
+            "identity_strategy": plan["identity_strategy"],
+            "chart_type": "waterfall",
+            "bars": [
+                {
+                    "series_id": b["series_id"],
+                    "category_id": b["category_id"],
+                    "role": b["role"],
+                    "x": b["x"],
+                    "y": b["y"],
+                    "width": b["width"],
+                    "height": b["height"],
+                    "y0": b["y0"],
+                    "y1": b["y1"],
+                    "level": b["level"],
+                }
+                for b in plan.get("bars") or []
+            ],
+            "connectors": plan.get("connectors") or [],
+            "thickness": g.get("thickness"),
+        },
+    }
 
 
 def _chartjs_line_config(plan: dict[str, Any]) -> dict[str, Any]:

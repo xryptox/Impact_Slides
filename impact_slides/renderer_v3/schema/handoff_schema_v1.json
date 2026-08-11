@@ -3388,7 +3388,8 @@
               "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
-              "line": "#/$defs/LineChartVisual"
+              "line": "#/$defs/LineChartVisual",
+              "waterfall": "#/$defs/WaterfallChartVisual"
             },
             "propertyName": "chart_type"
           },
@@ -3401,6 +3402,9 @@
             },
             {
               "$ref": "#/$defs/HorizontalBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/WaterfallChartVisual"
             },
             {
               "$ref": "#/$defs/HeatmapVisual"
@@ -4121,6 +4125,161 @@
         "domain"
       ],
       "title": "ValueAxis",
+      "type": "object"
+    },
+    "WaterfallChartVisual": {
+      "additionalProperties": false,
+      "description": "Explicit arithmetic waterfall (D162/D245/D248/D307).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "waterfall",
+          "default": "waterfall",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "waterfall_data": {
+          "$ref": "#/$defs/WaterfallData"
+        },
+        "category_axis": {
+          "$ref": "#/$defs/CategoryAxis"
+        },
+        "value_axes": {
+          "$ref": "#/$defs/ValueAxes"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "surface_id",
+        "waterfall_data",
+        "category_axis",
+        "value_axes"
+      ],
+      "title": "WaterfallChartVisual",
+      "type": "object"
+    },
+    "WaterfallData": {
+      "additionalProperties": false,
+      "description": "Ordered waterfall steps — not D228 series (D245/D307).",
+      "properties": {
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/WaterfallStep"
+          },
+          "maxItems": 12,
+          "minItems": 2,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "title": "WaterfallData",
+      "type": "object"
+    },
+    "WaterfallStep": {
+      "additionalProperties": false,
+      "description": "One authored waterfall step (D162/D245/D307).",
+      "properties": {
+        "category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Category Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "change",
+            "total",
+            "computed_total"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        }
+      },
+      "required": [
+        "category_id",
+        "label",
+        "role"
+      ],
+      "title": "WaterfallStep",
       "type": "object"
     }
   },

@@ -202,7 +202,7 @@ def build_presentation_html(
             ".linear-fallback{margin:0 0 var(--space-sm)}",
             ".linear-fallback ol,.linear-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
             ".linear-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
-            # axis charts: line + grouped/horizontal bars (D5/D6/D63/D106/D247)            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
+            # axis charts: line + grouped/horizontal bars + waterfall (D5/D6/D63/D106/D247)            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
             ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
             ".chart-pane-title{display:flex;flex-direction:column;gap:4px;padding:10px 16px;margin:0 0 var(--space-sm)}",
             ".chart-pane-title>span:first-child{font-size:40px;font-weight:var(--font-weight-title);color:var(--color-band-ink)}",
@@ -235,7 +235,7 @@ def build_presentation_html(
     has_chart = any(
         s.layout_type == "single_chart"
         and getattr(s.payload.primary_visual, "chart_type", None)
-        in ("line", "grouped_bar", "horizontal_bar")
+        in ("line", "grouped_bar", "horizontal_bar", "waterfall")
         for s in deck.slides
     )
     for slide in deck.slides:
@@ -1448,7 +1448,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
         painters: list[str] = []
         if is_chart:
             ctype = getattr(slide.payload.primary_visual, "chart_type", None)
-            if ctype in ("line", "grouped_bar", "horizontal_bar"):
+            if ctype in ("line", "grouped_bar", "horizontal_bar", "waterfall"):
                 painters = ["chartjs", "svg"]
             # heatmap: native HTML only — no canvas/SVG painters (D246/D248).
         rows.append(
