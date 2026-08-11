@@ -2,15 +2,15 @@
 
 ## Purpose
 
-Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model, deck-wide measure/plan freeze for kernel prose/chrome/tables/line charts/heatmaps, decimal-safe number formatting, deterministic five-artifact publication, the sole boardroom_amex theme manifest (CSS/Chart.js/SVG tokens), the line-chart tracer (Chart.js + noscript SVG + D247 semantic table), and native semantic heatmaps (D163/D246/D308); remaining chart families land in later tickets.
+Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model, deck-wide measure/plan freeze for kernel prose/chrome/tables/line charts/heatmaps/linear+grouping compositions, decimal-safe number formatting, deterministic five-artifact publication, the sole boardroom_amex theme manifest (CSS/Chart.js/SVG tokens), the line-chart tracer (Chart.js + noscript SVG + D247 semantic table), native semantic heatmaps (D163/D246/D308), and process/timeline/layered/pipeline compositions; remaining chart and relationship families land in later tickets.
 
 ## Ownership
 
-- Closed schema-v1 handoff models (`models.py`) including D213 semantic values + D255 `table` + table compositions (`data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`) + `single_chart` line/heatmap envelope (D163/D227–D239/D246/D290–D302/D308)
+- Closed schema-v1 handoff models (`models.py`) including D213 semantic values + D255 `table` + table compositions (`data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`) + linear/grouping compositions (`process_flow`, `timeline`, `layered_architecture`, `data_pipeline`) + `single_chart` line/heatmap envelope (D163/D227–D239/D246/D272–D277/D290–D302/D308)
 - Decimal-safe format registry (`format.py`) for D77/D78/D103/D214/D293
 - Line-chart freeze + dual painters + semantic table; heatmap freeze + native HTML painter (`charts.py`) (D53/D57/D63/D106/D163/D246–D248/D302/D308)
 - Aggregating validation + allowlisted non-strict repairs (`validate.py`, `repairs.py`, `diagnostics.py`)
-- Deck-wide adaptive measure/plan freeze (`plan.py`) for narrative prose, data tables, line charts, heatmaps, subtitles, takeaways, disclosures, source footers, and fixed chrome (D1–D4, D22–D25, D44, D59, D68–D70)
+- Deck-wide adaptive measure/plan freeze (`plan.py`) for narrative prose, data tables, line charts, heatmaps, linear/grouping compositions (fixed D60 type), subtitles, takeaways, disclosures, source footers, and fixed chrome (D1–D4, D22–D25, D44, D59, D60, D68–D70)
 - Public `render_deck` + CLI publication (`render.py`, `publish.py`, `cli.py`)
 - Generated JSON Schema artifact `schema/handoff_schema_v1.json` (D121)
 - Canonical `boardroom_amex` theme manifest + generated CSS (`theme/`, `theme_export.py`) and self-contained licensed webfonts (`assets/fonts/`) (D127-D133)
@@ -35,7 +35,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Non-strict `drop_unknown_fields` may strip noise keys only: on brand/legal layouts it **retains** forbidden D287 ordinary semantic roots (`title`/`content`/`takeaway`/`disclosure`/`source_footer`, and `section_id` on covers/dividers) so revalidation fails without deleting authored content; typed D180 unresolved-slide fallback is not yet implemented
 - `_wrap_lines` breaks at spaces and after `-,:;.` when more content follows; paint inserts matching `<wbr>` via `_soft_break_html` (R178-029). Disclosure units measure summary/list indent separately from full-width paragraphs
 - Print media expands closed disclosures and resets viewport stage scale to fixed 1920×1080
-- Kernel compositions: `opening_cover`, `section_divider`, `closing_cover`, `narrative`, `legal_notice`, `data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`, `single_chart` (line + heatmap) (D178–D187/D208/D210/D215/D223/D226/D251/D257–D261/D268–D271/D287/D302/D308)
+- Kernel compositions: `opening_cover`, `section_divider`, `closing_cover`, `narrative`, `legal_notice`, `data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`, `process_flow`, `timeline`, `layered_architecture`, `data_pipeline`, `single_chart` (line + heatmap) (D178–D187/D192–D193/D196–D197/D208/D210/D215/D223/D226/D251/D257–D261/D268–D273/D276–D277/D287/D302/D308)
 - Brand slides: covers share one `CoverPayload` (title + optional subtitle/period/date); divider payload is only `section_id` with registry-derived label + section ordinal; renderer owns bands/rules/chrome (descendant CSS + per-type `*-overflow` outline classes); no root title/section/takeaway/disclosure/source_footer
 - `legal_notice`: multipart `notice_id` + adjacent `part`/`total_parts`, plain paragraphs only; part 1 owns title, later parts paint renderer `— continued` + part-of-total; fixed 28/16px type, no adaptive growth or common takeaway/disclosure/footer
 - `single_chart` line: one frozen `chart_paint` drives Chart.js canvas + noscript SVG + one D247 semantic table; null breaks paths; no gridlines; transparent plot/body; readiness flags `semantic_table_present` + `chart_painters`
@@ -45,6 +45,9 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - `annex_table` reuses the table surface at 12–24px with disclosure-only notes (no takeaway); `grouped_annex_table` paints 1–2 equal-width headed peers with shared annex size and sequential flat-table non-strict fallback (D184/D185/D258/D259); peer `short_heading` is used only after an actual full-heading fit failure and the full heading stays the accessible name
 - `period_comparison` enforces ordered `current_period`/`comparison_period`/`variance` columns, optional exterior `metric_strip` (1–3 metrics), and ordinary-table non-strict fallback that keeps the strip (D186/D260/D265)
 - `comparison_cards` derives equal-rank cards from 2–4 peer rows × 2–4 fact columns; visual cards are `aria-hidden` and the sr-only D255 table is the single accessibility source; print hides cards and restores the table; non-strict falls back to the complete accessible table (D187/D208/D261)
+- `process_flow` / `timeline`: 2–6 / 2–8 author-ordered items; renderer owns orientation, step numbers, connectors; never infers branches/dates/durations; non-strict paints complete accessible ordered/chronological lists without connectors (D192/D193/D272/D273)
+- `layered_architecture`: 2–4 layers × 1–4 components; order is grouping/stack only — no arrows; non-strict nested outline (D196/D276)
+- `data_pipeline`: 2–6 stages × 1–3 components; optional `transfer_label` on non-final stages only; non-strict ordered flow keeps `A to B: label` wording (D197/D277)
 - Must not import `impact_slides.renderer_v2` or mutate v2 behavior
 - Schema artifact is generated: `python -m impact_slides.renderer_v3.schema_export` (write) or `--check` (CI)
 - Theme CSS artifact is generated from the Python manifest: `python -m impact_slides.renderer_v3.theme_export` (write) or `--check` (CI); painters resolve colors via `theme.resolve_color` / CSS `var(--color-*)` only (D129-D131)
@@ -63,7 +66,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 
 ## Verification
 
-- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py`
+- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_linear_grouping.py`
 - `python -m impact_slides.renderer_v3.schema_export --check`
 - `python -m impact_slides.renderer_v3.theme_export --check`
 - Full suite: `python -m pytest -q`

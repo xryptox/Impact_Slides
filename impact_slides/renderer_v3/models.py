@@ -111,6 +111,10 @@ KERNEL_LAYOUTS = frozenset(
         "period_comparison",
         "comparison_cards",
         "single_chart",
+        "process_flow",
+        "timeline",
+        "layered_architecture",
+        "data_pipeline",
     }
 )
 
@@ -601,6 +605,132 @@ class ComparisonCardsPayload(ClosedModel):
             raise ValueError("comparison_cards requires 2–4 fact columns")
         if self.table.column_groups is not None:
             raise ValueError("comparison_cards forbids column_groups (D256/D261)")
+        return self
+
+
+# ---------------------------------------------------------------------------
+# Linear + grouping semantic compositions (D192–D193/D196–D197/D272–D273/D276–D277)
+# ---------------------------------------------------------------------------
+
+
+class ProcessStep(ClosedModel):
+    """One authored step in a linear process_flow (D192/D272)."""
+
+    step_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+
+
+class ProcessFlowPayload(ClosedModel):
+    """2–6 author-ordered steps; connections are implicit sequence only."""
+
+    steps: list[ProcessStep] = Field(min_length=2, max_length=6)
+
+    @model_validator(mode="after")
+    def _unique_step_ids(self) -> ProcessFlowPayload:
+        ids = [s.step_id for s in self.steps]
+        if len(ids) != len(set(ids)):
+            raise ValueError("step_id values must be unique within process_flow")
+        return self
+
+
+class TimelineMilestone(ClosedModel):
+    """One authored milestone; time_label is display text, never parsed (D193/D273)."""
+
+    milestone_id: SemanticId
+    time_label: NonEmptyStr
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+
+
+class TimelinePayload(ClosedModel):
+    """2–8 author-ordered milestones; array order is chronology."""
+
+    milestones: list[TimelineMilestone] = Field(min_length=2, max_length=8)
+
+    @model_validator(mode="after")
+    def _unique_milestone_ids(self) -> TimelinePayload:
+        ids = [m.milestone_id for m in self.milestones]
+        if len(ids) != len(set(ids)):
+            raise ValueError("milestone_id values must be unique within timeline")
+        return self
+
+
+class ArchitectureComponent(ClosedModel):
+    """One component inside a layered_architecture layer (D196/D276)."""
+
+    component_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+
+
+class ArchitectureLayer(ClosedModel):
+    """One ordered layer; order is grouping/stack only, never dependency."""
+
+    layer_id: SemanticId
+    heading: NonEmptyStr
+    components: list[ArchitectureComponent] = Field(min_length=1, max_length=4)
+
+
+class LayeredArchitecturePayload(ClosedModel):
+    """2–4 ordered layers; component IDs unique across the surface."""
+
+    layers: list[ArchitectureLayer] = Field(min_length=2, max_length=4)
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> LayeredArchitecturePayload:
+        layer_ids = [ly.layer_id for ly in self.layers]
+        if len(layer_ids) != len(set(layer_ids)):
+            raise ValueError("layer_id values must be unique within layered_architecture")
+        comp_ids = [
+            c.component_id for ly in self.layers for c in ly.components
+        ]
+        if len(comp_ids) != len(set(comp_ids)):
+            raise ValueError(
+                "component_id values must be unique across layered_architecture"
+            )
+        return self
+
+
+class PipelineComponent(ClosedModel):
+    """One component inside a data_pipeline stage (D197/D277)."""
+
+    component_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+
+
+class PipelineStage(ClosedModel):
+    """One ordered stage; optional transfer_label describes the next-stage edge."""
+
+    stage_id: SemanticId
+    heading: NonEmptyStr
+    components: list[PipelineComponent] = Field(min_length=1, max_length=3)
+    transfer_label: Optional[NonEmptyStr] = None
+
+
+class DataPipelinePayload(ClosedModel):
+    """2–6 ordered stages; final stage forbids transfer_label."""
+
+    stages: list[PipelineStage] = Field(min_length=2, max_length=6)
+
+    @model_validator(mode="after")
+    def _unique_ids_and_transfers(self) -> DataPipelinePayload:
+        stage_ids = [st.stage_id for st in self.stages]
+        if len(stage_ids) != len(set(stage_ids)):
+            raise ValueError("stage_id values must be unique within data_pipeline")
+        comp_ids = [
+            c.component_id for st in self.stages for c in st.components
+        ]
+        if len(comp_ids) != len(set(comp_ids)):
+            raise ValueError(
+                "component_id values must be unique across data_pipeline"
+            )
+        last = self.stages[-1]
+        if last.transfer_label is not None:
+            raise ValueError(
+                "transfer_label is invalid on the final data_pipeline stage"
+            )
         return self
 
 
@@ -1211,6 +1341,82 @@ class ComparisonCardsSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
+class ProcessFlowSlide(_SlideBase):
+    """Linear procedural sequence (D192/D272)."""
+
+    layout_type: Literal["process_flow"] = "process_flow"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: ProcessFlowPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> ProcessFlowSlide:
+        return _ordinary_footer_subset(self)
+
+
+class TimelineSlide(_SlideBase):
+    """Authored chronology without date parsing (D193/D273)."""
+
+    layout_type: Literal["timeline"] = "timeline"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: TimelinePayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> TimelineSlide:
+        return _ordinary_footer_subset(self)
+
+
+class LayeredArchitectureSlide(_SlideBase):
+    """Non-graph layered grouping (D196/D276)."""
+
+    layout_type: Literal["layered_architecture"] = "layered_architecture"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: LayeredArchitecturePayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> LayeredArchitectureSlide:
+        return _ordinary_footer_subset(self)
+
+
+class DataPipelineSlide(_SlideBase):
+    """Directed stage flow with optional transfer labels (D197/D277)."""
+
+    layout_type: Literal["data_pipeline"] = "data_pipeline"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: DataPipelinePayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> DataPipelineSlide:
+        return _ordinary_footer_subset(self)
+
+
 class SingleChartSlide(_SlideBase):
     layout_type: Literal["single_chart"] = "single_chart"
     section_id: SemanticId
@@ -1229,10 +1435,10 @@ class SingleChartSlide(_SlideBase):
 
 
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
-# plus annex/comparison tables (#180) and the single_chart line tracer (#182).
-# Other D210 layout_type values are recognized at the envelope and rejected
-# with a clear "not yet implemented in kernel" structure error so the closed
-# vocabulary stays honest without shipping empty payload shells.
+# plus annex/comparison tables (#180), single_chart line tracer (#182), and
+# linear/grouping compositions (#192). Other D210 layout_type values are
+# recognized at the envelope and rejected with a clear "not yet implemented"
+# structure error so the closed vocabulary stays honest.
 Slide = Annotated[
     Union[
         OpeningCoverSlide,
@@ -1245,6 +1451,10 @@ Slide = Annotated[
         GroupedAnnexTableSlide,
         PeriodComparisonSlide,
         ComparisonCardsSlide,
+        ProcessFlowSlide,
+        TimelineSlide,
+        LayeredArchitectureSlide,
+        DataPipelineSlide,
         SingleChartSlide,
     ],
     Field(discriminator="layout_type"),

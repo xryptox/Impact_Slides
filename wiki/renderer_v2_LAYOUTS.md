@@ -56,7 +56,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `stacked_bar_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:361 | `amex_s21_v10_broken.json`, `amex_s28_corrected.json`, `amex_s28_v10_broken.json` +1 | `amex_s21_capital_handoff_contract.py`, `auto_chart_typography.py`, `bar_group_brackets.py` +8 |
 | `system_architecture` | `render_system_architecture` | impact_slides/renderer_v2/layout/recipes/diagrams.py:23 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
 | `three_column_comparison` | `render_three_column_comparison` | impact_slides/renderer_v2/layout/recipes/comparison.py:183 | `amex_v10_44_slide_handoff.json` | `circle_pair.py`, `layout_dispatch_parity.py`, `visual_regression_deck.py` +1 |
-| `timeline` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | `golden_mvp1_handoff.json`, `mini_handoff.json` | `existing_layout_refactor.py`, `layout_dispatch_parity.py`, `renderer_v2_gates.py` +3 |
+| `timeline` | `render_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:23 | `golden_mvp1_handoff.json`, `mini_handoff.json`, `linear_grouping_compositions.json` | `AGENTS.md`, `existing_layout_refactor.py`, `layout_dispatch_parity.py` +5 |
 | `title_or_opening` | `render_title` | impact_slides/renderer_v2/layout/recipes/covers.py:25 | `freeform_handoff.json`, `golden_mvp1_handoff.json`, `mini_handoff.json` | `amex_annex_33_37_handoff.py`, `amex_s21_capital_handoff_contract.py`, `amex_s24_growth_handoff_contract.py` +19 |
 | `waterfall_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:361 | — | `auto_chart_typography.py`, `layout_dispatch_parity.py`, `renderer_v2_heatmap_waterfall.py` +1 |
 

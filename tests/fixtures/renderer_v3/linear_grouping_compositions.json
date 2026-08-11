@@ -1,0 +1,188 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "ops",
+      "label": "Operations"
+    }
+  ],
+  "number_formats": {},
+  "evidence_registry": {
+    "src-ops": {
+      "source_name": "Ops handbook"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "process_flow",
+      "section_id": "ops",
+      "title": "Quarter-close process",
+      "content": {
+        "subtitle": "Four linear steps"
+      },
+      "payload": {
+        "steps": [
+          {
+            "step_id": "collect",
+            "heading": "Collect inputs",
+            "detail": "Pull ledger and pipeline feeds."
+          },
+          {
+            "step_id": "reconcile",
+            "heading": "Reconcile",
+            "detail": "Match cash to subledgers."
+          },
+          {
+            "step_id": "review",
+            "heading": "Management review"
+          },
+          {
+            "step_id": "publish",
+            "heading": "Publish pack",
+            "detail": "Distribute the board pack."
+          }
+        ]
+      },
+      "takeaway": {
+        "text": "Keep the sequence linear; no branches."
+      },
+      "evidence_ids": ["src-ops"],
+      "source_footer": ["src-ops"],
+      "speaker_notes": "Walk the four steps in order."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "timeline",
+      "section_id": "ops",
+      "title": "Rollout chronology",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "m1",
+            "time_label": "FY25 Q1",
+            "heading": "Pilot",
+            "detail": "Two markets only."
+          },
+          {
+            "milestone_id": "m2",
+            "time_label": "FY25 Q2",
+            "heading": "Expand",
+            "detail": "Add EMEA."
+          },
+          {
+            "milestone_id": "m3",
+            "time_label": "H2 FY25",
+            "heading": "Scale"
+          }
+        ]
+      },
+      "evidence_ids": ["src-ops"],
+      "speaker_notes": "Order is authored; do not re-sort labels."
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "layered_architecture",
+      "section_id": "ops",
+      "title": "Platform layers",
+      "payload": {
+        "layers": [
+          {
+            "layer_id": "experience",
+            "heading": "Experience",
+            "components": [
+              {
+                "component_id": "web",
+                "heading": "Web",
+                "detail": "Customer portal"
+              },
+              {
+                "component_id": "mobile",
+                "heading": "Mobile"
+              }
+            ]
+          },
+          {
+            "layer_id": "services",
+            "heading": "Services",
+            "components": [
+              {
+                "component_id": "api",
+                "heading": "API gateway"
+              },
+              {
+                "component_id": "auth",
+                "heading": "Identity",
+                "detail": "SSO + MFA"
+              }
+            ]
+          },
+          {
+            "layer_id": "data",
+            "heading": "Data",
+            "components": [
+              {
+                "component_id": "warehouse",
+                "heading": "Warehouse"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": ["src-ops"],
+      "speaker_notes": "Layers group only; no dependency arrows."
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "data_pipeline",
+      "section_id": "ops",
+      "title": "Reporting pipeline",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "ingest",
+            "heading": "Ingest",
+            "transfer_label": "validated batch",
+            "components": [
+              {
+                "component_id": "extract",
+                "heading": "Extract",
+                "detail": "Source systems"
+              }
+            ]
+          },
+          {
+            "stage_id": "transform",
+            "heading": "Transform",
+            "transfer_label": "curated facts",
+            "components": [
+              {
+                "component_id": "clean",
+                "heading": "Cleanse"
+              },
+              {
+                "component_id": "model",
+                "heading": "Model"
+              }
+            ]
+          },
+          {
+            "stage_id": "serve",
+            "heading": "Serve",
+            "components": [
+              {
+                "component_id": "dash",
+                "heading": "Dashboards"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": ["src-ops"],
+      "source_footer": ["src-ops"],
+      "speaker_notes": "Transfer labels own the edge wording."
+    }
+  ]
+}
