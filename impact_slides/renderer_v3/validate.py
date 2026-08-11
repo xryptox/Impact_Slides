@@ -89,7 +89,10 @@ def validate_handoff(raw: Any, *, strict: bool = True) -> ValidationResult:
     events.extend(_precheck(working))
 
     try:
-        deck = Deck.model_validate(working)
+        deck = Deck.model_validate(
+            working,
+            context={"allow_repair_empty": not strict},
+        )
     except ValidationError as exc:
         events.extend(_from_pydantic(exc, working))
         events = sort_events(merge_duplicate_events(events))

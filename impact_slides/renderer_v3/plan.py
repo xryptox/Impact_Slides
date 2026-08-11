@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Final, Optional
 
 from .diagnostics import DiagnosticEvent, RendererValidationError, event, sort_events
-from .models import KERNEL_RELATIONSHIP_LAYOUTS, Deck, Typography
+from .models import KERNEL_CARD_LAYOUTS, KERNEL_RELATIONSHIP_LAYOUTS, Deck, Typography
 
 KERNEL_TABLE_LAYOUTS = frozenset(
     {
@@ -118,6 +118,22 @@ LINEAR_CARD_MARGIN: Final = 4
 LINEAR_CONNECTOR_H: Final = 24
 LINEAR_INNER_GAP: Final = 8
 LINEAR_LAYER_GAP: Final = 20
+
+# Cards/reviews: D60 fixed for quotation/evidence/risk/rec/state;
+# feature_cards adapts heading/detail 22–28px (D201/D281).
+CARD_FIXED_HEADING_PX: Final = 22
+CARD_FIXED_BODY_PX: Final = 18
+CARD_FIXED_META_PX: Final = 14
+CARD_GAP: Final = 16
+CARD_PAD: Final = 16
+CARD_MARGIN: Final = 4
+CARD_INNER_GAP: Final = 8  # feature flex gap / quote blockquote / statement→sources
+RISK_GROUP_GAP: Final = 12  # .risk-opp-group column gap
+TRANSITION_STEP_PAD: Final = 12  # .transition-step padding
+FEATURE_ICON_SIZE: Final = 32
+FEATURE_ICON_GAP: Final = 8
+FEATURE_BODY_FLOOR: Final = 22
+FEATURE_BODY_CEIL: Final = 28
 TABLE_MAX_LABEL_LINES: Final = 2
 # Must match publish CSS padding on table.data-table th/td (8px*2, 6px*2).
 TABLE_CELL_PAD_X: Final = 16
@@ -135,6 +151,8 @@ TAKEAWAY_OUTER_MT: Final = 20  # --space-md
 TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
 TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
 TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
+CARD_PANEL_BORDER_Y: Final = TAKEAWAY_BORDER_Y  # .card-panel hairline top+bottom
+CARD_PANEL_BORDER_X: Final = TAKEAWAY_BORDER_X  # .card-panel hairline left+right
 COVER_GAP_Y: Final = 12  # --space-sm between flex items
 COVER_TITLE_MARGIN_Y: Final = 20  # --space-md
 COVER_BAND_H: Final = 8
@@ -198,6 +216,7 @@ class SurfacePlan:
     _table_spec: Optional[dict[str, Any]] = None
     # Linear/grouping composition measure + paint payload (D272–D277).
     _linear_spec: Optional[dict[str, Any]] = None
+    _card_spec: Optional[dict[str, Any]] = None
     # CSS white-space:pre-wrap surfaces preserve authored hard line breaks.
     _preserve_newlines: bool = False
     # Frozen paint input for data_table (public to painters; set at seal).
@@ -575,6 +594,7 @@ def _collect_surfaces(
             lt not in ("narrative", "single_chart")
             and lt not in KERNEL_TABLE_LAYOUTS
             and lt not in KERNEL_LINEAR_LAYOUTS
+            and lt not in KERNEL_CARD_LAYOUTS
             and lt not in KERNEL_RELATIONSHIP_LAYOUTS
         ):
             continue
@@ -732,6 +752,13 @@ def _collect_surfaces(
             for bp in body_plans:
                 out.append(bp)
                 adaptive_surfaces.append(bp)
+        elif lt in KERNEL_CARD_LAYOUTS:
+            body_slots, body_plans = _collect_card_body(
+                slide, deck, sn, slide_index, lt, region
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
         elif lt in KERNEL_RELATIONSHIP_LAYOUTS:
             body_slots, body_plans = _collect_relationship_body(
                 slide,
@@ -814,9 +841,9 @@ def _collect_surfaces(
                 adaptive_surfaces.append(disclosure)
                 out.append(disclosure)
 
-        if slide.source_footer is not None:
+        if getattr(slide, "source_footer", None) is not None:
             source_text = "Sources: " + "; ".join(
-                deck.evidence_registry[eid].source_name for eid in slide.source_footer
+                deck.evidence_registry[eid].source_name for eid in getattr(slide, "source_footer", None)
             )
             source = SurfacePlan(
                 surface_id=f"slide-{sn}-source-footer",
@@ -883,6 +910,9 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             return max(len(lab_lines) * _line_box(lab_px), box_h) + OUTLINED_PAD_Y
         if sp._linear_spec is not None:
             ok, height = _linear_fit_detail(sp)
+            return height if ok else 10**9
+        if sp._card_spec is not None:
+            ok, height = _card_fit_detail(sp, size)
             return height if ok else 10**9
         if _is_rectangular_table_spec(sp._table_spec):
             assert sp._table_spec is not None
@@ -1042,7 +1072,6 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
 # Measure
 # ---------------------------------------------------------------------------
 
-
 def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
     fit = sp._fit_role
     if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES:
@@ -1057,6 +1086,17 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             return
         if sp._linear_spec is not None:
             ok, _h = _linear_fit_detail(sp)
+            if not ok:
+                sp._overflow = True
+                _apply_composition_fallback(sp)
+            return
+        if sp._card_spec is not None:
+            size = (
+                sp.role_sizes.get("heading")
+                or sp.role_sizes.get("body")
+                or next(iter(sp.role_sizes.values()))
+            )
+            ok, _h = _card_fit_detail(sp, size)
             if not ok:
                 sp._overflow = True
                 _apply_composition_fallback(sp)
@@ -1468,12 +1508,12 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                 if ok:
                     m._overflow = False
                     _record_surface_adaptations(m, target, events)
-                    _finalize_composition_roles(m, target)
                 else:
                     m._overflow = True
                     _apply_surface_floor_adaptations(m, target, events)
                     _apply_composition_fallback(m)
                 _ = codes_wrapped
+            _finalize_composition_roles(m, target)
         if changed or len(members) > 1:
             for m in members:
                 if "plan.synchronized" not in m.adaptation_codes:
@@ -2271,6 +2311,664 @@ def _collect_linear_body(
     return 1, [sp]
 
 
+def _prose_plain(prose: Any) -> str:
+    """Concatenated authoritative wording for a D224 Prose value."""
+    return "".join(run.text for run in prose.runs)
+
+def _collect_card_body(
+    slide: Any,
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+) -> tuple[int, list[SurfacePlan]]:
+    """One surface for feature/quotation/review/state compositions (D281–D286)."""
+    payload = slide.payload
+    text_items: list[tuple[str, bool]] = []
+    registry = deck.evidence_registry
+
+    if lt == "feature_cards":
+        cards = []
+        for c in payload.cards:
+            cards.append(
+                {
+                    "id": c.card_id,
+                    "heading": c.heading,
+                    "detail": c.detail,
+                    "icon_key": c.icon_key,
+                }
+            )
+            text_items.append((c.heading, True))
+            if c.detail:
+                text_items.append((c.detail, False))
+        n = len(cards)
+        # D281 geometry: 2/3 one row; 4 as 2x2; 5/6 balanced two rows.
+        if n <= 3:
+            cols, rows = n, 1
+        elif n == 4:
+            cols, rows = 2, 2
+        else:
+            cols, rows = 3, 2
+        typo = payload.typography
+        mode = typo.mode if typo else "adaptive"
+        sync = typo.sync_group if typo else None
+        explicit = typo.body_font_size if typo else None
+        spec = {
+            "kind": "feature_cards",
+            "cards": cards,
+            "cols": cols,
+            "rows": rows,
+        }
+        sp = SurfacePlan(
+            surface_id=f"slide-{sn}-feature-cards",
+            role="feature_cards",
+            slide_number=sn,
+            slide_index=slide_index,
+            layout_type=lt,
+            slot_order=10,
+            design_stage_region=region,
+            role_sizes={
+                "heading": FEATURE_BODY_FLOOR,
+                "detail": FEATURE_BODY_FLOOR,
+            },
+            _text_items=text_items,
+            _box_w=CONTENT_W,
+            _fit_role="heading",
+            _typo=typo,
+            _mode=mode,
+            _sync_group=sync,
+            _explicit_size=explicit,
+            _margin_boxes=0,
+            _default_size=FEATURE_BODY_FLOOR,
+            _maximum_size=FEATURE_BODY_CEIL,
+            _card_spec=spec,
+        )
+        return 1, [sp]
+
+    if lt == "quotation":
+        quotes = []
+        for q in payload.quotes:
+            attr = q.attribution
+            attr_parts = [attr.name]
+            if attr.role:
+                attr_parts.append(attr.role)
+            if attr.organization:
+                attr_parts.append(attr.organization)
+            quotes.append(
+                {
+                    "id": q.quote_id,
+                    "paragraphs": list(q.paragraphs),
+                    "attribution": {
+                        "name": attr.name,
+                        "role": attr.role,
+                        "organization": attr.organization,
+                        "cite": ", ".join(attr_parts),
+                    },
+                    "evidence_id": q.evidence_id,
+                    "provenance_ok": getattr(q, "provenance_unavailable", None) is not True,
+                }
+            )
+            for para in q.paragraphs:
+                text_items.append((para, False))
+            text_items.append((attr.name, True))
+            if attr.role:
+                text_items.append((attr.role, False))
+            if attr.organization:
+                text_items.append((attr.organization, False))
+        spec = {"kind": "quotation", "quotes": quotes}
+        sp = SurfacePlan(
+            surface_id=f"slide-{sn}-quotation",
+            role="quotation",
+            slide_number=sn,
+            slide_index=slide_index,
+            layout_type=lt,
+            slot_order=10,
+            design_stage_region=region,
+            role_sizes={
+                "body": CARD_FIXED_BODY_PX,
+                "meta": CARD_FIXED_META_PX,
+            },
+            _text_items=text_items,
+            _box_w=CONTENT_W,
+            _fit_role=None,
+            _mode="fixed",
+            _margin_boxes=0,
+            _default_size=CARD_FIXED_BODY_PX,
+            _maximum_size=CARD_FIXED_BODY_PX,
+            _card_spec=spec,
+        )
+        return 1, [sp]
+
+    if lt == "evidence_review":
+        findings = []
+        for f in payload.findings:
+            statement = _prose_plain(f.statement)
+            sources = []
+            for eid in f.evidence_ids:
+                entry = registry.get(eid)
+                if entry is None:
+                    continue
+                sources.append({"id": eid, "name": entry.source_name})
+            findings.append(
+                {
+                    "id": f.finding_id,
+                    "statement": statement,
+                    "statement_runs": [
+                        {"text": r.text, "strong": r.emphasis == "strong"}
+                        for r in f.statement.runs
+                    ],
+                    "sources": sources,
+                    "source_unavailable": not sources,
+                }
+            )
+            text_items.extend(_prose_items(f.statement))
+            for src in sources:
+                text_items.append((src["name"], False))
+            if not sources:
+                text_items.append(("Source unavailable", False))
+        n = len(findings)
+        cols = n if n <= 3 else (2 if n == 4 else 3)
+        rows = 1 if n <= 3 else 2
+        spec = {
+            "kind": "evidence_review",
+            "findings": findings,
+            "cols": cols,
+            "rows": rows,
+        }
+        sp = SurfacePlan(
+            surface_id=f"slide-{sn}-evidence-review",
+            role="evidence_review",
+            slide_number=sn,
+            slide_index=slide_index,
+            layout_type=lt,
+            slot_order=10,
+            design_stage_region=region,
+            role_sizes={
+                "body": CARD_FIXED_BODY_PX,
+                "meta": CARD_FIXED_META_PX,
+            },
+            _text_items=text_items,
+            _box_w=CONTENT_W,
+            _fit_role=None,
+            _mode="fixed",
+            _margin_boxes=0,
+            _default_size=CARD_FIXED_BODY_PX,
+            _maximum_size=CARD_FIXED_BODY_PX,
+            _card_spec=spec,
+        )
+        return 1, [sp]
+
+    if lt == "risk_opportunity_review":
+        def _items(group):
+            out = []
+            for it in group:
+                out.append(
+                    {
+                        "id": it.item_id,
+                        "statement": _prose_plain(it.statement),
+                        "statement_runs": [
+                            {"text": r.text, "strong": r.emphasis == "strong"}
+                            for r in it.statement.runs
+                        ],
+                        "detail": _prose_plain(it.detail) if it.detail else None,
+                        "detail_runs": (
+                            [
+                                {"text": r.text, "strong": r.emphasis == "strong"}
+                                for r in it.detail.runs
+                            ]
+                            if it.detail
+                            else None
+                        ),
+                    }
+                )
+                text_items.extend(_prose_items(it.statement))
+                if it.detail:
+                    text_items.extend(_prose_items(it.detail))
+            return out
+
+        risks = _items(payload.risks)
+        opps = _items(payload.opportunities)
+        spec = {
+            "kind": "risk_opportunity_review",
+            "risks": risks,
+            "opportunities": opps,
+            "risks_empty": not risks,
+            "opportunities_empty": not opps,
+        }
+        sp = SurfacePlan(
+            surface_id=f"slide-{sn}-risk-opportunity-review",
+            role="risk_opportunity_review",
+            slide_number=sn,
+            slide_index=slide_index,
+            layout_type=lt,
+            slot_order=10,
+            design_stage_region=region,
+            role_sizes={
+                "heading": CARD_FIXED_HEADING_PX,
+                "body": CARD_FIXED_BODY_PX,
+            },
+            _text_items=text_items,
+            _box_w=CONTENT_W,
+            _fit_role=None,
+            _mode="fixed",
+            _margin_boxes=0,
+            _default_size=CARD_FIXED_BODY_PX,
+            _maximum_size=CARD_FIXED_BODY_PX,
+            _card_spec=spec,
+        )
+        return 1, [sp]
+
+    if lt == "recommendation_case":
+        rationales = []
+        for r in payload.rationales:
+            rationales.append(
+                {
+                    "id": r.rationale_id,
+                    "statement": _prose_plain(r.statement),
+                    "statement_runs": [
+                        {"text": run.text, "strong": run.emphasis == "strong"}
+                        for run in r.statement.runs
+                    ],
+                    "detail": _prose_plain(r.detail) if r.detail else None,
+                    "detail_runs": (
+                        [
+                            {"text": run.text, "strong": run.emphasis == "strong"}
+                            for run in r.detail.runs
+                        ]
+                        if r.detail
+                        else None
+                    ),
+                }
+            )
+            text_items.extend(_prose_items(r.statement))
+            if r.detail:
+                text_items.extend(_prose_items(r.detail))
+        rec_plain = _prose_plain(payload.recommendation)
+        text_items.extend(_prose_items(payload.recommendation))
+        n_rat = len(rationales)
+        cols = min(n_rat, 3) if n_rat else 0
+        rows = math.ceil(n_rat / cols) if cols else 0
+        spec = {
+            "kind": "recommendation_case",
+            "recommendation": rec_plain,
+            "recommendation_runs": [
+                {"text": run.text, "strong": run.emphasis == "strong"}
+                for run in payload.recommendation.runs
+            ],
+            "rationales": rationales,
+            "support_unavailable": not rationales,
+            "cols": cols,
+            "rows": rows,
+        }
+        sp = SurfacePlan(
+            surface_id=f"slide-{sn}-recommendation-case",
+            role="recommendation_case",
+            slide_number=sn,
+            slide_index=slide_index,
+            layout_type=lt,
+            slot_order=10,
+            design_stage_region=region,
+            role_sizes={
+                "heading": CARD_FIXED_HEADING_PX,
+                "body": CARD_FIXED_BODY_PX,
+            },
+            _text_items=text_items,
+            _box_w=CONTENT_W,
+            _fit_role=None,
+            _mode="fixed",
+            _margin_boxes=0,
+            _default_size=CARD_FIXED_BODY_PX,
+            _maximum_size=CARD_FIXED_BODY_PX,
+            _card_spec=spec,
+        )
+        return 1, [sp]
+
+    # state_transition
+    def _state(state):
+        blocks = []
+        for b in state.blocks:
+            if b.type == "paragraphs":
+                paras = [_prose_plain(p) for p in b.paragraphs]
+                for p in b.paragraphs:
+                    text_items.extend(_prose_items(p))
+                blocks.append(
+                    {
+                        "id": b.block_id,
+                        "type": "paragraphs",
+                        "paragraphs": paras,
+                        "paragraph_runs": [
+                            [
+                                {"text": r.text, "strong": r.emphasis == "strong"}
+                                for r in p.runs
+                            ]
+                            for p in b.paragraphs
+                        ],
+                    }
+                )
+            else:
+                items = [_prose_plain(it) for it in b.items]
+                for it in b.items:
+                    text_items.extend(_prose_items(it))
+                blocks.append(
+                    {
+                        "id": b.block_id,
+                        "type": "bullet_list",
+                        "items": items,
+                        "item_runs": [
+                            [
+                                {"text": r.text, "strong": r.emphasis == "strong"}
+                                for r in it.runs
+                            ]
+                            for it in b.items
+                        ],
+                    }
+                )
+        text_items.append((state.heading, True))
+        return {
+            "id": state.surface_id,
+            "heading": state.heading,
+            "blocks": blocks,
+        }
+
+    steps = []
+    if payload.transition_steps:
+        for s in payload.transition_steps:
+            steps.append(
+                {"id": s.step_id, "heading": s.heading, "detail": s.detail}
+            )
+            text_items.append((s.heading, True))
+            if s.detail:
+                text_items.append((s.detail, False))
+    spec = {
+        "kind": "state_transition",
+        "before": _state(payload.before),
+        "after": _state(payload.after),
+        "steps": steps,
+    }
+    sp = SurfacePlan(
+        surface_id=f"slide-{sn}-state-transition",
+        role="state_transition",
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=10,
+        design_stage_region=region,
+        role_sizes={
+            "heading": CARD_FIXED_HEADING_PX,
+            "body": CARD_FIXED_BODY_PX,
+            "meta": CARD_FIXED_META_PX,
+        },
+        _text_items=text_items,
+        _box_w=CONTENT_W,
+        _fit_role=None,
+        _mode="fixed",
+        _margin_boxes=0,
+        _default_size=CARD_FIXED_BODY_PX,
+        _maximum_size=CARD_FIXED_BODY_PX,
+        _card_spec=spec,
+    )
+    return 1, [sp]
+
+
+# ---------------------------------------------------------------------------
+# data_table measure (D24/D25/D44/D104)
+# ---------------------------------------------------------------------------
+
+def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
+    """Fixed/adaptive geometry fit for cards/reviews/quotations/states (D281–D286)."""
+    assert sp._card_spec is not None
+    spec = sp._card_spec
+    kind = spec["kind"]
+    box_w = sp._box_w
+    box_h = sp._box_h if sp._box_h > 0 else 10**9
+    ok = True
+    b_y = CARD_PANEL_BORDER_Y
+    b_x = CARD_PANEL_BORDER_X
+
+    def lines(text: str, px: int, width: float, *, strong: bool = False, max_lines: int = 8):
+        nonlocal ok
+        ls, fit = _linear_lines(text, px, width, strong=strong, max_lines=max_lines)
+        ok = ok and fit
+        return ls
+
+    def panel_inner(col_w: int, pad: int = CARD_PAD) -> int:
+        return max(40, col_w - 2 * pad - b_x)
+
+    if kind == "feature_cards":
+        heading_px = size
+        detail_px = size
+        cards = spec["cards"]
+        cols = spec["cols"]
+        rows = spec["rows"]
+        col_w = max(40, (box_w - CARD_GAP * (cols - 1)) // cols)
+        text_w = panel_inner(col_w)
+        row_heights = []
+        for r in range(rows):
+            chunk = cards[r * cols : (r + 1) * cols]
+            heights = []
+            for c in chunk:
+                h = CARD_PAD + b_y
+                if c.get("icon_key"):
+                    h += FEATURE_ICON_SIZE + FEATURE_ICON_GAP
+                ls = lines(c["heading"], heading_px, text_w, strong=True, max_lines=3)
+                h += len(ls) * _line_box(heading_px)
+                if c.get("detail"):
+                    h += FEATURE_ICON_GAP
+                    ls = lines(c["detail"], detail_px, text_w, max_lines=4)
+                    h += len(ls) * _line_box(detail_px)
+                h += CARD_PAD
+                heights.append(h)
+            row_heights.append(max(heights) if heights else 0)
+        total = sum(row_heights) + CARD_GAP * max(0, rows - 1) + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    if kind == "quotation":
+        body_px = sp.role_sizes.get("body", CARD_FIXED_BODY_PX)
+        meta_px = sp.role_sizes.get("meta", CARD_FIXED_META_PX)
+        quotes = spec["quotes"]
+        n = len(quotes)
+        col_w = box_w if n == 1 else max(40, (box_w - CARD_GAP * (n - 1)) // n)
+        heights = []
+        for q in quotes:
+            inner_w = panel_inner(col_w)
+            h = CARD_PAD + b_y
+            paras = q["paragraphs"]
+            for i, para in enumerate(paras):
+                ls = lines(para, body_px, inner_w, max_lines=6)
+                h += len(ls) * _line_box(body_px)
+                if i < len(paras) - 1:
+                    h += CARD_MARGIN
+            h += CARD_INNER_GAP  # blockquote margin-bottom before cite
+            cite = q["attribution"]["cite"]
+            ls = lines(cite, meta_px, inner_w, strong=True, max_lines=3)
+            h += len(ls) * _line_box(meta_px)
+            if not q.get("provenance_ok", True):
+                ls = lines("Provenance unavailable", meta_px, inner_w, max_lines=1)
+                h += CARD_INNER_GAP + len(ls) * _line_box(meta_px)
+            h += CARD_PAD
+            heights.append(h)
+        total = max(heights) + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    if kind == "evidence_review":
+        body_px = sp.role_sizes.get("body", CARD_FIXED_BODY_PX)
+        meta_px = sp.role_sizes.get("meta", CARD_FIXED_META_PX)
+        findings = spec["findings"]
+        cols = spec["cols"]
+        rows = spec["rows"]
+        col_w = max(40, (box_w - CARD_GAP * (cols - 1)) // cols)
+        row_heights = []
+        for r in range(rows):
+            chunk = findings[r * cols : (r + 1) * cols]
+            heights = []
+            for f in chunk:
+                inner_w = panel_inner(col_w)
+                h = CARD_PAD + b_y
+                ls = lines(f["statement"], body_px, inner_w, max_lines=8)
+                h += len(ls) * _line_box(body_px) + CARD_INNER_GAP
+                if f.get("source_unavailable"):
+                    src_text = "Source unavailable"
+                else:
+                    src_text = "; ".join(s["name"] for s in f["sources"])
+                ls = lines(src_text, meta_px, inner_w, max_lines=3)
+                h += len(ls) * _line_box(meta_px) + CARD_PAD
+                heights.append(h)
+            row_heights.append(max(heights) if heights else 0)
+        total = sum(row_heights) + CARD_GAP * max(0, rows - 1) + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    if kind == "risk_opportunity_review":
+        heading_px = sp.role_sizes.get("heading", CARD_FIXED_HEADING_PX)
+        body_px = sp.role_sizes.get("body", CARD_FIXED_BODY_PX)
+        col_w = max(40, (box_w - CARD_GAP) // 2)
+
+        def group_h(items: list[dict[str, Any]], label: str) -> int:
+            inner_w = panel_inner(col_w)
+            h = len(lines(label, heading_px, col_w, strong=True, max_lines=1)) * _line_box(
+                heading_px
+            )
+            if not items:
+                h += RISK_GROUP_GAP + CARD_PAD + b_y + _line_box(body_px) + CARD_PAD
+                return h
+            for i, it in enumerate(items):
+                h += RISK_GROUP_GAP
+                ch = CARD_PAD + b_y
+                ls = lines(it["statement"], body_px, inner_w, max_lines=6)
+                # .item-statement{margin:0 0 4px} always painted
+                ch += len(ls) * _line_box(body_px) + CARD_MARGIN
+                if it.get("detail"):
+                    ls = lines(it["detail"], body_px, inner_w, max_lines=4)
+                    ch += len(ls) * _line_box(body_px)
+                ch += CARD_PAD
+                h += ch
+            return h
+
+        total = max(
+            group_h(spec["risks"], "Risks"),
+            group_h(spec["opportunities"], "Opportunities"),
+        ) + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    if kind == "recommendation_case":
+        heading_px = sp.role_sizes.get("heading", CARD_FIXED_HEADING_PX)
+        body_px = sp.role_sizes.get("body", CARD_FIXED_BODY_PX)
+        inner_w = panel_inner(box_w)
+        h = CARD_PAD + b_y  # recommendation-panel
+        ls = lines("Recommendation", heading_px, inner_w, strong=True, max_lines=1)
+        h += len(ls) * _line_box(heading_px) + CARD_MARGIN
+        ls = lines(spec["recommendation"], body_px, inner_w, max_lines=6)
+        h += len(ls) * _line_box(body_px) + CARD_PAD + CARD_GAP
+        rationales = spec["rationales"]
+        if rationales:
+            n = len(rationales)
+            cols = int(spec.get("cols") or min(n, 3))
+            rows = int(spec.get("rows") or math.ceil(n / cols))
+            col_w = max(40, (box_w - CARD_GAP * (cols - 1)) // cols)
+            c_inner = panel_inner(col_w)
+            heights = []
+            for i, r in enumerate(rationales):
+                ch = CARD_PAD + b_y
+                label = f"Rationale {i + 1}"
+                ls = lines(label, heading_px, c_inner, strong=True, max_lines=1)
+                ch += len(ls) * _line_box(heading_px) + CARD_MARGIN
+                ls = lines(r["statement"], body_px, c_inner, max_lines=6)
+                # .item-statement{margin:0 0 4px} always painted
+                ch += len(ls) * _line_box(body_px) + CARD_MARGIN
+                if r.get("detail"):
+                    ls = lines(r["detail"], body_px, c_inner, max_lines=3)
+                    ch += len(ls) * _line_box(body_px)
+                ch += CARD_PAD
+                heights.append(ch)
+            row_heights = [
+                max(heights[r * cols : (r + 1) * cols]) for r in range(rows)
+            ]
+            h += sum(row_heights) + CARD_GAP * max(0, rows - 1)
+        else:
+            h += CARD_PAD + b_y + _line_box(body_px) + CARD_PAD
+        total = h + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    # state_transition
+    heading_px = sp.role_sizes.get("heading", CARD_FIXED_HEADING_PX)
+    body_px = sp.role_sizes.get("body", CARD_FIXED_BODY_PX)
+    meta_px = sp.role_sizes.get("meta", CARD_FIXED_META_PX)
+    steps = spec.get("steps") or []
+    # Layout: before | steps? | after as equal columns.
+    n_cols = 3 if steps else 2
+    col_w = max(
+        40,
+        (
+            box_w
+            - 2 * CARD_GAP * (n_cols - 1)
+            - LINEAR_CONNECTOR_H * (n_cols - 1)
+        )
+        // n_cols,
+    )
+
+    def state_h(state: dict[str, Any], role_label: str) -> int:
+        inner_w = panel_inner(col_w)
+        h = CARD_PAD + b_y
+        ls = lines(role_label, meta_px, inner_w, strong=True, max_lines=1)
+        h += len(ls) * _line_box(meta_px) + CARD_MARGIN
+        ls = lines(state["heading"], heading_px, inner_w, strong=True, max_lines=3)
+        h += len(ls) * _line_box(heading_px) + CARD_INNER_GAP
+        # Paint: one margin-bottom per p or ul block (not per li).
+        for b in state["blocks"]:
+            if b["type"] == "paragraphs":
+                for para in b["paragraphs"]:
+                    ls = lines(para, body_px, inner_w, max_lines=4)
+                    h += len(ls) * _line_box(body_px) + CARD_MARGIN
+            else:
+                li_w = max(40, inner_w - math.ceil(body_px * LIST_INDENT_EM))
+                for item in b["items"]:
+                    ls = lines(item, body_px, li_w, max_lines=3)
+                    h += len(ls) * _line_box(body_px)
+                # single ul margin-bottom
+                h += CARD_MARGIN
+        h += CARD_PAD
+        return h
+
+    def steps_h() -> int:
+        if not steps:
+            return 0
+        # Paint: column flex gap 8 among bare role-label p + each .transition-step.
+        # Label uses global p margin-bottom 12; steps pad 12; h4 mb 4; detail p mb 12.
+        step_inner_w = max(40, col_w - 2 * TRANSITION_STEP_PAD - b_x)
+        label_inner_w = max(40, col_w)
+        ls = lines("Transition", meta_px, label_inner_w, strong=True, max_lines=1)
+        h = len(ls) * _line_box(meta_px) + BLOCK_MARGIN_Y + CARD_INNER_GAP
+        for i, s in enumerate(steps):
+            h += TRANSITION_STEP_PAD + b_y
+            ls = lines(s["heading"], heading_px, step_inner_w, strong=True, max_lines=2)
+            h += len(ls) * _line_box(heading_px) + CARD_MARGIN
+            if s.get("detail"):
+                ls = lines(s["detail"], body_px, step_inner_w, max_lines=3)
+                h += len(ls) * _line_box(body_px) + BLOCK_MARGIN_Y
+            h += TRANSITION_STEP_PAD
+            if i < len(steps) - 1:
+                h += CARD_INNER_GAP
+        return h
+
+    total = max(
+        state_h(spec["before"], "Before"),
+        steps_h() if steps else 0,
+        state_h(spec["after"], "After"),
+    ) + BLOCK_MARGIN_Y
+    if not ok:
+        return False, 10**9
+    return total <= box_h, total
+
 def _collect_relationship_body(
     slide: Any,
     sn: int,
@@ -3031,8 +3729,14 @@ def _is_rectangular_table_spec(spec: dict[str, Any] | None) -> bool:
 
 def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     """Return (fits, wrapped) for table / metric_strip / prose surfaces."""
+    if sp.role in KERNEL_CARD_LAYOUTS and sp._card_spec is not None:
+        ok, _h = _card_fit_detail(sp, size)
+        return ok, False
     if sp._linear_spec is not None:
         ok, _h = _linear_fit_detail(sp)
+        return ok, False
+    if sp._card_spec is not None:
+        ok, _h = _card_fit_detail(sp, size)
         return ok, False
     spec = sp._table_spec
     if _is_rectangular_table_spec(spec):
@@ -3701,6 +4405,8 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
             sp.role_sizes["label"] = roles["label"]
             sp.role_sizes["value"] = roles["value"]
         sp.role_sizes["table"] = size
+    elif sp.role == "feature_cards":
+        sp.role_sizes["detail"] = size
 
 
 def _apply_composition_fallback(sp: SurfacePlan) -> None:
@@ -3781,6 +4487,18 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
         }
         sp.fallback = fallback_by_role[sp.role]
         sp._linear_spec["paint_as"] = "fallback_list"
+    elif sp.role in KERNEL_CARD_LAYOUTS and sp._card_spec is not None:
+        # Complete sequential accessible fallbacks (D281–D286).
+        fallback_by_role = {
+            "feature_cards": "accessible_sequential_cards",
+            "quotation": "accessible_sequential_blockquotes",
+            "evidence_review": "accessible_sequential_evidence_list",
+            "risk_opportunity_review": "accessible_sequential_sections",
+            "recommendation_case": "accessible_sequential_recommendation",
+            "state_transition": "accessible_sequential_states",
+        }
+        sp.fallback = fallback_by_role[sp.role]
+        sp._card_spec["paint_as"] = "fallback_list"
     elif sp.role in KERNEL_RELATIONSHIP_LAYOUTS and sp._linear_spec is not None:
         # Valid-but-unfittable trees/maps → outline/list; defects already set.
         if sp._linear_spec.get("structural_defect"):
@@ -3794,7 +4512,6 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
         }
         sp.fallback = fallback_by_role[sp.role]
         sp._linear_spec["paint_as"] = "relationship_fallback"
-
 
 def _record_surface_adaptations(
     sp: SurfacePlan, size: int, events: list[DiagnosticEvent]
@@ -3819,7 +4536,6 @@ def _record_surface_adaptations(
                 surface_id=sp.surface_id,
             )
         )
-
 
 def _apply_surface_floor_adaptations(
     sp: SurfacePlan, size: int, events: list[DiagnosticEvent]

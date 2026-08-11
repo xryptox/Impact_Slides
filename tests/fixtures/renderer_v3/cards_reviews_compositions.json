@@ -1,0 +1,256 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "insights",
+      "label": "Insights"
+    }
+  ],
+  "number_formats": {},
+  "evidence_registry": {
+    "src-a": {
+      "source_name": "Field interviews"
+    },
+    "src-b": {
+      "source_name": "Ops ledger"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "feature_cards",
+      "section_id": "insights",
+      "title": "Capability cards",
+      "content": {
+        "subtitle": "Equal-rank features"
+      },
+      "payload": {
+        "cards": [
+          {
+            "card_id": "grow",
+            "heading": "Grow share",
+            "detail": "Expand high-intent corridors.",
+            "icon_key": "growth"
+          },
+          {
+            "card_id": "guard",
+            "heading": "Guard risk",
+            "detail": "Tighten exception reviews.",
+            "icon_key": "shield"
+          },
+          {
+            "card_id": "guide",
+            "heading": "Guide teams",
+            "detail": "Publish the operating cadence."
+          }
+        ]
+      },
+      "takeaway": {
+        "text": "Icons stay decorative; wording carries meaning."
+      },
+      "evidence_ids": ["src-a"],
+      "source_footer": ["src-a"],
+      "speaker_notes": "Walk three equal cards left to right."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "quotation",
+      "section_id": "insights",
+      "title": "Customer voice",
+      "payload": {
+        "quotes": [
+          {
+            "quote_id": "q1",
+            "paragraphs": [
+              "We need one operating rhythm across markets."
+            ],
+            "attribution": {
+              "name": "A. Rivera",
+              "role": "COO",
+              "organization": "North Region"
+            },
+            "evidence_id": "src-a"
+          },
+          {
+            "quote_id": "q2",
+            "paragraphs": [
+              "Visibility beats more tooling."
+            ],
+            "attribution": {
+              "name": "J. Chen"
+            }
+          }
+        ]
+      },
+      "evidence_ids": ["src-a"],
+      "source_footer": ["src-a"],
+      "speaker_notes": "Read both quotes in authored order."
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "evidence_review",
+      "section_id": "insights",
+      "title": "Evidence findings",
+      "payload": {
+        "findings": [
+          {
+            "finding_id": "f1",
+            "statement": {
+              "runs": [
+                {"text": "Pipeline conversion "},
+                {"text": "softened", "emphasis": "strong"},
+                {"text": " in Q2."}
+              ]
+            },
+            "evidence_ids": ["src-a", "src-b"]
+          },
+          {
+            "finding_id": "f2",
+            "statement": {
+              "runs": [
+                {"text": "Exception queues cleared within SLA."}
+              ]
+            },
+            "evidence_ids": ["src-b"]
+          }
+        ]
+      },
+      "takeaway": {
+        "text": "Sources live on the cards, not the footer."
+      },
+      "evidence_ids": ["src-a", "src-b"],
+      "speaker_notes": "Cite both sources for finding one."
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "risk_opportunity_review",
+      "section_id": "insights",
+      "title": "Risks and opportunities",
+      "payload": {
+        "risks": [
+          {
+            "item_id": "r1",
+            "statement": {
+              "runs": [{"text": "Vendor concentration in one corridor."}]
+            },
+            "detail": {
+              "runs": [{"text": "Single-source dependency on hub B."}]
+            }
+          },
+          {
+            "item_id": "r2",
+            "statement": {
+              "runs": [{"text": "Capacity lag if demand spikes."}]
+            }
+          }
+        ],
+        "opportunities": [
+          {
+            "item_id": "o1",
+            "statement": {
+              "runs": [{"text": "Cross-sell into adjacent wallets."}]
+            }
+          }
+        ]
+      },
+      "evidence_ids": ["src-a"],
+      "source_footer": ["src-a"],
+      "speaker_notes": "Keep groups independent; do not pair by index."
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "recommendation_case",
+      "section_id": "insights",
+      "title": "Recommended path",
+      "payload": {
+        "recommendation": {
+          "runs": [
+            {"text": "Stand up a single weekly operating cadence."}
+          ]
+        },
+        "rationales": [
+          {
+            "rationale_id": "ra1",
+            "statement": {
+              "runs": [{"text": "Removes duplicate status forums."}]
+            }
+          },
+          {
+            "rationale_id": "ra2",
+            "statement": {
+              "runs": [{"text": "Surfaces exceptions earlier."}]
+            },
+            "detail": {
+              "runs": [{"text": "Ties ledger alerts to owners."}]
+            }
+          }
+        ]
+      },
+      "evidence_ids": ["src-b"],
+      "source_footer": ["src-b"],
+      "speaker_notes": "Recommendation owns the action; no takeaway."
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "state_transition",
+      "section_id": "insights",
+      "title": "Operating model shift",
+      "payload": {
+        "before": {
+          "surface_id": "state-before",
+          "heading": "Fragmented forums",
+          "blocks": [
+            {
+              "block_id": "bb1",
+              "type": "paragraphs",
+              "paragraphs": [
+                {
+                  "runs": [{"text": "Each market runs its own weekly pack."}]
+                }
+              ]
+            },
+            {
+              "block_id": "bb2",
+              "type": "bullet_list",
+              "items": [
+                {"runs": [{"text": "No shared exception queue."}]},
+                {"runs": [{"text": "Late handoffs across regions."}]}
+              ]
+            }
+          ]
+        },
+        "after": {
+          "surface_id": "state-after",
+          "heading": "One cadence",
+          "blocks": [
+            {
+              "block_id": "ba1",
+              "type": "paragraphs",
+              "paragraphs": [
+                {
+                  "runs": [{"text": "One board-ready pack every Monday."}]
+                }
+              ]
+            }
+          ]
+        },
+        "transition_steps": [
+          {
+            "step_id": "ts1",
+            "heading": "Consolidate owners",
+            "detail": "Name one forum chair."
+          },
+          {
+            "step_id": "ts2",
+            "heading": "Merge packs"
+          }
+        ]
+      },
+      "evidence_ids": ["src-a"],
+      "source_footer": ["src-a"],
+      "speaker_notes": "Read before, steps, then after."
+    }
+  ]
+}
