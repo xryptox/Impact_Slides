@@ -481,7 +481,7 @@ def _paint_slide_body(
             sub_sp = plans_by_id.get(f"slide-{sn}-subtitle")
             sub_px = sub_sp.role_sizes.get("subtitle") if sub_sp else None
             out.append(
-                f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
+                f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>'
                 f"{_soft_break_html(slide.content.subtitle)}</p>"
             )
         if lt == "single_chart":
@@ -535,7 +535,7 @@ def _paint_slide_body(
                 f'<p class="takeaway-label"{_style_font(label_px)}>Key takeaway</p>'
             )
             out.append(
-                f'<p class="takeaway-text"{_style_font(body_px)}>' 
+                f'<p class="takeaway-text"{_style_font(body_px)}>'
                 f"{_soft_break_html(takeaway.text)}</p>"
             )
             out.append("</aside>")
@@ -700,7 +700,7 @@ def _paint_table_surface(
     extra = f" {extra_table_class}" if extra_table_class else ""
     out.append(
         f'<table class="{table_class}{overflow_cls}{extra}" {attrs}{style} '
-        f'data-table-surface="{_escape(table.surface_id)}">' 
+        f'data-table-surface="{_escape(table.surface_id)}">'
     )
     if widths:
         out.append("<colgroup>")
@@ -845,28 +845,28 @@ def _paint_metric_strip(
     detail_px = sp.role_sizes.get("detail")
     out = [
         f'<div class="metric-strip" {_plan_attrs(sp, events_by_surface)} '
-        f'data-metric-strip="{_escape(strip.surface_id)}">' 
+        f'data-metric-strip="{_escape(strip.surface_id)}">'
     ]
     for m in metrics:
         out.append(
-            f'<div class="metric-cell" data-metric-id="{_escape(m["metric_id"])}">' 
+            f'<div class="metric-cell" data-metric-id="{_escape(m["metric_id"])}">'
         )
         out.append(
-            f'<p class="metric-label"{_style_font(label_px)}>' 
+            f'<p class="metric-label"{_style_font(label_px)}>'
             f"{_soft_break_html(m['label'])}</p>"
         )
         aria = (
-            f' aria-label="{_escape(m["accessible"])}"' 
+            f' aria-label="{_escape(m["accessible"])}"'
             if m["accessible"] != m["visible"]
             else ""
         )
         out.append(
-            f'<p class="metric-value"{_style_font(value_px)}{aria}>' 
+            f'<p class="metric-value"{_style_font(value_px)}{aria}>'
             f"{_escape(m['visible'])}</p>"
         )
         if m.get("detail"):
             out.append(
-                f'<p class="metric-detail"{_style_font(detail_px)}>' 
+                f'<p class="metric-detail"{_style_font(detail_px)}>'
                 f"{_soft_break_html(m['detail'])}</p>"
             )
         out.append("</div>")
@@ -965,7 +965,7 @@ def _paint_comparison_cards(
     out = [
         f'<div class="comparison-cards cols-{int(cols)}{overflow_cls}" '
         f'aria-hidden="true" {_plan_attrs(sp, events_by_surface)} '
-        f'data-table-surface="{_escape(table.surface_id)}">' 
+        f'data-table-surface="{_escape(table.surface_id)}">'
     ]
     # Cards are visual-only; the sr-only D255 table below is the single
     # accessibility source and the print source.
@@ -973,12 +973,12 @@ def _paint_comparison_cards(
     fact_labels = list(paint["header_full"][1:])
     for r_i, row in enumerate(table.rows):
         out.append(
-            f'<article class="comparison-card" data-row-id="{_escape(row.row_id)}">' 
+            f'<article class="comparison-card" data-row-id="{_escape(row.row_id)}">'
         )
         heading = paint["display_row_labels"][r_i]
         full_h = paint["row_labels_full"][r_i]
         out.append(
-            f'<h2 title="{_escape(full_h)}"{_style_font(heading_px)}>' 
+            f'<h2 title="{_escape(full_h)}"{_style_font(heading_px)}>'
             f"{_soft_break_html(heading)}</h2>"
         )
         for c_i, cid in enumerate(col_ids):
@@ -986,16 +986,16 @@ def _paint_comparison_cards(
             accessible = paint["cells_acc"][r_i][c_i]
             out.append(f'<div class="fact" data-column-id="{_escape(cid)}">')
             out.append(
-                f'<p class="fact-label"{_style_font(label_px)}>' 
+                f'<p class="fact-label"{_style_font(label_px)}>'
                 f"{_soft_break_html(fact_labels[c_i])}</p>"
             )
             aria = (
-                f' aria-label="{_escape(accessible)}"' 
+                f' aria-label="{_escape(accessible)}"'
                 if accessible != visible
                 else ""
             )
             out.append(
-                f'<p class="fact-value"{_style_font(value_px)}{aria}>' 
+                f'<p class="fact-value"{_style_font(value_px)}{aria}>'
                 f"{_escape(visible)}</p>"
             )
             out.append("</div>")
@@ -1066,7 +1066,7 @@ def _paint_linear_composition(
             )
             out.append('<div class="linear-card card-panel">')
             out.append(
-                f'<p class="linear-meta"{_style_font(meta_px)}>' 
+                f'<p class="linear-meta"{_style_font(meta_px)}>'
                 f'{int(it["ordinal"])}</p>'
             )
             out.append(
@@ -1074,7 +1074,7 @@ def _paint_linear_composition(
             )
             if it.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(it["detail"])}</p>'
                 )
             out.append("</div></div>")
@@ -1100,7 +1100,7 @@ def _paint_linear_composition(
             )
             out.append('<div class="linear-card card-panel">')
             out.append(
-                f'<p class="linear-meta"{_style_font(meta_px)}>' 
+                f'<p class="linear-meta"{_style_font(meta_px)}>'
                 f'{_soft_break_html(it["time_label"])}</p>'
             )
             out.append(
@@ -1108,7 +1108,7 @@ def _paint_linear_composition(
             )
             if it.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(it["detail"])}</p>'
                 )
             out.append("</div></div>")
@@ -1124,7 +1124,7 @@ def _paint_linear_composition(
                 f'<section class="arch-layer" data-layer-id="{_escape(layer["id"])}">'
             )
             out.append(
-                f'<h3 class="arch-layer-heading"{_style_font(heading_px)}>' 
+                f'<h3 class="arch-layer-heading"{_style_font(heading_px)}>'
                 f'{_soft_break_html(layer["heading"])}</h3>'
             )
             out.append('<div class="arch-components">')
@@ -1138,7 +1138,7 @@ def _paint_linear_composition(
                 )
                 if c.get("detail"):
                     out.append(
-                        f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                        f'<p class="linear-detail"{_style_font(detail_px)}>'
                         f'{_soft_break_html(c["detail"])}</p>'
                     )
                 out.append("</div>")
@@ -1177,7 +1177,7 @@ def _paint_linear_composition(
             )
             if c.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(c["detail"])}</p>'
                 )
             out.append("</div>")
@@ -1185,7 +1185,7 @@ def _paint_linear_composition(
         if st.get("transfer_label"):
             nxt = stages[i + 1]["heading"] if i + 1 < len(stages) else ""
             out.append(
-                f'<p class="pipeline-transfer"{_style_font(meta_px)}>' 
+                f'<p class="pipeline-transfer"{_style_font(meta_px)}>'
                 f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
                 f'{_soft_break_html(st["transfer_label"])}</p>'
             )
@@ -1254,7 +1254,7 @@ def _paint_linear_fallback(
                 )
                 if c.get("detail"):
                     out.append(
-                        f' — <span{_style_font(detail_px)}>' 
+                        f' — <span{_style_font(detail_px)}>'
                         f'{_soft_break_html(c["detail"])}</span>'
                     )
                 out.append("</li>")
@@ -1276,7 +1276,7 @@ def _paint_linear_fallback(
                 )
                 if c.get("detail"):
                     out.append(
-                        f' — <span{_style_font(detail_px)}>' 
+                        f' — <span{_style_font(detail_px)}>'
                         f'{_soft_break_html(c["detail"])}</span>'
                     )
                 out.append("</li>")
@@ -1284,7 +1284,7 @@ def _paint_linear_fallback(
             if st.get("transfer_label") and i + 1 < len(stages):
                 nxt = stages[i + 1]["heading"]
                 out.append(
-                    f'<p class="pipeline-transfer"{_style_font(meta_px)}>' 
+                    f'<p class="pipeline-transfer"{_style_font(meta_px)}>'
                     f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
                     f'{_soft_break_html(st["transfer_label"])}</p>'
                 )
@@ -1381,13 +1381,13 @@ def _paint_decision_tree(
             )
             if n.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(n["detail"])}</p>'
                 )
             for lab, tid in children.get(nid, []):
                 tgt = by_id.get(tid, {})
                 out.append(
-                    f'<p class="rel-branch"{_style_font(meta_px)}>' 
+                    f'<p class="rel-branch"{_style_font(meta_px)}>'
                     f'{_soft_break_html(lab)} → {_soft_break_html(tgt.get("heading", tid))}</p>'
                 )
             out.append("</div>")
@@ -1424,7 +1424,7 @@ def _paint_feedback_loop(
         out.append('<div class="linear-card card-panel">')
         if it.get("effect"):
             out.append(
-                f'<p class="linear-meta"{_style_font(meta_px)}>' 
+                f'<p class="linear-meta"{_style_font(meta_px)}>'
                 f'{_escape(it["effect"].replace("_", " "))}</p>'
             )
         out.append(
@@ -1432,12 +1432,12 @@ def _paint_feedback_loop(
         )
         if it.get("detail"):
             out.append(
-                f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                f'<p class="linear-detail"{_style_font(detail_px)}>'
                 f'{_soft_break_html(it["detail"])}</p>'
             )
         if it.get("relationship_label"):
             out.append(
-                f'<p class="rel-branch"{_style_font(meta_px)}>' 
+                f'<p class="rel-branch"{_style_font(meta_px)}>'
                 f'{_soft_break_html(it["relationship_label"])}</p>'
             )
         out.append("</div></div>")
@@ -1488,7 +1488,7 @@ def _paint_hierarchy(
             )
             if n.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(n["detail"])}</p>'
                 )
             out.append("</div>")
@@ -1517,7 +1517,7 @@ def _paint_stakeholder_map(
     )
     if focal.get("detail"):
         out.append(
-            f'<p class="linear-detail"{_style_font(detail_px)}>' 
+            f'<p class="linear-detail"{_style_font(detail_px)}>'
             f'{_soft_break_html(focal["detail"])}</p>'
         )
     out.append("</div>")
@@ -1528,7 +1528,7 @@ def _paint_stakeholder_map(
             f'data-entity-id="{_escape(s["id"])}" data-direction="{_escape(s["direction"])}">'
         )
         out.append(
-            f'<p class="linear-meta"{_style_font(meta_px)}>' 
+            f'<p class="linear-meta"{_style_font(meta_px)}>'
             f'{_soft_break_html(s["relationship_label"])} '
             f'({_escape(s["direction"].replace("_", " "))})</p>'
         )
@@ -1537,7 +1537,7 @@ def _paint_stakeholder_map(
         )
         if s.get("detail"):
             out.append(
-                f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                f'<p class="linear-detail"{_style_font(detail_px)}>'
                 f'{_soft_break_html(s["detail"])}</p>'
             )
         out.append("</div>")
@@ -1564,7 +1564,7 @@ def _paint_quadrant_matrix(
     for it in spec["items"]:
         by_q[(it["x_band"], it["y_band"])].append(it)
     out = [
-        f'<p class="axis-legend"{_style_font(meta_px)}>' 
+        f'<p class="axis-legend"{_style_font(meta_px)}>'
         f'X: {_soft_break_html(x_axis["label"])} '
         f'({_soft_break_html(x_axis["low_label"])}–{_soft_break_html(x_axis["high_label"])}); '
         f'Y: {_soft_break_html(y_axis["label"])} '
@@ -1581,7 +1581,7 @@ def _paint_quadrant_matrix(
             f'data-y-band="{_escape(yb)}">'
         )
         out.append(
-            f'<p class="quadrant-label"{_style_font(meta_px)}>' 
+            f'<p class="quadrant-label"{_style_font(meta_px)}>'
             f'{_soft_break_html(x_lab)} / {_soft_break_html(y_lab)}</p>'
         )
         for it in by_q[(xb, yb)]:
@@ -1594,7 +1594,7 @@ def _paint_quadrant_matrix(
             )
             if it.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(it["detail"])}</p>'
                 )
             out.append("</div>")
@@ -1652,7 +1652,7 @@ def _paint_relationship_fallback(
                             out.append("</ul>")
                         else:
                             out.append(
-                                f' <span class="relationship-unresolved"{_style_font(meta_px)}>' 
+                                f' <span class="relationship-unresolved"{_style_font(meta_px)}>'
                                 f'unresolved target {_escape(br["target_id"])}</span>'
                             )
                         out.append("</li>")
@@ -1746,7 +1746,7 @@ def _paint_relationship_fallback(
             out.append("</ol>")
             if spec.get("classification"):
                 out.append(
-                    f'<p class="loop-classification"{_style_font(meta_px)}>' 
+                    f'<p class="loop-classification"{_style_font(meta_px)}>'
                     f'{_escape(spec["classification"])} loop</p>'
                 )
         else:
@@ -1864,7 +1864,7 @@ def _paint_relationship_fallback(
         if fb == "accessible_relationship_list" and not spec.get("structural_defect"):
             focal = spec["focal"]
             out.append(
-                f'<p data-entity-id="{_escape(focal["id"])}"{_style_font(heading_px)}>' 
+                f'<p data-entity-id="{_escape(focal["id"])}"{_style_font(heading_px)}>'
                 f'<strong>Focal: {_soft_break_html(focal["heading"])}</strong></p>'
             )
             out.append("<ul>")
@@ -1877,7 +1877,7 @@ def _paint_relationship_fallback(
                     f'<strong{_style_font(heading_px)}>{_soft_break_html(s["heading"])}</strong>'
                 )
                 out.append(
-                    f' — <span{_style_font(meta_px)}>' 
+                    f' — <span{_style_font(meta_px)}>'
                     f'{_soft_break_html(s["relationship_label"])} '
                     f'({_escape(s["direction"].replace("_", " "))})</span>'
                 )
@@ -1949,8 +1949,8 @@ def _paint_relationship_fallback(
                 f'<li data-x-band="{_escape(xb)}" data-y-band="{_escape(yb)}">'
             )
             out.append(
-                f'<strong{_style_font(heading_px)}>' 
-                f'{_soft_break_html(str(x_lab))} / {_soft_break_html(str(y_lab))}' 
+                f'<strong{_style_font(heading_px)}>'
+                f'{_soft_break_html(str(x_lab))} / {_soft_break_html(str(y_lab))}'
                 f'</strong>'
             )
             out.append("<ul>")

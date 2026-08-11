@@ -1,4 +1,4 @@
-"""Schema-v1 typed deck model (D117–D224, D251, D268–D271 kernel subset).
+"""Schema-v1 typed deck model (D117–D224, D251, D268–D280 kernel compositions).
 
 This module is the single source of truth for the closed handoff contract.
 JSON Schema is generated from these models (D121).

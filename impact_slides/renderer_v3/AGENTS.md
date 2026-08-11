@@ -51,7 +51,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - `layered_architecture`: 2–4 layers × 1–4 components; order is grouping/stack only — no arrows; non-strict nested outline (D196/D276)
 - `data_pipeline`: 2–6 stages × 1–3 components; optional `transfer_label` on non-final stages only; non-strict ordered flow keeps `A to B: label` wording (D197/D277)
 - `decision_tree`: 3–15 nodes, authored root, max depth 4; decision 2–3 labeled branches / outcome leaves; graph invariants in `validate.analyze_relationship_structure`; non-strict unresolved → relationship table (no reconnect), unfittable valid → nested outline (D194/D274)
-- `feedback_loop`: 3–8 ordered cycle items; `procedural` or `causal` (authored polarities; derived reinforcing/balancing only); non-strict missing effect → relationship table without invented links (D195/D275)
+- `feedback_loop`: 3–8 ordered cycle items; `procedural` or `causal` (authored polarities; derived reinforcing/balancing only); non-strict missing effect → relationship table without invented links; unfittable valid → ordered list (D195/D275)
 - `hierarchy`: 3–20 nodes, one root, one uniform `reports_to`/`part_of`/`is_a`; max depth 4; non-strict defects → relationship table; unfittable valid → nested outline (D198/D278)
 - `stakeholder_map`: one focal + 2–8 spokes with exact label + direction; hub-spoke only; non-strict list/table preserves entities (D199/D279)
 - `quadrant_matrix`: two binary axes + 1–16 items with explicit low/high bands; empty quadrants stay labelled; non-strict four-group fallback (D200/D280)
