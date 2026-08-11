@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model, deck-wide measure/plan freeze for kernel prose/chrome/tables/line charts/heatmaps/linear+grouping compositions, decimal-safe number formatting, deterministic five-artifact publication, the sole boardroom_amex theme manifest (CSS/Chart.js/SVG tokens), the line-chart tracer (Chart.js + noscript SVG + D247 semantic table), native semantic heatmaps (D163/D246/D308), and process/timeline/layered/pipeline compositions; remaining chart and relationship families land in later tickets.
+Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model, deck-wide measure/plan freeze for kernel prose/chrome/tables/line charts/heatmaps/linear+grouping compositions, decimal-safe number formatting, deterministic five-artifact publication, the sole boardroom_amex theme manifest (CSS/Chart.js/SVG tokens), the line-chart tracer (Chart.js + noscript SVG + D247 semantic table), native semantic heatmaps (D163/D246/D308), process/timeline/layered/pipeline compositions, and the offline legacy→v1 migration tool (D119/D313); remaining chart and relationship families land in later tickets.
 
 ## Ownership
 
@@ -15,12 +15,14 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Generated JSON Schema artifact `schema/handoff_schema_v1.json` (D121)
 - Canonical `boardroom_amex` theme manifest + generated CSS (`theme/`, `theme_export.py`) and self-contained licensed webfonts (`assets/fonts/`) (D127-D133)
 - Vendored Chart.js UMD + license (`assets/libs/chart.umd.min.js`, `assets/libs/CHART_JS_LICENSE.md`) inlined into published decks
-- Does **not** own legacy v2 layouts, recipes, charts, or migration of unversioned handoffs (D119 is a later tool)
+- Offline legacy→schema-v1 migrator (`migrate.py`) — D119/D313/D316 inventory, proof gates, `--check`, v1 marker withhold; never mutates sources or `renderer_v2`
+- Does **not** own legacy v2 layouts, recipes, or charts; production `render_deck`/`validate_handoff` have no hidden legacy path
 
 ## Local Contracts
 
 - Public API: `from impact_slides.renderer_v3 import render_deck, validate_handoff, RendererValidationError, RendererConfigurationError, RendererPublicationError`
 - CLI: `python -m impact_slides.renderer_v3 --handoff PATH --out DIR` (strict default; `--no-strict`, `--debug`, `--svg-only`); `schema --check` / bare `--check` retain the D121 drift gate
+- Migrator CLI: `python -m impact_slides.renderer_v3.migrate --handoff PATH --out DIR` or `--check` (writes nothing; exit 0 only when all slides resolve and candidate validates). Emits `migration_report.json` always on write; `handoff_v1.json` only when unmarked decisions are zero and validation is clean; otherwise unmarked `handoff_candidate.json`. All 57 D313 inputs get one inventory disposition; failed proofs and human layouts are unresolved decisions (D119/D313)
 - `validate_handoff(raw, *, strict=True) -> ValidationResult` with `.deck` as the only paint input (D122)
 - `plan_deck(deck, *, strict=True) -> DeckPlan` freezes whole-pixel role sizes at 1920×1080 before paint; strict overflow → `RendererValidationError` / `plan.unresolved_overflow`; non-strict paints complete floor-size text degraded (D59/D69/D312); typography sync never freezes a member below the highest member role floor
 - `render_deck(handoff_path, out_dir, *, strict=True, ...)` validates → plans → publishes exactly five UTF-8/LF artifacts: `presentation.html`, `slide_notes.md`, `evidence_manifest.json`, `run_meta.json`, `handoff_schema_v1.json` (D250)
@@ -66,7 +68,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 
 ## Verification
 
-- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_linear_grouping.py`
+- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_migrate.py`
 - `python -m impact_slides.renderer_v3.schema_export --check`
 - `python -m impact_slides.renderer_v3.theme_export --check`
 - Full suite: `python -m pytest -q`

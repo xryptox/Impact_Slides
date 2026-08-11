@@ -1,7 +1,7 @@
 # Dependencies needed to run the test suite in CI.
 #
 # Derived empirically: installed into a clean venv until `pytest -q` matched the
-# local result exactly (1334 passed, 15 skipped). Unpinned on purpose -- CI should
+# local result exactly. Unpinned on purpose -- CI should
 # surface upstream breakage rather than hide it behind a lockfile. Pin here if a
 # release ever breaks the build.
 #
