@@ -393,6 +393,7 @@ def plan_deck(
                 rewritten.append(e)
         events = rewritten
 
+    late_overflow: list[SurfacePlan] = []
     for sp in surfaces:
         # Final category-center pass after measure/fit wrote col_widths.
         if (
@@ -401,15 +402,29 @@ def plan_deck(
             and sp._table_spec.get("alignment") == "category"
             and sp._table_spec.get("centers")
         ):
-            _apply_category_table_widths(
+            if not _apply_category_table_widths(
                 sp._table_spec,
                 list(sp._table_spec["centers"]),
                 sp._box_w or CONTENT_W,
-            )
+            ):
+                was = sp._overflow
+                _fail_category_table_alignment(sp)
+                if not was and sp._overflow:
+                    late_overflow.append(sp)
         if sp.role == "outlined_support" and sp._table_spec is not None:
             size = sp.role_sizes.get("table") or OUTLINED_SUPPORT_FLOOR
             _freeze_outlined_geometry(sp._table_spec, size)
         _seal_digests(sp)
+
+    if late_overflow:
+        for s in late_overflow:
+            events.append(_overflow_event(s))
+        if strict:
+            raise RendererValidationError(
+                sort_events(events),
+                handoff_schema_version=deck.meta.handoff_schema_version,
+                renderer_version=RENDERER_VERSION,
+            )
 
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
 
@@ -1017,7 +1032,10 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             )
             _freeze_outlined_geometry(sp._table_spec, OUTLINED_SUPPORT_FLOOR)
         elif centers and sp._table_spec.get("kind") == "support_table":
-            _apply_category_table_widths(sp._table_spec, centers, sp._box_w or CONTENT_W)
+            if not _apply_category_table_widths(
+                sp._table_spec, centers, sp._box_w or CONTENT_W
+            ):
+                _fail_category_table_alignment(sp)
 
 
 # ---------------------------------------------------------------------------
@@ -3090,15 +3108,18 @@ def _apply_category_table_widths(
     spec: dict[str, Any],
     centers: list[dict[str, Any]],
     box_w: int,
-) -> None:
+) -> bool:
     """Freeze content-sized cell width + lane for center-positioned paint (D167/D266).
 
     Contiguous HTML colgroups cannot center on chart x when cat0 sits at pad_l;
     painters place cells at frozen centers instead (same contract as outlined_support).
+    Returns True when category-centered geometry is sealed; False when freeze fails
+    (caller must demote to independent / mark overflow).
     """
     n = len(centers)
     if n == 0 or n != int(spec.get("n_cols") or 0):
-        return
+        spec.pop("category_centered", None)
+        return False
     px = SUPPORT_TABLE_FLOOR
     headers = list(spec.get("display_headers") or spec.get("header_full") or [])
     cells = list(spec.get("cells_vis") or [])
@@ -3121,7 +3142,8 @@ def _apply_category_table_widths(
     lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
     lane_w = min(max(int(math.ceil(stub_need)), OUTLINED_LABEL_LANE_MIN), lane_cap)
     if lane_w > first_left + 2:
-        return
+        spec.pop("category_centered", None)
+        return False
     # Ensure cells don't overlap neighbors when pitch is tight.
     if n >= 2:
         pitch = min(xs[i + 1] - xs[i] for i in range(n - 1))
@@ -3131,12 +3153,24 @@ def _apply_category_table_widths(
             lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
             lane_w = min(lane_w, lane_cap)
             if lane_w > first_left + 2 or cell_w < 24:
-                return
+                spec.pop("category_centered", None)
+                return False
     if xs[-1] + cell_w / 2.0 > box_w + 2:
-        return
+        spec.pop("category_centered", None)
+        return False
     spec["cell_w"] = cell_w
     spec["label_lane_w"] = lane_w
     spec["category_centered"] = True
+    return True
+
+
+def _fail_category_table_alignment(sp: SurfacePlan) -> None:
+    """Category-center freeze failed: mark overflow and demote when non-strict."""
+    sp._overflow = True
+    if sp._table_spec is not None:
+        sp._table_spec = dict(sp._table_spec)
+        sp._table_spec.pop("category_centered", None)
+    _apply_composition_fallback(sp)
 
 
 def _metric_strip_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
@@ -3647,11 +3681,12 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
             sp._table_spec.get("alignment") == "category"
             and sp._table_spec.get("centers")
         ):
-            _apply_category_table_widths(
+            if not _apply_category_table_widths(
                 sp._table_spec,
                 list(sp._table_spec["centers"]),
                 sp._box_w or CONTENT_W,
-            )
+            ):
+                _fail_category_table_alignment(sp)
     elif sp.role == "comparison_cards" and sp._table_spec:
         roles = sp._table_spec.get("card_role_sizes") or {}
         if roles:

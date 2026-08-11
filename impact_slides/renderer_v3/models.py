@@ -1918,9 +1918,15 @@ class SingleChartPayload(ClosedModel):
             raise ValueError("support table.surface_id must differ from heatmap table")
         # Category / outlined alignment only against axis-chart D228 categories.
         cats = getattr(getattr(chart, "chart_data", None), "categories", None)
+        chart_type = getattr(chart, "chart_type", None)
         if isinstance(support, OutlinedSupportVisual):
             if cats is None:
                 raise ValueError("outlined_support requires an axis chart with categories")
+            if chart_type == "horizontal_bar":
+                raise ValueError(
+                    "outlined_support is not supported on horizontal_bar "
+                    "(category axis is vertical)"
+                )
             cat_ids = [c.category_id for c in cats]
             col_ids = [c.column_id for c in table.columns]
             if col_ids != cat_ids:
@@ -1935,6 +1941,11 @@ class SingleChartPayload(ClosedModel):
             if cats is None:
                 raise ValueError(
                     "category-aligned support_table requires an axis chart with categories"
+                )
+            if chart_type == "horizontal_bar":
+                raise ValueError(
+                    "category-aligned support_table is not supported on horizontal_bar "
+                    "(category axis is vertical); use alignment=independent"
                 )
             cat_ids = [c.category_id for c in cats]
             col_ids = [c.column_id for c in table.columns]
