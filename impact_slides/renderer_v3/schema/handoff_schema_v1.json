@@ -3159,7 +3159,7 @@
           "items": {
             "$ref": "#/$defs/MetricItem"
           },
-          "maxItems": 3,
+          "maxItems": 6,
           "minItems": 1,
           "title": "Metrics",
           "type": "array"
@@ -3181,6 +3181,49 @@
         "metrics"
       ],
       "title": "MetricStrip",
+      "type": "object"
+    },
+    "MetricStripSupport": {
+      "additionalProperties": false,
+      "description": "Directionless metric strip under a chart (D140/D165/D265).",
+      "properties": {
+        "support_type": {
+          "const": "metric_strip",
+          "default": "metric_strip",
+          "title": "Support Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricItem"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Metrics",
+          "type": "array"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Typography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "surface_id",
+        "metrics"
+      ],
+      "title": "MetricStripSupport",
       "type": "object"
     },
     "MissingValue": {
@@ -3584,6 +3627,26 @@
         "payload"
       ],
       "title": "OpeningCoverSlide",
+      "type": "object"
+    },
+    "OutlinedSupportVisual": {
+      "additionalProperties": false,
+      "description": "One category-aligned measure row under a chart (D140/D166/D267).",
+      "properties": {
+        "support_type": {
+          "const": "outlined_support",
+          "default": "outlined_support",
+          "title": "Support Type",
+          "type": "string"
+        },
+        "table": {
+          "$ref": "#/$defs/TableData"
+        }
+      },
+      "required": [
+        "table"
+      ],
+      "title": "OutlinedSupportVisual",
       "type": "object"
     },
     "PeriodComparisonPayload": {
@@ -4385,7 +4448,7 @@
     },
     "SingleChartPayload": {
       "additionalProperties": false,
-      "description": "single_chart composition: one axis-chart or heatmap primary, no support yet (D140).",
+      "description": "single_chart: one primary chart + optional typed support (D140/D252).",
       "properties": {
         "primary_visual": {
           "discriminator": {
@@ -4420,6 +4483,36 @@
             }
           ],
           "title": "Primary Visual"
+        },
+        "support": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "metric_strip": "#/$defs/MetricStripSupport",
+                  "outlined_support": "#/$defs/OutlinedSupportVisual",
+                  "support_table": "#/$defs/SupportTableVisual"
+                },
+                "propertyName": "support_type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/SupportTableVisual"
+                },
+                {
+                  "$ref": "#/$defs/OutlinedSupportVisual"
+                },
+                {
+                  "$ref": "#/$defs/MetricStripSupport"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Support"
         }
       },
       "required": [
@@ -4933,6 +5026,35 @@
         "subtitle"
       ],
       "title": "SubtitleContent",
+      "type": "object"
+    },
+    "SupportTableVisual": {
+      "additionalProperties": false,
+      "description": "Chart support table with explicit category/independent alignment (D140/D167/D266).",
+      "properties": {
+        "support_type": {
+          "const": "support_table",
+          "default": "support_table",
+          "title": "Support Type",
+          "type": "string"
+        },
+        "alignment": {
+          "enum": [
+            "category",
+            "independent"
+          ],
+          "title": "Alignment",
+          "type": "string"
+        },
+        "table": {
+          "$ref": "#/$defs/TableData"
+        }
+      },
+      "required": [
+        "alignment",
+        "table"
+      ],
+      "title": "SupportTableVisual",
       "type": "object"
     },
     "TableColumn": {

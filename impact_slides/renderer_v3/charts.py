@@ -122,8 +122,9 @@ def freeze_line_chart(
     show_values = _ordinary_values_show(chart)
 
     # Geometry
-    plot_w = max(200, min(PLOT_W, box_w - PAD_L - PAD_R))
-    plot_h = max(160, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
+    # D47 absolute 320×240 plot floor; only surplus above may feed support.
+    plot_w = max(320, min(PLOT_W, box_w - PAD_L - PAD_R))
+    plot_h = max(240, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
     n = len(cats)
     xs = [
         PAD_L + (plot_w * i / (n - 1) if n > 1 else plot_w / 2) for i in range(n)
@@ -314,8 +315,9 @@ def _freeze_grouped_bar_chart(
         pad_t = max(PAD_T, 40)  # outside value headroom
         pad_b = PAD_B + group_pad
 
-    plot_w = max(200, min(PLOT_W, box_w - pad_l - pad_r))
-    plot_h = max(160, min(PLOT_H, box_h - pad_t - pad_b - 40))
+    # D47 absolute 320×240 plot floor; only surplus above may feed support.
+    plot_w = max(320, min(PLOT_W, box_w - pad_l - pad_r))
+    plot_h = max(240, min(PLOT_H, box_h - pad_t - pad_b - 40))
     n_cat = len(cats)
     n_ser = len(series_plans)
     geom = _bar_slot_geometry(

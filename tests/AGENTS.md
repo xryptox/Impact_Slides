@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart/heatmap/bar_charts/stacked_bar/waterfall/linear_grouping/relationship/migrate.
+Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart/heatmap/bar_charts/stacked_bar/waterfall/chart_support/linear_grouping/relationship/migrate.
 
 ## Ownership
 
@@ -43,6 +43,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 - Renderer v3 linear/grouping (#192): `test_renderer_v3_linear_grouping.py` + fixture `renderer_v3/linear_grouping_compositions.json` (`process_flow`/`timeline`/`layered_architecture`/`data_pipeline`; authored order/grouping/chronology/transfer preserved, fixed D60 geometry, layers without inferred connectors, non-strict accessible fallbacks without connectors, mutation traps)
 - Renderer v3 relationship/decision (#193): `test_renderer_v3_relationship.py` + fixture `renderer_v3/relationship_compositions.json` (`decision_tree`/`feedback_loop`/`hierarchy`/`stakeholder_map`/`quadrant_matrix`; graph/assignment invariants, no inferred relations, non-strict relationship-table/outline/four-group fallbacks preserving authored facts, mutation traps)
 - Renderer v3 offline migrator (#195): `test_renderer_v3_migrate.py` (D119/D313 57-input inventory, `--check` non-writing, source immutability, failed-proof → unresolved, v1 marker withhold, clean narrative/table conversion + validation, authored disclosure preservation, deck-unique surface ids + referenced-only number_formats, no render/validate import of migrate)
+- Renderer v3 chart support surfaces (#189): `test_renderer_v3_chart_support.py` (typed `support_table`/`outlined_support`/`metric_strip` on `single_chart`; category/independent alignment; outlined centers ≤2px; D47 320×240 plot floor; complete rows/metrics; mutation traps)
 - Amex #158 handoff + multi_panel pane titles: `test_amex_s28_handoff_contract.py` + `test_multi_panel_pane_headings.py` + fixtures `amex_s28_v10_broken.json` / `amex_s28_corrected.json` (mutation drops slide-28 `top_total` pseudo-titles; renderer multi_panel tiles share #147 heading/subtitle chrome; SVG honors `stack_total_labels`)
 - #151 driver_card + boxed bar labels: `test_driver_card.py` + `test_boxed_labels.py` (schema 1/6/7 rows, malformed direction/tone, overflow strict/non-strict, no-valid-row hero fallback, order/a11y; boxed category mismatch, in-bar/outside+connector, Chart.js+SVG, collision independence). Slide 18 target lives in `amex_v10_44_slide_handoff.json`
 - When adding layout references, regenerate `wiki/renderer_v2_LAYOUTS.md` if the index test-column drifts
@@ -51,7 +52,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 ## Verification
 
 - `python -m pytest -q`
-- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_bar_charts.py tests/test_renderer_v3_stacked_bar.py tests/test_renderer_v3_waterfall.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_relationship.py tests/test_renderer_v3_migrate.py`
+- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_bar_charts.py tests/test_renderer_v3_stacked_bar.py tests/test_renderer_v3_waterfall.py tests/test_renderer_v3_chart_support.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_relationship.py tests/test_renderer_v3_migrate.py`
 
 ## Child DOX Index
 

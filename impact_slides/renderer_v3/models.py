@@ -561,7 +561,7 @@ class MetricStrip(ClosedModel):
     """Compact exterior metric row (D165/D265); period_comparison caps at 3."""
 
     surface_id: SemanticId
-    metrics: list[MetricItem] = Field(min_length=1, max_length=3)
+    metrics: list[MetricItem] = Field(min_length=1, max_length=6)
     typography: Optional[Typography] = None
 
     @model_validator(mode="after")
@@ -602,6 +602,8 @@ class PeriodComparisonPayload(ClosedModel):
                 raise ValueError(
                     "metric_strip.surface_id must differ from table.surface_id"
                 )
+            if len(self.metric_strip.metrics) > 3:
+                raise ValueError("period_comparison metric_strip allows at most 3 metrics")
         return self
 
 
@@ -1820,19 +1822,129 @@ ChartVisual = Annotated[
 ]
 
 
+class SupportTableVisual(ClosedModel):
+    """Chart support table with explicit category/independent alignment (D140/D167/D266)."""
+
+    support_type: Literal["support_table"] = "support_table"
+    alignment: Literal["category", "independent"]
+    table: TableData
+
+    @model_validator(mode="after")
+    def _row_bounds(self) -> SupportTableVisual:
+        n = len(self.table.rows)
+        if not (1 <= n <= 4):
+            raise ValueError("support_table requires 1–4 rows")
+        if self.alignment == "category" and self.table.column_groups is not None:
+            raise ValueError("category-aligned support_table forbids column_groups (D266)")
+        return self
+
+
+class OutlinedSupportVisual(ClosedModel):
+    """One category-aligned measure row under a chart (D140/D166/D267)."""
+
+    support_type: Literal["outlined_support"] = "outlined_support"
+    table: TableData
+
+    @model_validator(mode="after")
+    def _one_row_no_groups(self) -> OutlinedSupportVisual:
+        if len(self.table.rows) != 1:
+            raise ValueError("outlined_support requires exactly one row")
+        if self.table.column_groups is not None:
+            raise ValueError("outlined_support forbids column_groups (D267)")
+        return self
+
+
+class MetricStripSupport(ClosedModel):
+    """Directionless metric strip under a chart (D140/D165/D265)."""
+
+    support_type: Literal["metric_strip"] = "metric_strip"
+    surface_id: SemanticId
+    metrics: list[MetricItem] = Field(min_length=1, max_length=6)
+    typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _unique_metrics_and_typo(self) -> MetricStripSupport:
+        ids = [m.metric_id for m in self.metrics]
+        if len(ids) != len(set(ids)):
+            raise ValueError("metric_id values must be unique within the strip")
+        if self.typography is not None:
+            t = self.typography
+            if t.subtitle_font_size is not None or t.table_font_size is not None:
+                raise ValueError(
+                    "metric_strip typography allows only mode, sync_group, body_font_size"
+                )
+        return self
+
+
+ChartSupportVisual = Annotated[
+    Union[SupportTableVisual, OutlinedSupportVisual, MetricStripSupport],
+    Field(discriminator="support_type"),
+]
+
+
 class SingleChartPayload(ClosedModel):
-    """single_chart composition: one axis-chart or heatmap primary, no support yet (D140)."""
+    """single_chart: one primary chart + optional typed support (D140/D252)."""
 
     primary_visual: ChartVisual
+    support: Optional[ChartSupportVisual] = None
 
     @model_validator(mode="before")
     @classmethod
-    def _forbid_support(cls, data: Any) -> Any:
-        if isinstance(data, dict) and "support_visual" in data:
-            raise ValueError(
-                "support_visual is not implemented on single_chart"
-            )
+    def _forbid_legacy_support_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for key in ("support_visual", "secondary_visual"):
+                if key in data:
+                    raise ValueError(
+                        f"{key} is invalid; use payload.support with support_type"
+                    )
         return data
+
+    @model_validator(mode="after")
+    def _support_contract(self) -> SingleChartPayload:
+        support = self.support
+        if support is None:
+            return self
+        chart = self.primary_visual
+        chart_sid = chart.surface_id
+        if isinstance(support, MetricStripSupport):
+            if support.surface_id == chart_sid:
+                raise ValueError("support surface_id must differ from chart surface_id")
+            return self
+        table = support.table
+        if table.surface_id == chart_sid:
+            raise ValueError("support table.surface_id must differ from chart surface_id")
+        heat = getattr(chart, "table_data", None)
+        if heat is not None and table.surface_id == heat.surface_id:
+            raise ValueError("support table.surface_id must differ from heatmap table")
+        # Category / outlined alignment only against axis-chart D228 categories.
+        cats = getattr(getattr(chart, "chart_data", None), "categories", None)
+        if isinstance(support, OutlinedSupportVisual):
+            if cats is None:
+                raise ValueError("outlined_support requires an axis chart with categories")
+            cat_ids = [c.category_id for c in cats]
+            col_ids = [c.column_id for c in table.columns]
+            if col_ids != cat_ids:
+                raise ValueError(
+                    "outlined_support columns must match chart category_id order exactly"
+                )
+            if not getattr(chart.category_axis, "visible", False):
+                raise ValueError(
+                    "outlined_support requires a visible category axis (D267)"
+                )
+        elif isinstance(support, SupportTableVisual) and support.alignment == "category":
+            if cats is None:
+                raise ValueError(
+                    "category-aligned support_table requires an axis chart with categories"
+                )
+            cat_ids = [c.category_id for c in cats]
+            col_ids = [c.column_id for c in table.columns]
+            if col_ids != cat_ids:
+                raise ValueError(
+                    "category-aligned support_table columns must match chart "
+                    "category_id order exactly"
+                )
+            # Hidden category axis makes support the visible category owner (D266).
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -2325,11 +2437,19 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
     if lt == "grouped_annex_table":
         return [peer.table.surface_id for peer in payload.tables]
     if lt == "single_chart":
+        ids: list[str] = []
         chart = payload.primary_visual
         # Heatmap owns a nested D255 table with its own deck-unique surface (D308).
         table = getattr(chart, "table_data", None)
         if table is not None:
-            return [table.surface_id]
+            ids.append(table.surface_id)
+        support = getattr(payload, "support", None)
+        if support is not None:
+            if isinstance(support, MetricStripSupport):
+                ids.append(support.surface_id)
+            else:
+                ids.append(support.table.surface_id)
+        return ids
     return []
 
 
@@ -2343,6 +2463,9 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
     strip = getattr(payload, "metric_strip", None) if payload is not None else None
     if strip is not None:
         values.extend(m.value for m in strip.metrics)
+    support = getattr(payload, "support", None) if payload is not None else None
+    if isinstance(support, MetricStripSupport):
+        values.extend(m.value for m in support.metrics)
     return values
 
 
@@ -2359,9 +2482,14 @@ def _slide_tables(slide: Any) -> list[TableData]:
     if lt == "grouped_annex_table":
         return [peer.table for peer in payload.tables]
     if lt == "single_chart":
+        tables: list[TableData] = []
         table = getattr(payload.primary_visual, "table_data", None)
         if table is not None:
-            return [table]
+            tables.append(table)
+        support = getattr(payload, "support", None)
+        if support is not None and not isinstance(support, MetricStripSupport):
+            tables.append(support.table)
+        return tables
     return []
 
 
