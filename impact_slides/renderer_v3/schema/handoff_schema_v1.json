@@ -1222,6 +1222,234 @@
       "title": "DataTableSlide",
       "type": "object"
     },
+    "DecisionBranch": {
+      "additionalProperties": false,
+      "description": "One authored branch from a decision node (D194/D274).",
+      "properties": {
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "target_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "target_id"
+      ],
+      "title": "DecisionBranch",
+      "type": "object"
+    },
+    "DecisionTreeNode": {
+      "additionalProperties": false,
+      "description": "Decision (2–3 branches) or outcome leaf (D194/D274).",
+      "properties": {
+        "node_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "decision",
+            "outcome"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "branches": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/DecisionBranch"
+              },
+              "maxItems": 3,
+              "minItems": 2,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branches"
+        }
+      },
+      "required": [
+        "node_id",
+        "kind",
+        "heading"
+      ],
+      "title": "DecisionTreeNode",
+      "type": "object"
+    },
+    "DecisionTreePayload": {
+      "additionalProperties": false,
+      "description": "3–15 nodes + authored root; tree invariants checked at validate (D194/D274).",
+      "properties": {
+        "root_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Root Id",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/DecisionTreeNode"
+          },
+          "maxItems": 15,
+          "minItems": 3,
+          "title": "Nodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "root_id",
+        "nodes"
+      ],
+      "title": "DecisionTreePayload",
+      "type": "object"
+    },
+    "DecisionTreeSlide": {
+      "additionalProperties": false,
+      "description": "Branching decision/outcome tree (D194/D274).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "decision_tree",
+          "default": "decision_tree",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DecisionTreePayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "DecisionTreeSlide",
+      "type": "object"
+    },
     "DeckMeta": {
       "additionalProperties": false,
       "properties": {
@@ -1337,6 +1565,218 @@
         "source_name"
       ],
       "title": "EvidenceEntry",
+      "type": "object"
+    },
+    "FeedbackLoopItem": {
+      "additionalProperties": false,
+      "description": "One cycle item; causal edges author next-edge polarity (D195/D275).",
+      "properties": {
+        "item_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "enum": [
+                "same_direction",
+                "opposite_direction"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Effect"
+        },
+        "relationship_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Relationship Label"
+        }
+      },
+      "required": [
+        "item_id",
+        "heading"
+      ],
+      "title": "FeedbackLoopItem",
+      "type": "object"
+    },
+    "FeedbackLoopPayload": {
+      "additionalProperties": false,
+      "description": "3–8 ordered items forming one implicit cycle (D195/D275).",
+      "properties": {
+        "kind": {
+          "enum": [
+            "procedural",
+            "causal"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/FeedbackLoopItem"
+          },
+          "maxItems": 8,
+          "minItems": 3,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "items"
+      ],
+      "title": "FeedbackLoopPayload",
+      "type": "object"
+    },
+    "FeedbackLoopSlide": {
+      "additionalProperties": false,
+      "description": "One ordered procedural or causal cycle (D195/D275).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "feedback_loop",
+          "default": "feedback_loop",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/FeedbackLoopPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "FeedbackLoopSlide",
       "type": "object"
     },
     "FixedDomain": {
@@ -1829,6 +2269,213 @@
         "scale"
       ],
       "title": "HeatmapVisual",
+      "type": "object"
+    },
+    "HierarchyNode": {
+      "additionalProperties": false,
+      "description": "One hierarchy node with ordered child IDs (D198/D278).",
+      "properties": {
+        "node_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "children": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Children"
+        }
+      },
+      "required": [
+        "node_id",
+        "heading"
+      ],
+      "title": "HierarchyNode",
+      "type": "object"
+    },
+    "HierarchyPayload": {
+      "additionalProperties": false,
+      "description": "3–20 nodes, one root, one uniform relation (D198/D278).",
+      "properties": {
+        "relationship": {
+          "enum": [
+            "reports_to",
+            "part_of",
+            "is_a"
+          ],
+          "title": "Relationship",
+          "type": "string"
+        },
+        "root_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Root Id",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/HierarchyNode"
+          },
+          "maxItems": 20,
+          "minItems": 3,
+          "title": "Nodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "relationship",
+        "root_id",
+        "nodes"
+      ],
+      "title": "HierarchyPayload",
+      "type": "object"
+    },
+    "HierarchySlide": {
+      "additionalProperties": false,
+      "description": "Uniform parent-child hierarchy (D198/D278).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "hierarchy",
+          "default": "hierarchy",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/HierarchyPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "HierarchySlide",
       "type": "object"
     },
     "HorizontalBarChartVisual": {
@@ -3253,6 +3900,234 @@
       "title": "ProseRun",
       "type": "object"
     },
+    "QuadrantAxis": {
+      "additionalProperties": false,
+      "description": "One binary axis with exact endpoint labels (D200/D280).",
+      "properties": {
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "low_label": {
+          "minLength": 1,
+          "title": "Low Label",
+          "type": "string"
+        },
+        "high_label": {
+          "minLength": 1,
+          "title": "High Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "low_label",
+        "high_label"
+      ],
+      "title": "QuadrantAxis",
+      "type": "object"
+    },
+    "QuadrantItem": {
+      "additionalProperties": false,
+      "description": "One item with explicit low/high band on both axes (D200/D280).",
+      "properties": {
+        "item_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "x_band": {
+          "enum": [
+            "low",
+            "high"
+          ],
+          "title": "X Band",
+          "type": "string"
+        },
+        "y_band": {
+          "enum": [
+            "low",
+            "high"
+          ],
+          "title": "Y Band",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        }
+      },
+      "required": [
+        "item_id",
+        "heading",
+        "x_band",
+        "y_band"
+      ],
+      "title": "QuadrantItem",
+      "type": "object"
+    },
+    "QuadrantMatrixPayload": {
+      "additionalProperties": false,
+      "description": "Two axes + 1–16 assigned items (D200/D280).",
+      "properties": {
+        "x_axis": {
+          "$ref": "#/$defs/QuadrantAxis"
+        },
+        "y_axis": {
+          "$ref": "#/$defs/QuadrantAxis"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/QuadrantItem"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "x_axis",
+        "y_axis",
+        "items"
+      ],
+      "title": "QuadrantMatrixPayload",
+      "type": "object"
+    },
+    "QuadrantMatrixSlide": {
+      "additionalProperties": false,
+      "description": "Two-axis semantic quadrant matrix (D200/D280).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "quadrant_matrix",
+          "default": "quadrant_matrix",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/QuadrantMatrixPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "QuadrantMatrixSlide",
+      "type": "object"
+    },
     "RangeValue": {
       "additionalProperties": false,
       "properties": {
@@ -3535,6 +4410,236 @@
         "title"
       ],
       "title": "SingleChartSlide",
+      "type": "object"
+    },
+    "StakeholderEntity": {
+      "additionalProperties": false,
+      "description": "Focal entity fields shared shape (D199/D279).",
+      "properties": {
+        "entity_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        }
+      },
+      "required": [
+        "entity_id",
+        "heading"
+      ],
+      "title": "StakeholderEntity",
+      "type": "object"
+    },
+    "StakeholderMapPayload": {
+      "additionalProperties": false,
+      "description": "One focal + 2–8 ordered stakeholders (D199/D279).",
+      "properties": {
+        "focal": {
+          "$ref": "#/$defs/StakeholderEntity"
+        },
+        "stakeholders": {
+          "items": {
+            "$ref": "#/$defs/StakeholderSpoke"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Stakeholders",
+          "type": "array"
+        }
+      },
+      "required": [
+        "focal",
+        "stakeholders"
+      ],
+      "title": "StakeholderMapPayload",
+      "type": "object"
+    },
+    "StakeholderMapSlide": {
+      "additionalProperties": false,
+      "description": "Hub-and-spoke stakeholder map (D199/D279).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "stakeholder_map",
+          "default": "stakeholder_map",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StakeholderMapPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "StakeholderMapSlide",
+      "type": "object"
+    },
+    "StakeholderSpoke": {
+      "additionalProperties": false,
+      "description": "One hub-spoke stakeholder with explicit direction (D199/D279).",
+      "properties": {
+        "entity_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "relationship_label": {
+          "minLength": 1,
+          "title": "Relationship Label",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "undirected",
+            "to_focal",
+            "from_focal",
+            "bidirectional"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        }
+      },
+      "required": [
+        "entity_id",
+        "heading",
+        "relationship_label",
+        "direction"
+      ],
+      "title": "StakeholderSpoke",
       "type": "object"
     },
     "SubtitleContent": {
@@ -4318,15 +5423,20 @@
             "comparison_cards": "#/$defs/ComparisonCardsSlide",
             "data_pipeline": "#/$defs/DataPipelineSlide",
             "data_table": "#/$defs/DataTableSlide",
+            "decision_tree": "#/$defs/DecisionTreeSlide",
+            "feedback_loop": "#/$defs/FeedbackLoopSlide",
             "grouped_annex_table": "#/$defs/GroupedAnnexTableSlide",
+            "hierarchy": "#/$defs/HierarchySlide",
             "layered_architecture": "#/$defs/LayeredArchitectureSlide",
             "legal_notice": "#/$defs/LegalNoticeSlide",
             "narrative": "#/$defs/NarrativeSlide",
             "opening_cover": "#/$defs/OpeningCoverSlide",
             "period_comparison": "#/$defs/PeriodComparisonSlide",
             "process_flow": "#/$defs/ProcessFlowSlide",
+            "quadrant_matrix": "#/$defs/QuadrantMatrixSlide",
             "section_divider": "#/$defs/SectionDividerSlide",
             "single_chart": "#/$defs/SingleChartSlide",
+            "stakeholder_map": "#/$defs/StakeholderMapSlide",
             "timeline": "#/$defs/TimelineSlide"
           },
           "propertyName": "layout_type"
@@ -4373,6 +5483,21 @@
           },
           {
             "$ref": "#/$defs/DataPipelineSlide"
+          },
+          {
+            "$ref": "#/$defs/DecisionTreeSlide"
+          },
+          {
+            "$ref": "#/$defs/FeedbackLoopSlide"
+          },
+          {
+            "$ref": "#/$defs/HierarchySlide"
+          },
+          {
+            "$ref": "#/$defs/StakeholderMapSlide"
+          },
+          {
+            "$ref": "#/$defs/QuadrantMatrixSlide"
           },
           {
             "$ref": "#/$defs/SingleChartSlide"

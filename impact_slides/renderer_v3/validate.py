@@ -13,7 +13,17 @@ from .diagnostics import (
     merge_duplicate_events,
     sort_events,
 )
-from .models import KERNEL_LAYOUTS, LAYOUT_TYPES, Deck
+from .models import (
+    KERNEL_LAYOUTS,
+    KERNEL_RELATIONSHIP_LAYOUTS,
+    LAYOUT_TYPES,
+    DecisionTreePayload,
+    Deck,
+    FeedbackLoopPayload,
+    HierarchyPayload,
+    QuadrantMatrixPayload,
+    StakeholderMapPayload,
+)
 from .repairs import apply_allowlisted_repairs
 
 _LAYOUT_SET = frozenset(LAYOUT_TYPES)
@@ -33,6 +43,8 @@ class ValidationResult:
     repaired: bool = False
     # Heatmap chart surface_ids whose scale was repaired → paint uncolored (D163/D308).
     uncolored_heatmap_surfaces: frozenset[str] = field(default_factory=frozenset)
+    # Slide numbers with relationship graph/assignment defects (non-strict only).
+    relationship_defect_slides: frozenset[int] = field(default_factory=frozenset)
 
     @property
     def ok(self) -> bool:
@@ -108,6 +120,33 @@ def validate_handoff(raw: Any, *, strict: bool = True) -> ValidationResult:
                 )
             )
 
+    # Relationship graph/assignment invariants before plan (D194–D200/D274–D280).
+    defect_slides: set[int] = set()
+    for s in deck.slides:
+        if s.layout_type not in KERNEL_RELATIONSHIP_LAYOUTS:
+            continue
+        defects = analyze_relationship_structure(s.layout_type, s.payload)
+        if not defects:
+            continue
+        idx = _slide_index(working, s.slide_number)
+        for code in defects:
+            events.append(
+                event(
+                    code="validation.structure",
+                    severity="error" if strict else "warning",
+                    phase="validation",
+                    role=s.layout_type,
+                    path=f"/slides/{idx}/payload",
+                    action="reject" if strict else "accept",
+                    result="failed" if strict else "fallback_unresolved",
+                    slide_number=s.slide_number,
+                    layout_type=s.layout_type,
+                    expected=code,
+                )
+            )
+        if not strict:
+            defect_slides.add(s.slide_number)
+
     errors = [e for e in events if e.severity == "error"]
     if errors:
         raise RendererValidationError(
@@ -132,7 +171,154 @@ def validate_handoff(raw: Any, *, strict: bool = True) -> ValidationResult:
         events=kept,
         repaired=repaired,
         uncolored_heatmap_surfaces=uncolored,
+        relationship_defect_slides=frozenset(defect_slides),
     )
+
+
+def analyze_relationship_structure(layout_type: str, payload: Any) -> list[str]:
+    """Return closed defect codes for graph/assignment invariants (empty = valid)."""
+    if layout_type == "decision_tree":
+        return _analyze_decision_tree(payload)
+    if layout_type == "feedback_loop":
+        return _analyze_feedback_loop(payload)
+    if layout_type == "hierarchy":
+        return _analyze_hierarchy(payload)
+    if layout_type == "stakeholder_map":
+        return _analyze_stakeholder_map(payload)
+    if layout_type == "quadrant_matrix":
+        return _analyze_quadrant_matrix(payload)
+    return []
+
+
+def _analyze_decision_tree(payload: DecisionTreePayload) -> list[str]:
+    defects: list[str] = []
+    by_id = {n.node_id: n for n in payload.nodes}
+    if payload.root_id not in by_id:
+        defects.append("decision_tree.root_missing")
+        return defects
+    root = by_id[payload.root_id]
+    if root.kind != "decision":
+        defects.append("decision_tree.root_not_decision")
+    parents: dict[str, list[str]] = {nid: [] for nid in by_id}
+    children: dict[str, list[str]] = {nid: [] for nid in by_id}
+    for n in payload.nodes:
+        if n.kind != "decision" or not n.branches:
+            continue
+        for br in n.branches:
+            if br.target_id not in by_id:
+                defects.append(f"decision_tree.unresolved_target:{br.target_id}")
+                continue
+            if br.target_id == n.node_id:
+                defects.append("decision_tree.self_target")
+                continue
+            parents[br.target_id].append(n.node_id)
+            children[n.node_id].append(br.target_id)
+    for nid, pars in parents.items():
+        if nid == payload.root_id:
+            if pars:
+                defects.append("decision_tree.root_has_parent")
+            continue
+        if len(pars) > 1:
+            defects.append(f"decision_tree.shared_target:{nid}")
+    # Reachability + depth from authored root only.
+    depth: dict[str, int] = {payload.root_id: 1}
+    stack = [payload.root_id]
+    while stack:
+        cur = stack.pop()
+        for tgt in children[cur]:
+            if tgt in depth:
+                continue
+            depth[tgt] = depth[cur] + 1
+            stack.append(tgt)
+    for nid in by_id:
+        if nid not in depth:
+            defects.append(f"decision_tree.unreachable:{nid}")
+    if _directed_graph_has_cycle(children):
+        defects.append("decision_tree.cycle")
+    if any(d > 4 for d in depth.values()):
+        defects.append("decision_tree.depth_exceeded")
+    return list(dict.fromkeys(defects))
+
+
+def _directed_graph_has_cycle(children: dict[str, list[str]]) -> bool:
+    """DFS cycle check over the full directed adjacency (all components)."""
+    state: dict[str, int] = {}
+
+    def dfs(u: str) -> bool:
+        state[u] = 1
+        for v in children.get(u, []):
+            s = state.get(v, 0)
+            if s == 1:
+                return True
+            if s == 0 and dfs(v):
+                return True
+        state[u] = 2
+        return False
+
+    return any(state.get(n, 0) == 0 and dfs(n) for n in children)
+
+
+def _analyze_feedback_loop(payload: FeedbackLoopPayload) -> list[str]:
+    defects: list[str] = []
+    if payload.kind == "causal":
+        for it in payload.items:
+            if it.effect is None:
+                defects.append(f"feedback_loop.missing_effect:{it.item_id}")
+    return defects
+
+
+def _analyze_hierarchy(payload: HierarchyPayload) -> list[str]:
+    defects: list[str] = []
+    by_id = {n.node_id: n for n in payload.nodes}
+    if payload.root_id not in by_id:
+        defects.append("hierarchy.root_missing")
+        return defects
+    parents: dict[str, list[str]] = {nid: [] for nid in by_id}
+    children: dict[str, list[str]] = {nid: [] for nid in by_id}
+    for n in payload.nodes:
+        for child in n.children or []:
+            if child not in by_id:
+                defects.append(f"hierarchy.unresolved_child:{child}")
+                continue
+            if child == n.node_id:
+                defects.append("hierarchy.self_child")
+                continue
+            parents[child].append(n.node_id)
+            children[n.node_id].append(child)
+    for nid, pars in parents.items():
+        if nid == payload.root_id:
+            if pars:
+                defects.append("hierarchy.root_has_parent")
+            continue
+        if len(pars) > 1:
+            defects.append(f"hierarchy.shared_child:{nid}")
+    depth: dict[str, int] = {payload.root_id: 1}
+    stack = [payload.root_id]
+    while stack:
+        cur = stack.pop()
+        for child in children[cur]:
+            if child in depth:
+                continue
+            depth[child] = depth[cur] + 1
+            stack.append(child)
+    for nid in by_id:
+        if nid not in depth:
+            defects.append(f"hierarchy.unreachable:{nid}")
+    if _directed_graph_has_cycle(children):
+        defects.append("hierarchy.cycle")
+    if any(d > 4 for d in depth.values()):
+        defects.append("hierarchy.depth_exceeded")
+    return list(dict.fromkeys(defects))
+
+
+def _analyze_stakeholder_map(payload: StakeholderMapPayload) -> list[str]:
+    # Shape already enforces one focal, unique IDs, 2–8 spokes, directions.
+    return []
+
+
+def _analyze_quadrant_matrix(payload: QuadrantMatrixPayload) -> list[str]:
+    # Shape already enforces axes + low/high bands on every item.
+    return []
 
 
 def _peek_version(raw: Any) -> int | None:
@@ -317,7 +503,9 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                             "closing_cover, narrative, legal_notice, data_table, "
                             "annex_table, grouped_annex_table, period_comparison, "
                             "comparison_cards, process_flow, timeline, "
-                            "layered_architecture, data_pipeline, single_chart; "
+                            "layered_architecture, data_pipeline, decision_tree, "
+                            "feedback_loop, hierarchy, stakeholder_map, "
+                            "quadrant_matrix, single_chart; "
                             "other D210 compositions arrive in later tickets"
                         ),
                     )

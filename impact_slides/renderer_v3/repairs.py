@@ -136,6 +136,11 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
             "timeline",
             "layered_architecture",
             "data_pipeline",
+            "decision_tree",
+            "feedback_loop",
+            "hierarchy",
+            "stakeholder_map",
+            "quadrant_matrix",
         }:
             allowed = common | {
                 "section_id",
@@ -150,6 +155,11 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "timeline": {"milestones"},
                 "layered_architecture": {"layers"},
                 "data_pipeline": {"stages"},
+                "decision_tree": {"root_id", "nodes"},
+                "feedback_loop": {"kind", "items"},
+                "hierarchy": {"relationship", "root_id", "nodes"},
+                "stakeholder_map": {"focal", "stakeholders"},
+                "quadrant_matrix": {"x_axis", "y_axis", "items"},
             }[layout]
         else:
             return True
@@ -234,6 +244,11 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "timeline",
                 "layered_architecture",
                 "data_pipeline",
+                "decision_tree",
+                "feedback_loop",
+                "hierarchy",
+                "stakeholder_map",
+                "quadrant_matrix",
             }:
                 allowed = common | {
                     "section_id",
@@ -325,6 +340,11 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "timeline": {"milestones"},
                 "layered_architecture": {"layers"},
                 "data_pipeline": {"stages"},
+                "decision_tree": {"root_id", "nodes"},
+                "feedback_loop": {"kind", "items"},
+                "hierarchy": {"relationship", "root_id", "nodes"},
+                "stakeholder_map": {"focal", "stakeholders"},
+                "quadrant_matrix": {"x_axis", "y_axis", "items"},
             }
             if isinstance(payload, dict) and layout in payload_fields:
                 _drop_unknown_object(
@@ -648,6 +668,11 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             "timeline",
             "layered_architecture",
             "data_pipeline",
+            "decision_tree",
+            "feedback_loop",
+            "hierarchy",
+            "stakeholder_map",
+            "quadrant_matrix",
         }:
             continue
 
@@ -696,6 +721,11 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                 "timeline",
                 "layered_architecture",
                 "data_pipeline",
+                "decision_tree",
+                "feedback_loop",
+                "hierarchy",
+                "stakeholder_map",
+                "quadrant_matrix",
             }:
                 # D60 fixed type — no authored typography on these payloads.
                 pass
@@ -817,6 +847,11 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
             "timeline",
             "layered_architecture",
             "data_pipeline",
+            "decision_tree",
+            "feedback_loop",
+            "hierarchy",
+            "stakeholder_map",
+            "quadrant_matrix",
         }:
             continue
         if "disclosure" not in slide:

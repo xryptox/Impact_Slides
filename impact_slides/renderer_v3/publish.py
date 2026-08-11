@@ -202,6 +202,27 @@ def build_presentation_html(
             ".linear-fallback{margin:0 0 var(--space-sm)}",
             ".linear-fallback ol,.linear-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
             ".linear-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
+            # Relationship + decision compositions (D194–D200/D274–D280).
+            ".decision-tree,.hierarchy-tree{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm)}",
+            ".rel-band{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center}",
+            ".rel-node{flex:1 1 160px;max-width:280px;min-width:0}",
+            ".rel-branch{margin:4px 0 0;font-style:italic}",
+            ".feedback-loop{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
+            ".feedback-item{flex:1 1 0;min-width:120px}",
+            ".loop-classification{margin:0 0 var(--space-sm);font-weight:var(--font-weight-emphasis);text-transform:capitalize}",
+            ".stakeholder-map{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm);align-items:center}",
+            ".stakeholder-focal{max-width:320px;width:100%}",
+            ".stakeholder-spokes{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center}",
+            ".stakeholder-spoke{flex:1 1 160px;max-width:260px;min-width:0}",
+            ".quadrant-matrix{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".quadrant-cell{border:var(--border-width-hairline) solid var(--color-rule);padding:12px;min-height:80px;box-sizing:border-box}",
+            ".quadrant-label{margin:0 0 8px;font-weight:var(--font-weight-emphasis)}",
+            ".quadrant-item{margin:0 0 8px}",
+            ".axis-legend{margin:0 0 var(--space-sm)}",
+            ".relationship-table{width:100%;border-collapse:collapse;margin:0 0 var(--space-sm)}",
+            ".relationship-table th,.relationship-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule);text-align:left}",
+            ".relationship-table thead th{background:var(--color-band);color:var(--color-band-ink)}",
+            ".relationship-unresolved{font-style:italic}",
             # axis charts: line + grouped/horizontal bars + waterfall (D5/D6/D63/D106/D247)            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
             ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
             ".chart-pane-title{display:flex;flex-direction:column;gap:4px;padding:10px 16px;margin:0 0 var(--space-sm)}",
@@ -445,6 +466,11 @@ def _paint_slide_body(
         "timeline",
         "layered_architecture",
         "data_pipeline",
+        "decision_tree",
+        "feedback_loop",
+        "hierarchy",
+        "stakeholder_map",
+        "quadrant_matrix",
     ):
         title_sp = plans_by_id.get(f"slide-{sn}-title")
         title_px = title_sp.role_sizes.get("title") if title_sp else None
@@ -455,7 +481,7 @@ def _paint_slide_body(
             sub_sp = plans_by_id.get(f"slide-{sn}-subtitle")
             sub_px = sub_sp.role_sizes.get("subtitle") if sub_sp else None
             out.append(
-                f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>' 
+                f'<p class="subtitle" {_plan_attrs(sub_sp, events_by_surface)}{_style_font(sub_px)}>'
                 f"{_soft_break_html(slide.content.subtitle)}</p>"
             )
         if lt == "single_chart":
@@ -479,6 +505,16 @@ def _paint_slide_body(
             "data_pipeline",
         ):
             out.extend(_paint_linear_composition(slide, plans_by_id, events_by_surface))
+        elif lt in (
+            "decision_tree",
+            "feedback_loop",
+            "hierarchy",
+            "stakeholder_map",
+            "quadrant_matrix",
+        ):
+            out.extend(
+                _paint_relationship_composition(slide, plans_by_id, events_by_surface)
+            )
         else:
             # data_table + annex_table share the canonical table painter.
             out.extend(
@@ -499,7 +535,7 @@ def _paint_slide_body(
                 f'<p class="takeaway-label"{_style_font(label_px)}>Key takeaway</p>'
             )
             out.append(
-                f'<p class="takeaway-text"{_style_font(body_px)}>' 
+                f'<p class="takeaway-text"{_style_font(body_px)}>'
                 f"{_soft_break_html(takeaway.text)}</p>"
             )
             out.append("</aside>")
@@ -664,7 +700,7 @@ def _paint_table_surface(
     extra = f" {extra_table_class}" if extra_table_class else ""
     out.append(
         f'<table class="{table_class}{overflow_cls}{extra}" {attrs}{style} '
-        f'data-table-surface="{_escape(table.surface_id)}">' 
+        f'data-table-surface="{_escape(table.surface_id)}">'
     )
     if widths:
         out.append("<colgroup>")
@@ -809,28 +845,28 @@ def _paint_metric_strip(
     detail_px = sp.role_sizes.get("detail")
     out = [
         f'<div class="metric-strip" {_plan_attrs(sp, events_by_surface)} '
-        f'data-metric-strip="{_escape(strip.surface_id)}">' 
+        f'data-metric-strip="{_escape(strip.surface_id)}">'
     ]
     for m in metrics:
         out.append(
-            f'<div class="metric-cell" data-metric-id="{_escape(m["metric_id"])}">' 
+            f'<div class="metric-cell" data-metric-id="{_escape(m["metric_id"])}">'
         )
         out.append(
-            f'<p class="metric-label"{_style_font(label_px)}>' 
+            f'<p class="metric-label"{_style_font(label_px)}>'
             f"{_soft_break_html(m['label'])}</p>"
         )
         aria = (
-            f' aria-label="{_escape(m["accessible"])}"' 
+            f' aria-label="{_escape(m["accessible"])}"'
             if m["accessible"] != m["visible"]
             else ""
         )
         out.append(
-            f'<p class="metric-value"{_style_font(value_px)}{aria}>' 
+            f'<p class="metric-value"{_style_font(value_px)}{aria}>'
             f"{_escape(m['visible'])}</p>"
         )
         if m.get("detail"):
             out.append(
-                f'<p class="metric-detail"{_style_font(detail_px)}>' 
+                f'<p class="metric-detail"{_style_font(detail_px)}>'
                 f"{_soft_break_html(m['detail'])}</p>"
             )
         out.append("</div>")
@@ -929,7 +965,7 @@ def _paint_comparison_cards(
     out = [
         f'<div class="comparison-cards cols-{int(cols)}{overflow_cls}" '
         f'aria-hidden="true" {_plan_attrs(sp, events_by_surface)} '
-        f'data-table-surface="{_escape(table.surface_id)}">' 
+        f'data-table-surface="{_escape(table.surface_id)}">'
     ]
     # Cards are visual-only; the sr-only D255 table below is the single
     # accessibility source and the print source.
@@ -937,12 +973,12 @@ def _paint_comparison_cards(
     fact_labels = list(paint["header_full"][1:])
     for r_i, row in enumerate(table.rows):
         out.append(
-            f'<article class="comparison-card" data-row-id="{_escape(row.row_id)}">' 
+            f'<article class="comparison-card" data-row-id="{_escape(row.row_id)}">'
         )
         heading = paint["display_row_labels"][r_i]
         full_h = paint["row_labels_full"][r_i]
         out.append(
-            f'<h2 title="{_escape(full_h)}"{_style_font(heading_px)}>' 
+            f'<h2 title="{_escape(full_h)}"{_style_font(heading_px)}>'
             f"{_soft_break_html(heading)}</h2>"
         )
         for c_i, cid in enumerate(col_ids):
@@ -950,16 +986,16 @@ def _paint_comparison_cards(
             accessible = paint["cells_acc"][r_i][c_i]
             out.append(f'<div class="fact" data-column-id="{_escape(cid)}">')
             out.append(
-                f'<p class="fact-label"{_style_font(label_px)}>' 
+                f'<p class="fact-label"{_style_font(label_px)}>'
                 f"{_soft_break_html(fact_labels[c_i])}</p>"
             )
             aria = (
-                f' aria-label="{_escape(accessible)}"' 
+                f' aria-label="{_escape(accessible)}"'
                 if accessible != visible
                 else ""
             )
             out.append(
-                f'<p class="fact-value"{_style_font(value_px)}{aria}>' 
+                f'<p class="fact-value"{_style_font(value_px)}{aria}>'
                 f"{_escape(visible)}</p>"
             )
             out.append("</div>")
@@ -1030,7 +1066,7 @@ def _paint_linear_composition(
             )
             out.append('<div class="linear-card card-panel">')
             out.append(
-                f'<p class="linear-meta"{_style_font(meta_px)}>' 
+                f'<p class="linear-meta"{_style_font(meta_px)}>'
                 f'{int(it["ordinal"])}</p>'
             )
             out.append(
@@ -1038,7 +1074,7 @@ def _paint_linear_composition(
             )
             if it.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(it["detail"])}</p>'
                 )
             out.append("</div></div>")
@@ -1064,7 +1100,7 @@ def _paint_linear_composition(
             )
             out.append('<div class="linear-card card-panel">')
             out.append(
-                f'<p class="linear-meta"{_style_font(meta_px)}>' 
+                f'<p class="linear-meta"{_style_font(meta_px)}>'
                 f'{_soft_break_html(it["time_label"])}</p>'
             )
             out.append(
@@ -1072,7 +1108,7 @@ def _paint_linear_composition(
             )
             if it.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(it["detail"])}</p>'
                 )
             out.append("</div></div>")
@@ -1088,7 +1124,7 @@ def _paint_linear_composition(
                 f'<section class="arch-layer" data-layer-id="{_escape(layer["id"])}">'
             )
             out.append(
-                f'<h3 class="arch-layer-heading"{_style_font(heading_px)}>' 
+                f'<h3 class="arch-layer-heading"{_style_font(heading_px)}>'
                 f'{_soft_break_html(layer["heading"])}</h3>'
             )
             out.append('<div class="arch-components">')
@@ -1102,7 +1138,7 @@ def _paint_linear_composition(
                 )
                 if c.get("detail"):
                     out.append(
-                        f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                        f'<p class="linear-detail"{_style_font(detail_px)}>'
                         f'{_soft_break_html(c["detail"])}</p>'
                     )
                 out.append("</div>")
@@ -1141,7 +1177,7 @@ def _paint_linear_composition(
             )
             if c.get("detail"):
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>' 
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(c["detail"])}</p>'
                 )
             out.append("</div>")
@@ -1149,7 +1185,7 @@ def _paint_linear_composition(
         if st.get("transfer_label"):
             nxt = stages[i + 1]["heading"] if i + 1 < len(stages) else ""
             out.append(
-                f'<p class="pipeline-transfer"{_style_font(meta_px)}>' 
+                f'<p class="pipeline-transfer"{_style_font(meta_px)}>'
                 f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
                 f'{_soft_break_html(st["transfer_label"])}</p>'
             )
@@ -1218,7 +1254,7 @@ def _paint_linear_fallback(
                 )
                 if c.get("detail"):
                     out.append(
-                        f' — <span{_style_font(detail_px)}>' 
+                        f' — <span{_style_font(detail_px)}>'
                         f'{_soft_break_html(c["detail"])}</span>'
                     )
                 out.append("</li>")
@@ -1240,7 +1276,7 @@ def _paint_linear_fallback(
                 )
                 if c.get("detail"):
                     out.append(
-                        f' — <span{_style_font(detail_px)}>' 
+                        f' — <span{_style_font(detail_px)}>'
                         f'{_soft_break_html(c["detail"])}</span>'
                     )
                 out.append("</li>")
@@ -1248,12 +1284,691 @@ def _paint_linear_fallback(
             if st.get("transfer_label") and i + 1 < len(stages):
                 nxt = stages[i + 1]["heading"]
                 out.append(
-                    f'<p class="pipeline-transfer"{_style_font(meta_px)}>' 
+                    f'<p class="pipeline-transfer"{_style_font(meta_px)}>'
                     f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
                     f'{_soft_break_html(st["transfer_label"])}</p>'
                 )
             out.append("</li>")
         out.append("</ol>")
+    out.append("</div>")
+    return out
+
+
+def _paint_relationship_composition(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    """Paint decision_tree / feedback_loop / hierarchy / stakeholder_map / quadrant."""
+    lt = slide.layout_type
+    sn = slide.slide_number
+    surface_ids = {
+        "decision_tree": f"slide-{sn}-decision-tree",
+        "feedback_loop": f"slide-{sn}-feedback-loop",
+        "hierarchy": f"slide-{sn}-hierarchy",
+        "stakeholder_map": f"slide-{sn}-stakeholder-map",
+        "quadrant_matrix": f"slide-{sn}-quadrant-matrix",
+    }
+    sp = plans_by_id.get(surface_ids[lt])
+    if sp is None or not getattr(sp, "_linear_spec", None):
+        raise RuntimeError(f"missing frozen relationship plan for {lt}")
+    spec = sp._linear_spec
+    heading_px = sp.role_sizes.get("heading")
+    detail_px = sp.role_sizes.get("detail")
+    meta_px = sp.role_sizes.get("meta")
+    overflow_cls = " linear-overflow" if sp._overflow else ""
+    plan_attrs = _plan_attrs(sp, events_by_surface)
+
+    if sp.fallback or spec.get("paint_as") == "relationship_fallback":
+        return _paint_relationship_fallback(
+            lt, spec, sp, events_by_surface, heading_px, detail_px, meta_px, overflow_cls
+        )
+
+    if lt == "decision_tree":
+        return _paint_decision_tree(spec, plan_attrs, heading_px, detail_px, meta_px, overflow_cls)
+    if lt == "feedback_loop":
+        return _paint_feedback_loop(spec, plan_attrs, heading_px, detail_px, meta_px, overflow_cls)
+    if lt == "hierarchy":
+        return _paint_hierarchy(spec, plan_attrs, heading_px, detail_px, meta_px, overflow_cls)
+    if lt == "stakeholder_map":
+        return _paint_stakeholder_map(spec, plan_attrs, heading_px, detail_px, meta_px, overflow_cls)
+    return _paint_quadrant_matrix(spec, plan_attrs, heading_px, detail_px, meta_px, overflow_cls)
+
+
+def _paint_decision_tree(
+    spec: dict[str, Any],
+    plan_attrs: str,
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+    overflow_cls: str,
+) -> list[str]:
+    by_id = {n["id"]: n for n in spec["nodes"]}
+    children: dict[str, list[tuple[str, str]]] = {n["id"]: [] for n in spec["nodes"]}
+    for n in spec["nodes"]:
+        for br in n.get("branches") or []:
+            if br["target_id"] in by_id:
+                children[n["id"]].append((br["label"], br["target_id"]))
+    # BFS bands from root — depth only for valid trees.
+    bands: list[list[str]] = []
+    seen: set[str] = set()
+    queue = [spec["root_id"]]
+    while queue:
+        band = [nid for nid in queue if nid in by_id and nid not in seen]
+        if not band:
+            break
+        for nid in band:
+            seen.add(nid)
+        bands.append(band)
+        nxt: list[str] = []
+        for nid in band:
+            nxt.extend(tid for _lab, tid in children.get(nid, []))
+        queue = nxt
+    out = [f'<div class="decision-tree{overflow_cls}" {plan_attrs}>']
+    for band in bands:
+        out.append('<div class="rel-band">')
+        for nid in band:
+            n = by_id[nid]
+            out.append(
+                f'<div class="rel-node linear-card card-panel" data-node-id="{_escape(nid)}" '
+                f'data-node-kind="{_escape(n["kind"])}">'
+            )
+            out.append(
+                f'<p class="linear-meta"{_style_font(meta_px)}>{_escape(n["kind"])}</p>'
+            )
+            out.append(
+                f'<h3{_style_font(heading_px)}>{_soft_break_html(n["heading"])}</h3>'
+            )
+            if n.get("detail"):
+                out.append(
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
+                    f'{_soft_break_html(n["detail"])}</p>'
+                )
+            for lab, tid in children.get(nid, []):
+                tgt = by_id.get(tid, {})
+                out.append(
+                    f'<p class="rel-branch"{_style_font(meta_px)}>'
+                    f'{_soft_break_html(lab)} → {_soft_break_html(tgt.get("heading", tid))}</p>'
+                )
+            out.append("</div>")
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+def _paint_feedback_loop(
+    spec: dict[str, Any],
+    plan_attrs: str,
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+    overflow_cls: str,
+) -> list[str]:
+    items = spec["items"]
+    out: list[str] = []
+    if spec.get("classification"):
+        out.append(
+            f'<p class="loop-classification"{_style_font(meta_px)} data-loop-class="'
+            f'{_escape(spec["classification"])}">{_escape(spec["classification"])} loop</p>'
+        )
+    out.append(
+        f'<div class="feedback-loop{overflow_cls}" role="list" {plan_attrs} '
+        f'data-loop-kind="{_escape(spec["loop_kind"])}">'
+    )
+    for i, it in enumerate(items):
+        if i:
+            out.append('<div class="linear-connector" aria-hidden="true">→</div>')
+        out.append(
+            f'<div class="feedback-item" role="listitem" data-item-id="{_escape(it["id"])}">'
+        )
+        out.append('<div class="linear-card card-panel">')
+        if it.get("effect"):
+            out.append(
+                f'<p class="linear-meta"{_style_font(meta_px)}>'
+                f'{_escape(it["effect"].replace("_", " "))}</p>'
+            )
+        out.append(
+            f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>'
+        )
+        if it.get("detail"):
+            out.append(
+                f'<p class="linear-detail"{_style_font(detail_px)}>'
+                f'{_soft_break_html(it["detail"])}</p>'
+            )
+        if it.get("relationship_label"):
+            out.append(
+                f'<p class="rel-branch"{_style_font(meta_px)}>'
+                f'{_soft_break_html(it["relationship_label"])}</p>'
+            )
+        out.append("</div></div>")
+    # Closing edge back to first.
+    out.append('<div class="linear-connector" aria-hidden="true">↻</div>')
+    out.append("</div>")
+    return out
+
+
+def _paint_hierarchy(
+    spec: dict[str, Any],
+    plan_attrs: str,
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+    overflow_cls: str,
+) -> list[str]:
+    by_id = {n["id"]: n for n in spec["nodes"]}
+    out = [
+        f'<p class="axis-legend"{_style_font(meta_px)} data-relationship="'
+        f'{_escape(spec["relationship"])}">Relationship: '
+        f'{_escape(spec["relationship"].replace("_", " "))}</p>',
+        f'<div class="hierarchy-tree{overflow_cls}" {plan_attrs}>',
+    ]
+    bands: list[list[str]] = []
+    seen: set[str] = set()
+    queue = [spec["root_id"]]
+    while queue:
+        band = [nid for nid in queue if nid in by_id and nid not in seen]
+        if not band:
+            break
+        for nid in band:
+            seen.add(nid)
+        bands.append(band)
+        nxt: list[str] = []
+        for nid in band:
+            nxt.extend(by_id[nid].get("children") or [])
+        queue = nxt
+    for band in bands:
+        out.append('<div class="rel-band">')
+        for nid in band:
+            n = by_id[nid]
+            out.append(
+                f'<div class="rel-node linear-card card-panel" data-node-id="{_escape(nid)}">'
+            )
+            out.append(
+                f'<h3{_style_font(heading_px)}>{_soft_break_html(n["heading"])}</h3>'
+            )
+            if n.get("detail"):
+                out.append(
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
+                    f'{_soft_break_html(n["detail"])}</p>'
+                )
+            out.append("</div>")
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+def _paint_stakeholder_map(
+    spec: dict[str, Any],
+    plan_attrs: str,
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+    overflow_cls: str,
+) -> list[str]:
+    focal = spec["focal"]
+    out = [f'<div class="stakeholder-map{overflow_cls}" {plan_attrs}>']
+    out.append(
+        f'<div class="stakeholder-focal linear-card card-panel" '
+        f'data-entity-id="{_escape(focal["id"])}" data-role="focal">'
+    )
+    out.append(f'<p class="linear-meta"{_style_font(meta_px)}>focal</p>')
+    out.append(
+        f'<h3{_style_font(heading_px)}>{_soft_break_html(focal["heading"])}</h3>'
+    )
+    if focal.get("detail"):
+        out.append(
+            f'<p class="linear-detail"{_style_font(detail_px)}>'
+            f'{_soft_break_html(focal["detail"])}</p>'
+        )
+    out.append("</div>")
+    out.append('<div class="stakeholder-spokes">')
+    for s in spec["stakeholders"]:
+        out.append(
+            f'<div class="stakeholder-spoke linear-card card-panel" '
+            f'data-entity-id="{_escape(s["id"])}" data-direction="{_escape(s["direction"])}">'
+        )
+        out.append(
+            f'<p class="linear-meta"{_style_font(meta_px)}>'
+            f'{_soft_break_html(s["relationship_label"])} '
+            f'({_escape(s["direction"].replace("_", " "))})</p>'
+        )
+        out.append(
+            f'<h3{_style_font(heading_px)}>{_soft_break_html(s["heading"])}</h3>'
+        )
+        if s.get("detail"):
+            out.append(
+                f'<p class="linear-detail"{_style_font(detail_px)}>'
+                f'{_soft_break_html(s["detail"])}</p>'
+            )
+        out.append("</div>")
+    out.append("</div></div>")
+    return out
+
+
+def _paint_quadrant_matrix(
+    spec: dict[str, Any],
+    plan_attrs: str,
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+    overflow_cls: str,
+) -> list[str]:
+    x_axis = spec["x_axis"]
+    y_axis = spec["y_axis"]
+    by_q: dict[tuple[str, str], list] = {
+        ("low", "high"): [],
+        ("high", "high"): [],
+        ("low", "low"): [],
+        ("high", "low"): [],
+    }
+    for it in spec["items"]:
+        by_q[(it["x_band"], it["y_band"])].append(it)
+    out = [
+        f'<p class="axis-legend"{_style_font(meta_px)}>'
+        f'X: {_soft_break_html(x_axis["label"])} '
+        f'({_soft_break_html(x_axis["low_label"])}–{_soft_break_html(x_axis["high_label"])}); '
+        f'Y: {_soft_break_html(y_axis["label"])} '
+        f'({_soft_break_html(y_axis["low_label"])}–{_soft_break_html(y_axis["high_label"])})</p>',
+        f'<div class="quadrant-matrix{overflow_cls}" {plan_attrs}>',
+    ]
+    # Visual top row = high Y; left = low X.
+    order = [("low", "high"), ("high", "high"), ("low", "low"), ("high", "low")]
+    for xb, yb in order:
+        x_lab = x_axis["low_label"] if xb == "low" else x_axis["high_label"]
+        y_lab = y_axis["low_label"] if yb == "low" else y_axis["high_label"]
+        out.append(
+            f'<section class="quadrant-cell" data-x-band="{_escape(xb)}" '
+            f'data-y-band="{_escape(yb)}">'
+        )
+        out.append(
+            f'<p class="quadrant-label"{_style_font(meta_px)}>'
+            f'{_soft_break_html(x_lab)} / {_soft_break_html(y_lab)}</p>'
+        )
+        for it in by_q[(xb, yb)]:
+            out.append(
+                f'<div class="quadrant-item linear-card card-panel" '
+                f'data-item-id="{_escape(it["id"])}">'
+            )
+            out.append(
+                f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>'
+            )
+            if it.get("detail"):
+                out.append(
+                    f'<p class="linear-detail"{_style_font(detail_px)}>'
+                    f'{_soft_break_html(it["detail"])}</p>'
+                )
+            out.append("</div>")
+        out.append("</section>")
+    out.append("</div>")
+    return out
+
+
+def _paint_relationship_fallback(
+    lt: str,
+    spec: dict[str, Any],
+    sp: Any,
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+    overflow_cls: str,
+) -> list[str]:
+    """Preserve all authored facts; mark unresolved without reconnecting."""
+    plan_attrs = _plan_attrs(sp, events_by_surface)
+    fb = sp.fallback or "accessible_relationship_table"
+    out = [
+        f'<div class="linear-fallback{overflow_cls}" {plan_attrs} '
+        f'data-fallback="{_escape(fb)}">'
+    ]
+
+    if lt == "decision_tree":
+        if fb == "accessible_nested_outline" and not spec.get("structural_defect"):
+            by_id = {n["id"]: n for n in spec["nodes"]}
+
+            def render_node(nid: str) -> None:
+                n = by_id[nid]
+                out.append(f'<li data-node-id="{_escape(nid)}" data-node-kind="{_escape(n["kind"])}">')
+                out.append(
+                    f'<strong{_style_font(heading_px)}>{_soft_break_html(n["heading"])}</strong>'
+                )
+                if n.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(detail_px)}>{_soft_break_html(n["detail"])}</span>'
+                    )
+                branches = n.get("branches") or []
+                if branches:
+                    out.append("<ul>")
+                    for br in branches:
+                        out.append(
+                            f'<li data-branch-label="{_escape(br["label"])}" '
+                            f'data-target-id="{_escape(br["target_id"])}">'
+                        )
+                        out.append(
+                            f'<em{_style_font(meta_px)}>{_soft_break_html(br["label"])}</em>'
+                        )
+                        if br["target_id"] in by_id:
+                            out.append("<ul>")
+                            render_node(br["target_id"])
+                            out.append("</ul>")
+                        else:
+                            out.append(
+                                f' <span class="relationship-unresolved"{_style_font(meta_px)}>'
+                                f'unresolved target {_escape(br["target_id"])}</span>'
+                            )
+                        out.append("</li>")
+                    out.append("</ul>")
+                out.append("</li>")
+
+            out.append("<ul>")
+            if spec["root_id"] in by_id:
+                render_node(spec["root_id"])
+            out.append("</ul>")
+        else:
+            # Relationship table: every node + every authored branch, no reconnect.
+            codes = list(spec.get("defect_codes") or [])
+            if codes:
+                out.append(
+                    f'<p class="relationship-unresolved"{_style_font(meta_px)}>'
+                    f'defects: {_escape("; ".join(codes))}</p>'
+                )
+            out.append(
+                '<table class="relationship-table"><thead><tr>'
+                "<th scope=\"col\">node_id</th><th scope=\"col\">kind</th>"
+                "<th scope=\"col\">heading</th><th scope=\"col\">relation</th>"
+                "<th scope=\"col\">status</th></tr></thead><tbody>"
+            )
+            known = {n["id"] for n in spec["nodes"]}
+            for n in spec["nodes"]:
+                node_notes = [
+                    c.split(".", 1)[-1]
+                    for c in codes
+                    if c.endswith(f":{n['id']}")
+                ]
+                branches = n.get("branches") or []
+                if not branches:
+                    status = "; ".join(node_notes) if node_notes else "leaf"
+                    status_cls = (
+                        ' class="relationship-unresolved"' if node_notes else ""
+                    )
+                    out.append(
+                        f'<tr data-node-id="{_escape(n["id"])}">'
+                        f'<td>{_escape(n["id"])}</td>'
+                        f'<td>{_escape(n["kind"])}</td>'
+                        f'<td>{_soft_break_html(n["heading"])}</td>'
+                        f'<td></td><td{status_cls}>{status}</td></tr>'
+                    )
+                for br in branches:
+                    notes = list(node_notes)
+                    if br["target_id"] not in known:
+                        notes.append(
+                            f'unresolved target {_escape(br["target_id"])}'
+                        )
+                    if f"decision_tree.shared_target:{br['target_id']}" in codes:
+                        notes.append(f"shared_target:{br['target_id']}")
+                    if notes:
+                        status = "; ".join(notes)
+                        status_cls = ' class="relationship-unresolved"'
+                    else:
+                        status = "ok"
+                        status_cls = ""
+                    out.append(
+                        f'<tr data-node-id="{_escape(n["id"])}" '
+                        f'data-target-id="{_escape(br["target_id"])}">'
+                        f'<td>{_escape(n["id"])}</td>'
+                        f'<td>{_escape(n["kind"])}</td>'
+                        f'<td>{_soft_break_html(n["heading"])}</td>'
+                        f'<td>{_soft_break_html(br["label"])} → {_escape(br["target_id"])}</td>'
+                        f'<td{status_cls}>{status}</td></tr>'
+                    )
+            out.append("</tbody></table>")
+
+    elif lt == "feedback_loop":
+        if fb == "accessible_ordered_relationship_list" and not spec.get("structural_defect"):
+            out.append("<ol>")
+            items = spec["items"]
+            for i, it in enumerate(items):
+                nxt = items[(i + 1) % len(items)]
+                out.append(f'<li data-item-id="{_escape(it["id"])}">')
+                out.append(
+                    f'<strong{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</strong>'
+                )
+                if it.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(detail_px)}>{_soft_break_html(it["detail"])}</span>'
+                    )
+                edge = f'next: {_escape(nxt["id"])}'
+                if it.get("effect"):
+                    edge += f' ({_escape(it["effect"])})'
+                if it.get("relationship_label"):
+                    edge += f' {_soft_break_html(it["relationship_label"])}'
+                out.append(f' <span{_style_font(meta_px)}>{edge}</span>')
+                out.append("</li>")
+            out.append("</ol>")
+            if spec.get("classification"):
+                out.append(
+                    f'<p class="loop-classification"{_style_font(meta_px)}>'
+                    f'{_escape(spec["classification"])} loop</p>'
+                )
+        else:
+            out.append(
+                '<table class="relationship-table"><thead><tr>'
+                "<th scope=\"col\">item_id</th><th scope=\"col\">heading</th>"
+                "<th scope=\"col\">next</th><th scope=\"col\">effect</th>"
+                "<th scope=\"col\">label</th><th scope=\"col\">status</th>"
+                "</tr></thead><tbody>"
+            )
+            items = spec["items"]
+            for i, it in enumerate(items):
+                nxt = items[(i + 1) % len(items)]
+                if spec["loop_kind"] == "causal" and not it.get("effect"):
+                    status = "unresolved effect"
+                    status_cls = ' class="relationship-unresolved"'
+                else:
+                    status = "ok"
+                    status_cls = ""
+                out.append(
+                    f'<tr data-item-id="{_escape(it["id"])}">'
+                    f'<td>{_escape(it["id"])}</td>'
+                    f'<td>{_soft_break_html(it["heading"])}</td>'
+                    f'<td>{_escape(nxt["id"])}</td>'
+                    f'<td>{_escape(it.get("effect") or "")}</td>'
+                    f'<td>{_soft_break_html(it.get("relationship_label") or "")}</td>'
+                    f'<td{status_cls}>{status}</td></tr>'
+                )
+            out.append("</tbody></table>")
+
+    elif lt == "hierarchy":
+        if fb == "accessible_nested_outline" and not spec.get("structural_defect"):
+            by_id = {n["id"]: n for n in spec["nodes"]}
+
+            def render_h(nid: str) -> None:
+                n = by_id[nid]
+                out.append(f'<li data-node-id="{_escape(nid)}">')
+                out.append(
+                    f'<strong{_style_font(heading_px)}>{_soft_break_html(n["heading"])}</strong>'
+                )
+                if n.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(detail_px)}>{_soft_break_html(n["detail"])}</span>'
+                    )
+                kids = [c for c in (n.get("children") or []) if c in by_id]
+                if kids:
+                    out.append("<ul>")
+                    for c in kids:
+                        render_h(c)
+                    out.append("</ul>")
+                out.append("</li>")
+
+            out.append(
+                f'<p{_style_font(meta_px)}>Relationship: '
+                f'{_escape(spec["relationship"].replace("_", " "))}</p>'
+            )
+            out.append("<ul>")
+            if spec["root_id"] in by_id:
+                render_h(spec["root_id"])
+            out.append("</ul>")
+        else:
+            codes = list(spec.get("defect_codes") or [])
+            if codes:
+                out.append(
+                    f'<p class="relationship-unresolved"{_style_font(meta_px)}>'
+                    f'defects: {_escape("; ".join(codes))}</p>'
+                )
+            out.append(
+                '<table class="relationship-table"><thead><tr>'
+                "<th scope=\"col\">node_id</th><th scope=\"col\">heading</th>"
+                f'<th scope=\"col\">{_escape(spec["relationship"])}</th>'
+                "<th scope=\"col\">status</th></tr></thead><tbody>"
+            )
+            known = {n["id"] for n in spec["nodes"]}
+            for n in spec["nodes"]:
+                node_notes = [
+                    c.split(".", 1)[-1]
+                    for c in codes
+                    if c.endswith(f":{n['id']}")
+                ]
+                kids = n.get("children") or []
+                if not kids:
+                    status = "; ".join(node_notes) if node_notes else "leaf"
+                    status_cls = (
+                        ' class="relationship-unresolved"' if node_notes else ""
+                    )
+                    out.append(
+                        f'<tr data-node-id="{_escape(n["id"])}">'
+                        f'<td>{_escape(n["id"])}</td>'
+                        f'<td>{_soft_break_html(n["heading"])}</td>'
+                        f'<td></td><td{status_cls}>{status}</td></tr>'
+                    )
+                for child in kids:
+                    notes = list(node_notes)
+                    if child not in known:
+                        notes.append(f"unresolved child {_escape(child)}")
+                    if f"hierarchy.shared_child:{child}" in codes:
+                        notes.append(f"shared_child:{child}")
+                    if notes:
+                        status = "; ".join(notes)
+                        status_cls = ' class="relationship-unresolved"'
+                    else:
+                        status = "ok"
+                        status_cls = ""
+                    out.append(
+                        f'<tr data-node-id="{_escape(n["id"])}" data-child-id="{_escape(child)}">'
+                        f'<td>{_escape(n["id"])}</td>'
+                        f'<td>{_soft_break_html(n["heading"])}</td>'
+                        f'<td>{_escape(child)}</td>'
+                        f'<td{status_cls}>{status}</td></tr>'
+                    )
+            out.append("</tbody></table>")
+
+    elif lt == "stakeholder_map":
+        if fb == "accessible_relationship_list" and not spec.get("structural_defect"):
+            focal = spec["focal"]
+            out.append(
+                f'<p data-entity-id="{_escape(focal["id"])}"{_style_font(heading_px)}>'
+                f'<strong>Focal: {_soft_break_html(focal["heading"])}</strong></p>'
+            )
+            out.append("<ul>")
+            for s in spec["stakeholders"]:
+                out.append(
+                    f'<li data-entity-id="{_escape(s["id"])}" '
+                    f'data-direction="{_escape(s["direction"])}">'
+                )
+                out.append(
+                    f'<strong{_style_font(heading_px)}>{_soft_break_html(s["heading"])}</strong>'
+                )
+                out.append(
+                    f' — <span{_style_font(meta_px)}>'
+                    f'{_soft_break_html(s["relationship_label"])} '
+                    f'({_escape(s["direction"].replace("_", " "))})</span>'
+                )
+                if s.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(detail_px)}>{_soft_break_html(s["detail"])}</span>'
+                    )
+                out.append("</li>")
+            out.append("</ul>")
+        else:
+            focal = spec["focal"]
+            out.append(
+                '<table class="relationship-table"><thead><tr>'
+                "<th scope=\"col\">entity_id</th><th scope=\"col\">role</th>"
+                "<th scope=\"col\">heading</th><th scope=\"col\">relation</th>"
+                "<th scope=\"col\">direction</th></tr></thead><tbody>"
+            )
+            out.append(
+                f'<tr data-entity-id="{_escape(focal["id"])}">'
+                f'<td>{_escape(focal["id"])}</td><td>focal</td>'
+                f'<td>{_soft_break_html(focal["heading"])}</td>'
+                f'<td></td><td></td></tr>'
+            )
+            for s in spec["stakeholders"]:
+                out.append(
+                    f'<tr data-entity-id="{_escape(s["id"])}">'
+                    f'<td>{_escape(s["id"])}</td><td>stakeholder</td>'
+                    f'<td>{_soft_break_html(s["heading"])}</td>'
+                    f'<td>{_soft_break_html(s["relationship_label"])}</td>'
+                    f'<td>{_escape(s["direction"])}</td></tr>'
+                )
+            out.append("</tbody></table>")
+
+    else:  # quadrant_matrix → four-group accessible fallback
+        x_axis = spec["x_axis"]
+        y_axis = spec["y_axis"]
+        out.append(
+            f'<p{_style_font(meta_px)}>X: {_soft_break_html(x_axis["label"])} '
+            f'({_soft_break_html(x_axis["low_label"])}–{_soft_break_html(x_axis["high_label"])}); '
+            f'Y: {_soft_break_html(y_axis["label"])} '
+            f'({_soft_break_html(y_axis["low_label"])}–{_soft_break_html(y_axis["high_label"])})</p>'
+        )
+        groups = {
+            ("low", "high"): [],
+            ("high", "high"): [],
+            ("low", "low"): [],
+            ("high", "low"): [],
+        }
+        for it in spec["items"]:
+            key = (it["x_band"], it["y_band"])
+            if key in groups:
+                groups[key].append(it)
+            else:
+                # Should not happen with typed bands; keep visibly unresolved.
+                groups.setdefault(("unresolved", "unresolved"), []).append(it)
+        out.append("<ul>")
+        for (xb, yb), items in groups.items():
+            x_lab = (
+                x_axis["low_label"]
+                if xb == "low"
+                else x_axis["high_label"] if xb == "high" else xb
+            )
+            y_lab = (
+                y_axis["low_label"]
+                if yb == "low"
+                else y_axis["high_label"] if yb == "high" else yb
+            )
+            out.append(
+                f'<li data-x-band="{_escape(xb)}" data-y-band="{_escape(yb)}">'
+            )
+            out.append(
+                f'<strong{_style_font(heading_px)}>'
+                f'{_soft_break_html(str(x_lab))} / {_soft_break_html(str(y_lab))}'
+                f'</strong>'
+            )
+            out.append("<ul>")
+            if not items:
+                out.append(f'<li{_style_font(meta_px)}>(empty)</li>')
+            for it in items:
+                out.append(f'<li data-item-id="{_escape(it["id"])}">')
+                out.append(
+                    f'<span{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</span>'
+                )
+                if it.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(detail_px)}>{_soft_break_html(it["detail"])}</span>'
+                    )
+                out.append("</li>")
+            out.append("</ul></li>")
+        out.append("</ul>")
+
     out.append("</div>")
     return out
 

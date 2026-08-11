@@ -1,4 +1,4 @@
-"""Schema-v1 typed deck model (D117–D224, D251, D268–D271 kernel subset).
+"""Schema-v1 typed deck model (D117–D224, D251, D268–D280 kernel compositions).
 
 This module is the single source of truth for the closed handoff contract.
 JSON Schema is generated from these models (D121).
@@ -115,6 +115,21 @@ KERNEL_LAYOUTS = frozenset(
         "timeline",
         "layered_architecture",
         "data_pipeline",
+        "decision_tree",
+        "feedback_loop",
+        "hierarchy",
+        "stakeholder_map",
+        "quadrant_matrix",
+    }
+)
+
+KERNEL_RELATIONSHIP_LAYOUTS = frozenset(
+    {
+        "decision_tree",
+        "feedback_loop",
+        "hierarchy",
+        "stakeholder_map",
+        "quadrant_matrix",
     }
 )
 
@@ -735,6 +750,203 @@ class DataPipelinePayload(ClosedModel):
 
 
 # ---------------------------------------------------------------------------
+# Relationship + decision compositions (D194–D195/D198–D200/D274–D275/D278–D280)
+# ---------------------------------------------------------------------------
+# Local shape only here. Graph/assignment connectivity is analyzed in
+# validate.analyze_relationship_structure so non-strict can preserve facts
+# without reconnecting (D274/D278).
+
+
+class DecisionBranch(ClosedModel):
+    """One authored branch from a decision node (D194/D274)."""
+
+    label: NonEmptyStr
+    target_id: SemanticId
+
+
+class DecisionTreeNode(ClosedModel):
+    """Decision (2–3 branches) or outcome leaf (D194/D274)."""
+
+    node_id: SemanticId
+    kind: Literal["decision", "outcome"]
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+    branches: Optional[list[DecisionBranch]] = Field(default=None, min_length=2, max_length=3)
+
+    @model_validator(mode="after")
+    def _kind_branches(self) -> DecisionTreeNode:
+        if self.kind == "decision":
+            if not self.branches:
+                raise ValueError("decision nodes require 2–3 ordered branches")
+            labels = [b.label.casefold().strip() for b in self.branches]
+            if len(labels) != len(set(labels)):
+                raise ValueError("branch labels must be normalized-unique on a decision")
+        elif self.branches is not None:
+            raise ValueError("outcome nodes must omit branches")
+        return self
+
+
+class DecisionTreePayload(ClosedModel):
+    """3–15 nodes + authored root; tree invariants checked at validate (D194/D274)."""
+
+    root_id: SemanticId
+    nodes: list[DecisionTreeNode] = Field(min_length=3, max_length=15)
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> DecisionTreePayload:
+        ids = [n.node_id for n in self.nodes]
+        if len(ids) != len(set(ids)):
+            raise ValueError("node_id values must be unique within decision_tree")
+        return self
+
+
+class FeedbackLoopItem(ClosedModel):
+    """One cycle item; causal edges author next-edge polarity (D195/D275)."""
+
+    item_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+    effect: Optional[Literal["same_direction", "opposite_direction"]] = None
+    relationship_label: Optional[NonEmptyStr] = None
+
+
+class FeedbackLoopPayload(ClosedModel):
+    """3–8 ordered items forming one implicit cycle (D195/D275)."""
+
+    kind: Literal["procedural", "causal"]
+    items: list[FeedbackLoopItem] = Field(min_length=3, max_length=8)
+
+    @model_validator(mode="after")
+    def _ids_and_kind_fields(self) -> FeedbackLoopPayload:
+        ids = [it.item_id for it in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("item_id values must be unique within feedback_loop")
+        if self.kind == "procedural":
+            for it in self.items:
+                if it.effect is not None or it.relationship_label is not None:
+                    raise ValueError(
+                        "procedural feedback_loop forbids effect and relationship_label"
+                    )
+        # Causal missing/malformed effects are structure defects (D275), not shape drops.
+        return self
+
+    @property
+    def loop_classification(self) -> Optional[Literal["reinforcing", "balancing"]]:
+        """Derive reinforcing/balancing only when every causal effect is authored."""
+        if self.kind != "causal":
+            return None
+        effects = [it.effect for it in self.items]
+        if any(e is None for e in effects):
+            return None
+        opposite = sum(1 for e in effects if e == "opposite_direction")
+        return "balancing" if opposite % 2 == 1 else "reinforcing"
+
+
+class HierarchyNode(ClosedModel):
+    """One hierarchy node with ordered child IDs (D198/D278)."""
+
+    node_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+    children: Optional[list[SemanticId]] = Field(default=None, min_length=1)
+
+    @model_validator(mode="after")
+    def _unique_child_refs(self) -> HierarchyNode:
+        if self.children is not None and len(self.children) != len(set(self.children)):
+            raise ValueError("children must be duplicate-free on a hierarchy node")
+        return self
+
+
+class HierarchyPayload(ClosedModel):
+    """3–20 nodes, one root, one uniform relation (D198/D278)."""
+
+    relationship: Literal["reports_to", "part_of", "is_a"]
+    root_id: SemanticId
+    nodes: list[HierarchyNode] = Field(min_length=3, max_length=20)
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> HierarchyPayload:
+        ids = [n.node_id for n in self.nodes]
+        if len(ids) != len(set(ids)):
+            raise ValueError("node_id values must be unique within hierarchy")
+        return self
+
+
+class StakeholderEntity(ClosedModel):
+    """Focal entity fields shared shape (D199/D279)."""
+
+    entity_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+
+
+class StakeholderSpoke(ClosedModel):
+    """One hub-spoke stakeholder with explicit direction (D199/D279)."""
+
+    entity_id: SemanticId
+    heading: NonEmptyStr
+    relationship_label: NonEmptyStr
+    direction: Literal["undirected", "to_focal", "from_focal", "bidirectional"]
+    detail: Optional[NonEmptyStr] = None
+
+
+class StakeholderMapPayload(ClosedModel):
+    """One focal + 2–8 ordered stakeholders (D199/D279)."""
+
+    focal: StakeholderEntity
+    stakeholders: list[StakeholderSpoke] = Field(min_length=2, max_length=8)
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> StakeholderMapPayload:
+        ids = [self.focal.entity_id] + [s.entity_id for s in self.stakeholders]
+        if len(ids) != len(set(ids)):
+            raise ValueError(
+                "entity_id values must be unique across stakeholder_map"
+            )
+        return self
+
+
+class QuadrantAxis(ClosedModel):
+    """One binary axis with exact endpoint labels (D200/D280)."""
+
+    label: NonEmptyStr
+    low_label: NonEmptyStr
+    high_label: NonEmptyStr
+
+    @model_validator(mode="after")
+    def _distinct_ends(self) -> QuadrantAxis:
+        if self.low_label.casefold().strip() == self.high_label.casefold().strip():
+            raise ValueError("axis low_label and high_label must be normalized-distinct")
+        return self
+
+
+class QuadrantItem(ClosedModel):
+    """One item with explicit low/high band on both axes (D200/D280)."""
+
+    item_id: SemanticId
+    heading: NonEmptyStr
+    x_band: Literal["low", "high"]
+    y_band: Literal["low", "high"]
+    detail: Optional[NonEmptyStr] = None
+
+
+class QuadrantMatrixPayload(ClosedModel):
+    """Two axes + 1–16 assigned items (D200/D280)."""
+
+    x_axis: QuadrantAxis
+    y_axis: QuadrantAxis
+    items: list[QuadrantItem] = Field(min_length=1, max_length=16)
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> QuadrantMatrixPayload:
+        ids = [it.item_id for it in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("item_id values must be unique within quadrant_matrix")
+        return self
+
+
+# ---------------------------------------------------------------------------
+
 # Axis charts + heatmap + single_chart composition (D162/D163/D227–D240, D243, D245–D248, D290–D302, D307/D308)
 # ---------------------------------------------------------------------------
 
@@ -1777,6 +1989,101 @@ class DataPipelineSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
+class DecisionTreeSlide(_SlideBase):
+    """Branching decision/outcome tree (D194/D274)."""
+
+    layout_type: Literal["decision_tree"] = "decision_tree"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: DecisionTreePayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> DecisionTreeSlide:
+        return _ordinary_footer_subset(self)
+
+
+class FeedbackLoopSlide(_SlideBase):
+    """One ordered procedural or causal cycle (D195/D275)."""
+
+    layout_type: Literal["feedback_loop"] = "feedback_loop"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: FeedbackLoopPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> FeedbackLoopSlide:
+        return _ordinary_footer_subset(self)
+
+
+class HierarchySlide(_SlideBase):
+    """Uniform parent-child hierarchy (D198/D278)."""
+
+    layout_type: Literal["hierarchy"] = "hierarchy"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: HierarchyPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> HierarchySlide:
+        return _ordinary_footer_subset(self)
+
+
+class StakeholderMapSlide(_SlideBase):
+    """Hub-and-spoke stakeholder map (D199/D279)."""
+
+    layout_type: Literal["stakeholder_map"] = "stakeholder_map"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: StakeholderMapPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> StakeholderMapSlide:
+        return _ordinary_footer_subset(self)
+
+
+class QuadrantMatrixSlide(_SlideBase):
+    """Two-axis semantic quadrant matrix (D200/D280)."""
+
+    layout_type: Literal["quadrant_matrix"] = "quadrant_matrix"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: QuadrantMatrixPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> QuadrantMatrixSlide:
+        return _ordinary_footer_subset(self)
+
+
 class SingleChartSlide(_SlideBase):
     layout_type: Literal["single_chart"] = "single_chart"
     section_id: SemanticId
@@ -1797,7 +2104,7 @@ class SingleChartSlide(_SlideBase):
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
 # plus annex/comparison tables (#180), single_chart axis charts
 # (line #182; grouped/horizontal bars #183; waterfall #186; heatmap #187),
-# and linear/grouping compositions (#192).
+# linear/grouping compositions (#192), and relationship/decision compositions (#193).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
@@ -1817,6 +2124,11 @@ Slide = Annotated[
         TimelineSlide,
         LayeredArchitectureSlide,
         DataPipelineSlide,
+        DecisionTreeSlide,
+        FeedbackLoopSlide,
+        HierarchySlide,
+        StakeholderMapSlide,
+        QuadrantMatrixSlide,
         SingleChartSlide,
     ],
     Field(discriminator="layout_type"),
