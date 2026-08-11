@@ -120,7 +120,13 @@ KERNEL_LAYOUTS = frozenset(
         "hierarchy",
         "stakeholder_map",
         "quadrant_matrix",
-    }
+    "feature_cards",
+    "quotation",
+    "evidence_review",
+    "risk_opportunity_review",
+    "recommendation_case",
+    "state_transition",
+}
 )
 
 KERNEL_RELATIONSHIP_LAYOUTS = frozenset(
@@ -130,6 +136,17 @@ KERNEL_RELATIONSHIP_LAYOUTS = frozenset(
         "hierarchy",
         "stakeholder_map",
         "quadrant_matrix",
+    }
+)
+
+KERNEL_CARD_LAYOUTS = frozenset(
+    {
+        "feature_cards",
+        "quotation",
+        "evidence_review",
+        "risk_opportunity_review",
+        "recommendation_case",
+        "state_transition",
     }
 )
 
@@ -758,6 +775,289 @@ class DataPipelinePayload(ClosedModel):
 # validate.analyze_relationship_structure so non-strict can preserve facts
 # without reconnecting (D274/D278).
 
+
+# Closed decorative icon keys for feature_cards (D281). Internal ic-* names stay private.
+FEATURE_ICON_KEYS: tuple[str, ...] = (
+    "growth",
+    "decline",
+    "globe",
+    "users",
+    "currency",
+    "percent",
+    "warning",
+    "check",
+    "flow",
+    "calendar",
+    "scale",
+    "building",
+    "restaurant",
+    "travel",
+    "target",
+    "energy",
+    "shield",
+    "chart",
+    "layers",
+    "clock",
+    "link",
+    "credit_card",
+    "wallet",
+    "institution",
+    "receipt",
+    "document",
+    "partnership",
+    "security",
+    "briefcase",
+    "coins",
+)
+FeatureIconKey = Literal[
+    "growth",
+    "decline",
+    "globe",
+    "users",
+    "currency",
+    "percent",
+    "warning",
+    "check",
+    "flow",
+    "calendar",
+    "scale",
+    "building",
+    "restaurant",
+    "travel",
+    "target",
+    "energy",
+    "shield",
+    "chart",
+    "layers",
+    "clock",
+    "link",
+    "credit_card",
+    "wallet",
+    "institution",
+    "receipt",
+    "document",
+    "partnership",
+    "security",
+    "briefcase",
+    "coins",
+]
+
+class FeatureCard(ClosedModel):
+    """One equal-rank feature card (D201/D281)."""
+
+    card_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+    icon_key: Optional[FeatureIconKey] = None
+
+class FeatureCardsPayload(ClosedModel):
+    """2–6 authored-order equal-rank cards with closed decorative icons."""
+
+    cards: list[FeatureCard] = Field(min_length=2, max_length=6)
+    typography: Optional[Typography] = None
+
+    @model_validator(mode="after")
+    def _unique_and_typo(self) -> FeatureCardsPayload:
+        ids = [c.card_id for c in self.cards]
+        if len(ids) != len(set(ids)):
+            raise ValueError("card_id values must be unique within feature_cards")
+        if self.typography and (
+            self.typography.subtitle_font_size is not None
+            or self.typography.table_font_size is not None
+        ):
+            raise ValueError(
+                "subtitle_font_size/table_font_size inapplicable to feature_cards"
+            )
+        return self
+
+class QuoteAttribution(ClosedModel):
+    """Required name plus optional role/organization (D202/D282)."""
+
+    name: NonEmptyStr
+    role: Optional[NonEmptyStr] = None
+    organization: Optional[NonEmptyStr] = None
+
+class QuoteItem(ClosedModel):
+    """One provenance-aware quotation; paragraphs stay plain (D282)."""
+
+    quote_id: SemanticId
+    paragraphs: list[NonEmptyStr] = Field(min_length=1, max_length=3)
+    attribution: QuoteAttribution
+    evidence_id: Optional[SemanticId] = None
+    # Repair-only marker when a bad evidence_id was dropped (D282).
+    provenance_unavailable: Optional[Literal[True]] = None
+
+class QuotationPayload(ClosedModel):
+    """1–3 authored-order quotations."""
+
+    quotes: list[QuoteItem] = Field(min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def _unique_quote_ids(self) -> QuotationPayload:
+        ids = [q.quote_id for q in self.quotes]
+        if len(ids) != len(set(ids)):
+            raise ValueError("quote_id values must be unique within quotation")
+        return self
+
+class EvidenceFinding(ClosedModel):
+    """One evidence-backed finding (D203/D283).
+
+    Empty evidence_ids is only valid when refs_repaired marks non-strict drops;
+    paint shows Source unavailable rather than inventing support.
+    """
+
+    finding_id: SemanticId
+    statement: Prose
+    evidence_ids: list[SemanticId] = Field(min_length=0, max_length=4)
+    # Repair-only: empty evidence_ids after dropping bad refs (D283).
+    refs_repaired: Optional[Literal[True]] = None
+
+    @model_validator(mode="after")
+    def _unique_refs(self, info: ValidationInfo) -> EvidenceFinding:
+        if len(self.evidence_ids) != len(set(self.evidence_ids)):
+            raise ValueError("finding evidence_ids must be duplicate-free")
+        allow_empty = bool((info.context or {}).get("allow_repair_empty"))
+        if not self.evidence_ids and not (
+            allow_empty and self.refs_repaired is True
+        ):
+            raise ValueError("finding requires 1–4 evidence_ids")
+        return self
+
+class EvidenceReviewPayload(ClosedModel):
+    """1–6 ordered findings linked to registered evidence."""
+
+    findings: list[EvidenceFinding] = Field(min_length=1, max_length=6)
+
+    @model_validator(mode="after")
+    def _unique_finding_ids(self) -> EvidenceReviewPayload:
+        ids = [f.finding_id for f in self.findings]
+        if len(ids) != len(set(ids)):
+            raise ValueError("finding_id values must be unique within evidence_review")
+        return self
+
+class RiskOpportunityItem(ClosedModel):
+    """One risk or opportunity item (D204/D284)."""
+
+    item_id: SemanticId
+    statement: Prose
+    detail: Optional[Prose] = None
+
+class RiskOpportunityReviewPayload(ClosedModel):
+    """Two authored groups; membership owns role.
+
+    Empty groups are only valid when groups_repaired marks non-strict drops (D284).
+    """
+
+    risks: list[RiskOpportunityItem] = Field(min_length=0, max_length=6)
+    opportunities: list[RiskOpportunityItem] = Field(min_length=0, max_length=6)
+    # Repair-only: empty group(s) after dropping malformed items.
+    groups_repaired: Optional[Literal[True]] = None
+
+    @model_validator(mode="after")
+    def _unique_ids_across_payload(
+        self, info: ValidationInfo
+    ) -> RiskOpportunityReviewPayload:
+        allow_empty = bool((info.context or {}).get("allow_repair_empty"))
+        if not (
+            allow_empty and self.groups_repaired is True
+        ) and (not self.risks or not self.opportunities):
+            raise ValueError(
+                "risk_opportunity_review requires 1–6 risks and 1–6 opportunities"
+            )
+        ids = [i.item_id for i in self.risks] + [i.item_id for i in self.opportunities]
+        if len(ids) != len(set(ids)):
+            raise ValueError(
+                "item_id values must be unique across risk_opportunity_review"
+            )
+        return self
+
+class RecommendationRationale(ClosedModel):
+    """One ordered rationale supporting the recommendation (D205/D285)."""
+
+    rationale_id: SemanticId
+    statement: Prose
+    detail: Optional[Prose] = None
+
+class RecommendationCasePayload(ClosedModel):
+    """One recommendation plus rationales.
+
+    Empty rationales only when support_repaired; paint marks support unavailable.
+    """
+
+    recommendation: Prose
+    rationales: list[RecommendationRationale] = Field(min_length=0, max_length=6)
+    # Repair-only: empty rationales after dropping malformed items (D285).
+    support_repaired: Optional[Literal[True]] = None
+
+    @model_validator(mode="after")
+    def _unique_rationale_ids(
+        self, info: ValidationInfo
+    ) -> RecommendationCasePayload:
+        allow_empty = bool((info.context or {}).get("allow_repair_empty"))
+        if not self.rationales and not (
+            allow_empty and self.support_repaired is True
+        ):
+            raise ValueError("recommendation_case requires 1–6 rationales")
+        ids = [r.rationale_id for r in self.rationales]
+        if len(ids) != len(set(ids)):
+            raise ValueError(
+                "rationale_id values must be unique within recommendation_case"
+            )
+        return self
+
+class TransitionState(ClosedModel):
+    """Before or after state surface (D206/D286)."""
+
+    surface_id: SemanticId
+    heading: NonEmptyStr
+    blocks: list[NarrativeBlock] = Field(min_length=1, max_length=4)
+
+    @model_validator(mode="after")
+    def _unique_block_ids(self) -> TransitionState:
+        ids = [b.block_id for b in self.blocks]
+        if len(ids) != len(set(ids)):
+            raise ValueError("block_id values must be unique within a state surface")
+        return self
+
+class TransitionStep(ClosedModel):
+    """Optional authored transition step (D192-style; never inferred)."""
+
+    step_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+
+class StateTransitionPayload(ClosedModel):
+    """Before/after states with optional transition steps."""
+
+    before: TransitionState
+    after: TransitionState
+    transition_steps: Optional[list[TransitionStep]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> StateTransitionPayload:
+        if self.before.surface_id == self.after.surface_id:
+            raise ValueError("before/after surface_id values must differ")
+        block_ids = [b.block_id for b in self.before.blocks] + [
+            b.block_id for b in self.after.blocks
+        ]
+        if len(block_ids) != len(set(block_ids)):
+            raise ValueError(
+                "block_id values must be unique across state_transition payload"
+            )
+        if self.transition_steps is not None:
+            step_ids = [s.step_id for s in self.transition_steps]
+            if len(step_ids) != len(set(step_ids)):
+                raise ValueError(
+                    "step_id values must be unique within transition_steps"
+                )
+        return self
+
+
+# ---------------------------------------------------------------------------
+# Axis charts + heatmap + single_chart composition (D163/D227–D240, D243, D246, D290–D302, D308)
+# ---------------------------------------------------------------------------
 
 class DecisionBranch(ClosedModel):
     """One authored branch from a decision node (D194/D274)."""
@@ -2403,6 +2703,155 @@ class SingleChartSlide(_SlideBase):
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
+class FeatureCardsSlide(_SlideBase):
+    """Equal-rank icon cards (D201/D281)."""
+
+    layout_type: Literal["feature_cards"] = "feature_cards"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: FeatureCardsPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> FeatureCardsSlide:
+        return _ordinary_footer_subset(self)
+
+class QuotationSlide(_SlideBase):
+    """Provenance-aware quotations (D202/D282)."""
+
+    layout_type: Literal["quotation"] = "quotation"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: QuotationPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_and_quote_evidence(self) -> QuotationSlide:
+        _ordinary_footer_subset(self)
+        slide_eids = set(self.evidence_ids or [])
+        for q in self.payload.quotes:
+            if q.evidence_id is None:
+                continue
+            if q.evidence_id not in slide_eids:
+                raise ValueError(
+                    f"quote evidence_id {q.evidence_id!r} must be among slide evidence_ids"
+                )
+        return self
+
+class EvidenceReviewSlide(_SlideBase):
+    """Findings with registered evidence; source_footer forbidden (D203/D283/D287)."""
+
+    layout_type: Literal["evidence_review"] = "evidence_review"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: EvidenceReviewPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_source_footer(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "source_footer" in data:
+            raise ValueError("evidence_review forbids source_footer (D283/D287)")
+        return data
+
+    @model_validator(mode="after")
+    def _finding_evidence_subset(self) -> EvidenceReviewSlide:
+        slide_eids = set(self.evidence_ids or [])
+        any_refs = any(f.evidence_ids for f in self.payload.findings)
+        if any_refs and not slide_eids:
+            raise ValueError(
+                "evidence_review requires slide evidence_ids covering every finding reference"
+            )
+        # Authored findings must carry at least one reference; empty lists are
+        # only produced by non-strict reference drops (revalidation path).
+        for finding in self.payload.findings:
+            missing = [e for e in finding.evidence_ids if e not in slide_eids]
+            if missing:
+                raise ValueError(
+                    "finding evidence_ids must be a subset of slide evidence_ids"
+                )
+        return self
+
+class RiskOpportunityReviewSlide(_SlideBase):
+    """Two authored risk/opportunity groups (D204/D284)."""
+
+    layout_type: Literal["risk_opportunity_review"] = "risk_opportunity_review"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: RiskOpportunityReviewPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> RiskOpportunityReviewSlide:
+        return _ordinary_footer_subset(self)
+
+class RecommendationCaseSlide(_SlideBase):
+    """Recommendation + rationales; takeaway forbidden (D205/D285/D287)."""
+
+    layout_type: Literal["recommendation_case"] = "recommendation_case"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: RecommendationCasePayload
+    content: Optional[SubtitleContent] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_takeaway(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "takeaway" in data:
+            raise ValueError("recommendation_case forbids takeaway (D285/D287)")
+        return data
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> RecommendationCaseSlide:
+        return _ordinary_footer_subset(self)
+
+class StateTransitionSlide(_SlideBase):
+    """Before/after states with optional steps (D206/D286)."""
+
+    layout_type: Literal["state_transition"] = "state_transition"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: StateTransitionPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> StateTransitionSlide:
+        return _ordinary_footer_subset(self)
+
+
+# Kernel compositions: covers + divider + narrative + legal + data_table (#191)
+# plus annex/comparison tables (#180), single_chart axis charts
+# (line #182; grouped/horizontal bars #183), linear/grouping (#192),
+# and cards/reviews/quotations/state transitions (#194).
+# Other D210 layout_type values are recognized at the envelope and rejected
+# with a clear "not yet implemented in kernel" structure error so the closed
+# vocabulary stays honest without shipping empty payload shells.
 Slide = Annotated[
     Union[
         OpeningCoverSlide,
@@ -2425,6 +2874,102 @@ Slide = Annotated[
         StakeholderMapSlide,
         QuadrantMatrixSlide,
         SingleChartSlide,
+        FeatureCardsSlide,
+        QuotationSlide,
+        EvidenceReviewSlide,
+        RiskOpportunityReviewSlide,
+        RecommendationCaseSlide,
+        StateTransitionSlide,
+    ],
+    Field(discriminator="layout_type"),
+]
+
+
+def _slide_table_surface_ids(slide: Any) -> list[str]:
+    """Authored table/metric surface IDs owned by one slide."""
+    lt = getattr(slide, "layout_type", None)
+    payload = getattr(slide, "payload", None)
+    if lt in (
+        "data_table",
+        "annex_table",
+        "period_comparison",
+        "comparison_cards",
+    ):
+        ids = [payload.table.surface_id]
+        strip = getattr(payload, "metric_strip", None)
+        if strip is not None:
+            ids.append(strip.surface_id)
+        return ids
+    if lt == "grouped_annex_table":
+        return [peer.table.surface_id for peer in payload.tables]
+    if lt == "single_chart":
+        chart = payload.primary_visual
+        # Heatmap owns a nested D255 table with its own deck-unique surface (D308).
+        table = getattr(chart, "table_data", None)
+        if table is not None:
+            return [table.surface_id]
+    return []
+
+
+def _slide_semantic_values(slide: Any) -> list[Any]:
+    """Every D213 value that may carry a format_id on one slide."""
+    values: list[Any] = []
+    for table in _slide_tables(slide):
+        for row in table.rows:
+            values.extend(row.cells.values())
+    payload = getattr(slide, "payload", None)
+    strip = getattr(payload, "metric_strip", None) if payload is not None else None
+    if strip is not None:
+        values.extend(m.value for m in strip.metrics)
+    return values
+
+
+def _slide_tables(slide: Any) -> list[TableData]:
+    lt = getattr(slide, "layout_type", None)
+    payload = getattr(slide, "payload", None)
+    if lt in (
+        "data_table",
+        "annex_table",
+        "period_comparison",
+        "comparison_cards",
+    ):
+        return [payload.table]
+    if lt == "grouped_annex_table":
+        return [peer.table for peer in payload.tables]
+    if lt == "single_chart":
+        table = getattr(payload.primary_visual, "table_data", None)
+        if table is not None:
+            return [table]
+    return []
+
+Slide = Annotated[
+    Union[
+        OpeningCoverSlide,
+        SectionDividerSlide,
+        ClosingCoverSlide,
+        NarrativeSlide,
+        LegalNoticeSlide,
+        DataTableSlide,
+        AnnexTableSlide,
+        GroupedAnnexTableSlide,
+        PeriodComparisonSlide,
+        ComparisonCardsSlide,
+        ProcessFlowSlide,
+        TimelineSlide,
+        LayeredArchitectureSlide,
+        DataPipelineSlide,
+        DecisionTreeSlide,
+        FeedbackLoopSlide,
+        HierarchySlide,
+        StakeholderMapSlide,
+        QuadrantMatrixSlide,
+        SingleChartSlide,
+        FeatureCardsSlide,
+        QuotationSlide,
+        EvidenceReviewSlide,
+        RiskOpportunityReviewSlide,
+        RecommendationCaseSlide,
+        StateTransitionSlide,
     ],
     Field(discriminator="layout_type"),
 ]

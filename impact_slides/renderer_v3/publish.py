@@ -213,7 +213,62 @@ def build_presentation_html(
             ".linear-fallback{margin:0 0 var(--space-sm)}",
             ".linear-fallback ol,.linear-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
             ".linear-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
-            # Relationship + decision compositions (D194–D200/D274–D280).
+            # Cards / reviews / quotations / state transitions (D201–D206/D281–D286).
+            ".feature-cards{display:grid;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".feature-cards.cols-2{grid-template-columns:1fr 1fr}",
+            ".feature-cards.cols-3{grid-template-columns:1fr 1fr 1fr}",
+            ".feature-card{display:flex;flex-direction:column;gap:8px;padding:16px;box-sizing:border-box;min-width:0}",
+            ".feature-card h3{margin:0;font-size:inherit;font-weight:var(--font-weight-emphasis)}",
+            ".feature-card .feature-detail{margin:0}",
+            ".feature-icon{width:32px;height:32px;flex:0 0 32px;color:var(--color-ink)}",
+            ".feature-icon svg{display:block;width:32px;height:32px}",
+            ".quotation-row{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".quotation-row.single{flex-direction:column}",
+            ".quote-card{flex:1 1 0;min-width:0;padding:16px;box-sizing:border-box}",
+            ".quote-card blockquote{margin:0 0 8px;padding:0;border:none}",
+            ".quote-card blockquote p{margin:0 0 4px}",
+            ".quote-card blockquote p:last-child{margin-bottom:0}",
+            ".quote-card cite{display:block;font-style:normal;font-weight:var(--font-weight-emphasis)}",
+            ".quote-card .source-unavailable{margin:8px 0 0}",
+            ".evidence-review{display:grid;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".evidence-review.cols-2{grid-template-columns:1fr 1fr}",
+            ".evidence-review.cols-3{grid-template-columns:1fr 1fr 1fr}",
+            ".evidence-finding{padding:16px;box-sizing:border-box;min-width:0}",
+            ".evidence-finding .finding-statement{margin:0 0 8px}",
+            ".evidence-finding .finding-sources{margin:0;color:var(--color-navy)}",
+            ".evidence-finding .source-unavailable{font-style:italic}",
+            ".risk-opportunity-review{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:flex-start}",
+            ".risk-opp-group{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
+            ".risk-opp-group h2{margin:0;font-size:inherit;font-weight:var(--font-weight-emphasis)}",
+            ".risk-opp-item{padding:16px;box-sizing:border-box}",
+            ".risk-opp-item .item-statement{margin:0 0 4px}",
+            ".risk-opp-item .item-detail{margin:0}",
+            ".group-unresolved{padding:16px;font-style:italic}",
+            ".recommendation-case{display:flex;flex-direction:column;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".recommendation-panel{padding:16px;box-sizing:border-box}",
+            ".recommendation-panel .role-label,.rationale-card .role-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis);letter-spacing:0.04em}",
+            ".recommendation-panel .rec-text{margin:0}",
+            ".rationale-row{display:grid;gap:16px;width:100%}",
+            ".rationale-row.cols-1{grid-template-columns:1fr}",
+            ".rationale-row.cols-2{grid-template-columns:1fr 1fr}",
+            ".rationale-row.cols-3{grid-template-columns:1fr 1fr 1fr}",
+            ".rationale-card{min-width:0;padding:16px;box-sizing:border-box}",
+            ".rationale-card .item-statement{margin:0 0 4px}",
+            ".rationale-card .item-detail{margin:0}",
+            ".support-unavailable{padding:16px;font-style:italic}",
+            ".state-transition{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
+            ".state-panel{flex:1 1 0;min-width:0;padding:16px;box-sizing:border-box}",
+            ".state-panel .role-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis);letter-spacing:0.04em}",
+            ".state-panel h3{margin:0 0 8px;font-size:inherit}",
+            ".state-panel p{margin:0 0 4px}",
+            ".state-panel ul{margin:0 0 4px;padding-left:0}",
+            ".transition-steps{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px}",
+            ".transition-step{padding:12px;box-sizing:border-box}",
+            ".transition-step h4{margin:0 0 4px;font-size:inherit}",
+            ".card-comp-fallback{margin:0 0 var(--space-sm)}",
+            ".card-comp-fallback ol,.card-comp-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
+            ".card-comp-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
+                    # Relationship + decision compositions (D194–D200/D274–D280).
             ".decision-tree,.hierarchy-tree{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm)}",
             ".rel-band{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center}",
             ".rel-node{flex:1 1 160px;max-width:280px;min-width:0}",
@@ -477,7 +532,13 @@ def _paint_slide_body(
         "timeline",
         "layered_architecture",
         "data_pipeline",
-        "decision_tree",
+        "feature_cards",
+"quotation",
+"evidence_review",
+"risk_opportunity_review",
+"recommendation_case",
+"state_transition",
+"decision_tree",
         "feedback_loop",
         "hierarchy",
         "stakeholder_map",
@@ -516,6 +577,15 @@ def _paint_slide_body(
             "data_pipeline",
         ):
             out.extend(_paint_linear_composition(slide, plans_by_id, events_by_surface))
+        elif lt in (
+            "feature_cards",
+            "quotation",
+            "evidence_review",
+            "risk_opportunity_review",
+            "recommendation_case",
+            "state_transition",
+        ):
+            out.extend(_paint_card_composition(slide, plans_by_id, events_by_surface))
         elif lt in (
             "decision_tree",
             "feedback_loop",
@@ -580,11 +650,11 @@ def _paint_slide_body(
                     out.append("</ul>")
                 out.append("</details>")
             out.append("</div>")
-        if slide.source_footer is not None:
+        if getattr(slide, "source_footer", None) is not None:
             fsp = plans_by_id.get(f"slide-{sn}-source-footer")
             px = fsp.role_sizes.get("body") if fsp else None
             names = "; ".join(
-                evidence_registry[eid].source_name for eid in slide.source_footer
+                evidence_registry[eid].source_name for eid in getattr(slide, "source_footer", None)
             )
             out.append(
                 f'<footer class="source-footer" {_plan_attrs(fsp, events_by_surface)}'
@@ -1505,6 +1575,513 @@ def _paint_linear_fallback(
     return out
 
 
+_FEATURE_ICON_PATHS: dict[str, str] = {
+    "growth": "M4 20 L12 8 L18 14 L28 4",
+    "decline": "M4 4 L12 16 L18 10 L28 20",
+    "globe": "M16 4a12 12 0 1 0 0.01 0 M4 16h24 M16 4c4 4 4 20 0 24 M16 4c-4 4-4 20 0 24",
+    "users": "M10 14a4 4 0 1 0 0.01 0 M22 14a4 4 0 1 0 0.01 0 M4 26c0-4 3-6 6-6s6 2 6 6 M16 26c0-4 3-6 6-6s6 2 6 6",
+    "currency": "M16 6v20 M10 10h10a4 4 0 0 1 0 8H12a4 4 0 0 0 0 8h10",
+    "percent": "M8 24 L24 8 M10 10a2 2 0 1 0 0.01 0 M22 22a2 2 0 1 0 0.01 0",
+    "warning": "M16 6 L28 26 H4 Z M16 14v6 M16 22v2",
+    "check": "M6 16 L13 23 L26 9",
+    "flow": "M4 16h18 M18 10l6 6-6 6",
+    "calendar": "M6 8h20v18H6Z M6 14h20 M11 4v6 M21 4v6",
+    "scale": "M16 6v20 M8 12h16 M8 12l-4 8h8Z M24 12l-4 8h8Z",
+    "building": "M8 28V8h16v20 M12 12h2v2h-2Z M18 12h2v2h-2Z M12 18h2v2h-2Z M18 18h2v2h-2Z",
+    "restaurant": "M10 6v20 M10 6c4 0 4 6 0 6 M18 6v8c0 4 4 4 4 8v4",
+    "travel": "M4 18 L28 12 L20 20 L22 26 L18 22 L12 26 Z",
+    "target": "M16 4a12 12 0 1 0 0.01 0 M16 10a6 6 0 1 0 0.01 0 M16 16a2 2 0 1 0 0.01 0",
+    "energy": "M18 4 L10 18h6l-2 10 10-16h-6Z",
+    "shield": "M16 4 L26 8v8c0 8-6 12-10 14-4-2-10-6-10-14V8Z",
+    "chart": "M6 26V14 M14 26V8 M22 26V16 M4 26h24",
+    "layers": "M16 6 L28 12 L16 18 L4 12Z M4 16l12 6 12-6 M4 20l12 6 12-6",
+    "clock": "M16 4a12 12 0 1 0 0.01 0 M16 8v8l6 4",
+    "link": "M12 16a6 6 0 0 1 8-8l4 4 M20 16a6 6 0 0 1-8 8l-4-4",
+    "credit_card": "M4 10h24v14H4Z M4 16h24 M8 22h6",
+    "wallet": "M4 10h20a4 4 0 0 1 4 4v10H4Z M20 18h4",
+    "institution": "M4 12 L16 6 L28 12 M6 12v12h4V16h4v8h4V16h4v8h4V12 M4 26h24",
+    "receipt": "M8 4h16v24l-4-3-4 3-4-3-4 3Z M12 10h8 M12 16h8",
+    "document": "M10 4h10l6 6v18H10Z M20 4v6h6 M14 16h8 M14 22h8",
+    "partnership": "M10 18a6 6 0 1 1 0-0.01 M22 18a6 6 0 1 1 0-0.01 M8 24c2 4 14 4 16 0",
+    "security": "M16 4 L26 8v8c0 8-6 12-10 14-4-2-10-6-10-14V8Z M12 16l3 3 6-6",
+    "briefcase": "M8 12h16v14H8Z M12 12V8h8v4 M4 18h24",
+    "coins": "M10 18a6 6 0 1 0 0.01 0 M18 14a6 6 0 1 0 0.01 0",
+}
+
+
+def _feature_icon_svg(icon_key: str | None) -> str:
+    if not icon_key or icon_key not in _FEATURE_ICON_PATHS:
+        return ""
+    path = _FEATURE_ICON_PATHS[icon_key]
+    return (
+        f'<span class="feature-icon" aria-hidden="true" data-icon="{_escape(icon_key)}">'
+        f'<svg viewBox="0 0 32 32" width="32" height="32" focusable="false">'
+        f'<path d="{_escape(path)}" fill="none" stroke="currentColor" '
+        f'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+        f"</svg></span>"
+    )
+
+
+def _runs_html(runs: list[dict[str, Any]] | None, plain: str) -> str:
+    """Paint frozen run list or plain text with soft breaks."""
+    if not runs:
+        return _soft_break_html(plain)
+    chunks: list[str] = []
+    for i, run in enumerate(runs):
+        text = _soft_break_html(run["text"])
+        if run.get("strong"):
+            chunks.append(f"<strong>{text}</strong>")
+        else:
+            chunks.append(text)
+        nxt = runs[i + 1]["text"] if i + 1 < len(runs) else ""
+        if (
+            run["text"]
+            and run["text"][-1] in _SOFT_BREAK_AFTER
+            and nxt
+            and not nxt[0].isspace()
+        ):
+            chunks.append("<wbr>")
+    return "".join(chunks)
+
+
+def _paint_card_composition(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    """Paint feature_cards / quotation / reviews / state_transition."""
+    lt = slide.layout_type
+    sn = slide.slide_number
+    surface_ids = {
+        "feature_cards": f"slide-{sn}-feature-cards",
+        "quotation": f"slide-{sn}-quotation",
+        "evidence_review": f"slide-{sn}-evidence-review",
+        "risk_opportunity_review": f"slide-{sn}-risk-opportunity-review",
+        "recommendation_case": f"slide-{sn}-recommendation-case",
+        "state_transition": f"slide-{sn}-state-transition",
+    }
+    sp = plans_by_id.get(surface_ids[lt])
+    if sp is None or not getattr(sp, "_card_spec", None):
+        raise RuntimeError(f"missing frozen card plan for {lt}")
+    spec = sp._card_spec
+    overflow_cls = " card-comp-overflow" if sp._overflow else ""
+    plan_attrs = _plan_attrs(sp, events_by_surface)
+
+    if sp.fallback or spec.get("paint_as") == "fallback_list":
+        return _paint_card_fallback(lt, spec, sp, events_by_surface, overflow_cls)
+
+    if lt == "feature_cards":
+        heading_px = sp.role_sizes.get("heading")
+        detail_px = sp.role_sizes.get("detail")
+        cols = int(spec["cols"])
+        out = [
+            f'<div class="feature-cards cols-{cols}{overflow_cls}" {plan_attrs}>'
+        ]
+        for c in spec["cards"]:
+            out.append(
+                f'<article class="feature-card card-panel" '
+                f'data-card-id="{_escape(c["id"])}">'
+            )
+            icon = _feature_icon_svg(c.get("icon_key"))
+            if icon:
+                out.append(icon)
+            out.append(
+                f'<h3{_style_font(heading_px)}>{_soft_break_html(c["heading"])}</h3>'
+            )
+            if c.get("detail"):
+                out.append(
+                    f'<p class="feature-detail"{_style_font(detail_px)}>' 
+                    f'{_soft_break_html(c["detail"])}</p>'
+                )
+            out.append("</article>")
+        out.append("</div>")
+        return out
+
+    if lt == "quotation":
+        body_px = sp.role_sizes.get("body")
+        meta_px = sp.role_sizes.get("meta")
+        quotes = spec["quotes"]
+        row_cls = "single" if len(quotes) == 1 else f"multi n-{len(quotes)}"
+        out = [f'<div class="quotation-row {row_cls}{overflow_cls}" {plan_attrs}>']
+        for q in quotes:
+            out.append(
+                f'<figure class="quote-card card-panel" '
+                f'data-quote-id="{_escape(q["id"])}">'
+            )
+            out.append("<blockquote>")
+            for para in q["paragraphs"]:
+                out.append(
+                    f'<p{_style_font(body_px)}>{_soft_break_html(para)}</p>'
+                )
+            out.append("</blockquote>")
+            cite = q["attribution"]["cite"]
+            out.append(
+                f'<figcaption><cite{_style_font(meta_px)}>' 
+                f'{_soft_break_html(cite)}</cite></figcaption>'
+            )
+            if not q.get("provenance_ok", True):
+                out.append(
+                    f'<p class="source-unavailable"{_style_font(meta_px)}>' 
+                    f'Provenance unavailable</p>'
+                )
+            out.append("</figure>")
+        out.append("</div>")
+        return out
+
+    if lt == "evidence_review":
+        body_px = sp.role_sizes.get("body")
+        meta_px = sp.role_sizes.get("meta")
+        cols = int(spec["cols"])
+        out = [
+            f'<div class="evidence-review cols-{cols}{overflow_cls}" {plan_attrs}>'
+        ]
+        for f in spec["findings"]:
+            out.append(
+                f'<article class="evidence-finding card-panel" '
+                f'data-finding-id="{_escape(f["id"])}">'
+            )
+            out.append(
+                f'<p class="finding-statement"{_style_font(body_px)}>' 
+                f'{_runs_html(f.get("statement_runs"), f["statement"])}</p>'
+            )
+            if f.get("source_unavailable"):
+                out.append(
+                    f'<p class="finding-sources source-unavailable"{_style_font(meta_px)}>' 
+                    f'Source unavailable</p>'
+                )
+            else:
+                names = "; ".join(s["name"] for s in f["sources"])
+                out.append(
+                    f'<p class="finding-sources"{_style_font(meta_px)}>' 
+                    f'{_soft_break_html(names)}</p>'
+                )
+            out.append("</article>")
+        out.append("</div>")
+        return out
+
+    if lt == "risk_opportunity_review":
+        heading_px = sp.role_sizes.get("heading")
+        body_px = sp.role_sizes.get("body")
+        out = [f'<div class="risk-opportunity-review{overflow_cls}" {plan_attrs}>']
+
+        def paint_group(label: str, items: list[dict[str, Any]], empty: bool, role: str) -> None:
+            out.append(f'<section class="risk-opp-group" data-group="{_escape(role)}">')
+            out.append(
+                f'<h2{_style_font(heading_px)}>{_escape(label)}</h2>'
+            )
+            if empty or not items:
+                out.append(
+                    f'<p class="group-unresolved card-panel"{_style_font(body_px)}>' 
+                    f'{_escape(label)} unresolved</p>'
+                )
+            else:
+                for it in items:
+                    out.append(
+                        f'<article class="risk-opp-item card-panel" '
+                        f'data-item-id="{_escape(it["id"])}">'
+                    )
+                    out.append(
+                        f'<p class="item-statement"{_style_font(body_px)}>' 
+                        f'{_runs_html(it.get("statement_runs"), it["statement"])}</p>'
+                    )
+                    if it.get("detail"):
+                        out.append(
+                            f'<p class="item-detail"{_style_font(body_px)}>' 
+                            f'{_runs_html(it.get("detail_runs"), it["detail"])}</p>'
+                        )
+                    out.append("</article>")
+            out.append("</section>")
+
+        paint_group("Risks", spec["risks"], spec.get("risks_empty", False), "risks")
+        paint_group(
+            "Opportunities",
+            spec["opportunities"],
+            spec.get("opportunities_empty", False),
+            "opportunities",
+        )
+        out.append("</div>")
+        return out
+
+    if lt == "recommendation_case":
+        heading_px = sp.role_sizes.get("heading")
+        body_px = sp.role_sizes.get("body")
+        out = [f'<div class="recommendation-case{overflow_cls}" {plan_attrs}>']
+        out.append('<section class="recommendation-panel card-panel">')
+        out.append(
+            f'<p class="role-label"{_style_font(heading_px)}>Recommendation</p>'
+        )
+        out.append(
+            f'<p class="rec-text"{_style_font(body_px)}>' 
+            f'{_runs_html(spec.get("recommendation_runs"), spec["recommendation"])}</p>'
+        )
+        out.append("</section>")
+        if spec.get("support_unavailable") or not spec["rationales"]:
+            out.append(
+                f'<p class="support-unavailable card-panel"{_style_font(body_px)}>' 
+                f'Support unavailable</p>'
+            )
+        else:
+            cols = int(spec.get("cols") or min(len(spec["rationales"]), 3))
+            out.append(f'<div class="rationale-row cols-{cols}">')
+            for i, r in enumerate(spec["rationales"]):
+                out.append(
+                    f'<article class="rationale-card card-panel" '
+                    f'data-rationale-id="{_escape(r["id"])}">'
+                )
+                out.append(
+                    f'<p class="role-label"{_style_font(heading_px)}>' 
+                    f'Rationale {i + 1}</p>'
+                )
+                out.append(
+                    f'<p class="item-statement"{_style_font(body_px)}>' 
+                    f'{_runs_html(r.get("statement_runs"), r["statement"])}</p>'
+                )
+                if r.get("detail"):
+                    out.append(
+                        f'<p class="item-detail"{_style_font(body_px)}>' 
+                        f'{_runs_html(r.get("detail_runs"), r["detail"])}</p>'
+                    )
+                out.append("</article>")
+            out.append("</div>")
+        out.append("</div>")
+        return out
+
+    # state_transition
+    heading_px = sp.role_sizes.get("heading")
+    body_px = sp.role_sizes.get("body")
+    meta_px = sp.role_sizes.get("meta")
+    steps = spec.get("steps") or []
+    out = [f'<div class="state-transition{overflow_cls}" {plan_attrs}>']
+
+    def paint_state(state: dict[str, Any], role_label: str) -> None:
+        out.append(
+            f'<section class="state-panel card-panel" '
+            f'data-state-id="{_escape(state["id"])}" data-role="{_escape(role_label.lower())}">'
+        )
+        out.append(
+            f'<p class="role-label"{_style_font(meta_px)}>{_escape(role_label)}</p>'
+        )
+        out.append(
+            f'<h3{_style_font(heading_px)}>{_soft_break_html(state["heading"])}</h3>'
+        )
+        for b in state["blocks"]:
+            if b["type"] == "paragraphs":
+                for i, para in enumerate(b["paragraphs"]):
+                    runs = None
+                    if b.get("paragraph_runs") and i < len(b["paragraph_runs"]):
+                        runs = b["paragraph_runs"][i]
+                    out.append(
+                        f'<p{_style_font(body_px)}>{_runs_html(runs, para)}</p>'
+                    )
+            else:
+                out.append("<ul>")
+                for i, item in enumerate(b["items"]):
+                    runs = None
+                    if b.get("item_runs") and i < len(b["item_runs"]):
+                        runs = b["item_runs"][i]
+                    out.append(
+                        f'<li{_style_font(body_px)}>{_runs_html(runs, item)}</li>'
+                    )
+                out.append("</ul>")
+        out.append("</section>")
+
+    paint_state(spec["before"], "Before")
+    if steps:
+        out.append('<div class="linear-connector" aria-hidden="true">→</div>')
+        out.append('<div class="transition-steps" role="list">')
+        out.append(
+            f'<p class="role-label"{_style_font(meta_px)}>Transition</p>'
+        )
+        for s in steps:
+            out.append(
+                f'<div class="transition-step card-panel" role="listitem" '
+                f'data-step-id="{_escape(s["id"])}">'
+            )
+            out.append(
+                f'<h4{_style_font(heading_px)}>{_soft_break_html(s["heading"])}</h4>'
+            )
+            if s.get("detail"):
+                out.append(
+                    f'<p{_style_font(body_px)}>{_soft_break_html(s["detail"])}</p>'
+                )
+            out.append("</div>")
+        out.append("</div>")
+        out.append('<div class="linear-connector" aria-hidden="true">→</div>')
+    else:
+        out.append('<div class="linear-connector" aria-hidden="true">→</div>')
+    paint_state(spec["after"], "After")
+    out.append("</div>")
+    return out
+
+
+def _paint_card_fallback(
+    lt: str,
+    spec: dict[str, Any],
+    sp: Any,
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    overflow_cls: str,
+) -> list[str]:
+    """Sequential accessible fallbacks preserving every authored fact."""
+    plan_attrs = _plan_attrs(sp, events_by_surface)
+    heading_px = sp.role_sizes.get("heading") or sp.role_sizes.get("body")
+    body_px = sp.role_sizes.get("body") or sp.role_sizes.get("detail") or heading_px
+    meta_px = sp.role_sizes.get("meta") or body_px
+    out = [
+        f'<div class="card-comp-fallback{overflow_cls}" {plan_attrs} '
+        f'data-fallback="{_escape(sp.fallback or "fallback_list")}">'
+    ]
+
+    if lt == "feature_cards":
+        out.append("<ol>")
+        for c in spec["cards"]:
+            out.append(f'<li data-card-id="{_escape(c["id"])}">')
+            out.append(
+                f'<strong{_style_font(heading_px)}>{_soft_break_html(c["heading"])}</strong>'
+            )
+            if c.get("detail"):
+                out.append(
+                    f' — <span{_style_font(body_px)}>{_soft_break_html(c["detail"])}</span>'
+                )
+            out.append("</li>")
+        out.append("</ol>")
+    elif lt == "quotation":
+        for q in spec["quotes"]:
+            out.append(
+                f'<blockquote data-quote-id="{_escape(q["id"])}">'
+            )
+            for para in q["paragraphs"]:
+                out.append(
+                    f'<p{_style_font(body_px)}>{_soft_break_html(para)}</p>'
+                )
+            out.append(
+                f'<cite{_style_font(meta_px)}>' 
+                f'{_soft_break_html(q["attribution"]["cite"])}</cite>'
+            )
+            if not q.get("provenance_ok", True):
+                out.append(
+                    f'<p class="source-unavailable"{_style_font(meta_px)}>' 
+                    f'Provenance unavailable</p>'
+                )
+            out.append("</blockquote>")
+    elif lt == "evidence_review":
+        out.append("<ol>")
+        for f in spec["findings"]:
+            out.append(f'<li data-finding-id="{_escape(f["id"])}">')
+            out.append(
+                f'<span{_style_font(body_px)}>' 
+                f'{_runs_html(f.get("statement_runs"), f["statement"])}</span>'
+            )
+            if f.get("source_unavailable"):
+                out.append(
+                    f' — <em{_style_font(meta_px)}>Source unavailable</em>'
+                )
+            else:
+                names = "; ".join(s["name"] for s in f["sources"])
+                out.append(
+                    f' — <span{_style_font(meta_px)}>{_soft_break_html(names)}</span>'
+                )
+            out.append("</li>")
+        out.append("</ol>")
+    elif lt == "risk_opportunity_review":
+        for label, key in (("Risks", "risks"), ("Opportunities", "opportunities")):
+            out.append(f"<section><h2{_style_font(heading_px)}>{label}</h2><ol>")
+            items = spec[key]
+            if not items:
+                out.append(
+                    f'<li class="group-unresolved"{_style_font(body_px)}>' 
+                    f'{label} unresolved</li>'
+                )
+            for it in items:
+                out.append(f'<li data-item-id="{_escape(it["id"])}">')
+                out.append(
+                    f'<span{_style_font(body_px)}>' 
+                    f'{_runs_html(it.get("statement_runs"), it["statement"])}</span>'
+                )
+                if it.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(body_px)}>' 
+                        f'{_runs_html(it.get("detail_runs"), it["detail"])}</span>'
+                    )
+                out.append("</li>")
+            out.append("</ol></section>")
+    elif lt == "recommendation_case":
+        out.append(
+            f'<p{_style_font(heading_px)}><strong>Recommendation</strong></p>'
+        )
+        out.append(
+            f'<p{_style_font(body_px)}>' 
+            f'{_runs_html(spec.get("recommendation_runs"), spec["recommendation"])}</p>'
+        )
+        if spec.get("support_unavailable") or not spec["rationales"]:
+            out.append(
+                f'<p class="support-unavailable"{_style_font(body_px)}>' 
+                f'Support unavailable</p>'
+            )
+        else:
+            out.append("<ol>")
+            for i, r in enumerate(spec["rationales"]):
+                out.append(f'<li data-rationale-id="{_escape(r["id"])}">')
+                out.append(
+                    f'<strong{_style_font(heading_px)}>Rationale {i + 1}</strong> — '
+                )
+                out.append(
+                    f'<span{_style_font(body_px)}>' 
+                    f'{_runs_html(r.get("statement_runs"), r["statement"])}</span>'
+                )
+                if r.get("detail"):
+                    out.append(
+                        f' — <span{_style_font(body_px)}>' 
+                        f'{_runs_html(r.get("detail_runs"), r["detail"])}</span>'
+                    )
+                out.append("</li>")
+            out.append("</ol>")
+    else:  # state_transition
+        for role, key in (("Before", "before"), ("After", "after")):
+            state = spec[key]
+            out.append(
+                f'<section data-state-id="{_escape(state["id"])}">'
+                f'<h2{_style_font(heading_px)}>{role}: {_soft_break_html(state["heading"])}</h2>'
+            )
+            for b in state["blocks"]:
+                if b["type"] == "paragraphs":
+                    for i, para in enumerate(b["paragraphs"]):
+                        runs = None
+                        if b.get("paragraph_runs") and i < len(b["paragraph_runs"]):
+                            runs = b["paragraph_runs"][i]
+                        out.append(
+                            f'<p{_style_font(body_px)}>{_runs_html(runs, para)}</p>'
+                        )
+                else:
+                    out.append("<ul>")
+                    for i, item in enumerate(b["items"]):
+                        runs = None
+                        if b.get("item_runs") and i < len(b["item_runs"]):
+                            runs = b["item_runs"][i]
+                        out.append(
+                            f'<li{_style_font(body_px)}>{_runs_html(runs, item)}</li>'
+                        )
+                    out.append("</ul>")
+            out.append("</section>")
+            if key == "before" and spec.get("steps"):
+                out.append(
+                    f'<h2{_style_font(heading_px)}>Transition</h2><ol>'
+                )
+                for s in spec["steps"]:
+                    out.append(f'<li data-step-id="{_escape(s["id"])}">')
+                    out.append(
+                        f'<strong{_style_font(heading_px)}>' 
+                        f'{_soft_break_html(s["heading"])}</strong>'
+                    )
+                    if s.get("detail"):
+                        out.append(
+                            f' — <span{_style_font(body_px)}>' 
+                            f'{_soft_break_html(s["detail"])}</span>'
+                        )
+                    out.append("</li>")
+                out.append("</ol>")
+    out.append("</div>")
+    return out
+
 def _paint_relationship_composition(
     slide: Any,
     plans_by_id: dict[str, Any],
@@ -2359,7 +2936,7 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                     f"slide-{slide.slide_number}-disclosure-{s.surface_id}"
                     for s in disclosure.sections
                 )
-            if slide.source_footer is not None:
+            if getattr(slide, "source_footer", None) is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-source-footer")
         row: dict[str, Any] = {
             "slide_number": slide.slide_number,

@@ -146,6 +146,12 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
             "timeline",
             "layered_architecture",
             "data_pipeline",
+            "feature_cards",
+            "quotation",
+            "evidence_review",
+            "risk_opportunity_review",
+            "recommendation_case",
+            "state_transition",
             "decision_tree",
             "feedback_loop",
             "hierarchy",
@@ -165,6 +171,12 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "timeline": {"milestones"},
                 "layered_architecture": {"layers"},
                 "data_pipeline": {"stages"},
+                    "feature_cards": {"cards", "typography"},
+                    "quotation": {"quotes"},
+                    "evidence_review": {"findings"},
+                    "risk_opportunity_review": {"risks", "opportunities", "groups_repaired"},
+                    "recommendation_case": {"recommendation", "rationales", "support_repaired"},
+                    "state_transition": {"before", "after", "transition_steps"},
                 "decision_tree": {"root_id", "nodes"},
                 "feedback_loop": {"kind", "items"},
                 "hierarchy": {"relationship", "root_id", "nodes"},
@@ -254,6 +266,12 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "timeline",
                 "layered_architecture",
                 "data_pipeline",
+                "feature_cards",
+                "quotation",
+                "evidence_review",
+                "risk_opportunity_review",
+                "recommendation_case",
+                "state_transition",
                 "decision_tree",
                 "feedback_loop",
                 "hierarchy",
@@ -350,6 +368,12 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "timeline": {"milestones"},
                 "layered_architecture": {"layers"},
                 "data_pipeline": {"stages"},
+                    "feature_cards": {"cards", "typography"},
+                    "quotation": {"quotes"},
+                    "evidence_review": {"findings"},
+                    "risk_opportunity_review": {"risks", "opportunities", "groups_repaired"},
+                    "recommendation_case": {"recommendation", "rationales", "support_repaired"},
+                    "state_transition": {"before", "after", "transition_steps"},
                 "decision_tree": {"root_id", "nodes"},
                 "feedback_loop": {"kind", "items"},
                 "hierarchy": {"relationship", "root_id", "nodes"},
@@ -705,6 +729,12 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             "timeline",
             "layered_architecture",
             "data_pipeline",
+            "feature_cards",
+            "quotation",
+            "evidence_review",
+            "risk_opportunity_review",
+            "recommendation_case",
+            "state_transition",
             "decision_tree",
             "feedback_loop",
             "hierarchy",
@@ -758,6 +788,12 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                 "timeline",
                 "layered_architecture",
                 "data_pipeline",
+                "feature_cards",
+                "quotation",
+                "evidence_review",
+                "risk_opportunity_review",
+                "recommendation_case",
+                "state_transition",
                 "decision_tree",
                 "feedback_loop",
                 "hierarchy",
@@ -914,6 +950,12 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
             "timeline",
             "layered_architecture",
             "data_pipeline",
+            "feature_cards",
+            "quotation",
+            "evidence_review",
+            "risk_opportunity_review",
+            "recommendation_case",
+            "state_transition",
             "decision_tree",
             "feedback_loop",
             "hierarchy",
@@ -1359,6 +1401,283 @@ def repair_invalid_heatmap_scales(raw: Any, events: list[DiagnosticEvent]) -> An
 
 
 # Closed registry: name → transform (D123).
+def repair_card_compositions(raw: Any, events: list[DiagnosticEvent]) -> Any:
+    """Non-strict repairs for cards/reviews (D281–D286): icons, refs, items."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    from .models import FEATURE_ICON_KEYS
+
+    out = deepcopy(raw)
+    icon_set = set(FEATURE_ICON_KEYS)
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict):
+            continue
+        layout = slide.get("layout_type")
+        sn = _slide_number(slide)
+        payload = slide.get("payload")
+        if not isinstance(payload, dict):
+            continue
+
+        # D287: drop forbidden common fields when meaning remains complete.
+        if layout == "evidence_review" and "source_footer" in slide:
+            del slide["source_footer"]
+            events.append(
+                event(
+                    code="repair.field_dropped",
+                    severity="warning",
+                    phase="repair",
+                    role="source_footer",
+                    path=f"/slides/{i}/source_footer",
+                    action="drop_field",
+                    result="dropped",
+                    slide_number=sn,
+                    layout_type=layout,
+                    expected="evidence_review forbids source_footer",
+                )
+            )
+        if layout == "recommendation_case" and "takeaway" in slide:
+            del slide["takeaway"]
+            events.append(
+                event(
+                    code="repair.field_dropped",
+                    severity="warning",
+                    phase="repair",
+                    role="takeaway",
+                    path=f"/slides/{i}/takeaway",
+                    action="drop_field",
+                    result="dropped",
+                    slide_number=sn,
+                    layout_type=layout,
+                    expected="recommendation_case forbids takeaway",
+                )
+            )
+
+        if layout == "feature_cards":
+            cards = payload.get("cards")
+            if not isinstance(cards, list):
+                continue
+            for j, card in enumerate(cards):
+                if not isinstance(card, dict):
+                    continue
+                key = card.get("icon_key")
+                if key is None:
+                    continue
+                if not isinstance(key, str) or key not in icon_set:
+                    del card["icon_key"]
+                    events.append(
+                        event(
+                            code="repair.field_dropped",
+                            severity="warning",
+                            phase="repair",
+                            role="icon_key",
+                            path=f"/slides/{i}/payload/cards/{j}/icon_key",
+                            action="drop_field",
+                            result="dropped",
+                            slide_number=sn,
+                            layout_type=layout,
+                            expected="closed feature_cards icon registry",
+                        )
+                    )
+
+        if layout == "evidence_review":
+            findings = payload.get("findings")
+            if not isinstance(findings, list):
+                continue
+            slide_eids = set(slide.get("evidence_ids") or [])
+            cleaned: list[Any] = []
+            for j, finding in enumerate(findings):
+                if not isinstance(finding, dict):
+                    events.append(
+                        event(
+                            code="repair.item_dropped",
+                            severity="warning",
+                            phase="repair",
+                            role="finding",
+                            path=f"/slides/{i}/payload/findings/{j}",
+                            action="drop_item",
+                            result="dropped",
+                            slide_number=sn,
+                            layout_type=layout,
+                            expected="finding with statement + evidence_ids",
+                        )
+                    )
+                    continue
+                stmt = finding.get("statement")
+                if not isinstance(stmt, dict) or not stmt.get("runs"):
+                    events.append(
+                        event(
+                            code="repair.item_dropped",
+                            severity="warning",
+                            phase="repair",
+                            role="finding",
+                            path=f"/slides/{i}/payload/findings/{j}",
+                            action="drop_item",
+                            result="dropped",
+                            slide_number=sn,
+                            layout_type=layout,
+                            expected="finding with statement + evidence_ids",
+                        )
+                    )
+                    continue
+                refs = finding.get("evidence_ids")
+                kept: list[Any] = []
+                if isinstance(refs, list):
+                    for k, eid in enumerate(refs):
+                        if isinstance(eid, str) and eid in slide_eids and eid not in kept:
+                            kept.append(eid)
+                        else:
+                            events.append(
+                                event(
+                                    code="repair.reference_dropped",
+                                    severity="warning",
+                                    phase="repair",
+                                    role="evidence_ids",
+                                    path=(
+                                        f"/slides/{i}/payload/findings/{j}/"
+                                        f"evidence_ids/{k}"
+                                    ),
+                                    action="drop_reference",
+                                    result="dropped",
+                                    slide_number=sn,
+                                    layout_type=layout,
+                                    expected=(
+                                        "finding evidence_ids ⊆ slide evidence_ids"
+                                    ),
+                                )
+                            )
+                finding["evidence_ids"] = kept
+                if not kept:
+                    finding["refs_repaired"] = True
+                cleaned.append(finding)
+            payload["findings"] = cleaned
+
+        if layout == "risk_opportunity_review":
+            for group_key in ("risks", "opportunities"):
+                items = payload.get(group_key)
+                if not isinstance(items, list):
+                    continue
+                kept_items = []
+                for j, it in enumerate(items):
+                    if (
+                        isinstance(it, dict)
+                        and isinstance(it.get("item_id"), str)
+                        and isinstance(it.get("statement"), dict)
+                        and it["statement"].get("runs")
+                    ):
+                        kept_items.append(it)
+                    else:
+                        events.append(
+                            event(
+                                code="repair.item_dropped",
+                                severity="warning",
+                                phase="repair",
+                                role=group_key,
+                                path=f"/slides/{i}/payload/{group_key}/{j}",
+                                action="drop_item",
+                                result="dropped",
+                                slide_number=sn,
+                                layout_type=layout,
+                                expected=f"valid {group_key} item",
+                            )
+                        )
+                payload[group_key] = kept_items
+            if not payload.get("risks") or not payload.get("opportunities"):
+                payload["groups_repaired"] = True
+
+        if layout == "recommendation_case":
+            rats = payload.get("rationales")
+            if isinstance(rats, list):
+                kept_r = []
+                for j, r in enumerate(rats):
+                    if (
+                        isinstance(r, dict)
+                        and isinstance(r.get("rationale_id"), str)
+                        and isinstance(r.get("statement"), dict)
+                        and r["statement"].get("runs")
+                    ):
+                        kept_r.append(r)
+                    else:
+                        events.append(
+                            event(
+                                code="repair.item_dropped",
+                                severity="warning",
+                                phase="repair",
+                                role="rationale",
+                                path=f"/slides/{i}/payload/rationales/{j}",
+                                action="drop_item",
+                                result="dropped",
+                                slide_number=sn,
+                                layout_type=layout,
+                                expected="valid rationale",
+                            )
+                        )
+                payload["rationales"] = kept_r
+                if not kept_r:
+                    payload["support_repaired"] = True
+
+        if layout == "quotation":
+            quotes = payload.get("quotes")
+            if not isinstance(quotes, list):
+                continue
+            slide_eids = set(slide.get("evidence_ids") or [])
+            for j, q in enumerate(quotes):
+                if not isinstance(q, dict):
+                    continue
+                eid = q.get("evidence_id")
+                if eid is None:
+                    continue
+                if not isinstance(eid, str) or eid not in slide_eids:
+                    del q["evidence_id"]
+                    q["provenance_unavailable"] = True
+                    events.append(
+                        event(
+                            code="repair.reference_dropped",
+                            severity="warning",
+                            phase="repair",
+                            role="evidence_id",
+                            path=f"/slides/{i}/payload/quotes/{j}/evidence_id",
+                            action="drop_reference",
+                            result="dropped",
+                            slide_number=sn,
+                            layout_type=layout,
+                            expected="quote evidence_id among slide evidence_ids",
+                        )
+                    )
+
+        if layout == "state_transition":
+            steps = payload.get("transition_steps")
+            if isinstance(steps, list):
+                kept_s = []
+                for j, s in enumerate(steps):
+                    if (
+                        isinstance(s, dict)
+                        and isinstance(s.get("step_id"), str)
+                        and isinstance(s.get("heading"), str)
+                        and s.get("heading")
+                    ):
+                        kept_s.append(s)
+                    else:
+                        events.append(
+                            event(
+                                code="repair.item_dropped",
+                                severity="warning",
+                                phase="repair",
+                                role="transition_step",
+                                path=f"/slides/{i}/payload/transition_steps/{j}",
+                                action="drop_item",
+                                result="dropped",
+                                slide_number=sn,
+                                layout_type=layout,
+                                expected="valid transition step",
+                            )
+                        )
+                if kept_s:
+                    payload["transition_steps"] = kept_s
+                else:
+                    payload.pop("transition_steps", None)
+    return out
+
+
 REPAIR_REGISTRY: dict[str, RepairFn] = {
     "assume_schema_v1": assume_schema_v1,
     "drop_unknown_fields": drop_unknown_fields,
@@ -1368,8 +1687,8 @@ REPAIR_REGISTRY: dict[str, RepairFn] = {
     "repair_source_footer_names": repair_source_footer_names,
     "repair_uncontained_fixed_domains": repair_uncontained_fixed_domains,
     "repair_invalid_heatmap_scales": repair_invalid_heatmap_scales,
+    "repair_card_compositions": repair_card_compositions,
 }
-
 
 def apply_allowlisted_repairs(raw: Any) -> tuple[Any, list[DiagnosticEvent]]:
     """Apply every kernel allowlisted repair in stable order; collect events.
