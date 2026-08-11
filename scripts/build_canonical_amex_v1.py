@@ -942,7 +942,7 @@ def build() -> dict:
                     "metrics": [
                         {
                             "metric_id": "share-66",
-                            "label": "Share metric A",
+                            "label": "Proprietary new cards share",
                             "value": {
                                 "type": "number",
                                 "value": "66",
@@ -951,7 +951,7 @@ def build() -> dict:
                         },
                         {
                             "metric_id": "share-73",
-                            "label": "Share metric B",
+                            "label": "Proprietary new accounts share",
                             "value": {
                                 "type": "number",
                                 "value": "73",
@@ -1377,10 +1377,11 @@ def build() -> dict:
             )
         )
     totals21 = []
+    from decimal import Decimal, InvalidOperation
     for r in steps21[1:]:
         try:
-            totals21.append(str(float(r[1]) + float(r[2])))
-        except Exception:
+            totals21.append(str(Decimal(str(r[1])) + Decimal(str(r[2]))))
+        except (InvalidOperation, TypeError, ValueError):
             totals21.append(None)
     slides.append(
         ordinary(

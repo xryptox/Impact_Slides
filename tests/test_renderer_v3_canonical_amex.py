@@ -154,13 +154,16 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
 
 
 def test_mutation_drops_capital_summary_heading(handoff: dict) -> None:
-    """Adversarial: removing approved Capital Summary must fail validation or identity."""
+    """Adversarial: corpus identity requires authored Capital Summary on slide 21."""
+    s21 = next(s for s in handoff["slides"] if s["slide_number"] == 21)
+    assert s21["payload"]["hero_visual"]["heading"] == "Capital Summary"
     mutated = json.loads(json.dumps(handoff))
-    s21 = next(s for s in mutated["slides"] if s["slide_number"] == 21)
-    s21["payload"]["hero_visual"]["heading"] = "Wrong Heading"
-    # Still validates as structure, but corpus identity probe fails.
-    validate_handoff(mutated, strict=True)
-    assert s21["payload"]["hero_visual"]["heading"] != "Capital Summary"
+    m21 = next(s for s in mutated["slides"] if s["slide_number"] == 21)
+    del m21["payload"]["hero_visual"]["heading"]
+    from impact_slides.renderer_v3 import RendererValidationError
+
+    with pytest.raises(RendererValidationError):
+        validate_handoff(mutated, strict=True)
 
 
 def test_mutation_wrong_slide_count_fails(handoff: dict) -> None:

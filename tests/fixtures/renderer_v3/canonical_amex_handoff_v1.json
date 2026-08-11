@@ -1757,7 +1757,7 @@
           "metrics": [
             {
               "metric_id": "share-66",
-              "label": "Share metric A",
+              "label": "Proprietary new cards share",
               "value": {
                 "type": "number",
                 "value": "66",
@@ -1766,7 +1766,7 @@
             },
             {
               "metric_id": "share-73",
-              "label": "Share metric B",
+              "label": "Proprietary new accounts share",
               "value": {
                 "type": "number",
                 "value": "73",
@@ -3029,7 +3029,7 @@
               "format_id": "usd_1",
               "values": [
                 "1.6",
-                "1.2999999999999998",
+                "1.3",
                 "2.0",
                 "2.9",
                 "1.5",
