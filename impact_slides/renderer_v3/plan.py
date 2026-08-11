@@ -3737,6 +3737,7 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
         sp._table_spec = dict(sp._table_spec)
         sp._table_spec["alignment"] = "independent"
         sp._table_spec["hide_header"] = False
+        sp._table_spec.pop("category_centered", None)
         sp.adaptation_codes.append("plan.support_alignment_independent")
         return
     if sp.role == "comparison_cards":
