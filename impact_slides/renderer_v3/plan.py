@@ -3644,6 +3644,17 @@ def _collect_relationship_body(
         _maximum_size=LINEAR_HEADING_PX,
         _linear_spec=spec,
     )
+    if structural_defect:
+        # Force relationship-table paint path; never reconnect (D274/D278).
+        sp.fallback = {
+            "decision_tree": "accessible_relationship_table",
+            "feedback_loop": "accessible_relationship_table",
+            "hierarchy": "accessible_relationship_table",
+            "stakeholder_map": "accessible_relationship_table",
+            "quadrant_matrix": "accessible_four_group",
+        }[role]
+        spec["paint_as"] = "relationship_fallback"
+    return 1, [sp]
 
 
 def _chart_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -> int:
