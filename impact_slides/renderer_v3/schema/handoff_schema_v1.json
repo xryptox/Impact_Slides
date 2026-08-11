@@ -193,6 +193,57 @@
       "title": "ArchitectureLayer",
       "type": "object"
     },
+    "AuthoredStackTotalAuxiliary": {
+      "additionalProperties": false,
+      "description": "Category-aligned authored stack totals (D235/D241/D299).",
+      "properties": {
+        "auxiliary_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Auxiliary Id",
+          "type": "string"
+        },
+        "role": {
+          "const": "authored_stack_total",
+          "default": "authored_stack_total",
+          "title": "Role",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "format_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Format Id",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "auxiliary_id",
+        "label",
+        "format_id",
+        "values"
+      ],
+      "title": "AuthoredStackTotalAuxiliary",
+      "type": "object"
+    },
     "BoxedLabelAuxiliary": {
       "additionalProperties": false,
       "description": "Category-aligned boxed labels targeting one bar series (D146/D235).",
@@ -358,7 +409,7 @@
     },
     "ChartData": {
       "additionalProperties": false,
-      "description": "Ordered category-and-series matrix (D228/D291).\n\nFamily cardinality (line vs bar category/series floors) is enforced on the\nchart visual; this model owns rectangular identity only.",
+      "description": "Ordered category-and-series matrix (D228/D291).\n\nShared series ceiling is 6; family floors/ceilings (line/grouped/hbar 1–4,\nstacked 2–6) are enforced on each chart visual. This model owns rectangular\nidentity only.",
       "properties": {
         "categories": {
           "items": {
@@ -373,7 +424,7 @@
           "items": {
             "$ref": "#/$defs/ChartSeries"
           },
-          "maxItems": 4,
+          "maxItems": 6,
           "minItems": 1,
           "title": "Series",
           "type": "array"
@@ -405,6 +456,38 @@
           ],
           "default": null,
           "title": "Ordinary Values"
+        },
+        "stack_segments": {
+          "anyOf": [
+            {
+              "enum": [
+                "show",
+                "hide"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stack Segments"
+        },
+        "stack_totals": {
+          "anyOf": [
+            {
+              "enum": [
+                "show",
+                "hide"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stack Totals"
         },
         "series_identity": {
           "anyOf": [
@@ -949,6 +1032,53 @@
         "title"
       ],
       "title": "CoverPayload",
+      "type": "object"
+    },
+    "CoverageCallout": {
+      "additionalProperties": false,
+      "description": "One stacked-bar percentage coverage fact (D156/D236/D301).",
+      "properties": {
+        "callout_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Callout Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Value",
+          "type": "string"
+        },
+        "format_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Format Id",
+          "type": "string"
+        },
+        "period": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Period"
+        }
+      },
+      "required": [
+        "callout_id",
+        "label",
+        "value",
+        "format_id"
+      ],
+      "title": "CoverageCallout",
       "type": "object"
     },
     "DataPipelinePayload": {
@@ -4264,6 +4394,7 @@
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
               "line": "#/$defs/LineChartVisual",
+              "stacked_bar": "#/$defs/StackedBarChartVisual",
               "waterfall": "#/$defs/WaterfallChartVisual"
             },
             "propertyName": "chart_type"
@@ -4277,6 +4408,9 @@
             },
             {
               "$ref": "#/$defs/HorizontalBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/StackedBarChartVisual"
             },
             {
               "$ref": "#/$defs/WaterfallChartVisual"
@@ -4410,6 +4544,139 @@
         "title"
       ],
       "title": "SingleChartSlide",
+      "type": "object"
+    },
+    "StackedBarChartVisual": {
+      "additionalProperties": false,
+      "description": "Vertical sign-separated stacks with independent labels (D242/D304).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "stacked_bar",
+          "default": "stacked_bar",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "chart_data": {
+          "$ref": "#/$defs/ChartData"
+        },
+        "category_axis": {
+          "$ref": "#/$defs/CategoryAxis"
+        },
+        "value_axes": {
+          "$ref": "#/$defs/ValueAxes"
+        },
+        "display": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartDisplay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "category_groups": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CategoryGroup"
+              },
+              "maxItems": 6,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category Groups"
+        },
+        "auxiliary_series": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/AuthoredStackTotalAuxiliary"
+              },
+              "maxItems": 1,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auxiliary Series"
+        },
+        "coverage_callout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CoverageCallout"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "surface_id",
+        "chart_data",
+        "category_axis",
+        "value_axes"
+      ],
+      "title": "StackedBarChartVisual",
       "type": "object"
     },
     "StakeholderEntity": {

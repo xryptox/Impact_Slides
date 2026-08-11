@@ -947,7 +947,7 @@ class QuadrantMatrixPayload(ClosedModel):
 
 # ---------------------------------------------------------------------------
 
-# Axis charts + heatmap + single_chart composition (D162/D163/D227–D240, D243, D245–D248, D290–D302, D307/D308)
+# Axis charts + heatmap + single_chart composition (D162/D163/D227–D243, D245–D248, D290–D304, D307/D308)
 # ---------------------------------------------------------------------------
 
 
@@ -976,12 +976,16 @@ class ChartDisplay(ClosedModel):
     """Sparse axis-chart display overrides (D231/D295)."""
 
     ordinary_values: Optional[Literal["show", "hide"]] = None
+    stack_segments: Optional[Literal["show", "hide"]] = None
+    stack_totals: Optional[Literal["show", "hide"]] = None
     series_identity: Optional[Literal["auto", "legend", "pane_title"]] = None
 
     @model_validator(mode="after")
     def _not_empty_noise(self) -> ChartDisplay:
         if (
             self.ordinary_values is None
+            and self.stack_segments is None
+            and self.stack_totals is None
             and self.series_identity is None
         ):
             raise ValueError("display must declare at least one override")
@@ -1012,12 +1016,14 @@ class ChartSeries(ClosedModel):
 class ChartData(ClosedModel):
     """Ordered category-and-series matrix (D228/D291).
 
-    Family cardinality (line vs bar category/series floors) is enforced on the
-    chart visual; this model owns rectangular identity only.
+    Shared series ceiling is 6; family floors/ceilings (line/grouped/hbar 1–4,
+    stacked 2–6) are enforced on each chart visual. This model owns rectangular
+    identity only.
     """
 
     categories: list[ChartCategory] = Field(min_length=1, max_length=24)
-    series: list[ChartSeries] = Field(min_length=1, max_length=4)
+    # Family floors/ceilings tighten further on each chart visual (D239–D243/D304).
+    series: list[ChartSeries] = Field(min_length=1, max_length=6)
 
     @model_validator(mode="after")
     def _matrix_invariants(self) -> ChartData:
@@ -1057,6 +1063,35 @@ class BoxedLabelAuxiliary(ClosedModel):
     format_id: SemanticId
     target_series_id: SemanticId
     values: list[Optional[CanonicalDecimal]] = Field(min_length=1)
+
+
+class AuthoredStackTotalAuxiliary(ClosedModel):
+    """Category-aligned authored stack totals (D235/D241/D299)."""
+
+    auxiliary_id: SemanticId
+    role: Literal["authored_stack_total"] = "authored_stack_total"
+    label: NonEmptyStr
+    format_id: SemanticId
+    values: list[Optional[CanonicalDecimal]] = Field(min_length=1)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_target(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "target_series_id" in data:
+            raise ValueError(
+                "authored_stack_total forbids target_series_id (D235/D299)"
+            )
+        return data
+
+
+class CoverageCallout(ClosedModel):
+    """One stacked-bar percentage coverage fact (D156/D236/D301)."""
+
+    callout_id: SemanticId
+    label: NonEmptyStr
+    value: CanonicalDecimal
+    format_id: SemanticId
+    period: Optional[NonEmptyStr] = None
 
 
 class CategoryAxis(ClosedModel):
@@ -1239,6 +1274,53 @@ def _validate_boxed_labels(chart: Any) -> None:
         )
 
 
+def _validate_authored_stack_totals(chart: Any) -> None:
+    aux = getattr(chart, "auxiliary_series", None) or []
+    totals = [a for a in aux if a.role == "authored_stack_total"]
+    if len(totals) > 1:
+        raise ValueError(
+            "at most one authored_stack_total auxiliary_series entry (D235)"
+        )
+    if not totals:
+        return
+    t = totals[0]
+    n = len(chart.chart_data.categories)
+    if len(t.values) != n:
+        raise ValueError(
+            "authored_stack_total values must supply exactly one entry per category"
+        )
+    # D231/D295: authored totals imply show and conflict with hide.
+    disp = chart.display
+    if disp is not None and disp.stack_totals == "hide":
+        raise ValueError(
+            "authored_stack_total conflicts with display.stack_totals hide (D231)"
+        )
+
+
+def _validate_stacked_display(chart: Any) -> None:
+    """Stacked bars forbid ordinary_values + pane_title; allow segment/total (D295)."""
+    disp = chart.display
+    if disp is None:
+        return
+    if disp.ordinary_values is not None:
+        raise ValueError(
+            "stacked_bar forbids display.ordinary_values (use stack_segments) (D295)"
+        )
+    if disp.series_identity == "pane_title":
+        raise ValueError("stacked_bar forbids series_identity pane_title (D295/D304)")
+
+
+def _validate_nonstacked_display(chart: Any) -> None:
+    """Non-stacked axis charts forbid stack segment/total policies (D295)."""
+    disp = chart.display
+    if disp is None:
+        return
+    if disp.stack_segments is not None or disp.stack_totals is not None:
+        raise ValueError(
+            f"{chart.chart_type} forbids stack_segments/stack_totals display (D295)"
+        )
+
+
 def _finite_values(chart: Any) -> list[Decimal]:
     out: list[Decimal] = []
     for s in chart.chart_data.series:
@@ -1306,6 +1388,8 @@ class LineChartVisual(ClosedModel):
     def _line_invariants(self) -> LineChartVisual:
         if len(self.chart_data.categories) < 2:
             raise ValueError("line charts require at least two categories")
+        if not (1 <= len(self.chart_data.series) <= 4):
+            raise ValueError("line charts require 1–4 series")
         for s in self.chart_data.series:
             finite = sum(1 for v in s.values if v is not None)
             if finite < 2:
@@ -1315,6 +1399,7 @@ class LineChartVisual(ClosedModel):
         _common_chart_heading_rules(self)
         _leading_break_rules(self, allow=True)
         _domain_contains_finite(self)
+        _validate_nonstacked_display(self)
         return self
 
 
@@ -1473,6 +1558,12 @@ class GroupedBarChartVisual(ClosedModel):
         _domain_contains_finite(self)
         _validate_category_groups(self)
         _validate_boxed_labels(self)
+        _validate_nonstacked_display(self)
+        if any(
+            getattr(a, "role", None) == "authored_stack_total"
+            for a in (self.auxiliary_series or [])
+        ):
+            raise ValueError("grouped_bar forbids authored_stack_total (D235/D240)")
         return self
 
 
@@ -1517,6 +1608,12 @@ class HorizontalBarChartVisual(ClosedModel):
         _domain_contains_finite(self)
         _validate_category_groups(self)
         _validate_boxed_labels(self)
+        _validate_nonstacked_display(self)
+        if any(
+            getattr(a, "role", None) == "authored_stack_total"
+            for a in (self.auxiliary_series or [])
+        ):
+            raise ValueError("horizontal_bar forbids authored_stack_total (D235/D243)")
         return self
 
 
@@ -1636,11 +1733,86 @@ def _waterfall_levels(chart: "WaterfallChartVisual") -> list[Decimal]:
     return out
 
 
+class StackedBarChartVisual(ClosedModel):
+    """Vertical sign-separated stacks with independent labels (D242/D304)."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["stacked_bar"] = "stacked_bar"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    chart_data: ChartData
+    category_axis: CategoryAxis
+    value_axes: ValueAxes
+    display: Optional[ChartDisplay] = None
+    typography: Optional[ChartTypography] = None
+    category_groups: Optional[list[CategoryGroup]] = Field(
+        default=None, min_length=1, max_length=6
+    )
+    auxiliary_series: Optional[list[AuthoredStackTotalAuxiliary]] = Field(
+        default=None, min_length=1, max_length=1
+    )
+    coverage_callout: Optional[CoverageCallout] = None
+
+    @model_validator(mode="after")
+    def _stacked_invariants(self) -> StackedBarChartVisual:
+        n_cat = len(self.chart_data.categories)
+        n_ser = len(self.chart_data.series)
+        if not (1 <= n_cat <= 12):
+            raise ValueError("stacked_bar requires 1–12 categories")
+        if not (2 <= n_ser <= 6):
+            raise ValueError("stacked_bar requires 2–6 series")
+        for s in self.chart_data.series:
+            if s.style is not None:
+                raise ValueError("stacked_bar forbids line series style")
+            if not any(v is not None for v in s.values):
+                raise ValueError(
+                    f"series {s.series_id!r} requires at least one finite value"
+                )
+        _common_chart_heading_rules(self)
+        _leading_break_rules(self, allow=False)
+        _bar_domain_includes_zero(self)
+        # Domain must contain signed extents, not just raw segment values (D83/D242).
+        _domain_contains_stack_extents(self)
+        _validate_category_groups(self)
+        _validate_authored_stack_totals(self)
+        _validate_stacked_display(self)
+        return self
+
+
+def _domain_contains_stack_extents(chart: Any) -> None:
+    """Authored bounds must cover zero + both signed stack extents (D83/D242)."""
+    domain = chart.value_axes.primary.domain
+    lo = Decimal(domain.min) if domain.min is not None else None
+    hi = Decimal(domain.max) if domain.max is not None else None
+    if lo is None and hi is None:
+        return
+    n = len(chart.chart_data.categories)
+    for c_i in range(n):
+        pos = Decimal(0)
+        neg = Decimal(0)
+        for s in chart.chart_data.series:
+            raw = s.values[c_i]
+            if raw is None:
+                continue
+            dv = Decimal(raw)
+            if dv > 0:
+                pos += dv
+            elif dv < 0:
+                neg += dv
+        for extent in (pos, neg, Decimal(0)):
+            if (lo is not None and extent < lo) or (hi is not None and extent > hi):
+                raise ValueError(
+                    "authored domain bounds must contain every finite value"
+                )
+
+
 ChartVisual = Annotated[
     Union[
         LineChartVisual,
         GroupedBarChartVisual,
         HorizontalBarChartVisual,
+        StackedBarChartVisual,
         WaterfallChartVisual,
         HeatmapVisual,
     ],
@@ -2103,8 +2275,8 @@ class SingleChartSlide(_SlideBase):
 
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
 # plus annex/comparison tables (#180), single_chart axis charts
-# (line #182; grouped/horizontal bars #183; waterfall #186; heatmap #187),
-# linear/grouping compositions (#192), and relationship/decision compositions (#193).
+# (line #182; grouped/horizontal bars #183; stacked_bar #184; waterfall #186;
+# heatmap #187), linear/grouping compositions (#192), and relationship/decision compositions (#193).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
@@ -2262,6 +2434,7 @@ class Deck(ClosedModel):
                         LineChartVisual,
                         GroupedBarChartVisual,
                         HorizontalBarChartVisual,
+                        StackedBarChartVisual,
                         WaterfallChartVisual,
                     ),
                 ):
@@ -2283,6 +2456,28 @@ class Deck(ClosedModel):
                             if s.color is not None and s.color not in keys:
                                 raise ValueError(
                                     f"unknown series color key {s.color!r}"
+                                )
+                    if isinstance(chart, StackedBarChartVisual):
+                        cov = chart.coverage_callout
+                        if cov is not None:
+                            cfid = cov.format_id
+                            if cfid not in self.number_formats:
+                                raise ValueError(f"unresolved format_id {cfid!r}")
+                            referenced_formats.add(cfid)
+                            cfmt = self.number_formats[cfid]
+                            if cfmt.unit != "percent":
+                                raise ValueError(
+                                    "coverage_callout format_id must use percent unit (D301)"
+                                )
+                            scale = (
+                                Decimal(cfmt.value_scale)
+                                if cfmt.value_scale is not None
+                                else Decimal(1)
+                            )
+                            display = Decimal(cov.value) * scale
+                            if display < 0 or display > 100:
+                                raise ValueError(
+                                    "coverage_callout must resolve to 0–100 after scale (D301)"
                                 )
                 elif isinstance(chart, HeatmapVisual):
                     fid = chart.shared_format_id
