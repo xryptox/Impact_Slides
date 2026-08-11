@@ -142,6 +142,7 @@ def render_deck(
         result.deck,
         strict=strict,
         uncolored_heatmap_surfaces=result.uncolored_heatmap_surfaces,
+        relationship_defect_slides=result.relationship_defect_slides,
     )
     events.extend(deck_plan.events)
 

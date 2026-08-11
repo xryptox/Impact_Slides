@@ -1,0 +1,197 @@
+{
+  "meta": {"handoff_schema_version": 1},
+  "sections": [{"section_id": "strategy", "label": "Strategy"}],
+  "number_formats": {},
+  "evidence_registry": {"src-strat": {"source_name": "Strategy brief"}},
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "decision_tree",
+      "section_id": "strategy",
+      "title": "Credit decision path",
+      "payload": {
+        "root_id": "d_risk",
+        "nodes": [
+          {
+            "node_id": "d_risk",
+            "kind": "decision",
+            "heading": "Risk tier?",
+            "branches": [
+              {"label": "Low", "target_id": "d_docs"},
+              {"label": "High", "target_id": "o_decline"}
+            ]
+          },
+          {
+            "node_id": "d_docs",
+            "kind": "decision",
+            "heading": "Docs complete?",
+            "branches": [
+              {"label": "Yes", "target_id": "o_approve"},
+              {"label": "No", "target_id": "o_hold"}
+            ]
+          },
+          {
+            "node_id": "o_approve",
+            "kind": "outcome",
+            "heading": "Approve",
+            "detail": "Issue standard limit."
+          },
+          {
+            "node_id": "o_hold",
+            "kind": "outcome",
+            "heading": "Hold for docs"
+          },
+          {
+            "node_id": "o_decline",
+            "kind": "outcome",
+            "heading": "Decline"
+          }
+        ]
+      },
+      "evidence_ids": ["src-strat"],
+      "speaker_notes": "Authored branches only; no inferred edges."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "feedback_loop",
+      "section_id": "strategy",
+      "title": "Volume feedback",
+      "payload": {
+        "kind": "causal",
+        "items": [
+          {
+            "item_id": "spend",
+            "heading": "Card spend",
+            "effect": "same_direction",
+            "relationship_label": "drives"
+          },
+          {
+            "item_id": "rewards",
+            "heading": "Rewards cost",
+            "effect": "same_direction"
+          },
+          {
+            "item_id": "offers",
+            "heading": "Promo intensity",
+            "detail": "Targeted offers",
+            "effect": "opposite_direction",
+            "relationship_label": "curbs"
+          }
+        ]
+      },
+      "evidence_ids": ["src-strat"],
+      "speaker_notes": "Odd opposite edges → balancing."
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "hierarchy",
+      "section_id": "strategy",
+      "title": "Org reporting",
+      "payload": {
+        "relationship": "reports_to",
+        "root_id": "ceo",
+        "nodes": [
+          {
+            "node_id": "ceo",
+            "heading": "CEO",
+            "children": ["cfo", "coo"]
+          },
+          {
+            "node_id": "cfo",
+            "heading": "CFO",
+            "detail": "Finance",
+            "children": ["ctrl"]
+          },
+          {
+            "node_id": "coo",
+            "heading": "COO"
+          },
+          {
+            "node_id": "ctrl",
+            "heading": "Controller"
+          }
+        ]
+      },
+      "evidence_ids": ["src-strat"],
+      "speaker_notes": "Uniform reports_to only."
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "stakeholder_map",
+      "section_id": "strategy",
+      "title": "Partner ecosystem",
+      "payload": {
+        "focal": {
+          "entity_id": "amex",
+          "heading": "Amex",
+          "detail": "Network owner"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "merchants",
+            "heading": "Merchants",
+            "relationship_label": "accepts network",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "cardholders",
+            "heading": "Cardholders",
+            "relationship_label": "membership",
+            "direction": "bidirectional",
+            "detail": "Consumer and commercial"
+          },
+          {
+            "entity_id": "issuers",
+            "heading": "Co-brand issuers",
+            "relationship_label": "partnership",
+            "direction": "from_focal"
+          }
+        ]
+      },
+      "evidence_ids": ["src-strat"],
+      "source_footer": ["src-strat"],
+      "speaker_notes": "Hub-spoke only."
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "quadrant_matrix",
+      "section_id": "strategy",
+      "title": "Initiative priority",
+      "payload": {
+        "x_axis": {
+          "label": "Impact",
+          "low_label": "Low impact",
+          "high_label": "High impact"
+        },
+        "y_axis": {
+          "label": "Effort",
+          "low_label": "Low effort",
+          "high_label": "High effort"
+        },
+        "items": [
+          {
+            "item_id": "a",
+            "heading": "Quick win A",
+            "x_band": "high",
+            "y_band": "low"
+          },
+          {
+            "item_id": "b",
+            "heading": "Big bet B",
+            "x_band": "high",
+            "y_band": "high",
+            "detail": "Multi-year"
+          },
+          {
+            "item_id": "c",
+            "heading": "Fill-in C",
+            "x_band": "low",
+            "y_band": "low"
+          }
+        ]
+      },
+      "evidence_ids": ["src-strat"],
+      "speaker_notes": "Bands are semantic, not scores."
+    }
+  ]
+}

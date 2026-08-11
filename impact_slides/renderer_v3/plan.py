@@ -31,6 +31,15 @@ KERNEL_LINEAR_LAYOUTS = frozenset(
         "data_pipeline",
     }
 )
+KERNEL_RELATIONSHIP_LAYOUTS = frozenset(
+    {
+        "decision_tree",
+        "feedback_loop",
+        "hierarchy",
+        "stakeholder_map",
+        "quadrant_matrix",
+    }
+)
 
 from ._version import __version__ as RENDERER_VERSION
 
@@ -239,11 +248,13 @@ def plan_deck(
     *,
     strict: bool = True,
     uncolored_heatmap_surfaces: frozenset[str] | None = None,
+    relationship_defect_slides: frozenset[int] | None = None,
 ) -> DeckPlan:
     """Measure every kernel surface, synchronize, freeze whole-pixel sizes (D69)."""
     surfaces = _collect_surfaces(
         deck,
         uncolored_heatmap_surfaces=uncolored_heatmap_surfaces or frozenset(),
+        relationship_defect_slides=relationship_defect_slides or frozenset(),
     )
     events: list[DiagnosticEvent] = []
 
@@ -390,6 +401,7 @@ def _collect_surfaces(
     deck: Deck,
     *,
     uncolored_heatmap_surfaces: frozenset[str] = frozenset(),
+    relationship_defect_slides: frozenset[int] = frozenset(),
 ) -> list[SurfacePlan]:
     out: list[SurfacePlan] = []
     region = 0
@@ -526,6 +538,7 @@ def _collect_surfaces(
             lt not in ("narrative", "single_chart")
             and lt not in KERNEL_TABLE_LAYOUTS
             and lt not in KERNEL_LINEAR_LAYOUTS
+            and lt not in KERNEL_RELATIONSHIP_LAYOUTS
         ):
             continue
 
@@ -678,6 +691,18 @@ def _collect_surfaces(
         elif lt in KERNEL_LINEAR_LAYOUTS:
             body_slots, body_plans = _collect_linear_body(
                 slide, sn, slide_index, lt, region
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
+        elif lt in KERNEL_RELATIONSHIP_LAYOUTS:
+            body_slots, body_plans = _collect_relationship_body(
+                slide,
+                sn,
+                slide_index,
+                lt,
+                region,
+                structural_defect=sn in relationship_defect_slides,
             )
             for bp in body_plans:
                 out.append(bp)
@@ -1958,6 +1983,207 @@ def _collect_linear_body(
     return 1, [sp]
 
 
+def _collect_relationship_body(
+    slide: Any,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    *,
+    structural_defect: bool = False,
+) -> tuple[int, list[SurfacePlan]]:
+    """Fixed-type surface for decision/cycle/hierarchy/map/quadrant (D274–D280)."""
+    payload = slide.payload
+    text_items: list[tuple[str, bool]] = []
+    if lt == "decision_tree":
+        nodes = []
+        for n in payload.nodes:
+            branches = None
+            if n.branches:
+                branches = [
+                    {"label": b.label, "target_id": b.target_id} for b in n.branches
+                ]
+            nodes.append(
+                {
+                    "id": n.node_id,
+                    "kind": n.kind,
+                    "heading": n.heading,
+                    "detail": n.detail,
+                    "branches": branches,
+                }
+            )
+            text_items.append((n.heading, True))
+            if n.detail:
+                text_items.append((n.detail, False))
+            if branches:
+                for b in branches:
+                    text_items.append((b["label"], False))
+        spec: dict[str, Any] = {
+            "kind": "decision_tree",
+            "root_id": payload.root_id,
+            "nodes": nodes,
+            "structural_defect": structural_defect,
+        }
+        role = "decision_tree"
+        surface_id = f"slide-{sn}-decision-tree"
+    elif lt == "feedback_loop":
+        items = []
+        for it in payload.items:
+            items.append(
+                {
+                    "id": it.item_id,
+                    "heading": it.heading,
+                    "detail": it.detail,
+                    "effect": it.effect,
+                    "relationship_label": it.relationship_label,
+                }
+            )
+            text_items.append((it.heading, True))
+            if it.detail:
+                text_items.append((it.detail, False))
+            if it.relationship_label:
+                text_items.append((it.relationship_label, False))
+        classification = payload.loop_classification
+        if classification:
+            text_items.append((classification, True))
+        spec = {
+            "kind": "feedback_loop",
+            "loop_kind": payload.kind,
+            "items": items,
+            "classification": classification,
+            "structural_defect": structural_defect,
+        }
+        role = "feedback_loop"
+        surface_id = f"slide-{sn}-feedback-loop"
+    elif lt == "hierarchy":
+        nodes = []
+        for n in payload.nodes:
+            nodes.append(
+                {
+                    "id": n.node_id,
+                    "heading": n.heading,
+                    "detail": n.detail,
+                    "children": list(n.children or []),
+                }
+            )
+            text_items.append((n.heading, True))
+            if n.detail:
+                text_items.append((n.detail, False))
+        text_items.append((payload.relationship, True))
+        spec = {
+            "kind": "hierarchy",
+            "relationship": payload.relationship,
+            "root_id": payload.root_id,
+            "nodes": nodes,
+            "structural_defect": structural_defect,
+        }
+        role = "hierarchy"
+        surface_id = f"slide-{sn}-hierarchy"
+    elif lt == "stakeholder_map":
+        focal = {
+            "id": payload.focal.entity_id,
+            "heading": payload.focal.heading,
+            "detail": payload.focal.detail,
+        }
+        text_items.append((focal["heading"], True))
+        if focal["detail"]:
+            text_items.append((focal["detail"], False))
+        spokes = []
+        for s in payload.stakeholders:
+            spoke = {
+                "id": s.entity_id,
+                "heading": s.heading,
+                "detail": s.detail,
+                "relationship_label": s.relationship_label,
+                "direction": s.direction,
+            }
+            spokes.append(spoke)
+            text_items.append((spoke["heading"], True))
+            text_items.append((spoke["relationship_label"], False))
+            if spoke["detail"]:
+                text_items.append((spoke["detail"], False))
+        spec = {
+            "kind": "stakeholder_map",
+            "focal": focal,
+            "stakeholders": spokes,
+            "structural_defect": structural_defect,
+        }
+        role = "stakeholder_map"
+        surface_id = f"slide-{sn}-stakeholder-map"
+    else:  # quadrant_matrix
+        x_axis = {
+            "label": payload.x_axis.label,
+            "low_label": payload.x_axis.low_label,
+            "high_label": payload.x_axis.high_label,
+        }
+        y_axis = {
+            "label": payload.y_axis.label,
+            "low_label": payload.y_axis.low_label,
+            "high_label": payload.y_axis.high_label,
+        }
+        for ax in (x_axis, y_axis):
+            text_items.append((ax["label"], True))
+            text_items.append((ax["low_label"], False))
+            text_items.append((ax["high_label"], False))
+        items = []
+        for it in payload.items:
+            items.append(
+                {
+                    "id": it.item_id,
+                    "heading": it.heading,
+                    "detail": it.detail,
+                    "x_band": it.x_band,
+                    "y_band": it.y_band,
+                }
+            )
+            text_items.append((it.heading, True))
+            if it.detail:
+                text_items.append((it.detail, False))
+        spec = {
+            "kind": "quadrant_matrix",
+            "x_axis": x_axis,
+            "y_axis": y_axis,
+            "items": items,
+            "structural_defect": structural_defect,
+        }
+        role = "quadrant_matrix"
+        surface_id = f"slide-{sn}-quadrant-matrix"
+
+    sp = SurfacePlan(
+        surface_id=surface_id,
+        role=role,
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=10,
+        design_stage_region=region,
+        role_sizes={
+            "heading": LINEAR_HEADING_PX,
+            "detail": LINEAR_DETAIL_PX,
+            "meta": LINEAR_META_PX,
+        },
+        _text_items=text_items,
+        _box_w=CONTENT_W,
+        _fit_role=None,
+        _mode="fixed",
+        _margin_boxes=0,
+        _default_size=LINEAR_HEADING_PX,
+        _maximum_size=LINEAR_HEADING_PX,
+        _linear_spec=spec,
+    )
+    if structural_defect:
+        # Force relationship-table paint path; never reconnect (D274/D278).
+        sp.fallback = {
+            "decision_tree": "accessible_relationship_table",
+            "feedback_loop": "accessible_relationship_table",
+            "hierarchy": "accessible_relationship_table",
+            "stakeholder_map": "accessible_relationship_table",
+            "quadrant_matrix": "accessible_four_group",
+        }[role]
+        spec["paint_as"] = "relationship_fallback"
+    return 1, [sp]
+
+
 # ---------------------------------------------------------------------------
 # data_table measure (D24/D25/D44/D104)
 # ---------------------------------------------------------------------------
@@ -2584,7 +2810,7 @@ def _linear_lines(
 
 
 def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
-    """Fixed D60 geometry fit for process/timeline/layers/pipeline (D272–D277)."""
+    """Fixed D60 geometry fit for linear + relationship compositions."""
     assert sp._linear_spec is not None
     spec = sp._linear_spec
     kind = spec["kind"]
@@ -2594,6 +2820,9 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
     box_w = sp._box_w
     box_h = sp._box_h if sp._box_h > 0 else 10**9
     ok = True
+
+    if kind in KERNEL_RELATIONSHIP_LAYOUTS:
+        return _relationship_fit_detail(sp)
 
     if kind in ("process_flow", "timeline"):
         items = spec["items"]
@@ -2823,6 +3052,147 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
     return total <= box_h, total
 
 
+def _relationship_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
+    """Conservative fixed D60 height budget for relationship compositions."""
+    assert sp._linear_spec is not None
+    spec = sp._linear_spec
+    kind = spec["kind"]
+    heading_px = sp.role_sizes.get("heading", LINEAR_HEADING_PX)
+    detail_px = sp.role_sizes.get("detail", LINEAR_DETAIL_PX)
+    meta_px = sp.role_sizes.get("meta", LINEAR_META_PX)
+    box_w = sp._box_w
+    box_h = sp._box_h if sp._box_h > 0 else 10**9
+    ok = True
+    # Structural defects always take the accessible fallback path.
+    if spec.get("structural_defect") or spec.get("paint_as") == "relationship_fallback":
+        return True, min(box_h, 400)
+
+    def card_h(heading: str, detail: str | None, *, meta: str | None = None) -> int:
+        nonlocal ok
+        inner = max(40, box_w // 3 - 2 * LINEAR_CARD_PAD)
+        h = 2 * LINEAR_CARD_PAD
+        if meta:
+            lines, fit = _linear_lines(meta, meta_px, inner, strong=True, max_lines=2)
+            ok = ok and fit
+            h += len(lines) * _line_box(meta_px) + LINEAR_CARD_MARGIN
+        lines, fit = _linear_lines(heading, heading_px, inner, strong=True, max_lines=3)
+        ok = ok and fit
+        h += len(lines) * _line_box(heading_px) + LINEAR_CARD_MARGIN
+        if detail:
+            lines, fit = _linear_lines(detail, detail_px, inner, max_lines=3)
+            ok = ok and fit
+            h += len(lines) * _line_box(detail_px)
+        return h
+
+    if kind == "decision_tree":
+        nodes = spec["nodes"]
+        # Depth-banded layout: up to 4 rows of cards.
+        row_h = max(card_h(n["heading"], n.get("detail"), meta=n["kind"]) for n in nodes)
+        # Estimate depth from node count (conservative 4 bands).
+        bands = min(4, max(2, (len(nodes) + 2) // 3))
+        total = bands * row_h + (bands - 1) * LINEAR_LAYER_GAP + BLOCK_MARGIN_Y
+    elif kind == "feedback_loop":
+        items = spec["items"]
+        n = len(items)
+        col_w = max(40, (box_w - LINEAR_GAP * n) // max(1, n))
+        heights = []
+        for it in items:
+            meta = it.get("effect") or it.get("relationship_label")
+            inner = max(40, col_w - 2 * LINEAR_CARD_PAD)
+            h = 2 * LINEAR_CARD_PAD
+            if meta:
+                lines, fit = _linear_lines(str(meta), meta_px, inner, max_lines=2)
+                ok = ok and fit
+                h += len(lines) * _line_box(meta_px) + LINEAR_CARD_MARGIN
+            lines, fit = _linear_lines(
+                it["heading"], heading_px, inner, strong=True, max_lines=3
+            )
+            ok = ok and fit
+            h += len(lines) * _line_box(heading_px)
+            if it.get("detail"):
+                lines, fit = _linear_lines(it["detail"], detail_px, inner, max_lines=3)
+                ok = ok and fit
+                h += len(lines) * _line_box(detail_px)
+            heights.append(h)
+        total = max(heights) + 2 * LINEAR_CONNECTOR_H + BLOCK_MARGIN_Y
+        if spec.get("classification"):
+            lines, fit = _linear_lines(
+                str(spec["classification"]), meta_px, box_w, strong=True, max_lines=1
+            )
+            ok = ok and fit
+            total += len(lines) * _line_box(meta_px) + LINEAR_GAP
+    elif kind == "hierarchy":
+        nodes = spec["nodes"]
+        row_h = max(card_h(n["heading"], n.get("detail")) for n in nodes)
+        bands = min(4, max(2, (len(nodes) + 1) // 2))
+        total = (
+            bands * row_h
+            + (bands - 1) * LINEAR_LAYER_GAP
+            + _line_box(meta_px)
+            + BLOCK_MARGIN_Y
+        )
+        lines, fit = _linear_lines(
+            str(spec["relationship"]), meta_px, box_w, strong=True, max_lines=1
+        )
+        ok = ok and fit
+    elif kind == "stakeholder_map":
+        focal = spec["focal"]
+        spokes = spec["stakeholders"]
+        hub = card_h(focal["heading"], focal.get("detail"), meta="focal")
+        spoke_h = max(
+            card_h(
+                s["heading"],
+                s.get("detail"),
+                meta=f'{s["relationship_label"]} ({s["direction"]})',
+            )
+            for s in spokes
+        )
+        total = hub + spoke_h + 2 * LINEAR_LAYER_GAP + BLOCK_MARGIN_Y
+    else:  # quadrant_matrix
+        items = spec["items"]
+        # 2x2 grid; within-quadrant stack preserves order.
+        by_q: dict[tuple[str, str], list] = {
+            ("low", "high"): [],
+            ("high", "high"): [],
+            ("low", "low"): [],
+            ("high", "low"): [],
+        }
+        for it in items:
+            by_q[(it["x_band"], it["y_band"])].append(it)
+        cell_w = max(40, (box_w - LINEAR_GAP) // 2)
+        inner = max(40, cell_w - 2 * LINEAR_CARD_PAD)
+
+        def quad_h(group: list) -> int:
+            nonlocal ok
+            h = _line_box(meta_px) + LINEAR_INNER_GAP
+            if not group:
+                return h + LINEAR_CARD_PAD
+            for it in group:
+                ch = 2 * LINEAR_CARD_PAD
+                lines, fit = _linear_lines(
+                    it["heading"], heading_px, inner, strong=True, max_lines=3
+                )
+                ok = ok and fit
+                ch += len(lines) * _line_box(heading_px)
+                if it.get("detail"):
+                    lines, fit = _linear_lines(
+                        it["detail"], detail_px, inner, max_lines=2
+                    )
+                    ok = ok and fit
+                    ch += len(lines) * _line_box(detail_px)
+                h += ch + LINEAR_INNER_GAP
+            return h
+
+        top = max(quad_h(by_q[("low", "high")]), quad_h(by_q[("high", "high")]))
+        bot = max(quad_h(by_q[("low", "low")]), quad_h(by_q[("high", "low")]))
+        axis_h = 2 * _line_box(meta_px) + LINEAR_GAP
+        total = top + bot + axis_h + LINEAR_GAP + BLOCK_MARGIN_Y
+
+    if not ok:
+        return False, 10**9
+    return total <= box_h, total
+
+
 def _comparison_cards_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     """Fit peer cards; size drives ordinary-table fallback floor simultaneously."""
     assert sp._table_spec is not None
@@ -2928,6 +3298,19 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
         }
         sp.fallback = fallback_by_role[sp.role]
         sp._linear_spec["paint_as"] = "fallback_list"
+    elif sp.role in KERNEL_RELATIONSHIP_LAYOUTS and sp._linear_spec is not None:
+        # Valid-but-unfittable trees/maps → outline/list; defects already set.
+        if sp._linear_spec.get("structural_defect"):
+            return
+        fallback_by_role = {
+            "decision_tree": "accessible_nested_outline",
+            "feedback_loop": "accessible_ordered_relationship_list",
+            "hierarchy": "accessible_nested_outline",
+            "stakeholder_map": "accessible_relationship_list",
+            "quadrant_matrix": "accessible_four_group",
+        }
+        sp.fallback = fallback_by_role[sp.role]
+        sp._linear_spec["paint_as"] = "relationship_fallback"
 
 
 def _record_surface_adaptations(
