@@ -422,6 +422,35 @@ def test_non_strict_outlined_overflow_keeps_category():
     assert len(centers) == 4
 
 
+def test_outlined_keep_cat_then_width_freeze_fail_demotes_independent():
+    from impact_slides.renderer_v3 import plan as plan_mod
+
+    result = validate_handoff(_with_support(_outlined_support()), strict=True)
+    real_fit = plan_mod._outlined_support_fit_detail
+    real_widths = plan_mod._apply_category_table_widths
+
+    def never_fits(sp, size):
+        return False, True
+
+    def boom(spec, centers, box_w):
+        spec.pop("category_centered", None)
+        return False
+
+    plan_mod._outlined_support_fit_detail = never_fits  # type: ignore[assignment]
+    plan_mod._apply_category_table_widths = boom  # type: ignore[assignment]
+    try:
+        plan = plan_deck(result.deck, strict=False)
+    finally:
+        plan_mod._outlined_support_fit_detail = real_fit  # type: ignore[assignment]
+        plan_mod._apply_category_table_widths = real_widths  # type: ignore[assignment]
+    support = next(s for s in plan.surfaces if s.surface_id == "vol-outlined")
+    assert support.role == "support_table"
+    assert support.fallback == "independent_support_table"
+    assert support.table_paint.get("alignment") == "independent"
+    assert support.table_paint.get("category_centered") is not True
+    assert "plan.support_alignment_independent" in support.adaptation_codes
+
+
 def test_category_width_freeze_failure_demotes_non_strict():
     from impact_slides.renderer_v3 import plan as plan_mod
 

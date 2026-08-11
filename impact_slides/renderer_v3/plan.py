@@ -3165,11 +3165,18 @@ def _apply_category_table_widths(
 
 
 def _fail_category_table_alignment(sp: SurfacePlan) -> None:
-    """Category-center freeze failed: mark overflow and demote when non-strict."""
+    """Category-center freeze failed: mark overflow and force independent demotion."""
     sp._overflow = True
     if sp._table_spec is not None:
         sp._table_spec = dict(sp._table_spec)
         sp._table_spec.pop("category_centered", None)
+        if sp._table_spec.get("alignment") == "category":
+            sp._table_spec["alignment"] = "independent"
+            sp._table_spec["hide_header"] = False
+            sp.fallback = "independent_support_table"
+            if "plan.support_alignment_independent" not in sp.adaptation_codes:
+                sp.adaptation_codes.append("plan.support_alignment_independent")
+            return
     _apply_composition_fallback(sp)
 
 
