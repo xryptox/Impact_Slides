@@ -388,7 +388,7 @@
     },
     "ChartDisplay": {
       "additionalProperties": false,
-      "description": "Sparse line-chart display overrides (D231/D295).",
+      "description": "Sparse axis-chart display overrides (D231/D295).",
       "properties": {
         "ordinary_values": {
           "anyOf": [

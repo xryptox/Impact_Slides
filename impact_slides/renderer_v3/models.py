@@ -735,7 +735,7 @@ class DataPipelinePayload(ClosedModel):
 
 
 # ---------------------------------------------------------------------------
-# Line chart + single_chart composition (D227–D239, D290–D302)
+# Axis charts + heatmap + single_chart composition (D163/D227–D240, D243, D246, D290–D302, D308)
 # ---------------------------------------------------------------------------
 
 
@@ -761,7 +761,7 @@ class ChartTypography(ClosedModel):
 
 
 class ChartDisplay(ClosedModel):
-    """Sparse line-chart display overrides (D231/D295)."""
+    """Sparse axis-chart display overrides (D231/D295)."""
 
     ordinary_values: Optional[Literal["show", "hide"]] = None
     series_identity: Optional[Literal["auto", "legend", "pane_title"]] = None
