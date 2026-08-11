@@ -3730,7 +3730,8 @@ def _is_rectangular_table_spec(spec: dict[str, Any] | None) -> bool:
 def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     """Return (fits, wrapped) for table / metric_strip / prose surfaces."""
     if sp.role in KERNEL_CARD_LAYOUTS and sp._card_spec is not None:
-        return _card_fit_detail(sp, size)
+        ok, _h = _card_fit_detail(sp, size)
+        return ok, False
     if sp._linear_spec is not None:
         ok, _h = _linear_fit_detail(sp)
         return ok, False

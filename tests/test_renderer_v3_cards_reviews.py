@@ -16,15 +16,21 @@ import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
 from impact_slides.renderer_v3.plan import (
+    BLOCK_MARGIN_Y,
     CARD_FIXED_BODY_PX,
+    CARD_FIXED_HEADING_PX,
+    CARD_GAP,
     CARD_MARGIN,
+    CARD_PAD,
     CARD_PANEL_BORDER_Y,
     FEATURE_BODY_FLOOR,
     LIST_INDENT_EM,
+    RISK_GROUP_GAP,
     SurfacePlan,
     _card_fit_detail,
     _finalize_composition_roles,
     _line_box,
+    _synchronize,
     plan_deck,
 )
 from impact_slides.renderer_v3.schema_export import check_schema
@@ -844,7 +850,7 @@ def test_card_panel_hairline_border_budgeted_in_fit_height():
 def test_empty_marker_card_panel_border_budgeted():
     """Empty group-unresolved / support-unavailable markers budget panel border, not p margin."""
     body = CARD_FIXED_BODY_PX
-    from impact_slides.renderer_v3.plan import BLOCK_MARGIN_Y, CARD_GAP, CARD_PAD, RISK_GROUP_GAP
+    heading = CARD_FIXED_HEADING_PX
 
     empty_only = SurfacePlan(
         surface_id="t-empty-only",
@@ -854,7 +860,7 @@ def test_empty_marker_card_panel_border_budgeted():
         layout_type="risk_opportunity_review",
         slot_order=10,
         design_stage_region=1,
-        role_sizes={"heading": 22, "body": body},
+        role_sizes={"heading": heading, "body": body},
         _box_w=1728,
         _box_h=10**9,
         _card_spec={
@@ -866,28 +872,8 @@ def test_empty_marker_card_panel_border_budgeted():
     ok, h_empty = _card_fit_detail(empty_only, body)
     assert ok
     marker = RISK_GROUP_GAP + CARD_PAD + CARD_PANEL_BORDER_Y + _line_box(body) + CARD_PAD
-    heading = _line_box(22)
-    assert h_empty == heading + marker + BLOCK_MARGIN_Y
+    assert h_empty == _line_box(heading) + marker + BLOCK_MARGIN_Y
 
-    with_support = SurfacePlan(
-        surface_id="t-with-support",
-        role="recommendation_case",
-        slide_number=1,
-        slide_index=0,
-        layout_type="recommendation_case",
-        slot_order=10,
-        design_stage_region=1,
-        role_sizes={"heading": 22, "body": body},
-        _box_w=1728,
-        _box_h=10**9,
-        _card_spec={
-            "kind": "recommendation_case",
-            "recommendation": "Do it.",
-            "rationales": [{"statement": "Because."}],
-            "cols": 1,
-            "rows": 1,
-        },
-    )
     no_support = SurfacePlan(
         surface_id="t-no-support",
         role="recommendation_case",
@@ -896,7 +882,7 @@ def test_empty_marker_card_panel_border_budgeted():
         layout_type="recommendation_case",
         slot_order=10,
         design_stage_region=1,
-        role_sizes={"heading": 22, "body": body},
+        role_sizes={"heading": heading, "body": body},
         _box_w=1728,
         _box_h=10**9,
         _card_spec={
@@ -907,18 +893,24 @@ def test_empty_marker_card_panel_border_budgeted():
             "rows": 0,
         },
     )
-    ok_s, h_s = _card_fit_detail(with_support, body)
     ok_n, h_n = _card_fit_detail(no_support, body)
-    assert ok_s and ok_n
-    # support-unavailable marker: pad + border + one body line + pad
-    # one rationale card is taller; empty marker still includes CARD_PANEL_BORDER_Y once
-    marker_h = CARD_PAD + CARD_PANEL_BORDER_Y + _line_box(body) + CARD_PAD
-    # recommendation panel shared prefix ends before CARD_GAP + support/rationales
-    # no_support total = shared + marker_h + BLOCK_MARGIN_Y
-    # Derive shared from no_support.
-    shared = h_n - marker_h - BLOCK_MARGIN_Y
-    assert shared > 0
-    assert h_n == shared + marker_h + BLOCK_MARGIN_Y
+    assert ok_n
+    # recommendation-panel + support-unavailable marker, each with hairline border.
+    expected = (
+        CARD_PAD
+        + CARD_PANEL_BORDER_Y
+        + _line_box(heading)
+        + CARD_MARGIN
+        + _line_box(body)
+        + CARD_PAD
+        + CARD_GAP
+        + CARD_PAD
+        + CARD_PANEL_BORDER_Y
+        + _line_box(body)
+        + CARD_PAD
+        + BLOCK_MARGIN_Y
+    )
+    assert h_n == expected
 
 
 def test_quote_card_figure_margin_reset_in_emitted_css(tmp_path: Path):
@@ -940,31 +932,37 @@ def test_quote_card_figure_margin_reset_in_emitted_css(tmp_path: Path):
 
 
 def test_feature_cards_sync_finalizes_detail_size():
-    """_synchronize re-finalizes feature_cards so detail tracks synced heading."""
-    sp = SurfacePlan(
-        surface_id="t-fc-sync",
-        role="feature_cards",
-        slide_number=1,
-        slide_index=0,
-        layout_type="feature_cards",
-        slot_order=10,
-        design_stage_region=1,
-        role_sizes={"heading": FEATURE_BODY_FLOOR, "detail": FEATURE_BODY_FLOOR},
-        _box_w=1728,
-        _box_h=10**9,
-        _fit_role="heading",
-        _mode="adaptive",
-        _default_size=FEATURE_BODY_FLOOR,
-        _maximum_size=28,
-        _card_spec={
-            "kind": "feature_cards",
-            "cards": [{"id": "c0", "heading": "H", "detail": "D"}],
-            "cols": 1,
-            "rows": 1,
-        },
-    )
-    target = 28
-    sp.role_sizes["heading"] = target
-    _finalize_composition_roles(sp, target)
-    assert sp.role_sizes["detail"] == target
-    assert sp.role_sizes["heading"] == target
+    """_synchronize re-finalizes every member so feature detail tracks synced heading."""
+
+    def fc(sid: str, heading_size: int) -> SurfacePlan:
+        return SurfacePlan(
+            surface_id=sid,
+            role="feature_cards",
+            slide_number=1,
+            slide_index=0,
+            layout_type="feature_cards",
+            slot_order=10,
+            design_stage_region=1,
+            role_sizes={"heading": heading_size, "detail": FEATURE_BODY_FLOOR},
+            _box_w=1728,
+            _box_h=10**9,
+            _fit_role="heading",
+            _mode="adaptive",
+            _default_size=FEATURE_BODY_FLOOR,
+            _maximum_size=28,
+            _sync_group="feature-sync",
+            _card_spec={
+                "kind": "feature_cards",
+                "cards": [{"id": "c0", "heading": "H", "detail": "D"}],
+                "cols": 1,
+                "rows": 1,
+            },
+        )
+
+    low = fc("t-fc-low", FEATURE_BODY_FLOOR)
+    high = fc("t-fc-high", 28)
+    events: list = []
+    _synchronize([low, high], events)
+    for sp in (low, high):
+        assert sp.role_sizes["heading"] == 28
+        assert sp.role_sizes["detail"] == 28
