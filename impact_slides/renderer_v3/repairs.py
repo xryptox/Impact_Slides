@@ -1133,6 +1133,35 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
                         finite.append(Decimal(str(v)))
                     except (InvalidOperation, TypeError, ValueError):
                         continue
+            if visual.get("chart_type") == "stacked_bar":
+                cats = data.get("categories") if isinstance(data, dict) else None
+                n = len(cats) if isinstance(cats, list) else 0
+                if n == 0 and series:
+                    vals0 = (
+                        series[0].get("values")
+                        if isinstance(series[0], dict)
+                        else None
+                    )
+                    n = len(vals0) if isinstance(vals0, list) else 0
+                for c_i in range(n):
+                    pos = Decimal(0)
+                    neg = Decimal(0)
+                    for s in series:
+                        values = s.get("values") if isinstance(s, dict) else None
+                        if not isinstance(values, list) or c_i >= len(values):
+                            continue
+                        v = values[c_i]
+                        if v is None:
+                            continue
+                        try:
+                            dv = Decimal(str(v))
+                        except (InvalidOperation, TypeError, ValueError):
+                            continue
+                        if dv > 0:
+                            pos += dv
+                        elif dv < 0:
+                            neg += dv
+                    finite.extend((pos, neg, Decimal(0)))
         if not finite:
             continue
         domain_path = (
