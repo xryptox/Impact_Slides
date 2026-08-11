@@ -478,6 +478,19 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
             table = payload.get("table")
             if isinstance(table, dict):
                 located.append((f"/slides/{i}/payload/table", table))
+        elif layout == "single_chart":
+            visual = payload.get("primary_visual")
+            if (
+                isinstance(visual, dict)
+                and visual.get("chart_type") == "heatmap"
+                and isinstance(visual.get("table_data"), dict)
+            ):
+                located.append(
+                    (
+                        f"/slides/{i}/payload/primary_visual/table_data",
+                        visual["table_data"],
+                    )
+                )
         elif layout == "grouped_annex_table":
             peers = payload.get("tables")
             if isinstance(peers, list):
@@ -1071,6 +1084,73 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
     return out
 
 
+def repair_invalid_heatmap_scales(raw: Any, events: list[DiagnosticEvent]) -> Any:
+    """D163/D308 non-strict: missing/malformed/out-of-range heatmap scales become
+    generated so validation can proceed; freeze paints uncolored when the repair
+    marks the visual (scale replaced → no trusted encoding)."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    out = deepcopy(raw)
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict) or slide.get("layout_type") != "single_chart":
+            continue
+        payload = slide.get("payload")
+        visual = payload.get("primary_visual") if isinstance(payload, dict) else None
+        if not isinstance(visual, dict) or visual.get("chart_type") != "heatmap":
+            continue
+        scale = visual.get("scale")
+        table = visual.get("table_data")
+        finite: list[Decimal] = []
+        if isinstance(table, dict) and isinstance(table.get("rows"), list):
+            for row in table["rows"]:
+                cells = row.get("cells") if isinstance(row, dict) else None
+                if not isinstance(cells, dict):
+                    continue
+                for cell in cells.values():
+                    if not isinstance(cell, dict) or cell.get("type") != "number":
+                        continue
+                    try:
+                        finite.append(Decimal(str(cell.get("value"))))
+                    except (InvalidOperation, TypeError, ValueError):
+                        continue
+        path = f"/slides/{i}/payload/primary_visual/scale"
+        bad = False
+        if not isinstance(scale, dict) or scale.get("mode") not in ("generated", "fixed"):
+            bad = True
+        elif scale.get("mode") == "fixed":
+            try:
+                lo = Decimal(str(scale.get("min")))
+                hi = Decimal(str(scale.get("max")))
+            except (InvalidOperation, TypeError, ValueError):
+                bad = True
+            else:
+                if lo >= hi or (finite and any(v < lo or v > hi for v in finite)):
+                    bad = True
+        if not bad:
+            continue
+        visual["scale"] = {"mode": "generated"}
+        events.append(
+            event(
+                code="repair.domain_replaced",
+                severity="warning",
+                phase="repair",
+                role="heatmap",
+                path=path,
+                action="replace_domain",
+                result="fallback_semantic_table",
+                slide_number=_slide_number(slide),
+                layout_type="single_chart",
+                surface_id=(
+                    visual.get("surface_id")
+                    if isinstance(visual.get("surface_id"), str)
+                    else None
+                ),
+                expected="generated or fixed min<max scale containing every finite value",
+            )
+        )
+    return out
+
+
 # Closed registry: name → transform (D123).
 REPAIR_REGISTRY: dict[str, RepairFn] = {
     "assume_schema_v1": assume_schema_v1,
@@ -1080,6 +1160,7 @@ REPAIR_REGISTRY: dict[str, RepairFn] = {
     "repair_disclosure_sections": repair_disclosure_sections,
     "repair_source_footer_names": repair_source_footer_names,
     "repair_uncontained_fixed_domains": repair_uncontained_fixed_domains,
+    "repair_invalid_heatmap_scales": repair_invalid_heatmap_scales,
 }
 
 

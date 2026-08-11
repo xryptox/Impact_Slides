@@ -59,6 +59,8 @@ TAKEAWAY_FLOOR: Final = 22
 TAKEAWAY_CEIL: Final = 28
 TABLE_FLOOR: Final = 20  # D44 ordinary data_table / period / cards
 TABLE_CEIL: Final = 24
+HEATMAP_TABLE_FLOOR: Final = 18  # D44/D60/D246 heatmap
+HEATMAP_TABLE_CEIL: Final = 24
 ANNEX_TABLE_FLOOR: Final = 12  # D44 annex + grouped annex
 ANNEX_TABLE_CEIL: Final = 24
 METRIC_STRIP_FLOOR: Final = 14  # D265 support labels
@@ -204,9 +206,17 @@ class DeckPlan:
         return {s.surface_id: s for s in self.surfaces}
 
 
-def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
+def plan_deck(
+    deck: Deck,
+    *,
+    strict: bool = True,
+    uncolored_heatmap_surfaces: frozenset[str] | None = None,
+) -> DeckPlan:
     """Measure every kernel surface, synchronize, freeze whole-pixel sizes (D69)."""
-    surfaces = _collect_surfaces(deck)
+    surfaces = _collect_surfaces(
+        deck,
+        uncolored_heatmap_surfaces=uncolored_heatmap_surfaces or frozenset(),
+    )
     events: list[DiagnosticEvent] = []
 
     sync_roles: dict[str, set[str]] = {}
@@ -348,7 +358,11 @@ def plan_deck(deck: Deck, *, strict: bool = True) -> DeckPlan:
 # ---------------------------------------------------------------------------
 
 
-def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
+def _collect_surfaces(
+    deck: Deck,
+    *,
+    uncolored_heatmap_surfaces: frozenset[str] = frozenset(),
+) -> list[SurfacePlan]:
     out: list[SurfacePlan] = []
     region = 0
     for slide_index, slide in enumerate(deck.slides):
@@ -630,57 +644,100 @@ def _collect_surfaces(deck: Deck) -> list[SurfacePlan]:
                 out.append(bp)
                 adaptive_surfaces.append(bp)
         elif lt == "single_chart":
-            # single_chart line tracer (D239/D302): one chart surface + frozen plan.
-            from .charts import freeze_line_chart
+            # single_chart line or heatmap (D239/D246/D302/D308).
+            from .charts import freeze_heatmap, freeze_line_chart
+            from .models import HeatmapVisual, LineChartVisual
 
             body_slots = 1
             chart = slide.payload.primary_visual
-            chart_spec = freeze_line_chart(
-                chart,
-                deck.number_formats,
-                box_w=CONTENT_W,
-            )
-            text_items = _chart_text_items(chart_spec)
-            role_sizes = dict(chart_spec["role_sizes"])
-            # Pane title band is fixed chrome when authored (D9/D42).
-            if chart.heading:
-                role_sizes["pane_title"] = 40
-                if chart.subtitle:
-                    role_sizes["pane_subtitle"] = 22
-            out.append(
-                SurfacePlan(
-                    surface_id=chart.surface_id,
-                    role="line_chart",
-                    slide_number=sn,
-                    slide_index=slide_index,
-                    layout_type=lt,
-                    slot_order=10,
-                    design_stage_region=region,
-                    role_sizes=role_sizes,
-                    display_identity_strategy=chart_spec["identity_strategy"],
-                    expected_placement_classes=sorted(
-                        {
-                            p["class"]
-                            for p in chart_spec["placements"]
-                            if p.get("class") and p["class"] != "suppressed"
-                        }
-                    ),
-                    _text_items=text_items,
-                    _box_w=CONTENT_W,
-                    _box_h=math.ceil(chart_spec["geometry"]["view_h"]),
-                    _fit_role=None,  # sizes frozen inside chart planner
-                    _mode=(
-                        chart.typography.mode
-                        if chart.typography is not None
-                        else "adaptive"
-                    ),
-                    _margin_boxes=0,
-                    _chrome_h=_chart_chrome_height(chart_spec),
-                    _chart_spec=chart_spec,
-                    _chart_visual=chart,
-                    _chart_formats=deck.number_formats,
+            if isinstance(chart, HeatmapVisual):
+                chart_spec = freeze_heatmap(
+                    chart,
+                    deck.number_formats,
+                    box_w=CONTENT_W,
+                    table_floor=HEATMAP_TABLE_FLOOR,
+                    colored=chart.surface_id not in uncolored_heatmap_surfaces,
                 )
-            )
+                # Heatmap is a native table: fit through table fitter (18–24px).
+                table_spec = _heatmap_table_spec(chart_spec)
+                text_items = [(t, False) for t in chart_spec["all_texts"]]
+                role_sizes = {"table": HEATMAP_TABLE_FLOOR}
+                if chart.heading:
+                    role_sizes["pane_title"] = 40
+                    if chart.subtitle:
+                        role_sizes["pane_subtitle"] = 22
+                out.append(
+                    SurfacePlan(
+                        surface_id=chart.surface_id,
+                        role="heatmap",
+                        slide_number=sn,
+                        slide_index=slide_index,
+                        layout_type=lt,
+                        slot_order=10,
+                        design_stage_region=region,
+                        role_sizes=role_sizes,
+                        _text_items=text_items,
+                        _box_w=CONTENT_W,
+                        _fit_role="table",
+                        _mode="adaptive",
+                        _margin_boxes=0,
+                        _default_size=HEATMAP_TABLE_FLOOR,
+                        _maximum_size=HEATMAP_TABLE_CEIL,
+                        _chrome_h=_heatmap_chrome_height(chart_spec),
+                        _table_spec=table_spec,
+                        _chart_spec=chart_spec,
+                        _chart_visual=chart,
+                        _chart_formats=deck.number_formats,
+                    )
+                )
+            else:
+                assert isinstance(chart, LineChartVisual)
+                chart_spec = freeze_line_chart(
+                    chart,
+                    deck.number_formats,
+                    box_w=CONTENT_W,
+                )
+                text_items = _chart_text_items(chart_spec)
+                role_sizes = dict(chart_spec["role_sizes"])
+                # Pane title band is fixed chrome when authored (D9/D42).
+                if chart.heading:
+                    role_sizes["pane_title"] = 40
+                    if chart.subtitle:
+                        role_sizes["pane_subtitle"] = 22
+                out.append(
+                    SurfacePlan(
+                        surface_id=chart.surface_id,
+                        role="line_chart",
+                        slide_number=sn,
+                        slide_index=slide_index,
+                        layout_type=lt,
+                        slot_order=10,
+                        design_stage_region=region,
+                        role_sizes=role_sizes,
+                        display_identity_strategy=chart_spec["identity_strategy"],
+                        expected_placement_classes=sorted(
+                            {
+                                p["class"]
+                                for p in chart_spec["placements"]
+                                if p.get("class") and p["class"] != "suppressed"
+                            }
+                        ),
+                        _text_items=text_items,
+                        _box_w=CONTENT_W,
+                        _box_h=math.ceil(chart_spec["geometry"]["view_h"]),
+                        _fit_role=None,  # sizes frozen inside chart planner
+                        _mode=(
+                            chart.typography.mode
+                            if chart.typography is not None
+                            else "adaptive"
+                        ),
+                        _margin_boxes=0,
+                        _chrome_h=_chart_chrome_height(chart_spec),
+                        _chart_spec=chart_spec,
+                        _chart_visual=chart,
+                        _chart_formats=deck.number_formats,
+                    )
+                )
             adaptive_surfaces.append(out[-1])
         else:
             # data_table / annex_table / period_comparison table surface(s).
@@ -788,11 +845,13 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         return
 
     chart_targets = {
-        sp.surface_id: sp._box_h for sp in surfaces if sp._chart_spec is not None
+        sp.surface_id: sp._box_h
+        for sp in surfaces
+        if sp._chart_spec is not None and sp.role == "line_chart"
     }
 
     def need(sp: SurfacePlan, size: int) -> int:
-        if sp._chart_spec is not None:
+        if sp._chart_spec is not None and sp.role == "line_chart":
             return CHART_VIEW_MIN_H
         if _is_rectangular_table_spec(sp._table_spec):
             assert sp._table_spec is not None
@@ -884,7 +943,7 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         ]
         if height > floor_h:
             sp.adaptation_codes.append("plan.geometry_reallocated")
-        if sp._chart_spec is not None:
+        if sp._chart_spec is not None and sp.role == "line_chart":
             from .charts import freeze_line_chart
 
             sp._chart_spec = freeze_line_chart(
@@ -912,7 +971,7 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
 
 def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
     fit = sp._fit_role
-    if sp._chart_spec is not None:
+    if sp._chart_spec is not None and sp.role == "line_chart":
         if math.ceil(sp._chart_spec["geometry"]["view_h"]) > sp._box_h:
             sp._overflow = True
         return
@@ -1376,7 +1435,35 @@ def _seal_digests(sp: SurfacePlan) -> None:
     sp.painter_plan_digest = _sha(base)
     # Freeze table paint payload so painters never reformat (D69/D70).
     if sp._table_spec is not None:
-        sp.table_paint = dict(sp._table_spec)
+        frozen_table = dict(sp._table_spec)
+        # Heatmap: merge fitted labels/widths into chart_paint (sole paint input).
+        heat_src = frozen_table.pop("_heatmap_chart_spec", None)
+        sp.table_paint = frozen_table
+        if heat_src is not None and sp._chart_spec is not None:
+            sp._chart_spec = dict(sp._chart_spec)
+            sp._chart_spec["display_headers"] = list(
+                frozen_table.get("display_headers") or heat_src["display_headers"]
+            )
+            sp._chart_spec["display_row_labels"] = list(
+                frozen_table.get("display_row_labels") or heat_src["display_row_labels"]
+            )
+            sp._chart_spec["col_widths"] = list(
+                frozen_table.get("col_widths") or []
+            )
+            sp._chart_spec["short_label_used"] = bool(
+                frozen_table.get("short_label_used")
+            )
+            sp._chart_spec["ellipsized"] = bool(frozen_table.get("ellipsized"))
+            sp._chart_spec["role_sizes"] = dict(sp.role_sizes)
+            # Uncolored fallback when plan marked degraded (non-strict overflow).
+            if sp.fallback == "uncolored_heatmap":
+                sp._chart_spec["colored"] = False
+                sp._chart_spec["scale"] = dict(sp._chart_spec.get("scale") or {})
+                sp._chart_spec["scale"]["key_stops"] = []
+                for row in sp._chart_spec["cells"]:
+                    for cell in row:
+                        cell["fill"] = None
+                        cell["ink"] = None
     if sp._chart_spec is not None:
         sp.chart_paint = dict(sp._chart_spec)
         # Keep role_sizes aligned with sealed chart plan.
@@ -1704,7 +1791,7 @@ def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
                 inner_w,
                 0,
             )
-    if chart_spec["identity_strategy"] == "legend":
+    if chart_spec.get("identity_strategy") == "legend":
         px = chart_spec["role_sizes"]["legend"]
         rows = 1
         used = 0.0
@@ -1716,6 +1803,69 @@ def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
             used += width
         height += rows * _line_box(px) + (rows - 1) * 16 + BLOCK_MARGIN_Y
     return height
+
+
+def _heatmap_chrome_height(chart_spec: dict[str, Any]) -> int:
+    """Pane title band only; scale key is part of the fitted table height."""
+    height = BLOCK_MARGIN_Y
+    if chart_spec.get("heading"):
+        inner_w = CONTENT_W - 32
+        height += CHART_PANE_PAD_Y + BLOCK_MARGIN_Y
+        height += _required_height(
+            [(chart_spec["heading"], True)], CHART_PANE_TITLE_PX, inner_w, 0
+        )
+        if chart_spec.get("subtitle"):
+            height += CHART_PANE_GAP + _required_height(
+                [(chart_spec["subtitle"], True)],
+                CHART_PANE_SUBTITLE_PX,
+                inner_w,
+                0,
+            )
+    return height
+
+
+def _heatmap_table_spec(chart_spec: dict[str, Any]) -> dict[str, Any]:
+    """Adapt freeze_heatmap payload to the shared rectangular table fitter."""
+    n_cols = chart_spec["n_cols"]
+    n_rows = chart_spec["n_rows"]
+    cells_vis = chart_spec["cells_vis"]
+    cells_acc = chart_spec["cells_acc"]
+    cells_role = [
+        [("missing" if c["missing"] else "number") for c in row]
+        for row in chart_spec["cells"]
+    ]
+    cells_align = [["right"] * n_cols for _ in range(n_rows)]
+    # Scale key height: one line when colored stops exist.
+    scale_labels: list[str] = []
+    if chart_spec.get("colored") and (chart_spec.get("scale") or {}).get("key_stops"):
+        scale_labels.append("heatmap-scale-key")
+    return {
+        "kind": "heatmap",
+        "paint_as": "heatmap",
+        "col_ids": list(chart_spec["col_ids"]),
+        "n_cols": n_cols,
+        "n_rows": n_rows,
+        "header_full": list(chart_spec["header_full"]),
+        "header_short": list(chart_spec["header_short"]),
+        "row_labels_full": list(chart_spec["row_labels_full"]),
+        "row_labels_short": list(chart_spec["row_labels_short"]),
+        "cells_vis": cells_vis,
+        "cells_acc": cells_acc,
+        "cells_role": cells_role,
+        "cells_align": cells_align,
+        "col_aligns": ["right"] * n_cols,
+        "groups": None,
+        "scale_labels": scale_labels,
+        "all_texts": list(chart_spec["all_texts"]),
+        "display_headers": list(chart_spec["display_headers"]),
+        "display_row_labels": list(chart_spec["display_row_labels"]),
+        "display_groups": None,
+        "col_widths": list(chart_spec.get("col_widths") or []),
+        "ellipsized": False,
+        "short_label_used": False,
+        # Keep a back-pointer so seal can merge fitted labels into chart_paint.
+        "_heatmap_chart_spec": chart_spec,
+    }
 
 
 def _chart_text_items(chart_spec: dict[str, Any]) -> list[tuple[str, bool]]:
@@ -2313,6 +2463,15 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
             sp._table_spec["paint_as"] = "sequential_annex"
             sp._box_w = CONTENT_W
             floor = ANNEX_TABLE_FLOOR
+            _table_fit_detail(sp._table_spec, floor, CONTENT_W, 10**9)
+            sp.role_sizes["table"] = floor
+    elif sp.role == "heatmap":
+        # D246/D308: keep complete uncolored semantic table at 18px floor.
+        sp.fallback = "uncolored_heatmap"
+        if sp._table_spec is not None:
+            sp._table_spec["paint_as"] = "heatmap"
+            sp._box_w = CONTENT_W
+            floor = HEATMAP_TABLE_FLOOR
             _table_fit_detail(sp._table_spec, floor, CONTENT_W, 10**9)
             sp.role_sizes["table"] = floor
 

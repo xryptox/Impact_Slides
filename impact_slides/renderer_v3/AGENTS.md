@@ -2,15 +2,15 @@
 
 ## Purpose
 
-Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model, deck-wide measure/plan freeze for kernel prose/chrome/tables/line charts, decimal-safe number formatting, deterministic five-artifact publication, the sole boardroom_amex theme manifest (CSS/Chart.js/SVG tokens), and the line-chart tracer (Chart.js + noscript SVG + D247 semantic table); remaining chart families land in later tickets.
+Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of frozen legacy `renderer_v2`. Owns typed validation into one canonical deck model, deck-wide measure/plan freeze for kernel prose/chrome/tables/line charts/heatmaps, decimal-safe number formatting, deterministic five-artifact publication, the sole boardroom_amex theme manifest (CSS/Chart.js/SVG tokens), the line-chart tracer (Chart.js + noscript SVG + D247 semantic table), and native semantic heatmaps (D163/D246/D308); remaining chart families land in later tickets.
 
 ## Ownership
 
-- Closed schema-v1 handoff models (`models.py`) including D213 semantic values + D255 `table` + table compositions (`data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`) + `single_chart` line envelope (D227–D239/D290–D302)
+- Closed schema-v1 handoff models (`models.py`) including D213 semantic values + D255 `table` + table compositions (`data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`) + `single_chart` line/heatmap envelope (D163/D227–D239/D246/D290–D302/D308)
 - Decimal-safe format registry (`format.py`) for D77/D78/D103/D214/D293
-- Line-chart freeze + dual painters + semantic table (`charts.py`) (D53/D57/D63/D106/D247/D248/D302)
+- Line-chart freeze + dual painters + semantic table; heatmap freeze + native HTML painter (`charts.py`) (D53/D57/D63/D106/D163/D246–D248/D302/D308)
 - Aggregating validation + allowlisted non-strict repairs (`validate.py`, `repairs.py`, `diagnostics.py`)
-- Deck-wide adaptive measure/plan freeze (`plan.py`) for narrative prose, data tables, line charts, subtitles, takeaways, disclosures, source footers, and fixed chrome (D1–D4, D22–D25, D44, D59, D68–D70)
+- Deck-wide adaptive measure/plan freeze (`plan.py`) for narrative prose, data tables, line charts, heatmaps, subtitles, takeaways, disclosures, source footers, and fixed chrome (D1–D4, D22–D25, D44, D59, D68–D70)
 - Public `render_deck` + CLI publication (`render.py`, `publish.py`, `cli.py`)
 - Generated JSON Schema artifact `schema/handoff_schema_v1.json` (D121)
 - Canonical `boardroom_amex` theme manifest + generated CSS (`theme/`, `theme_export.py`) and self-contained licensed webfonts (`assets/fonts/`) (D127-D133)
@@ -31,14 +31,15 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Disclosure is native `<details>` accordion (D174/D222/D289): deterministic `slide-{n}-{surface_id}` IDs, initially closed, print CSS expands bodies; no-JS markup remains complete
 - Takeaway outer reservation includes label/pad/border/outer margin; text fitter uses the inner box only. Cover elements measure at their own frozen role sizes. Paragraph/list margins match paint per CSS block box. Planning uses calibrated Source Sans 3 metrics, diagnoses conservative unsupported-glyph fallback, and publication embeds the vendored font.
 - Strict aggregates all detectable errors into `RendererValidationError.events` (D120/D309/D310)
-- Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311); `repair_disclosure_sections` drops malformed/duplicate D222 sections (keep first); `repair_source_footer_names` drops later duplicate visible footer names; `repair_table_data` converts missing/malformed cells to diagnosed missing, drops cell keys for unknown columns, and flattens malformed `column_groups` while retaining leaf data before TableData validation; `repair_uncontained_fixed_domains` replaces a fixed domain that fails to contain every finite value with a diagnosed safe generated domain and drops authored generated `min`/`max` bounds that fail containment so the domain regenerates from data (strict rejects both, D230)
+- Non-strict applies only `repairs.REPAIR_REGISTRY` actions, then revalidates (D123/D311); `repair_disclosure_sections` drops malformed/duplicate D222 sections (keep first); `repair_source_footer_names` drops later duplicate visible footer names; `repair_table_data` converts missing/malformed cells to diagnosed missing, drops cell keys for unknown columns, and flattens malformed `column_groups` while retaining leaf data before TableData validation; `repair_uncontained_fixed_domains` replaces a fixed domain that fails to contain every finite value with a diagnosed safe generated domain and drops authored generated `min`/`max` bounds that fail containment so the domain regenerates from data (strict rejects both, D230); `repair_invalid_heatmap_scales` replaces missing/malformed/out-of-range heatmap scales with generated so freeze paints the complete uncolored diagnosed table (strict rejects, D163/D308).
 - Non-strict `drop_unknown_fields` may strip noise keys only: on brand/legal layouts it **retains** forbidden D287 ordinary semantic roots (`title`/`content`/`takeaway`/`disclosure`/`source_footer`, and `section_id` on covers/dividers) so revalidation fails without deleting authored content; typed D180 unresolved-slide fallback is not yet implemented
 - `_wrap_lines` breaks at spaces and after `-,:;.` when more content follows; paint inserts matching `<wbr>` via `_soft_break_html` (R178-029). Disclosure units measure summary/list indent separately from full-width paragraphs
 - Print media expands closed disclosures and resets viewport stage scale to fixed 1920×1080
-- Kernel compositions: `opening_cover`, `section_divider`, `closing_cover`, `narrative`, `legal_notice`, `data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`, `single_chart` (line only) (D178–D187/D208/D210/D215/D223/D226/D251/D257–D261/D268–D271/D287/D302)
+- Kernel compositions: `opening_cover`, `section_divider`, `closing_cover`, `narrative`, `legal_notice`, `data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`, `comparison_cards`, `single_chart` (line + heatmap) (D178–D187/D208/D210/D215/D223/D226/D251/D257–D261/D268–D271/D287/D302/D308)
 - Brand slides: covers share one `CoverPayload` (title + optional subtitle/period/date); divider payload is only `section_id` with registry-derived label + section ordinal; renderer owns bands/rules/chrome (descendant CSS + per-type `*-overflow` outline classes); no root title/section/takeaway/disclosure/source_footer
 - `legal_notice`: multipart `notice_id` + adjacent `part`/`total_parts`, plain paragraphs only; part 1 owns title, later parts paint renderer `— continued` + part-of-total; fixed 28/16px type, no adaptive growth or common takeaway/disclosure/footer
 - `single_chart` line: one frozen `chart_paint` drives Chart.js canvas + noscript SVG + one D247 semantic table; null breaks paths; no gridlines; transparent plot/body; readiness flags `semantic_table_present` + `chart_painters`
+- `single_chart` heatmap: one visible native HTML D255 table + mandatory scale key when finite data exists; shared format; generated/fixed scale; renderer-owned light→primary-blue fills + contrast-safe ink; no canvas/SVG/duplicate table; non-strict overflow paints complete uncolored table (D163/D246/D308)
 - Envelope: `meta`, `sections`, `number_formats`, `evidence_registry`, `slides` (D211); `number_formats` uses closed unit vocabulary (`usd`/`percent`/`percentage_points`/`basis_points`)
 - `data_table` paints one full-width D255 table: navy headers, transparent body, native `scope`/`headers`, one common 20–24px fit, em-dash missing, no row/column/value loss (D24–D25/D103–D105)
 - `annex_table` reuses the table surface at 12–24px with disclosure-only notes (no takeaway); `grouped_annex_table` paints 1–2 equal-width headed peers with shared annex size and sequential flat-table non-strict fallback (D184/D185/D258/D259); peer `short_heading` is used only after an actual full-heading fit failure and the full heading stays the accessible name
@@ -62,7 +63,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 
 ## Verification
 
-- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py`
+- `python -m pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py`
 - `python -m impact_slides.renderer_v3.schema_export --check`
 - `python -m impact_slides.renderer_v3.theme_export --check`
 - Full suite: `python -m pytest -q`

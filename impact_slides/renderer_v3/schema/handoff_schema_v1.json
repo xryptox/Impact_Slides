@@ -1069,6 +1069,34 @@
       "title": "FixedDomain",
       "type": "object"
     },
+    "FixedHeatmapScale": {
+      "additionalProperties": false,
+      "description": "Authored finite min < max containing every finite cell (D163/D246).",
+      "properties": {
+        "mode": {
+          "const": "fixed",
+          "default": "fixed",
+          "title": "Mode",
+          "type": "string"
+        },
+        "min": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Min",
+          "type": "string"
+        },
+        "max": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max",
+          "type": "string"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ],
+      "title": "FixedHeatmapScale",
+      "type": "object"
+    },
     "GeneratedDomain": {
       "additionalProperties": false,
       "properties": {
@@ -1120,6 +1148,20 @@
         }
       },
       "title": "GeneratedDomain",
+      "type": "object"
+    },
+    "GeneratedHeatmapScale": {
+      "additionalProperties": false,
+      "description": "Scale derived from all finite heatmap cells (D163/D246/D308).",
+      "properties": {
+        "mode": {
+          "const": "generated",
+          "default": "generated",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "GeneratedHeatmapScale",
       "type": "object"
     },
     "GroupedAnnexPeer": {
@@ -1281,6 +1323,83 @@
         "title"
       ],
       "title": "GroupedAnnexTableSlide",
+      "type": "object"
+    },
+    "HeatmapVisual": {
+      "additionalProperties": false,
+      "description": "Native semantic heatmap: one D255 table + one color scale (D163/D246/D308).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "heatmap",
+          "default": "heatmap",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "table_data": {
+          "$ref": "#/$defs/TableData"
+        },
+        "scale": {
+          "discriminator": {
+            "mapping": {
+              "fixed": "#/$defs/FixedHeatmapScale",
+              "generated": "#/$defs/GeneratedHeatmapScale"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/GeneratedHeatmapScale"
+            },
+            {
+              "$ref": "#/$defs/FixedHeatmapScale"
+            }
+          ],
+          "title": "Scale"
+        }
+      },
+      "required": [
+        "surface_id",
+        "table_data",
+        "scale"
+      ],
+      "title": "HeatmapVisual",
       "type": "object"
     },
     "LeadingBreak": {
@@ -2318,10 +2437,25 @@
     },
     "SingleChartPayload": {
       "additionalProperties": false,
-      "description": "single_chart composition: one line primary, no support yet (D140).",
+      "description": "single_chart composition: one line or heatmap primary, no support yet (D140).",
       "properties": {
         "primary_visual": {
-          "$ref": "#/$defs/LineChartVisual"
+          "discriminator": {
+            "mapping": {
+              "heatmap": "#/$defs/HeatmapVisual",
+              "line": "#/$defs/LineChartVisual"
+            },
+            "propertyName": "chart_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/LineChartVisual"
+            },
+            {
+              "$ref": "#/$defs/HeatmapVisual"
+            }
+          ],
+          "title": "Primary Visual"
         }
       },
       "required": [

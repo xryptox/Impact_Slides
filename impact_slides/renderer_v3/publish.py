@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .charts import chart_boot_script, paint_line_chart_html
+from .charts import chart_boot_script, paint_heatmap_html, paint_line_chart_html
 from .diagnostics import (
     DiagnosticEvent,
     RendererPublicationError,
@@ -167,6 +167,11 @@ def build_presentation_html(
             ".metric-strip .metric-value{margin:0 0 4px;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis)}",
             ".metric-strip .metric-detail{margin:0}",
             # Comparison cards (D187/D261).
+            # Heatmap native table + scale key (D163/D246/D308).
+            "table.heatmap-table td.heatmap-missing{background:transparent}",
+            ".heatmap-scale-key{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 var(--space-sm)}",
+            ".heatmap-scale-stop{display:inline-block;padding:2px 8px;border:var(--border-width-hairline) solid var(--color-rule);font-variant-numeric:tabular-nums lining-nums}",
+            ".heatmap-scale-note{color:var(--color-navy)}",
             ".comparison-cards{display:grid;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
             ".comparison-cards.cols-2{grid-template-columns:1fr 1fr}",
             ".comparison-cards.cols-3{grid-template-columns:1fr 1fr 1fr}",
@@ -205,7 +210,12 @@ def build_presentation_html(
             '<main class="deck-stage">',
         ]
     )
-    has_chart = any(s.layout_type == "single_chart" for s in deck.slides)
+    # Chart.js only for axis-family charts; heatmaps are native HTML (D248).
+    has_chart = any(
+        s.layout_type == "single_chart"
+        and getattr(s.payload.primary_visual, "chart_type", None) == "line"
+        for s in deck.slides
+    )
     for slide in deck.slides:
         sid = f"slide-{slide.slide_number}"
         slide_diag = _diag_attrs(events_by_surface.get(sid, []))
@@ -541,7 +551,7 @@ def _paint_single_chart(
     *,
     svg_only: bool = False,
 ) -> list[str]:
-    """Paint single_chart line tracer from frozen plan (D69/D248/D302)."""
+    """Paint single_chart line or heatmap from frozen plan (D69/D248/D302/D308)."""
     chart = slide.payload.primary_visual
     sp = plans_by_id.get(chart.surface_id)
     if sp is None or not getattr(sp, "chart_paint", None):
@@ -549,7 +559,10 @@ def _paint_single_chart(
             f"missing frozen chart_paint for surface {chart.surface_id!r}"
         )
     attrs = _plan_attrs(sp, events_by_surface)
-    return paint_line_chart_html(sp.chart_paint, plan_attrs=attrs, svg_only=svg_only)
+    paint = sp.chart_paint
+    if paint.get("chart_type") == "heatmap":
+        return paint_heatmap_html(paint, plan_attrs=attrs)
+    return paint_line_chart_html(paint, plan_attrs=attrs, svg_only=svg_only)
 
 
 def _paint_data_table(
@@ -1110,6 +1123,12 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for slide in deck.slides:
         is_chart = slide.layout_type == "single_chart"
+        painters: list[str] = []
+        if is_chart:
+            ctype = getattr(slide.payload.primary_visual, "chart_type", None)
+            if ctype == "line":
+                painters = ["chartjs", "svg"]
+            # heatmap: native HTML only — no canvas/SVG painters (D246/D248).
         rows.append(
             {
                 "slide_number": slide.slide_number,
@@ -1118,9 +1137,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
                 "required_payload_present": True,
                 "semantic_table_present": bool(is_chart),
                 "stable_ids_resolved": True,
-                "chart_painters": (
-                    ["chartjs", "svg"] if is_chart else []
-                ),
+                "chart_painters": painters,
                 "readiness_contract_version": 1,
             }
         )

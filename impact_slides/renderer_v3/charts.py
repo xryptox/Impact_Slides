@@ -1,4 +1,4 @@
-"""Line-chart tracer: freeze plan + dual painters + semantic table (D239/D247/D248/D302)."""
+"""Chart freeze + painters: line tracer + native heatmap (D163/D239/D246–D248/D302/D308)."""
 from __future__ import annotations
 
 import html
@@ -11,6 +11,7 @@ from .format import MISSING_ACCESSIBLE, MISSING_VISIBLE, format_semantic_value
 from .models import (
     LINE_STYLE_PAIRS,
     ChartData,
+    HeatmapVisual,
     LineChartVisual,
     MissingValue,
     NumberFormat,
@@ -23,6 +24,17 @@ from .theme import (
     resolve_color,
     resolve_series_colors,
 )
+
+# Heatmap sequential light → primary blue (D163/D246/D308) — theme palette only.
+def _rgb(key: str, *, role: str) -> tuple[int, int, int]:
+    h = resolve_color(key, role=role).lstrip("#")
+    return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
+
+
+_HEAT_LIGHT = _rgb("sky_blue", role="fill")  # light end of sequential ramp
+_HEAT_PRIMARY = _rgb("primary_blue", role="fill")
+_HEAT_NAVY = resolve_color("navy", role="text_on_light")
+_HEAT_WHITE = resolve_color("white", role="text_on_dark")
 
 # Plot geometry on the 1920 content width (D68 stage; single_chart body region).
 PLOT_W = 1400
@@ -1027,3 +1039,364 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
             "identity_strategy": plan["identity_strategy"],
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Heatmap (D163/D246/D247/D308) — native HTML only, no canvas/SVG painter
+# ---------------------------------------------------------------------------
+
+
+def freeze_heatmap(
+    chart: HeatmapVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int | None = None,
+    colored: bool = True,
+    table_floor: int = 18,
+) -> dict[str, Any]:
+    """Build one frozen native-heatmap plan (D69/D246/D308)."""
+    table = chart.table_data
+    fmt_id = chart.shared_format_id
+    fmt = formats[fmt_id]
+    columns = list(table.columns)
+    rows = list(table.rows)
+    col_ids = [c.column_id for c in columns]
+    table_sid = table.surface_id
+
+    finite: list[Decimal] = []
+    for row in rows:
+        for cid in col_ids:
+            cell = row.cells[cid]
+            if getattr(cell, "type", None) == "number":
+                finite.append(Decimal(cell.value))
+
+    if chart.scale.mode == "fixed":
+        lo = Decimal(chart.scale.min)
+        hi = Decimal(chart.scale.max)
+        equal = False
+    else:
+        lo = min(finite)
+        hi = max(finite)
+        equal = lo == hi
+
+    cells: list[list[dict[str, Any]]] = []
+    cells_vis: list[list[str]] = []
+    cells_acc: list[list[str]] = []
+    for row in rows:
+        vis_row: list[str] = []
+        acc_row: list[str] = []
+        cell_row: list[dict[str, Any]] = []
+        for cid in col_ids:
+            cell = row.cells[cid]
+            fv = format_semantic_value(cell, formats)
+            entry: dict[str, Any] = {
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+                "role": fv.role,
+                "missing": fv.role == "missing",
+                "fill": None,
+                "ink": None,
+                "t": None,
+            }
+            if fv.role == "number" and colored:
+                val = Decimal(cell.value)
+                t = _heatmap_t(val, lo, hi, equal=equal)
+                fill = _heatmap_fill(t)
+                ink = _heatmap_ink(fill)
+                entry.update({"fill": fill, "ink": ink, "t": t, "value": cell.value})
+            cell_row.append(entry)
+            vis_row.append(fv.visible)
+            acc_row.append(fv.accessible)
+        cells.append(cell_row)
+        cells_vis.append(vis_row)
+        cells_acc.append(acc_row)
+
+    # Scale key samples: min / mid / max (or one shared value when equal).
+    key_stops: list[dict[str, Any]] = []
+    if colored and finite:
+        if equal:
+            mid_vis = format_semantic_value(
+                NumberValue(value=format(lo, "f"), format_id=fmt_id), formats
+            ).visible
+            fill = _heatmap_fill(Decimal("0.5"))
+            key_stops.append(
+                {
+                    "label": mid_vis,
+                    "fill": fill,
+                    "ink": _heatmap_ink(fill),
+                    "role": "shared",
+                }
+            )
+        else:
+            mid = (lo + hi) / 2
+            for role, val, t in (
+                ("min", lo, Decimal(0)),
+                ("mid", mid, Decimal("0.5")),
+                ("max", hi, Decimal(1)),
+            ):
+                # Prefer an authored finite cell label when it matches the stop.
+                vis = format_semantic_value(
+                    NumberValue(value=format(val, "f"), format_id=fmt_id), formats
+                ).visible
+                fill = _heatmap_fill(t)
+                key_stops.append(
+                    {
+                        "label": vis,
+                        "fill": fill,
+                        "ink": _heatmap_ink(fill),
+                        "role": role,
+                    }
+                )
+
+    header_full = [table.stub_header.label] + [c.label for c in columns]
+    header_short = [
+        table.stub_header.short_label or table.stub_header.label
+    ] + [c.short_label or c.label for c in columns]
+    row_labels_full = [r.label for r in rows]
+    row_labels_short = [r.short_label or r.label for r in rows]
+
+    scale_label = fmt.scale_label
+    unit_note = _heatmap_unit_note(fmt)
+    all_texts = (
+        header_full
+        + header_short
+        + row_labels_full
+        + row_labels_short
+        + [v for row in cells_vis for v in row]
+        + [s["label"] for s in key_stops]
+        + ([scale_label] if scale_label else [])
+        + ([unit_note] if unit_note else [])
+        + ([MISSING_VISIBLE, MISSING_ACCESSIBLE] if any(
+            c["missing"] for row in cells for c in row
+        ) else [])
+    )
+    if chart.heading:
+        all_texts.append(chart.heading)
+    if chart.subtitle:
+        all_texts.append(chart.subtitle)
+
+    # Geometry is the native table itself — view_h is fitted later in plan.
+    return {
+        "surface_id": chart.surface_id,
+        "table_surface_id": table_sid,
+        "chart_type": "heatmap",
+        "heading": chart.heading,
+        "subtitle": chart.subtitle,
+        "colored": bool(colored and finite),
+        "format_id": fmt_id,
+        "scale": {
+            "mode": chart.scale.mode,
+            "min": format(lo, "f"),
+            "max": format(hi, "f"),
+            "equal": equal,
+            "key_stops": key_stops,
+            "scale_label": scale_label,
+            "unit_note": unit_note,
+            "missing_visible": MISSING_VISIBLE,
+            "missing_accessible": MISSING_ACCESSIBLE,
+        },
+        "col_ids": col_ids,
+        "row_ids": [r.row_id for r in rows],
+        "n_cols": len(col_ids),
+        "n_rows": len(rows),
+        "header_full": header_full,
+        "header_short": header_short,
+        "row_labels_full": row_labels_full,
+        "row_labels_short": row_labels_short,
+        "cells": cells,
+        "cells_vis": cells_vis,
+        "cells_acc": cells_acc,
+        "all_texts": all_texts,
+        "display_headers": list(header_full),
+        "display_row_labels": list(row_labels_full),
+        "col_widths": [],
+        "short_label_used": False,
+        "ellipsized": False,
+        "role_sizes": {"table": table_floor},
+        "geometry": {
+            "view_w": box_w,
+            "view_h": box_h if box_h is not None else 400,
+        },
+        "identity_strategy": None,
+        "placements": [],
+        "gridlines": False,
+    }
+
+
+def paint_heatmap_html(
+    plan: dict[str, Any],
+    *,
+    plan_attrs: str = "",
+) -> list[str]:
+    """Emit one visible native heatmap table + scale key (D246/D247/D308)."""
+    chart_sid = plan["surface_id"]
+    # D255/D308: table DOM uses the nested table surface_id when distinct.
+    table_sid = plan.get("table_surface_id") or chart_sid
+    px = plan.get("role_sizes", {}).get("table", 18)
+    style = f' style="font-size:{int(px)}px"' if px else ""
+    out: list[str] = []
+    out.append(
+        f'<div class="chart-body heatmap-body" data-chart-surface="{_e(chart_sid)}" '
+        f'data-chart-type="heatmap" {plan_attrs}>'
+    )
+    if plan.get("heading"):
+        out.append(
+            f'<div class="band-title chart-pane-title">'
+            f"<span>{_e(plan['heading'])}</span>"
+        )
+        if plan.get("subtitle"):
+            out.append(
+                f'<span class="chart-pane-subtitle">{_e(plan["subtitle"])}</span>'
+            )
+        out.append("</div>")
+
+    headers = list(plan["display_headers"])
+    row_labels = list(plan["display_row_labels"])
+    full_headers = list(plan["header_full"])
+    full_row_labels = list(plan["row_labels_full"])
+    widths = list(plan.get("col_widths") or [])
+    col_ids = list(plan["col_ids"])
+    row_ids = list(plan["row_ids"])
+    stub_hid = f"{table_sid}-h-stub"
+    leaf_hids = [f"{table_sid}-h-{cid}" for cid in col_ids]
+    colored = bool(plan.get("colored"))
+
+    out.append(
+        f'<table class="data-table heatmap-table"{style} '
+        f'id="{_e(table_sid)}-table" data-table-surface="{_e(table_sid)}" '
+        f'data-heatmap-colored="{"true" if colored else "false"}">'
+    )
+    if widths:
+        out.append("<colgroup>")
+        for w in widths:
+            out.append(f'<col style="width:{int(w)}px"/>')
+        out.append("</colgroup>")
+    out.append("<thead><tr>")
+    out.append(
+        f'<th id="{_e(stub_hid)}" scope="col" '
+        f'class="band-table-header align-left stub" '
+        f'title="{_e(full_headers[0])}">{_e(headers[0])}</th>'
+    )
+    for i, hid in enumerate(leaf_hids):
+        out.append(
+            f'<th id="{_e(hid)}" scope="col" '
+            f'class="band-table-header align-right" '
+            f'title="{_e(full_headers[i + 1])}">{_e(headers[i + 1])}</th>'
+        )
+    out.append("</tr></thead><tbody>")
+
+    for r_i, rid_raw in enumerate(row_ids):
+        out.append("<tr>")
+        rid = f"{table_sid}-r-{rid_raw}"
+        out.append(
+            f'<th id="{_e(rid)}" scope="row" class="stub align-left" '
+            f'title="{_e(full_row_labels[r_i])}">{_e(row_labels[r_i])}</th>'
+        )
+        for c_i, cid in enumerate(col_ids):
+            cell = plan["cells"][r_i][c_i]
+            visible = cell["visible"]
+            accessible = cell["accessible"]
+            hrefs = f"{rid} {leaf_hids[c_i]}"
+            aria = (
+                f' aria-label="{_e(accessible)}"'
+                if accessible != visible
+                else ""
+            )
+            fill = cell.get("fill") if colored else None
+            ink = cell.get("ink") if colored else None
+            style_bits: list[str] = []
+            if fill:
+                style_bits.append(f"background-color:{fill}")
+            if ink:
+                style_bits.append(f"color:{ink}")
+            cell_style = f' style="{";".join(style_bits)}"' if style_bits else ""
+            miss_cls = " heatmap-missing" if cell.get("missing") else ""
+            out.append(
+                f'<td headers="{_e(hrefs)}" '
+                f'class="align-right num{miss_cls}"{aria}{cell_style}>'
+                f"{_e(visible)}</td>"
+            )
+        out.append("</tr>")
+    out.append("</tbody></table>")
+
+    # Mandatory scale key when finite colored data exists (D163/D246/D308).
+    scale = plan.get("scale") or {}
+    stops = scale.get("key_stops") or []
+    if colored and stops:
+        out.append(
+            f'<div class="heatmap-scale-key"{style} '
+            f'role="group" aria-label="Color scale">'
+        )
+        for stop in stops:
+            out.append(
+                f'<span class="heatmap-scale-stop" '
+                f'style="background-color:{stop["fill"]};color:{stop["ink"]}">'
+                f'{_e(stop["label"])}</span>'
+            )
+        notes: list[str] = []
+        if scale.get("unit_note"):
+            notes.append(scale["unit_note"])
+        if scale.get("scale_label"):
+            notes.append(scale["scale_label"])
+        notes.append(f"Missing: {scale.get('missing_visible', MISSING_VISIBLE)}")
+        out.append(
+            f'<span class="heatmap-scale-note">{_e(" · ".join(notes))}</span>'
+        )
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+def _heatmap_t(
+    value: Decimal, lo: Decimal, hi: Decimal, *, equal: bool
+) -> Decimal:
+    if equal:
+        return Decimal("0.5")
+    span = hi - lo
+    if span == 0:
+        return Decimal("0.5")
+    t = (value - lo) / span
+    if t < 0:
+        return Decimal(0)
+    if t > 1:
+        return Decimal(1)
+    return t
+
+
+def _heatmap_fill(t: Decimal) -> str:
+    """Monotonic light→primary-blue sequential (D163)."""
+    tt = float(t)
+    r = int(round(_HEAT_LIGHT[0] + (_HEAT_PRIMARY[0] - _HEAT_LIGHT[0]) * tt))
+    g = int(round(_HEAT_LIGHT[1] + (_HEAT_PRIMARY[1] - _HEAT_LIGHT[1]) * tt))
+    b = int(round(_HEAT_LIGHT[2] + (_HEAT_PRIMARY[2] - _HEAT_LIGHT[2]) * tt))
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _heatmap_ink(fill_hex: str) -> str:
+    """Contrast-safe navy/white text on the fill (D246/D308).
+
+    White only for dark fills (relative L <= 0.18); navy otherwise.
+    Navy reaches WCAG AA 4.5:1 near L >= 0.236; white only near L <= 0.183.
+    """
+    h = fill_hex.lstrip("#")
+    r, g, b = (int(h[i : i + 2], 16) for i in (0, 2, 4))
+
+    def lin(c: int) -> float:
+        x = c / 255.0
+        return x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4
+
+    L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    return _HEAT_WHITE if L <= 0.18 else _HEAT_NAVY
+
+
+def _heatmap_unit_note(fmt: NumberFormat) -> str | None:
+    unit = fmt.unit
+    if unit is None:
+        return None
+    return {
+        "usd": "USD",
+        "percent": "Percent",
+        "percentage_points": "Percentage points",
+        "basis_points": "Basis points",
+    }.get(unit)
