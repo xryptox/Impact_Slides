@@ -4399,6 +4399,8 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
             sp.role_sizes["label"] = roles["label"]
             sp.role_sizes["value"] = roles["value"]
         sp.role_sizes["table"] = size
+    elif sp.role == "feature_cards":
+        sp.role_sizes["detail"] = size
 
 
 def _apply_composition_fallback(sp: SurfacePlan) -> None:

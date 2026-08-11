@@ -668,14 +668,35 @@ def test_state_list_indent_uses_list_indent_em():
     assert h > h20, f"paint indent must wrap more than 20px (h={h} h20={h20})"
 
 
-def test_state_panel_css_single_list_indent():
-    """Paint must not stack ul padding-left on global li margin-left."""
-    import inspect
-    from impact_slides.renderer_v3 import publish
-
-    src = inspect.getsource(publish)
-    assert '".state-panel ul{margin:0 0 4px;padding-left:0}"' in src
-    assert '".state-panel ul{margin:0 0 4px;padding-left:1.25em}"' not in src
+def test_state_panel_css_single_list_indent(tmp_path: Path):
+    """Emitted paint: state-panel ul uses padding-left:0; li keep one global indent."""
+    raw = _raw()
+    st = next(s for s in raw["slides"] if s["layout_type"] == "state_transition")
+    st["payload"]["before"]["blocks"] = [
+        {
+            "block_id": "b-bullets",
+            "type": "bullet_list",
+            "items": [
+                {"runs": [{"text": "First before bullet"}]},
+                {"runs": [{"text": "Second before bullet"}]},
+            ],
+        }
+    ]
+    raw["slides"] = [st]
+    raw["evidence_registry"] = {"src-a": raw["evidence_registry"]["src-a"]}
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    # Public HTML contract: bullets under state-panel, single list indent in CSS.
+    assert 'class="state-panel' in html
+    assert "<ul>" in html
+    assert "First before bullet" in html
+    assert ".state-panel ul{margin:0 0 4px;padding-left:0}" in html
+    assert ".state-panel ul{margin:0 0 4px;padding-left:1.25em}" not in html
+    # Global li indent remains exactly once (not also on the ul).
+    assert "li{margin:0;padding:0;margin-left:1.25em}" in html
 
 
 def test_evidence_review_near_overflow_uses_sequential_fallback(tmp_path: Path):
