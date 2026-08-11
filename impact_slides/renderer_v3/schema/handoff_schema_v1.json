@@ -409,7 +409,7 @@
     },
     "ChartData": {
       "additionalProperties": false,
-      "description": "Ordered category-and-series matrix (D228/D291).\n\nFamily cardinality (line vs bar category/series floors) is enforced on the\nchart visual; this model owns rectangular identity only.",
+      "description": "Ordered category-and-series matrix (D228/D291).\n\nShared series ceiling is 6; family floors/ceilings (line/grouped/hbar 1–4,\nstacked 2–6) are enforced on each chart visual. This model owns rectangular\nidentity only.",
       "properties": {
         "categories": {
           "items": {

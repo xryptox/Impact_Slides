@@ -1016,8 +1016,9 @@ class ChartSeries(ClosedModel):
 class ChartData(ClosedModel):
     """Ordered category-and-series matrix (D228/D291).
 
-    Family cardinality (line vs bar category/series floors) is enforced on the
-    chart visual; this model owns rectangular identity only.
+    Shared series ceiling is 6; family floors/ceilings (line/grouped/hbar 1–4,
+    stacked 2–6) are enforced on each chart visual. This model owns rectangular
+    identity only.
     """
 
     categories: list[ChartCategory] = Field(min_length=1, max_length=24)
@@ -2274,8 +2275,8 @@ class SingleChartSlide(_SlideBase):
 
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
 # plus annex/comparison tables (#180), single_chart axis charts
-# (line #182; grouped/horizontal bars #183; waterfall #186; heatmap #187),
-# linear/grouping compositions (#192), and relationship/decision compositions (#193).
+# (line #182; grouped/horizontal bars #183; stacked_bar #184; waterfall #186;
+# heatmap #187), linear/grouping compositions (#192), and relationship/decision compositions (#193).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.

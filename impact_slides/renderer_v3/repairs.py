@@ -1065,9 +1065,10 @@ def repair_source_footer_names(raw: Any, events: list[DiagnosticEvent]) -> Any:
 
 def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) -> Any:
     """D230 non-strict: authored domain bounds that fail to contain every finite
-    chart value are fixed before revalidation (strict rejects). A fixed domain is
-    replaced by a diagnosed safe generated domain; offending authored generated
-    min/max keys are dropped so the domain regenerates from the data."""
+    chart value are fixed before revalidation (strict rejects). Stacked bars also
+    require zero + signed stack extents (D83/D242). A fixed domain is replaced by
+    a diagnosed safe generated domain; offending authored generated min/max keys
+    are dropped so the domain regenerates from the data."""
     if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
         return raw
     out = deepcopy(raw)
