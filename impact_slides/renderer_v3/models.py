@@ -735,7 +735,7 @@ class DataPipelinePayload(ClosedModel):
 
 
 # ---------------------------------------------------------------------------
-# Axis charts + heatmap + single_chart composition (D163/D227–D240, D243, D246, D290–D302, D308)
+# Axis charts + heatmap + single_chart composition (D162/D163/D227–D240, D243, D245–D248, D290–D302, D307/D308)
 # ---------------------------------------------------------------------------
 
 
@@ -1796,8 +1796,8 @@ class SingleChartSlide(_SlideBase):
 
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
 # plus annex/comparison tables (#180), single_chart axis charts
-# (line #182; grouped/horizontal bars #183), and linear/grouping
-# compositions (#192).
+# (line #182; grouped/horizontal bars #183; waterfall #186; heatmap #187),
+# and linear/grouping compositions (#192).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.

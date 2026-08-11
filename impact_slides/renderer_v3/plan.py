@@ -683,7 +683,7 @@ def _collect_surfaces(
                 out.append(bp)
                 adaptive_surfaces.append(bp)
         elif lt == "single_chart":
-            # single_chart axis charts + heatmap (D239/D240/D243/D246/D302/D308).
+            # single_chart axis charts + heatmap (D239/D240/D243/D245/D246/D302/D307/D308).
             from .charts import freeze_chart, freeze_heatmap
             from .models import HeatmapVisual
 
