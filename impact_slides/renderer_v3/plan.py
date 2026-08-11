@@ -2918,18 +2918,19 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
         h += len(ls) * _line_box(meta_px) + CARD_MARGIN
         ls = lines(state["heading"], heading_px, inner_w, strong=True, max_lines=3)
         h += len(ls) * _line_box(heading_px) + CARD_INNER_GAP
-        block_bits: list[tuple[str, str, int]] = []
+        # Paint: one margin-bottom per p or ul block (not per li).
         for b in state["blocks"]:
             if b["type"] == "paragraphs":
                 for para in b["paragraphs"]:
-                    block_bits.append(("p", para, inner_w))
+                    ls = lines(para, body_px, inner_w, max_lines=4)
+                    h += len(ls) * _line_box(body_px) + CARD_MARGIN
             else:
+                li_w = max(40, inner_w - math.ceil(body_px * LIST_INDENT_EM))
                 for item in b["items"]:
-                    block_bits.append(("li", item, max(40, inner_w - math.ceil(body_px * LIST_INDENT_EM))))
-        for _kind, text, tw in block_bits:
-            ls = lines(text, body_px, tw, max_lines=4 if _kind == "p" else 3)
-            # Paint always applies p/ul margin-bottom 4, including the last block.
-            h += len(ls) * _line_box(body_px) + CARD_MARGIN
+                    ls = lines(item, body_px, li_w, max_lines=3)
+                    h += len(ls) * _line_box(body_px)
+                # single ul margin-bottom
+                h += CARD_MARGIN
         h += CARD_PAD
         return h
 
@@ -4527,31 +4528,6 @@ def _record_surface_adaptations(
                 surface_id=sp.surface_id,
             )
         )
-
-def _record_surface_adaptations(
-    sp: SurfacePlan, size: int, events: list[DiagnosticEvent]
-) -> None:
-    if _is_rectangular_table_spec(sp._table_spec) and sp.role != "comparison_cards":
-        _record_table_adaptations(sp, size, events)
-        return
-    ok, wrapped = _surface_fits_detail(sp, size)
-    if ok and wrapped and "plan.text_wrapped" not in sp.adaptation_codes:
-        sp.adaptation_codes.append("plan.text_wrapped")
-        events.append(
-            event(
-                code="plan.text_wrapped",
-                severity="info",
-                phase="plan",
-                role=sp.role,
-                path=f"/slides/{sp.slide_index}/{sp.role}",
-                action="measure",
-                result="accepted",
-                slide_number=sp.slide_number,
-                layout_type=sp.layout_type,
-                surface_id=sp.surface_id,
-            )
-        )
-
 
 def _apply_surface_floor_adaptations(
     sp: SurfacePlan, size: int, events: list[DiagnosticEvent]

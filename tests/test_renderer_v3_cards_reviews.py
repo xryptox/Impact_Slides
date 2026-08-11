@@ -676,3 +676,100 @@ def test_state_panel_css_single_list_indent():
     src = inspect.getsource(publish)
     assert '".state-panel ul{margin:0 0 4px;padding-left:0}"' in src
     assert '".state-panel ul{margin:0 0 4px;padding-left:1.25em}"' not in src
+
+
+def test_evidence_review_near_overflow_uses_sequential_fallback(tmp_path: Path):
+    raw = _raw()
+    er = next(s for s in raw["slides"] if s["layout_type"] == "evidence_review")
+    long_stmt = {
+        "runs": [{"text": ("Evidence finding statement that wraps and stacks. " * 20).strip()}]
+    }
+    er["payload"]["findings"] = [
+        {
+            "finding_id": f"f{i}",
+            "statement": long_stmt,
+            "evidence_ids": ["src-a"],
+        }
+        for i in range(6)
+    ]
+    er["evidence_ids"] = ["src-a"]
+    raw["slides"] = [er]
+    raw["evidence_registry"] = {"src-a": raw["evidence_registry"]["src-a"]}
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=False)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "evidence_review")
+    assert plan["fallback"]
+    assert "card-comp-fallback" in html
+    assert result["status"] == "degraded"
+
+
+def test_risk_opportunity_near_overflow_uses_sequential_fallback(tmp_path: Path):
+    raw = _raw()
+    risk = next(s for s in raw["slides"] if s["layout_type"] == "risk_opportunity_review")
+    long_stmt = {
+        "runs": [{"text": ("Risk or opportunity statement that fills the column. " * 16).strip()}]
+    }
+    long_detail = {
+        "runs": [{"text": ("Supporting detail that also wraps in the card. " * 10).strip()}]
+    }
+    items = [
+        {"item_id": f"x{i}", "statement": long_stmt, "detail": long_detail}
+        for i in range(5)
+    ]
+    risk["payload"]["risks"] = items
+    risk["payload"]["opportunities"] = [
+        {**it, "item_id": f"o{i}"} for i, it in enumerate(items)
+    ]
+    raw["slides"] = [risk]
+    raw["evidence_registry"] = {"src-a": raw["evidence_registry"]["src-a"]}
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=False)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "risk_opportunity_review")
+    assert plan["fallback"]
+    assert "card-comp-fallback" in html
+    assert result["status"] == "degraded"
+
+
+def test_state_bullet_list_budgets_one_ul_margin():
+    """Paint applies one ul margin-bottom; fit must not charge CARD_MARGIN per li."""
+    body = CARD_FIXED_BODY_PX
+
+    def st(n: int) -> SurfacePlan:
+        return SurfacePlan(
+            surface_id="t-st",
+            role="state_transition",
+            slide_number=1,
+            slide_index=0,
+            layout_type="state_transition",
+            slot_order=10,
+            design_stage_region=1,
+            role_sizes={"heading": 22, "body": body, "meta": 14},
+            _box_w=1728,
+            _box_h=10**9,
+            _card_spec={
+                "kind": "state_transition",
+                "before": {
+                    "heading": "Before",
+                    "blocks": [
+                        {"type": "bullet_list", "items": ["Short bullet."] * n}
+                    ],
+                },
+                "after": {
+                    "heading": "After",
+                    "blocks": [{"type": "paragraphs", "paragraphs": ["S"]}],
+                },
+                "steps": [],
+            },
+        )
+
+    _, h1 = _card_fit_detail(st(1), body)
+    _, h4 = _card_fit_detail(st(4), body)
+    assert h4 - h1 == 3 * _line_box(body)
