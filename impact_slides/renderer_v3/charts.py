@@ -1,17 +1,23 @@
-"""Chart freeze + painters: line tracer + native heatmap (D163/D239/D246–D248/D302/D308)."""
+"""Chart freeze + painters: axis charts (line/grouped/horizontal bars) + native heatmap.
+
+Covers D239/D240/D243/D247/D248/D302, shared D71–D73/D160 bar geometry, and
+D163/D246–D248/D308 semantic heatmaps.
+"""
 from __future__ import annotations
 
 import html
 import json
 import math
 from decimal import Decimal
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Union
 
 from .format import MISSING_ACCESSIBLE, MISSING_VISIBLE, format_semantic_value
 from .models import (
     LINE_STYLE_PAIRS,
     ChartData,
+    GroupedBarChartVisual,
     HeatmapVisual,
+    HorizontalBarChartVisual,
     LineChartVisual,
     MissingValue,
     NumberFormat,
@@ -24,6 +30,11 @@ from .theme import (
     resolve_color,
     resolve_series_colors,
 )
+
+AxisChartVisual = Union[
+    LineChartVisual, GroupedBarChartVisual, HorizontalBarChartVisual
+]
+BarChartVisual = Union[GroupedBarChartVisual, HorizontalBarChartVisual]
 
 # Heatmap sequential light → primary blue (D163/D246/D308) — theme palette only.
 def _rgb(key: str, *, role: str) -> tuple[int, int, int]:
@@ -46,6 +57,11 @@ PAD_B = 64
 MARKER_R = 5
 LABEL_CLEAR = MARKER_R + 4  # D53/D62 clearance
 POINT_LABEL_CANDIDATES = ("above", "below", "left", "right", "leader")
+# D160 theme-owned thickness bounds (px at 1920×1080).
+BAR_MIN_THICKNESS = 12
+BAR_MAX_THICKNESS = 56
+BAR_CATEGORY_GAP_RATIO = 0.28
+BAR_SERIES_GAP_RATIO = 0.12
 
 # Chart typography floors / ceilings (D294).
 _ROLE_BOUNDS: dict[str, tuple[int, int]] = {
@@ -225,7 +241,324 @@ def freeze_line_chart(
     }
 
 
-def paint_line_chart_html(
+def freeze_bar_chart(
+    chart: BarChartVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+) -> dict[str, Any]:
+    """Frozen painter-neutral plan for grouped/horizontal bars (D240/D243)."""
+    horizontal = chart.chart_type == "horizontal_bar"
+    fmt = formats[chart.value_axes.primary.format_id]
+    data = chart.chart_data
+    cats = list(data.categories)
+    series_plans = _resolve_series(data, family="grouped_bar")
+    domain = _resolve_domain(chart, data, include_zero=True)
+    ticks = list(domain["ticks"])
+    show_values = _ordinary_values_show(chart)
+    leading = (
+        chart.value_axes.primary.leading_break.to
+        if chart.value_axes.primary.leading_break
+        else None
+    )
+    break_to = float(Decimal(leading)) if leading is not None else None
+
+    # Groups need extra category-axis chrome clearance.
+    group_pad = 28 if chart.category_groups else 0
+    if horizontal:
+        pad_l = max(PAD_L, 120)  # category labels on left
+        pad_r = max(PAD_R, 96)  # exterior value labels
+        pad_t = PAD_T
+        pad_b = PAD_B + group_pad
+    else:
+        pad_l = PAD_L
+        pad_r = max(PAD_R // 2, 48)
+        pad_t = max(PAD_T, 40)  # outside value headroom
+        pad_b = PAD_B + group_pad
+
+    plot_w = max(200, min(PLOT_W, box_w - pad_l - pad_r))
+    plot_h = max(160, min(PLOT_H, box_h - pad_t - pad_b - 40))
+    n_cat = len(cats)
+    n_ser = len(series_plans)
+    geom = _bar_slot_geometry(
+        plot_w=plot_w,
+        plot_h=plot_h,
+        n_cat=n_cat,
+        n_ser=n_ser,
+        horizontal=horizontal,
+        pad_l=pad_l,
+        pad_t=pad_t,
+    )
+
+    v_min = float(domain["min"])
+    v_max = float(domain["max"])
+    # Visible domain starts at break target when leading break omits baseline.
+    vis_min = break_to if break_to is not None else v_min
+    vis_max = v_max
+    span = (vis_max - vis_min) or 1.0
+
+    def value_to_y(v: float) -> float:
+        return pad_t + plot_h - ((v - vis_min) / span) * plot_h
+
+    def value_to_x(v: float) -> float:
+        return pad_l + ((v - vis_min) / span) * plot_w
+
+    zero_v = 0.0 if break_to is None else break_to
+    zero_y = value_to_y(zero_v)
+    zero_x = value_to_x(zero_v)
+
+    bars: list[dict[str, Any]] = []
+    points: list[dict[str, Any]] = []
+    for c_i, cat in enumerate(cats):
+        slot = geom["slots"][c_i]
+        for s_i, sp in enumerate(series_plans):
+            raw = data.series[s_i].values[c_i]
+            bar_origin = slot["origins"][s_i]
+            thick = geom["thickness"]
+            if raw is None:
+                point = {
+                    "series_id": sp["series_id"],
+                    "category_id": cat.category_id,
+                    "x": zero_x if horizontal else bar_origin + thick / 2,
+                    "y": (bar_origin + thick / 2) if horizontal else zero_y,
+                    "value": None,
+                    "visible": MISSING_VISIBLE,
+                    "accessible": MISSING_ACCESSIBLE,
+                    "finite": False,
+                }
+                points.append(point)
+                bars.append(
+                    {
+                        **point,
+                        "missing": True,
+                        "x": bar_origin if not horizontal else zero_x,
+                        "y": zero_y if not horizontal else bar_origin,
+                        "width": 0.0,
+                        "height": 0.0,
+                        "thickness": thick,
+                        "sign": 0,
+                    }
+                )
+                continue
+            num = float(Decimal(raw))
+            fv = format_semantic_value(
+                NumberValue(
+                    value=raw, format_id=chart.value_axes.primary.format_id
+                ),
+                formats,
+            )
+            if horizontal:
+                x0 = zero_x
+                x1 = value_to_x(num)
+                left, right = (x0, x1) if x1 >= x0 else (x1, x0)
+                width = abs(x1 - x0)
+                # Zero-height real mark still owns a 2px stub for visibility.
+                if width < 0.5 and num == 0.0 and break_to is None:
+                    width = 2.0
+                    left = zero_x
+                y = bar_origin
+                bar = {
+                    "series_id": sp["series_id"],
+                    "category_id": cat.category_id,
+                    "x": left,
+                    "y": y,
+                    "width": width,
+                    "height": thick,
+                    "thickness": thick,
+                    "value": raw,
+                    "numeric": num,
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "finite": True,
+                    "missing": False,
+                    "sign": 0 if num == 0 else (1 if num > 0 else -1),
+                    "end_x": x1,
+                    "end_y": y + thick / 2,
+                }
+                point = {
+                    "series_id": sp["series_id"],
+                    "category_id": cat.category_id,
+                    "x": x1,
+                    "y": y + thick / 2,
+                    "value": raw,
+                    "numeric": num,
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "finite": True,
+                }
+            else:
+                y0 = zero_y
+                y1 = value_to_y(num)
+                top, bot = (y1, y0) if y1 <= y0 else (y0, y1)
+                height = abs(y1 - y0)
+                if height < 0.5 and num == 0.0:
+                    height = 2.0
+                    top = zero_y - 1.0
+                x = bar_origin
+                bar = {
+                    "series_id": sp["series_id"],
+                    "category_id": cat.category_id,
+                    "x": x,
+                    "y": top,
+                    "width": thick,
+                    "height": height,
+                    "thickness": thick,
+                    "value": raw,
+                    "numeric": num,
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "finite": True,
+                    "missing": False,
+                    "sign": 0 if num == 0 else (1 if num > 0 else -1),
+                    "end_x": x + thick / 2,
+                    "end_y": y1,
+                }
+                point = {
+                    "series_id": sp["series_id"],
+                    "category_id": cat.category_id,
+                    "x": x + thick / 2,
+                    "y": y1,
+                    "value": raw,
+                    "numeric": num,
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "finite": True,
+                }
+            bars.append(bar)
+            points.append(point)
+
+    role_sizes = _role_sizes(chart)
+    # Multi-series always legend; single-series may use pane_title (D240/D243).
+    identity = _bar_identity_strategy(chart, series_plans)
+    placements = _place_bar_labels(
+        bars,
+        series_plans,
+        show_values=show_values,
+        label_px=role_sizes["ordinary_values"],
+        plot=(pad_l, pad_t, pad_l + plot_w, pad_t + plot_h),
+        horizontal=horizontal,
+    )
+
+    # Boxed labels (D235/D146) — structural, never suppressed.
+    boxed_plan = _freeze_boxed_labels(
+        chart, formats, bars, cats, role_sizes, horizontal=horizontal
+    )
+    placements.extend(boxed_plan["placements"])
+
+    groups_plan = _freeze_category_groups(
+        chart, cats, geom, pad_l, pad_t, plot_w, plot_h, horizontal=horizontal
+    )
+
+    tick_labels = [
+        format_semantic_value(
+            NumberValue(value=t, format_id=chart.value_axes.primary.format_id),
+            formats,
+        ).visible
+        for t in ticks
+    ]
+    # Category centers for axis ticks.
+    cat_centers = []
+    for c_i, cat in enumerate(cats):
+        slot = geom["slots"][c_i]
+        if horizontal:
+            cat_centers.append(
+                {
+                    "category_id": cat.category_id,
+                    "label": cat.label,
+                    "short_label": cat.short_label,
+                    "x": pad_l - 10,
+                    "y": slot["center"],
+                }
+            )
+        else:
+            cat_centers.append(
+                {
+                    "category_id": cat.category_id,
+                    "label": cat.label,
+                    "short_label": cat.short_label,
+                    "x": slot["center"],
+                    "y": pad_t + plot_h + 22,
+                }
+            )
+
+    table = _semantic_table(
+        chart,
+        formats,
+        series_plans,
+        domain,
+        identity=identity,
+        scale_label=fmt.scale_label,
+        chart_type=chart.chart_type,
+        groups=groups_plan,
+        boxed=boxed_plan.get("facts") or [],
+    )
+
+    return {
+        "surface_id": chart.surface_id,
+        "chart_type": chart.chart_type,
+        "heading": chart.heading,
+        "subtitle": chart.subtitle,
+        "categories": cat_centers,
+        "series": series_plans,
+        "points": points,
+        "bars": bars,
+        "placements": placements,
+        "show_ordinary_values": show_values,
+        "identity_strategy": identity,
+        "role_sizes": role_sizes,
+        "geometry": {
+            "pad_l": pad_l,
+            "pad_r": pad_r,
+            "pad_t": pad_t,
+            "pad_b": pad_b,
+            "plot_w": plot_w,
+            "plot_h": plot_h,
+            "marker_r": 0,
+            "view_w": pad_l + plot_w + pad_r,
+            "view_h": pad_t + plot_h + pad_b,
+            "thickness": geom["thickness"],
+            "category_pitch": geom["category_pitch"],
+            "series_gap": geom["series_gap"],
+            "horizontal": horizontal,
+            "zero_x": zero_x,
+            "zero_y": zero_y,
+        },
+        "domain": domain,
+        "tick_labels": tick_labels,
+        "category_axis": {
+            "visible": chart.category_axis.visible,
+            "title": chart.category_axis.title,
+        },
+        "value_axis": {
+            "visible": chart.value_axes.primary.visible,
+            "title": chart.value_axes.primary.title,
+            "format_id": chart.value_axes.primary.format_id,
+            "leading_break": leading,
+            "scale_label": fmt.scale_label,
+        },
+        "category_groups": groups_plan,
+        "boxed_labels": boxed_plan.get("labels") or [],
+        "semantic_table": table,
+        "theme": chart_js_tokens(),
+        "gridlines": False,
+    }
+
+
+def freeze_chart(
+    chart: AxisChartVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+) -> dict[str, Any]:
+    """Dispatch freeze by chart_type (D238)."""
+    if isinstance(chart, LineChartVisual):
+        return freeze_line_chart(chart, formats, box_w=box_w, box_h=box_h)
+    return freeze_bar_chart(chart, formats, box_w=box_w, box_h=box_h)
+
+
+def paint_chart_html(
     plan: dict[str, Any],
     *,
     plan_attrs: str = "",
@@ -233,10 +566,11 @@ def paint_line_chart_html(
 ) -> list[str]:
     """Emit Chart.js canvas + noscript SVG + one D247 semantic table."""
     sid = plan["surface_id"]
+    ctype = plan.get("chart_type", "line")
     out: list[str] = []
     out.append(
         f'<div class="chart-body" data-chart-surface="{_e(sid)}" '
-        f'data-chart-type="line" {plan_attrs}>'
+        f'data-chart-type="{_e(ctype)}" {plan_attrs}>'
     )
     if plan.get("heading"):
         out.append(
@@ -255,12 +589,12 @@ def paint_line_chart_html(
 
     g = plan["geometry"]
     vw, vh = g["view_w"], g["view_h"]
-    svg = paint_line_chart_svg(plan)
+    svg = paint_chart_svg(plan)
     table_html = paint_semantic_table(plan)
 
     # Label/axis chrome SVG shares frozen plan with both painters (D248/D53).
-    chrome_svg = paint_line_chart_svg(plan, marks=False)
-    marks_svg = paint_line_chart_svg(plan, marks=True, chrome=False)
+    chrome_svg = paint_chart_svg(plan, marks=False)
+    marks_svg = paint_chart_svg(plan, marks=True, chrome=False)
     if svg_only:
         out.append(
             f'<div class="chart-plot" style="width:{vw}px;height:{vh}px" aria-hidden="true">'
@@ -287,7 +621,17 @@ def paint_line_chart_html(
     return out
 
 
-def paint_line_chart_svg(
+def paint_line_chart_html(
+    plan: dict[str, Any],
+    *,
+    plan_attrs: str = "",
+    svg_only: bool = False,
+) -> list[str]:
+    """Back-compat alias for line-chart HTML paint."""
+    return paint_chart_html(plan, plan_attrs=plan_attrs, svg_only=svg_only)
+
+
+def paint_chart_svg(
     plan: dict[str, Any],
     *,
     marks: bool = True,
@@ -295,9 +639,31 @@ def paint_line_chart_svg(
 ) -> str:
     """No-JS SVG painter consuming the frozen plan (D57/D248).
 
-    ``marks`` = series paths/markers; ``chrome`` = axes/ticks/labels/identities.
+    ``marks`` = series paths/markers/bars; ``chrome`` = axes/ticks/labels.
     Chart.js path overlays chrome SVG on the canvas for placement parity.
     """
+    ctype = plan.get("chart_type", "line")
+    if ctype in ("grouped_bar", "horizontal_bar"):
+        return _paint_bar_svg(plan, marks=marks, chrome=chrome)
+    return _paint_line_svg(plan, marks=marks, chrome=chrome)
+
+
+def paint_line_chart_svg(
+    plan: dict[str, Any],
+    *,
+    marks: bool = True,
+    chrome: bool = True,
+) -> str:
+    """Back-compat alias."""
+    return paint_chart_svg(plan, marks=marks, chrome=chrome)
+
+
+def _paint_line_svg(
+    plan: dict[str, Any],
+    *,
+    marks: bool = True,
+    chrome: bool = True,
+) -> str:
     g = plan["geometry"]
     vw, vh = g["view_w"], g["view_h"]
     pl, pt, pw, ph = g["pad_l"], g["pad_t"], g["plot_w"], g["plot_h"]
@@ -434,6 +800,209 @@ def paint_line_chart_svg(
     return "".join(parts)
 
 
+def _paint_bar_svg(
+    plan: dict[str, Any],
+    *,
+    marks: bool = True,
+    chrome: bool = True,
+) -> str:
+    g = plan["geometry"]
+    vw, vh = g["view_w"], g["view_h"]
+    pl, pt, pw, ph = g["pad_l"], g["pad_t"], g["plot_w"], g["plot_h"]
+    horizontal = bool(g.get("horizontal"))
+    ink = resolve_color("navy", role="text_on_light")
+    border = resolve_color("navy", role="border")
+    parts = [
+        f'<svg class="chart-svg" viewBox="0 0 {vw} {vh}" width="{vw}" height="{vh}" '
+        f'role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect class="chart-plot-bg" x="0" y="0" width="{vw}" height="{vh}" fill="none"/>'
+    ]
+    if chrome:
+        if plan["category_axis"]["visible"] or plan["value_axis"]["visible"]:
+            # Baseline axes.
+            parts.append(
+                f'<line x1="{pl}" y1="{pt + ph}" x2="{pl + pw}" y2="{pt + ph}" '
+                f'stroke="{_e(border)}" stroke-width="1"/>'
+            )
+            parts.append(
+                f'<line x1="{pl}" y1="{pt}" x2="{pl}" y2="{pt + ph}" '
+                f'stroke="{_e(border)}" stroke-width="1"/>'
+            )
+        # Semantic zero line only when zero is inside the visible domain (D84/D157).
+        leading = plan["value_axis"].get("leading_break")
+        d_min = float(Decimal(plan["domain"]["min"]))
+        d_max = float(Decimal(plan["domain"]["max"]))
+        if leading is None and d_min < 0 < d_max:
+            if horizontal:
+                zx = g["zero_x"]
+                parts.append(
+                    f'<line class="zero-line" x1="{zx:.1f}" y1="{pt}" '
+                    f'x2="{zx:.1f}" y2="{pt + ph}" stroke="{_e(border)}" '
+                    f'stroke-width="1" stroke-dasharray="4 3"/>'
+                )
+            else:
+                zy = g["zero_y"]
+                parts.append(
+                    f'<line class="zero-line" x1="{pl}" y1="{zy:.1f}" '
+                    f'x2="{pl + pw}" y2="{zy:.1f}" stroke="{_e(border)}" '
+                    f'stroke-width="1" stroke-dasharray="4 3"/>'
+                )
+        if leading is not None:
+            # Break chrome at the disclosed boundary (D157/D243).
+            if horizontal:
+                bx = g["zero_x"]
+                parts.append(
+                    f'<g class="leading-break" data-break-to="{_e(leading)}">'
+                    f'<line x1="{bx:.1f}" y1="{pt}" x2="{bx:.1f}" y2="{pt + ph}" '
+                    f'stroke="{_e(border)}" stroke-width="1.5"/>'
+                    f'<path d="M{bx - 6:.1f},{pt + ph / 2 - 8} l6,8 l-6,8" '
+                    f'fill="none" stroke="{_e(border)}" stroke-width="1.5"/>'
+                    f"</g>"
+                )
+            else:
+                by = g["zero_y"]
+                parts.append(
+                    f'<g class="leading-break" data-break-to="{_e(leading)}">'
+                    f'<line x1="{pl}" y1="{by:.1f}" x2="{pl + pw}" y2="{by:.1f}" '
+                    f'stroke="{_e(border)}" stroke-width="1.5"/>'
+                    f"</g>"
+                )
+
+        cat_px = plan["role_sizes"]["category_ticks"]
+        val_px = plan["role_sizes"]["value_ticks"]
+        if plan["category_axis"]["visible"]:
+            for cat in plan["categories"]:
+                if horizontal:
+                    parts.append(
+                        f'<text x="{cat["x"]:.1f}" y="{cat["y"] + 4:.1f}" text-anchor="end" '
+                        f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                    )
+                else:
+                    parts.append(
+                        f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
+                        f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                    )
+        if plan["value_axis"]["visible"]:
+            vis_min = float(Decimal(leading)) if leading is not None else d_min
+            vis_max = d_max
+            span = (vis_max - vis_min) or 1.0
+            for tick, label in zip(plan["domain"]["ticks"], plan["tick_labels"]):
+                tv = float(Decimal(tick))
+                if leading is not None and tv < vis_min - 1e-12:
+                    continue
+                if horizontal:
+                    x = pl + ((tv - vis_min) / span) * pw
+                    parts.append(
+                        f'<text x="{x:.1f}" y="{pt + ph + 22}" text-anchor="middle" '
+                        f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                        f'fill="{_e(ink)}">{_e(label)}</text>'
+                    )
+                else:
+                    y = pt + ph - ((tv - vis_min) / span) * ph
+                    parts.append(
+                        f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
+                        f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                        f'fill="{_e(ink)}">{_e(label)}</text>'
+                    )
+        title_px = plan["role_sizes"]["axis_titles"]
+        cat_title = plan["category_axis"].get("title")
+        val_title = plan["value_axis"].get("title")
+        if plan["category_axis"]["visible"] and cat_title:
+            if horizontal:
+                cy = pt + ph / 2
+                parts.append(
+                    f'<text x="18" y="{cy}" text-anchor="middle" font-size="{title_px}" '
+                    f'transform="rotate(-90 18 {cy})" fill="{_e(ink)}">{_e(cat_title)}</text>'
+                )
+            else:
+                parts.append(
+                    f'<text x="{pl + pw / 2}" y="{pt + ph + 52}" text-anchor="middle" '
+                    f'font-size="{title_px}" fill="{_e(ink)}">{_e(cat_title)}</text>'
+                )
+        if plan["value_axis"]["visible"] and val_title:
+            if horizontal:
+                parts.append(
+                    f'<text x="{pl + pw / 2}" y="{pt + ph + 52}" text-anchor="middle" '
+                    f'font-size="{title_px}" fill="{_e(ink)}">{_e(val_title)}</text>'
+                )
+            else:
+                cy = pt + ph / 2
+                parts.append(
+                    f'<text x="16" y="{cy}" text-anchor="middle" font-size="{title_px}" '
+                    f'transform="rotate(-90 16 {cy})" fill="{_e(ink)}">{_e(val_title)}</text>'
+                )
+
+        # Category group brackets (D155/D237).
+        for grp in plan.get("category_groups") or []:
+            x1, y1, x2, y2 = grp["x1"], grp["y1"], grp["x2"], grp["y2"]
+            parts.append(
+                f'<g class="category-group" data-group-id="{_e(grp["group_id"])}">'
+                f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+                f'stroke="{_e(border)}" stroke-width="1.5"/>'
+                f'<text x="{(x1 + x2) / 2:.1f}" y="{y2 + 14:.1f}" text-anchor="middle" '
+                f'font-size="{cat_px}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
+                f"</g>"
+            )
+
+    series_by_id = {s["series_id"]: s for s in plan["series"]}
+    if marks:
+        for bar in plan.get("bars") or []:
+            if bar.get("missing") or not bar.get("finite"):
+                continue
+            color = series_by_id[bar["series_id"]]["color"]
+            parts.append(
+                f'<rect class="bar" data-series="{_e(bar["series_id"])}" '
+                f'data-category="{_e(bar["category_id"])}" '
+                f'x="{bar["x"]:.1f}" y="{bar["y"]:.1f}" '
+                f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
+                f'fill="{_e(color)}"/>'
+            )
+
+    if chrome:
+        lab_px = plan["role_sizes"]["ordinary_values"]
+        for place in plan["placements"]:
+            if place["class"] == "suppressed":
+                continue
+            kind = place.get("kind")
+            if kind == "value" and plan["show_ordinary_values"]:
+                # D80/D303: ordinary bar values are navy; leaders may use series color.
+                series_color = series_by_id[place["series_id"]]["color"]
+                label_color = series_color if place["class"] == "leader" else ink
+                tx, ty = place["x"], place["y"]
+                if place["class"] == "leader":
+                    parts.append(
+                        f'<line x1="{place.get("anchor_x", tx):.1f}" '
+                        f'y1="{place.get("anchor_y", ty):.1f}" '
+                        f'x2="{tx:.1f}" y2="{ty:.1f}" '
+                        f'stroke="{_e(series_color)}" stroke-width="1" opacity="0.7"/>'
+                    )
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(label_color)}" data-placement="{place["class"]}">'
+                    f'{_e(place["text"])}</text>'
+                )
+            elif kind == "boxed_label":
+                tx, ty = place["x"], place["y"]
+                tw = place.get("box_w", 40)
+                th = place.get("box_h", lab_px + 8)
+                surface = resolve_color("white", role="surface")
+                parts.append(
+                    f'<g class="boxed-label" data-series="{_e(place["series_id"])}" '
+                    f'data-category="{_e(place["category_id"])}">'
+                    f'<rect x="{tx - tw / 2:.1f}" y="{ty - th / 2:.1f}" '
+                    f'width="{tw:.1f}" height="{th:.1f}" '
+                    f'fill="{_e(surface)}" stroke="{_e(border)}" stroke-width="1" rx="2"/>'
+                    f'<text x="{tx:.1f}" y="{ty + lab_px * 0.35:.1f}" text-anchor="middle" '
+                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(ink)}" data-placement="boxed">{_e(place["text"])}</text>'
+                    f"</g>"
+                )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def paint_semantic_table(plan: dict[str, Any]) -> str:
     """One D106/D247 table — visually hidden unless fallback."""
     t = plan["semantic_table"]
@@ -518,7 +1087,7 @@ def _e(text: Any) -> str:
     return html.escape(str(text), quote=True)
 
 
-def _ordinary_values_show(chart: LineChartVisual) -> bool:
+def _ordinary_values_show(chart: AxisChartVisual) -> bool:
     if chart.display is None or chart.display.ordinary_values is None:
         return True
     return chart.display.ordinary_values == "show"
@@ -543,7 +1112,7 @@ def _identity_strategy(
     return "legend"
 
 
-def _role_sizes(chart: LineChartVisual) -> dict[str, int]:
+def _role_sizes(chart: AxisChartVisual) -> dict[str, int]:
     sizes = {k: lo for k, (lo, _hi) in _ROLE_BOUNDS.items()}
     typo = chart.typography
     if typo is None:
@@ -560,18 +1129,23 @@ def _role_sizes(chart: LineChartVisual) -> dict[str, int]:
     return sizes
 
 
-def _resolve_series(data: ChartData) -> list[dict[str, Any]]:
-    defaults = resolve_series_colors("line", count=len(data.series))
+def _resolve_series(
+    data: ChartData, *, family: str = "line"
+) -> list[dict[str, Any]]:
+    defaults = resolve_series_colors(family, count=len(data.series))
     out: list[dict[str, Any]] = []
     for i, s in enumerate(data.series):
         if s.color is not None:
             color = resolve_color(s.color, role="series_identity")
         else:
             color = defaults[i]
-        if s.style is not None:
-            line_style, marker = s.style.line_style, s.style.marker
+        if family == "line":
+            if s.style is not None:
+                line_style, marker = s.style.line_style, s.style.marker
+            else:
+                line_style, marker = LINE_STYLE_PAIRS[i % len(LINE_STYLE_PAIRS)]
         else:
-            line_style, marker = LINE_STYLE_PAIRS[i % len(LINE_STYLE_PAIRS)]
+            line_style, marker = "solid", "circle"
         out.append(
             {
                 "series_id": s.series_id,
@@ -585,7 +1159,12 @@ def _resolve_series(data: ChartData) -> list[dict[str, Any]]:
     return out
 
 
-def _resolve_domain(chart: LineChartVisual, data: ChartData) -> dict[str, Any]:
+def _resolve_domain(
+    chart: AxisChartVisual,
+    data: ChartData,
+    *,
+    include_zero: bool = False,
+) -> dict[str, Any]:
     axis = chart.value_axes.primary
     finite: list[Decimal] = []
     for s in data.series:
@@ -596,6 +1175,7 @@ def _resolve_domain(chart: LineChartVisual, data: ChartData) -> dict[str, Any]:
         finite = [Decimal(0), Decimal(1)]
     data_min = min(finite)
     data_max = max(finite)
+    leading = axis.leading_break
     if axis.domain.kind == "fixed":
         ticks = list(axis.domain.ticks)
         return {
@@ -607,21 +1187,437 @@ def _resolve_domain(chart: LineChartVisual, data: ChartData) -> dict[str, Any]:
     # generated
     lo = Decimal(axis.domain.min) if axis.domain.min is not None else data_min
     hi = Decimal(axis.domain.max) if axis.domain.max is not None else data_max
+    if leading is not None:
+        # Visible domain starts at break target; source min retained for D106.
+        lo = Decimal(leading.to)
+        if hi <= lo:
+            hi = lo + Decimal("1")
+    elif include_zero:
+        if lo > 0:
+            lo = Decimal(0)
+        if hi < 0:
+            hi = Decimal(0)
     if lo == hi:
         lo -= Decimal("1")
         hi += Decimal("1")
-    # headroom ~5%
+    # headroom ~8% (label clearance D72)
     pad = (hi - lo) * Decimal("0.08")
-    lo_f = lo - pad
+    lo_f = lo if (include_zero and lo == 0) or leading is not None else lo - pad
     hi_f = hi + pad
+    if include_zero and leading is None:
+        if lo_f > 0:
+            lo_f = Decimal(0)
+        if hi_f < 0:
+            hi_f = Decimal(0)
     target = axis.domain.target_ticks or 5
     ticks = _nice_ticks(float(lo_f), float(hi_f), target)
+    source_min = float(data_min)
+    source_max = float(data_max)
+    if leading is not None:
+        # First visible tick equals break target (D157/D230).
+        br = float(Decimal(leading.to))
+        ticks = [t for t in ticks if t >= br - 1e-12]
+        if not ticks or abs(ticks[0] - br) > 1e-9:
+            ticks = [br] + [t for t in ticks if t > br + 1e-12]
+        if len(ticks) < 2:
+            ticks.append(br + max(1.0, abs(br) * 0.25))
+    if include_zero and leading is None and 0.0 not in ticks:
+        # Keep zero when analytically inside span.
+        if ticks[0] <= 0 <= ticks[-1]:
+            ticks = sorted(set(ticks + [0.0]))
     return {
         "kind": "generated",
         "min": _plain_decimal(ticks[0]),
         "max": _plain_decimal(ticks[-1]),
         "ticks": [_plain_decimal(t) for t in ticks],
+        "source_min": _plain_decimal(source_min),
+        "source_max": _plain_decimal(source_max),
     }
+
+
+def _bar_identity_strategy(
+    chart: BarChartVisual, series_plans: list[dict[str, Any]]
+) -> str:
+    if chart.display is not None and chart.display.series_identity is not None:
+        pol = chart.display.series_identity
+        if pol == "pane_title":
+            return "pane_title"
+        if pol == "legend":
+            return "legend"
+    # Multi-series always complete legend; single-series one-item legend (D240).
+    return "legend"
+
+
+def _bar_slot_geometry(
+    *,
+    plot_w: float,
+    plot_h: float,
+    n_cat: int,
+    n_ser: int,
+    horizontal: bool,
+    pad_l: float = 0.0,
+    pad_t: float = 0.0,
+) -> dict[str, Any]:
+    """Renderer-owned bar thickness + pitch (D160). Absolute plot coords."""
+    n_cat = max(1, n_cat)
+    n_ser = max(1, n_ser)
+    axis_span = plot_h if horizontal else plot_w
+    pitch = axis_span / n_cat
+    cat_gap = pitch * BAR_CATEGORY_GAP_RATIO
+    inner = max(1.0, pitch - cat_gap)
+    ser_gap = inner * BAR_SERIES_GAP_RATIO / max(1, n_ser)
+    raw_thick = (inner - ser_gap * max(0, n_ser - 1)) / n_ser
+    thick = max(BAR_MIN_THICKNESS, min(BAR_MAX_THICKNESS, raw_thick))
+    cluster = n_ser * thick + max(0, n_ser - 1) * ser_gap
+    slots: list[dict[str, Any]] = []
+    ser_slot = cluster / n_ser
+    for c_i in range(n_cat):
+        base = c_i * pitch + (pitch - cluster) / 2
+        origins = [
+            base + s_i * ser_slot + (ser_slot - thick) / 2 for s_i in range(n_ser)
+        ]
+        if horizontal:
+            # Categories top → bottom along Y.
+            slots.append(
+                {
+                    "center": pad_t + c_i * pitch + pitch / 2,
+                    "origins": [pad_t + o for o in origins],
+                }
+            )
+        else:
+            # Categories left → right along X.
+            slots.append(
+                {
+                    "center": pad_l + c_i * pitch + pitch / 2,
+                    "origins": [pad_l + o for o in origins],
+                }
+            )
+    return {
+        "thickness": thick,
+        "category_pitch": pitch,
+        "series_gap": ser_gap,
+        "slots": slots,
+        "horizontal": horizontal,
+    }
+
+
+def _place_bar_labels(
+    bars: list[dict[str, Any]],
+    series_plans: list[dict[str, Any]],
+    *,
+    show_values: bool,
+    label_px: int,
+    plot: tuple[float, float, float, float],
+    horizontal: bool,
+) -> list[dict[str, Any]]:
+    """Outside-end ordinary bar values (D71–D73); first/last retained."""
+    placements: list[dict[str, Any]] = []
+    occupied: list[tuple[float, float, float, float]] = []
+    finite_bars = [b for b in bars if b.get("finite") and not b.get("missing")]
+    # Priority: first/last category per series, extrema, then authored order.
+    by_series: dict[str, list[dict[str, Any]]] = {}
+    for b in finite_bars:
+        by_series.setdefault(b["series_id"], []).append(b)
+    ordered: list[dict[str, Any]] = []
+    for sp in series_plans:
+        pts = by_series.get(sp["series_id"]) or []
+        if not pts:
+            continue
+        for i, p in enumerate(pts):
+            p = dict(p)
+            if i == 0 or i == len(pts) - 1:
+                p["_edge"] = True
+                p["_rank"] = "edge"
+            else:
+                p["_rank"] = "coverage"
+            ordered.append(p)
+        # Extrema next
+        nums = [(abs(p["numeric"]), p) for p in pts]
+        nums.sort(key=lambda t: t[0], reverse=True)
+        for _, p in nums[:2]:
+            if not any(
+                o["series_id"] == p["series_id"]
+                and o["category_id"] == p["category_id"]
+                for o in ordered
+                if o.get("_rank") == "extrema"
+            ):
+                ep = dict(p)
+                ep["_rank"] = "extrema"
+                ordered.append(ep)
+    # De-dupe preserving first rank assignment.
+    seen: set[tuple[str, str]] = set()
+    unique: list[dict[str, Any]] = []
+    for p in ordered:
+        key = (p["series_id"], p["category_id"])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(p)
+
+    for p in unique:
+        if not show_values:
+            placements.append(
+                {
+                    "series_id": p["series_id"],
+                    "category_id": p["category_id"],
+                    "kind": "value",
+                    "class": "suppressed",
+                    "x": p.get("end_x", p["x"]),
+                    "y": p.get("end_y", p["y"]),
+                    "text": p["visible"],
+                    "priority": "hidden_policy",
+                }
+            )
+            continue
+        w = max(24.0, len(p["visible"]) * label_px * 0.55)
+        h = float(label_px + 4)
+        end_x = p.get("end_x", p["x"])
+        end_y = p.get("end_y", p["y"])
+        sign = p.get("sign", 1)
+        if horizontal:
+            # Beyond terminal edge in value direction (D71); zero just past baseline.
+            if sign == 0:
+                x = end_x + w / 2 + 6
+                cls = "beyond_zero"
+            elif sign < 0:
+                x = end_x - w / 2 - 6
+                cls = "beyond_neg"
+            else:
+                x = end_x + w / 2 + 6
+                cls = "beyond_pos"
+            y = end_y + label_px * 0.35
+            box = (x - w / 2, y - h, x + w / 2, y)
+        else:
+            if sign == 0:
+                # Zero label just above the zero baseline (D78/D240).
+                x = end_x
+                y = end_y - 4
+                cls = "above_zero"
+            elif sign < 0:
+                x = end_x
+                y = end_y + h + 4
+                cls = "below"
+            else:
+                x = end_x
+                y = end_y - 4
+                cls = "above"
+            box = (x - w / 2, y - h, x + w / 2, y)
+        # Prefer in-plot labels; edges may extend slightly for outside values (D71).
+        if not _fits(box, plot) and not p.get("_edge") and sign != 0:
+            # Nudge inward once before collision handling.
+            if horizontal:
+                x = min(max(x, plot[0] + w / 2), plot[2] - w / 2)
+            else:
+                y = min(max(y, plot[1] + h), plot[3])
+            box = (x - w / 2, y - h, x + w / 2, y)
+        if _overlaps(box, occupied) and not p.get("_edge"):
+            # Small lateral stagger then leader (D72).
+            if horizontal:
+                y2 = y + h + 2
+                box2 = (box[0], y2 - h, box[2], y2)
+                if not _overlaps(box2, occupied):
+                    y, box, cls = y2, box2, "leader"
+                else:
+                    placements.append(
+                        {
+                            "series_id": p["series_id"],
+                            "category_id": p["category_id"],
+                            "kind": "value",
+                            "class": "suppressed",
+                            "x": end_x,
+                            "y": end_y,
+                            "text": p["visible"],
+                            "priority": p.get("_rank", "coverage"),
+                        }
+                    )
+                    continue
+            else:
+                x2 = x + (w * 0.35 if sign >= 0 else -w * 0.35)
+                box2 = (x2 - w / 2, box[1], x2 + w / 2, box[3])
+                if not _overlaps(box2, occupied):
+                    x, box, cls = x2, box2, "leader"
+                else:
+                    placements.append(
+                        {
+                            "series_id": p["series_id"],
+                            "category_id": p["category_id"],
+                            "kind": "value",
+                            "class": "suppressed",
+                            "x": end_x,
+                            "y": end_y,
+                            "text": p["visible"],
+                            "priority": p.get("_rank", "coverage"),
+                        }
+                    )
+                    continue
+        occupied.append(box)
+        placements.append(
+            {
+                "series_id": p["series_id"],
+                "category_id": p["category_id"],
+                "kind": "value",
+                "class": cls,
+                "x": x,
+                "y": y,
+                "text": p["visible"],
+                "anchor_x": end_x,
+                "anchor_y": end_y,
+                "priority": p.get("_rank", "coverage"),
+            }
+        )
+    return placements
+
+
+def _freeze_boxed_labels(
+    chart: BarChartVisual,
+    formats: Mapping[str, NumberFormat],
+    bars: list[dict[str, Any]],
+    cats: list[Any],
+    role_sizes: dict[str, int],
+    *,
+    horizontal: bool,
+) -> dict[str, Any]:
+    aux = getattr(chart, "auxiliary_series", None) or []
+    boxed = [a for a in aux if a.role == "boxed_label"]
+    if not boxed:
+        return {"placements": [], "labels": [], "facts": []}
+    b = boxed[0]
+    # format_id is validated at deck level; missing → leave for validate_handoff.
+    if b.format_id not in formats:
+        return {"placements": [], "labels": [], "facts": []}
+    bar_by = {(bar["series_id"], bar["category_id"]): bar for bar in bars}
+    # Boxed labels fit 12–24px (D52); clamp from ordinary/annotation roles.
+    px = max(12, min(24, role_sizes.get("annotations", role_sizes["ordinary_values"])))
+    placements: list[dict[str, Any]] = []
+    labels: list[dict[str, Any]] = []
+    facts: list[str] = []
+    for c_i, cat in enumerate(cats):
+        raw = b.values[c_i]
+        if raw is None:
+            labels.append(
+                {
+                    "category_id": cat.category_id,
+                    "value": None,
+                    "visible": MISSING_VISIBLE,
+                    "accessible": MISSING_ACCESSIBLE,
+                    "missing": True,
+                }
+            )
+            continue
+        fv = format_semantic_value(
+            NumberValue(value=raw, format_id=b.format_id), formats
+        )
+        bar = bar_by.get((b.target_series_id, cat.category_id))
+        if bar is None or not bar.get("finite"):
+            # Still a D106 fact; no paint when target bar missing.
+            labels.append(
+                {
+                    "category_id": cat.category_id,
+                    "value": raw,
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "missing": False,
+                }
+            )
+            continue
+        tw = max(28.0, len(fv.visible) * px * 0.55 + 12)
+        th = float(px + 10)
+        if horizontal:
+            x = bar["x"] + bar["width"] / 2
+            y = bar["y"] + bar["height"] / 2
+        else:
+            # Inside bar when tall enough, else outside above/below (D52).
+            if bar["height"] >= th + 4 and bar.get("sign", 1) >= 0:
+                x = bar["x"] + bar["width"] / 2
+                y = bar["y"] + bar["height"] / 2
+            elif bar.get("sign", 1) < 0:
+                x = bar["x"] + bar["width"] / 2
+                y = bar["y"] + bar["height"] + th / 2 + 4
+            else:
+                x = bar["x"] + bar["width"] / 2
+                y = bar["y"] - th / 2 - 4
+        place = {
+            "series_id": b.target_series_id,
+            "category_id": cat.category_id,
+            "kind": "boxed_label",
+            "class": "boxed",
+            "x": x,
+            "y": y,
+            "text": fv.visible,
+            "box_w": tw,
+            "box_h": th,
+            "priority": "structural",
+        }
+        placements.append(place)
+        labels.append(
+            {
+                "category_id": cat.category_id,
+                "value": raw,
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+                "missing": False,
+                "x": x,
+                "y": y,
+            }
+        )
+    facts.append(f"Boxed labels: {b.label} on series {b.target_series_id}")
+    return {"placements": placements, "labels": labels, "facts": facts}
+
+
+def _freeze_category_groups(
+    chart: BarChartVisual,
+    cats: list[Any],
+    geom: dict[str, Any],
+    pad_l: float,
+    pad_t: float,
+    plot_w: float,
+    plot_h: float,
+    *,
+    horizontal: bool,
+) -> list[dict[str, Any]]:
+    groups = getattr(chart, "category_groups", None) or []
+    if not groups:
+        return []
+    cat_pos = {c.category_id: i for i, c in enumerate(cats)}
+    out: list[dict[str, Any]] = []
+    for g in groups:
+        idxs = [cat_pos[cid] for cid in g.category_ids]
+        first, last = idxs[0], idxs[-1]
+        s0 = geom["slots"][first]
+        s1 = geom["slots"][last]
+        if horizontal:
+            y1 = s0["origins"][0]
+            y2 = s1["origins"][-1] + geom["thickness"]
+            x = pad_l + plot_w + 8
+            out.append(
+                {
+                    "group_id": g.group_id,
+                    "label": g.label,
+                    "short_label": g.short_label,
+                    "category_ids": list(g.category_ids),
+                    "x1": x,
+                    "y1": y1,
+                    "x2": x,
+                    "y2": y2,
+                }
+            )
+        else:
+            x1 = s0["origins"][0]
+            x2 = s1["origins"][-1] + geom["thickness"]
+            y = pad_t + plot_h + 36
+            out.append(
+                {
+                    "group_id": g.group_id,
+                    "label": g.label,
+                    "short_label": g.short_label,
+                    "category_ids": list(g.category_ids),
+                    "x1": x1,
+                    "y1": y,
+                    "x2": x2,
+                    "y2": y,
+                }
+            )
+    return out
 
 
 def _plain_decimal(value: float) -> str:
@@ -872,13 +1868,16 @@ def _legend_html(plan: dict[str, Any]) -> str:
 
 
 def _semantic_table(
-    chart: LineChartVisual,
+    chart: AxisChartVisual,
     formats: Mapping[str, NumberFormat],
     series_plans: list[dict[str, Any]],
     domain: dict[str, Any],
     *,
     identity: str,
     scale_label: Optional[str],
+    chart_type: str = "line",
+    groups: Optional[list[dict[str, Any]]] = None,
+    boxed: Optional[list[str]] = None,
 ) -> dict[str, Any]:
     fmt_id = chart.value_axes.primary.format_id
     columns = [{"series_id": s["series_id"], "label": s["name"]} for s in series_plans]
@@ -915,8 +1914,13 @@ def _semantic_table(
         "percentage_points": "percentage points",
         "basis_points": "basis points",
     }.get(fmt.unit or "", "unitless")
+    type_words = {
+        "line": "line trend",
+        "grouped_bar": "grouped vertical bars",
+        "horizontal_bar": "horizontal grouped bars",
+    }.get(chart_type, chart_type)
     facts = [
-        "Chart type: line trend",
+        f"Chart type: {type_words}",
         f"Series identity: {identity.replace('_', ' ')}",
         f"Values in {unit_words}, {fmt.value_decimals} decimal places",
         f"Value domain from {domain['min']} to {domain['max']}",
@@ -934,6 +1938,11 @@ def _semantic_table(
             f"Leading axis break omits values below "
             f"{chart.value_axes.primary.leading_break.to}"
         )
+    for g in groups or []:
+        members = ", ".join(g.get("category_ids") or [])
+        facts.append(f"Category group {g['label']}: {members}")
+    for fact in boxed or []:
+        facts.append(fact)
     return {
         "columns": columns,
         "rows": rows,
@@ -944,6 +1953,13 @@ def _semantic_table(
 
 def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     """Settled Chart.js config — animation off, no gridlines (D63/D108)."""
+    ctype = plan.get("chart_type", "line")
+    if ctype in ("grouped_bar", "horizontal_bar"):
+        return _chartjs_bar_config(plan)
+    return _chartjs_line_config(plan)
+
+
+def _chartjs_line_config(plan: dict[str, Any]) -> dict[str, Any]:
     labels = [c["label"] for c in plan["categories"]]
     datasets = []
     for s in plan["series"]:
@@ -1400,3 +2416,121 @@ def _heatmap_unit_note(fmt: NumberFormat) -> str | None:
         "percentage_points": "Percentage points",
         "basis_points": "Basis points",
     }.get(unit)
+
+
+def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
+    """Grouped / horizontal bar Chart.js config sharing frozen geometry (D160)."""
+    labels = [c["label"] for c in plan["categories"]]
+    horizontal = bool(plan["geometry"].get("horizontal"))
+    g = plan["geometry"]
+    n_ser = max(1, len(plan["series"]))
+    # Mirror freeze thickness/gap → Chart.js category/bar percentages (D160).
+    pitch = g.get("category_pitch") or 1.0
+    thick = g.get("thickness") or BAR_MIN_THICKNESS
+    ser_gap = g.get("series_gap")
+    if ser_gap is None:
+        ser_gap = thick * BAR_SERIES_GAP_RATIO
+    cluster = n_ser * thick + max(0, n_ser - 1) * ser_gap
+    category_pct = min(1.0, max(0.1, cluster / pitch))
+    slot = (cluster / n_ser) if n_ser else thick
+    bar_pct = min(1.0, max(0.1, thick / slot)) if slot else 0.9
+    datasets = []
+    for s in plan["series"]:
+        data = [None if v is None else float(Decimal(v)) for v in s["values"]]
+        datasets.append(
+            {
+                "label": s["name"],
+                "data": data,
+                "backgroundColor": s["color"],
+                "borderColor": s["color"],
+                "borderWidth": 0,
+                "barPercentage": bar_pct,
+                "categoryPercentage": category_pct,
+                "clip": False,
+            }
+        )
+    d_min = float(Decimal(plan["domain"]["min"]))
+    d_max = float(Decimal(plan["domain"]["max"]))
+    leading = plan["value_axis"].get("leading_break")
+    vis_min = float(Decimal(leading)) if leading is not None else d_min
+    vis_max = d_max
+    value_scale = {
+        "display": False,
+        "min": vis_min,
+        "max": vis_max,
+        "grid": {"display": False, "drawBorder": True},
+        "stacked": False,
+        "ticks": {
+            "font": {"size": plan["role_sizes"]["value_ticks"]},
+            "color": resolve_color("navy", role="text_on_light"),
+        },
+        "title": {
+            "display": bool(plan["value_axis"].get("title")),
+            "text": plan["value_axis"].get("title") or "",
+        },
+    }
+    cat_scale = {
+        "display": False,
+        "grid": {"display": False, "drawBorder": True},
+        "ticks": {
+            "font": {"size": plan["role_sizes"]["category_ticks"]},
+            "color": resolve_color("navy", role="text_on_light"),
+        },
+        "title": {
+            "display": bool(plan["category_axis"].get("title")),
+            "text": plan["category_axis"].get("title") or "",
+        },
+    }
+    if horizontal:
+        scales = {"x": value_scale, "y": cat_scale}
+        index_axis = "y"
+    else:
+        scales = {"x": cat_scale, "y": value_scale}
+        index_axis = "x"
+    base_v = vis_min if leading is not None else 0.0
+    for ds in datasets:
+        ds["indexAxis"] = index_axis
+        ds["base"] = base_v
+    return {
+        "type": "bar",
+        "data": {"labels": labels, "datasets": datasets},
+        "options": {
+            "indexAxis": index_axis,
+            "animation": False,
+            "responsive": False,
+            "maintainAspectRatio": False,
+            "plugins": {
+                "legend": {"display": False},
+                "tooltip": {"enabled": True},
+            },
+            "scales": scales,
+            "layout": {
+                "padding": {
+                    "left": g["pad_l"],
+                    "right": g["pad_r"],
+                    "top": g["pad_t"],
+                    "bottom": g["pad_b"],
+                }
+            },
+        },
+        "v3": {
+            "tick_labels": plan["tick_labels"],
+            "domain_ticks": plan["domain"]["ticks"],
+            "surface_id": plan["surface_id"],
+            "identity_strategy": plan["identity_strategy"],
+            "bars": [
+                {
+                    "series_id": b["series_id"],
+                    "category_id": b["category_id"],
+                    "x": b["x"],
+                    "y": b["y"],
+                    "width": b["width"],
+                    "height": b["height"],
+                    "missing": b.get("missing", False),
+                }
+                for b in plan.get("bars") or []
+            ],
+            "thickness": g.get("thickness"),
+            "leading_break": leading,
+        },
+    }

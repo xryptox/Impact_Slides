@@ -1,0 +1,75 @@
+{
+  "meta": {"handoff_schema_version": 1},
+  "sections": [{"section_id": "share", "label": "Share"}],
+  "number_formats": {
+    "pct_1": {"unit": "percent", "value_decimals": 1, "negative_style": "minus"}
+  },
+  "evidence_registry": {
+    "src-board-pack": {"source_name": "Board pack Q4"}
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {"title": "Impact Review"},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "share",
+      "title": "Network share",
+      "content": {"subtitle": "Selected markets"},
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "net-share",
+          "chart_type": "horizontal_bar",
+          "heading": "Network share",
+          "subtitle": "Percent",
+          "chart_data": {
+            "categories": [
+              {"category_id": "us", "label": "United States"},
+              {"category_id": "uk", "label": "United Kingdom"},
+              {"category_id": "jp", "label": "Japan"},
+              {"category_id": "mx", "label": "Mexico"}
+            ],
+            "series": [
+              {
+                "series_id": "share",
+                "name": "Share",
+                "values": ["62.5", "48.0", "55.2", null]
+              }
+            ]
+          },
+          "category_axis": {"visible": true, "title": "Market"},
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "pct_1",
+              "domain": {
+                "kind": "generated",
+                "min": "0",
+                "target_ticks": 5
+              },
+              "title": "Share %",
+              "leading_break": {"to": "40"}
+            }
+          },
+          "display": {
+            "ordinary_values": "show",
+            "series_identity": "pane_title"
+          }
+        }
+      },
+      "takeaway": {"text": "US leads; Mexico gap is real missing data."},
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {"title": "Discussion"}
+    }
+  ]
+}

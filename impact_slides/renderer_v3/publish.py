@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .charts import chart_boot_script, paint_heatmap_html, paint_line_chart_html
+from .charts import chart_boot_script, paint_chart_html, paint_heatmap_html
 from .diagnostics import (
     DiagnosticEvent,
     RendererPublicationError,
@@ -202,8 +202,7 @@ def build_presentation_html(
             ".linear-fallback{margin:0 0 var(--space-sm)}",
             ".linear-fallback ol,.linear-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
             ".linear-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
-            # line chart (D5/D6/D63/D106/D247)
-            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
+            # axis charts: line + grouped/horizontal bars (D5/D6/D63/D106/D247)            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
             ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
             ".chart-pane-title{display:flex;flex-direction:column;gap:4px;padding:10px 16px;margin:0 0 var(--space-sm)}",
             ".chart-pane-title>span:first-child{font-size:40px;font-weight:var(--font-weight-title);color:var(--color-band-ink)}",
@@ -235,7 +234,8 @@ def build_presentation_html(
     # Chart.js only for axis-family charts; heatmaps are native HTML (D248).
     has_chart = any(
         s.layout_type == "single_chart"
-        and getattr(s.payload.primary_visual, "chart_type", None) == "line"
+        and getattr(s.payload.primary_visual, "chart_type", None)
+        in ("line", "grouped_bar", "horizontal_bar")
         for s in deck.slides
     )
     for slide in deck.slides:
@@ -584,7 +584,7 @@ def _paint_single_chart(
     *,
     svg_only: bool = False,
 ) -> list[str]:
-    """Paint single_chart line or heatmap from frozen plan (D69/D248/D302/D308)."""
+    """Paint single_chart axis charts or heatmap from frozen plan (D69/D248/D302/D308)."""
     chart = slide.payload.primary_visual
     sp = plans_by_id.get(chart.surface_id)
     if sp is None or not getattr(sp, "chart_paint", None):
@@ -595,7 +595,7 @@ def _paint_single_chart(
     paint = sp.chart_paint
     if paint.get("chart_type") == "heatmap":
         return paint_heatmap_html(paint, plan_attrs=attrs)
-    return paint_line_chart_html(paint, plan_attrs=attrs, svg_only=svg_only)
+    return paint_chart_html(paint, plan_attrs=attrs, svg_only=svg_only)
 
 
 def _paint_data_table(
@@ -1448,7 +1448,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
         painters: list[str] = []
         if is_chart:
             ctype = getattr(slide.payload.primary_visual, "chart_type", None)
-            if ctype == "line":
+            if ctype in ("line", "grouped_bar", "horizontal_bar"):
                 painters = ["chartjs", "svg"]
             # heatmap: native HTML only — no canvas/SVG painters (D246/D248).
         rows.append(

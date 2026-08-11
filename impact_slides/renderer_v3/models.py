@@ -735,7 +735,7 @@ class DataPipelinePayload(ClosedModel):
 
 
 # ---------------------------------------------------------------------------
-# Line chart + single_chart composition (D227–D239, D290–D302)
+# Axis charts + heatmap + single_chart composition (D163/D227–D240, D243, D246, D290–D302, D308)
 # ---------------------------------------------------------------------------
 
 
@@ -761,7 +761,7 @@ class ChartTypography(ClosedModel):
 
 
 class ChartDisplay(ClosedModel):
-    """Sparse line-chart display overrides (D231/D295)."""
+    """Sparse axis-chart display overrides (D231/D295)."""
 
     ordinary_values: Optional[Literal["show", "hide"]] = None
     series_identity: Optional[Literal["auto", "legend", "pane_title"]] = None
@@ -792,15 +792,19 @@ class ChartSeriesStyle(ClosedModel):
 class ChartSeries(ClosedModel):
     series_id: SemanticId
     name: NonEmptyStr
-    values: list[Optional[CanonicalDecimal]] = Field(min_length=2)
+    values: list[Optional[CanonicalDecimal]] = Field(min_length=1)
     color: Optional[NonEmptyStr] = None  # palette key (D130)
     style: Optional[ChartSeriesStyle] = None
 
 
 class ChartData(ClosedModel):
-    """Ordered category-and-series matrix (D228/D291)."""
+    """Ordered category-and-series matrix (D228/D291).
 
-    categories: list[ChartCategory] = Field(min_length=2, max_length=24)
+    Family cardinality (line vs bar category/series floors) is enforced on the
+    chart visual; this model owns rectangular identity only.
+    """
+
+    categories: list[ChartCategory] = Field(min_length=1, max_length=24)
     series: list[ChartSeries] = Field(min_length=1, max_length=4)
 
     @model_validator(mode="after")
@@ -820,12 +824,27 @@ class ChartData(ClosedModel):
                 raise ValueError(
                     f"series {s.series_id!r} must supply exactly one value per category"
                 )
-            finite = sum(1 for v in s.values if v is not None)
-            if finite < 2:
-                raise ValueError(
-                    f"series {s.series_id!r} requires at least two finite values"
-                )
         return self
+
+
+class CategoryGroup(ClosedModel):
+    """Semantic category hierarchy only — never aggregates values (D155/D237)."""
+
+    group_id: SemanticId
+    label: NonEmptyStr
+    category_ids: list[SemanticId] = Field(min_length=1)
+    short_label: Optional[NonEmptyStr] = None
+
+
+class BoxedLabelAuxiliary(ClosedModel):
+    """Category-aligned boxed labels targeting one bar series (D146/D235)."""
+
+    auxiliary_id: SemanticId
+    role: Literal["boxed_label"] = "boxed_label"
+    label: NonEmptyStr
+    format_id: SemanticId
+    target_series_id: SemanticId
+    values: list[Optional[CanonicalDecimal]] = Field(min_length=1)
 
 
 class CategoryAxis(ClosedModel):
@@ -891,6 +910,15 @@ class ValueAxis(ClosedModel):
                 raise ValueError("leading_break requires generated domain min")
             if Decimal(self.domain.min) >= Decimal(self.leading_break.to):
                 raise ValueError("leading_break requires min < to")
+        if self.leading_break is not None and self.domain.kind == "fixed":
+            if not any(
+                Decimal(t) == Decimal(self.leading_break.to)
+                for t in self.domain.ticks
+            ):
+                raise ValueError(
+                    "leading_break with a fixed domain requires a fixed tick"
+                    " equal to leading_break.to (D157/D159)"
+                )
         return self
 
 
@@ -901,8 +929,151 @@ class ValueAxes(ClosedModel):
     @classmethod
     def _no_secondary(cls, data: Any) -> Any:
         if isinstance(data, dict) and "secondary" in data:
-            raise ValueError("line charts forbid secondary value axis")
+            raise ValueError("secondary value axis is combo-only (D230)")
         return data
+
+
+def _common_chart_heading_rules(chart: Any) -> None:
+    if chart.subtitle is not None and chart.heading is None:
+        raise ValueError("subtitle requires heading")
+    identity = (
+        chart.display.series_identity if chart.display is not None else None
+    )
+    if identity == "pane_title":
+        if chart.heading is None:
+            raise ValueError("series_identity pane_title requires heading")
+        if len(chart.chart_data.series) != 1:
+            raise ValueError(
+                "series_identity pane_title requires exactly one series"
+            )
+
+
+def _domain_contains_finite(chart: Any) -> None:
+    domain = chart.value_axes.primary.domain
+    lo = Decimal(domain.min) if domain.min is not None else None
+    hi = Decimal(domain.max) if domain.max is not None else None
+    for s in chart.chart_data.series:
+        for v in s.values:
+            if v is None:
+                continue
+            dv = Decimal(v)
+            if (lo is not None and dv < lo) or (hi is not None and dv > hi):
+                raise ValueError(
+                    "authored domain bounds must contain every finite value"
+                )
+
+
+def _validate_category_groups(chart: Any) -> None:
+    groups = getattr(chart, "category_groups", None)
+    if not groups:
+        return
+    cat_ids = [c.category_id for c in chart.chart_data.categories]
+    cat_pos = {cid: i for i, cid in enumerate(cat_ids)}
+    seen_gids: set[str] = set()
+    occupied: dict[str, str] = {}
+    ordered_first: list[int] = []
+    for g in groups:
+        if g.group_id in seen_gids:
+            raise ValueError("category group_id values must be unique")
+        seen_gids.add(g.group_id)
+        if len(g.category_ids) != len(set(g.category_ids)):
+            raise ValueError(
+                f"category group {g.group_id!r} has duplicate category_ids"
+            )
+        positions: list[int] = []
+        for cid in g.category_ids:
+            if cid not in cat_pos:
+                raise ValueError(
+                    f"category group {g.group_id!r} references unknown "
+                    f"category_id {cid!r}"
+                )
+            if cid in occupied:
+                raise ValueError(
+                    f"category_id {cid!r} belongs to multiple groups"
+                )
+            occupied[cid] = g.group_id
+            positions.append(cat_pos[cid])
+        # Contiguous and chart-order (D237).
+        if positions != sorted(positions):
+            raise ValueError(
+                f"category group {g.group_id!r} category_ids must follow chart order"
+            )
+        if positions[-1] - positions[0] + 1 != len(positions):
+            raise ValueError(
+                f"category group {g.group_id!r} category_ids must be contiguous"
+            )
+        ordered_first.append(positions[0])
+    if ordered_first != sorted(ordered_first):
+        raise ValueError("category_groups must follow first-category order")
+
+
+def _validate_boxed_labels(chart: Any) -> None:
+    aux = getattr(chart, "auxiliary_series", None) or []
+    boxed = [a for a in aux if a.role == "boxed_label"]
+    if len(boxed) > 1:
+        raise ValueError("at most one boxed_label auxiliary_series entry (D235)")
+    if not boxed:
+        return
+    b = boxed[0]
+    n = len(chart.chart_data.categories)
+    if len(b.values) != n:
+        raise ValueError(
+            "boxed_label values must supply exactly one entry per category"
+        )
+    ser_ids = {s.series_id for s in chart.chart_data.series}
+    if b.target_series_id not in ser_ids:
+        raise ValueError(
+            f"boxed_label target_series_id {b.target_series_id!r} is not a chart series"
+        )
+
+
+def _finite_values(chart: Any) -> list[Decimal]:
+    out: list[Decimal] = []
+    for s in chart.chart_data.series:
+        for v in s.values:
+            if v is not None:
+                out.append(Decimal(v))
+    return out
+
+
+def _leading_break_rules(
+    chart: Any, *, allow: bool, positive_only: bool = False
+) -> None:
+    br = chart.value_axes.primary.leading_break
+    if br is None:
+        return
+    if not allow:
+        raise ValueError(
+            f"{chart.chart_type} forbids leading_break (D157/D240)"
+        )
+    target = Decimal(br.to)
+    finite = _finite_values(chart)
+    if not finite:
+        raise ValueError("leading_break requires at least one finite value")
+    if any(v <= target for v in finite):
+        # D157/D243: every finite value lies beyond the break target.
+        raise ValueError("leading_break.to must be below every finite value")
+    if positive_only and any(v <= 0 for v in finite):
+        raise ValueError(
+            "leading_break requires every finite value on the positive side (D243)"
+        )
+
+
+def _bar_domain_includes_zero(chart: Any) -> None:
+    """Without a leading break, bar domains must include semantic zero (D240/D243)."""
+    if chart.value_axes.primary.leading_break is not None:
+        return
+    domain = chart.value_axes.primary.domain
+    if domain.kind == "fixed":
+        lo, hi = Decimal(domain.min), Decimal(domain.max)
+        if lo > 0 or hi < 0:
+            raise ValueError("bar fixed domain must include zero")
+        return
+    # generated: authored bounds alone must not exclude zero when both set
+    lo = Decimal(domain.min) if domain.min is not None else None
+    hi = Decimal(domain.max) if domain.max is not None else None
+    if lo is not None and hi is not None and (lo > 0 or hi < 0):
+        raise ValueError("bar generated domain bounds must include zero")
 
 
 class LineChartVisual(ClosedModel):
@@ -921,38 +1092,17 @@ class LineChartVisual(ClosedModel):
 
     @model_validator(mode="after")
     def _line_invariants(self) -> LineChartVisual:
-        if self.subtitle is not None and self.heading is None:
-            raise ValueError("subtitle requires heading")
-        identity = (
-            self.display.series_identity if self.display is not None else None
-        )
-        if identity == "pane_title":
-            if self.heading is None:
-                raise ValueError("series_identity pane_title requires heading")
-            if len(self.chart_data.series) != 1:
-                raise ValueError(
-                    "series_identity pane_title requires exactly one series"
-                )
-        if self.value_axes.primary.leading_break is not None:
-            br = Decimal(self.value_axes.primary.leading_break.to)
-            for s in self.chart_data.series:
-                for v in s.values:
-                    if v is not None and Decimal(v) < br:
-                        raise ValueError(
-                            "leading_break.to must be below every finite value"
-                        )
-        domain = self.value_axes.primary.domain
-        lo = Decimal(domain.min) if domain.min is not None else None
-        hi = Decimal(domain.max) if domain.max is not None else None
+        if len(self.chart_data.categories) < 2:
+            raise ValueError("line charts require at least two categories")
         for s in self.chart_data.series:
-            for v in s.values:
-                if v is None:
-                    continue
-                dv = Decimal(v)
-                if (lo is not None and dv < lo) or (hi is not None and dv > hi):
-                    raise ValueError(
-                        "authored domain bounds must contain every finite value"
-                    )
+            finite = sum(1 for v in s.values if v is not None)
+            if finite < 2:
+                raise ValueError(
+                    f"series {s.series_id!r} requires at least two finite values"
+                )
+        _common_chart_heading_rules(self)
+        _leading_break_rules(self, allow=True)
+        _domain_contains_finite(self)
         return self
 
 
@@ -1070,14 +1220,107 @@ class HeatmapVisual(ClosedModel):
         raise RuntimeError("heatmap has no numeric format_id")
 
 
+class GroupedBarChartVisual(ClosedModel):
+    """Vertical zero-baseline grouped bars (D240)."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["grouped_bar"] = "grouped_bar"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    chart_data: ChartData
+    category_axis: CategoryAxis
+    value_axes: ValueAxes
+    display: Optional[ChartDisplay] = None
+    typography: Optional[ChartTypography] = None
+    category_groups: Optional[list[CategoryGroup]] = Field(
+        default=None, min_length=1, max_length=6
+    )
+    auxiliary_series: Optional[list[BoxedLabelAuxiliary]] = Field(
+        default=None, min_length=1
+    )
+
+    @model_validator(mode="after")
+    def _grouped_invariants(self) -> GroupedBarChartVisual:
+        n_cat = len(self.chart_data.categories)
+        n_ser = len(self.chart_data.series)
+        if not (1 <= n_cat <= 12):
+            raise ValueError("grouped_bar requires 1–12 categories")
+        if not (1 <= n_ser <= 4):
+            raise ValueError("grouped_bar requires 1–4 series")
+        for s in self.chart_data.series:
+            if s.style is not None:
+                raise ValueError("grouped_bar forbids line series style")
+            if not any(v is not None for v in s.values):
+                raise ValueError(
+                    f"series {s.series_id!r} requires at least one finite value"
+                )
+        _common_chart_heading_rules(self)
+        _leading_break_rules(self, allow=False)
+        _bar_domain_includes_zero(self)
+        _domain_contains_finite(self)
+        _validate_category_groups(self)
+        _validate_boxed_labels(self)
+        return self
+
+
+class HorizontalBarChartVisual(ClosedModel):
+    """Horizontal grouped bars with optional leading break (D243)."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["horizontal_bar"] = "horizontal_bar"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    chart_data: ChartData
+    category_axis: CategoryAxis
+    value_axes: ValueAxes
+    display: Optional[ChartDisplay] = None
+    typography: Optional[ChartTypography] = None
+    category_groups: Optional[list[CategoryGroup]] = Field(
+        default=None, min_length=1, max_length=6
+    )
+    auxiliary_series: Optional[list[BoxedLabelAuxiliary]] = Field(
+        default=None, min_length=1
+    )
+
+    @model_validator(mode="after")
+    def _hbar_invariants(self) -> HorizontalBarChartVisual:
+        n_cat = len(self.chart_data.categories)
+        n_ser = len(self.chart_data.series)
+        if not (1 <= n_cat <= 12):
+            raise ValueError("horizontal_bar requires 1–12 categories")
+        if not (1 <= n_ser <= 4):
+            raise ValueError("horizontal_bar requires 1–4 series")
+        for s in self.chart_data.series:
+            if s.style is not None:
+                raise ValueError("horizontal_bar forbids line series style")
+            if not any(v is not None for v in s.values):
+                raise ValueError(
+                    f"series {s.series_id!r} requires at least one finite value"
+                )
+        _common_chart_heading_rules(self)
+        _leading_break_rules(self, allow=True, positive_only=True)
+        _bar_domain_includes_zero(self)
+        _domain_contains_finite(self)
+        _validate_category_groups(self)
+        _validate_boxed_labels(self)
+        return self
+
+
 ChartVisual = Annotated[
-    Union[LineChartVisual, HeatmapVisual],
+    Union[
+        LineChartVisual,
+        GroupedBarChartVisual,
+        HorizontalBarChartVisual,
+        HeatmapVisual,
+    ],
     Field(discriminator="chart_type"),
 ]
 
 
 class SingleChartPayload(ClosedModel):
-    """single_chart composition: one line or heatmap primary, no support yet (D140)."""
+    """single_chart composition: one axis-chart or heatmap primary, no support yet (D140)."""
 
     primary_visual: ChartVisual
 
@@ -1435,10 +1678,12 @@ class SingleChartSlide(_SlideBase):
 
 
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
-# plus annex/comparison tables (#180), single_chart line tracer (#182), and
-# linear/grouping compositions (#192). Other D210 layout_type values are
-# recognized at the envelope and rejected with a clear "not yet implemented"
-# structure error so the closed vocabulary stays honest.
+# plus annex/comparison tables (#180), single_chart axis charts
+# (line #182; grouped/horizontal bars #183), and linear/grouping
+# compositions (#192).
+# Other D210 layout_type values are recognized at the envelope and rejected
+# with a clear "not yet implemented in kernel" structure error so the closed
+# vocabulary stays honest without shipping empty payload shells.
 Slide = Annotated[
     Union[
         OpeningCoverSlide,
@@ -1582,13 +1827,25 @@ class Deck(ClosedModel):
                 referenced_formats.add(fid)
             if isinstance(slide, SingleChartSlide):
                 chart = slide.payload.primary_visual
-                if isinstance(chart, LineChartVisual):
+                if isinstance(
+                    chart,
+                    (
+                        LineChartVisual,
+                        GroupedBarChartVisual,
+                        HorizontalBarChartVisual,
+                    ),
+                ):
                     fid = chart.value_axes.primary.format_id
                     if fid not in self.number_formats:
                         raise ValueError(f"unresolved format_id {fid!r}")
                     referenced_formats.add(fid)
+                    for aux in getattr(chart, "auxiliary_series", None) or []:
+                        afid = aux.format_id
+                        if afid not in self.number_formats:
+                            raise ValueError(f"unresolved format_id {afid!r}")
+                        referenced_formats.add(afid)
                     # Author series colors must be known palette keys (D16/D98/D130).
-                    from .theme import palette_keys  # local import avoids cycle
+                    from .theme import palette_keys  # local import avoids cycle at import
 
                     keys = set(palette_keys())
                     for s in chart.chart_data.series:

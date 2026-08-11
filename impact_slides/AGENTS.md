@@ -33,4 +33,4 @@ Python package for the Impact_Slides hybrid pipeline: Step 1 preprocessor (v4) a
 ## Child DOX Index
 
 - `renderer_v2/AGENTS.md` — legacy Step 4 HTML renderer (current layouts, charts, recipes, handoff → deck)
-- `renderer_v3/AGENTS.md` — schema-v1 canonical kernel (typed validation, repairs, deck-wide plan freeze, table + linear/grouping compositions + format registry, line-chart tracer, native heatmaps, offline legacy→v1 migrator, generated JSON Schema, deterministic five-artifact `render_deck` publication); remaining chart/relationship families arrive in later tickets
+- `renderer_v3/AGENTS.md` — schema-v1 canonical kernel (typed validation, repairs, deck-wide plan freeze, table + linear/grouping compositions + format registry, line-chart tracer, grouped/horizontal bar charts, native heatmaps, offline legacy→v1 migrator, generated JSON Schema, deterministic five-artifact `render_deck` publication); remaining chart/relationship families arrive in later tickets
