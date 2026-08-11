@@ -1045,6 +1045,7 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
             "line",
             "grouped_bar",
             "horizontal_bar",
+            "waterfall",
         ):
             continue
         axes = visual.get("value_axes")
@@ -1055,22 +1056,47 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
             "generated",
         ):
             continue
-        data = visual.get("chart_data")
-        series = data.get("series") if isinstance(data, dict) else None
-        if not isinstance(series, list):
-            continue
         finite: list[Decimal] = []
-        for s in series:
-            values = s.get("values") if isinstance(s, dict) else None
-            if not isinstance(values, list):
+        if visual.get("chart_type") == "waterfall":
+            # Domain containment uses authored totals/changes + running levels.
+            wdata = visual.get("waterfall_data")
+            steps = wdata.get("steps") if isinstance(wdata, dict) else None
+            if not isinstance(steps, list):
                 continue
-            for v in values:
-                if v is None:
+            level = Decimal(0)
+            finite.append(level)
+            for step in steps:
+                if not isinstance(step, dict):
                     continue
+                role = step.get("role")
+                raw_v = step.get("value")
                 try:
-                    finite.append(Decimal(str(v)))
+                    if role == "total" and raw_v is not None:
+                        level = Decimal(str(raw_v))
+                        finite.append(level)
+                    elif role == "change" and raw_v is not None:
+                        level = level + Decimal(str(raw_v))
+                        finite.append(level)
+                    elif role == "computed_total":
+                        finite.append(level)
                 except (InvalidOperation, TypeError, ValueError):
                     continue
+        else:
+            data = visual.get("chart_data")
+            series = data.get("series") if isinstance(data, dict) else None
+            if not isinstance(series, list):
+                continue
+            for s in series:
+                values = s.get("values") if isinstance(s, dict) else None
+                if not isinstance(values, list):
+                    continue
+                for v in values:
+                    if v is None:
+                        continue
+                    try:
+                        finite.append(Decimal(str(v)))
+                    except (InvalidOperation, TypeError, ValueError):
+                        continue
         if not finite:
             continue
         domain_path = (

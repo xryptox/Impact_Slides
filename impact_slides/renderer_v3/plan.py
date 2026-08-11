@@ -58,7 +58,12 @@ CHART_PANE_PAD_Y: Final = 20
 CHART_PANE_GAP: Final = 4
 CHART_VIEW_MIN_H: Final = 252
 _AXIS_CHART_ROLES: Final = frozenset(
-    {"line_chart", "grouped_bar_chart", "horizontal_bar_chart"}
+    {
+        "line_chart",
+        "grouped_bar_chart",
+        "horizontal_bar_chart",
+        "waterfall_chart",
+    }
 )
 
 # Adaptive floors / ceilings (D12/D14/D51/D59/D171/D172/D225/D288).
@@ -741,6 +746,7 @@ def _collect_surfaces(
                     "line": "line_chart",
                     "grouped_bar": "grouped_bar_chart",
                     "horizontal_bar": "horizontal_bar_chart",
+                    "waterfall": "waterfall_chart",
                 }.get(chart.chart_type, f"{chart.chart_type}_chart")
                 out.append(
                     SurfacePlan(

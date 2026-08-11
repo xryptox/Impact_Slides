@@ -1,0 +1,90 @@
+{
+  "meta": {"handoff_schema_version": 1},
+  "sections": [{"section_id": "bridge", "label": "Bridge"}],
+  "number_formats": {
+    "usd_0": {"unit": "usd", "value_decimals": 0, "negative_style": "minus"}
+  },
+  "evidence_registry": {
+    "src-board-pack": {"source_name": "Board pack Q4"}
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {"title": "Impact Review"},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "bridge",
+      "title": "Revenue bridge",
+      "content": {"subtitle": "Reported currency"},
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "rev-bridge",
+          "chart_type": "waterfall",
+          "heading": "Revenue bridge",
+          "subtitle": "USD millions",
+          "waterfall_data": {
+            "steps": [
+              {
+                "category_id": "open",
+                "label": "Opening",
+                "role": "total",
+                "value": "100"
+              },
+              {
+                "category_id": "price",
+                "label": "Price",
+                "role": "change",
+                "value": "20"
+              },
+              {
+                "category_id": "volume",
+                "label": "Volume",
+                "role": "change",
+                "value": "-10"
+              },
+              {
+                "category_id": "mid",
+                "label": "Mid-year",
+                "role": "total",
+                "value": "115"
+              },
+              {
+                "category_id": "fx",
+                "label": "FX",
+                "role": "change",
+                "value": "5"
+              },
+              {
+                "category_id": "close",
+                "label": "Closing",
+                "role": "computed_total"
+              }
+            ]
+          },
+          "category_axis": {"visible": true, "title": "Step"},
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "usd_0",
+              "domain": {"kind": "generated", "target_ticks": 5},
+              "title": "USD m"
+            }
+          }
+        }
+      },
+      "takeaway": {"text": "Price lifts; volume offsets; FX closes higher."},
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {"title": "Discussion"}
+    }
+  ]
+}

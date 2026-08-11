@@ -1308,11 +1308,128 @@ class HorizontalBarChartVisual(ClosedModel):
         return self
 
 
+class WaterfallStep(ClosedModel):
+    """One authored waterfall step (D162/D245/D307)."""
+
+    category_id: SemanticId
+    label: NonEmptyStr
+    role: Literal["change", "total", "computed_total"]
+    value: Optional[CanonicalDecimal] = None
+    short_label: Optional[NonEmptyStr] = None
+
+    @model_validator(mode="after")
+    def _role_value(self) -> WaterfallStep:
+        if self.role == "computed_total":
+            if self.value is not None:
+                raise ValueError(
+                    "computed_total forbids authored value (D245/D307)"
+                )
+        elif self.value is None:
+            raise ValueError(
+                f"{self.role} requires a canonical decimal value (D245/D307)"
+            )
+        return self
+
+
+class WaterfallData(ClosedModel):
+    """Ordered waterfall steps — not D228 series (D245/D307)."""
+
+    steps: list[WaterfallStep] = Field(min_length=2, max_length=12)
+
+    @model_validator(mode="after")
+    def _sequence(self) -> WaterfallData:
+        ids = [s.category_id for s in self.steps]
+        if len(ids) != len(set(ids)):
+            raise ValueError("waterfall category_id values must be unique")
+        if self.steps[0].role != "total":
+            raise ValueError("first waterfall step must be total (D245/D307)")
+        if self.steps[-1].role not in ("total", "computed_total"):
+            raise ValueError(
+                "last waterfall step must be total or computed_total (D245/D307)"
+            )
+        return self
+
+
+class WaterfallChartVisual(ClosedModel):
+    """Explicit arithmetic waterfall (D162/D245/D248/D307)."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["waterfall"] = "waterfall"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    waterfall_data: WaterfallData
+    category_axis: CategoryAxis
+    value_axes: ValueAxes
+    typography: Optional[ChartTypography] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_bar_only_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        forbidden = (
+            "chart_data",
+            "display",
+            "category_groups",
+            "auxiliary_series",
+        )
+        hit = [k for k in forbidden if k in data]
+        if hit:
+            raise ValueError(
+                f"waterfall forbids {', '.join(hit)} (D245/D307)"
+            )
+        return data
+
+    @model_validator(mode="after")
+    def _waterfall_invariants(self) -> WaterfallChartVisual:
+        if self.subtitle is not None and self.heading is None:
+            raise ValueError("subtitle requires heading")
+        if self.value_axes.primary.leading_break is not None:
+            raise ValueError("waterfall forbids leading_break (D245/D307)")
+        # Domain must include zero and every authored total/change level.
+        levels = _waterfall_levels(self)
+        domain = self.value_axes.primary.domain
+        lo = Decimal(domain.min) if domain.min is not None else None
+        hi = Decimal(domain.max) if domain.max is not None else None
+        if domain.kind == "fixed":
+            lo, hi = Decimal(domain.min), Decimal(domain.max)
+            if lo > 0 or hi < 0:
+                raise ValueError("waterfall fixed domain must include zero")
+        elif lo is not None and hi is not None and (lo > 0 or hi < 0):
+            raise ValueError(
+                "waterfall generated domain bounds must include zero"
+            )
+        for lv in levels:
+            if (lo is not None and lv < lo) or (hi is not None and lv > hi):
+                raise ValueError(
+                    "authored domain bounds must contain every waterfall level"
+                )
+        return self
+
+
+def _waterfall_levels(chart: "WaterfallChartVisual") -> list[Decimal]:
+    """Running levels + zero for domain containment (placement arithmetic only)."""
+    level = Decimal(0)
+    out: list[Decimal] = [Decimal(0)]
+    for step in chart.waterfall_data.steps:
+        if step.role == "total":
+            level = Decimal(step.value)  # type: ignore[arg-type]
+            out.append(level)
+        elif step.role == "change":
+            level = level + Decimal(step.value)  # type: ignore[arg-type]
+            out.append(level)
+        else:
+            out.append(level)
+    return out
+
+
 ChartVisual = Annotated[
     Union[
         LineChartVisual,
         GroupedBarChartVisual,
         HorizontalBarChartVisual,
+        WaterfallChartVisual,
         HeatmapVisual,
     ],
     Field(discriminator="chart_type"),
@@ -1833,6 +1950,7 @@ class Deck(ClosedModel):
                         LineChartVisual,
                         GroupedBarChartVisual,
                         HorizontalBarChartVisual,
+                        WaterfallChartVisual,
                     ),
                 ):
                     fid = chart.value_axes.primary.format_id
@@ -1845,14 +1963,15 @@ class Deck(ClosedModel):
                             raise ValueError(f"unresolved format_id {afid!r}")
                         referenced_formats.add(afid)
                     # Author series colors must be known palette keys (D16/D98/D130).
-                    from .theme import palette_keys  # local import avoids cycle at import
+                    if not isinstance(chart, WaterfallChartVisual):
+                        from .theme import palette_keys  # local; avoid import cycle
 
-                    keys = set(palette_keys())
-                    for s in chart.chart_data.series:
-                        if s.color is not None and s.color not in keys:
-                            raise ValueError(
-                                f"unknown series color key {s.color!r}"
-                            )
+                        keys = set(palette_keys())
+                        for s in chart.chart_data.series:
+                            if s.color is not None and s.color not in keys:
+                                raise ValueError(
+                                    f"unknown series color key {s.color!r}"
+                                )
                 elif isinstance(chart, HeatmapVisual):
                     fid = chart.shared_format_id
                     if fid not in self.number_formats:
