@@ -1,0 +1,112 @@
+{
+  "meta": {"handoff_schema_version": 1},
+  "sections": [{"section_id": "funding", "label": "Funding"}],
+  "number_formats": {
+    "usd_0": {"unit": "usd", "value_decimals": 0, "negative_style": "minus"},
+    "pct_0": {"unit": "percent", "value_decimals": 0, "negative_style": "minus"}
+  },
+  "evidence_registry": {
+    "src-board-pack": {"source_name": "Board pack Q4"}
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {"title": "Impact Review"},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "funding",
+      "title": "Deposit mix",
+      "content": {"subtitle": "Sign-separated stack"},
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "dep-mix",
+          "chart_type": "stacked_bar",
+          "heading": "Deposit composition",
+          "subtitle": "$B",
+          "chart_data": {
+            "categories": [
+              {"category_id": "q1", "label": "Q1"},
+              {"category_id": "q2", "label": "Q2"},
+              {"category_id": "q3", "label": "Q3"},
+              {"category_id": "q4", "label": "Q4"}
+            ],
+            "series": [
+              {
+                "series_id": "retail",
+                "name": "Retail",
+                "values": ["40", "45", "50", null]
+              },
+              {
+                "series_id": "wholesale",
+                "name": "Wholesale",
+                "values": ["30", "25", "20", "35"]
+              },
+              {
+                "series_id": "runoff",
+                "name": "Runoff",
+                "values": ["-10", "-8", "0", "-5"]
+              }
+            ]
+          },
+          "category_axis": {"visible": true, "title": "Quarter"},
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "usd_0",
+              "domain": {"kind": "generated", "target_ticks": 5},
+              "title": "$B"
+            }
+          },
+          "display": {
+            "stack_segments": "show",
+            "stack_totals": "show",
+            "series_identity": "legend"
+          },
+          "category_groups": [
+            {
+              "group_id": "h1",
+              "label": "H1",
+              "category_ids": ["q1", "q2"]
+            },
+            {
+              "group_id": "h2",
+              "label": "H2",
+              "category_ids": ["q3", "q4"]
+            }
+          ],
+          "auxiliary_series": [
+            {
+              "auxiliary_id": "board-total",
+              "role": "authored_stack_total",
+              "label": "Board total",
+              "format_id": "usd_0",
+              "values": ["62", "63", null, "30"]
+            }
+          ],
+          "coverage_callout": {
+            "callout_id": "fdic-cov",
+            "label": "FDIC insured",
+            "value": "72",
+            "format_id": "pct_0",
+            "period": "Q4"
+          }
+        }
+      },
+      "takeaway": {
+        "text": "Retail leads; Q4 retail gap withholds computed sides."
+      },
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {"title": "Discussion"}
+    }
+  ]
+}

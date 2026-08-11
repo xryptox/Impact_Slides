@@ -1,7 +1,7 @@
-"""Chart freeze + painters: axis charts (line/bars/waterfall) + native heatmap.
+"""Chart freeze + painters: axis charts (line/bars/waterfall/stacked) + native heatmap.
 
-Covers D239/D240/D243/D245/D247/D248/D302/D307, shared D71–D73/D160 geometry,
-and D163/D246–D248/D308 semantic heatmaps.
+Covers D239/D240/D242–D243/D245/D247/D248/D302/D304/D307, shared D71–D73/D160
+geometry, and D163/D246–D248/D308 semantic heatmaps.
 """
 from __future__ import annotations
 
@@ -22,10 +22,12 @@ from .models import (
     MissingValue,
     NumberFormat,
     NumberValue,
+    StackedBarChartVisual,
     WaterfallChartVisual,
 )
 from .theme import (
     chart_js_tokens,
+    contrast_ratio,
     line_style_keys,
     marker_keys,
     resolve_color,
@@ -36,9 +38,12 @@ AxisChartVisual = Union[
     LineChartVisual,
     GroupedBarChartVisual,
     HorizontalBarChartVisual,
+    StackedBarChartVisual,
     WaterfallChartVisual,
 ]
-BarChartVisual = Union[GroupedBarChartVisual, HorizontalBarChartVisual]
+BarChartVisual = Union[
+    GroupedBarChartVisual, HorizontalBarChartVisual, StackedBarChartVisual
+]
 
 # Theme-owned waterfall role fills (D162/D245/D307).
 _WATERFALL_ROLE_COLOR = {
@@ -83,6 +88,8 @@ _ROLE_BOUNDS: dict[str, tuple[int, int]] = {
     "category_ticks": (14, 24),
     "value_ticks": (14, 28),
     "ordinary_values": (14, 32),
+    "segment_labels": (14, 24),  # stacked segments (D79/D304)
+    "stack_totals": (14, 24),  # computed/authored totals (D79/D304)
     "legend": (16, 24),
     "series_labels": (16, 24),
     "axis_titles": (13, 24),
@@ -258,6 +265,21 @@ def freeze_line_chart(
 
 def freeze_bar_chart(
     chart: BarChartVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+) -> dict[str, Any]:
+    """Frozen painter-neutral plan for grouped/horizontal/stacked bars."""
+    if chart.chart_type == "stacked_bar":
+        return _freeze_stacked_bar_chart(
+            chart, formats, box_w=box_w, box_h=box_h
+        )
+    return _freeze_grouped_bar_chart(chart, formats, box_w=box_w, box_h=box_h)
+
+
+def _freeze_grouped_bar_chart(
+    chart: Union[GroupedBarChartVisual, HorizontalBarChartVisual],
     formats: Mapping[str, NumberFormat],
     *,
     box_w: int = PLOT_W + PAD_L + PAD_R,
@@ -520,6 +542,8 @@ def freeze_bar_chart(
         "bars": bars,
         "placements": placements,
         "show_ordinary_values": show_values,
+        "show_segment_labels": False,
+        "show_stack_totals": False,
         "identity_strategy": identity,
         "role_sizes": role_sizes,
         "geometry": {
@@ -536,6 +560,7 @@ def freeze_bar_chart(
             "category_pitch": geom["category_pitch"],
             "series_gap": geom["series_gap"],
             "horizontal": horizontal,
+            "stacked": False,
             "zero_x": zero_x,
             "zero_y": zero_y,
         },
@@ -554,6 +579,517 @@ def freeze_bar_chart(
         },
         "category_groups": groups_plan,
         "boxed_labels": boxed_plan.get("labels") or [],
+        "stack_totals": [],
+        "coverage_callout": None,
+        "semantic_table": table,
+        "theme": chart_js_tokens(),
+        "gridlines": False,
+    }
+
+
+def _freeze_stacked_bar_chart(
+    chart: StackedBarChartVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+) -> dict[str, Any]:
+    """Sign-separated vertical stacks (D242/D304)."""
+    fmt = formats[chart.value_axes.primary.format_id]
+    fmt_id = chart.value_axes.primary.format_id
+    data = chart.chart_data
+    cats = list(data.categories)
+    series_plans = _resolve_series(data, family="stacked_bar")
+    domain = _resolve_domain(
+        chart, data, include_zero=True, stack_extents=True
+    )
+    ticks = list(domain["ticks"])
+    show_segments = _stack_segments_show(chart)
+    show_totals = _stack_totals_show(chart)
+
+    group_pad = 28 if chart.category_groups else 0
+    cov = chart.coverage_callout
+    cov_pad = 36 if cov is not None else 0
+    pad_l = PAD_L
+    pad_r = max(PAD_R // 2, 48)
+    pad_t = max(PAD_T, 48) + cov_pad  # totals + coverage headroom
+    pad_b = PAD_B + group_pad + 16  # negative totals footroom
+
+    plot_w = max(200, min(PLOT_W, box_w - pad_l - pad_r))
+    plot_h = max(160, min(PLOT_H, box_h - pad_t - pad_b - 40))
+    n_cat = len(cats)
+    # One bar cluster per category (series stack inside).
+    geom = _bar_slot_geometry(
+        plot_w=plot_w,
+        plot_h=plot_h,
+        n_cat=n_cat,
+        n_ser=1,
+        horizontal=False,
+        pad_l=pad_l,
+        pad_t=pad_t,
+    )
+
+    v_min = float(domain["min"])
+    v_max = float(domain["max"])
+    span = (v_max - v_min) or 1.0
+
+    def value_to_y(v: float) -> float:
+        return pad_t + plot_h - ((v - v_min) / span) * plot_h
+
+    zero_y = value_to_y(0.0)
+    zero_x = pad_l  # unused for vertical stacks
+
+    bars: list[dict[str, Any]] = []
+    points: list[dict[str, Any]] = []
+    stack_totals: list[dict[str, Any]] = []
+
+    for c_i, cat in enumerate(cats):
+        slot = geom["slots"][c_i]
+        thick = geom["thickness"]
+        x = slot["origins"][0]
+        cx = x + thick / 2
+        pos_cursor = 0.0
+        neg_cursor = 0.0
+        pos_missing = False
+        neg_missing = False
+        pos_sum = Decimal(0)
+        neg_sum = Decimal(0)
+        # Author order = bottom-to-top within each sign (D242/D304).
+        for s_i, sp in enumerate(series_plans):
+            raw = data.series[s_i].values[c_i]
+            if raw is None:
+                # Null preserves slot; no area; invalidates that sign's total.
+                points.append(
+                    {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": cx,
+                        "y": zero_y,
+                        "value": None,
+                        "visible": MISSING_VISIBLE,
+                        "accessible": MISSING_ACCESSIBLE,
+                        "finite": False,
+                    }
+                )
+                bars.append(
+                    {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": x,
+                        "y": zero_y,
+                        "width": thick,
+                        "height": 0.0,
+                        "thickness": thick,
+                        "value": None,
+                        "visible": MISSING_VISIBLE,
+                        "accessible": MISSING_ACCESSIBLE,
+                        "finite": False,
+                        "missing": True,
+                        "sign": 0,
+                        "stack_base": 0.0,
+                        "stack_top": 0.0,
+                        "end_x": cx,
+                        "end_y": zero_y,
+                    }
+                )
+                # Missing contributor: both signs may still receive later values;
+                # a null does not own a sign until we know its intended side, so
+                # it withholds any side that has no other finite contributor of
+                # that sign only when that side had a missing-tagged series.
+                # Spec: null invalidates the computed total for that sign/category
+                # — without a sign we mark both incomplete only if no finite of
+                # either side later; practical rule used here: null withholds
+                # both sides' computed totals (safe; D242/D304).
+                pos_missing = True
+                neg_missing = True
+                continue
+            num_d = Decimal(raw)
+            num = float(num_d)
+            fv = format_semantic_value(
+                NumberValue(value=raw, format_id=fmt_id), formats
+            )
+            if num > 0:
+                base = pos_cursor
+                top = pos_cursor + num
+                pos_cursor = top
+                pos_sum += num_d
+                y0 = value_to_y(base)
+                y1 = value_to_y(top)
+                top_y, bot_y = (y1, y0) if y1 <= y0 else (y0, y1)
+                height = abs(y1 - y0)
+                sign = 1
+                end_y = y1
+            elif num < 0:
+                base = neg_cursor
+                top = neg_cursor + num  # more negative
+                neg_cursor = top
+                neg_sum += num_d
+                y0 = value_to_y(base)
+                y1 = value_to_y(top)
+                top_y, bot_y = (y1, y0) if y1 <= y0 else (y0, y1)
+                height = abs(y1 - y0)
+                sign = -1
+                end_y = y1
+            else:
+                # Zero is data without area — distinct zero anchor (D304).
+                base = 0.0
+                top = 0.0
+                height = 2.0
+                top_y = zero_y - 1.0
+                sign = 0
+                end_y = zero_y
+            bar = {
+                "series_id": sp["series_id"],
+                "category_id": cat.category_id,
+                "x": x,
+                "y": top_y,
+                "width": thick,
+                "height": height,
+                "thickness": thick,
+                "value": raw,
+                "numeric": num,
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+                "finite": True,
+                "missing": False,
+                "sign": sign,
+                "stack_base": base,
+                "stack_top": top,
+                "end_x": cx,
+                "end_y": end_y,
+                "mid_y": top_y + height / 2,
+            }
+            bars.append(bar)
+            points.append(
+                {
+                    "series_id": sp["series_id"],
+                    "category_id": cat.category_id,
+                    "x": cx,
+                    "y": end_y,
+                    "value": raw,
+                    "numeric": num,
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "finite": True,
+                }
+            )
+
+        # Computed sign-side totals (axis format); withhold incomplete sides.
+        pos_ext = float(pos_sum)
+        neg_ext = float(neg_sum)
+        authored = None
+        aux = chart.auxiliary_series or []
+        if aux:
+            authored = aux[0].values[c_i]
+
+        def _total_entry(
+            *,
+            side: str,
+            raw_val: Optional[str],
+            numeric: float,
+            source: str,
+            withheld: bool,
+            fmt_for: str,
+        ) -> dict[str, Any]:
+            if withheld or raw_val is None:
+                return {
+                    "category_id": cat.category_id,
+                    "side": side,
+                    "value": None,
+                    "numeric": None,
+                    "visible": MISSING_VISIBLE,
+                    "accessible": MISSING_ACCESSIBLE,
+                    "missing": True,
+                    "withheld": withheld,
+                    "source": source,
+                    "x": cx,
+                    "y": value_to_y(numeric) if side != "authored" else zero_y,
+                    "format_id": fmt_for,
+                }
+            fv_t = format_semantic_value(
+                NumberValue(value=raw_val, format_id=fmt_for), formats
+            )
+            # D241: authored totals anchor on completed stack outer signed edge
+            # (never authored value on scale). Empty extents → zero edge.
+            if side == "authored":
+                if numeric < 0:
+                    anchor_v = neg_ext if neg_ext < 0 else 0.0
+                    y = value_to_y(anchor_v) + 14
+                else:
+                    anchor_v = pos_ext if pos_ext > 0 else 0.0
+                    y = value_to_y(anchor_v) - 8
+            elif side == "negative":
+                anchor_v = neg_ext if neg_ext < 0 else numeric
+                y = value_to_y(anchor_v) + 14
+            else:
+                anchor_v = pos_ext if pos_ext > 0 else numeric
+                y = value_to_y(anchor_v) - 8
+            return {
+                "category_id": cat.category_id,
+                "side": side,
+                "value": raw_val,
+                "numeric": numeric,
+                "visible": fv_t.visible,
+                "accessible": fv_t.accessible,
+                "missing": False,
+                "withheld": False,
+                "source": source,
+                "x": cx,
+                "y": y,
+                "format_id": fmt_for,
+            }
+
+        if authored is not None:
+            # Finite authored total visually overrides computed category total.
+            num_a = float(Decimal(authored))
+            stack_totals.append(
+                _total_entry(
+                    side="authored",
+                    raw_val=authored,
+                    numeric=num_a,
+                    source="authored",
+                    withheld=False,
+                    fmt_for=aux[0].format_id,
+                )
+            )
+        elif authored is None and aux:
+            # Null authored slot: Missing in D106, does not suppress computation.
+            stack_totals.append(
+                {
+                    "category_id": cat.category_id,
+                    "side": "authored",
+                    "value": None,
+                    "numeric": None,
+                    "visible": MISSING_VISIBLE,
+                    "accessible": MISSING_ACCESSIBLE,
+                    "missing": True,
+                    "withheld": False,
+                    "source": "authored",
+                    "x": cx,
+                    "y": zero_y,
+                    "format_id": aux[0].format_id,
+                }
+            )
+            # Still emit complete computed sides when contributors allow.
+            if pos_sum > 0 and not pos_missing:
+                stack_totals.append(
+                    _total_entry(
+                        side="positive",
+                        raw_val=_plain_decimal(pos_sum),
+                        numeric=pos_ext,
+                        source="computed",
+                        withheld=False,
+                        fmt_for=fmt_id,
+                    )
+                )
+            elif pos_missing and pos_sum >= 0:
+                stack_totals.append(
+                    _total_entry(
+                        side="positive",
+                        raw_val=None,
+                        numeric=pos_ext,
+                        source="computed",
+                        withheld=True,
+                        fmt_for=fmt_id,
+                    )
+                )
+            if neg_sum < 0 and not neg_missing:
+                stack_totals.append(
+                    _total_entry(
+                        side="negative",
+                        raw_val=_plain_decimal(neg_sum),
+                        numeric=neg_ext,
+                        source="computed",
+                        withheld=False,
+                        fmt_for=fmt_id,
+                    )
+                )
+            elif neg_missing and neg_sum <= 0:
+                stack_totals.append(
+                    _total_entry(
+                        side="negative",
+                        raw_val=None,
+                        numeric=neg_ext,
+                        source="computed",
+                        withheld=True,
+                        fmt_for=fmt_id,
+                    )
+                )
+        else:
+            # No authored totals: pure computed sides.
+            if pos_sum > 0 and not pos_missing:
+                stack_totals.append(
+                    _total_entry(
+                        side="positive",
+                        raw_val=_plain_decimal(pos_sum),
+                        numeric=pos_ext,
+                        source="computed",
+                        withheld=False,
+                        fmt_for=fmt_id,
+                    )
+                )
+            elif pos_missing:
+                # Only record withheld if there was a positive contributor intent.
+                # Null withholds the side even with zero sum (incomplete).
+                stack_totals.append(
+                    _total_entry(
+                        side="positive",
+                        raw_val=None,
+                        numeric=pos_ext,
+                        source="computed",
+                        withheld=True,
+                        fmt_for=fmt_id,
+                    )
+                )
+            if neg_sum < 0 and not neg_missing:
+                stack_totals.append(
+                    _total_entry(
+                        side="negative",
+                        raw_val=_plain_decimal(neg_sum),
+                        numeric=neg_ext,
+                        source="computed",
+                        withheld=False,
+                        fmt_for=fmt_id,
+                    )
+                )
+            elif neg_missing:
+                stack_totals.append(
+                    _total_entry(
+                        side="negative",
+                        raw_val=None,
+                        numeric=neg_ext,
+                        source="computed",
+                        withheld=True,
+                        fmt_for=fmt_id,
+                    )
+                )
+
+    role_sizes = _role_sizes(chart)
+    identity = "legend"  # mandatory complete authored-order legend (D304)
+    if chart.display is not None and chart.display.series_identity == "legend":
+        identity = "legend"
+
+    placements = _place_stack_labels(
+        bars,
+        series_plans,
+        stack_totals,
+        show_segments=show_segments,
+        show_totals=show_totals,
+        segment_px=role_sizes["segment_labels"],
+        total_px=role_sizes["stack_totals"],
+        plot=(pad_l, pad_t, pad_l + plot_w, pad_t + plot_h),
+    )
+
+    groups_plan = _freeze_category_groups(
+        chart, cats, geom, pad_l, pad_t, plot_w, plot_h, horizontal=False
+    )
+
+    coverage_plan = _freeze_coverage_callout(chart, formats, pad_l, pad_t, plot_w)
+
+    tick_labels = [
+        format_semantic_value(
+            NumberValue(value=t, format_id=fmt_id), formats
+        ).visible
+        for t in ticks
+    ]
+    cat_centers = []
+    for c_i, cat in enumerate(cats):
+        slot = geom["slots"][c_i]
+        cat_centers.append(
+            {
+                "category_id": cat.category_id,
+                "label": cat.label,
+                "short_label": cat.short_label,
+                "x": slot["center"],
+                "y": pad_t + plot_h + 22,
+            }
+        )
+
+    extra_facts: list[str] = []
+    for t in stack_totals:
+        if t.get("source") == "authored":
+            if t.get("missing"):
+                extra_facts.append(
+                    f"Authored stack total {t['category_id']}: {MISSING_ACCESSIBLE}"
+                )
+            else:
+                extra_facts.append(
+                    f"Authored stack total {t['category_id']}: {t['accessible']}"
+                )
+        elif t.get("withheld"):
+            extra_facts.append(
+                f"Computed {t['side']} total {t['category_id']}: withheld "
+                f"(missing contributor)"
+            )
+        elif not t.get("missing"):
+            extra_facts.append(
+                f"Computed {t['side']} total {t['category_id']}: {t['accessible']}"
+            )
+    if coverage_plan is not None:
+        extra_facts.append(coverage_plan["fact"])
+
+    table = _semantic_table(
+        chart,
+        formats,
+        series_plans,
+        domain,
+        identity=identity,
+        scale_label=fmt.scale_label,
+        chart_type="stacked_bar",
+        groups=groups_plan,
+        boxed=extra_facts,
+    )
+
+    return {
+        "surface_id": chart.surface_id,
+        "chart_type": "stacked_bar",
+        "heading": chart.heading,
+        "subtitle": chart.subtitle,
+        "categories": cat_centers,
+        "series": series_plans,
+        "points": points,
+        "bars": bars,
+        "placements": placements,
+        "show_ordinary_values": False,
+        "show_segment_labels": show_segments,
+        "show_stack_totals": show_totals,
+        "identity_strategy": identity,
+        "role_sizes": role_sizes,
+        "geometry": {
+            "pad_l": pad_l,
+            "pad_r": pad_r,
+            "pad_t": pad_t,
+            "pad_b": pad_b,
+            "plot_w": plot_w,
+            "plot_h": plot_h,
+            "marker_r": 0,
+            "view_w": pad_l + plot_w + pad_r,
+            "view_h": pad_t + plot_h + pad_b,
+            "thickness": geom["thickness"],
+            "category_pitch": geom["category_pitch"],
+            "series_gap": 0.0,
+            "horizontal": False,
+            "stacked": True,
+            "zero_x": zero_x,
+            "zero_y": zero_y,
+        },
+        "domain": domain,
+        "tick_labels": tick_labels,
+        "category_axis": {
+            "visible": chart.category_axis.visible,
+            "title": chart.category_axis.title,
+        },
+        "value_axis": {
+            "visible": chart.value_axes.primary.visible,
+            "title": chart.value_axes.primary.title,
+            "format_id": fmt_id,
+            "leading_break": None,
+            "scale_label": fmt.scale_label,
+        },
+        "category_groups": groups_plan,
+        "boxed_labels": [],
+        "stack_totals": stack_totals,
+        "coverage_callout": coverage_plan,
         "semantic_table": table,
         "theme": chart_js_tokens(),
         "gridlines": False,
@@ -861,7 +1397,7 @@ def paint_chart_svg(
     ctype = plan.get("chart_type", "line")
     if ctype == "waterfall":
         return _paint_waterfall_svg(plan, marks=marks, chrome=chrome)
-    if ctype in ("grouped_bar", "horizontal_bar"):
+    if ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
         return _paint_bar_svg(plan, marks=marks, chrome=chrome)
     return _paint_line_svg(plan, marks=marks, chrome=chrome)
 
@@ -1216,6 +1752,47 @@ def _paint_bar_svg(
                     f'fill="{_e(ink)}" data-placement="boxed">{_e(place["text"])}</text>'
                     f"</g>"
                 )
+            elif kind == "segment" and plan.get("show_segment_labels"):
+                tx, ty = place["x"], place["y"]
+                seg_px = plan["role_sizes"].get("segment_labels", lab_px)
+                color = place.get("color") or ink
+                if place["class"] == "leader":
+                    parts.append(
+                        f'<line x1="{place.get("anchor_x", tx):.1f}" '
+                        f'y1="{place.get("anchor_y", ty):.1f}" '
+                        f'x2="{tx:.1f}" y2="{ty:.1f}" '
+                        f'stroke="{_e(place.get("connector_color") or color)}" '
+                        f'stroke-width="1" opacity="0.7"/>'
+                    )
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                    f'font-size="{seg_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(color)}" data-placement="{place["class"]}" '
+                    f'data-kind="segment">{_e(place["text"])}</text>'
+                )
+            elif kind == "stack_total" and plan.get("show_stack_totals"):
+                tx, ty = place["x"], place["y"]
+                tot_px = plan["role_sizes"].get("stack_totals", lab_px)
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                    f'font-size="{tot_px}" font-weight="700" '
+                    f'font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(place.get("color") or ink)}" '
+                    f'data-placement="{place["class"]}" data-kind="stack_total">'
+                    f'{_e(place["text"])}</text>'
+                )
+
+        # Coverage callout chrome (D50/D301) — aria-hidden visual only.
+        cov = plan.get("coverage_callout")
+        if cov:
+            parts.append(
+                f'<g class="coverage-callout" data-callout-id="{_e(cov["callout_id"])}" '
+                f'aria-hidden="true">'
+                f'<text x="{cov["x"]:.1f}" y="{cov["y"]:.1f}" text-anchor="middle" '
+                f'font-size="{cov["value_px"]}" font-weight="700" '
+                f'fill="{_e(ink)}">{_e(cov["wording"])}</text>'
+                f"</g>"
+            )
 
     parts.append("</svg>")
     return "".join(parts)
@@ -1439,9 +2016,26 @@ def _e(text: Any) -> str:
 
 
 def _ordinary_values_show(chart: AxisChartVisual) -> bool:
+    if getattr(chart, "chart_type", None) == "stacked_bar":
+        return False  # stacked uses stack_segments (D231/D295)
     if chart.display is None or chart.display.ordinary_values is None:
         return True
     return chart.display.ordinary_values == "show"
+
+
+def _stack_segments_show(chart: StackedBarChartVisual) -> bool:
+    if chart.display is None or chart.display.stack_segments is None:
+        return False
+    return chart.display.stack_segments == "show"
+
+
+def _stack_totals_show(chart: StackedBarChartVisual) -> bool:
+    aux = chart.auxiliary_series or []
+    if any(getattr(a, "role", None) == "authored_stack_total" for a in aux):
+        return True
+    if chart.display is None or chart.display.stack_totals is None:
+        return False
+    return chart.display.stack_totals == "show"
 
 
 def _identity_strategy(
@@ -1750,6 +2344,7 @@ def _resolve_domain(
     data: ChartData,
     *,
     include_zero: bool = False,
+    stack_extents: bool = False,
 ) -> dict[str, Any]:
     axis = chart.value_axes.primary
     finite: list[Decimal] = []
@@ -1757,6 +2352,23 @@ def _resolve_domain(
         for v in s.values:
             if v is not None:
                 finite.append(Decimal(v))
+    if stack_extents:
+        # Domain must cover completed signed stacks, not only segments (D83/D242).
+        n = len(data.categories)
+        for c_i in range(n):
+            pos = Decimal(0)
+            neg = Decimal(0)
+            for s in data.series:
+                raw = s.values[c_i]
+                if raw is None:
+                    continue
+                dv = Decimal(raw)
+                if dv > 0:
+                    pos += dv
+                elif dv < 0:
+                    neg += dv
+            finite.append(pos)
+            finite.append(neg)
     if not finite:
         finite = [Decimal(0), Decimal(1)]
     data_min = min(finite)
@@ -1884,6 +2496,163 @@ def _bar_slot_geometry(
         "series_gap": ser_gap,
         "slots": slots,
         "horizontal": horizontal,
+    }
+
+
+def _place_stack_labels(
+    bars: list[dict[str, Any]],
+    series_plans: list[dict[str, Any]],
+    stack_totals: list[dict[str, Any]],
+    *,
+    show_segments: bool,
+    show_totals: bool,
+    segment_px: int,
+    total_px: int,
+    plot: tuple[float, float, float, float],
+) -> list[dict[str, Any]]:
+    """Segment + total labels for stacked bars (D79/D242/D304). Never fit-drop."""
+    placements: list[dict[str, Any]] = []
+    series_by_id = {s["series_id"]: s for s in series_plans}
+    navy = resolve_color("navy", role="text_on_light")
+    white = resolve_color("white", role="text_on_dark")
+
+    for b in bars:
+        if b.get("missing") or not b.get("finite"):
+            continue
+        text = b["visible"]
+        if not show_segments:
+            placements.append(
+                {
+                    "series_id": b["series_id"],
+                    "category_id": b["category_id"],
+                    "kind": "segment",
+                    "class": "suppressed",
+                    "x": b["end_x"],
+                    "y": b.get("mid_y", b["end_y"]),
+                    "text": text,
+                    "priority": "hidden_policy",
+                }
+            )
+            continue
+        # Prefer inside when segment tall enough and fill is dark enough.
+        h = float(b["height"])
+        w_est = max(20.0, len(text) * segment_px * 0.55)
+        inside_ok = h >= segment_px + 6 and b.get("sign", 0) != 0
+        cx = b["end_x"]
+        if inside_ok:
+            placements.append(
+                {
+                    "series_id": b["series_id"],
+                    "category_id": b["category_id"],
+                    "kind": "segment",
+                    "class": "inside",
+                    "x": cx,
+                    "y": b.get("mid_y", b["y"] + h / 2) + segment_px * 0.35,
+                    "text": text,
+                    "color": white,
+                    "priority": "segment",
+                }
+            )
+        else:
+            # Outside + series connector; navy text (D79/D304).
+            sign = b.get("sign", 0)
+            if sign < 0:
+                y = b["y"] + h + segment_px + 4
+                cls = "outside_below"
+            elif sign > 0:
+                y = b["y"] - 4
+                cls = "outside_above"
+            else:
+                y = b.get("end_y", b["y"]) - 4
+                cls = "outside_zero"
+            # Lateral nudge if label wider than bar.
+            x = cx
+            if w_est > b["width"]:
+                x = cx + b["width"] / 2 + w_est / 2 + 6
+                cls = "leader"
+            placements.append(
+                {
+                    "series_id": b["series_id"],
+                    "category_id": b["category_id"],
+                    "kind": "segment",
+                    "class": cls,
+                    "x": x,
+                    "y": y,
+                    "text": text,
+                    "color": navy,
+                    "anchor_x": cx,
+                    "anchor_y": b.get("mid_y", b["end_y"]),
+                    "connector_color": series_by_id[b["series_id"]]["color"],
+                    "priority": "segment",
+                }
+            )
+
+    for t in stack_totals:
+        if t.get("missing") or t.get("withheld"):
+            # Withheld/missing stay in D106 only — no visual label.
+            continue
+        if not show_totals and t.get("source") != "authored":
+            continue
+        # Authored implies show; computed follows policy.
+        if not show_totals and t.get("source") == "authored":
+            pass  # still show
+        text = t["visible"]
+        placements.append(
+            {
+                "series_id": None,
+                "category_id": t["category_id"],
+                "kind": "stack_total",
+                "class": f"total_{t['side']}",
+                "x": t["x"],
+                "y": t["y"],
+                "text": text,
+                "color": navy,
+                "priority": "total",
+                "source": t.get("source"),
+                "side": t.get("side"),
+            }
+        )
+    return placements
+
+
+def _freeze_coverage_callout(
+    chart: StackedBarChartVisual,
+    formats: Mapping[str, NumberFormat],
+    pad_l: float,
+    pad_t: float,
+    plot_w: float,
+) -> Optional[dict[str, Any]]:
+    cov = chart.coverage_callout
+    if cov is None:
+        return None
+    if cov.format_id not in formats:
+        return None
+    fv = format_semantic_value(
+        NumberValue(value=cov.value, format_id=cov.format_id), formats
+    )
+    # D50/D301 fixed chrome: value then label then optional period; top exterior.
+    y = max(18.0, pad_t - 28)
+    x = pad_l + plot_w / 2
+    parts = [fv.visible, cov.label]
+    if cov.period:
+        parts.append(cov.period)
+    wording = " · ".join(parts)
+    return {
+        "callout_id": cov.callout_id,
+        "value_visible": fv.visible,
+        "value_accessible": fv.accessible,
+        "label": cov.label,
+        "period": cov.period,
+        "wording": wording,
+        "x": x,
+        "y": y,
+        "value_px": 26,
+        "text_px": 24,
+        "fact": (
+            f"Coverage {cov.label}"
+            + (f" ({cov.period})" if cov.period else "")
+            + f": {fv.accessible}"
+        ),
     }
 
 
@@ -2504,6 +3273,7 @@ def _semantic_table(
         "line": "line trend",
         "grouped_bar": "grouped vertical bars",
         "horizontal_bar": "horizontal grouped bars",
+        "stacked_bar": "sign-separated stacked vertical bars",
     }.get(chart_type, chart_type)
     facts = [
         f"Chart type: {type_words}",
@@ -2542,7 +3312,7 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     ctype = plan.get("chart_type", "line")
     if ctype == "waterfall":
         return _chartjs_waterfall_config(plan)
-    if ctype in ("grouped_bar", "horizontal_bar"):
+    if ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
         return _chartjs_bar_config(plan)
     return _chartjs_line_config(plan)
 
@@ -3115,36 +3885,44 @@ def _heatmap_unit_note(fmt: NumberFormat) -> str | None:
 
 
 def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
-    """Grouped / horizontal bar Chart.js config sharing frozen geometry (D160)."""
+    """Grouped / horizontal / stacked bar Chart.js config (D160/D242)."""
     labels = [c["label"] for c in plan["categories"]]
     horizontal = bool(plan["geometry"].get("horizontal"))
+    stacked = bool(plan["geometry"].get("stacked")) or plan.get("chart_type") == "stacked_bar"
     g = plan["geometry"]
     n_ser = max(1, len(plan["series"]))
     # Mirror freeze thickness/gap → Chart.js category/bar percentages (D160).
     pitch = g.get("category_pitch") or 1.0
     thick = g.get("thickness") or BAR_MIN_THICKNESS
-    ser_gap = g.get("series_gap")
-    if ser_gap is None:
-        ser_gap = thick * BAR_SERIES_GAP_RATIO
-    cluster = n_ser * thick + max(0, n_ser - 1) * ser_gap
-    category_pct = min(1.0, max(0.1, cluster / pitch))
-    slot = (cluster / n_ser) if n_ser else thick
-    bar_pct = min(1.0, max(0.1, thick / slot)) if slot else 0.9
+    if stacked:
+        # One bar per category; thickness is the full cluster.
+        category_pct = min(1.0, max(0.1, thick / pitch))
+        bar_pct = 1.0
+    else:
+        ser_gap = g.get("series_gap")
+        if ser_gap is None:
+            ser_gap = thick * BAR_SERIES_GAP_RATIO
+        cluster = n_ser * thick + max(0, n_ser - 1) * ser_gap
+        category_pct = min(1.0, max(0.1, cluster / pitch))
+        slot = (cluster / n_ser) if n_ser else thick
+        bar_pct = min(1.0, max(0.1, thick / slot)) if slot else 0.9
     datasets = []
     for s in plan["series"]:
         data = [None if v is None else float(Decimal(v)) for v in s["values"]]
-        datasets.append(
-            {
-                "label": s["name"],
-                "data": data,
-                "backgroundColor": s["color"],
-                "borderColor": s["color"],
-                "borderWidth": 0,
-                "barPercentage": bar_pct,
-                "categoryPercentage": category_pct,
-                "clip": False,
-            }
-        )
+        ds: dict[str, Any] = {
+            "label": s["name"],
+            "data": data,
+            "backgroundColor": s["color"],
+            "borderColor": s["color"],
+            "borderWidth": 0,
+            "barPercentage": bar_pct,
+            "categoryPercentage": category_pct,
+            "clip": False,
+        }
+        if stacked:
+            # Chart.js stacks + and − independently when stack id is shared.
+            ds["stack"] = "stack"
+        datasets.append(ds)
     d_min = float(Decimal(plan["domain"]["min"]))
     d_max = float(Decimal(plan["domain"]["max"]))
     leading = plan["value_axis"].get("leading_break")
@@ -3155,7 +3933,7 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
         "min": vis_min,
         "max": vis_max,
         "grid": {"display": False, "drawBorder": True},
-        "stacked": False,
+        "stacked": stacked,
         "ticks": {
             "font": {"size": plan["role_sizes"]["value_ticks"]},
             "color": resolve_color("navy", role="text_on_light"),
@@ -3168,6 +3946,7 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
     cat_scale = {
         "display": False,
         "grid": {"display": False, "drawBorder": True},
+        "stacked": stacked,
         "ticks": {
             "font": {"size": plan["role_sizes"]["category_ticks"]},
             "color": resolve_color("navy", role="text_on_light"),
@@ -3186,7 +3965,8 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
     base_v = vis_min if leading is not None else 0.0
     for ds in datasets:
         ds["indexAxis"] = index_axis
-        ds["base"] = base_v
+        if not stacked:
+            ds["base"] = base_v
     return {
         "type": "bar",
         "data": {"labels": labels, "datasets": datasets},
@@ -3214,6 +3994,7 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
             "domain_ticks": plan["domain"]["ticks"],
             "surface_id": plan["surface_id"],
             "identity_strategy": plan["identity_strategy"],
+            "stacked": stacked,
             "bars": [
                 {
                     "series_id": b["series_id"],
@@ -3223,6 +4004,9 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
                     "width": b["width"],
                     "height": b["height"],
                     "missing": b.get("missing", False),
+                    "stack_base": b.get("stack_base"),
+                    "stack_top": b.get("stack_top"),
+                    "sign": b.get("sign"),
                 }
                 for b in plan.get("bars") or []
             ],

@@ -62,6 +62,7 @@ _AXIS_CHART_ROLES: Final = frozenset(
         "line_chart",
         "grouped_bar_chart",
         "horizontal_bar_chart",
+        "stacked_bar_chart",
         "waterfall_chart",
     }
 )
@@ -699,7 +700,7 @@ def _collect_surfaces(
                 out.append(bp)
                 adaptive_surfaces.append(bp)
         elif lt == "single_chart":
-            # single_chart axis charts + heatmap (D239/D240/D243/D245/D246/D302/D307/D308).
+            # single_chart axis charts + heatmap (D239/D240/D242–D243/D245/D246/D302/D304/D307/D308).
             from .charts import freeze_chart, freeze_heatmap
             from .models import HeatmapVisual
 
@@ -762,6 +763,7 @@ def _collect_surfaces(
                     "line": "line_chart",
                     "grouped_bar": "grouped_bar_chart",
                     "horizontal_bar": "horizontal_bar_chart",
+                    "stacked_bar": "stacked_bar_chart",
                     "waterfall": "waterfall_chart",
                 }.get(chart.chart_type, f"{chart.chart_type}_chart")
                 out.append(

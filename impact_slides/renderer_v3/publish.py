@@ -256,7 +256,7 @@ def build_presentation_html(
     has_chart = any(
         s.layout_type == "single_chart"
         and getattr(s.payload.primary_visual, "chart_type", None)
-        in ("line", "grouped_bar", "horizontal_bar", "waterfall")
+        in ("line", "grouped_bar", "horizontal_bar", "stacked_bar", "waterfall")
         for s in deck.slides
     )
     for slide in deck.slides:
@@ -2163,7 +2163,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
         painters: list[str] = []
         if is_chart:
             ctype = getattr(slide.payload.primary_visual, "chart_type", None)
-            if ctype in ("line", "grouped_bar", "horizontal_bar", "waterfall"):
+            if ctype in ("line", "grouped_bar", "horizontal_bar", "stacked_bar", "waterfall"):
                 painters = ["chartjs", "svg"]
             # heatmap: native HTML only — no canvas/SVG painters (D246/D248).
         rows.append(

@@ -1080,6 +1080,7 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
             "line",
             "grouped_bar",
             "horizontal_bar",
+            "stacked_bar",
             "waterfall",
         ):
             continue
