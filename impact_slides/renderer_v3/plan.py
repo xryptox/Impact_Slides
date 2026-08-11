@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Final, Optional
 
 from .diagnostics import DiagnosticEvent, RendererValidationError, event, sort_events
-from .models import Deck, Typography
+from .models import KERNEL_RELATIONSHIP_LAYOUTS, Deck, Typography
 
 KERNEL_TABLE_LAYOUTS = frozenset(
     {
@@ -29,15 +29,6 @@ KERNEL_LINEAR_LAYOUTS = frozenset(
         "timeline",
         "layered_architecture",
         "data_pipeline",
-    }
-)
-KERNEL_RELATIONSHIP_LAYOUTS = frozenset(
-    {
-        "decision_tree",
-        "feedback_loop",
-        "hierarchy",
-        "stakeholder_map",
-        "quadrant_matrix",
     }
 )
 
@@ -1993,7 +1984,12 @@ def _collect_relationship_body(
     structural_defect: bool = False,
 ) -> tuple[int, list[SurfacePlan]]:
     """Fixed-type surface for decision/cycle/hierarchy/map/quadrant (D274–D280)."""
+    from .validate import analyze_relationship_structure
+
     payload = slide.payload
+    defect_codes = (
+        analyze_relationship_structure(lt, payload) if structural_defect else []
+    )
     text_items: list[tuple[str, bool]] = []
     if lt == "decision_tree":
         nodes = []
@@ -2023,6 +2019,7 @@ def _collect_relationship_body(
             "root_id": payload.root_id,
             "nodes": nodes,
             "structural_defect": structural_defect,
+            "defect_codes": defect_codes,
         }
         role = "decision_tree"
         surface_id = f"slide-{sn}-decision-tree"
@@ -2052,6 +2049,7 @@ def _collect_relationship_body(
             "items": items,
             "classification": classification,
             "structural_defect": structural_defect,
+            "defect_codes": defect_codes,
         }
         role = "feedback_loop"
         surface_id = f"slide-{sn}-feedback-loop"
@@ -2076,6 +2074,7 @@ def _collect_relationship_body(
             "root_id": payload.root_id,
             "nodes": nodes,
             "structural_defect": structural_defect,
+            "defect_codes": defect_codes,
         }
         role = "hierarchy"
         surface_id = f"slide-{sn}-hierarchy"
@@ -2107,6 +2106,7 @@ def _collect_relationship_body(
             "focal": focal,
             "stakeholders": spokes,
             "structural_defect": structural_defect,
+            "defect_codes": defect_codes,
         }
         role = "stakeholder_map"
         surface_id = f"slide-{sn}-stakeholder-map"
@@ -2145,6 +2145,7 @@ def _collect_relationship_body(
             "y_axis": y_axis,
             "items": items,
             "structural_defect": structural_defect,
+            "defect_codes": defect_codes,
         }
         role = "quadrant_matrix"
         surface_id = f"slide-{sn}-quadrant-matrix"

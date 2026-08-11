@@ -1665,6 +1665,12 @@ def _paint_relationship_fallback(
             out.append("</ul>")
         else:
             # Relationship table: every node + every authored branch, no reconnect.
+            codes = list(spec.get("defect_codes") or [])
+            if codes:
+                out.append(
+                    f'<p class="relationship-unresolved"{_style_font(meta_px)}>'
+                    f'defects: {_escape("; ".join(codes))}</p>'
+                )
             out.append(
                 '<table class="relationship-table"><thead><tr>'
                 "<th scope=\"col\">node_id</th><th scope=\"col\">kind</th>"
@@ -1673,21 +1679,38 @@ def _paint_relationship_fallback(
             )
             known = {n["id"] for n in spec["nodes"]}
             for n in spec["nodes"]:
+                node_notes = [
+                    c.split(".", 1)[-1]
+                    for c in codes
+                    if c.endswith(f":{n['id']}")
+                ]
                 branches = n.get("branches") or []
                 if not branches:
+                    status = "; ".join(node_notes) if node_notes else "leaf"
+                    status_cls = (
+                        ' class="relationship-unresolved"' if node_notes else ""
+                    )
                     out.append(
                         f'<tr data-node-id="{_escape(n["id"])}">'
                         f'<td>{_escape(n["id"])}</td>'
                         f'<td>{_escape(n["kind"])}</td>'
                         f'<td>{_soft_break_html(n["heading"])}</td>'
-                        f'<td></td><td>leaf</td></tr>'
+                        f'<td></td><td{status_cls}>{status}</td></tr>'
                     )
                 for br in branches:
-                    status = (
-                        "ok"
-                        if br["target_id"] in known
-                        else f'unresolved target {_escape(br["target_id"])}'
-                    )
+                    notes = list(node_notes)
+                    if br["target_id"] not in known:
+                        notes.append(
+                            f'unresolved target {_escape(br["target_id"])}'
+                        )
+                    if f"decision_tree.shared_target:{br['target_id']}" in codes:
+                        notes.append(f"shared_target:{br['target_id']}")
+                    if notes:
+                        status = "; ".join(notes)
+                        status_cls = ' class="relationship-unresolved"'
+                    else:
+                        status = "ok"
+                        status_cls = ""
                     out.append(
                         f'<tr data-node-id="{_escape(n["id"])}" '
                         f'data-target-id="{_escape(br["target_id"])}">'
@@ -1695,7 +1718,7 @@ def _paint_relationship_fallback(
                         f'<td>{_escape(n["kind"])}</td>'
                         f'<td>{_soft_break_html(n["heading"])}</td>'
                         f'<td>{_soft_break_html(br["label"])} → {_escape(br["target_id"])}</td>'
-                        f'<td class="relationship-unresolved">{status}</td></tr>'
+                        f'<td{status_cls}>{status}</td></tr>'
                     )
             out.append("</tbody></table>")
 
@@ -1737,9 +1760,12 @@ def _paint_relationship_fallback(
             items = spec["items"]
             for i, it in enumerate(items):
                 nxt = items[(i + 1) % len(items)]
-                status = "ok"
                 if spec["loop_kind"] == "causal" and not it.get("effect"):
                     status = "unresolved effect"
+                    status_cls = ' class="relationship-unresolved"'
+                else:
+                    status = "ok"
+                    status_cls = ""
                 out.append(
                     f'<tr data-item-id="{_escape(it["id"])}">'
                     f'<td>{_escape(it["id"])}</td>'
@@ -1747,7 +1773,7 @@ def _paint_relationship_fallback(
                     f'<td>{_escape(nxt["id"])}</td>'
                     f'<td>{_escape(it.get("effect") or "")}</td>'
                     f'<td>{_soft_break_html(it.get("relationship_label") or "")}</td>'
-                    f'<td class="relationship-unresolved">{status}</td></tr>'
+                    f'<td{status_cls}>{status}</td></tr>'
                 )
             out.append("</tbody></table>")
 
@@ -1782,6 +1808,12 @@ def _paint_relationship_fallback(
                 render_h(spec["root_id"])
             out.append("</ul>")
         else:
+            codes = list(spec.get("defect_codes") or [])
+            if codes:
+                out.append(
+                    f'<p class="relationship-unresolved"{_style_font(meta_px)}>'
+                    f'defects: {_escape("; ".join(codes))}</p>'
+                )
             out.append(
                 '<table class="relationship-table"><thead><tr>'
                 "<th scope=\"col\">node_id</th><th scope=\"col\">heading</th>"
@@ -1790,22 +1822,41 @@ def _paint_relationship_fallback(
             )
             known = {n["id"] for n in spec["nodes"]}
             for n in spec["nodes"]:
+                node_notes = [
+                    c.split(".", 1)[-1]
+                    for c in codes
+                    if c.endswith(f":{n['id']}")
+                ]
                 kids = n.get("children") or []
                 if not kids:
+                    status = "; ".join(node_notes) if node_notes else "leaf"
+                    status_cls = (
+                        ' class="relationship-unresolved"' if node_notes else ""
+                    )
                     out.append(
                         f'<tr data-node-id="{_escape(n["id"])}">'
                         f'<td>{_escape(n["id"])}</td>'
                         f'<td>{_soft_break_html(n["heading"])}</td>'
-                        f'<td></td><td>leaf</td></tr>'
+                        f'<td></td><td{status_cls}>{status}</td></tr>'
                     )
                 for child in kids:
-                    status = "ok" if child in known else f"unresolved child {_escape(child)}"
+                    notes = list(node_notes)
+                    if child not in known:
+                        notes.append(f"unresolved child {_escape(child)}")
+                    if f"hierarchy.shared_child:{child}" in codes:
+                        notes.append(f"shared_child:{child}")
+                    if notes:
+                        status = "; ".join(notes)
+                        status_cls = ' class="relationship-unresolved"'
+                    else:
+                        status = "ok"
+                        status_cls = ""
                     out.append(
                         f'<tr data-node-id="{_escape(n["id"])}" data-child-id="{_escape(child)}">'
                         f'<td>{_escape(n["id"])}</td>'
                         f'<td>{_soft_break_html(n["heading"])}</td>'
                         f'<td>{_escape(child)}</td>'
-                        f'<td class="relationship-unresolved">{status}</td></tr>'
+                        f'<td{status_cls}>{status}</td></tr>'
                     )
             out.append("</tbody></table>")
 
