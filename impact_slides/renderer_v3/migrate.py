@@ -476,39 +476,214 @@ def _evidence_from_slide(
     return ids or None
 
 
-def _disclosure_from_legacy(
+# Layouts that forbid root disclosure on schema-v1 slides.
+_NO_DISCLOSURE_LAYOUTS = frozenset(
+    {"opening_cover", "closing_cover", "section_divider", "legal_notice"}
+)
+
+
+def _disclosure_locations(
+    slide: Mapping[str, Any],
+) -> list[tuple[str, Any]]:
+    """Return (json-path, value) for every authored disclosure bag."""
+    locs: list[tuple[str, Any]] = []
+    if "disclosure" in slide and slide.get("disclosure") is not None:
+        locs.append(("/disclosure", slide["disclosure"]))
+    content = slide.get("content")
+    if isinstance(content, dict) and content.get("disclosure") is not None:
+        locs.append(("/content/disclosure", content["disclosure"]))
+    vs = slide.get("visual_spec")
+    if isinstance(vs, dict) and vs.get("disclosure") is not None:
+        locs.append(("/visual_spec/disclosure", vs["disclosure"]))
+    return locs
+
+
+def _map_disclosure(
     slide: Mapping[str, Any],
     *,
-    slide_number: int = 0,
-) -> Optional[dict[str, Any]]:
-    """Map authored legacy disclosure panels → v1 Disclosure; never invent."""
-    raw = slide.get("disclosure")
-    if not isinstance(raw, dict):
-        return None
-    panels = raw.get("panels")
-    if not isinstance(panels, list) or not panels:
-        return None
-    sections: list[dict[str, Any]] = []
-    used: set[str] = set()
-    for i, panel in enumerate(panels[:4]):
-        if not isinstance(panel, dict):
-            continue
-        title = _text(panel.get("title"))
-        body = _text(panel.get("body"))
-        if not title or not body:
-            continue
-        sid = _unique_slug(
-            title, used, fallback=f"disc-{slide_number or 0}-{i + 1}"
+    slide_number: int,
+    path: str,
+    legacy_input: str,
+    target: Optional[str],
+) -> tuple[Optional[dict[str, Any]], Optional[UnresolvedDecision]]:
+    """Canonical-only disclosure map (Q3B/Q4A).
+
+    Maps only top-level ``disclosure.panels[{title, body:str}]`` within schema
+    caps. Recognized-but-unmapped shapes and cap overflow become unresolved
+    decisions — never silent drops. Absent/empty disclosure → (None, None).
+    Deck-unique surface_ids are finalized later by ``_register_surface_ids``.
+    """
+    locs = _disclosure_locations(slide)
+    if not locs:
+        return None, None
+
+    def _unres(suffix: str, msg: str) -> UnresolvedDecision:
+        return UnresolvedDecision(
+            slide_number,
+            f"{path}{suffix}",
+            legacy_input,
+            msg,
+            target=target,
         )
-        # Split body on blank lines into paragraph items (cap 6).
+
+    nested = [(p, v) for p, v in locs if p != "/disclosure"]
+    if nested:
+        where = nested[0][0]
+        return None, _unres(
+            where,
+            "Proof failed: authored disclosure is nested under "
+            f"{where}; only top-level disclosure.panels maps mechanically.",
+        )
+
+    raw = locs[0][1]
+    if not isinstance(raw, dict):
+        return None, _unres(
+            "/disclosure",
+            "Proof failed: disclosure must be an object with panels.",
+        )
+    if not raw:
+        return None, None
+
+    has_panels = isinstance(raw.get("panels"), list)
+    has_items = "items" in raw and raw.get("items") is not None
+    shorthand_keys = ("body", "content", "text", "title", "summary", "label")
+    has_shorthand = any(k in raw for k in shorthand_keys) and not has_panels
+
+    if has_items and not has_panels:
+        return None, _unres(
+            "/disclosure/items",
+            "Proof failed: disclosure uses items container; only panels maps.",
+        )
+    if has_shorthand:
+        return None, _unres(
+            "/disclosure",
+            "Proof failed: disclosure title+body shorthand is not canonical; "
+            "only disclosure.panels maps.",
+        )
+    if not has_panels:
+        # Pattern-only / empty declaration — nothing authored to preserve.
+        return None, None
+
+    panels = raw["panels"]
+    assert isinstance(panels, list)
+    if not panels:
+        return None, None
+    if len(panels) > 4:
+        return None, _unres(
+            "/disclosure/panels",
+            f"Proof failed: disclosure has {len(panels)} panels; "
+            "schema-v1 allows at most 4 (never truncate).",
+        )
+
+    sections: list[dict[str, Any]] = []
+    local_ids: set[str] = set()
+    for i, panel in enumerate(panels):
+        pp = f"/disclosure/panels/{i}"
+        if isinstance(panel, str):
+            return None, _unres(
+                pp,
+                "Proof failed: bare-string disclosure panel is not canonical.",
+            )
+        if not isinstance(panel, dict):
+            return None, _unres(
+                pp,
+                "Proof failed: disclosure panel must be an object.",
+            )
+
+        title = _text(panel.get("title"))
+        if not title and (panel.get("label") is not None or panel.get("summary") is not None):
+            return None, _unres(
+                pp,
+                "Proof failed: disclosure panel uses label/summary title alias; "
+                "only title maps.",
+            )
+
+        body_raw = panel.get("body")
+        if isinstance(body_raw, list):
+            return None, _unres(
+                f"{pp}/body",
+                "Proof failed: disclosure panel body is a list; only string body maps.",
+            )
+        if body_raw is not None and not isinstance(body_raw, str):
+            return None, _unres(
+                f"{pp}/body",
+                "Proof failed: disclosure panel body must be a string.",
+            )
+        body = _text(body_raw)
+        if not body and (
+            panel.get("content") is not None or panel.get("text") is not None
+        ):
+            return None, _unres(
+                pp,
+                "Proof failed: disclosure panel uses content/text body alias; "
+                "only body maps.",
+            )
+
+        if not title or not body:
+            return None, _unres(
+                pp,
+                "Proof failed: canonical disclosure panel needs non-empty title and body.",
+            )
+
         parts = [p.strip() for p in re.split(r"\n\s*\n", body) if p.strip()]
         if not parts:
             parts = [body]
-        items = [{"kind": "paragraph", "text": p} for p in parts[:6]]
-        sections.append({"surface_id": sid, "title": title, "items": items})
-    if not sections:
+        if len(parts) > 6:
+            return None, _unres(
+                f"{pp}/body",
+                f"Proof failed: disclosure body splits into {len(parts)} paragraphs; "
+                "schema-v1 allows at most 6 items per section (never truncate).",
+            )
+
+        sid = _unique_slug(
+            title, local_ids, fallback=f"disc-{slide_number}-{i + 1}"
+        )
+        sections.append(
+            {
+                "surface_id": sid,
+                "title": title,
+                "items": [{"kind": "paragraph", "text": p} for p in parts],
+            }
+        )
+
+    return {"sections": sections}, None
+
+
+def _attach_disclosure(
+    slide: Mapping[str, Any],
+    converted: dict[str, Any],
+    *,
+    slide_number: int,
+    path: str,
+    legacy_input: str,
+) -> Optional[UnresolvedDecision]:
+    """Attach mapped disclosure or return unresolved; mutates converted on success."""
+    layout = converted.get("layout_type")
+    target = layout if isinstance(layout, str) else None
+    locs = _disclosure_locations(slide)
+    if not locs:
         return None
-    return {"sections": sections}
+    if target in _NO_DISCLOSURE_LAYOUTS:
+        return UnresolvedDecision(
+            slide_number,
+            f"{path}/disclosure",
+            legacy_input,
+            f"Proof failed: layout {target!r} forbids disclosure but authored "
+            "disclosure is present (never drop).",
+            target=target,
+        )
+    disc, err = _map_disclosure(
+        slide,
+        slide_number=slide_number,
+        path=path,
+        legacy_input=legacy_input,
+        target=target,
+    )
+    if err is not None:
+        return err
+    if disc is not None:
+        converted["disclosure"] = disc
+    return None
 
 
 def _common_fields(
@@ -517,8 +692,6 @@ def _common_fields(
     section_id: Optional[str],
     title: Optional[str],
     include_takeaway: bool,
-    include_disclosure: bool = True,
-    slide_number: int = 0,
 ) -> dict[str, Any]:
     out: dict[str, Any] = {}
     if section_id is not None:
@@ -533,10 +706,6 @@ def _common_fields(
         so = _text(c.get("so_what")) or _text(c.get("takeaway"))
         if so:
             out["takeaway"] = {"text": so}
-    if include_disclosure:
-        disc = _disclosure_from_legacy(slide, slide_number=slide_number)
-        if disc is not None:
-            out["disclosure"] = disc
     notes = _text(slide.get("speaker_notes"))
     if notes:
         out["speaker_notes"] = notes
@@ -621,7 +790,6 @@ def _convert_narrative(
             section_id=section_id,
             title=title,
             include_takeaway=True,
-            slide_number=slide_number,
         ),
     }
     return out, None
@@ -675,7 +843,6 @@ def _convert_table_family(
             section_id=section_id,
             title=title,
             include_takeaway=target == "data_table",
-            slide_number=slide_number,
         ),
     }
     if require_insight and insight and "takeaway" not in out:
@@ -757,7 +924,6 @@ def _convert_grouped_annex(
             section_id=section_id,
             title=title,
             include_takeaway=False,
-            slide_number=slide_number,
         ),
     }
     out.pop("takeaway", None)
@@ -860,7 +1026,6 @@ def _convert_period_comparison(
             section_id=section_id,
             title=title,
             include_takeaway=True,
-            slide_number=slide_number,
         ),
     }
     return out, None
@@ -913,7 +1078,6 @@ def _convert_comparison_cards(
             section_id=section_id,
             title=title,
             include_takeaway=True,
-            slide_number=slide_number,
         ),
     }
     return out, None
@@ -1026,7 +1190,6 @@ def _convert_line_chart(
             section_id=section_id,
             title=title,
             include_takeaway=True,
-            slide_number=slide_number,
         ),
     }
     return out, None
@@ -1257,6 +1420,18 @@ def migrate_handoff(
             sections=sections,
         )
 
+        if converted is not None and unres is None:
+            disc_err = _attach_disclosure(
+                slide,
+                converted,
+                slide_number=slide_number,
+                path=path,
+                legacy_input=legacy_input,
+            )
+            if disc_err is not None:
+                unres = disc_err
+                converted = None
+
         eids = _evidence_from_slide(slide, evidence_registry)
         if converted is not None and eids:
             converted["evidence_ids"] = eids
@@ -1266,12 +1441,7 @@ def migrate_handoff(
                 isinstance(authored_footer, list)
                 and authored_footer
                 and converted.get("layout_type")
-                not in {
-                    "opening_cover",
-                    "closing_cover",
-                    "section_divider",
-                    "legal_notice",
-                }
+                not in _NO_DISCLOSURE_LAYOUTS
             ):
                 kept = [x for x in authored_footer if isinstance(x, str) and x in eids]
                 # de-dupe preserve order

@@ -362,6 +362,139 @@ def _annex_slide(number: int, title: str, panel_title: str) -> dict:
     }
 
 
+def _narrative_with_disclosure(disclosure: dict) -> dict:
+    return {
+        "slide_number": 1,
+        "layout_type": "ir_bullet_sheet",
+        "title": "Notes",
+        "section": "A",
+        "content": {"bullets": ["Only bullet"]},
+        "disclosure": disclosure,
+        "speaker_notes": "Say the bullet.",
+    }
+
+
+def test_unmapped_disclosure_shape_is_unresolved(tmp_path: Path):
+    """Q3B: recognized-but-unmapped disclosure shapes never silently drop."""
+    cases = [
+        (
+            "items-container",
+            {"pattern": "detail", "items": [{"title": "Note", "body": "Body text."}]},
+            "items",
+        ),
+        (
+            "label-alias",
+            {"pattern": "detail", "panels": [{"label": "Note", "body": "Body text."}]},
+            "label/summary",
+        ),
+        (
+            "content-alias",
+            {"pattern": "detail", "panels": [{"title": "Note", "content": "Body text."}]},
+            "content/text",
+        ),
+        (
+            "list-body",
+            {"pattern": "detail", "panels": [{"title": "Note", "body": ["Line a", "Line b"]}]},
+            "list",
+        ),
+        (
+            "bare-string-panel",
+            {"pattern": "detail", "panels": ["Bare string panel body."]},
+            "bare-string",
+        ),
+        (
+            "title-body-shorthand",
+            {"pattern": "detail", "title": "Note", "body": "Body text."},
+            "shorthand",
+        ),
+    ]
+    for name, disc, needle in cases:
+        src = _write(
+            tmp_path,
+            f"{name}.json",
+            _legacy_envelope([_narrative_with_disclosure(disc)]),
+        )
+        result = migrate_handoff(src, out_dir=tmp_path / f"out-{name}", check=False)
+        assert result.version_marked is False, name
+        assert result.unresolved, name
+        assert any(needle in u.reason for u in result.unresolved), (name, result.unresolved)
+
+
+def test_nested_disclosure_is_unresolved(tmp_path: Path):
+    """Q3B: content.disclosure / visual_spec.disclosure never silently drop."""
+    base = {
+        "slide_number": 1,
+        "layout_type": "ir_bullet_sheet",
+        "title": "Notes",
+        "section": "A",
+        "content": {
+            "bullets": ["Only bullet"],
+            "disclosure": {
+                "pattern": "detail",
+                "panels": [{"title": "Nested", "body": "Must not drop."}],
+            },
+        },
+        "speaker_notes": "Say the bullet.",
+    }
+    src = _write(tmp_path, "nested-content.json", _legacy_envelope([base]))
+    result = migrate_handoff(src, out_dir=tmp_path / "out-nested", check=False)
+    assert result.version_marked is False
+    assert any("content/disclosure" in u.path for u in result.unresolved)
+
+    vs = {
+        "slide_number": 1,
+        "layout_type": "annex_table",
+        "title": "Annex A",
+        "section": "Annex",
+        "visual_spec": {
+            "primary_visual": {
+                "type": "annex_table",
+                "steps_or_data": [["Metric", "Value"], ["Revenue", "100"]],
+            },
+            "disclosure": {
+                "pattern": "detail",
+                "panels": [{"title": "Nested VS", "body": "Must not drop."}],
+            },
+        },
+    }
+    src2 = _write(tmp_path, "nested-vs.json", _legacy_envelope([vs]))
+    result2 = migrate_handoff(src2, out_dir=tmp_path / "out-nested-vs", check=False)
+    assert result2.version_marked is False
+    assert any("visual_spec/disclosure" in u.path for u in result2.unresolved)
+
+
+def test_disclosure_cap_overflow_is_unresolved(tmp_path: Path):
+    """Q4A: panels>4 or body paragraphs>6 fail proof instead of truncating."""
+    five_panels = {
+        "pattern": "detail",
+        "panels": [
+            {"title": f"Panel {i}", "body": f"Body {i}."} for i in range(1, 6)
+        ],
+    }
+    src = _write(
+        tmp_path,
+        "five-panels.json",
+        _legacy_envelope([_narrative_with_disclosure(five_panels)]),
+    )
+    result = migrate_handoff(src, out_dir=tmp_path / "out-5p", check=False)
+    assert result.version_marked is False
+    assert any("at most 4" in u.reason for u in result.unresolved)
+
+    long_body = "\n\n".join(f"Paragraph {i}." for i in range(1, 8))
+    seven_parts = {
+        "pattern": "detail",
+        "panels": [{"title": "Long note", "body": long_body}],
+    }
+    src2 = _write(
+        tmp_path,
+        "seven-parts.json",
+        _legacy_envelope([_narrative_with_disclosure(seven_parts)]),
+    )
+    result2 = migrate_handoff(src2, out_dir=tmp_path / "out-7p", check=False)
+    assert result2.version_marked is False
+    assert any("at most 6" in u.reason for u in result2.unresolved)
+
+
 def test_repeated_disclosure_titles_get_deck_unique_surface_ids(tmp_path: Path):
     src = _write(
         tmp_path,
