@@ -305,6 +305,23 @@ def build_presentation_html(
             ".relationship-table thead th{background:var(--color-band);color:var(--color-band-ink)}",
             ".relationship-unresolved{font-style:italic}",
     # axis charts: line + grouped/horizontal/stacked bars + waterfall (D5/D6/D63/D106/D247/D304)
+            # dual / hero / metric boards (D149–D153/D189)
+            ".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
+            ".dual-chart-pane{flex:1 1 0;min-width:0}",
+            ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
+            ".chart-hero-left{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
+            ".chart-hero-right{flex:1 1 0;min-width:0}",
+            ".hero-card{border:var(--border-width-hairline) solid var(--color-rule);padding:16px;box-sizing:border-box;height:100%}",
+            ".hero-card h2{margin:0 0 8px}",
+            ".hero-subtitle{margin:0 0 12px}",
+            ".metric-stack,.driver-card,.metric-overview-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}",
+            ".metric-stack li,.driver-card li,.metric-overview-list li{display:flex;flex-direction:column;gap:4px}",
+            ".metric-value,.driver-value{font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis)}",
+            ".metric-overview h2{margin:0 0 16px}",
+            ".metric-overview-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}",
+            ".support-table.outlined{outline:2px solid var(--color-primary-blue)}",
+            # axis charts: line + grouped/horizontal/stacked bars (D5/D6/D63/D106/D247)
+            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
             ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
             ".chart-pane-title{display:flex;flex-direction:column;gap:4px;padding:10px 16px;margin:0 0 var(--space-sm)}",
             ".chart-pane-title>span:first-child{font-size:40px;font-weight:var(--font-weight-title);color:var(--color-band-ink)}",

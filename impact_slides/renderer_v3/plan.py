@@ -3658,10 +3658,10 @@ def _collect_relationship_body(
 # ---------------------------------------------------------------------------
 
 
-def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
+def _chart_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -> int:
     height = BLOCK_MARGIN_Y
+    inner_w = max(1, box_w - 32)
     if chart_spec.get("heading"):
-        inner_w = CONTENT_W - 32
         height += CHART_PANE_PAD_Y + BLOCK_MARGIN_Y
         height += _required_height(
             [(chart_spec["heading"], True)], CHART_PANE_TITLE_PX, inner_w, 0
@@ -3679,7 +3679,7 @@ def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
         used = 0.0
         for series in chart_spec["series"]:
             width = _text_width(series["name"], px) + 52
-            if used and used + width > CONTENT_W:
+            if used and used + width > box_w:
                 rows += 1
                 used = 0.0
             used += width
@@ -3687,11 +3687,11 @@ def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
     return height
 
 
-def _heatmap_chrome_height(chart_spec: dict[str, Any]) -> int:
+def _heatmap_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -> int:
     """Pane title band only; scale key is part of the fitted table height."""
     height = BLOCK_MARGIN_Y
     if chart_spec.get("heading"):
-        inner_w = CONTENT_W - 32
+        inner_w = max(1, box_w - 32)
         height += CHART_PANE_PAD_Y + BLOCK_MARGIN_Y
         height += _required_height(
             [(chart_spec["heading"], True)], CHART_PANE_TITLE_PX, inner_w, 0
