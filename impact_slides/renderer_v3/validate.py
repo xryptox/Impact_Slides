@@ -200,6 +200,7 @@ def _analyze_decision_tree(payload: DecisionTreePayload) -> list[str]:
     if root.kind != "decision":
         defects.append("decision_tree.root_not_decision")
     parents: dict[str, list[str]] = {nid: [] for nid in by_id}
+    children: dict[str, list[str]] = {nid: [] for nid in by_id}
     for n in payload.nodes:
         if n.kind != "decision" or not n.branches:
             continue
@@ -211,57 +212,50 @@ def _analyze_decision_tree(payload: DecisionTreePayload) -> list[str]:
                 defects.append("decision_tree.self_target")
                 continue
             parents[br.target_id].append(n.node_id)
+            children[n.node_id].append(br.target_id)
     for nid, pars in parents.items():
         if nid == payload.root_id:
             if pars:
                 defects.append("decision_tree.root_has_parent")
             continue
-        if len(pars) == 0:
-            defects.append(f"decision_tree.unreachable:{nid}")
-        elif len(pars) > 1:
+        if len(pars) > 1:
             defects.append(f"decision_tree.shared_target:{nid}")
-    # Reachability + depth from root following authored branches only.
+    # Reachability + depth from authored root only.
     depth: dict[str, int] = {payload.root_id: 1}
     stack = [payload.root_id]
-    seen_edge: set[tuple[str, str]] = set()
     while stack:
         cur = stack.pop()
-        node = by_id[cur]
-        if node.kind != "decision" or not node.branches:
-            continue
-        for br in node.branches:
-            tgt = br.target_id
-            if tgt not in by_id:
+        for tgt in children[cur]:
+            if tgt in depth:
                 continue
-            edge = (cur, tgt)
-            if edge in seen_edge:
-                continue
-            seen_edge.add(edge)
-            if tgt in depth and depth[tgt] <= depth[cur]:
-                # Back/cross edge ⇒ cycle or multi-path; shared already flagged.
-                if tgt in _ancestors(cur, parents):
-                    defects.append("decision_tree.cycle")
-                continue
-            nd = depth[cur] + 1
-            if tgt not in depth or nd < depth[tgt]:
-                depth[tgt] = nd
-                stack.append(tgt)
+            depth[tgt] = depth[cur] + 1
+            stack.append(tgt)
+    for nid in by_id:
+        if nid not in depth:
+            defects.append(f"decision_tree.unreachable:{nid}")
+    if _directed_graph_has_cycle(children):
+        defects.append("decision_tree.cycle")
     if any(d > 4 for d in depth.values()):
         defects.append("decision_tree.depth_exceeded")
-    # Stable unique codes only.
     return list(dict.fromkeys(defects))
 
 
-def _ancestors(node_id: str, parents: dict[str, list[str]]) -> set[str]:
-    out: set[str] = set()
-    stack = list(parents.get(node_id, []))
-    while stack:
-        p = stack.pop()
-        if p in out:
-            continue
-        out.add(p)
-        stack.extend(parents.get(p, []))
-    return out
+def _directed_graph_has_cycle(children: dict[str, list[str]]) -> bool:
+    """DFS cycle check over the full directed adjacency (all components)."""
+    state: dict[str, int] = {}
+
+    def dfs(u: str) -> bool:
+        state[u] = 1
+        for v in children.get(u, []):
+            s = state.get(v, 0)
+            if s == 1:
+                return True
+            if s == 0 and dfs(v):
+                return True
+        state[u] = 2
+        return False
+
+    return any(state.get(n, 0) == 0 and dfs(n) for n in children)
 
 
 def _analyze_feedback_loop(payload: FeedbackLoopPayload) -> list[str]:
@@ -280,6 +274,7 @@ def _analyze_hierarchy(payload: HierarchyPayload) -> list[str]:
         defects.append("hierarchy.root_missing")
         return defects
     parents: dict[str, list[str]] = {nid: [] for nid in by_id}
+    children: dict[str, list[str]] = {nid: [] for nid in by_id}
     for n in payload.nodes:
         for child in n.children or []:
             if child not in by_id:
@@ -289,31 +284,28 @@ def _analyze_hierarchy(payload: HierarchyPayload) -> list[str]:
                 defects.append("hierarchy.self_child")
                 continue
             parents[child].append(n.node_id)
+            children[n.node_id].append(child)
     for nid, pars in parents.items():
         if nid == payload.root_id:
             if pars:
                 defects.append("hierarchy.root_has_parent")
             continue
-        if len(pars) == 0:
-            defects.append(f"hierarchy.unreachable:{nid}")
-        elif len(pars) > 1:
+        if len(pars) > 1:
             defects.append(f"hierarchy.shared_child:{nid}")
     depth: dict[str, int] = {payload.root_id: 1}
     stack = [payload.root_id]
     while stack:
         cur = stack.pop()
-        node = by_id[cur]
-        for child in node.children or []:
-            if child not in by_id:
+        for child in children[cur]:
+            if child in depth:
                 continue
-            if child in depth and depth[child] <= depth[cur]:
-                if child in _ancestors(cur, parents) or child == cur:
-                    defects.append("hierarchy.cycle")
-                continue
-            nd = depth[cur] + 1
-            if child not in depth or nd < depth[child]:
-                depth[child] = nd
-                stack.append(child)
+            depth[child] = depth[cur] + 1
+            stack.append(child)
+    for nid in by_id:
+        if nid not in depth:
+            defects.append(f"hierarchy.unreachable:{nid}")
+    if _directed_graph_has_cycle(children):
+        defects.append("hierarchy.cycle")
     if any(d > 4 for d in depth.values()):
         defects.append("hierarchy.depth_exceeded")
     return list(dict.fromkeys(defects))

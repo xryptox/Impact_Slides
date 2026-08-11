@@ -161,6 +161,75 @@ def test_hierarchy_rejects_cycle_strict():
     assert any("cycle" in d or "shared" in d for d in defects)
 
 
+def test_disconnected_mutual_cycle_is_structural_defect(tmp_path: Path):
+    """Nodes in a disconnected mutual cycle must not pass as clean or vanish."""
+    hierarchy = HierarchyPayload(
+        relationship="part_of",
+        root_id="root",
+        nodes=[
+            HierarchyNode(node_id="root", heading="Root", children=["leaf"]),
+            HierarchyNode(node_id="leaf", heading="Leaf"),
+            HierarchyNode(node_id="ghost_a", heading="GhostA", children=["ghost_b"]),
+            HierarchyNode(node_id="ghost_b", heading="GhostB", children=["ghost_a"]),
+        ],
+    )
+    h_defects = analyze_relationship_structure("hierarchy", hierarchy)
+    assert any(d.startswith("hierarchy.unreachable:") for d in h_defects)
+    assert "hierarchy.cycle" in h_defects
+
+    decision = DecisionTreePayload(
+        root_id="r",
+        nodes=[
+            DecisionTreeNode(
+                node_id="r",
+                kind="decision",
+                heading="Root",
+                branches=[
+                    DecisionBranch(label="yes", target_id="o"),
+                    DecisionBranch(label="no", target_id="o2"),
+                ],
+            ),
+            DecisionTreeNode(node_id="o", kind="outcome", heading="Out"),
+            DecisionTreeNode(node_id="o2", kind="outcome", heading="Out2"),
+            DecisionTreeNode(
+                node_id="ghost_a",
+                kind="decision",
+                heading="GhostA",
+                branches=[
+                    DecisionBranch(label="loop", target_id="ghost_b"),
+                    DecisionBranch(label="alt", target_id="ghost_b"),
+                ],
+            ),
+            DecisionTreeNode(
+                node_id="ghost_b",
+                kind="decision",
+                heading="GhostB",
+                branches=[
+                    DecisionBranch(label="back", target_id="ghost_a"),
+                    DecisionBranch(label="also", target_id="ghost_a"),
+                ],
+            ),
+        ],
+    )
+    d_defects = analyze_relationship_structure("decision_tree", decision)
+    assert any(d.startswith("decision_tree.unreachable:") for d in d_defects)
+    assert "decision_tree.cycle" in d_defects
+
+    slide = next(s for s in _raw()["slides"] if s["layout_type"] == "hierarchy")
+    slide["payload"] = hierarchy.model_dump(mode="json", exclude_none=True)
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_deck([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    with pytest.raises(RendererValidationError):
+        render_deck(handoff, out, strict=True)
+    result = render_deck(handoff, out, strict=False)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert result["status"] == "degraded"
+    assert "GhostA" in html
+    assert "GhostB" in html
+    assert 'data-fallback="accessible_relationship_table"' in html
+
+
 def test_hierarchy_nonstrict_table_marks_dangling(tmp_path: Path):
     slide = next(s for s in _raw()["slides"] if s["layout_type"] == "hierarchy")
     slide["payload"]["nodes"][0]["children"] = ["cfo", "ghost"]
