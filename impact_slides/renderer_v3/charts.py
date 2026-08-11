@@ -1292,7 +1292,8 @@ def _paint_waterfall_svg(
             )
         d_min = float(Decimal(plan["domain"]["min"]))
         d_max = float(Decimal(plan["domain"]["max"]))
-        if d_min < 0 < d_max:
+        # Waterfall bridging requires zero; draw when zero is in the domain (D84/D245).
+        if d_min <= 0 <= d_max:
             zy = g["zero_y"]
             parts.append(
                 f'<line class="zero-line" x1="{pl}" y1="{zy:.1f}" '
@@ -1331,8 +1332,8 @@ def _paint_waterfall_svg(
                 f'<text x="16" y="{cy}" text-anchor="middle" font-size="{title_px}" '
                 f'transform="rotate(-90 16 {cy})" fill="{_e(ink)}">{_e(val_title)}</text>'
             )
-
-    if marks:
+        # Connectors + structural labels ride the chrome overlay so settled
+        # Chart.js path retains bridges/labels (D245/D248/D307); bars stay on marks.
         for conn in plan.get("connectors") or []:
             parts.append(
                 f'<line class="waterfall-connector" '
@@ -1342,16 +1343,6 @@ def _paint_waterfall_svg(
                 f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
                 f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
             )
-        for bar in plan.get("bars") or []:
-            parts.append(
-                f'<rect class="bar waterfall-bar" data-series="{_e(bar["series_id"])}" '
-                f'data-category="{_e(bar["category_id"])}" data-role="{_e(bar["role"])}" '
-                f'x="{bar["x"]:.1f}" y="{bar["y"]:.1f}" '
-                f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
-                f'fill="{_e(bar["color"])}"/>'
-            )
-
-    if chrome:
         lab_px = plan["role_sizes"].get(
             "structural_values", plan.get("structural_label_px", 18)
         )
@@ -1365,6 +1356,40 @@ def _paint_waterfall_svg(
                 f'data-placement="structural" data-category="{_e(place["category_id"])}">'
                 f'{_e(place["text"])}</text>'
             )
+
+    if marks:
+        for bar in plan.get("bars") or []:
+            parts.append(
+                f'<rect class="bar waterfall-bar" data-series="{_e(bar["series_id"])}" '
+                f'data-category="{_e(bar["category_id"])}" data-role="{_e(bar["role"])}" '
+                f'x="{bar["x"]:.1f}" y="{bar["y"]:.1f}" '
+                f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
+                f'fill="{_e(bar["color"])}"/>'
+            )
+        # Full SVG (noscript) still needs connectors/labels when chrome=False.
+        if not chrome:
+            for conn in plan.get("connectors") or []:
+                parts.append(
+                    f'<line class="waterfall-connector" '
+                    f'data-from="{_e(conn["from_category_id"])}" '
+                    f'data-to="{_e(conn["to_category_id"])}" '
+                    f'x1="{conn["x1"]:.1f}" y1="{conn["y"]:.1f}" '
+                    f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
+                    f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
+                )
+            lab_px = plan["role_sizes"].get(
+                "structural_values", plan.get("structural_label_px", 18)
+            )
+            for place in plan["placements"]:
+                if place.get("kind") != "structural":
+                    continue
+                parts.append(
+                    f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
+                    f'text-anchor="middle" font-size="{lab_px}" font-weight="700" '
+                    f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
+                    f'data-placement="structural" data-category="{_e(place["category_id"])}">'
+                    f'{_e(place["text"])}</text>'
+                )
 
     parts.append("</svg>")
     return "".join(parts)
@@ -1497,7 +1522,8 @@ def _resolve_waterfall_steps(
         else:  # computed_total
             y0, y1 = Decimal(0), level
             display_num = level
-            display_raw = _plain_decimal(float(level))
+            # Keep canonical decimal text — never float-round (D70/D77/D307).
+            display_raw = format(level, "f")
             color_role = "computed_total"
             sign = 0 if level == 0 else (1 if level > 0 else -1)
         fv = format_semantic_value(
@@ -1615,10 +1641,13 @@ def _waterfall_semantic_table(
                 formats,
             )
             val_vis, val_acc, missing = fv.visible, step["accessible"], False
+        level_raw = (
+            step["authored_value"]
+            if step["role"] == "total" and step["authored_value"] is not None
+            else format(Decimal(step["level"]), "f")
+        )
         lv = format_semantic_value(
-            NumberValue(
-                value=_plain_decimal(float(step["level"])), format_id=fmt_id
-            ),
+            NumberValue(value=level_raw, format_id=fmt_id),
             formats,
         )
         rows.append(

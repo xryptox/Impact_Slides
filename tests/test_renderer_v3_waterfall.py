@@ -265,8 +265,12 @@ def test_render_waterfall_html(tmp_path: Path):
     assert result["ok"] is True
     html = (out / "presentation.html").read_text(encoding="utf-8")
     assert 'data-chart-type="waterfall"' in html
-    assert "waterfall-connector" in html or "cfg-rev-bridge" in html
     assert "rev-bridge-semantic-table" in html
+    # Settled Chart.js path overlays connectors/labels outside <noscript> (D245/D248).
+    before_noscript = html.split("<noscript>", 1)[0]
+    assert "waterfall-connector" in before_noscript
+    assert "waterfall-value" in before_noscript
+    assert "zero-line" in before_noscript  # semantic zero even for all-positive
     m = re.search(
         r'<script type="application/json" id="cfg-rev-bridge">(.*?)</script>',
         html,
@@ -288,12 +292,27 @@ def test_render_waterfall_html(tmp_path: Path):
         if r.get("layout_type") == "single_chart"
     ]
     if not chart_ready:
-        # readiness may nest under different key — scan plans for chart_type
         plans = meta.get("plans") or []
         assert any(p.get("chart_type") == "waterfall" for p in plans)
     else:
         assert "chartjs" in chart_ready[0]["chart_painters"]
         assert "svg" in chart_ready[0]["chart_painters"]
+
+
+def test_computed_total_stays_decimal_safe():
+    raw = _w()
+    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps[0]["value"] = "10.1"
+    steps[1]["value"] = "0.2"
+    steps[2]["value"] = "0.3"
+    steps[3]["value"] = "10.6"  # authored reset
+    steps[4]["value"] = "0.05"
+    # last is computed_total of 10.65
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["rev-bridge"].chart_paint
+    close = next(s for s in cp["steps"] if s["category_id"] == "close")
+    assert close["display_value"] == "10.65"
+    assert Decimal(close["display_value"]) == Decimal("10.65")
 
 
 def test_svg_geometry_matches_frozen_plan():
