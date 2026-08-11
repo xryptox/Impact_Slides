@@ -1472,8 +1472,9 @@ unambiguous legacy title source; conflicts require human resolution.
 ### D140 — Single-chart support is one explicit typed slot
 
 A `single_chart` has exactly one chart `primary_visual` and at most one
-`support_visual`, typed as `support_table`, `outlined_support`, or
-`metric_strip`. This composition no longer paints `secondary_visual` or
+`support` slot (payload field `support`), typed as `support_table`, `outlined_support`, or
+`metric_strip`. Legacy keys `support_visual` and `secondary_visual` are invalid.
+This composition no longer paints `secondary_visual` or
 `content.key_stats` implicitly. Each support visual owns a `surface_id`, typed
 content, typography plan, diagnostics, and accessibility structure. Table and
 outlined support align to chart categories through `category_id`, never label

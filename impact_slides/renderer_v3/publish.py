@@ -176,7 +176,7 @@ def build_presentation_html(
             ".support-table.category-aligned .support-cat-cell.num{font-variant-numeric:tabular-nums lining-nums}",
             ".outlined-support{position:relative;width:100%;margin:0 0 var(--space-sm);min-height:48px}",
             ".outlined-support-label{position:absolute;left:0;top:50%;transform:translateY(-50%);margin:0;font-weight:var(--font-weight-emphasis);box-sizing:border-box;padding-right:8px}",
-            ".outlined-support-box{position:absolute;top:50%;transform:translate(-50%,-50%);border:var(--border-width-thin) solid var(--color-navy);box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:transparent;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis);padding:4px 6px;min-width:48px;min-height:48px}",
+            ".outlined-support-box{position:absolute;top:50%;transform:translate(-50%,-50%);border:var(--border-width-hairline) solid var(--color-navy);box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:transparent;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis);padding:4px 6px;min-width:48px;min-height:48px}",
             # Comparison cards (D187/D261).
             # Heatmap native table + scale key (D163/D246/D308).
             "table.heatmap-table td.heatmap-missing{background:transparent}",
@@ -705,7 +705,6 @@ def _paint_category_support_table(
     """Category-centered support cells from frozen plan centers (D69/D167/D266)."""
     paint = sp.table_paint or {}
     px = sp.role_sizes.get("table")
-    style = _style_font(px)
     attrs = _plan_attrs(sp, events_by_surface)
     centers = list(paint["centers"])
     cell_w = int(paint["cell_w"])
@@ -722,10 +721,13 @@ def _paint_category_support_table(
     row_h = max(28, (px or 14) + 12)
     head_h = 0 if hide_header else row_h
     total_h = head_h + n_rows * row_h + 8
+    geom = f"position:relative;height:{total_h}px"
+    if px is not None:
+        geom = f"font-size:{px}px;{geom}"
     out = [
-        f'<div class="support-table category-aligned" {attrs}{style} '
+        f'<div class="support-table category-aligned" {attrs} '
         f'data-table-surface="{_escape(support.table.surface_id)}" '
-        f'data-category-centered="true" style="position:relative;height:{total_h}px">'
+        f'data-category-centered="true" style="{geom}">'
     ]
     # sr-only semantic table keeps associations; visual row is center-positioned.
     out.extend(
@@ -796,7 +798,6 @@ def _paint_outlined_support(
     """Category-centered outlined boxes from frozen plan only (D69/D166/D267)."""
     paint = sp.table_paint or {}
     px = sp.role_sizes.get("table") or sp.role_sizes.get("label")
-    style = _style_font(px)
     attrs = _plan_attrs(sp, events_by_surface)
     label = paint["label"]
     lane_w = int(paint["label_lane_w"])
@@ -810,10 +811,13 @@ def _paint_outlined_support(
         raise RuntimeError(
             f"outlined_support {support.table.surface_id!r} centers/values length mismatch"
         )
+    geom = f"height:{row_h}px"
+    if px is not None:
+        geom = f"font-size:{px}px;{geom}"
     out = [
-        f'<div class="outlined-support" {attrs}{style} '
+        f'<div class="outlined-support" {attrs} '
         f'data-outlined-support="{_escape(support.table.surface_id)}" '
-        f'style="height:{row_h}px">'
+        f'style="{geom}">'
     ]
     out.append(
         f'<p class="outlined-support-label" style="width:{lane_w}px">'

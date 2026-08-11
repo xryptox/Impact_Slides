@@ -280,6 +280,15 @@ def test_paint_support_table_complete_rows(tmp_path: Path):
     assert "Mix" in html
     assert "—" in html  # missing cell
     assert 'data-category-centered="true"' in html
+    # Single style attr: font + relative box (duplicate style= drops height in HTML).
+    m = re.search(
+        r'class="support-table category-aligned"[^>]*style="([^"]+)"',
+        html,
+    )
+    assert m is not None
+    style = m.group(1)
+    assert "position:relative" in style and "height:" in style
+    assert style.count("style=") == 0
     # Semantic table remains for a11y; visual cells are center-positioned.
     assert "support-cat-cell" in html
     lefts = [float(x) for x in re.findall(r'support-cat-cell[^>]*left:([0-9.]+)px', html)]
@@ -301,6 +310,15 @@ def test_paint_outlined_support_alignment(tmp_path: Path):
     assert 'data-outlined-support="vol-outlined"' in html
     assert "outlined-support-label" in html
     assert "ROE" in html
+    m = re.search(r'class="outlined-support"[^>]*style="([^"]+)"', html)
+    assert m is not None
+    style = m.group(1)
+    assert "height:" in style
+    # Boxes must paint a real border using a theme token that exists.
+    assert (
+        ".outlined-support-box" in html
+        and "border:var(--border-width-hairline) solid var(--color-navy)" in html
+    )
     lefts = [float(x) for x in re.findall(r"outlined-support-box[^>]*left:([0-9.]+)px", html)]
     assert len(lefts) == 4
     # Pull frozen chart centers from run_meta plans via re-plan.
