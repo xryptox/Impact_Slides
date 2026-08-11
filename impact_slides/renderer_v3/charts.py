@@ -902,9 +902,7 @@ def _freeze_stacked_bar_chart(
                 )
 
     role_sizes = _role_sizes(chart)
-    identity = "legend"  # mandatory complete authored-order legend (D304)
-    if chart.display is not None and chart.display.series_identity == "legend":
-        identity = "legend"
+    identity = "legend"
 
     placements = _place_stack_labels(
         bars,
