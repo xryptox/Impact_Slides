@@ -60,7 +60,7 @@ CHART_VIEW_MIN_H: Final = 252
 # D47 absolute plot floor 320×240; view min keeps pads around that plot.
 CHART_PLOT_FLOOR_W: Final = 320
 CHART_PLOT_FLOOR_H: Final = 240
-CHART_VIEW_FLOOR_H: Final = 240 + 28 + 64  # plot + PAD_T + PAD_B ≈ 332
+CHART_VIEW_FLOOR_H: Final = CHART_PLOT_FLOOR_H + 28 + 64  # plot + PAD_T + PAD_B
 _AXIS_CHART_ROLES: Final = frozenset(
     {
         "line_chart",
@@ -79,6 +79,8 @@ OUTLINED_BOX_MAX: Final = 120  # content-sized; not full category pitch
 OUTLINED_BOX_GAP: Final = 8
 OUTLINED_LABEL_LANE_MIN: Final = 40  # grows with label; capped by first-box edge
 OUTLINED_PAD_Y: Final = 12
+OUTLINED_BOX_PAD_Y: Final = 16
+OUTLINED_ROW_EXTRA: Final = 12
 
 # Adaptive floors / ceilings (D12/D14/D51/D59/D171/D172/D225/D288).
 SUBTITLE_FLOOR: Final = 22
@@ -392,6 +394,21 @@ def plan_deck(
         events = rewritten
 
     for sp in surfaces:
+        # Final category-center pass after measure/fit wrote col_widths.
+        if (
+            sp.role == "support_table"
+            and sp._table_spec is not None
+            and sp._table_spec.get("alignment") == "category"
+            and sp._table_spec.get("centers")
+        ):
+            _apply_category_table_widths(
+                sp._table_spec,
+                list(sp._table_spec["centers"]),
+                sp._box_w or CONTENT_W,
+            )
+        if sp.role == "outlined_support" and sp._table_spec is not None:
+            size = sp.role_sizes.get("table") or OUTLINED_SUPPORT_FLOOR
+            _freeze_outlined_geometry(sp._table_spec, size)
         _seal_digests(sp)
 
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
@@ -998,6 +1015,9 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             sp._table_spec["label_lane_w"] = min(
                 max(OUTLINED_LABEL_LANE_MIN, label_need), lane_cap
             )
+            _freeze_outlined_geometry(sp._table_spec, OUTLINED_SUPPORT_FLOOR)
+        elif centers and sp._table_spec.get("kind") == "support_table":
+            _apply_category_table_widths(sp._table_spec, centers, sp._box_w or CONTENT_W)
 
 
 # ---------------------------------------------------------------------------
@@ -1728,15 +1748,10 @@ def _collect_single_chart_body(
         return len(plans), plans
 
     if isinstance(support, MetricStripSupport):
-        # Reuse period-comparison strip planner; support owns its own surface_id.
-        class _StripProxy:
-            surface_id = support.surface_id
-            metrics = support.metrics
-            typography = support.typography
-
+        # MetricStripSupport is duck-compatible with MetricStrip plan fields.
         plans.append(
             _metric_strip_plan(
-                _StripProxy(),
+                support,
                 deck,
                 sn=sn,
                 slide_index=slide_index,
@@ -1861,6 +1876,7 @@ def _outlined_support_plan(
             "alignment": "category",
         }
     )
+    _freeze_outlined_geometry(base, OUTLINED_SUPPORT_FLOOR)
     return SurfacePlan(
         surface_id=table.surface_id,
         role="outlined_support",
@@ -3054,7 +3070,73 @@ def _outlined_support_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool
     # Stash resolved box width for paint.
     if fits or sp._box_h <= 0:
         spec["box_w"] = box_w
+        _freeze_outlined_geometry(spec, size)
     return fits, wrapped
+
+
+def _freeze_outlined_geometry(spec: dict[str, Any], size: int) -> None:
+    """Seal painter-consumed outlined geometry at plan time (D69/D166)."""
+    box_min = int(spec.get("box_min") or OUTLINED_BOX_MIN)
+    box_w = int(spec.get("box_w") or box_min)
+    box_h = max(box_min, _line_box(size) + OUTLINED_BOX_PAD_Y)
+    spec["box_w"] = box_w
+    spec["box_h"] = box_h
+    spec["row_h"] = max(box_h + OUTLINED_ROW_EXTRA, box_min)
+    if "label" not in spec or not spec["label"]:
+        spec["label"] = ""
+
+
+def _apply_category_table_widths(
+    spec: dict[str, Any],
+    centers: list[dict[str, Any]],
+    box_w: int,
+) -> None:
+    """Freeze content-sized cell width + lane for center-positioned paint (D167/D266).
+
+    Contiguous HTML colgroups cannot center on chart x when cat0 sits at pad_l;
+    painters place cells at frozen centers instead (same contract as outlined_support).
+    """
+    n = len(centers)
+    if n == 0 or n != int(spec.get("n_cols") or 0):
+        return
+    px = SUPPORT_TABLE_FLOOR
+    headers = list(spec.get("display_headers") or spec.get("header_full") or [])
+    cells = list(spec.get("cells_vis") or [])
+    row_labs = list(spec.get("display_row_labels") or spec.get("row_labels_full") or [])
+    stub_need = 24.0
+    if headers:
+        stub_need = max(stub_need, _text_width(headers[0], px, strong=True) + 16)
+    for lab in row_labs:
+        stub_need = max(stub_need, _text_width(lab, px, strong=True) + 16)
+    cell_w = 40.0
+    for i in range(n):
+        if len(headers) > i + 1 and not spec.get("hide_header"):
+            cell_w = max(cell_w, _text_width(headers[i + 1], px, strong=True) + 16)
+        for row in cells:
+            if i < len(row):
+                cell_w = max(cell_w, _text_width(row[i], px) + 16)
+    cell_w = int(math.ceil(min(float(OUTLINED_BOX_MAX), max(40.0, cell_w))))
+    xs = [float(c["x"]) for c in centers]
+    first_left = xs[0] - cell_w / 2.0
+    lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
+    lane_w = min(max(int(math.ceil(stub_need)), OUTLINED_LABEL_LANE_MIN), lane_cap)
+    if lane_w > first_left + 2:
+        return
+    # Ensure cells don't overlap neighbors when pitch is tight.
+    if n >= 2:
+        pitch = min(xs[i + 1] - xs[i] for i in range(n - 1))
+        if cell_w > pitch - OUTLINED_BOX_GAP:
+            cell_w = max(24, int(math.floor(pitch - OUTLINED_BOX_GAP)))
+            first_left = xs[0] - cell_w / 2.0
+            lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
+            lane_w = min(lane_w, lane_cap)
+            if lane_w > first_left + 2 or cell_w < 24:
+                return
+    if xs[-1] + cell_w / 2.0 > box_w + 2:
+        return
+    spec["cell_w"] = cell_w
+    spec["label_lane_w"] = lane_w
+    spec["category_centered"] = True
 
 
 def _metric_strip_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
@@ -3557,6 +3639,19 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
     elif sp.role == "outlined_support":
         sp.role_sizes["table"] = size
         sp.role_sizes["label"] = size
+        if sp._table_spec is not None:
+            _freeze_outlined_geometry(sp._table_spec, size)
+    elif sp.role == "support_table" and sp._table_spec is not None:
+        # After table fit freezes col_widths, re-center on category x (D167).
+        if (
+            sp._table_spec.get("alignment") == "category"
+            and sp._table_spec.get("centers")
+        ):
+            _apply_category_table_widths(
+                sp._table_spec,
+                list(sp._table_spec["centers"]),
+                sp._box_w or CONTENT_W,
+            )
     elif sp.role == "comparison_cards" and sp._table_spec:
         roles = sp._table_spec.get("card_role_sizes") or {}
         if roles:
@@ -3571,13 +3666,18 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
     if not sp._overflow:
         return
     if sp.role == "outlined_support" and sp._table_spec is not None:
-        # D267: whole surface → ordinary support_table (independent if needed).
+        # D267: whole surface → support_table; keep category when IDs/centers survive.
         sp.fallback = "support_table"
         sp._table_spec = dict(sp._table_spec)
         sp._table_spec["kind"] = "support_table"
         sp._table_spec["paint_as"] = "support_table"
-        sp._table_spec["alignment"] = "independent"
-        sp._table_spec["hide_header"] = False
+        centers = list(sp._table_spec.get("centers") or [])
+        n_cols = int(sp._table_spec.get("n_cols") or 0)
+        keep_cat = bool(centers) and n_cols == len(centers)
+        sp._table_spec["alignment"] = "category" if keep_cat else "independent"
+        # Category keeps chart-owned header omission only when still category.
+        if not keep_cat:
+            sp._table_spec["hide_header"] = False
         sp.role = "support_table"
         sp.role_sizes["table"] = SUPPORT_TABLE_FLOOR
         sp._default_size = SUPPORT_TABLE_FLOOR

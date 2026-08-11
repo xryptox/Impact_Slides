@@ -172,6 +172,8 @@ def build_presentation_html(
             "table.support-table th.band-table-header{background:var(--color-navy);color:var(--color-white);font-weight:var(--font-weight-emphasis)}",
             "table.support-table th.stub,table.support-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis);background:transparent}",
             "table.support-table td.num{font-variant-numeric:tabular-nums lining-nums;text-align:right}",
+            ".support-table.category-aligned{width:100%;margin:0 0 var(--space-sm);background:transparent}",
+            ".support-table.category-aligned .support-cat-cell.num{font-variant-numeric:tabular-nums lining-nums}",
             ".outlined-support{position:relative;width:100%;margin:0 0 var(--space-sm);min-height:48px}",
             ".outlined-support-label{position:absolute;left:0;top:50%;transform:translateY(-50%);margin:0;font-weight:var(--font-weight-emphasis);box-sizing:border-box;padding-right:8px}",
             ".outlined-support-box{position:absolute;top:50%;transform:translate(-50%,-50%);border:var(--border-width-thin) solid var(--color-navy);box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:transparent;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis);padding:4px 6px;min-width:48px;min-height:48px}",
@@ -659,12 +661,7 @@ def _paint_chart_support(
     from .models import MetricStripSupport, OutlinedSupportVisual, SupportTableVisual
 
     if isinstance(support, MetricStripSupport):
-        class _StripProxy:
-            surface_id = support.surface_id
-            metrics = support.metrics
-            typography = support.typography
-
-        return _paint_metric_strip(_StripProxy(), plans_by_id, events_by_surface)
+        return _paint_metric_strip(support, plans_by_id, events_by_surface)
     if isinstance(support, OutlinedSupportVisual):
         sp = plans_by_id.get(support.table.surface_id)
         if sp is None or not getattr(sp, "table_paint", None):
@@ -673,6 +670,10 @@ def _paint_chart_support(
             )
         paint = sp.table_paint
         if paint.get("paint_as") == "support_table" or paint.get("kind") == "support_table":
+            if paint.get("category_centered") and paint.get("centers"):
+                return _paint_category_support_table(
+                    support, sp, events_by_surface
+                )
             return _paint_table_surface(
                 support.table,
                 plans_by_id,
@@ -681,6 +682,12 @@ def _paint_chart_support(
             )
         return _paint_outlined_support(support, sp, events_by_surface)
     if isinstance(support, SupportTableVisual):
+        sp = plans_by_id.get(support.table.surface_id)
+        paint = getattr(sp, "table_paint", None) if sp is not None else None
+        if paint and paint.get("category_centered") and paint.get("centers"):
+            return _paint_category_support_table(
+                support, sp, events_by_surface
+            )
         return _paint_table_surface(
             support.table,
             plans_by_id,
@@ -690,25 +697,119 @@ def _paint_chart_support(
     return []
 
 
+def _paint_category_support_table(
+    support: Any,
+    sp: Any,
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    """Category-centered support cells from frozen plan centers (D69/D167/D266)."""
+    paint = sp.table_paint or {}
+    px = sp.role_sizes.get("table")
+    style = _style_font(px)
+    attrs = _plan_attrs(sp, events_by_surface)
+    centers = list(paint["centers"])
+    cell_w = int(paint["cell_w"])
+    lane_w = int(paint["label_lane_w"])
+    hide_header = bool(paint.get("hide_header"))
+    headers = list(paint.get("display_headers") or paint.get("header_full") or [])
+    row_labels = list(paint.get("display_row_labels") or paint.get("row_labels_full") or [])
+    full_row_labels = list(paint.get("row_labels_full") or row_labels)
+    cells_vis = list(paint.get("cells_vis") or [])
+    cells_acc = list(paint.get("cells_acc") or [])
+    cells_role = list(paint.get("cells_role") or [])
+    col_ids = list(paint.get("col_ids") or [])
+    n_rows = int(paint.get("n_rows") or len(cells_vis))
+    row_h = max(28, (px or 14) + 12)
+    head_h = 0 if hide_header else row_h
+    total_h = head_h + n_rows * row_h + 8
+    out = [
+        f'<div class="support-table category-aligned" {attrs}{style} '
+        f'data-table-surface="{_escape(support.table.surface_id)}" '
+        f'data-category-centered="true" style="position:relative;height:{total_h}px">'
+    ]
+    # sr-only semantic table keeps associations; visual row is center-positioned.
+    out.extend(
+        _paint_table_surface(
+            support.table,
+            {support.table.surface_id: sp},
+            events_by_surface,
+            table_class="support-table sr-only",
+            include_plan_attrs=False,
+        )
+    )
+    y = 0
+    if not hide_header and len(headers) > 1:
+        out.append(
+            f'<p class="support-cat-stub" style="position:absolute;left:0;top:{y}px;'
+            f'width:{lane_w}px;margin:0;font-weight:var(--font-weight-emphasis)">'
+            f"{_soft_break_html(headers[0])}</p>"
+        )
+        for i, hid_lab in enumerate(headers[1:]):
+            cx = float(centers[i]["x"]) if i < len(centers) else 0.0
+            out.append(
+                f'<div class="support-cat-cell head" style="position:absolute;'
+                f'left:{cx:.1f}px;top:{y}px;width:{cell_w}px;height:{row_h}px;' 
+                f'transform:translateX(-50%);text-align:center;' 
+                f'font-weight:var(--font-weight-emphasis)">' 
+                f"{_soft_break_html(hid_lab)}</div>"
+            )
+        y += row_h
+    for r_i in range(n_rows):
+        lab = row_labels[r_i] if r_i < len(row_labels) else ""
+        full = full_row_labels[r_i] if r_i < len(full_row_labels) else lab
+        out.append(
+            f'<p class="support-cat-stub" style="position:absolute;left:0;top:{y}px;'
+            f'width:{lane_w}px;margin:0;font-weight:var(--font-weight-emphasis)" '
+            f'title="{_escape(full)}">{_soft_break_html(lab)}</p>'
+        )
+        row_vis = cells_vis[r_i] if r_i < len(cells_vis) else []
+        row_acc = cells_acc[r_i] if r_i < len(cells_acc) else []
+        row_role = cells_role[r_i] if r_i < len(cells_role) else []
+        for c_i, cid in enumerate(col_ids):
+            cx = float(centers[c_i]["x"]) if c_i < len(centers) else 0.0
+            visible = row_vis[c_i] if c_i < len(row_vis) else ""
+            accessible = row_acc[c_i] if c_i < len(row_acc) else visible
+            role = row_role[c_i] if c_i < len(row_role) else "text"
+            num_cls = " num" if role in ("number", "range", "missing") else ""
+            aria = (
+                f' aria-label="{_escape(accessible)}"'
+                if accessible != visible
+                else ""
+            )
+            out.append(
+                f'<div class="support-cat-cell{num_cls}" data-category-id="{_escape(cid)}" '
+                f'style="position:absolute;left:{cx:.1f}px;top:{y}px;width:{cell_w}px;'
+                f'height:{row_h}px;transform:translateX(-50%);text-align:center;'
+                f'display:flex;align-items:center;justify-content:center"{aria}>'
+                f"{_escape(visible)}</div>"
+            )
+        y += row_h
+    out.append("</div>")
+    return out
+
+
 def _paint_outlined_support(
     support: Any,
     sp: Any,
     events_by_surface: dict[str, list[DiagnosticEvent]],
 ) -> list[str]:
-    """Category-centered outlined boxes with exterior label lane (D166/D267)."""
+    """Category-centered outlined boxes from frozen plan only (D69/D166/D267)."""
     paint = sp.table_paint or {}
     px = sp.role_sizes.get("table") or sp.role_sizes.get("label")
     style = _style_font(px)
     attrs = _plan_attrs(sp, events_by_surface)
-    label = paint.get("label") or support.table.stub_header.label
-    lane_w = int(paint.get("label_lane_w") or 96)
-    centers = list(paint.get("centers") or [])
-    values = list(paint.get("values") or [])
-    box_min = int(paint.get("box_min") or 48)
+    label = paint["label"]
+    lane_w = int(paint["label_lane_w"])
+    centers = list(paint["centers"])
+    values = list(paint["values"])
     offset = float(paint.get("chart_offset_x") or 0)
-    box_w = int(paint.get("box_w") or box_min)
-    box_h = max(box_min, (px or 22) + 16)
-    row_h = max(box_h + 12, 48)
+    box_w = int(paint["box_w"])
+    box_h = int(paint["box_h"])
+    row_h = int(paint["row_h"])
+    if len(centers) != len(values):
+        raise RuntimeError(
+            f"outlined_support {support.table.surface_id!r} centers/values length mismatch"
+        )
     out = [
         f'<div class="outlined-support" {attrs}{style} '
         f'data-outlined-support="{_escape(support.table.surface_id)}" '
@@ -719,7 +820,7 @@ def _paint_outlined_support(
         f"{_soft_break_html(label)}</p>"
     )
     for i, val in enumerate(values):
-        cx = float(centers[i]["x"]) + offset if i < len(centers) else lane_w + 40 + i * (box_w + 8)
+        cx = float(centers[i]["x"]) + offset
         aria = (
             f' aria-label="{_escape(val["accessible"])}"' 
             if val.get("accessible") and val["accessible"] != val["visible"]

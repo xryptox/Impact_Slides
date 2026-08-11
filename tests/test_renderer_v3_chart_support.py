@@ -223,6 +223,14 @@ def test_support_table_preserves_rows_and_plot_floor():
     assert support.table_paint["n_rows"] == 1
     assert support.table_paint.get("hide_header") is True
     assert "—" in support.table_paint["cells_vis"][0]  # missing em dash preserved
+    # Category alignment freezes centers + content cell width for paint (D167).
+    centers = support.table_paint.get("centers") or []
+    assert support.table_paint.get("category_centered") is True
+    assert len(centers) == 4
+    assert int(support.table_paint.get("cell_w") or 0) >= 24
+    cat_x = {c["category_id"]: c["x"] for c in chart.chart_paint["categories"]}
+    for c in centers:
+        assert abs(c["x"] - cat_x[c["category_id"]]) <= 2.0
 
 
 def test_outlined_centers_align_within_2px():
@@ -236,7 +244,8 @@ def test_outlined_centers_align_within_2px():
     for c in centers:
         assert abs(c["x"] - cat_x[c["category_id"]]) <= 2.0
     assert support.table_paint["label_lane_w"] > 0
-    # Lane clear of first box.
+    # Frozen geometry only — paint must not recompute (D69).
+    assert "box_h" in support.table_paint and "row_h" in support.table_paint
     box_w = support.table_paint["box_w"]
     first_left = centers[0]["x"] - box_w / 2
     assert support.table_paint["label_lane_w"] <= first_left + 2
@@ -270,8 +279,17 @@ def test_paint_support_table_complete_rows(tmp_path: Path):
     assert "support-table" in html
     assert "Mix" in html
     assert "—" in html  # missing cell
-    # Category header is sr-only when chart owns categories.
-    assert re.search(r'<thead class="sr-only">', html)
+    assert 'data-category-centered="true"' in html
+    # Semantic table remains for a11y; visual cells are center-positioned.
+    assert "support-cat-cell" in html
+    lefts = [float(x) for x in re.findall(r'support-cat-cell[^>]*left:([0-9.]+)px', html)]
+    assert len(lefts) == 4
+    result = validate_handoff(_with_support(_cat_support_table()), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    chart = next(s for s in plan.surfaces if s.surface_id == "vol-trend")
+    cat_x = [c["x"] for c in chart.chart_paint["categories"]]
+    for painted, frozen in zip(lefts, cat_x):
+        assert abs(painted - frozen) <= 2.0
 
 
 def test_paint_outlined_support_alignment(tmp_path: Path):
