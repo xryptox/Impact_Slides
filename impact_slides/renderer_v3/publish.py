@@ -234,7 +234,8 @@ def build_presentation_html(
     # Chart.js only for axis-family charts; heatmaps are native HTML (D248).
     has_chart = any(
         s.layout_type == "single_chart"
-        and getattr(s.payload.primary_visual, "chart_type", None) == "line"
+        and getattr(s.payload.primary_visual, "chart_type", None)
+        in ("line", "grouped_bar", "horizontal_bar")
         for s in deck.slides
     )
     for slide in deck.slides:

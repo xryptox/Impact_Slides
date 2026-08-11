@@ -21,6 +21,7 @@ import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
 from impact_slides.renderer_v3.charts import (
+    chart_boot_script,
     freeze_bar_chart,
     paint_chart_svg,
     paint_semantic_table,
@@ -355,6 +356,9 @@ def test_horizontal_leading_break_contract():
     # Null slot preserved
     miss = next(b for b in cp["bars"] if b["category_id"] == "mx")
     assert miss["missing"] is True
+    # Null-slot point sits on the value-axis baseline, like the missing bar
+    miss_point = next(p for p in cp["points"] if p["category_id"] == "mx")
+    assert abs(miss_point["x"] - zx) <= 0.5
     # Identity pane_title for single series
     assert cp["identity_strategy"] == "pane_title"
     # Facts disclose break
@@ -383,6 +387,7 @@ def test_render_grouped_emits_chartjs_svg_table(tmp_path: Path):
     assert 'data-chart-type="grouped_bar"' in html
     assert 'data-chart-surface="seg-growth"' in html
     assert "chartjs-canvas" in html
+    assert chart_boot_script() in html
     assert "<noscript>" in html
     assert "<svg" in html and 'class="bar"' in html
     assert 'data-semantic-table="1"' in html

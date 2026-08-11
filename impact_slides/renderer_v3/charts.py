@@ -320,7 +320,7 @@ def freeze_bar_chart(
                 point = {
                     "series_id": sp["series_id"],
                     "category_id": cat.category_id,
-                    "x": bar_origin + (0 if horizontal else thick / 2),
+                    "x": zero_x if horizontal else bar_origin + thick / 2,
                     "y": (bar_origin + thick / 2) if horizontal else zero_y,
                     "value": None,
                     "visible": MISSING_VISIBLE,
@@ -334,7 +334,7 @@ def freeze_bar_chart(
                         "missing": True,
                         "x": bar_origin if not horizontal else zero_x,
                         "y": zero_y if not horizontal else bar_origin,
-                        "width": 0.0 if not horizontal else 0.0,
+                        "width": 0.0,
                         "height": 0.0,
                         "thickness": thick,
                         "sign": 0,
