@@ -230,7 +230,6 @@ def build_presentation_html(
             ".quote-card blockquote p:last-child{margin-bottom:0}",
             ".quote-card cite{display:block;font-style:normal;font-weight:var(--font-weight-emphasis)}",
         ".quote-card figcaption{margin:0}",
-        ".quote-card figcaption{margin:0}",
             ".quote-card .source-unavailable{margin:8px 0 0}",
             ".evidence-review{display:grid;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
             ".evidence-review.cols-2{grid-template-columns:1fr 1fr}",
