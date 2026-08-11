@@ -151,6 +151,8 @@ TAKEAWAY_OUTER_MT: Final = 20  # --space-md
 TAKEAWAY_LABEL_MB: Final = 8  # --space-xs under label
 TAKEAWAY_PAD_X: Final = 40  # --space-md left+right
 TAKEAWAY_BORDER_X: Final = 2  # hairline left+right
+CARD_PANEL_BORDER_Y: Final = TAKEAWAY_BORDER_Y  # .card-panel hairline top+bottom
+CARD_PANEL_BORDER_X: Final = TAKEAWAY_BORDER_X  # .card-panel hairline left+right
 COVER_GAP_Y: Final = 12  # --space-sm between flex items
 COVER_TITLE_MARGIN_Y: Final = 20  # --space-md
 COVER_BAND_H: Final = 8
@@ -1506,12 +1508,12 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                 if ok:
                     m._overflow = False
                     _record_surface_adaptations(m, target, events)
-                    _finalize_composition_roles(m, target)
                 else:
                     m._overflow = True
                     _apply_surface_floor_adaptations(m, target, events)
                     _apply_composition_fallback(m)
                 _ = codes_wrapped
+            _finalize_composition_roles(m, target)
         if changed or len(members) > 1:
             for m in members:
                 if "plan.synchronized" not in m.adaptation_codes:
@@ -2721,12 +2723,17 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
     box_w = sp._box_w
     box_h = sp._box_h if sp._box_h > 0 else 10**9
     ok = True
+    b_y = CARD_PANEL_BORDER_Y
+    b_x = CARD_PANEL_BORDER_X
 
     def lines(text: str, px: int, width: float, *, strong: bool = False, max_lines: int = 8):
         nonlocal ok
         ls, fit = _linear_lines(text, px, width, strong=strong, max_lines=max_lines)
         ok = ok and fit
         return ls
+
+    def panel_inner(col_w: int, pad: int = CARD_PAD) -> int:
+        return max(40, col_w - 2 * pad - b_x)
 
     if kind == "feature_cards":
         heading_px = size
@@ -2735,14 +2742,13 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
         cols = spec["cols"]
         rows = spec["rows"]
         col_w = max(40, (box_w - CARD_GAP * (cols - 1)) // cols)
-        inner_w = max(40, col_w - 2 * CARD_PAD)
-        text_w = inner_w
+        text_w = panel_inner(col_w)
         row_heights = []
         for r in range(rows):
             chunk = cards[r * cols : (r + 1) * cols]
             heights = []
             for c in chunk:
-                h = CARD_PAD
+                h = CARD_PAD + b_y
                 if c.get("icon_key"):
                     h += FEATURE_ICON_SIZE + FEATURE_ICON_GAP
                 ls = lines(c["heading"], heading_px, text_w, strong=True, max_lines=3)
@@ -2767,8 +2773,8 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
         col_w = box_w if n == 1 else max(40, (box_w - CARD_GAP * (n - 1)) // n)
         heights = []
         for q in quotes:
-            inner_w = max(40, col_w - 2 * CARD_PAD)
-            h = CARD_PAD
+            inner_w = panel_inner(col_w)
+            h = CARD_PAD + b_y
             paras = q["paragraphs"]
             for i, para in enumerate(paras):
                 ls = lines(para, body_px, inner_w, max_lines=6)
@@ -2801,8 +2807,8 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
             chunk = findings[r * cols : (r + 1) * cols]
             heights = []
             for f in chunk:
-                inner_w = max(40, col_w - 2 * CARD_PAD)
-                h = CARD_PAD
+                inner_w = panel_inner(col_w)
+                h = CARD_PAD + b_y
                 ls = lines(f["statement"], body_px, inner_w, max_lines=8)
                 h += len(ls) * _line_box(body_px) + CARD_INNER_GAP
                 if f.get("source_unavailable"):
@@ -2824,16 +2830,16 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
         col_w = max(40, (box_w - CARD_GAP) // 2)
 
         def group_h(items: list[dict[str, Any]], label: str) -> int:
-            inner_w = max(40, col_w - 2 * CARD_PAD)
+            inner_w = panel_inner(col_w)
             h = len(lines(label, heading_px, col_w, strong=True, max_lines=1)) * _line_box(
                 heading_px
             )
             if not items:
-                h += RISK_GROUP_GAP + CARD_PAD + _line_box(body_px) + CARD_PAD
+                h += RISK_GROUP_GAP + CARD_PAD + b_y + _line_box(body_px) + CARD_PAD
                 return h
             for i, it in enumerate(items):
                 h += RISK_GROUP_GAP
-                ch = CARD_PAD
+                ch = CARD_PAD + b_y
                 ls = lines(it["statement"], body_px, inner_w, max_lines=6)
                 # .item-statement{margin:0 0 4px} always painted
                 ch += len(ls) * _line_box(body_px) + CARD_MARGIN
@@ -2855,8 +2861,8 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
     if kind == "recommendation_case":
         heading_px = sp.role_sizes.get("heading", CARD_FIXED_HEADING_PX)
         body_px = sp.role_sizes.get("body", CARD_FIXED_BODY_PX)
-        inner_w = max(40, box_w - 2 * CARD_PAD)
-        h = CARD_PAD
+        inner_w = panel_inner(box_w)
+        h = CARD_PAD + b_y  # recommendation-panel
         ls = lines("Recommendation", heading_px, inner_w, strong=True, max_lines=1)
         h += len(ls) * _line_box(heading_px) + CARD_MARGIN
         ls = lines(spec["recommendation"], body_px, inner_w, max_lines=6)
@@ -2867,10 +2873,10 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
             cols = int(spec.get("cols") or min(n, 3))
             rows = int(spec.get("rows") or math.ceil(n / cols))
             col_w = max(40, (box_w - CARD_GAP * (cols - 1)) // cols)
-            c_inner = max(40, col_w - 2 * CARD_PAD)
+            c_inner = panel_inner(col_w)
             heights = []
             for i, r in enumerate(rationales):
-                ch = CARD_PAD
+                ch = CARD_PAD + b_y
                 label = f"Rationale {i + 1}"
                 ls = lines(label, heading_px, c_inner, strong=True, max_lines=1)
                 ch += len(ls) * _line_box(heading_px) + CARD_MARGIN
@@ -2883,12 +2889,11 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
                 ch += CARD_PAD
                 heights.append(ch)
             row_heights = [
-                max(heights[r * cols : (r + 1) * cols])
-                for r in range(rows)
+                max(heights[r * cols : (r + 1) * cols]) for r in range(rows)
             ]
             h += sum(row_heights) + CARD_GAP * max(0, rows - 1)
         else:
-            h += CARD_PAD + _line_box(body_px) + CARD_PAD
+            h += CARD_PAD + b_y + _line_box(body_px) + CARD_PAD
         total = h + BLOCK_MARGIN_Y
         if not ok:
             return False, 10**9
@@ -2912,8 +2917,8 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
     )
 
     def state_h(state: dict[str, Any], role_label: str) -> int:
-        inner_w = max(40, col_w - 2 * CARD_PAD)
-        h = CARD_PAD
+        inner_w = panel_inner(col_w)
+        h = CARD_PAD + b_y
         ls = lines(role_label, meta_px, inner_w, strong=True, max_lines=1)
         h += len(ls) * _line_box(meta_px) + CARD_MARGIN
         ls = lines(state["heading"], heading_px, inner_w, strong=True, max_lines=3)
@@ -2939,12 +2944,12 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
             return 0
         # Paint: column flex gap 8 among bare role-label p + each .transition-step.
         # Label uses global p margin-bottom 12; steps pad 12; h4 mb 4; detail p mb 12.
-        step_inner_w = max(40, col_w - 2 * TRANSITION_STEP_PAD)
+        step_inner_w = max(40, col_w - 2 * TRANSITION_STEP_PAD - b_x)
         label_inner_w = max(40, col_w)
         ls = lines("Transition", meta_px, label_inner_w, strong=True, max_lines=1)
         h = len(ls) * _line_box(meta_px) + BLOCK_MARGIN_Y + CARD_INNER_GAP
         for i, s in enumerate(steps):
-            h += TRANSITION_STEP_PAD
+            h += TRANSITION_STEP_PAD + b_y
             ls = lines(s["heading"], heading_px, step_inner_w, strong=True, max_lines=2)
             h += len(ls) * _line_box(heading_px) + CARD_MARGIN
             if s.get("detail"):

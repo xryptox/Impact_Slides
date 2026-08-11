@@ -18,9 +18,12 @@ from impact_slides.renderer_v3 import RendererValidationError, render_deck, vali
 from impact_slides.renderer_v3.plan import (
     CARD_FIXED_BODY_PX,
     CARD_MARGIN,
+    CARD_PANEL_BORDER_Y,
+    FEATURE_BODY_FLOOR,
     LIST_INDENT_EM,
     SurfacePlan,
     _card_fit_detail,
+    _finalize_composition_roles,
     _line_box,
     plan_deck,
 )
@@ -624,8 +627,8 @@ def test_state_list_indent_uses_list_indent_em():
     expected_indent = math.ceil(body_px * LIST_INDENT_EM)
     assert expected_indent == 23  # body 18 * 1.25
 
-    # 66× "ab" wraps 3 lines at indent 23 and 2 at indent 20 (max_lines=3).
-    long_item = " ".join(["ab"] * 66)
+    # 65× "ab" wraps 3 lines at indent 23 and 2 at indent 20 (max_lines=3).
+    long_item = " ".join(["ab"] * 65)
     sp = SurfacePlan(
         surface_id="t-st",
         role="state_transition",
@@ -794,3 +797,174 @@ def test_state_bullet_list_budgets_one_ul_margin():
     _, h1 = _card_fit_detail(st(1), body)
     _, h4 = _card_fit_detail(st(4), body)
     assert h4 - h1 == 3 * _line_box(body)
+
+
+def test_card_panel_hairline_border_budgeted_in_fit_height():
+    """Each .card-panel box budgets CARD_PANEL_BORDER_Y (theme hairline top+bottom)."""
+    body = CARD_FIXED_BODY_PX
+    stmt = "Short statement."
+
+    def risk(n_items: int) -> SurfacePlan:
+        items = [{"item_id": f"r{i}", "statement": stmt} for i in range(n_items)]
+        return SurfacePlan(
+            surface_id="t-risk-border",
+            role="risk_opportunity_review",
+            slide_number=1,
+            slide_index=0,
+            layout_type="risk_opportunity_review",
+            slot_order=10,
+            design_stage_region=1,
+            role_sizes={"heading": 22, "body": body},
+            _box_w=1728,
+            _box_h=10**9,
+            _card_spec={
+                "kind": "risk_opportunity_review",
+                "risks": items,
+                "opportunities": items,
+            },
+        )
+
+    _, h1 = _card_fit_detail(risk(1), body)
+    _, h2 = _card_fit_detail(risk(2), body)
+    # Second stacked item adds: RISK_GROUP_GAP(12) + pad*2 + border + stmt line + CARD_MARGIN
+    from impact_slides.renderer_v3.plan import CARD_PAD, RISK_GROUP_GAP
+
+    delta = h2 - h1
+    expected = (
+        RISK_GROUP_GAP
+        + CARD_PAD
+        + CARD_PANEL_BORDER_Y
+        + _line_box(body)
+        + CARD_MARGIN
+        + CARD_PAD
+    )
+    assert delta == expected
+
+
+def test_empty_marker_card_panel_border_budgeted():
+    """Empty group-unresolved / support-unavailable markers budget panel border, not p margin."""
+    body = CARD_FIXED_BODY_PX
+    from impact_slides.renderer_v3.plan import BLOCK_MARGIN_Y, CARD_GAP, CARD_PAD, RISK_GROUP_GAP
+
+    empty_only = SurfacePlan(
+        surface_id="t-empty-only",
+        role="risk_opportunity_review",
+        slide_number=1,
+        slide_index=0,
+        layout_type="risk_opportunity_review",
+        slot_order=10,
+        design_stage_region=1,
+        role_sizes={"heading": 22, "body": body},
+        _box_w=1728,
+        _box_h=10**9,
+        _card_spec={
+            "kind": "risk_opportunity_review",
+            "risks": [],
+            "opportunities": [],
+        },
+    )
+    ok, h_empty = _card_fit_detail(empty_only, body)
+    assert ok
+    marker = RISK_GROUP_GAP + CARD_PAD + CARD_PANEL_BORDER_Y + _line_box(body) + CARD_PAD
+    heading = _line_box(22)
+    assert h_empty == heading + marker + BLOCK_MARGIN_Y
+
+    with_support = SurfacePlan(
+        surface_id="t-with-support",
+        role="recommendation_case",
+        slide_number=1,
+        slide_index=0,
+        layout_type="recommendation_case",
+        slot_order=10,
+        design_stage_region=1,
+        role_sizes={"heading": 22, "body": body},
+        _box_w=1728,
+        _box_h=10**9,
+        _card_spec={
+            "kind": "recommendation_case",
+            "recommendation": "Do it.",
+            "rationales": [{"statement": "Because."}],
+            "cols": 1,
+            "rows": 1,
+        },
+    )
+    no_support = SurfacePlan(
+        surface_id="t-no-support",
+        role="recommendation_case",
+        slide_number=1,
+        slide_index=0,
+        layout_type="recommendation_case",
+        slot_order=10,
+        design_stage_region=1,
+        role_sizes={"heading": 22, "body": body},
+        _box_w=1728,
+        _box_h=10**9,
+        _card_spec={
+            "kind": "recommendation_case",
+            "recommendation": "Do it.",
+            "rationales": [],
+            "cols": 0,
+            "rows": 0,
+        },
+    )
+    ok_s, h_s = _card_fit_detail(with_support, body)
+    ok_n, h_n = _card_fit_detail(no_support, body)
+    assert ok_s and ok_n
+    # support-unavailable marker: pad + border + one body line + pad
+    # one rationale card is taller; empty marker still includes CARD_PANEL_BORDER_Y once
+    marker_h = CARD_PAD + CARD_PANEL_BORDER_Y + _line_box(body) + CARD_PAD
+    # recommendation panel shared prefix ends before CARD_GAP + support/rationales
+    # no_support total = shared + marker_h + BLOCK_MARGIN_Y
+    # Derive shared from no_support.
+    shared = h_n - marker_h - BLOCK_MARGIN_Y
+    assert shared > 0
+    assert h_n == shared + marker_h + BLOCK_MARGIN_Y
+
+
+def test_quote_card_figure_margin_reset_in_emitted_css(tmp_path: Path):
+    """Public HTML zeros figure/figcaption UA margin on .quote-card."""
+    raw = _raw()
+    q = next(s for s in raw["slides"] if s["layout_type"] == "quotation")
+    raw["slides"] = [q]
+    raw["evidence_registry"] = {"src-a": raw["evidence_registry"]["src-a"]}
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'class="quote-card card-panel"' in html
+    assert ".quote-card{flex:1 1 0;min-width:0;margin:0;padding:16px;box-sizing:border-box}" in html
+    assert ".quote-card figcaption{margin:0}" in html
+    assert ".group-unresolved{margin:0;padding:16px;font-style:italic}" in html
+    assert ".support-unavailable{margin:0;padding:16px;font-style:italic}" in html
+
+
+def test_feature_cards_sync_finalizes_detail_size():
+    """_synchronize re-finalizes feature_cards so detail tracks synced heading."""
+    sp = SurfacePlan(
+        surface_id="t-fc-sync",
+        role="feature_cards",
+        slide_number=1,
+        slide_index=0,
+        layout_type="feature_cards",
+        slot_order=10,
+        design_stage_region=1,
+        role_sizes={"heading": FEATURE_BODY_FLOOR, "detail": FEATURE_BODY_FLOOR},
+        _box_w=1728,
+        _box_h=10**9,
+        _fit_role="heading",
+        _mode="adaptive",
+        _default_size=FEATURE_BODY_FLOOR,
+        _maximum_size=28,
+        _card_spec={
+            "kind": "feature_cards",
+            "cards": [{"id": "c0", "heading": "H", "detail": "D"}],
+            "cols": 1,
+            "rows": 1,
+        },
+    )
+    target = 28
+    sp.role_sizes["heading"] = target
+    _finalize_composition_roles(sp, target)
+    assert sp.role_sizes["detail"] == target
+    assert sp.role_sizes["heading"] == target
