@@ -1698,9 +1698,14 @@ def _waterfall_semantic_table(
     if fmt.scale_label:
         facts.append(f"Display scale: {fmt.scale_label}")
     for step in resolved:
+        fact_level = (
+            step["authored_value"]
+            if step["role"] == "total" and step["authored_value"] is not None
+            else format(Decimal(step["level"]), "f")
+        )
         facts.append(
             f"Step {step['label']}: {step['role']} value {step['visible']} "
-            f"level {_plain_decimal(float(step['level']))}"
+            f"level {fact_level}"
         )
     return {
         "columns": columns,
