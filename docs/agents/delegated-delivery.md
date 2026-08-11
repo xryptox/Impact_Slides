@@ -63,6 +63,14 @@ The watcher emits `pr-ready` once per run/head/PR when CI monitoring begins; the
 
 A deliberately stopped or superseded watcher may report `CANCELLED`; verify the replacement run ID and implementation state, then treat that notification as expected rather than an implementation failure.
 
+### Follow-up token economy
+
+Watcher follow-up events are token-trimmed before delivery; the supervising session pays input tokens for every byte it receives:
+
+- In `Return-Event` (`watch-visible-implementers.ps1`), `Compress-AxiStatus` drops the `branch_sync` block unless it reports an anomaly (diverged/behind/local_ahead), strips the `help[...]` boilerplate, and collapses the `steps[...]` and `active_steps[...]` tables to one line each. Raw pane output is capped to the last 15 lines (200 chars/line) with a pointer to `herdr pane read` for the full text. Gate/ask-user content must always survive trimming.
+- The `ticket-wave-followups.ts` extension forwards only decision-relevant events into the session: `ask-user`, `pr-ready`, `loop-limit`, implementer `done`, or any event carrying `outcome`/`error` or `status: failed`. Everything else (working/idle heartbeats, auto-fix gate parks) is suppressed as `informational` in `actions.jsonl`. Desktop notifications fire for every event regardless, so visibility is preserved without context cost.
+- Gate-waiting implementers must block (`axi run`/`axi respond` re-block), never sleep-poll `axi status`; the no-mistakes skill carries that rule.
+
 ## Delivery sequence
 
 ### 1. Prepare a dependency wave
@@ -88,7 +96,7 @@ Each implementer must:
 - run the full no-mistakes gate itself;
 - report commits, tests, mutations, review results, no-mistakes run ID/findings/fixes, PR URL, CI state, and blockers.
 
-`ask-user` findings are escalation points. An implementer must not decide them without explicit standing consent. The watcher sends at most two notifications for the same unanswered decision, then pauses until the user explicitly resumes that ticket or wave.
+`ask-user` findings are escalation points. An implementer must not decide them without explicit standing consent. A parked `awaiting_approval` gate (review, rebase, document) is likewise an escalation point: the implementer reports the gate verbatim and waits for the supervisor-relayed decision before running `axi respond`, even when every finding is auto-fix or low-risk. The watcher sends at most two notifications for the same unanswered decision, then pauses until the user explicitly resumes that ticket or wave.
 
 No-mistakes review loops are also escalation points. After more than 5 review-fix rounds, 90 minutes in review fixing, or CPU-confirmed stalled quiet time (10 minutes in a fix round, 25 minutes in the initial review; growing CPU means a long model call, not a stall), approve no further fix: report the run, head, round/time, and current findings, preserve pipeline custody, and wait for controlled recovery.
 
