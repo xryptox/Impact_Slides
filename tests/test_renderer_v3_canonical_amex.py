@@ -174,3 +174,87 @@ def test_mutation_wrong_slide_count_fails(handoff: dict) -> None:
 
     with pytest.raises(RendererValidationError):
         validate_handoff(mutated, strict=True)
+
+def test_dual_and_hero_equal_band_and_stage_fit(handoff: dict) -> None:
+    """Composite body surfaces enter geometry fit (equal dual panes; stage stack)."""
+    from impact_slides.renderer_v3.plan import (
+        DESIGN_STAGE_H,
+        PAD_BOTTOM,
+        PAD_TOP,
+        plan_deck,
+    )
+
+    result = validate_handoff(handoff, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    stage = DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM
+    by_slide: dict[int, list] = {}
+    for sp in plan.surfaces:
+        by_slide.setdefault(sp.slide_number, []).append(sp)
+
+    dual_sns = [n for n, lt in D314_LAYOUTS.items() if lt == "dual_chart"]
+    for sn in dual_sns:
+        panes = [s for s in by_slide[sn] if s.role.endswith("_chart")]
+        assert len(panes) == 2, sn
+        assert panes[0]._box_h == panes[1]._box_h, (
+            sn,
+            panes[0]._box_h,
+            panes[1]._box_h,
+        )
+        assert not any(s._overflow for s in by_slide[sn]), sn
+
+    hero_sns = [n for n, lt in D314_LAYOUTS.items() if lt == "chart_hero_dual"]
+    for sn in dual_sns + hero_sns:
+        sps = by_slide[sn]
+        fixed = sum(
+            s._box_h + s._chrome_h
+            for s in sps
+            if s.role in {
+                "title",
+                "subtitle",
+                "takeaway",
+                "disclosure",
+                "source_footer",
+            }
+        )
+        if sn in dual_sns:
+            panes = [s for s in sps if s.role.endswith("_chart")]
+            band = max(s._box_h + s._chrome_h for s in panes)
+        else:
+            chart = next(s for s in sps if s.role.endswith("_chart"))
+            hero = next(s for s in sps if s.role == "hero_card")
+            support = [
+                s
+                for s in sps
+                if s.role in {"support_table", "outlined_support", "metric_strip"}
+            ]
+            left = chart._box_h + chart._chrome_h + sum(
+                s._box_h + s._chrome_h for s in support
+            )
+            right = hero._box_h + hero._chrome_h
+            band = max(left, right)
+        assert fixed + band <= stage, (sn, fixed + band, stage)
+
+
+def test_slide21_outlined_support_geometry(handoff: dict, tmp_path: Path) -> None:
+    """Capital Summary hero support paints outlined boxes, not a plain table."""
+    result = validate_handoff(handoff, strict=True)
+    from impact_slides.renderer_v3.plan import plan_deck
+
+    plan = plan_deck(result.deck, strict=True)
+    outlined = [
+        s
+        for s in plan.surfaces
+        if s.slide_number == 21 and s.role == "outlined_support"
+    ]
+    assert len(outlined) == 1
+    assert outlined[0]._table_spec is not None
+    assert outlined[0]._table_spec.get("kind") == "outlined_support"
+    assert outlined[0]._table_spec.get("centers")
+
+    out = tmp_path / "s21"
+    render_deck(FIXTURE, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-outlined-support="s21-roe"' in html
+    assert "outlined-support-box" in html
+    assert 'data-slide-number="21"' in html
+

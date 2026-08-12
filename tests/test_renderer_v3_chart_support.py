@@ -534,3 +534,88 @@ def test_mutation_reorder_category_columns_fails():
     # cells still keyed correctly but order wrong vs chart
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
+
+def _hero_with_outlined_support() -> dict:
+    """Minimal chart_hero_dual carrying outlined_support (hero path, not single_chart)."""
+    raw = _raw()
+    cats = raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["categories"]
+    chart = deepcopy(raw["slides"][1]["payload"]["primary_visual"])
+    chart["surface_id"] = "hero-chart"
+    support = _outlined_support()
+    # Hero path uses type/surface_id envelope, not support_type.
+    hero_support = {
+        "type": "outlined_support",
+        "surface_id": "hero-outlined-wrap",
+        "table": support["table"],
+    }
+    hero_support["table"]["surface_id"] = "hero-outlined"
+    raw["slides"][1] = {
+        "slide_number": 2,
+        "layout_type": "chart_hero_dual",
+        "section_id": "trends",
+        "title": "Hero outlined",
+        "payload": {
+            "primary_visual": chart,
+            "hero_visual": {
+                "type": "metric_stack",
+                "surface_id": "hero-stack",
+                "heading": "Summary",
+                "metrics": [
+                    {
+                        "metric_id": "m1",
+                        "label": "Peak",
+                        "value": {
+                            "type": "number",
+                            "value": "5.0",
+                            "format_id": "pct_1",
+                        },
+                    }
+                ],
+            },
+            "support_visual": hero_support,
+        },
+        "evidence_ids": ["src-board-pack"],
+    }
+    assert [c["category_id"] for c in cats] == [
+        c["column_id"] for c in hero_support["table"]["columns"]
+    ]
+    return raw
+
+
+def test_hero_outlined_support_validates_and_plans():
+    result = validate_handoff(_hero_with_outlined_support(), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    outlined = [s for s in plan.surfaces if s.role == "outlined_support"]
+    assert len(outlined) == 1
+    assert outlined[0]._table_spec["kind"] == "outlined_support"
+    assert outlined[0]._table_spec.get("centers")
+
+
+def test_hero_outlined_support_rejects_row_and_category_mismatches():
+    raw = _hero_with_outlined_support()
+    row = raw["slides"][1]["payload"]["support_visual"]["table"]["rows"][0]
+    raw["slides"][1]["payload"]["support_visual"]["table"]["rows"].append(
+        {**deepcopy(row), "row_id": "extra"}
+    )
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+    raw = _hero_with_outlined_support()
+    cols = raw["slides"][1]["payload"]["support_visual"]["table"]["columns"]
+    cols[0], cols[1] = cols[1], cols[0]
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_paint_hero_outlined_support_boxes(tmp_path: Path):
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(_hero_with_outlined_support()), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-outlined-support="hero-outlined"' in html
+    assert "outlined-support-box" in html
+    assert "support-table" not in html.split("chart-hero-dual")[1].split(
+        "chart-hero-right"
+    )[0] or "outlined-support" in html
+

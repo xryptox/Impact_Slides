@@ -2218,11 +2218,19 @@ class HeroSupportTableVisual(ClosedModel):
 
 
 class HeroOutlinedSupportVisual(ClosedModel):
-    """Outlined support under chart_hero_dual (D140/D153)."""
+    """Outlined support under chart_hero_dual (D140/D153/D166/D267)."""
 
     type: Literal["outlined_support"] = "outlined_support"
     surface_id: SemanticId
     table: TableData
+
+    @model_validator(mode="after")
+    def _one_row_no_groups(self) -> HeroOutlinedSupportVisual:
+        if len(self.table.rows) != 1:
+            raise ValueError("outlined_support requires exactly one row")
+        if self.table.column_groups is not None:
+            raise ValueError("outlined_support forbids column_groups (D267)")
+        return self
 
 
 class HeroMetricStripVisual(ClosedModel):
@@ -2270,6 +2278,28 @@ class ChartHeroDualPayload(ClosedModel):
             raise ValueError("chart_hero_dual surface_id values must be unique")
         if getattr(self.primary_visual, "chart_type", None) == "heatmap":
             raise ValueError("chart_hero_dual primary must be an axis chart")
+        support = self.support_visual
+        if isinstance(support, HeroOutlinedSupportVisual):
+            chart = self.primary_visual
+            cats = getattr(getattr(chart, "chart_data", None), "categories", None)
+            chart_type = getattr(chart, "chart_type", None)
+            if cats is None:
+                raise ValueError("outlined_support requires an axis chart with categories")
+            if chart_type == "horizontal_bar":
+                raise ValueError(
+                    "outlined_support is not supported on horizontal_bar "
+                    "(category axis is vertical)"
+                )
+            cat_ids = [c.category_id for c in cats]
+            col_ids = [c.column_id for c in support.table.columns]
+            if col_ids != cat_ids:
+                raise ValueError(
+                    "outlined_support columns must match chart category_id order exactly"
+                )
+            if not getattr(chart.category_axis, "visible", False):
+                raise ValueError(
+                    "outlined_support requires a visible category axis (D267)"
+                )
         return self
 
 

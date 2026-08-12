@@ -787,8 +787,7 @@ _text_items=items,
             )
             for bp in body_plans:
                 out.append(bp)
-                if bp._fit_role is not None:
-                    adaptive_surfaces.append(bp)
+                adaptive_surfaces.append(bp)
         elif lt == "single_chart":
             # single_chart axis charts + heatmap + optional support (D140/D252).
             body_slots, body_plans = _collect_single_chart_body(
@@ -1005,7 +1004,7 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             slot["chart"] = i
         elif sp.role == "hero_card":
             slot["hero"] = i
-        elif sp.role in {"metric_strip", "support_table"}:
+        elif sp.role in {"metric_strip", "support_table", "outlined_support"}:
             slot["support"] = i
     band_members: dict[int, set[int]] = {
         sn: set(slot.values())
@@ -1998,12 +1997,23 @@ _text_items=hero_items or [(" ", False)],
                         _chrome_h=METRIC_STRIP_PAD_Y,
                     )
                 )
+            elif getattr(support, "type", None) == "outlined_support":
+                plans.append(
+                    _outlined_support_plan(
+                        support=support,
+                        chart=payload.primary_visual,
+                        chart_spec=plans[0]._chart_spec or {},
+                        deck=deck,
+                        sn=sn,
+                        slide_index=slide_index,
+                        lt=lt,
+                        region=region,
+                        slot_order=12,
+                    )
+                )
             else:
                 table = support.table
                 table_spec = _build_table_spec(table, deck.number_formats)
-                table_spec["outlined"] = (
-                    getattr(support, "type", None) == "outlined_support"
-                )
                 table_plan = SurfacePlan(
                     surface_id=table.surface_id,
                     role="support_table",

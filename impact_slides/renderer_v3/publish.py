@@ -582,15 +582,23 @@ def _paint_chart_hero_dual(
                     f'<p class="metric-value">{_escape(vis)}</p></div>'
                 )
             out.append("</div>")
+        elif getattr(support, "type", None) == "outlined_support":
+            from .models import OutlinedSupportVisual
+
+            out.extend(
+                _paint_chart_support(
+                    OutlinedSupportVisual(table=support.table),
+                    plans_by_id,
+                    events_by_surface,
+                )
+            )
         else:
-            outlined = "outlined" if support.type == "outlined_support" else ""
             out.extend(
                 _paint_table_surface(
                     support.table,
                     plans_by_id,
                     events_by_surface,
                     table_class="support-table",
-                    extra_table_class=outlined,
                 )
             )
     out.append('</div><div class="chart-hero-right">')

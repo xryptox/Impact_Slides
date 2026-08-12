@@ -3368,7 +3368,7 @@
     },
     "HeroOutlinedSupportVisual": {
       "additionalProperties": false,
-      "description": "Outlined support under chart_hero_dual (D140/D153).",
+      "description": "Outlined support under chart_hero_dual (D140/D153/D166/D267).",
       "properties": {
         "type": {
           "const": "outlined_support",
