@@ -102,7 +102,7 @@ When the user requests a durable behavior change, record it here or in the relev
 
 - `impact_slides/AGENTS.md` — Python package (preprocessor v4 + shared modules); child covers renderer
 - `impact_slides/renderer_v2/AGENTS.md` — legacy Step 4 renderer v2 (current layouts, charts, recipes, validation)
-- `impact_slides/renderer_v3/AGENTS.md` — schema-v1 canonical rendering kernel (typed validation, plan freeze, chart/table/card composition families, format registry, legacy→v1 migrator, generated JSON Schema, deterministic artifact publication); dual/hero/metric compositions; D314 canonical Amex corpus; remaining chart/card families in later tickets
+- `impact_slides/renderer_v3/AGENTS.md` — schema-v1 canonical rendering kernel (typed validation, plan freeze, chart/table/card + dual/hero/metric compositions, format registry, legacy→v1 migrator, generated JSON Schema, deterministic artifact publication); D314 canonical Amex corpus
 - `docs/AGENTS.md` — agent operating docs (`docs/agents/`) and ADRs
 - `tests/AGENTS.md` — pytest suite, fixtures, CI expectations
 - `wiki/AGENTS.md` — historical archive + stale-doc marker policy; generated layout index; live `AGENT_LEARNINGS.md` pointer
