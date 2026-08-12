@@ -13,12 +13,19 @@ from typing import Any, Mapping, Optional, Union
 
 from .format import MISSING_ACCESSIBLE, MISSING_VISIBLE, format_semantic_value
 from .models import (
-    LINE_STYLE_PAIRS,
+    CategoryAnchor,
+    CategoryRangeAnchor,
+    ChartAnchor,
+    ChartAnnotation,
     ChartData,
+    ChartMeasurement,
     ComboChartVisual,
+    ContextLabel,
+    DataPointAnchor,
     GroupedBarChartVisual,
     HeatmapVisual,
     HorizontalBarChartVisual,
+    LINE_STYLE_PAIRS,
     LineChartVisual,
     MissingValue,
     NumberFormat,
@@ -2056,12 +2063,14 @@ def freeze_chart(
 ) -> dict[str, Any]:
     """Dispatch freeze by chart_type (D238)."""
     if isinstance(chart, LineChartVisual):
-        return freeze_line_chart(chart, formats, box_w=box_w, box_h=box_h)
-    if isinstance(chart, ComboChartVisual):
-        return freeze_combo_chart(chart, formats, box_w=box_w, box_h=box_h)
-    if isinstance(chart, WaterfallChartVisual):
-        return freeze_waterfall_chart(chart, formats, box_w=box_w, box_h=box_h)
-    return freeze_bar_chart(chart, formats, box_w=box_w, box_h=box_h)
+        plan = freeze_line_chart(chart, formats, box_w=box_w, box_h=box_h)
+    elif isinstance(chart, ComboChartVisual):
+        plan = freeze_combo_chart(chart, formats, box_w=box_w, box_h=box_h)
+    elif isinstance(chart, WaterfallChartVisual):
+        plan = freeze_waterfall_chart(chart, formats, box_w=box_w, box_h=box_h)
+    else:
+        plan = freeze_bar_chart(chart, formats, box_w=box_w, box_h=box_h)
+    return _attach_chart_facts(plan, chart, formats)
 
 
 def paint_chart_html(
@@ -2421,6 +2430,9 @@ def _paint_combo_svg(
                     f'data-placement="endpoint">{_e(name)}</text>'
                 )
 
+    if chrome:
+        ink_fact = resolve_color("navy", role="text_on_light")
+        _paint_fact_chrome_svg(plan, parts, ink_fact)
     parts.append("</svg>")
     return "".join(parts)
 
@@ -2563,6 +2575,9 @@ def _paint_line_svg(
                     f'data-placement="endpoint">{_e(name)}</text>'
                 )
 
+    if chrome:
+        ink_fact = resolve_color("navy", role="text_on_light")
+        _paint_fact_chrome_svg(plan, parts, ink_fact)
     parts.append("</svg>")
     return "".join(parts)
 
@@ -2817,6 +2832,9 @@ def _paint_bar_svg(
                 f"</g>"
             )
 
+    if chrome:
+        ink_fact = resolve_color("navy", role="text_on_light")
+        _paint_fact_chrome_svg(plan, parts, ink_fact)
     parts.append("</svg>")
     return "".join(parts)
 
@@ -2991,6 +3009,9 @@ def _paint_waterfall_svg(
                     f'{_e(place["text"])}</text>'
                 )
 
+    if chrome:
+        ink_fact = resolve_color("navy", role="text_on_light")
+        _paint_fact_chrome_svg(plan, parts, ink_fact)
     parts.append("</svg>")
     return "".join(parts)
 
@@ -3650,6 +3671,371 @@ def _place_stack_labels(
             }
         )
     return placements
+
+
+def _norm_text(s: str) -> str:
+    return " ".join(s.casefold().split())
+
+
+def _freeze_context_labels(
+    chart: Any,
+    formats: Mapping[str, NumberFormat],
+    *,
+    pad_l: float,
+    pad_t: float,
+    plot_w: float,
+    pad_r: float,
+    role_sizes: Mapping[str, int],
+    identity_names: list[str],
+) -> dict[str, Any]:
+    """D30/D168/D232/D296: ordered exterior-lane context block + D97 chrome dedupe."""
+    labels = list(getattr(chart, "context_labels", None) or [])
+    px = int(role_sizes.get("context_labels", 16))
+    series_norms = {_norm_text(n) for n in identity_names if n}
+    facts: list[str] = []
+    placements: list[dict[str, Any]] = []
+    suppressed: list[dict[str, Any]] = []
+    x = pad_l + plot_w + max(12.0, pad_r * 0.15)
+    y = pad_t + 18.0
+    line_h = px * 1.35
+    for lab in labels:
+        fv = format_semantic_value(lab.value, formats)
+        facts.append(f"Context {lab.label}: {fv.accessible}")
+        label_norm = _norm_text(lab.label)
+        # D18/D97: suppress chrome only when label+value duplicate series identity text.
+        chrome_suppressed = False
+        if label_norm in series_norms and fv.role == "text" and _norm_text(fv.visible) == label_norm:
+            chrome_suppressed = True
+            suppressed.append(
+                {
+                    "context_id": lab.context_id,
+                    "label": lab.label,
+                    "reason": "duplicate_identity",
+                }
+            )
+        placement = {
+            "kind": "context_label",
+            "context_id": lab.context_id,
+            "label": lab.label,
+            "short_label": lab.short_label,
+            "display_label": lab.label,
+            "value_visible": fv.visible,
+            "value_accessible": fv.accessible,
+            "x": x,
+            "y": y,
+            "px": px,
+            "suppressed": chrome_suppressed,
+            "relocated": False,
+            "class": "suppressed" if chrome_suppressed else "exterior",
+        }
+        if not chrome_suppressed:
+            placements.append(placement)
+            y += line_h * 2
+    return {
+        "placements": placements,
+        "facts": facts,
+        "suppressed": suppressed,
+        "px": px,
+        "block": {"x": x, "y0": pad_t + 18.0, "y1": y},
+    }
+
+
+def _category_centers(plan_cats: list[dict[str, Any]]) -> dict[str, dict[str, float]]:
+    out: dict[str, dict[str, float]] = {}
+    for c in plan_cats:
+        out[c["category_id"]] = {
+            "x": float(c.get("x") or 0.0),
+            "y": float(c.get("y") or 0.0),
+        }
+    return out
+
+
+def _freeze_annotations(
+    chart: Any,
+    *,
+    categories: list[dict[str, Any]],
+    points: list[dict[str, Any]],
+    pad_l: float,
+    pad_t: float,
+    plot_w: float,
+    plot_h: float,
+    role_sizes: Mapping[str, int],
+    identity_names: list[str],
+) -> dict[str, Any]:
+    """D147/D233/D297: semantic anchors → frozen candidates; facts always retained."""
+    anns = list(getattr(chart, "annotations", None) or [])
+    px = int(role_sizes.get("annotations", 13))
+    cat_xy = _category_centers(categories)
+    point_xy = {
+        (p["series_id"], p["category_id"]): p for p in points if p.get("finite")
+    }
+    series_norms = {_norm_text(n) for n in identity_names if n}
+    facts: list[str] = []
+    placements: list[dict[str, Any]] = []
+    for ann in anns:
+        role_word = "Event" if ann.role == "event" else "Explanation"
+        facts.append(f"{role_word}: {ann.text}")
+        anchor = ann.anchor
+        ax = pad_l + plot_w / 2
+        ay = pad_t + 12
+        anchor_desc = "chart"
+        if anchor.type == "category":
+            c = cat_xy.get(anchor.category_id)
+            if c:
+                ax, ay = c["x"], pad_t + 14
+            anchor_desc = f"category {anchor.category_id}"
+        elif anchor.type == "category_range":
+            a = cat_xy.get(anchor.from_category_id)
+            b = cat_xy.get(anchor.to_category_id)
+            if a and b:
+                ax = (a["x"] + b["x"]) / 2
+                ay = pad_t + 14
+            anchor_desc = (
+                f"category range {anchor.from_category_id} to {anchor.to_category_id}"
+            )
+        elif anchor.type == "data_point":
+            p = point_xy.get((anchor.series_id, anchor.category_id))
+            if p and p.get("x") is not None and p.get("y") is not None:
+                ax, ay = float(p["x"]), float(p["y"]) - 16
+            anchor_desc = f"data point {anchor.series_id}/{anchor.category_id}"
+        chrome_suppressed = _norm_text(ann.text) in series_norms
+        candidates = [
+            {"class": "above", "x": ax, "y": ay - 10},
+            {"class": "below", "x": ax, "y": ay + 18},
+            {"class": "exterior", "x": pad_l + plot_w + 12, "y": ay},
+            {"class": "below_plot", "x": ax, "y": pad_t + plot_h + 36},
+        ]
+        chosen = candidates[0]
+        placements.append(
+            {
+                "kind": "annotation",
+                "annotation_id": ann.annotation_id,
+                "role": ann.role,
+                "text": ann.text,
+                "anchor_type": anchor.type,
+                "anchor_desc": anchor_desc,
+                "x": chosen["x"],
+                "y": chosen["y"],
+                "px": px,
+                "class": chosen["class"],
+                "candidates": candidates,
+                "suppressed": chrome_suppressed,
+                "anchor_x": ax,
+                "anchor_y": ay,
+            }
+        )
+    return {"placements": placements, "facts": facts, "px": px}
+
+
+def _freeze_measurements(
+    chart: Any,
+    formats: Mapping[str, NumberFormat],
+    *,
+    categories: list[dict[str, Any]],
+    pad_l: float,
+    pad_t: float,
+    plot_w: float,
+    plot_h: float,
+    role_sizes: Mapping[str, int],
+) -> dict[str, Any]:
+    """D148/D234/D298: authored value facts; never recompute endpoints."""
+    measures = list(getattr(chart, "measurements", None) or [])
+    px = int(role_sizes.get("annotations", 13))
+    cat_xy = _category_centers(categories)
+    cat_label = {
+        c["category_id"]: c.get("label") or c["category_id"] for c in categories
+    }
+    if not cat_label and getattr(chart, "chart_type", None) == "waterfall":
+        for step in chart.waterfall_data.steps:
+            cat_label[step.category_id] = step.label
+            cat_xy.setdefault(step.category_id, {"x": 0.0, "y": 0.0})
+    facts: list[str] = []
+    placements: list[dict[str, Any]] = []
+    for m in measures:
+        fv = format_semantic_value(
+            NumberValue(value=m.value, format_id=m.format_id), formats
+        )
+        role_word = "Change" if m.role == "change" else "CAGR"
+        approx = " approximately" if m.approximate else ""
+        from_l = cat_label.get(m.from_category_id, m.from_category_id)
+        to_l = cat_label.get(m.to_category_id, m.to_category_id)
+        facts.append(
+            f"{role_word}{approx} on {m.series_id} from {from_l} to {to_l}: "
+            f"{fv.accessible}"
+        )
+        a = cat_xy.get(m.from_category_id, {"x": pad_l, "y": pad_t})
+        b = cat_xy.get(m.to_category_id, {"x": pad_l + plot_w, "y": pad_t})
+        mx = (a["x"] + b["x"]) / 2
+        my = pad_t + 28
+        try:
+            dv = Decimal(m.value)
+            direction = "up" if dv > 0 else ("down" if dv < 0 else "flat")
+        except Exception:
+            direction = "flat"
+        candidates = [
+            {"class": "above_range", "x": mx, "y": my},
+            {"class": "exterior", "x": pad_l + plot_w + 12, "y": my},
+            {"class": "below_plot", "x": mx, "y": pad_t + plot_h + 48},
+        ]
+        chosen = candidates[0]
+        placements.append(
+            {
+                "kind": "measurement",
+                "measurement_id": m.measurement_id,
+                "role": m.role,
+                "series_id": m.series_id,
+                "from_category_id": m.from_category_id,
+                "to_category_id": m.to_category_id,
+                "value_visible": fv.visible,
+                "value_accessible": fv.accessible,
+                "approximate": m.approximate,
+                "direction": direction,
+                "text": f"{'~' if m.approximate else ''}{fv.visible}",
+                "x": chosen["x"],
+                "y": chosen["y"],
+                "x1": a["x"],
+                "x2": b["x"],
+                "px": px,
+                "class": chosen["class"],
+                "candidates": candidates,
+                "suppressed": False,
+            }
+        )
+    return {"placements": placements, "facts": facts, "px": px}
+
+
+def _attach_chart_facts(
+    plan: dict[str, Any],
+    chart: Any,
+    formats: Mapping[str, NumberFormat],
+    *,
+    categories: list[dict[str, Any]] | None = None,
+    points: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Freeze context/annotation/measurement chrome into one shared plan (D248/D290)."""
+    g = plan["geometry"]
+    pad_l = float(g.get("pad_l", PAD_L))
+    pad_t = float(g.get("pad_t", PAD_T))
+    pad_r = float(g.get("pad_r", PAD_R))
+    plot_w = float(g.get("plot_w", g.get("view_w", PLOT_W) - pad_l - pad_r))
+    plot_h = float(g.get("plot_h", 200))
+    role_sizes = plan.get("role_sizes") or {}
+    cats = categories if categories is not None else list(plan.get("categories") or [])
+    pts = points if points is not None else list(plan.get("points") or [])
+    identity_names = [s.get("name") or "" for s in plan.get("series") or []]
+
+    ctx = _freeze_context_labels(
+        chart,
+        formats,
+        pad_l=pad_l,
+        pad_t=pad_t,
+        plot_w=plot_w,
+        pad_r=pad_r,
+        role_sizes=role_sizes,
+        identity_names=identity_names,
+    )
+    anns = _freeze_annotations(
+        chart,
+        categories=cats,
+        points=pts,
+        pad_l=pad_l,
+        pad_t=pad_t,
+        plot_w=plot_w,
+        plot_h=plot_h,
+        role_sizes=role_sizes,
+        identity_names=identity_names,
+    )
+    meas = _freeze_measurements(
+        chart,
+        formats,
+        categories=cats,
+        pad_l=pad_l,
+        pad_t=pad_t,
+        plot_w=plot_w,
+        plot_h=plot_h,
+        role_sizes=role_sizes,
+    )
+    plan["context_labels"] = ctx["placements"]
+    plan["annotations"] = anns["placements"]
+    plan["measurements"] = meas["placements"]
+    plan["fact_chrome"] = {
+        "context_suppressed": ctx["suppressed"],
+        "context_px": ctx["px"],
+        "annotation_px": anns["px"],
+        "measurement_px": meas["px"],
+    }
+    table = plan.get("semantic_table")
+    if isinstance(table, dict):
+        facts = list(table.get("facts") or [])
+        facts.extend(ctx["facts"])
+        facts.extend(anns["facts"])
+        facts.extend(meas["facts"])
+        table["facts"] = facts
+        plan["semantic_table"] = table
+    plan.setdefault("extra_facts", [])
+    plan["extra_facts"] = (
+        list(plan["extra_facts"]) + ctx["facts"] + anns["facts"] + meas["facts"]
+    )
+    return plan
+
+
+def _paint_fact_chrome_svg(plan: dict[str, Any], parts: list[str], ink: str) -> None:
+    """Shared SVG chrome for context labels, annotations, measurements (both painters)."""
+    for place in plan.get("context_labels") or []:
+        if place.get("suppressed"):
+            continue
+        px = place.get("px") or plan.get("role_sizes", {}).get("context_labels", 16)
+        x, y = place["x"], place["y"]
+        label = place.get("display_label") or place["label"]
+        parts.append(
+            f'<g class="context-label" data-context-id="{_e(place["context_id"])}" '
+            f'aria-hidden="true">'
+            f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="start" '
+            f'font-size="{px}" font-weight="600" fill="{_e(ink)}">'
+            f"{_e(label)}</text>"
+            f'<text x="{x:.1f}" y="{y + px * 1.2:.1f}" text-anchor="start" '
+            f'font-size="{px}" font-variant-numeric="tabular-nums" fill="{_e(ink)}">'
+            f'{_e(place["value_visible"])}</text>'
+            f"</g>"
+        )
+    for place in plan.get("annotations") or []:
+        if place.get("suppressed"):
+            continue
+        px = place.get("px") or plan.get("role_sizes", {}).get("annotations", 13)
+        x, y = place["x"], place["y"]
+        if place.get("class") in ("exterior", "leader", "below_plot"):
+            parts.append(
+                f'<line x1="{place.get("anchor_x", x):.1f}" '
+                f'y1="{place.get("anchor_y", y):.1f}" '
+                f'x2="{x:.1f}" y2="{y:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1" opacity="0.55"/>'
+            )
+        parts.append(
+            f'<text class="chart-annotation" data-annotation-id="{_e(place["annotation_id"])}" '
+            f'data-role="{_e(place["role"])}" data-placement="{_e(place["class"])}" '
+            f'x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-size="{px}" '
+            f'fill="{_e(ink)}" aria-hidden="true">{_e(place["text"])}</text>'
+        )
+    for place in plan.get("measurements") or []:
+        if place.get("suppressed"):
+            continue
+        px = place.get("px") or plan.get("role_sizes", {}).get("annotations", 13)
+        x, y = place["x"], place["y"]
+        x1, x2 = place.get("x1", x - 20), place.get("x2", x + 20)
+        parts.append(
+            f'<g class="chart-measurement" data-measurement-id="{_e(place["measurement_id"])}" '
+            f'data-role="{_e(place["role"])}" aria-hidden="true">'
+            f'<line x1="{x1:.1f}" y1="{y + 6:.1f}" x2="{x2:.1f}" y2="{y + 6:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+            f'<line x1="{x1:.1f}" y1="{y + 2:.1f}" x2="{x1:.1f}" y2="{y + 10:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+            f'<line x1="{x2:.1f}" y1="{y + 2:.1f}" x2="{x2:.1f}" y2="{y + 10:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+            f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-size="{px}" '
+            f'font-variant-numeric="tabular-nums" fill="{_e(ink)}">'
+            f'{_e(place["text"])}</text>'
+            f"</g>"
+        )
 
 
 def _freeze_coverage_callout(
@@ -4956,7 +5342,7 @@ def freeze_heatmap(
         all_texts.append(chart.subtitle)
 
     # Geometry is the native table itself — view_h is fitted later in plan.
-    return {
+    plan = {
         "surface_id": chart.surface_id,
         "table_surface_id": table_sid,
         "chart_type": "heatmap",
@@ -5001,6 +5387,34 @@ def freeze_heatmap(
         "placements": [],
         "gridlines": False,
     }
+    plan.setdefault(
+        "semantic_table",
+        {"columns": [], "rows": [], "facts": [], "visible": False},
+    )
+    n_cols = max(1, int(plan["n_cols"]))
+    col_xs = []
+    for i, cid in enumerate(plan["col_ids"]):
+        col_xs.append(
+            {
+                "category_id": cid,
+                "label": (
+                    plan["header_full"][i + 1]
+                    if i + 1 < len(plan["header_full"])
+                    else cid
+                ),
+                "x": (i + 0.5) * (plan["geometry"]["view_w"] / n_cols),
+                "y": 24.0,
+            }
+        )
+    plan["categories"] = col_xs
+    plan["points"] = []
+    plan["series"] = []
+    plan["role_sizes"] = {
+        **plan.get("role_sizes", {}),
+        "context_labels": 16,
+        "annotations": 13,
+    }
+    return _attach_chart_facts(plan, chart, formats, categories=col_xs, points=[])
 
 
 def paint_heatmap_html(
@@ -5124,6 +5538,28 @@ def paint_heatmap_html(
         )
         out.append("</div>")
     out.append("</div>")
+    fact_bits: list[str] = []
+    for place in plan.get("context_labels") or []:
+        if place.get("suppressed"):
+            continue
+        fact_bits.append(
+            f'<div class="context-label" data-context-id="{_e(place["context_id"])}">'
+            f'<span class="context-label-name">{_e(place["label"])}</span> '
+            f'<span class="context-label-value">{_e(place["value_visible"])}</span></div>'
+        )
+    for place in plan.get("annotations") or []:
+        if place.get("suppressed"):
+            continue
+        fact_bits.append(
+            f'<div class="chart-annotation" data-annotation-id="{_e(place["annotation_id"])}" '
+            f'data-role="{_e(place["role"])}">{_e(place["text"])}</div>'
+        )
+    extra_facts = list((plan.get("semantic_table") or {}).get("facts") or [])
+    if extra_facts:
+        items = "".join(f"<li>{_e(f)}</li>" for f in extra_facts)
+        fact_bits.append(f'<div class="chart-facts"><ul>{items}</ul></div>')
+    if fact_bits:
+        out.append('<div class="heatmap-chart-facts">' + "".join(fact_bits) + "</div>")
     return out
 
 
