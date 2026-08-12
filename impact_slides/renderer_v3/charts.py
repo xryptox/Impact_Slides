@@ -1190,6 +1190,20 @@ def freeze_waterfall_chart(
             "values": [s["display_value"] for s in resolved],
         }
     ]
+    points = [
+        {
+            "series_id": bar["series_id"],
+            "category_id": bar["category_id"],
+            "x": bar["end_x"],
+            "y": bar["end_y"],
+            "value": bar["value"],
+            "numeric": bar["numeric"],
+            "visible": bar["visible"],
+            "accessible": bar["accessible"],
+            "finite": bar["finite"],
+        }
+        for bar in bars
+    ]
 
     return {
         "surface_id": chart.surface_id,
@@ -1199,7 +1213,7 @@ def freeze_waterfall_chart(
         "categories": cat_centers,
         "series": series_plans,
         "steps": resolved,
-        "points": [],
+        "points": points,
         "bars": bars,
         "connectors": connectors,
         "placements": placements,
@@ -3873,13 +3887,13 @@ def _freeze_annotations(
     occupied: list[tuple[float, float, float, float]],
 ) -> dict[str, Any]:
     """D147/D233/D297: semantic anchors → frozen candidates; facts always retained."""
-    del identity_names  # reserved for D97 owner chain; annotations keep chrome
     anns = list(getattr(chart, "annotations", None) or [])
     px = int(role_sizes.get("annotations", 13))
     cat_xy = _category_centers(categories)
     point_xy = {
         (p["series_id"], p["category_id"]): p for p in points if p.get("finite")
     }
+    series_norms = {_norm_text(n) for n in identity_names if n}
     facts: list[str] = []
     placements: list[dict[str, Any]] = []
     diagnostics: list[Any] = []
@@ -3910,6 +3924,26 @@ def _freeze_annotations(
             if p and p.get("x") is not None and p.get("y") is not None:
                 ax, ay = float(p["x"]), float(p["y"]) - 16
             anchor_desc = f"data point {anchor.series_id}/{anchor.category_id}"
+        chrome_suppressed = _norm_text(ann.text) in series_norms
+        if chrome_suppressed:
+            diagnostics.append(
+                diag_event(
+                    code="plan.chrome_deduplicated",
+                    severity="info",
+                    phase="plan",
+                    role="annotations",
+                    path=f"annotations.{ann.annotation_id}",
+                    action="deduplicate",
+                    result="deduplicated",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D18/D97 duplicate identity chrome suppressed",
+                    input_meta={
+                        "annotation_id": ann.annotation_id,
+                        "text": ann.text,
+                    },
+                )
+            )
+            continue
         candidates = [
             {"class": "above", "x": ax, "y": ay - 10},
             {"class": "below", "x": ax, "y": ay + 18},

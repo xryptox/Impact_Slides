@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LINE = ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json"
 HEAT = ROOT / "tests/fixtures/renderer_v3/minimal_heatmap.json"
 STACKED = ROOT / "tests/fixtures/renderer_v3/minimal_stacked_bar.json"
+WATERFALL = ROOT / "tests/fixtures/renderer_v3/minimal_waterfall.json"
 
 
 def _line() -> dict:
@@ -31,6 +32,10 @@ def _line() -> dict:
 
 def _heat() -> dict:
     return json.loads(HEAT.read_text(encoding="utf-8"))
+
+
+def _waterfall() -> dict:
+    return json.loads(WATERFALL.read_text(encoding="utf-8"))
 
 
 def _vis(raw: dict) -> dict:
@@ -303,6 +308,61 @@ def test_duplicate_identity_context_suppresses_chrome_keeps_fact():
     assert any(f.startswith("Context US:") for f in plan["semantic_table"]["facts"])
     svg = paint_chart_svg(plan)
     assert 'data-context-id="dup-us"' not in svg
+
+
+def test_waterfall_data_point_annotation_anchors_to_step():
+    raw = _waterfall()
+    vis = _vis(raw)
+    vis["annotations"] = [
+        {
+            "annotation_id": "price-note",
+            "role": "explanation",
+            "text": "Price lift",
+            "anchor": {
+                "type": "data_point",
+                "series_id": "waterfall",
+                "category_id": "price",
+            },
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    assert plan["points"], "waterfall freeze must emit anchor points"
+    ann = next(a for a in plan["annotations"] if a["annotation_id"] == "price-note")
+    pt = next(
+        p
+        for p in plan["points"]
+        if p["series_id"] == "waterfall" and p["category_id"] == "price"
+    )
+    assert pt["finite"] is True
+    assert ann["anchor_x"] == pytest.approx(float(pt["x"]))
+    assert ann["anchor_y"] == pytest.approx(float(pt["y"]) - 16)
+    svg = paint_chart_svg(plan)
+    assert 'data-annotation-id="price-note"' in svg
+
+
+def test_duplicate_identity_annotation_suppresses_chrome_keeps_fact():
+    raw = _line()
+    _facts_on_line(raw)
+    # Series name "US" duplicated as annotation text → chrome only suppressed.
+    _vis(raw)["annotations"] = [
+        {
+            "annotation_id": "dup-us-ann",
+            "role": "explanation",
+            "text": "US",
+            "anchor": {"type": "chart"},
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    assert all(a["annotation_id"] != "dup-us-ann" for a in plan.get("annotations") or [])
+    assert any("Explanation: US" in f for f in plan["semantic_table"]["facts"])
+    codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
+    assert "plan.chrome_deduplicated" in codes
+    svg = paint_chart_svg(plan)
+    assert 'data-annotation-id="dup-us-ann"' not in svg
 
 
 def test_context_with_distinct_value_not_duplicate():

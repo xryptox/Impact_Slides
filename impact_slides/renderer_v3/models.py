@@ -1720,15 +1720,20 @@ def _chart_series_ids(chart: Any) -> set[str]:
 
 def _finite_point_exists(chart: Any, series_id: str, category_id: str) -> bool:
     data = getattr(chart, "chart_data", None)
-    if data is None:
+    if data is not None:
+        cat_ids = [c.category_id for c in data.categories]
+        if category_id not in cat_ids:
+            return False
+        c_i = cat_ids.index(category_id)
+        for s in data.series:
+            if s.series_id == series_id:
+                return s.values[c_i] is not None
         return False
-    cat_ids = [c.category_id for c in data.categories]
-    if category_id not in cat_ids:
-        return False
-    c_i = cat_ids.index(category_id)
-    for s in data.series:
-        if s.series_id == series_id:
-            return s.values[c_i] is not None
+    wf = getattr(chart, "waterfall_data", None)
+    if wf is not None:
+        if series_id != "waterfall":
+            return False
+        return any(s.category_id == category_id for s in wf.steps)
     return False
 
 
