@@ -1253,7 +1253,7 @@ class QuadrantMatrixPayload(ClosedModel):
 
 # ---------------------------------------------------------------------------
 
-# Axis charts + heatmap + single_chart composition (D162/D163/D227–D243, D245–D248, D290–D304, D307/D308)
+# Axis charts + heatmap + single_chart composition (D162/D163/D227–D244, D245–D248, D290–D304, D307/D308)
 # ---------------------------------------------------------------------------
 
 
