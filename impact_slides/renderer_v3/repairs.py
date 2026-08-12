@@ -1242,6 +1242,7 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
             "grouped_bar",
             "horizontal_bar",
             "stacked_bar",
+            "combo",
             "waterfall",
         ):
             continue
@@ -1294,7 +1295,11 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
                         finite.append(Decimal(str(v)))
                     except (InvalidOperation, TypeError, ValueError):
                         continue
-            if visual.get("chart_type") == "stacked_bar":
+            stacked_combo = (
+                visual.get("chart_type") == "combo"
+                and visual.get("bar_mode") == "stacked"
+            )
+            if visual.get("chart_type") == "stacked_bar" or stacked_combo:
                 cats = data.get("categories") if isinstance(data, dict) else None
                 n = len(cats) if isinstance(cats, list) else 0
                 if n == 0 and series:
@@ -1308,6 +1313,8 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
                     pos = Decimal(0)
                     neg = Decimal(0)
                     for s in series:
+                        if stacked_combo and isinstance(s, dict) and s.get("mark_type") == "line":
+                            continue
                         values = s.get("values") if isinstance(s, dict) else None
                         if not isinstance(values, list) or c_i >= len(values):
                             continue

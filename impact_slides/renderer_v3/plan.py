@@ -76,6 +76,7 @@ _AXIS_CHART_ROLES: Final = frozenset(
         "grouped_bar_chart",
         "horizontal_bar_chart",
         "stacked_bar_chart",
+        "combo_chart",
         "waterfall_chart",
     }
 )
@@ -1829,6 +1830,7 @@ def _axis_chart_surface_plan(
         "grouped_bar": "grouped_bar_chart",
         "horizontal_bar": "horizontal_bar_chart",
         "stacked_bar": "stacked_bar_chart",
+        "combo": "combo_chart",
     }.get(chart.chart_type, f"{chart.chart_type}_chart")
     return SurfacePlan(
         surface_id=chart.surface_id,
@@ -2250,6 +2252,7 @@ def _collect_single_chart_body(
             "grouped_bar": "grouped_bar_chart",
             "horizontal_bar": "horizontal_bar_chart",
             "stacked_bar": "stacked_bar_chart",
+            "combo": "combo_chart",
             "waterfall": "waterfall_chart",
         }.get(chart.chart_type, f"{chart.chart_type}_chart")
         plans.append(
