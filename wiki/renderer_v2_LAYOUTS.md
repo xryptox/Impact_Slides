@@ -17,7 +17,7 @@ Regenerate: `python scripts/gen_layout_index.py`
 | `causal_loop` | `render_causal_loop` | impact_slides/renderer_v2/layout/recipes/diagrams.py:75 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
 | `chart_hero_dual` | `render_chart_hero_dual` | impact_slides/renderer_v2/layout/recipes/charts.py:579 | `amex_v10_44_slide_handoff.json`, `canonical_amex_handoff_v1.json` | `AGENTS.md`, `amex_s21_capital_handoff_contract.py`, `chart_hero_dual_headings.py` +5 |
 | `circular_process` | `render_circular_process` | impact_slides/renderer_v2/layout/recipes/timeline.py:118 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave4b_layouts.py` |
-| `combo_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:361 | `golden_mvp1_handoff.json` | `auto_chart_typography.py`, `chart_polish.py`, `chart_styling.py` +6 |
+| `combo_chart` | `render_chart` | impact_slides/renderer_v2/layout/recipes/charts.py:361 | `golden_mvp1_handoff.json` | `AGENTS.md`, `auto_chart_typography.py`, `chart_polish.py` +7 |
 | `comparison_grid` | `render_comparison` | impact_slides/renderer_v2/layout/recipes/comparison.py:86 | `amex_v10_44_slide_handoff.json`, `mini_handoff.json` | `circle_pair.py`, `existing_layout_refactor.py`, `layout_dispatch_parity.py` +4 |
 | `comparison_with_metrics` | `render_comparison_with_metrics` | impact_slides/renderer_v2/layout/recipes/comparison.py:131 | — | `layout_dispatch_parity.py`, `renderer_v3_migrate.py`, `visual_regression_deck.py` +1 |
 | `data_flow_diagram` | `render_data_flow_diagram` | impact_slides/renderer_v2/layout/recipes/diagrams.py:49 | — | `layout_dispatch_parity.py`, `visual_regression_deck.py`, `wave2_layouts.py` |
