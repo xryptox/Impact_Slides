@@ -489,6 +489,20 @@ def plan_deck(
                 )
             )
 
+    if strict:
+        late_fit = [
+            e
+            for e in events
+            if e.severity == "error"
+            and e.code in ("plan.unresolved_overflow", "validation.fit")
+        ]
+        if late_fit:
+            raise RendererValidationError(
+                sort_events(events),
+                handoff_schema_version=deck.meta.handoff_schema_version,
+                renderer_version=RENDERER_VERSION,
+            )
+
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
 
 

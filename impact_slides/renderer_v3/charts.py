@@ -3735,6 +3735,34 @@ def _pick_candidate(
     return None, -1
 
 
+def _context_item_box(
+    x: float, y: float, text: str, px: float, line_h: float
+) -> tuple[tuple[float, float, float, float], float, float]:
+    w = max(40.0, len(text) * px * 0.55)
+    h = line_h * 2
+    return _fact_box(x, y, w, h), w, h
+
+
+def _place_context_block(
+    items: list[tuple[Any, Any, str]],
+    *,
+    x: float,
+    y0: float,
+    px: float,
+    line_h: float,
+    occupied: list[tuple[float, float, float, float]],
+) -> list[tuple[Any, Any, str, float, float, float, float]] | None:
+    y = y0
+    placed: list[tuple[Any, Any, str, float, float, float, float]] = []
+    for lab, fv, display in items:
+        box, w, h = _context_item_box(x, y, display, px, line_h)
+        if _overlaps(box, occupied):
+            return None
+        placed.append((lab, fv, display, x, y, w, h))
+        y += h
+    return placed
+
+
 def _freeze_context_labels(
     chart: Any,
     formats: Mapping[str, NumberFormat],
@@ -3748,18 +3776,18 @@ def _freeze_context_labels(
     identity_names: list[str],
     occupied: list[tuple[float, float, float, float]],
 ) -> dict[str, Any]:
-    """D30/D168/D232/D296: ordered exterior-lane context block + D97 chrome dedupe."""
+    """D30/D168/D232/D296: one ordered context block + D97 chrome dedupe."""
     labels = list(getattr(chart, "context_labels", None) or [])
     px = int(role_sizes.get("context_labels", 16))
     series_norms = {_norm_text(n) for n in identity_names if n}
     facts: list[str] = []
-    placements: list[dict[str, Any]] = []
     suppressed: list[dict[str, Any]] = []
     diagnostics: list[Any] = []
     x_ext = pad_l + plot_w + max(12.0, pad_r * 0.15)
-    y = pad_t + 18.0
+    y0 = pad_t + 18.0
     line_h = px * 1.35
-    plot = (pad_l, pad_t, pad_l + plot_w, pad_t + plot_h)
+    surface_id = getattr(chart, "surface_id", None)
+    survivors: list[tuple[Any, Any]] = []
     for lab in labels:
         fv = format_semantic_value(lab.value, formats)
         facts.append(f"Context {lab.label}: {fv.accessible}")
@@ -3786,7 +3814,7 @@ def _freeze_context_labels(
                     path=f"context_labels.{lab.context_id}",
                     action="deduplicate",
                     result="deduplicated",
-                    surface_id=getattr(chart, "surface_id", None),
+                    surface_id=surface_id,
                     expected="D18/D97 duplicate identity chrome suppressed",
                     input_meta={
                         "context_id": lab.context_id,
@@ -3796,12 +3824,106 @@ def _freeze_context_labels(
                 )
             )
             continue
+        survivors.append((lab, fv))
+
+    full_items = [(lab, fv, lab.label) for lab, fv in survivors]
+    short_items = [(lab, fv, lab.short_label or lab.label) for lab, fv in survivors]
+    used_short = False
+    relocated = False
+    overflow = False
+    placed = _place_context_block(
+        full_items, x=x_ext, y0=y0, px=px, line_h=line_h, occupied=occupied
+    )
+    cls = "exterior"
+    if placed is None:
+        placed = _place_context_block(
+            short_items, x=x_ext, y0=y0, px=px, line_h=line_h, occupied=occupied
+        )
+        if placed is not None:
+            used_short = True
+            cls = "exterior_short"
+    if placed is None:
+        x_below = pad_l + plot_w / 2
+        y_below = pad_t + plot_h + 40
+        placed = _place_context_block(
+            short_items,
+            x=x_below,
+            y0=y_below,
+            px=px,
+            line_h=line_h,
+            occupied=occupied,
+        )
+        relocated = True
+        used_short = any(
+            (lab.short_label or lab.label) != lab.label for lab, _fv in survivors
+        )
+        cls = "below_plot"
+        if placed is None:
+            overflow = True
+            y = y_below
+            forced: list[tuple[Any, Any, str, float, float, float, float]] = []
+            for lab, fv, display in short_items:
+                _box, w, h = _context_item_box(x_below, y, display, px, line_h)
+                forced.append((lab, fv, display, x_below, y, w, h))
+                y += h
+            placed = forced
+
+    ids = [lab.context_id for lab, _fv in survivors]
+    if used_short:
+        diagnostics.append(
+            diag_event(
+                code="plan.short_label_used",
+                severity="info",
+                phase="plan",
+                role="context_labels",
+                path="context_labels",
+                action="select_candidate",
+                result="accepted",
+                surface_id=surface_id,
+                expected="D30 short_label under exterior pressure",
+                input_meta={"context_ids": ids},
+            )
+        )
+    if relocated:
+        diagnostics.append(
+            diag_event(
+                code="plan.surface_relocated",
+                severity="warning",
+                phase="plan",
+                role="context_labels",
+                path="context_labels",
+                action="reallocate",
+                result="relocated",
+                surface_id=surface_id,
+                expected="D30/D296 complete context block below plot",
+                input_meta={"context_ids": ids},
+            )
+        )
+    if overflow:
+        diagnostics.append(
+            diag_event(
+                code="plan.unresolved_overflow",
+                severity="error",
+                phase="plan",
+                role="context_labels",
+                path="context_labels",
+                action="measure",
+                result="failed",
+                surface_id=surface_id,
+                expected="D30/D296 relocated context block fits",
+                input_meta={"context_ids": ids},
+            )
+        )
+
+    placements: list[dict[str, Any]] = []
+    y1 = y0
+    for lab, fv, display, x, y, w, h in placed or []:
         candidates = [
-            {"class": "exterior", "x": x_ext, "y": y, "label": lab.label},
+            {"class": "exterior", "x": x_ext, "y": y0, "label": lab.label},
             {
                 "class": "exterior_short",
                 "x": x_ext,
-                "y": y,
+                "y": y0,
                 "label": lab.short_label or lab.label,
             },
             {
@@ -3811,88 +3933,33 @@ def _freeze_context_labels(
                 "label": lab.short_label or lab.label,
             },
         ]
-        est_w = max(40.0, len(lab.label) * px * 0.55)
-        est_h = line_h * 2
-        chosen, idx = _pick_candidate(
-            candidates, box_w=est_w, box_h=est_h, occupied=occupied, plot=plot
+        placements.append(
+            {
+                "kind": "context_label",
+                "context_id": lab.context_id,
+                "label": lab.label,
+                "short_label": lab.short_label,
+                "display_label": display,
+                "value_visible": fv.visible,
+                "value_accessible": fv.accessible,
+                "x": float(x),
+                "y": float(y),
+                "px": px,
+                "suppressed": False,
+                "relocated": relocated,
+                "class": cls,
+                "candidates": candidates,
+            }
         )
-        if chosen is None:
-            diagnostics.append(
-                diag_event(
-                    code="plan.label_suppressed",
-                    severity="warning",
-                    phase="plan",
-                    role="context_labels",
-                    path=f"context_labels.{lab.context_id}",
-                    action="suppress",
-                    result="suppressed",
-                    surface_id=getattr(chart, "surface_id", None),
-                    expected="D110 non-overlapping candidate; chrome omitted",
-                    input_meta={"context_id": lab.context_id},
-                )
-            )
-            continue
-        display_label = chosen.get("label") or lab.label
-        if idx > 0 and lab.short_label and display_label == lab.short_label:
-            diagnostics.append(
-                diag_event(
-                    code="plan.short_label_used",
-                    severity="info",
-                    phase="plan",
-                    role="context_labels",
-                    path=f"context_labels.{lab.context_id}",
-                    action="select_candidate",
-                    result="accepted",
-                    surface_id=getattr(chart, "surface_id", None),
-                    expected="D30 short_label under exterior pressure",
-                    input_meta={"context_id": lab.context_id},
-                )
-            )
-        relocated = chosen["class"] == "below_plot"
-        if relocated:
-            diagnostics.append(
-                diag_event(
-                    code="plan.surface_relocated",
-                    severity="warning",
-                    phase="plan",
-                    role="context_labels",
-                    path=f"context_labels.{lab.context_id}",
-                    action="reallocate",
-                    result="relocated",
-                    surface_id=getattr(chart, "surface_id", None),
-                    expected="D30/D296 complete context block below plot",
-                    input_meta={"context_id": lab.context_id},
-                )
-            )
-        placement = {
-            "kind": "context_label",
-            "context_id": lab.context_id,
-            "label": lab.label,
-            "short_label": lab.short_label,
-            "display_label": display_label,
-            "value_visible": fv.visible,
-            "value_accessible": fv.accessible,
-            "x": float(chosen["x"]),
-            "y": float(chosen["y"]),
-            "px": px,
-            "suppressed": False,
-            "relocated": relocated,
-            "class": chosen["class"],
-            "candidates": candidates,
-        }
-        placements.append(placement)
-        occupied.append(
-            _fact_box(float(chosen["x"]), float(chosen["y"]), est_w, est_h)
-        )
-        if str(chosen["class"]).startswith("exterior"):
-            y += line_h * 2
+        occupied.append(_fact_box(float(x), float(y), w, h))
+        y1 = y + h
     return {
         "placements": placements,
         "facts": facts,
         "suppressed": suppressed,
         "px": px,
         "diagnostics": diagnostics,
-        "block": {"x": x_ext, "y0": pad_t + 18.0, "y1": y},
+        "block": {"x": x_ext if not relocated else pad_l + plot_w / 2, "y0": y0, "y1": y1},
     }
 
 

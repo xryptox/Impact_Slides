@@ -562,18 +562,78 @@ def test_unplaceable_fact_omits_chrome_keeps_fact():
         assert f'data-annotation-id="{aid}"' not in svg
 
 
+def test_context_labels_relocate_as_complete_block():
+    raw = _line()
+    vis = _vis(raw)
+    vis.pop("annotations", None)
+    vis.pop("measurements", None)
+    vis["context_labels"] = [
+        {
+            "context_id": "ctx-a",
+            "label": "Gross and Services Mix Extra",
+            "short_label": "WWWWWWWWWW",
+            "value": {"type": "number", "value": "3.0", "format_id": "pct_1"},
+        },
+        {
+            "context_id": "ctx-b",
+            "label": "International Share Extra Wide",
+            "short_label": "XXXXXXXXXX",
+            "value": {"type": "number", "value": "1.5", "format_id": "pct_1"},
+        },
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    placed = plan["context_labels"]
+    assert {p["context_id"] for p in placed} == {"ctx-a", "ctx-b"}
+    classes = {p["class"] for p in placed}
+    assert len(classes) == 1
+    assert classes <= {"exterior", "exterior_short", "below_plot"}
+    assert "plan.label_suppressed" not in [
+        d["code"] for d in plan["fact_chrome"]["diagnostics"]
+    ]
+    codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
+    if "below_plot" in classes:
+        assert "plan.surface_relocated" in codes
+        assert placed[0]["y"] != placed[1]["y"]
+    if classes != {"exterior"}:
+        assert "plan.short_label_used" in codes
+    facts = plan["semantic_table"]["facts"]
+    assert any("Gross and Services Mix Extra" in f for f in facts)
+    assert any("International Share Extra Wide" in f for f in facts)
+    svg = paint_chart_svg(plan)
+    assert 'data-context-id="ctx-a"' in svg
+    assert 'data-context-id="ctx-b"' in svg
+
+
 def test_schema_export_includes_fact_models():
-    # Drift gate must stay green after model extension.
     check_schema()
     schema = json.loads(
         (ROOT / "impact_slides/renderer_v3/schema/handoff_schema_v1.json").read_text(
             encoding="utf-8"
         )
     )
-    blob = json.dumps(schema)
-    assert "context_labels" in blob
-    assert "annotations" in blob
-    assert "measurements" in blob
-    assert "context_id" in blob
-    assert "annotation_id" in blob
-    assert "measurement_id" in blob
+    defs = schema["$defs"]
+    assert defs["ContextLabel"]["properties"]["context_id"]["type"] == "string"
+    assert defs["ChartAnnotation"]["properties"]["annotation_id"]["type"] == "string"
+    assert defs["ChartMeasurement"]["properties"]["measurement_id"]["type"] == "string"
+    visuals = (
+        "LineChartVisual",
+        "GroupedBarChartVisual",
+        "HorizontalBarChartVisual",
+        "StackedBarChartVisual",
+        "ComboChartVisual",
+        "WaterfallChartVisual",
+        "HeatmapVisual",
+    )
+    for name in visuals:
+        props = defs[name]["properties"]
+        ctx_items = props["context_labels"]["anyOf"][0]["items"]
+        ann_items = props["annotations"]["anyOf"][0]["items"]
+        assert ctx_items["$ref"] == "#/$defs/ContextLabel"
+        assert ann_items["$ref"] == "#/$defs/ChartAnnotation"
+        if name == "HeatmapVisual":
+            assert "measurements" not in props
+        else:
+            meas_items = props["measurements"]["anyOf"][0]["items"]
+            assert meas_items["$ref"] == "#/$defs/ChartMeasurement"
