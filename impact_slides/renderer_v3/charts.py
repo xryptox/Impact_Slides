@@ -12,6 +12,7 @@ from decimal import Decimal
 from typing import Any, Mapping, Optional, Union
 
 from .format import MISSING_ACCESSIBLE, MISSING_VISIBLE, format_semantic_value
+from .diagnostics import event as diag_event
 from .models import (
     CategoryAnchor,
     CategoryRangeAnchor,
@@ -3677,6 +3678,32 @@ def _norm_text(s: str) -> str:
     return " ".join(s.casefold().split())
 
 
+def _fact_box(x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
+    return (x - w / 2, y - h / 2, x + w / 2, y + h / 2)
+
+
+def _pick_candidate(
+    candidates: list[dict[str, Any]],
+    *,
+    box_w: float,
+    box_h: float,
+    occupied: list[tuple[float, float, float, float]],
+    plot: tuple[float, float, float, float],
+) -> tuple[dict[str, Any], int]:
+    """First non-overlapping candidate; fall back to last (below/exterior)."""
+    for i, cand in enumerate(candidates):
+        box = _fact_box(float(cand["x"]), float(cand["y"]), box_w, box_h)
+        if _overlaps(box, occupied):
+            continue
+        if i == len(candidates) - 1 or _fits(box, plot) or cand["class"] in (
+            "exterior",
+            "exterior_short",
+            "below_plot",
+        ):
+            return cand, i
+    return candidates[-1], len(candidates) - 1
+
+
 def _freeze_context_labels(
     chart: Any,
     formats: Mapping[str, NumberFormat],
@@ -3685,8 +3712,10 @@ def _freeze_context_labels(
     pad_t: float,
     plot_w: float,
     pad_r: float,
+    plot_h: float,
     role_sizes: Mapping[str, int],
     identity_names: list[str],
+    occupied: list[tuple[float, float, float, float]],
 ) -> dict[str, Any]:
     """D30/D168/D232/D296: ordered exterior-lane context block + D97 chrome dedupe."""
     labels = list(getattr(chart, "context_labels", None) or [])
@@ -3695,17 +3724,21 @@ def _freeze_context_labels(
     facts: list[str] = []
     placements: list[dict[str, Any]] = []
     suppressed: list[dict[str, Any]] = []
-    x = pad_l + plot_w + max(12.0, pad_r * 0.15)
+    diagnostics: list[Any] = []
+    x_ext = pad_l + plot_w + max(12.0, pad_r * 0.15)
     y = pad_t + 18.0
     line_h = px * 1.35
+    plot = (pad_l, pad_t, pad_l + plot_w, pad_t + plot_h)
     for lab in labels:
         fv = format_semantic_value(lab.value, formats)
         facts.append(f"Context {lab.label}: {fv.accessible}")
         label_norm = _norm_text(lab.label)
-        # D18/D97: suppress chrome only when label+value duplicate series identity text.
-        chrome_suppressed = False
-        if label_norm in series_norms and fv.role == "text" and _norm_text(fv.visible) == label_norm:
-            chrome_suppressed = True
+        chrome_suppressed = (
+            label_norm in series_norms
+            and fv.role == "text"
+            and _norm_text(fv.visible) == label_norm
+        )
+        if chrome_suppressed:
             suppressed.append(
                 {
                     "context_id": lab.context_id,
@@ -3713,30 +3746,106 @@ def _freeze_context_labels(
                     "reason": "duplicate_identity",
                 }
             )
+            diagnostics.append(
+                diag_event(
+                    code="plan.chrome_deduplicated",
+                    severity="info",
+                    phase="plan",
+                    role="context_labels",
+                    path=f"context_labels.{lab.context_id}",
+                    action="deduplicate",
+                    result="deduplicated",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D18/D97 duplicate identity chrome suppressed",
+                    input_meta={
+                        "context_id": lab.context_id,
+                        "label": lab.label,
+                        "value": fv.visible,
+                    },
+                )
+            )
+            continue
+        candidates = [
+            {"class": "exterior", "x": x_ext, "y": y, "label": lab.label},
+            {
+                "class": "exterior_short",
+                "x": x_ext,
+                "y": y,
+                "label": lab.short_label or lab.label,
+            },
+            {
+                "class": "below_plot",
+                "x": pad_l + plot_w / 2,
+                "y": pad_t + plot_h + 40,
+                "label": lab.short_label or lab.label,
+            },
+        ]
+        est_w = max(40.0, len(lab.label) * px * 0.55)
+        est_h = line_h * 2
+        chosen, idx = _pick_candidate(
+            candidates, box_w=est_w, box_h=est_h, occupied=occupied, plot=plot
+        )
+        display_label = chosen.get("label") or lab.label
+        if idx > 0 and lab.short_label and display_label == lab.short_label:
+            diagnostics.append(
+                diag_event(
+                    code="plan.short_label_used",
+                    severity="info",
+                    phase="plan",
+                    role="context_labels",
+                    path=f"context_labels.{lab.context_id}",
+                    action="select_candidate",
+                    result="accepted",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D30 short_label under exterior pressure",
+                    input_meta={"context_id": lab.context_id},
+                )
+            )
+        relocated = chosen["class"] == "below_plot"
+        if relocated:
+            diagnostics.append(
+                diag_event(
+                    code="plan.surface_relocated",
+                    severity="warning",
+                    phase="plan",
+                    role="context_labels",
+                    path=f"context_labels.{lab.context_id}",
+                    action="reallocate",
+                    result="relocated",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D30/D296 complete context block below plot",
+                    input_meta={"context_id": lab.context_id},
+                )
+            )
         placement = {
             "kind": "context_label",
             "context_id": lab.context_id,
             "label": lab.label,
             "short_label": lab.short_label,
-            "display_label": lab.label,
+            "display_label": display_label,
             "value_visible": fv.visible,
             "value_accessible": fv.accessible,
-            "x": x,
-            "y": y,
+            "x": float(chosen["x"]),
+            "y": float(chosen["y"]),
             "px": px,
-            "suppressed": chrome_suppressed,
-            "relocated": False,
-            "class": "suppressed" if chrome_suppressed else "exterior",
+            "suppressed": False,
+            "relocated": relocated,
+            "class": chosen["class"],
+            "candidates": candidates,
         }
-        if not chrome_suppressed:
-            placements.append(placement)
+        placements.append(placement)
+        occupied.append(
+            _fact_box(float(chosen["x"]), float(chosen["y"]), est_w, est_h)
+        )
+        if str(chosen["class"]).startswith("exterior"):
             y += line_h * 2
     return {
         "placements": placements,
         "facts": facts,
         "suppressed": suppressed,
         "px": px,
-        "block": {"x": x, "y0": pad_t + 18.0, "y1": y},
+        "diagnostics": diagnostics,
+        "block": {"x": x_ext, "y0": pad_t + 18.0, "y1": y},
     }
 
 
@@ -3761,17 +3870,20 @@ def _freeze_annotations(
     plot_h: float,
     role_sizes: Mapping[str, int],
     identity_names: list[str],
+    occupied: list[tuple[float, float, float, float]],
 ) -> dict[str, Any]:
     """D147/D233/D297: semantic anchors → frozen candidates; facts always retained."""
+    del identity_names  # reserved for D97 owner chain; annotations keep chrome
     anns = list(getattr(chart, "annotations", None) or [])
     px = int(role_sizes.get("annotations", 13))
     cat_xy = _category_centers(categories)
     point_xy = {
         (p["series_id"], p["category_id"]): p for p in points if p.get("finite")
     }
-    series_norms = {_norm_text(n) for n in identity_names if n}
     facts: list[str] = []
     placements: list[dict[str, Any]] = []
+    diagnostics: list[Any] = []
+    plot = (pad_l, pad_t, pad_l + plot_w, pad_t + plot_h)
     for ann in anns:
         role_word = "Event" if ann.role == "event" else "Explanation"
         facts.append(f"{role_word}: {ann.text}")
@@ -3798,14 +3910,36 @@ def _freeze_annotations(
             if p and p.get("x") is not None and p.get("y") is not None:
                 ax, ay = float(p["x"]), float(p["y"]) - 16
             anchor_desc = f"data point {anchor.series_id}/{anchor.category_id}"
-        chrome_suppressed = _norm_text(ann.text) in series_norms
         candidates = [
             {"class": "above", "x": ax, "y": ay - 10},
             {"class": "below", "x": ax, "y": ay + 18},
             {"class": "exterior", "x": pad_l + plot_w + 12, "y": ay},
             {"class": "below_plot", "x": ax, "y": pad_t + plot_h + 36},
         ]
-        chosen = candidates[0]
+        est_w = max(48.0, len(ann.text) * px * 0.5)
+        est_h = px * 1.4
+        chosen, idx = _pick_candidate(
+            candidates, box_w=est_w, box_h=est_h, occupied=occupied, plot=plot
+        )
+        if idx > 0:
+            diagnostics.append(
+                diag_event(
+                    code="plan.label_repositioned",
+                    severity="info",
+                    phase="plan",
+                    role="annotations",
+                    path=f"annotations.{ann.annotation_id}",
+                    action="select_candidate",
+                    result="accepted",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D297 deterministic candidate ladder",
+                    input_meta={
+                        "annotation_id": ann.annotation_id,
+                        "class": chosen["class"],
+                        "candidate_index": idx,
+                    },
+                )
+            )
         placements.append(
             {
                 "kind": "annotation",
@@ -3814,17 +3948,25 @@ def _freeze_annotations(
                 "text": ann.text,
                 "anchor_type": anchor.type,
                 "anchor_desc": anchor_desc,
-                "x": chosen["x"],
-                "y": chosen["y"],
+                "x": float(chosen["x"]),
+                "y": float(chosen["y"]),
                 "px": px,
                 "class": chosen["class"],
                 "candidates": candidates,
-                "suppressed": chrome_suppressed,
+                "suppressed": False,
                 "anchor_x": ax,
                 "anchor_y": ay,
             }
         )
-    return {"placements": placements, "facts": facts, "px": px}
+        occupied.append(
+            _fact_box(float(chosen["x"]), float(chosen["y"]), est_w, est_h)
+        )
+    return {
+        "placements": placements,
+        "facts": facts,
+        "px": px,
+        "diagnostics": diagnostics,
+    }
 
 
 def _freeze_measurements(
@@ -3837,6 +3979,7 @@ def _freeze_measurements(
     plot_w: float,
     plot_h: float,
     role_sizes: Mapping[str, int],
+    occupied: list[tuple[float, float, float, float]],
 ) -> dict[str, Any]:
     """D148/D234/D298: authored value facts; never recompute endpoints."""
     measures = list(getattr(chart, "measurements", None) or [])
@@ -3851,6 +3994,8 @@ def _freeze_measurements(
             cat_xy.setdefault(step.category_id, {"x": 0.0, "y": 0.0})
     facts: list[str] = []
     placements: list[dict[str, Any]] = []
+    diagnostics: list[Any] = []
+    plot = (pad_l, pad_t, pad_l + plot_w, pad_t + plot_h)
     for m in measures:
         fv = format_semantic_value(
             NumberValue(value=m.value, format_id=m.format_id), formats
@@ -3867,17 +4012,38 @@ def _freeze_measurements(
         b = cat_xy.get(m.to_category_id, {"x": pad_l + plot_w, "y": pad_t})
         mx = (a["x"] + b["x"]) / 2
         my = pad_t + 28
-        try:
-            dv = Decimal(m.value)
-            direction = "up" if dv > 0 else ("down" if dv < 0 else "flat")
-        except Exception:
-            direction = "flat"
+        dv = Decimal(m.value)
+        direction = "up" if dv > 0 else ("down" if dv < 0 else "flat")
         candidates = [
             {"class": "above_range", "x": mx, "y": my},
             {"class": "exterior", "x": pad_l + plot_w + 12, "y": my},
             {"class": "below_plot", "x": mx, "y": pad_t + plot_h + 48},
         ]
-        chosen = candidates[0]
+        text = f"{'~' if m.approximate else ''}{fv.visible}"
+        est_w = max(40.0, len(text) * px * 0.55)
+        est_h = px * 1.6
+        chosen, idx = _pick_candidate(
+            candidates, box_w=est_w, box_h=est_h, occupied=occupied, plot=plot
+        )
+        if idx > 0:
+            diagnostics.append(
+                diag_event(
+                    code="plan.label_repositioned",
+                    severity="info",
+                    phase="plan",
+                    role="measurements",
+                    path=f"measurements.{m.measurement_id}",
+                    action="select_candidate",
+                    result="accepted",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D298 deterministic measurement placement",
+                    input_meta={
+                        "measurement_id": m.measurement_id,
+                        "class": chosen["class"],
+                        "candidate_index": idx,
+                    },
+                )
+            )
         placements.append(
             {
                 "kind": "measurement",
@@ -3890,9 +4056,9 @@ def _freeze_measurements(
                 "value_accessible": fv.accessible,
                 "approximate": m.approximate,
                 "direction": direction,
-                "text": f"{'~' if m.approximate else ''}{fv.visible}",
-                "x": chosen["x"],
-                "y": chosen["y"],
+                "text": text,
+                "x": float(chosen["x"]),
+                "y": float(chosen["y"]),
                 "x1": a["x"],
                 "x2": b["x"],
                 "px": px,
@@ -3901,7 +4067,15 @@ def _freeze_measurements(
                 "suppressed": False,
             }
         )
-    return {"placements": placements, "facts": facts, "px": px}
+        occupied.append(
+            _fact_box(float(chosen["x"]), float(chosen["y"]), est_w, est_h)
+        )
+    return {
+        "placements": placements,
+        "facts": facts,
+        "px": px,
+        "diagnostics": diagnostics,
+    }
 
 
 def _attach_chart_facts(
@@ -3923,6 +4097,13 @@ def _attach_chart_facts(
     cats = categories if categories is not None else list(plan.get("categories") or [])
     pts = points if points is not None else list(plan.get("points") or [])
     identity_names = [s.get("name") or "" for s in plan.get("series") or []]
+    occupied: list[tuple[float, float, float, float]] = []
+    for place in plan.get("placements") or []:
+        if place.get("class") == "suppressed":
+            continue
+        if place.get("x") is None or place.get("y") is None:
+            continue
+        occupied.append(_fact_box(float(place["x"]), float(place["y"]), 36.0, 14.0))
 
     ctx = _freeze_context_labels(
         chart,
@@ -3931,8 +4112,10 @@ def _attach_chart_facts(
         pad_t=pad_t,
         plot_w=plot_w,
         pad_r=pad_r,
+        plot_h=plot_h,
         role_sizes=role_sizes,
         identity_names=identity_names,
+        occupied=occupied,
     )
     anns = _freeze_annotations(
         chart,
@@ -3944,6 +4127,7 @@ def _attach_chart_facts(
         plot_h=plot_h,
         role_sizes=role_sizes,
         identity_names=identity_names,
+        occupied=occupied,
     )
     meas = _freeze_measurements(
         chart,
@@ -3954,15 +4138,23 @@ def _attach_chart_facts(
         plot_w=plot_w,
         plot_h=plot_h,
         role_sizes=role_sizes,
+        occupied=occupied,
     )
     plan["context_labels"] = ctx["placements"]
     plan["annotations"] = anns["placements"]
     plan["measurements"] = meas["placements"]
+    diags = list(ctx.get("diagnostics") or [])
+    diags.extend(anns.get("diagnostics") or [])
+    diags.extend(meas.get("diagnostics") or [])
     plan["fact_chrome"] = {
         "context_suppressed": ctx["suppressed"],
         "context_px": ctx["px"],
         "annotation_px": anns["px"],
         "measurement_px": meas["px"],
+        "diagnostics": [
+            d.model_dump(exclude_none=True) if hasattr(d, "model_dump") else d
+            for d in diags
+        ],
     }
     table = plan.get("semantic_table")
     if isinstance(table, dict):

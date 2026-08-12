@@ -3763,6 +3763,10 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
             values.extend(m.value for m in hsv.metrics)
     if lt == "metric_overview" and payload is not None:
         values.extend(m.value for m in payload.metrics)
+    # Chart context_labels carry D213 values (D232/D296).
+    for chart in _axis_charts_on_slide(slide):
+        for lab in getattr(chart, "context_labels", None) or []:
+            values.append(lab.value)
     return values
 
 
@@ -3882,6 +3886,13 @@ class Deck(ClosedModel):
                         if afid not in self.number_formats:
                             raise ValueError(f"unresolved format_id {afid!r}")
                         referenced_formats.add(afid)
+                    # Measurement format_ids (D234/D298) — context values via
+                    # _slide_semantic_values.
+                    for meas in getattr(chart, "measurements", None) or []:
+                        mfid = meas.format_id
+                        if mfid not in self.number_formats:
+                            raise ValueError(f"unresolved format_id {mfid!r}")
+                        referenced_formats.add(mfid)
                     # Author series colors must be known palette keys (D16/D98/D130).
                     if not isinstance(chart, WaterfallChartVisual):
                         from .theme import palette_keys  # local; avoid import cycle

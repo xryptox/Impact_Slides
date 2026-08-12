@@ -133,6 +133,39 @@ def test_strict_rejects_duplicate_measurement_key():
         validate_handoff(raw, strict=True)
 
 
+def test_strict_rejects_unresolved_context_format():
+    raw = _line()
+    _facts_on_line(raw)
+    _vis(raw)["context_labels"][0]["value"]["format_id"] = "missing-fmt"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_strict_rejects_unresolved_measurement_format():
+    raw = _line()
+    _facts_on_line(raw)
+    _vis(raw)["measurements"][0]["format_id"] = "missing-fmt"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_duplicate_identity_emits_plan_diagnostic():
+    raw = _line()
+    _facts_on_line(raw)
+    _vis(raw)["context_labels"] = [
+        {
+            "context_id": "dup-us",
+            "label": "US",
+            "value": {"type": "text", "text": "US"},
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
+    assert "plan.chrome_deduplicated" in codes
+
+
 def test_heatmap_accepts_context_and_category_annotation():
     raw = _heat()
     vis = _vis(raw)
