@@ -8,6 +8,7 @@ from __future__ import annotations
 import html
 import json
 import math
+import unicodedata
 from decimal import Decimal
 from typing import Any, Mapping, Optional, Union
 
@@ -3688,8 +3689,24 @@ def _place_stack_labels(
     return placements
 
 
+_QUOTE_DASH = str.maketrans(
+    {
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2013": "-",
+        "\u2014": "-",
+        "\u2212": "-",
+    }
+)
+_TRAIL_PUNCT = ".,:;!?"
+
+
 def _norm_text(s: str) -> str:
-    return " ".join(s.casefold().split())
+    t = unicodedata.normalize("NFKC", s).translate(_QUOTE_DASH)
+    t = " ".join(t.casefold().split()).rstrip(_TRAIL_PUNCT + " ")
+    return t
 
 
 def _fact_box(x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
@@ -3703,8 +3720,8 @@ def _pick_candidate(
     box_h: float,
     occupied: list[tuple[float, float, float, float]],
     plot: tuple[float, float, float, float],
-) -> tuple[dict[str, Any], int]:
-    """First non-overlapping candidate; fall back to last (below/exterior)."""
+) -> tuple[dict[str, Any] | None, int]:
+    """First non-overlapping candidate; None when every slot collides."""
     for i, cand in enumerate(candidates):
         box = _fact_box(float(cand["x"]), float(cand["y"]), box_w, box_h)
         if _overlaps(box, occupied):
@@ -3715,7 +3732,7 @@ def _pick_candidate(
             "below_plot",
         ):
             return cand, i
-    return candidates[-1], len(candidates) - 1
+    return None, -1
 
 
 def _freeze_context_labels(
@@ -3799,6 +3816,22 @@ def _freeze_context_labels(
         chosen, idx = _pick_candidate(
             candidates, box_w=est_w, box_h=est_h, occupied=occupied, plot=plot
         )
+        if chosen is None:
+            diagnostics.append(
+                diag_event(
+                    code="plan.label_suppressed",
+                    severity="warning",
+                    phase="plan",
+                    role="context_labels",
+                    path=f"context_labels.{lab.context_id}",
+                    action="suppress",
+                    result="suppressed",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D110 non-overlapping candidate; chrome omitted",
+                    input_meta={"context_id": lab.context_id},
+                )
+            )
+            continue
         display_label = chosen.get("label") or lab.label
         if idx > 0 and lab.short_label and display_label == lab.short_label:
             diagnostics.append(
@@ -3885,6 +3918,7 @@ def _freeze_annotations(
     role_sizes: Mapping[str, int],
     identity_names: list[str],
     occupied: list[tuple[float, float, float, float]],
+    horizontal: bool = False,
 ) -> dict[str, Any]:
     """D147/D233/D297: semantic anchors → frozen candidates; facts always retained."""
     anns = list(getattr(chart, "annotations", None) or [])
@@ -3908,14 +3942,15 @@ def _freeze_annotations(
         if anchor.type == "category":
             c = cat_xy.get(anchor.category_id)
             if c:
-                ax, ay = c["x"], pad_t + 14
+                ax = c["x"]
+                ay = c["y"] if horizontal else pad_t + 14
             anchor_desc = f"category {anchor.category_id}"
         elif anchor.type == "category_range":
             a = cat_xy.get(anchor.from_category_id)
             b = cat_xy.get(anchor.to_category_id)
             if a and b:
                 ax = (a["x"] + b["x"]) / 2
-                ay = pad_t + 14
+                ay = (a["y"] + b["y"]) / 2 if horizontal else pad_t + 14
             anchor_desc = (
                 f"category range {anchor.from_category_id} to {anchor.to_category_id}"
             )
@@ -3955,6 +3990,22 @@ def _freeze_annotations(
         chosen, idx = _pick_candidate(
             candidates, box_w=est_w, box_h=est_h, occupied=occupied, plot=plot
         )
+        if chosen is None:
+            diagnostics.append(
+                diag_event(
+                    code="plan.label_suppressed",
+                    severity="warning",
+                    phase="plan",
+                    role="annotations",
+                    path=f"annotations.{ann.annotation_id}",
+                    action="suppress",
+                    result="suppressed",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D110 non-overlapping candidate; chrome omitted",
+                    input_meta={"annotation_id": ann.annotation_id},
+                )
+            )
+            continue
         if idx > 0:
             diagnostics.append(
                 diag_event(
@@ -4014,6 +4065,7 @@ def _freeze_measurements(
     plot_h: float,
     role_sizes: Mapping[str, int],
     occupied: list[tuple[float, float, float, float]],
+    horizontal: bool = False,
 ) -> dict[str, Any]:
     """D148/D234/D298: authored value facts; never recompute endpoints."""
     measures = list(getattr(chart, "measurements", None) or [])
@@ -4045,7 +4097,7 @@ def _freeze_measurements(
         a = cat_xy.get(m.from_category_id, {"x": pad_l, "y": pad_t})
         b = cat_xy.get(m.to_category_id, {"x": pad_l + plot_w, "y": pad_t})
         mx = (a["x"] + b["x"]) / 2
-        my = pad_t + 28
+        my = (a["y"] + b["y"]) / 2 if horizontal else pad_t + 28
         dv = Decimal(m.value)
         direction = "up" if dv > 0 else ("down" if dv < 0 else "flat")
         candidates = [
@@ -4059,6 +4111,22 @@ def _freeze_measurements(
         chosen, idx = _pick_candidate(
             candidates, box_w=est_w, box_h=est_h, occupied=occupied, plot=plot
         )
+        if chosen is None:
+            diagnostics.append(
+                diag_event(
+                    code="plan.label_suppressed",
+                    severity="warning",
+                    phase="plan",
+                    role="measurements",
+                    path=f"measurements.{m.measurement_id}",
+                    action="suppress",
+                    result="suppressed",
+                    surface_id=getattr(chart, "surface_id", None),
+                    expected="D110 non-overlapping candidate; chrome omitted",
+                    input_meta={"measurement_id": m.measurement_id},
+                )
+            )
+            continue
         if idx > 0:
             diagnostics.append(
                 diag_event(
@@ -4095,6 +4163,8 @@ def _freeze_measurements(
                 "y": float(chosen["y"]),
                 "x1": a["x"],
                 "x2": b["x"],
+                "y1": a["y"],
+                "y2": b["y"],
                 "px": px,
                 "class": chosen["class"],
                 "candidates": candidates,
@@ -4151,6 +4221,7 @@ def _attach_chart_facts(
         identity_names=identity_names,
         occupied=occupied,
     )
+    horizontal = bool((plan.get("geometry") or {}).get("horizontal"))
     anns = _freeze_annotations(
         chart,
         categories=cats,
@@ -4162,6 +4233,7 @@ def _attach_chart_facts(
         role_sizes=role_sizes,
         identity_names=identity_names,
         occupied=occupied,
+        horizontal=horizontal,
     )
     meas = _freeze_measurements(
         chart,
@@ -4173,6 +4245,7 @@ def _attach_chart_facts(
         plot_h=plot_h,
         role_sizes=role_sizes,
         occupied=occupied,
+        horizontal=horizontal,
     )
     plan["context_labels"] = ctx["placements"]
     plan["annotations"] = anns["placements"]
@@ -4248,15 +4321,29 @@ def _paint_fact_chrome_svg(plan: dict[str, Any], parts: list[str], ink: str) -> 
         px = place.get("px") or plan.get("role_sizes", {}).get("annotations", 13)
         x, y = place["x"], place["y"]
         x1, x2 = place.get("x1", x - 20), place.get("x2", x + 20)
+        y1, y2 = place.get("y1", y + 2), place.get("y2", y + 10)
+        if abs(float(y2) - float(y1)) > abs(float(x2) - float(x1)):
+            span = (
+                f'<line x1="{x - 6:.1f}" y1="{y1:.1f}" x2="{x - 6:.1f}" y2="{y2:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+                f'<line x1="{x - 10:.1f}" y1="{y1:.1f}" x2="{x - 2:.1f}" y2="{y1:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+                f'<line x1="{x - 10:.1f}" y1="{y2:.1f}" x2="{x - 2:.1f}" y2="{y2:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+            )
+        else:
+            span = (
+                f'<line x1="{x1:.1f}" y1="{y + 6:.1f}" x2="{x2:.1f}" y2="{y + 6:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+                f'<line x1="{x1:.1f}" y1="{y + 2:.1f}" x2="{x1:.1f}" y2="{y + 10:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+                f'<line x1="{x2:.1f}" y1="{y + 2:.1f}" x2="{x2:.1f}" y2="{y + 10:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+            )
         parts.append(
             f'<g class="chart-measurement" data-measurement-id="{_e(place["measurement_id"])}" '
             f'data-role="{_e(place["role"])}" aria-hidden="true">'
-            f'<line x1="{x1:.1f}" y1="{y + 6:.1f}" x2="{x2:.1f}" y2="{y + 6:.1f}" '
-            f'stroke="{_e(ink)}" stroke-width="1.25"/>'
-            f'<line x1="{x1:.1f}" y1="{y + 2:.1f}" x2="{x1:.1f}" y2="{y + 10:.1f}" '
-            f'stroke="{_e(ink)}" stroke-width="1.25"/>'
-            f'<line x1="{x2:.1f}" y1="{y + 2:.1f}" x2="{x2:.1f}" y2="{y + 10:.1f}" '
-            f'stroke="{_e(ink)}" stroke-width="1.25"/>'
+            f"{span}"
             f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-size="{px}" '
             f'font-variant-numeric="tabular-nums" fill="{_e(ink)}">'
             f'{_e(place["text"])}</text>'

@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
+from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.charts import (
     freeze_chart,
     freeze_heatmap,
@@ -30,6 +31,7 @@ LINE = ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json"
 HEAT = ROOT / "tests/fixtures/renderer_v3/minimal_heatmap.json"
 STACKED = ROOT / "tests/fixtures/renderer_v3/minimal_stacked_bar.json"
 WATERFALL = ROOT / "tests/fixtures/renderer_v3/minimal_waterfall.json"
+HBAR = ROOT / "tests/fixtures/renderer_v3/minimal_horizontal_bar.json"
 
 
 def _line() -> dict:
@@ -42,6 +44,10 @@ def _heat() -> dict:
 
 def _waterfall() -> dict:
     return json.loads(WATERFALL.read_text(encoding="utf-8"))
+
+
+def _hbar() -> dict:
+    return json.loads(HBAR.read_text(encoding="utf-8"))
 
 
 def _vis(raw: dict) -> dict:
@@ -439,6 +445,121 @@ def test_render_deck_includes_fact_chrome(tmp_path: Path):
     assert 'data-annotation-id="evt-q2"' in html
     assert 'data-measurement-id="chg-us"' in html
     assert "Context G&S" in html
+
+
+def test_fact_chrome_diagnostics_reach_run_meta_and_dom(tmp_path: Path):
+    raw = _line()
+    _facts_on_line(raw)
+    _vis(raw)["context_labels"] = [
+        {
+            "context_id": "dup-us",
+            "label": "US",
+            "value": {"type": "text", "text": "US"},
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    deck_plan = plan_deck(result.deck, strict=True)
+    assert any(e.code == "plan.chrome_deduplicated" for e in deck_plan.events)
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(str(handoff), str(out), strict=True)
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert any(e["code"] == "plan.chrome_deduplicated" for e in meta["events"])
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert "plan.chrome_deduplicated" in html
+
+
+def test_d96_norm_dedupes_trailing_punct_identity():
+    raw = _line()
+    _facts_on_line(raw)
+    _vis(raw)["annotations"] = [
+        {
+            "annotation_id": "us-colon",
+            "role": "explanation",
+            "text": "US:",
+            "anchor": {"type": "chart"},
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    assert all(a["annotation_id"] != "us-colon" for a in plan.get("annotations") or [])
+    assert any("Explanation: US:" in f for f in plan["semantic_table"]["facts"])
+    codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
+    assert "plan.chrome_deduplicated" in codes
+    svg = paint_chart_svg(plan)
+    assert 'data-annotation-id="us-colon"' not in svg
+
+
+def test_hbar_category_and_measurement_use_row_y():
+    raw = _hbar()
+    vis = _vis(raw)
+    vis["annotations"] = [
+        {
+            "annotation_id": "uk-note",
+            "role": "event",
+            "text": "UK row",
+            "anchor": {"type": "category", "category_id": "uk"},
+        }
+    ]
+    vis["measurements"] = [
+        {
+            "measurement_id": "us-jp",
+            "role": "change",
+            "series_id": "share",
+            "from_category_id": "us",
+            "to_category_id": "jp",
+            "value": "7.3",
+            "format_id": "pct_1",
+            "approximate": False,
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    cats = {c["category_id"]: c for c in plan["categories"]}
+    ann = next(a for a in plan["annotations"] if a["annotation_id"] == "uk-note")
+    assert ann["anchor_y"] == pytest.approx(float(cats["uk"]["y"]))
+    assert ann["anchor_y"] != pytest.approx(float(plan["geometry"]["pad_t"]) + 14)
+    meas = next(m for m in plan["measurements"] if m["measurement_id"] == "us-jp")
+    mid_y = (float(cats["us"]["y"]) + float(cats["jp"]["y"])) / 2
+    assert meas["y1"] == pytest.approx(float(cats["us"]["y"]))
+    assert meas["y2"] == pytest.approx(float(cats["jp"]["y"]))
+    assert meas["y"] == pytest.approx(mid_y) or meas["class"] in (
+        "exterior",
+        "below_plot",
+    )
+
+
+def test_unplaceable_fact_omits_chrome_keeps_fact():
+    raw = _line()
+    vis = _vis(raw)
+    vis.pop("context_labels", None)
+    vis.pop("measurements", None)
+    vis["annotations"] = [
+        {
+            "annotation_id": f"pile-{i}",
+            "role": "explanation",
+            "text": f"Note {i} extra long collision text",
+            "anchor": {"type": "chart"},
+        }
+        for i in range(8)
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    placed = {a["annotation_id"] for a in plan["annotations"]}
+    omitted = [f"pile-{i}" for i in range(8) if f"pile-{i}" not in placed]
+    assert omitted
+    facts = plan["semantic_table"]["facts"]
+    for i in range(8):
+        assert any(f"Note {i}" in f for f in facts)
+    codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
+    assert "plan.label_suppressed" in codes
+    svg = paint_chart_svg(plan)
+    for aid in omitted:
+        assert f'data-annotation-id="{aid}"' not in svg
 
 
 def test_schema_export_includes_fact_models():

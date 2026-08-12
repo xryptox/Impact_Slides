@@ -455,6 +455,40 @@ def plan_deck(
                 renderer_version=RENDERER_VERSION,
             )
 
+    for sp in surfaces:
+        spec = sp._chart_spec or {}
+        for raw in ((spec.get("fact_chrome") or {}).get("diagnostics") or []):
+            if hasattr(raw, "model_dump"):
+                events.append(raw)
+                continue
+            payload = dict(raw)
+            expected = payload.get("expected")
+            if isinstance(expected, dict):
+                expected = expected.get("contract")
+            action = payload.get("action")
+            if isinstance(action, dict):
+                action = action.get("name")
+            result_name = payload.get("result")
+            if isinstance(result_name, dict):
+                result_name = result_name.get("name")
+            events.append(
+                event(
+                    code=payload["code"],
+                    severity=payload["severity"],
+                    phase=payload.get("phase") or "plan",
+                    role=payload.get("role") or sp.role,
+                    path=payload.get("path") or f"/slides/{sp.slide_index}/{sp.role}",
+                    action=action,
+                    result=result_name,
+                    slide_number=payload.get("slide_number", sp.slide_number),
+                    layout_type=payload.get("layout_type", sp.layout_type),
+                    surface_id=payload.get("surface_id") or sp.surface_id,
+                    expected=expected,
+                    input_meta=payload.get("input"),
+                    occurrences=int(payload.get("occurrences") or 1),
+                )
+            )
+
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
 
 
