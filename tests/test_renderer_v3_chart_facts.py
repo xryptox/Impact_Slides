@@ -16,7 +16,13 @@ from pathlib import Path
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
-from impact_slides.renderer_v3.charts import freeze_chart, paint_chart_svg, paint_semantic_table
+from impact_slides.renderer_v3.charts import (
+    freeze_chart,
+    freeze_heatmap,
+    paint_chart_svg,
+    paint_heatmap_html,
+    paint_semantic_table,
+)
 from impact_slides.renderer_v3.schema_export import check_schema
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -192,6 +198,45 @@ def test_heatmap_accepts_context_and_category_annotation():
         }
     ]
     assert validate_handoff(raw, strict=True).ok
+
+
+def test_heatmap_facts_paint_once_inside_surface():
+    raw = _heat()
+    vis = _vis(raw)
+    cols = [c["column_id"] for c in vis["table_data"]["columns"]]
+    vis["context_labels"] = [
+        {
+            "context_id": "note",
+            "label": "Coverage",
+            "value": {"type": "text", "text": "Board view"},
+        }
+    ]
+    vis["annotations"] = [
+        {
+            "annotation_id": "col-note",
+            "role": "explanation",
+            "text": "Peak column",
+            "anchor": {"type": "category", "category_id": cols[0]},
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    html = "".join(paint_heatmap_html(freeze_heatmap(chart, result.deck.number_formats)))
+    body_open = html.find('data-chart-surface=')
+    body_close = html.rfind("</div>")
+    owned = html[body_open:body_close]
+    leftover = html[body_close:]
+    assert 'data-context-id="note"' in owned
+    assert 'data-annotation-id="col-note"' in owned
+    assert leftover.count("Board view") == 0
+    assert leftover.count("Peak column") == 0
+    assert html.count('data-context-id="note"') == 1
+    assert html.count('data-annotation-id="col-note"') == 1
+    ctx = html[html.find('data-context-id="note"') : html.find("</div>", html.find('data-context-id="note"'))]
+    ann = html[html.find('data-annotation-id="col-note"') : html.find("</div>", html.find('data-annotation-id="col-note"'))]
+    assert 'aria-hidden="true"' in ctx
+    assert 'aria-hidden="true"' in ann
+    assert 'class="chart-facts visually-hidden"' in owned
 
 
 def test_heatmap_forbids_measurements():

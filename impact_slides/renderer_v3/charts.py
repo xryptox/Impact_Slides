@@ -5763,29 +5763,29 @@ def paint_heatmap_html(
             f'<span class="heatmap-scale-note">{_e(" · ".join(notes))}</span>'
         )
         out.append("</div>")
-    out.append("</div>")
-    fact_bits: list[str] = []
     for place in plan.get("context_labels") or []:
         if place.get("suppressed"):
             continue
-        fact_bits.append(
-            f'<div class="context-label" data-context-id="{_e(place["context_id"])}">'
+        out.append(
+            f'<div class="context-label" data-context-id="{_e(place["context_id"])}" '
+            f'aria-hidden="true">'
             f'<span class="context-label-name">{_e(place["label"])}</span> '
             f'<span class="context-label-value">{_e(place["value_visible"])}</span></div>'
         )
     for place in plan.get("annotations") or []:
         if place.get("suppressed"):
             continue
-        fact_bits.append(
+        out.append(
             f'<div class="chart-annotation" data-annotation-id="{_e(place["annotation_id"])}" '
-            f'data-role="{_e(place["role"])}">{_e(place["text"])}</div>'
+            f'data-role="{_e(place["role"])}" aria-hidden="true">{_e(place["text"])}</div>'
         )
     extra_facts = list((plan.get("semantic_table") or {}).get("facts") or [])
     if extra_facts:
         items = "".join(f"<li>{_e(f)}</li>" for f in extra_facts)
-        fact_bits.append(f'<div class="chart-facts"><ul>{items}</ul></div>')
-    if fact_bits:
-        out.append('<div class="heatmap-chart-facts">' + "".join(fact_bits) + "</div>")
+        hidden = (plan.get("semantic_table") or {}).get("visible") is not True
+        cls = "chart-facts" + (" visually-hidden" if hidden else "")
+        out.append(f'<div class="{cls}"><ul>{items}</ul></div>')
+    out.append("</div>")
     return out
 
 
