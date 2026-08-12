@@ -1,0 +1,165 @@
+{
+  "meta": {"handoff_schema_version": 1},
+  "sections": [{"section_id": "capital", "label": "Capital"}],
+  "number_formats": {
+    "usd_0": {"unit": "usd", "value_decimals": 0, "negative_style": "minus"},
+    "pct_1": {"unit": "percent", "value_decimals": 1, "negative_style": "minus"}
+  },
+  "evidence_registry": {
+    "src-board-pack": {"source_name": "Board pack Q4"}
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {"title": "Impact Review"},
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "capital",
+      "title": "Capital returns",
+      "content": {"subtitle": "Grouped combo"},
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "cap-combo",
+          "chart_type": "combo",
+          "bar_mode": "grouped",
+          "heading": "Buybacks and ROE",
+          "subtitle": "$B / %",
+          "chart_data": {
+            "categories": [
+              {"category_id": "q1", "label": "Q1"},
+              {"category_id": "q2", "label": "Q2"},
+              {"category_id": "q3", "label": "Q3"},
+              {"category_id": "q4", "label": "Q4"}
+            ],
+            "series": [
+              {
+                "series_id": "buybacks",
+                "name": "Buybacks",
+                "mark_type": "bar",
+                "values": ["40", "45", "50", "55"]
+              },
+              {
+                "series_id": "dividends",
+                "name": "Dividends",
+                "mark_type": "bar",
+                "values": ["10", "12", "11", null]
+              },
+              {
+                "series_id": "roe",
+                "name": "ROE",
+                "mark_type": "line",
+                "axis_key": "secondary",
+                "style": {"line_style": "solid", "marker": "circle"},
+                "values": ["12.0", "12.5", "13.0", "13.5"]
+              }
+            ]
+          },
+          "category_axis": {"visible": true, "title": "Quarter"},
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "usd_0",
+              "domain": {"kind": "generated", "target_ticks": 5},
+              "title": "$B"
+            },
+            "secondary": {
+              "visible": true,
+              "format_id": "pct_1",
+              "domain": {"kind": "generated", "min": "10", "max": "16", "target_ticks": 4},
+              "title": "ROE %"
+            }
+          },
+          "display": {"ordinary_values": "show", "series_identity": "legend"},
+          "category_groups": [
+            {"group_id": "h1", "label": "H1", "category_ids": ["q1", "q2"]},
+            {"group_id": "h2", "label": "H2", "category_ids": ["q3", "q4"]}
+          ]
+        }
+      },
+      "takeaway": {"text": "Buybacks lead; ROE trends up on the secondary axis."},
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "single_chart",
+      "section_id": "capital",
+      "title": "Deposit mix with share",
+      "content": {"subtitle": "Stacked combo"},
+      "payload": {
+        "primary_visual": {
+          "type": "chart",
+          "surface_id": "dep-combo",
+          "chart_type": "combo",
+          "bar_mode": "stacked",
+          "heading": "Deposit composition + share",
+          "chart_data": {
+            "categories": [
+              {"category_id": "q1", "label": "Q1"},
+              {"category_id": "q2", "label": "Q2"},
+              {"category_id": "q3", "label": "Q3"},
+              {"category_id": "q4", "label": "Q4"}
+            ],
+            "series": [
+              {
+                "series_id": "retail",
+                "name": "Retail",
+                "mark_type": "bar",
+                "values": ["40", "45", "50", "48"]
+              },
+              {
+                "series_id": "wholesale",
+                "name": "Wholesale",
+                "mark_type": "bar",
+                "values": ["30", "25", "20", "22"]
+              },
+              {
+                "series_id": "share",
+                "name": "Retail share",
+                "mark_type": "line",
+                "values": ["57.1", "64.3", "71.4", "68.6"]
+              }
+            ]
+          },
+          "category_axis": {"visible": true},
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "usd_0",
+              "domain": {"kind": "generated", "target_ticks": 5},
+              "title": "$B"
+            }
+          },
+          "display": {
+            "stack_segments": "show",
+            "stack_totals": "show",
+            "ordinary_values": "show",
+            "series_identity": "legend"
+          },
+          "auxiliary_series": [
+            {
+              "auxiliary_id": "board-total",
+              "role": "authored_stack_total",
+              "label": "Board total",
+              "format_id": "usd_0",
+              "values": ["72", "71", "70", "70"]
+            }
+          ]
+        }
+      },
+      "takeaway": {"text": "Stacks share one primary axis with the line overlay."},
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "closing_cover",
+      "payload": {"title": "Discussion"}
+    }
+  ]
+}

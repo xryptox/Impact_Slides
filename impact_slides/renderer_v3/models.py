@@ -1486,6 +1486,13 @@ class ValueAxes(ClosedModel):
         return data
 
 
+class ComboValueAxes(ClosedModel):
+    """Primary always; secondary only when combo lines reference it (D230/D244)."""
+
+    primary: ValueAxis
+    secondary: Optional[ValueAxis] = None
+
+
 def _common_chart_heading_rules(chart: Any) -> None:
     if chart.subtitle is not None and chart.heading is None:
         raise ValueError("subtitle requires heading")
@@ -1560,7 +1567,7 @@ def _validate_category_groups(chart: Any) -> None:
         raise ValueError("category_groups must follow first-category order")
 
 
-def _validate_boxed_labels(chart: Any) -> None:
+def _validate_boxed_labels(chart: Any, *, bar_series_ids: Optional[set[str]] = None) -> None:
     aux = getattr(chart, "auxiliary_series", None) or []
     boxed = [a for a in aux if a.role == "boxed_label"]
     if len(boxed) > 1:
@@ -1573,7 +1580,9 @@ def _validate_boxed_labels(chart: Any) -> None:
         raise ValueError(
             "boxed_label values must supply exactly one entry per category"
         )
-    ser_ids = {s.series_id for s in chart.chart_data.series}
+    ser_ids = bar_series_ids if bar_series_ids is not None else {
+        s.series_id for s in chart.chart_data.series
+    }
     if b.target_series_id not in ser_ids:
         raise ValueError(
             f"boxed_label target_series_id {b.target_series_id!r} is not a chart series"
@@ -2113,12 +2122,214 @@ def _domain_contains_stack_extents(chart: Any) -> None:
                 )
 
 
+class ComboChartSeries(ClosedModel):
+    """Combo series with explicit mark + optional axis ownership (D136/D228/D244)."""
+
+    series_id: SemanticId
+    name: NonEmptyStr
+    values: list[Optional[CanonicalDecimal]] = Field(min_length=1)
+    mark_type: Literal["bar", "line"]
+    axis_key: Optional[Literal["primary", "secondary"]] = None
+    color: Optional[NonEmptyStr] = None
+    style: Optional[ChartSeriesStyle] = None
+
+
+class ComboChartData(ClosedModel):
+    """Shared category matrix for combo bar+line layers (D136/D228/D244)."""
+
+    categories: list[ChartCategory] = Field(min_length=2, max_length=12)
+    series: list[ComboChartSeries] = Field(min_length=2, max_length=8)
+
+    @model_validator(mode="after")
+    def _matrix_invariants(self) -> ComboChartData:
+        cat_ids = [c.category_id for c in self.categories]
+        if len(cat_ids) != len(set(cat_ids)):
+            raise ValueError("category_id values must be unique within the chart")
+        ser_ids = [s.series_id for s in self.series]
+        if len(ser_ids) != len(set(ser_ids)):
+            raise ValueError("series_id values must be unique within the chart")
+        names_norm = [s.name.casefold().strip() for s in self.series]
+        if len(names_norm) != len(set(names_norm)):
+            raise ValueError("series names must be normalized-unique within the chart")
+        n = len(self.categories)
+        for s in self.series:
+            if len(s.values) != n:
+                raise ValueError(
+                    f"series {s.series_id!r} must supply exactly one value per category"
+                )
+        return self
+
+
+ComboAuxiliary = Annotated[
+    Union[BoxedLabelAuxiliary, AuthoredStackTotalAuxiliary],
+    Field(discriminator="role"),
+]
+
+
+class ComboChartVisual(ClosedModel):
+    """Grouped or stacked bars + line layers on one category model (D136/D161/D244)."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["combo"] = "combo"
+    bar_mode: Literal["grouped", "stacked"]
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    chart_data: ComboChartData
+    category_axis: CategoryAxis
+    value_axes: ComboValueAxes
+    display: Optional[ChartDisplay] = None
+    typography: Optional[ChartTypography] = None
+    category_groups: Optional[list[CategoryGroup]] = Field(
+        default=None, min_length=1, max_length=6
+    )
+    auxiliary_series: Optional[list[ComboAuxiliary]] = Field(
+        default=None, min_length=1, max_length=1
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_coverage(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "coverage_callout" in data:
+            raise ValueError("combo forbids coverage_callout (D236/D244)")
+        return data
+
+    @model_validator(mode="after")
+    def _combo_invariants(self) -> ComboChartVisual:
+        n_cat = len(self.chart_data.categories)
+        if not (2 <= n_cat <= 12):
+            raise ValueError("combo requires 2–12 categories")
+        bars = [s for s in self.chart_data.series if s.mark_type == "bar"]
+        lines = [s for s in self.chart_data.series if s.mark_type == "line"]
+        if not (1 <= len(bars) <= 4):
+            raise ValueError("combo requires 1–4 bar series")
+        if not (1 <= len(lines) <= 4):
+            raise ValueError("combo requires 1–4 line series")
+        for s in bars:
+            if s.style is not None:
+                raise ValueError("combo bar series forbid line style (D228)")
+            if s.axis_key not in (None, "primary"):
+                raise ValueError("combo bars always use the primary axis (D244)")
+            if not any(v is not None for v in s.values):
+                raise ValueError(
+                    f"bar series {s.series_id!r} requires at least one finite value"
+                )
+        for s in lines:
+            finite = sum(1 for v in s.values if v is not None)
+            if finite < 2:
+                raise ValueError(
+                    f"line series {s.series_id!r} requires at least two finite values"
+                )
+        line_axes = {
+            ("primary" if s.axis_key in (None, "primary") else s.axis_key)
+            for s in lines
+        }
+        if line_axes == {"primary", "secondary"}:
+            raise ValueError("combo lines may not mix primary and secondary axes (D244)")
+        line_axis = next(iter(line_axes))
+        if line_axis == "secondary":
+            if self.value_axes.secondary is None:
+                raise ValueError(
+                    "secondary value axis required when combo lines use secondary (D230)"
+                )
+        elif self.value_axes.secondary is not None:
+            raise ValueError(
+                "secondary value axis requires at least one secondary line series (D230)"
+            )
+        if self.display is not None and self.display.series_identity == "pane_title":
+            raise ValueError("combo forbids series_identity pane_title (D244)")
+        if self.bar_mode == "grouped":
+            _validate_nonstacked_display(self)
+        else:
+            # stacked combo: stack policies OK; ordinary_values still valid for lines.
+            disp = self.display
+            if disp is not None and disp.series_identity == "pane_title":
+                raise ValueError("combo forbids series_identity pane_title (D244)")
+        _common_chart_heading_rules(self)
+        _leading_break_rules(self, allow=False)
+        if self.value_axes.secondary is not None:
+            if self.value_axes.secondary.leading_break is not None:
+                raise ValueError("combo secondary axis forbids leading_break (D244)")
+        _bar_domain_includes_zero(self)
+        if self.bar_mode == "stacked":
+            _domain_contains_stack_extents_series(self, bars)
+        else:
+            _domain_contains_series_finite(self, bars, axis="primary")
+        # Line values on their axis.
+        _domain_contains_series_finite(
+            self, lines, axis=line_axis  # type: ignore[arg-type]
+        )
+        _validate_category_groups(self)
+        bar_ids = {s.series_id for s in bars}
+        aux = self.auxiliary_series or []
+        if self.bar_mode == "grouped":
+            if any(a.role == "authored_stack_total" for a in aux):
+                raise ValueError(
+                    "grouped combo forbids authored_stack_total (D235/D244)"
+                )
+            _validate_boxed_labels(self, bar_series_ids=bar_ids)
+        else:
+            if any(a.role == "boxed_label" for a in aux):
+                raise ValueError("stacked combo forbids boxed_label (D235/D244)")
+            _validate_authored_stack_totals(self)
+        return self
+
+
+def _domain_contains_series_finite(
+    chart: Any, series: list[Any], *, axis: Literal["primary", "secondary"]
+) -> None:
+    axes = chart.value_axes
+    axis_obj = axes.primary if axis == "primary" else axes.secondary
+    if axis_obj is None:
+        return
+    domain = axis_obj.domain
+    lo = Decimal(domain.min) if domain.min is not None else None
+    hi = Decimal(domain.max) if domain.max is not None else None
+    for s in series:
+        for v in s.values:
+            if v is None:
+                continue
+            dv = Decimal(v)
+            if (lo is not None and dv < lo) or (hi is not None and dv > hi):
+                raise ValueError(
+                    "authored domain bounds must contain every finite value"
+                )
+
+
+def _domain_contains_stack_extents_series(chart: Any, bar_series: list[Any]) -> None:
+    """Primary bounds must cover zero + signed bar-stack extents (D83/D242/D244)."""
+    domain = chart.value_axes.primary.domain
+    lo = Decimal(domain.min) if domain.min is not None else None
+    hi = Decimal(domain.max) if domain.max is not None else None
+    if lo is None and hi is None:
+        return
+    n = len(chart.chart_data.categories)
+    for c_i in range(n):
+        pos = Decimal(0)
+        neg = Decimal(0)
+        for s in bar_series:
+            raw = s.values[c_i]
+            if raw is None:
+                continue
+            dv = Decimal(raw)
+            if dv > 0:
+                pos += dv
+            elif dv < 0:
+                neg += dv
+        for extent in (pos, neg, Decimal(0)):
+            if (lo is not None and extent < lo) or (hi is not None and extent > hi):
+                raise ValueError(
+                    "authored domain bounds must contain every finite value"
+                )
+
+
 ChartVisual = Annotated[
     Union[
         LineChartVisual,
         GroupedBarChartVisual,
         HorizontalBarChartVisual,
         StackedBarChartVisual,
+        ComboChartVisual,
         WaterfallChartVisual,
         HeatmapVisual,
     ],
@@ -3104,10 +3315,10 @@ class MetricOverviewSlide(_SlideBase):
 
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
 # plus annex/comparison tables (#180), single_chart axis charts
-# (line #182; grouped/horizontal bars #183; stacked_bar #184; waterfall #186;
-# heatmap #187), linear/grouping compositions (#192), relationship/decision
-# compositions (#193), dual/hero/metric compositions (#196), and
-# cards/reviews/quotations/state transitions (#194/#219).
+# (line #182; grouped/horizontal bars #183; stacked_bar #184; combo #185;
+# waterfall #186; heatmap #187), linear/grouping compositions (#192),
+# relationship/decision compositions (#193), dual/hero/metric compositions
+# (#196), and cards/reviews/quotations/state transitions (#194/#219).
 # Other D210 layout_type values are recognized at the envelope and rejected
 # with a clear "not yet implemented in kernel" structure error so the closed
 # vocabulary stays honest without shipping empty payload shells.
@@ -3335,6 +3546,7 @@ class Deck(ClosedModel):
                         GroupedBarChartVisual,
                         HorizontalBarChartVisual,
                         StackedBarChartVisual,
+                        ComboChartVisual,
                         WaterfallChartVisual,
                     ),
                 ):
@@ -3342,6 +3554,11 @@ class Deck(ClosedModel):
                     if fid not in self.number_formats:
                         raise ValueError(f"unresolved format_id {fid!r}")
                     referenced_formats.add(fid)
+                    if isinstance(chart, ComboChartVisual) and chart.value_axes.secondary is not None:
+                        sfid = chart.value_axes.secondary.format_id
+                        if sfid not in self.number_formats:
+                            raise ValueError(f"unresolved format_id {sfid!r}")
+                        referenced_formats.add(sfid)
                     for aux in getattr(chart, "auxiliary_series", None) or []:
                         afid = aux.format_id
                         if afid not in self.number_formats:

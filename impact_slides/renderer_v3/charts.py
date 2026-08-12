@@ -15,6 +15,7 @@ from .format import MISSING_ACCESSIBLE, MISSING_VISIBLE, format_semantic_value
 from .models import (
     LINE_STYLE_PAIRS,
     ChartData,
+    ComboChartVisual,
     GroupedBarChartVisual,
     HeatmapVisual,
     HorizontalBarChartVisual,
@@ -39,6 +40,7 @@ AxisChartVisual = Union[
     GroupedBarChartVisual,
     HorizontalBarChartVisual,
     StackedBarChartVisual,
+    ComboChartVisual,
     WaterfallChartVisual,
 ]
 BarChartVisual = Union[
@@ -1235,6 +1237,830 @@ def freeze_waterfall_chart(
     }
 
 
+def freeze_combo_chart(
+    chart: ComboChartVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+) -> dict[str, Any]:
+    """Grouped/stacked bars behind line layers on one category model (D136/D244)."""
+    stacked = chart.bar_mode == "stacked"
+    primary = chart.value_axes.primary
+    secondary = chart.value_axes.secondary
+    p_fmt = formats[primary.format_id]
+    p_fmt_id = primary.format_id
+    data = chart.chart_data
+    cats = list(data.categories)
+    bar_series = [s for s in data.series if s.mark_type == "bar"]
+    line_series = [s for s in data.series if s.mark_type == "line"]
+    line_axis_key = (
+        "secondary"
+        if any(s.axis_key == "secondary" for s in line_series)
+        else "primary"
+    )
+
+    # Resolve colors in authored series order across the whole combo (D99/D132).
+    defaults = resolve_series_colors("combo", count=len(data.series))
+    series_plans: list[dict[str, Any]] = []
+    bar_plans: list[dict[str, Any]] = []
+    line_plans: list[dict[str, Any]] = []
+    for i, s in enumerate(data.series):
+        color = (
+            resolve_color(s.color, role="series_identity")
+            if s.color is not None
+            else defaults[i]
+        )
+        if s.mark_type == "line":
+            if s.style is not None:
+                line_style, marker = s.style.line_style, s.style.marker
+            else:
+                # Line-layer style index among line series only.
+                li = sum(1 for p in series_plans if p["mark_type"] == "line")
+                line_style, marker = LINE_STYLE_PAIRS[li % len(LINE_STYLE_PAIRS)]
+            axis_key = "secondary" if s.axis_key == "secondary" else "primary"
+        else:
+            line_style, marker = "solid", "circle"
+            axis_key = "primary"
+        plan_s = {
+            "series_id": s.series_id,
+            "name": s.name,
+            "color": color,
+            "line_style": line_style,
+            "marker": marker,
+            "values": list(s.values),
+            "mark_type": s.mark_type,
+            "axis_key": axis_key,
+        }
+        series_plans.append(plan_s)
+        if s.mark_type == "bar":
+            bar_plans.append(plan_s)
+        else:
+            line_plans.append(plan_s)
+
+    # Domains: primary always owns bars (+ primary lines); secondary owns secondary lines.
+    primary_domain = _resolve_combo_domain(
+        primary,
+        bar_series if stacked or line_axis_key == "secondary" else list(data.series),
+        categories=cats,
+        include_zero=True,
+        stack_extents=stacked,
+        bar_only=stacked or line_axis_key == "secondary",
+        all_series=list(data.series),
+        line_axis_key=line_axis_key,
+        axis_key="primary",
+    )
+    secondary_domain = None
+    if secondary is not None:
+        secondary_domain = _resolve_combo_domain(
+            secondary,
+            line_series,
+            categories=cats,
+            include_zero=False,
+            stack_extents=False,
+            bar_only=False,
+            all_series=list(data.series),
+            line_axis_key=line_axis_key,
+            axis_key="secondary",
+        )
+
+    show_values = _ordinary_values_show(chart)
+    show_segments = _stack_segments_show(chart) if stacked else False
+    show_totals = _stack_totals_show(chart) if stacked else False
+
+    group_pad = 28 if chart.category_groups else 0
+    pad_l = PAD_L
+    pad_r = PAD_R if secondary is not None else max(PAD_R // 2, 48)
+    if secondary is not None:
+        pad_r = max(pad_r, PAD_L)  # room for secondary tick labels
+    pad_t = max(PAD_T, 48 if stacked else 40)
+    pad_b = PAD_B + group_pad + (16 if stacked else 0)
+
+    plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - pad_l - pad_r))
+    plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - pad_t - pad_b - 40))
+    n_cat = len(cats)
+    n_bar = len(bar_plans)
+    geom = _bar_slot_geometry(
+        plot_w=plot_w,
+        plot_h=plot_h,
+        n_cat=n_cat,
+        n_ser=1 if stacked else n_bar,
+        horizontal=False,
+        pad_l=pad_l,
+        pad_t=pad_t,
+    )
+
+    p_min = float(primary_domain["min"])
+    p_max = float(primary_domain["max"])
+    p_span = (p_max - p_min) or 1.0
+
+    def p_y(v: float) -> float:
+        return pad_t + plot_h - ((v - p_min) / p_span) * plot_h
+
+    s_min = s_max = s_span = 0.0
+
+    def s_y(v: float) -> float:
+        return pad_t + plot_h - ((v - s_min) / s_span) * plot_h
+
+    if secondary_domain is not None:
+        s_min = float(secondary_domain["min"])
+        s_max = float(secondary_domain["max"])
+        s_span = (s_max - s_min) or 1.0
+
+    zero_y = p_y(0.0)
+    bars: list[dict[str, Any]] = []
+    points: list[dict[str, Any]] = []
+    stack_totals: list[dict[str, Any]] = []
+
+    # --- bar layer (always primary) ---
+    for c_i, cat in enumerate(cats):
+        slot = geom["slots"][c_i]
+        thick = geom["thickness"]
+        if stacked:
+            x = slot["origins"][0]
+            cx = x + thick / 2
+            pos_cursor = 0.0
+            neg_cursor = 0.0
+            pos_missing = False
+            neg_missing = False
+            pos_sum = Decimal(0)
+            neg_sum = Decimal(0)
+            for s_i, sp in enumerate(bar_plans):
+                raw = bar_series[s_i].values[c_i]
+                if raw is None:
+                    points.append(
+                        {
+                            "series_id": sp["series_id"],
+                            "category_id": cat.category_id,
+                            "x": cx,
+                            "y": zero_y,
+                            "value": None,
+                            "visible": MISSING_VISIBLE,
+                            "accessible": MISSING_ACCESSIBLE,
+                            "finite": False,
+                            "mark_type": "bar",
+                            "axis_key": "primary",
+                        }
+                    )
+                    bars.append(
+                        {
+                            "series_id": sp["series_id"],
+                            "category_id": cat.category_id,
+                            "x": x,
+                            "y": zero_y,
+                            "width": thick,
+                            "height": 0.0,
+                            "thickness": thick,
+                            "value": None,
+                            "visible": MISSING_VISIBLE,
+                            "accessible": MISSING_ACCESSIBLE,
+                            "finite": False,
+                            "missing": True,
+                            "sign": 0,
+                            "stack_base": 0.0,
+                            "stack_top": 0.0,
+                            "end_x": cx,
+                            "end_y": zero_y,
+                            "mark_type": "bar",
+                            "axis_key": "primary",
+                        }
+                    )
+                    pos_missing = True
+                    neg_missing = True
+                    continue
+                num_d = Decimal(raw)
+                num = float(num_d)
+                fv = format_semantic_value(
+                    NumberValue(value=raw, format_id=p_fmt_id), formats
+                )
+                if num > 0:
+                    base, top = pos_cursor, pos_cursor + num
+                    pos_cursor = top
+                    pos_sum += num_d
+                    sign = 1
+                elif num < 0:
+                    base, top = neg_cursor, neg_cursor + num
+                    neg_cursor = top
+                    neg_sum += num_d
+                    sign = -1
+                else:
+                    base = top = 0.0
+                    sign = 0
+                y0, y1 = p_y(base), p_y(top)
+                top_y = min(y0, y1) if sign != 0 else zero_y
+                height = abs(y1 - y0) if sign != 0 else 0.0
+                end_y = y1 if sign != 0 else zero_y
+                bars.append(
+                    {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": x,
+                        "y": top_y,
+                        "width": thick,
+                        "height": height,
+                        "thickness": thick,
+                        "value": raw,
+                        "numeric": num,
+                        "visible": fv.visible,
+                        "accessible": fv.accessible,
+                        "finite": True,
+                        "missing": False,
+                        "sign": sign,
+                        "stack_base": base,
+                        "stack_top": top,
+                        "end_x": cx,
+                        "end_y": end_y,
+                        "mid_y": top_y + height / 2 if height else zero_y,
+                        "mark_type": "bar",
+                        "axis_key": "primary",
+                    }
+                )
+                points.append(
+                    {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": cx,
+                        "y": end_y,
+                        "value": raw,
+                        "numeric": num,
+                        "visible": fv.visible,
+                        "accessible": fv.accessible,
+                        "finite": True,
+                        "mark_type": "bar",
+                        "axis_key": "primary",
+                    }
+                )
+            pos_ext, neg_ext = float(pos_sum), float(neg_sum)
+            aux = chart.auxiliary_series or []
+            authored = (
+                aux[0].values[c_i]
+                if aux and getattr(aux[0], "role", None) == "authored_stack_total"
+                else None
+            )
+
+            def _total_entry(
+                *,
+                side: str,
+                raw_val: Optional[str],
+                numeric: float,
+                source: str,
+                withheld: bool,
+                fmt_for: str,
+            ) -> dict[str, Any]:
+                if withheld or raw_val is None:
+                    return {
+                        "category_id": cat.category_id,
+                        "side": side,
+                        "value": None,
+                        "numeric": None,
+                        "visible": MISSING_VISIBLE,
+                        "accessible": MISSING_ACCESSIBLE,
+                        "missing": True,
+                        "withheld": withheld,
+                        "source": source,
+                        "x": cx,
+                        "y": p_y(numeric) if side != "authored" else zero_y,
+                        "format_id": fmt_for,
+                    }
+                fv_t = format_semantic_value(
+                    NumberValue(value=raw_val, format_id=fmt_for), formats
+                )
+                if side == "authored":
+                    if numeric < 0:
+                        anchor_v = neg_ext if neg_ext < 0 else 0.0
+                        y = p_y(anchor_v) + 14
+                    else:
+                        anchor_v = pos_ext if pos_ext > 0 else 0.0
+                        y = p_y(anchor_v) - 8
+                elif side == "negative":
+                    anchor_v = neg_ext if neg_ext < 0 else numeric
+                    y = p_y(anchor_v) + 14
+                else:
+                    anchor_v = pos_ext if pos_ext > 0 else numeric
+                    y = p_y(anchor_v) - 8
+                return {
+                    "category_id": cat.category_id,
+                    "side": side,
+                    "value": raw_val,
+                    "numeric": numeric,
+                    "visible": fv_t.visible,
+                    "accessible": fv_t.accessible,
+                    "missing": False,
+                    "withheld": False,
+                    "source": source,
+                    "x": cx,
+                    "y": y,
+                    "format_id": fmt_for,
+                }
+
+            if pos_missing:
+                stack_totals.append(
+                    _total_entry(
+                        side="positive",
+                        raw_val=None,
+                        numeric=pos_ext,
+                        source="computed",
+                        withheld=True,
+                        fmt_for=p_fmt_id,
+                    )
+                )
+            else:
+                stack_totals.append(
+                    _total_entry(
+                        side="positive",
+                        raw_val=_plain_decimal(pos_sum),
+                        numeric=pos_ext,
+                        source="computed",
+                        withheld=False,
+                        fmt_for=p_fmt_id,
+                    )
+                )
+            if neg_missing:
+                stack_totals.append(
+                    _total_entry(
+                        side="negative",
+                        raw_val=None,
+                        numeric=neg_ext,
+                        source="computed",
+                        withheld=True,
+                        fmt_for=p_fmt_id,
+                    )
+                )
+            else:
+                stack_totals.append(
+                    _total_entry(
+                        side="negative",
+                        raw_val=_plain_decimal(neg_sum),
+                        numeric=neg_ext,
+                        source="computed",
+                        withheld=False,
+                        fmt_for=p_fmt_id,
+                    )
+                )
+            if aux and getattr(aux[0], "role", None) == "authored_stack_total":
+                if authored is None:
+                    stack_totals.append(
+                        _total_entry(
+                            side="authored",
+                            raw_val=None,
+                            numeric=0.0,
+                            source="authored",
+                            withheld=False,
+                            fmt_for=aux[0].format_id,
+                        )
+                    )
+                else:
+                    stack_totals.append(
+                        _total_entry(
+                            side="authored",
+                            raw_val=authored,
+                            numeric=float(Decimal(authored)),
+                            source="authored",
+                            withheld=False,
+                            fmt_for=aux[0].format_id,
+                        )
+                    )
+        else:
+            # grouped bars
+            for s_i, sp in enumerate(bar_plans):
+                raw = bar_series[s_i].values[c_i]
+                bar_origin = slot["origins"][s_i]
+                if raw is None:
+                    point = {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": bar_origin + thick / 2,
+                        "y": zero_y,
+                        "value": None,
+                        "visible": MISSING_VISIBLE,
+                        "accessible": MISSING_ACCESSIBLE,
+                        "finite": False,
+                        "mark_type": "bar",
+                        "axis_key": "primary",
+                    }
+                    points.append(point)
+                    bars.append(
+                        {
+                            **point,
+                            "missing": True,
+                            "x": bar_origin,
+                            "y": zero_y,
+                            "width": 0.0,
+                            "height": 0.0,
+                            "thickness": thick,
+                            "sign": 0,
+                        }
+                    )
+                    continue
+                num = float(Decimal(raw))
+                fv = format_semantic_value(
+                    NumberValue(value=raw, format_id=p_fmt_id), formats
+                )
+                y1 = p_y(num)
+                top, bot = (y1, zero_y) if y1 <= zero_y else (zero_y, y1)
+                height = abs(y1 - zero_y)
+                if height < 0.5 and num == 0.0:
+                    height = 2.0
+                    top = zero_y - 1.0
+                bars.append(
+                    {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": bar_origin,
+                        "y": top,
+                        "width": thick,
+                        "height": height,
+                        "thickness": thick,
+                        "value": raw,
+                        "numeric": num,
+                        "visible": fv.visible,
+                        "accessible": fv.accessible,
+                        "finite": True,
+                        "missing": False,
+                        "sign": 0 if num == 0 else (1 if num > 0 else -1),
+                        "end_x": bar_origin + thick / 2,
+                        "end_y": y1,
+                        "mark_type": "bar",
+                        "axis_key": "primary",
+                    }
+                )
+                points.append(
+                    {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": bar_origin + thick / 2,
+                        "y": y1,
+                        "value": raw,
+                        "numeric": num,
+                        "visible": fv.visible,
+                        "accessible": fv.accessible,
+                        "finite": True,
+                        "mark_type": "bar",
+                        "axis_key": "primary",
+                    }
+                )
+
+    # --- line layer (on category centers; bars paint behind) ---
+    line_xs = [geom["slots"][c_i]["center"] for c_i in range(n_cat)]
+    for s_i, sp in enumerate(line_plans):
+        src = line_series[s_i]
+        axis_key = sp["axis_key"]
+        fmt_id = (
+            secondary.format_id
+            if axis_key == "secondary" and secondary is not None
+            else p_fmt_id
+        )
+        y_of = s_y if axis_key == "secondary" else p_y
+        for c_i, cat in enumerate(cats):
+            raw = src.values[c_i]
+            if raw is None:
+                points.append(
+                    {
+                        "series_id": sp["series_id"],
+                        "category_id": cat.category_id,
+                        "x": line_xs[c_i],
+                        "y": None,
+                        "value": None,
+                        "visible": MISSING_VISIBLE,
+                        "accessible": MISSING_ACCESSIBLE,
+                        "finite": False,
+                        "mark_type": "line",
+                        "axis_key": axis_key,
+                    }
+                )
+                continue
+            num = float(Decimal(raw))
+            fv = format_semantic_value(
+                NumberValue(value=raw, format_id=fmt_id), formats
+            )
+            points.append(
+                {
+                    "series_id": sp["series_id"],
+                    "category_id": cat.category_id,
+                    "x": line_xs[c_i],
+                    "y": y_of(num),
+                    "value": raw,
+                    "numeric": num,
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "finite": True,
+                    "mark_type": "line",
+                    "axis_key": axis_key,
+                }
+            )
+
+    role_sizes = _role_sizes(chart)
+    # Auto identity: line endpoint labels + bar legend when endpoints fit; else full legend (D244).
+    ser_px = role_sizes["series_labels"]
+    endpoints_fit = all(
+        len(sp["name"]) * ser_px * 0.55 <= pad_r - 16 for sp in line_plans
+    )
+    if chart.display is not None and chart.display.series_identity == "legend":
+        identity = "legend"
+    elif endpoints_fit:
+        identity = "endpoints_and_bar_legend"
+    else:
+        identity = "legend"
+
+    placements: list[dict[str, Any]] = []
+    if stacked:
+        placements.extend(
+            _place_stack_labels(
+                bars,
+                bar_plans,
+                stack_totals,
+                show_segments=show_segments,
+                show_totals=show_totals,
+                segment_px=role_sizes["segment_labels"],
+                total_px=role_sizes["stack_totals"],
+                plot=(pad_l, pad_t, pad_l + plot_w, pad_t + plot_h),
+            )
+        )
+    else:
+        # Ordinary bar values (grouped).
+        placements.extend(
+            _place_bar_labels(
+                bars,
+                bar_plans,
+                show_values=show_values,
+                label_px=role_sizes["ordinary_values"],
+                plot=(pad_l, pad_t, pad_l + plot_w, pad_t + plot_h),
+                horizontal=False,
+            )
+        )
+    boxed_plan = {"placements": [], "labels": [], "facts": []}
+    if not stacked:
+        boxed_plan = _freeze_boxed_labels(
+            chart, formats, bars, cats, role_sizes, horizontal=False
+        )
+        placements.extend(boxed_plan["placements"])
+    # Line point labels + endpoint identities.
+    line_points = [p for p in points if p.get("mark_type") == "line"]
+    placements.extend(
+        _place_point_labels(
+            line_points,
+            line_plans,
+            show_values=show_values,
+            label_px=role_sizes["ordinary_values"],
+            plot=(pad_l, pad_t, pad_l + plot_w, pad_t + plot_h),
+            identity=("endpoints" if identity == "endpoints_and_bar_legend" else identity),
+        )
+    )
+
+    groups_plan = _freeze_category_groups(
+        chart, cats, geom, pad_l, pad_t, plot_w, plot_h, horizontal=False
+    )
+
+    tick_labels = [
+        format_semantic_value(
+            NumberValue(value=t, format_id=p_fmt_id), formats
+        ).visible
+        for t in primary_domain["ticks"]
+    ]
+    secondary_tick_labels: list[str] = []
+    if secondary_domain is not None and secondary is not None:
+        secondary_tick_labels = [
+            format_semantic_value(
+                NumberValue(value=t, format_id=secondary.format_id), formats
+            ).visible
+            for t in secondary_domain["ticks"]
+        ]
+
+    cat_centers = []
+    for c_i, cat in enumerate(cats):
+        slot = geom["slots"][c_i]
+        cat_centers.append(
+            {
+                "category_id": cat.category_id,
+                "label": cat.label,
+                "short_label": cat.short_label,
+                "x": slot["center"],
+                "y": pad_t + plot_h + 22,
+            }
+        )
+
+    # Semantic table: all series columns; stacked adds computed totals.
+    table_type = "combo_stacked" if stacked else "combo_grouped"
+    extra_facts: list[str] = [f"Bar mode: {chart.bar_mode}"]
+    if secondary is not None:
+        s_fmt = formats[secondary.format_id]
+        extra_facts.append(
+            f"Secondary axis format: {s_fmt.unit or 'unitless'}, "
+            f"{s_fmt.value_decimals} decimal places"
+        )
+        if secondary_domain is not None:
+            extra_facts.append(
+                f"Secondary domain from {secondary_domain['min']} to {secondary_domain['max']}"
+            )
+    for sp in series_plans:
+        extra_facts.append(
+            f"Series {sp['name']}: mark={sp['mark_type']} axis={sp['axis_key']}"
+        )
+    if stacked:
+        for t in stack_totals:
+            if t.get("source") == "authored":
+                if t.get("missing"):
+                    extra_facts.append(
+                        f"Authored stack total {t['category_id']}: {MISSING_ACCESSIBLE}"
+                    )
+                else:
+                    extra_facts.append(
+                        f"Authored stack total {t['category_id']}: {t['accessible']}"
+                    )
+            elif t.get("withheld"):
+                extra_facts.append(
+                    f"Computed {t['side']} total {t['category_id']}: withheld "
+                    f"(missing contributor)"
+                )
+
+    # Build a chart-like object for _semantic_table primary format path.
+    table = _semantic_table(
+        chart,
+        formats,
+        series_plans,
+        primary_domain,
+        identity=identity,
+        scale_label=p_fmt.scale_label,
+        chart_type=table_type if not stacked else "stacked_bar",
+        groups=groups_plan,
+        boxed=extra_facts,
+        stack_totals=stack_totals if stacked else None,
+    )
+    # Force combo type wording even when reusing stacked table columns.
+    if stacked:
+        table["facts"] = [
+            f.replace("sign-separated stacked vertical bars", "stacked combo bars with line layers")
+            if isinstance(f, str)
+            else f
+            for f in table["facts"]
+        ]
+        if not any("Bar mode" in f for f in table["facts"]):
+            table["facts"].insert(1, f"Bar mode: {chart.bar_mode}")
+
+    boxed_labels = boxed_plan.get("labels") or []
+
+    return {
+        "surface_id": chart.surface_id,
+        "chart_type": "combo",
+        "bar_mode": chart.bar_mode,
+        "heading": chart.heading,
+        "subtitle": chart.subtitle,
+        "categories": cat_centers,
+        "series": series_plans,
+        "points": points,
+        "bars": bars,
+        "placements": placements,
+        "show_ordinary_values": show_values,
+        "show_segment_labels": show_segments,
+        "show_stack_totals": show_totals,
+        "identity_strategy": identity,
+        "role_sizes": role_sizes,
+        "geometry": {
+            "pad_l": pad_l,
+            "pad_r": pad_r,
+            "pad_t": pad_t,
+            "pad_b": pad_b,
+            "plot_w": plot_w,
+            "plot_h": plot_h,
+            "marker_r": MARKER_R,
+            "view_w": pad_l + plot_w + pad_r,
+            "view_h": pad_t + plot_h + pad_b,
+            "thickness": geom["thickness"],
+            "category_pitch": geom["category_pitch"],
+            "series_gap": 0.0 if stacked else geom["series_gap"],
+            "horizontal": False,
+            "stacked": stacked,
+            "zero_x": pad_l,
+            "zero_y": zero_y,
+        },
+        "domain": primary_domain,
+        "secondary_domain": secondary_domain,
+        "tick_labels": tick_labels,
+        "secondary_tick_labels": secondary_tick_labels,
+        "category_axis": {
+            "visible": chart.category_axis.visible,
+            "title": chart.category_axis.title,
+        },
+        "value_axis": {
+            "visible": primary.visible,
+            "title": primary.title,
+            "format_id": p_fmt_id,
+            "leading_break": None,
+            "scale_label": p_fmt.scale_label,
+        },
+        "secondary_value_axis": (
+            {
+                "visible": secondary.visible,
+                "title": secondary.title,
+                "format_id": secondary.format_id,
+                "leading_break": None,
+                "scale_label": formats[secondary.format_id].scale_label,
+            }
+            if secondary is not None
+            else None
+        ),
+        "category_groups": groups_plan,
+        "boxed_labels": boxed_labels,
+        "stack_totals": stack_totals,
+        "coverage_callout": None,
+        "semantic_table": table,
+        "theme": chart_js_tokens(),
+        "gridlines": False,
+    }
+
+
+def _resolve_combo_domain(
+    axis: Any,
+    series_for_domain: list[Any],
+    *,
+    categories: list[Any],
+    include_zero: bool,
+    stack_extents: bool,
+    bar_only: bool,
+    all_series: list[Any],
+    line_axis_key: str,
+    axis_key: str,
+) -> dict[str, Any]:
+    """Domain for one combo value axis from the series that plot on it."""
+    finite: list[Decimal] = []
+    if axis_key == "primary":
+        # Bars always primary; primary lines when lines share primary.
+        bar_s = [s for s in all_series if getattr(s, "mark_type", None) == "bar"]
+        line_s = [
+            s
+            for s in all_series
+            if getattr(s, "mark_type", None) == "line"
+            and line_axis_key == "primary"
+        ]
+        use = bar_s + line_s
+        if stack_extents:
+            n = len(categories)
+            for c_i in range(n):
+                pos = Decimal(0)
+                neg = Decimal(0)
+                for s in bar_s:
+                    raw = s.values[c_i]
+                    if raw is None:
+                        continue
+                    dv = Decimal(raw)
+                    if dv > 0:
+                        pos += dv
+                    elif dv < 0:
+                        neg += dv
+                finite.extend((pos, neg))
+            for s in line_s:
+                for v in s.values:
+                    if v is not None:
+                        finite.append(Decimal(v))
+        else:
+            for s in use:
+                for v in s.values:
+                    if v is not None:
+                        finite.append(Decimal(v))
+    else:
+        for s in series_for_domain:
+            for v in s.values:
+                if v is not None:
+                    finite.append(Decimal(v))
+    if not finite:
+        finite = [Decimal(0), Decimal(1)]
+    data_min = min(finite)
+    data_max = max(finite)
+    if axis.domain.kind == "fixed":
+        return {
+            "kind": "fixed",
+            "min": axis.domain.min,
+            "max": axis.domain.max,
+            "ticks": list(axis.domain.ticks),
+        }
+    lo = Decimal(axis.domain.min) if axis.domain.min is not None else data_min
+    hi = Decimal(axis.domain.max) if axis.domain.max is not None else data_max
+    if include_zero:
+        if lo > 0:
+            lo = Decimal(0)
+        if hi < 0:
+            hi = Decimal(0)
+    if lo == hi:
+        lo -= Decimal("1")
+        hi += Decimal("1")
+    pad = (hi - lo) * Decimal("0.08")
+    lo_f = lo if (include_zero and lo == 0) else lo - pad
+    hi_f = hi + pad
+    if include_zero:
+        if lo_f > 0:
+            lo_f = Decimal(0)
+        if hi_f < 0:
+            hi_f = Decimal(0)
+    target = axis.domain.target_ticks or 5
+    ticks = _nice_ticks(float(lo_f), float(hi_f), target)
+    return {
+        "kind": "generated",
+        "min": _plain_decimal(ticks[0]),
+        "max": _plain_decimal(ticks[-1]),
+        "ticks": [_plain_decimal(t) for t in ticks],
+    }
+
+
 def freeze_chart(
     chart: AxisChartVisual,
     formats: Mapping[str, NumberFormat],
@@ -1245,6 +2071,8 @@ def freeze_chart(
     """Dispatch freeze by chart_type (D238)."""
     if isinstance(chart, LineChartVisual):
         return freeze_line_chart(chart, formats, box_w=box_w, box_h=box_h)
+    if isinstance(chart, ComboChartVisual):
+        return freeze_combo_chart(chart, formats, box_w=box_w, box_h=box_h)
     if isinstance(chart, WaterfallChartVisual):
         return freeze_waterfall_chart(chart, formats, box_w=box_w, box_h=box_h)
     return freeze_bar_chart(chart, formats, box_w=box_w, box_h=box_h)
@@ -1276,7 +2104,10 @@ def paint_chart_html(
         out.append("</div>")
 
     legend_html = _legend_html(plan)
-    if legend_html and plan["identity_strategy"] == "legend":
+    if legend_html and plan["identity_strategy"] in (
+        "legend",
+        "endpoints_and_bar_legend",
+    ):
         out.append(legend_html)
 
     g = plan["geometry"]
@@ -1337,6 +2168,8 @@ def paint_chart_svg(
     ctype = plan.get("chart_type", "line")
     if ctype == "waterfall":
         return _paint_waterfall_svg(plan, marks=marks, chrome=chrome)
+    if ctype == "combo":
+        return _paint_combo_svg(plan, marks=marks, chrome=chrome)
     if ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
         return _paint_bar_svg(plan, marks=marks, chrome=chrome)
     return _paint_line_svg(plan, marks=marks, chrome=chrome)
@@ -1350,6 +2183,260 @@ def paint_line_chart_svg(
 ) -> str:
     """Back-compat alias."""
     return paint_chart_svg(plan, marks=marks, chrome=chrome)
+
+
+def _paint_combo_svg(
+    plan: dict[str, Any],
+    *,
+    marks: bool = True,
+    chrome: bool = True,
+) -> str:
+    """Bars behind lines; primary (+ optional secondary) chrome (D136/D244/D248)."""
+    g = plan["geometry"]
+    vw, vh = g["view_w"], g["view_h"]
+    pl, pt, pw, ph = g["pad_l"], g["pad_t"], g["plot_w"], g["plot_h"]
+    ink = resolve_color("navy", role="text_on_light")
+    border = resolve_color("navy", role="border")
+    parts = [
+        f'<svg class="chart-svg" viewBox="0 0 {vw} {vh}" width="{vw}" height="{vh}" '
+        f'role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect class="chart-plot-bg" x="0" y="0" width="{vw}" height="{vh}" fill="none"/>'
+    ]
+    if chrome:
+        if plan["category_axis"]["visible"] or plan["value_axis"]["visible"]:
+            parts.append(
+                f'<line x1="{pl}" y1="{pt + ph}" x2="{pl + pw}" y2="{pt + ph}" '
+                f'stroke="{_e(border)}" stroke-width="1"/>'
+            )
+            parts.append(
+                f'<line x1="{pl}" y1="{pt}" x2="{pl}" y2="{pt + ph}" '
+                f'stroke="{_e(border)}" stroke-width="1"/>'
+            )
+        d_min = float(Decimal(plan["domain"]["min"]))
+        d_max = float(Decimal(plan["domain"]["max"]))
+        if d_min < 0 < d_max:
+            zy = g["zero_y"]
+            parts.append(
+                f'<line class="zero-line" x1="{pl}" y1="{zy:.1f}" '
+                f'x2="{pl + pw}" y2="{zy:.1f}" stroke="{_e(border)}" '
+                f'stroke-width="1" stroke-dasharray="4 3"/>'
+            )
+        cat_px = plan["role_sizes"]["category_ticks"]
+        val_px = plan["role_sizes"]["value_ticks"]
+        if plan["category_axis"]["visible"]:
+            for cat in plan["categories"]:
+                parts.append(
+                    f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
+                    f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                )
+        if plan["value_axis"]["visible"]:
+            span = (d_max - d_min) or 1.0
+            for tick, label in zip(plan["domain"]["ticks"], plan["tick_labels"]):
+                tv = float(Decimal(tick))
+                y = pt + ph - ((tv - d_min) / span) * ph
+                parts.append(
+                    f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
+                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(ink)}">{_e(label)}</text>'
+                )
+        sec = plan.get("secondary_value_axis")
+        sec_dom = plan.get("secondary_domain")
+        if sec and sec.get("visible") and sec_dom:
+            # Right-side secondary axis line + ticks.
+            parts.append(
+                f'<line x1="{pl + pw}" y1="{pt}" x2="{pl + pw}" y2="{pt + ph}" '
+                f'stroke="{_e(border)}" stroke-width="1"/>'
+            )
+            s_min = float(Decimal(sec_dom["min"]))
+            s_max = float(Decimal(sec_dom["max"]))
+            s_span = (s_max - s_min) or 1.0
+            for tick, label in zip(
+                sec_dom["ticks"], plan.get("secondary_tick_labels") or []
+            ):
+                tv = float(Decimal(tick))
+                y = pt + ph - ((tv - s_min) / s_span) * ph
+                parts.append(
+                    f'<text x="{pl + pw + 10}" y="{y + 4:.1f}" text-anchor="start" '
+                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(ink)}">{_e(label)}</text>'
+                )
+            if sec.get("title"):
+                cy = pt + ph / 2
+                tx = pl + pw + g["pad_r"] - 12
+                parts.append(
+                    f'<text x="{tx}" y="{cy}" text-anchor="middle" '
+                    f'font-size="{plan["role_sizes"]["axis_titles"]}" '
+                    f'transform="rotate(90 {tx} {cy})" fill="{_e(ink)}">'
+                    f'{_e(sec["title"])}</text>'
+                )
+        title_px = plan["role_sizes"]["axis_titles"]
+        cat_title = plan["category_axis"].get("title")
+        val_title = plan["value_axis"].get("title")
+        if plan["category_axis"]["visible"] and cat_title:
+            parts.append(
+                f'<text x="{pl + pw / 2}" y="{pt + ph + 52}" text-anchor="middle" '
+                f'font-size="{title_px}" fill="{_e(ink)}">{_e(cat_title)}</text>'
+            )
+        if plan["value_axis"]["visible"] and val_title:
+            cy = pt + ph / 2
+            parts.append(
+                f'<text x="16" y="{cy}" text-anchor="middle" font-size="{title_px}" '
+                f'transform="rotate(-90 16 {cy})" fill="{_e(ink)}">{_e(val_title)}</text>'
+            )
+        for grp in plan.get("category_groups") or []:
+            x1, y1, x2, y2 = grp["x1"], grp["y1"], grp["x2"], grp["y2"]
+            parts.append(
+                f'<g class="category-group" data-group-id="{_e(grp["group_id"])}">'
+                f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+                f'stroke="{_e(border)}" stroke-width="1.5"/>'
+                f'<text x="{(x1 + x2) / 2:.1f}" y="{y2 + 14:.1f}" text-anchor="middle" '
+                f'font-size="{cat_px}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
+                f"</g>"
+            )
+
+    series_by_id = {s["series_id"]: s for s in plan["series"]}
+    if marks:
+        # Bars first (behind lines).
+        for bar in plan.get("bars") or []:
+            if bar.get("missing") or not bar.get("finite"):
+                continue
+            color = series_by_id[bar["series_id"]]["color"]
+            parts.append(
+                f'<rect class="bar" data-series="{_e(bar["series_id"])}" '
+                f'data-category="{_e(bar["category_id"])}" '
+                f'x="{bar["x"]:.1f}" y="{bar["y"]:.1f}" '
+                f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
+                f'fill="{_e(color)}"/>'
+            )
+        # Line polylines + markers.
+        by_series: dict[str, list[dict[str, Any]]] = {}
+        for p in plan["points"]:
+            if p.get("mark_type") != "line":
+                continue
+            by_series.setdefault(p["series_id"], []).append(p)
+        for sp in plan["series"]:
+            if sp.get("mark_type") != "line":
+                continue
+            pts = by_series.get(sp["series_id"]) or []
+            color = sp["color"]
+            dash = _DASHARRAY.get(sp["line_style"])
+            dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+            segment: list[str] = []
+            for p in pts:
+                if not p["finite"]:
+                    if len(segment) >= 2:
+                        parts.append(
+                            f'<polyline class="combo-line" fill="none" '
+                            f'stroke="{_e(color)}" stroke-width="2.5" '
+                            f'points="{" ".join(segment)}"{dash_attr}/>'
+                        )
+                    segment = []
+                    continue
+                segment.append(f'{p["x"]:.1f},{p["y"]:.1f}')
+            if len(segment) >= 2:
+                parts.append(
+                    f'<polyline class="combo-line" fill="none" '
+                    f'stroke="{_e(color)}" stroke-width="2.5" '
+                    f'points="{" ".join(segment)}"{dash_attr}/>'
+                )
+            for p in pts:
+                if not p["finite"]:
+                    continue
+                parts.append(_marker_svg(p["x"], p["y"], sp["marker"], color))
+
+    if chrome:
+        lab_px = plan["role_sizes"]["ordinary_values"]
+        ser_px = plan["role_sizes"]["series_labels"]
+        point_lookup = {
+            (p["series_id"], p["category_id"]): p for p in plan["points"]
+        }
+        for place in plan["placements"]:
+            if place["class"] == "suppressed":
+                continue
+            kind = place.get("kind")
+            if kind == "value":
+                # Bar ordinary / line ordinary share this kind.
+                series_color = series_by_id[place["series_id"]]["color"]
+                mark = series_by_id[place["series_id"]].get("mark_type")
+                show = plan["show_ordinary_values"] if mark == "line" or not plan.get(
+                    "geometry", {}
+                ).get("stacked") else False
+                if mark == "bar" and plan.get("geometry", {}).get("stacked"):
+                    continue
+                if not show and mark == "line":
+                    continue
+                if mark == "bar" and not plan["show_ordinary_values"]:
+                    continue
+                label_color = series_color if place["class"] == "leader" or mark == "line" else ink
+                tx, ty = place["x"], place["y"]
+                text = place.get("text")
+                if text is None:
+                    p = point_lookup.get((place["series_id"], place["category_id"]))
+                    text = p["visible"] if p else ""
+                if place["class"] == "leader":
+                    parts.append(
+                        f'<line x1="{place.get("anchor_x", tx):.1f}" '
+                        f'y1="{place.get("anchor_y", ty):.1f}" '
+                        f'x2="{tx:.1f}" y2="{ty:.1f}" '
+                        f'stroke="{_e(series_color)}" stroke-width="1" opacity="0.7"/>'
+                    )
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(label_color)}" data-placement="{place["class"]}">'
+                    f"{_e(text)}</text>"
+                )
+            elif kind == "boxed_label":
+                tx, ty = place["x"], place["y"]
+                tw = place.get("box_w", 40)
+                th = place.get("box_h", lab_px + 8)
+                surface = resolve_color("white", role="surface")
+                parts.append(
+                    f'<g class="boxed-label" data-series="{_e(place["series_id"])}" '
+                    f'data-category="{_e(place["category_id"])}">'
+                    f'<rect x="{tx - tw / 2:.1f}" y="{ty - th / 2:.1f}" '
+                    f'width="{tw:.1f}" height="{th:.1f}" '
+                    f'fill="{_e(surface)}" stroke="{_e(border)}" stroke-width="1" rx="2"/>'
+                    f'<text x="{tx:.1f}" y="{ty + lab_px * 0.35:.1f}" text-anchor="middle" '
+                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'fill="{_e(ink)}" data-placement="boxed">{_e(place["text"])}</text>'
+                    f"</g>"
+                )
+            elif kind == "segment" and plan.get("show_segment_labels"):
+                tx, ty = place["x"], place["y"]
+                series_color = series_by_id[place["series_id"]]["color"]
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                    f'font-size="{plan["role_sizes"]["segment_labels"]}" '
+                    f'font-variant-numeric="tabular-nums" fill="{_e(series_color)}" '
+                    f'data-placement="segment">{_e(place["text"])}</text>'
+                )
+            elif kind == "stack_total" and plan.get("show_stack_totals"):
+                tx, ty = place["x"], place["y"]
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                    f'font-size="{plan["role_sizes"]["stack_totals"]}" '
+                    f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
+                    f'data-placement="stack-total">{_e(place["text"])}</text>'
+                )
+            elif kind == "identity" and plan["identity_strategy"] in (
+                "endpoints",
+                "endpoints_and_bar_legend",
+            ):
+                p = point_lookup.get((place["series_id"], place["category_id"]))
+                if p is None or not p.get("finite"):
+                    continue
+                tx, ty = place["x"], place["y"]
+                name = series_by_id[p["series_id"]]["name"]
+                parts.append(
+                    f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="start" '
+                    f'font-size="{ser_px}" '
+                    f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
+                    f'data-placement="endpoint">{_e(name)}</text>'
+                )
+
+    parts.append("</svg>")
+    return "".join(parts)
 
 
 def _paint_line_svg(
@@ -1968,19 +3055,25 @@ def _e(text: Any) -> str:
 def _ordinary_values_show(chart: AxisChartVisual) -> bool:
     if getattr(chart, "chart_type", None) == "stacked_bar":
         return False  # stacked uses stack_segments (D231/D295)
+    if (
+        getattr(chart, "chart_type", None) == "combo"
+        and getattr(chart, "bar_mode", None) == "stacked"
+    ):
+        # Stacked combo: ordinary_values govern line points only (D231/D244).
+        pass
     if chart.display is None or chart.display.ordinary_values is None:
         return True
     return chart.display.ordinary_values == "show"
 
 
-def _stack_segments_show(chart: StackedBarChartVisual) -> bool:
+def _stack_segments_show(chart: Any) -> bool:
     if chart.display is None or chart.display.stack_segments is None:
         return False
     return chart.display.stack_segments == "show"
 
 
-def _stack_totals_show(chart: StackedBarChartVisual) -> bool:
-    aux = chart.auxiliary_series or []
+def _stack_totals_show(chart: Any) -> bool:
+    aux = getattr(chart, "auxiliary_series", None) or []
     if any(getattr(a, "role", None) == "authored_stack_total" for a in aux):
         return True
     if chart.display is None or chart.display.stack_totals is None:
@@ -3163,20 +4256,40 @@ def _marker_svg(x: float, y: float, marker: str, color: str) -> str:
 def _legend_html(plan: dict[str, Any]) -> str:
     items = []
     leg_px = plan["role_sizes"].get("legend", 16)
-    for s in plan["series"]:
-        # Swatch approximates line+marker pair (D99).
-        dash = _DASHARRAY.get(s["line_style"]) or ""
+    identity = plan.get("identity_strategy")
+    series_list = plan["series"]
+    # Combo auto: bar legend only when line endpoints carry line identity (D244).
+    if identity == "endpoints_and_bar_legend":
+        series_list = [s for s in series_list if s.get("mark_type") == "bar"]
+    for s in series_list:
+        mark = s.get("mark_type")
+        if mark == "bar" or (
+            plan.get("chart_type") in ("grouped_bar", "horizontal_bar", "stacked_bar")
+        ):
+            swatch = (
+                f'<svg width="28" height="12" aria-hidden="true">'
+                f'<rect x="4" y="2" width="20" height="8" fill="{_e(s["color"])}"/>'
+                f"</svg>"
+            )
+        else:
+            # Swatch approximates line+marker pair (D99).
+            dash = _DASHARRAY.get(s["line_style"]) or ""
+            swatch = (
+                f'<svg width="28" height="12" aria-hidden="true">'
+                f'<line x1="0" y1="6" x2="28" y2="6" stroke="{_e(s["color"])}" '
+                f'stroke-width="2"'
+                f'{f" stroke-dasharray=\"{dash}\"" if dash else ""}/>'
+                f'{_marker_svg(14, 6, s["marker"], s["color"])}'
+                f"</svg>"
+            )
         items.append(
             f'<li class="legend-item" data-series-id="{_e(s["series_id"])}" '
             f'style="font-size:{leg_px}px">'
-            f'<svg width="28" height="12" aria-hidden="true">'
-            f'<line x1="0" y1="6" x2="28" y2="6" stroke="{_e(s["color"])}" '
-            f'stroke-width="2"'
-            f'{f" stroke-dasharray=\"{dash}\"" if dash else ""}/>'
-            f'{_marker_svg(14, 6, s["marker"], s["color"])}'
-            f"</svg>"
+            f"{swatch}"
             f'<span class="legend-label">{_e(s["name"])}</span></li>'
         )
+    if not items:
+        return ""
     return f'<ul class="chart-legend" aria-hidden="true">{"".join(items)}</ul>'
 
 
@@ -3278,6 +4391,9 @@ def _semantic_table(
         "grouped_bar": "grouped vertical bars",
         "horizontal_bar": "horizontal grouped bars",
         "stacked_bar": "sign-separated stacked vertical bars",
+        "combo": "combo bar and line layers",
+        "combo_grouped": "grouped combo bars with line layers",
+        "combo_stacked": "stacked combo bars with line layers",
     }.get(chart_type, chart_type)
     facts = [
         f"Chart type: {type_words}",
@@ -3316,6 +4432,8 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     ctype = plan.get("chart_type", "line")
     if ctype == "waterfall":
         return _chartjs_waterfall_config(plan)
+    if ctype == "combo":
+        return _chartjs_combo_config(plan)
     if ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
         return _chartjs_bar_config(plan)
     return _chartjs_line_config(plan)
@@ -3425,6 +4543,189 @@ def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
             ],
             "connectors": plan.get("connectors") or [],
             "thickness": g.get("thickness"),
+        },
+    }
+
+
+def _chartjs_combo_config(plan: dict[str, Any]) -> dict[str, Any]:
+    """Mixed bar+line Chart.js config; bars first so lines paint above (D244)."""
+    labels = [c["label"] for c in plan["categories"]]
+    stacked = bool(plan["geometry"].get("stacked")) or plan.get("bar_mode") == "stacked"
+    g = plan["geometry"]
+    n_bar = max(1, sum(1 for s in plan["series"] if s.get("mark_type") == "bar"))
+    pitch = g.get("category_pitch") or 1.0
+    thick = g.get("thickness") or BAR_MIN_THICKNESS
+    if stacked:
+        category_pct = min(1.0, max(0.1, thick / pitch))
+        bar_pct = 1.0
+    else:
+        ser_gap = g.get("series_gap")
+        if ser_gap is None:
+            ser_gap = thick * BAR_SERIES_GAP_RATIO
+        cluster = n_bar * thick + max(0, n_bar - 1) * ser_gap
+        category_pct = min(1.0, max(0.1, cluster / pitch))
+        slot = (cluster / n_bar) if n_bar else thick
+        bar_pct = min(1.0, max(0.1, thick / slot)) if slot else 0.9
+
+    datasets: list[dict[str, Any]] = []
+    # Bars first (behind), then lines — Chart.js order / z.
+    ordered = [s for s in plan["series"] if s.get("mark_type") == "bar"] + [
+        s for s in plan["series"] if s.get("mark_type") == "line"
+    ]
+    for s in ordered:
+        data = [None if v is None else float(Decimal(v)) for v in s["values"]]
+        if s.get("mark_type") == "bar":
+            ds: dict[str, Any] = {
+                "type": "bar",
+                "label": s["name"],
+                "data": data,
+                "backgroundColor": s["color"],
+                "borderColor": s["color"],
+                "borderWidth": 0,
+                "barPercentage": bar_pct,
+                "categoryPercentage": category_pct,
+                "clip": False,
+                "order": 2,
+                "yAxisID": "y",
+            }
+            if stacked:
+                ds["stack"] = "combo"
+            else:
+                ds["base"] = 0.0
+            datasets.append(ds)
+        else:
+            border_dash = {
+                "solid": [],
+                "dashed": [8, 6],
+                "dotted": [2, 4],
+                "dash_dot": [10, 4, 2, 4],
+            }[s["line_style"]]
+            point_style = {
+                "circle": "circle",
+                "square": "rect",
+                "triangle": "triangle",
+                "diamond": "rectRot",
+            }[s["marker"]]
+            y_id = "y1" if s.get("axis_key") == "secondary" else "y"
+            datasets.append(
+                {
+                    "type": "line",
+                    "label": s["name"],
+                    "data": data,
+                    "borderColor": s["color"],
+                    "backgroundColor": s["color"],
+                    "borderWidth": 2.5,
+                    "borderDash": border_dash,
+                    "pointStyle": point_style,
+                    "pointRadius": MARKER_R,
+                    "pointHoverRadius": MARKER_R,
+                    "spanGaps": False,
+                    "tension": 0,
+                    "fill": False,
+                    "clip": False,
+                    "order": 1,
+                    "yAxisID": y_id,
+                }
+            )
+
+    d_min = float(Decimal(plan["domain"]["min"]))
+    d_max = float(Decimal(plan["domain"]["max"]))
+    scales: dict[str, Any] = {
+        "x": {
+            "display": False,
+            "grid": {"display": False, "drawBorder": True},
+            "stacked": stacked,
+            "ticks": {
+                "font": {"size": plan["role_sizes"]["category_ticks"]},
+                "color": resolve_color("navy", role="text_on_light"),
+            },
+            "title": {
+                "display": bool(plan["category_axis"].get("title")),
+                "text": plan["category_axis"].get("title") or "",
+            },
+        },
+        "y": {
+            "display": False,
+            "position": "left",
+            "min": d_min,
+            "max": d_max,
+            "grid": {"display": False, "drawBorder": True},
+            "stacked": stacked,
+            "ticks": {
+                "font": {"size": plan["role_sizes"]["value_ticks"]},
+                "color": resolve_color("navy", role="text_on_light"),
+            },
+            "title": {
+                "display": bool(plan["value_axis"].get("title")),
+                "text": plan["value_axis"].get("title") or "",
+            },
+        },
+    }
+    sec = plan.get("secondary_value_axis")
+    sec_dom = plan.get("secondary_domain")
+    if sec is not None and sec_dom is not None:
+        scales["y1"] = {
+            "display": False,
+            "position": "right",
+            "min": float(Decimal(sec_dom["min"])),
+            "max": float(Decimal(sec_dom["max"])),
+            "grid": {"display": False, "drawBorder": False},
+            "stacked": False,
+            "ticks": {
+                "font": {"size": plan["role_sizes"]["value_ticks"]},
+                "color": resolve_color("navy", role="text_on_light"),
+            },
+            "title": {
+                "display": bool(sec.get("title")),
+                "text": sec.get("title") or "",
+            },
+        }
+    return {
+        "type": "bar",  # mixed; per-dataset type overrides
+        "data": {"labels": labels, "datasets": datasets},
+        "options": {
+            "animation": False,
+            "responsive": False,
+            "maintainAspectRatio": False,
+            "plugins": {
+                "legend": {"display": False},
+                "tooltip": {"enabled": True},
+            },
+            "scales": scales,
+            "layout": {
+                "padding": {
+                    "left": g["pad_l"],
+                    "right": g["pad_r"],
+                    "top": g["pad_t"],
+                    "bottom": g["pad_b"],
+                }
+            },
+        },
+        "v3": {
+            "tick_labels": plan["tick_labels"],
+            "domain_ticks": plan["domain"]["ticks"],
+            "surface_id": plan["surface_id"],
+            "identity_strategy": plan["identity_strategy"],
+            "chart_type": "combo",
+            "bar_mode": plan.get("bar_mode"),
+            "stacked": stacked,
+            "bars": [
+                {
+                    "series_id": b["series_id"],
+                    "category_id": b["category_id"],
+                    "x": b["x"],
+                    "y": b["y"],
+                    "width": b["width"],
+                    "height": b["height"],
+                    "missing": b.get("missing", False),
+                    "stack_base": b.get("stack_base"),
+                    "stack_top": b.get("stack_top"),
+                    "sign": b.get("sign"),
+                }
+                for b in plan.get("bars") or []
+            ],
+            "thickness": g.get("thickness"),
+            "secondary_domain": sec_dom,
         },
     }
 

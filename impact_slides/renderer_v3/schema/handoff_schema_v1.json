@@ -517,6 +517,7 @@
         "primary_visual": {
           "discriminator": {
             "mapping": {
+              "combo": "#/$defs/ComboChartVisual",
               "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
@@ -538,6 +539,9 @@
             },
             {
               "$ref": "#/$defs/StackedBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/ComboChartVisual"
             },
             {
               "$ref": "#/$defs/WaterfallChartVisual"
@@ -1056,6 +1060,294 @@
         "column_ids"
       ],
       "title": "ColumnGroup",
+      "type": "object"
+    },
+    "ComboChartData": {
+      "additionalProperties": false,
+      "description": "Shared category matrix for combo bar+line layers (D136/D228/D244).",
+      "properties": {
+        "categories": {
+          "items": {
+            "$ref": "#/$defs/ChartCategory"
+          },
+          "maxItems": 12,
+          "minItems": 2,
+          "title": "Categories",
+          "type": "array"
+        },
+        "series": {
+          "items": {
+            "$ref": "#/$defs/ComboChartSeries"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Series",
+          "type": "array"
+        }
+      },
+      "required": [
+        "categories",
+        "series"
+      ],
+      "title": "ComboChartData",
+      "type": "object"
+    },
+    "ComboChartSeries": {
+      "additionalProperties": false,
+      "description": "Combo series with explicit mark + optional axis ownership (D136/D228/D244).",
+      "properties": {
+        "series_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Series Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        },
+        "mark_type": {
+          "enum": [
+            "bar",
+            "line"
+          ],
+          "title": "Mark Type",
+          "type": "string"
+        },
+        "axis_key": {
+          "anyOf": [
+            {
+              "enum": [
+                "primary",
+                "secondary"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Axis Key"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartSeriesStyle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "series_id",
+        "name",
+        "values",
+        "mark_type"
+      ],
+      "title": "ComboChartSeries",
+      "type": "object"
+    },
+    "ComboChartVisual": {
+      "additionalProperties": false,
+      "description": "Grouped or stacked bars + line layers on one category model (D136/D161/D244).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "combo",
+          "default": "combo",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "bar_mode": {
+          "enum": [
+            "grouped",
+            "stacked"
+          ],
+          "title": "Bar Mode",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "chart_data": {
+          "$ref": "#/$defs/ComboChartData"
+        },
+        "category_axis": {
+          "$ref": "#/$defs/CategoryAxis"
+        },
+        "value_axes": {
+          "$ref": "#/$defs/ComboValueAxes"
+        },
+        "display": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartDisplay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "category_groups": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CategoryGroup"
+              },
+              "maxItems": 6,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category Groups"
+        },
+        "auxiliary_series": {
+          "anyOf": [
+            {
+              "items": {
+                "discriminator": {
+                  "mapping": {
+                    "authored_stack_total": "#/$defs/AuthoredStackTotalAuxiliary",
+                    "boxed_label": "#/$defs/BoxedLabelAuxiliary"
+                  },
+                  "propertyName": "role"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/BoxedLabelAuxiliary"
+                  },
+                  {
+                    "$ref": "#/$defs/AuthoredStackTotalAuxiliary"
+                  }
+                ]
+              },
+              "maxItems": 1,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auxiliary Series"
+        }
+      },
+      "required": [
+        "surface_id",
+        "bar_mode",
+        "chart_data",
+        "category_axis",
+        "value_axes"
+      ],
+      "title": "ComboChartVisual",
+      "type": "object"
+    },
+    "ComboValueAxes": {
+      "additionalProperties": false,
+      "description": "Primary always; secondary only when combo lines reference it (D230/D244).",
+      "properties": {
+        "primary": {
+          "$ref": "#/$defs/ValueAxis"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValueAxis"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "primary"
+      ],
+      "title": "ComboValueAxes",
       "type": "object"
     },
     "ComparisonCardsPayload": {
@@ -2037,6 +2329,7 @@
           "items": {
             "discriminator": {
               "mapping": {
+                "combo": "#/$defs/ComboChartVisual",
                 "grouped_bar": "#/$defs/GroupedBarChartVisual",
                 "heatmap": "#/$defs/HeatmapVisual",
                 "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
@@ -2058,6 +2351,9 @@
               },
               {
                 "$ref": "#/$defs/StackedBarChartVisual"
+              },
+              {
+                "$ref": "#/$defs/ComboChartVisual"
               },
               {
                 "$ref": "#/$defs/WaterfallChartVisual"
@@ -6410,6 +6706,7 @@
         "primary_visual": {
           "discriminator": {
             "mapping": {
+              "combo": "#/$defs/ComboChartVisual",
               "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
@@ -6431,6 +6728,9 @@
             },
             {
               "$ref": "#/$defs/StackedBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/ComboChartVisual"
             },
             {
               "$ref": "#/$defs/WaterfallChartVisual"
