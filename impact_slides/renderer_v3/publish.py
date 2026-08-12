@@ -134,15 +134,15 @@ def build_presentation_html(
             ".disclosures summary{padding-left:1.25em}",
             # data_table + annex/comparison compositions (D8/D42/D104/D183–D187)
             # Pads must match plan.TABLE_CELL_PAD_* (8+8 x, 6+6 y).
-            "table.data-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
-            "table.data-table th,table.data-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule);vertical-align:middle;font-weight:400}",
-            "table.data-table thead th{background:var(--color-band);color:var(--color-band-ink);font-weight:var(--font-weight-emphasis)}",
-            "table.data-table tbody td,table.data-table tbody th{background:transparent}",
-            "table.data-table th.align-left,table.data-table td.align-left{text-align:left}",
-            "table.data-table th.align-right,table.data-table td.align-right{text-align:right}",
-            "table.data-table th.align-center,table.data-table td.align-center{text-align:center}",
-            "table.data-table td.num,table.data-table th.num{font-variant-numeric:tabular-nums lining-nums}",
-            "table.data-table th.stub,table.data-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
+            "table.data-table,table.support-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
+            "table.data-table th,table.data-table td,table.support-table th,table.support-table td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-rule);vertical-align:middle;font-weight:400}",
+            "table.data-table thead th,table.support-table thead th{background:var(--color-band);color:var(--color-band-ink);font-weight:var(--font-weight-emphasis)}",
+            "table.data-table tbody td,table.data-table tbody th,table.support-table tbody td,table.support-table tbody th{background:transparent}",
+            "table.data-table th.align-left,table.data-table td.align-left,table.support-table th.align-left,table.support-table td.align-left{text-align:left}",
+            "table.data-table th.align-right,table.data-table td.align-right,table.support-table th.align-right,table.support-table td.align-right{text-align:right}",
+            "table.data-table th.align-center,table.data-table td.align-center,table.support-table th.align-center,table.support-table td.align-center{text-align:center}",
+            "table.data-table td.num,table.data-table th.num,table.support-table td.num,table.support-table th.num{font-variant-numeric:tabular-nums lining-nums}",
+            "table.data-table th.stub,table.data-table td.stub,table.support-table th.stub,table.support-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
             # Period comparison bounded columns (D186/D260).
             "table.period-comparison{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
             "table.period-comparison th,table.period-comparison td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-panel-border);vertical-align:middle;background:var(--color-panel)}",
@@ -162,6 +162,20 @@ def build_presentation_html(
             ".grouped-annex-divider{position:absolute;inset:0 auto 0 50%;width:1px;background:var(--color-rule)}",
             # Metric strip (D165/D265).
             ".metric-strip{display:flex;flex-direction:row;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
+".dual-chart-pane{flex:1 1 0;min-width:0}",
+".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
+".chart-hero-left{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
+".chart-hero-right{flex:1 1 0;min-width:0}",
+".hero-card{border:var(--border-width-hairline) solid var(--color-rule);padding:16px;box-sizing:border-box;height:100%}",
+".hero-card h2{margin:0 0 8px}",
+".hero-subtitle{margin:0 0 12px}",
+".metric-stack,.driver-card,.metric-overview-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}",
+".metric-stack li,.driver-card li,.metric-overview-list li{display:flex;flex-direction:column;gap:4px}",
+".metric-value,.driver-value{font-weight:700}",
+".metric-overview h2{margin:0 0 16px}",
+".metric-overview-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}",
+".metric-overview-detail{margin-top:16px}",
             ".metric-strip .metric-cell{flex:1 1 0;min-width:0;padding:8px;border:var(--border-width-hairline) solid var(--color-rule);box-sizing:border-box}",
             ".metric-strip .metric-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis)}",
             ".metric-strip .metric-value{margin:0 0 4px;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis)}",
@@ -291,6 +305,23 @@ def build_presentation_html(
             ".relationship-table thead th{background:var(--color-band);color:var(--color-band-ink)}",
             ".relationship-unresolved{font-style:italic}",
     # axis charts: line + grouped/horizontal/stacked bars + waterfall (D5/D6/D63/D106/D247/D304)
+            # dual / hero / metric boards (D149–D153/D189)
+            ".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
+            ".dual-chart-pane{flex:1 1 0;min-width:0}",
+            ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
+            ".chart-hero-left{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
+            ".chart-hero-right{flex:1 1 0;min-width:0}",
+            ".hero-card{border:var(--border-width-hairline) solid var(--color-rule);padding:16px;box-sizing:border-box;height:100%}",
+            ".hero-card h2{margin:0 0 8px}",
+            ".hero-subtitle{margin:0 0 12px}",
+            ".metric-stack, .driver-card, .metric-overview-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}",
+            ".metric-stack li, .driver-card li, .metric-overview-list li{display:flex;flex-direction:column;gap:4px}",
+            ".metric-value, .driver-value{font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis)}",
+            ".metric-overview h2{margin:0 0 16px}",
+            ".metric-overview-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}",
+            ".support-table.outlined{outline:2px solid var(--color-primary-blue)}",
+            # axis charts: line + grouped/horizontal/stacked bars (D5/D6/D63/D106/D247)
+            ".chart-body{background:transparent;border:none;box-shadow:none;border-radius:0;margin:0 0 var(--space-sm)}",
             ".chart-plot{background:transparent;border:none;box-shadow:none;border-radius:0;position:relative}",
             ".chart-pane-title{display:flex;flex-direction:column;gap:4px;padding:10px 16px;margin:0 0 var(--space-sm)}",
             ".chart-pane-title>span:first-child{font-size:40px;font-weight:var(--font-weight-title);color:var(--color-band-ink)}",
@@ -342,6 +373,7 @@ def build_presentation_html(
                 deck.evidence_registry,
                 sections=deck.sections,
                 svg_only=svg_only,
+                number_formats=deck.number_formats,
             )
         )
         notes = getattr(slide, "speaker_notes", None)
@@ -420,6 +452,222 @@ def _style_font(px: int | None) -> str:
     return f' style="font-size:{px}px"'
 
 
+def _paint_one_chart_surface(
+    chart: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    *,
+    svg_only: bool = False,
+) -> list[str]:
+    sp = plans_by_id.get(chart.surface_id)
+    if sp is None or not getattr(sp, "chart_paint", None):
+        raise RuntimeError(
+            f"missing frozen chart_paint for surface {chart.surface_id!r}"
+        )
+    attrs = _plan_attrs(sp, events_by_surface)
+    return paint_chart_html(sp.chart_paint, plan_attrs=attrs, svg_only=svg_only)
+
+
+
+def _paint_dual_chart(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    *,
+    svg_only: bool = False,
+) -> list[str]:
+    """Equal synchronized dual panes (D149)."""
+    out = ['<div class="dual-chart">']
+    for chart in slide.payload.panes:
+        out.append('<div class="dual-chart-pane">')
+        out.extend(
+            _paint_one_chart_surface(
+                chart, plans_by_id, events_by_surface, svg_only=svg_only
+            )
+        )
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+
+def _paint_hero_visual(
+    hero: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    formats: dict[str, Any],
+) -> list[str]:
+    from .format import format_semantic_value
+
+    sp = plans_by_id.get(hero.surface_id)
+    attrs = _plan_attrs(sp, events_by_surface)
+    heading_px = sp.role_sizes.get("heading") if sp else None
+    body_px = sp.role_sizes.get("body") if sp else None
+    value_px = sp.role_sizes.get("value") if sp else None
+    out = [f'<div class="hero-card" data-hero-type="{_escape(hero.type)}" {attrs}>']
+    if hero.heading:
+        out.append(f"<h2{_style_font(heading_px)}>{_soft_break_html(hero.heading)}</h2>")
+    if hero.subtitle:
+        out.append(
+            f'<p class="hero-subtitle"{_style_font(body_px)}>{_soft_break_html(hero.subtitle)}</p>'
+        )
+    if hero.type == "metric_stack":
+        out.append('<ul class="metric-stack">')
+        for m in hero.metrics:
+            vis = format_semantic_value(m.value, formats).visible
+            out.append(
+                f'<li data-metric-id="{_escape(m.metric_id)}">'
+                f'<span class="metric-value"{_style_font(value_px)}>{_escape(vis)}</span>'
+                f'<span class="metric-label"{_style_font(body_px)}>{_soft_break_html(m.label)}</span>'
+            )
+            if m.detail:
+                out.append(
+                    f'<span class="metric-detail">{_soft_break_html(m.detail)}</span>'
+                )
+            out.append("</li>")
+        out.append("</ul>")
+    else:
+        out.append('<ul class="driver-card">')
+        for r in hero.rows:
+            vis = format_semantic_value(r.value, formats).visible
+            direction = f' data-direction="{_escape(r.direction)}"' if r.direction else ""
+            tone = f' data-tone="{_escape(r.tone)}"' if r.tone else ""
+            out.append(
+                f'<li data-row-id="{_escape(r.row_id)}"{direction}{tone}>'
+                f'<span class="driver-label"{_style_font(body_px)}>{_soft_break_html(r.label)}</span>'
+                f'<span class="driver-value"{_style_font(value_px)}>{_escape(vis)}</span>'
+            )
+            if r.detail:
+                out.append(
+                    f'<span class="driver-detail">{_soft_break_html(r.detail)}</span>'
+                )
+            out.append("</li>")
+        out.append("</ul>")
+    out.append("</div>")
+    return out
+
+
+
+def _paint_chart_hero_dual(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    *,
+    svg_only: bool = False,
+    number_formats: dict[str, Any] | None = None,
+) -> list[str]:
+    """2:1 chart + hero with optional left support (D150/D153)."""
+    from .format import format_semantic_value
+
+    p = slide.payload
+    formats = number_formats or {}
+    out = ['<div class="chart-hero-dual">', '<div class="chart-hero-left">']
+    out.extend(
+        _paint_one_chart_surface(
+            p.primary_visual, plans_by_id, events_by_surface, svg_only=svg_only
+        )
+    )
+    support = p.support_visual
+    if support is not None:
+        if getattr(support, "type", None) == "metric_strip":
+            sp = plans_by_id.get(support.surface_id)
+            out.append(
+                f'<div class="metric-strip" {_plan_attrs(sp, events_by_surface)}>'
+            )
+            for m in support.metrics:
+                vis = format_semantic_value(m.value, formats).visible
+                out.append(
+                    f'<div class="metric-cell" data-metric-id="{_escape(m.metric_id)}">'
+                    f'<p class="metric-label">{_soft_break_html(m.label)}</p>'
+                    f'<p class="metric-value">{_escape(vis)}</p></div>'
+                )
+            out.append("</div>")
+        elif getattr(support, "type", None) == "outlined_support":
+            from .models import OutlinedSupportVisual
+
+            out.extend(
+                _paint_chart_support(
+                    OutlinedSupportVisual(table=support.table),
+                    plans_by_id,
+                    events_by_surface,
+                )
+            )
+        else:
+            out.extend(
+                _paint_table_surface(
+                    support.table,
+                    plans_by_id,
+                    events_by_surface,
+                    table_class="support-table",
+                )
+            )
+    out.append('</div><div class="chart-hero-right">')
+    out.extend(
+        _paint_hero_visual(p.hero_visual, plans_by_id, events_by_surface, formats)
+    )
+    out.append("</div></div>")
+    return out
+
+
+
+def _paint_metric_overview(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    *,
+    number_formats: dict[str, Any] | None = None,
+) -> list[str]:
+    """Equal-rank metric board with optional detail (D189/D190)."""
+    from .format import format_semantic_value
+
+    p = slide.payload
+    sp = plans_by_id.get(p.surface_id)
+    formats = number_formats or {}
+    heading_px = sp.role_sizes.get("heading") if sp else None
+    body_px = sp.role_sizes.get("body") if sp else None
+    value_px = sp.role_sizes.get("value") if sp else None
+    out = [
+        f'<div class="metric-overview" {_plan_attrs(sp, events_by_surface)}>',
+        f"<h2{_style_font(heading_px)}>{_soft_break_html(p.heading)}</h2>",
+        '<ul class="metric-overview-list">',
+    ]
+    for m in p.metrics:
+        vis = format_semantic_value(m.value, formats).visible
+        out.append(
+            f'<li data-metric-id="{_escape(m.metric_id)}">'
+            f'<span class="metric-value"{_style_font(value_px)}>{_escape(vis)}</span>'
+            f'<span class="metric-label"{_style_font(body_px)}>{_soft_break_html(m.label)}</span>'
+        )
+        if m.detail:
+            out.append(
+                f'<span class="metric-detail">{_soft_break_html(m.detail)}</span>'
+            )
+        out.append("</li>")
+    out.append("</ul>")
+    if p.detail is not None:
+        dsp = plans_by_id.get(p.detail.surface_id)
+        out.append(
+            f'<div class="metric-overview-detail" {_plan_attrs(dsp, events_by_surface)}>'
+            f"<h3>{_soft_break_html(p.detail.heading)}</h3>"
+        )
+        for block in p.detail.blocks:
+            bid = block.block_id
+            if block.type == "paragraphs":
+                out.append(f'<div class="paragraphs" data-block-id="{_escape(bid)}">')
+                for prose in block.paragraphs:
+                    out.append(f"<p>{_prose_html(prose)}</p>")
+                out.append("</div>")
+            else:
+                out.append(f'<ul data-block-id="{_escape(bid)}">')
+                for item in block.items:
+                    out.append(f"<li>{_prose_html(item)}</li>")
+                out.append("</ul>")
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
+
 def _paint_slide_body(
     slide: Any,
     plans_by_id: dict[str, Any],
@@ -428,6 +676,7 @@ def _paint_slide_body(
     sections: list[Any] | None = None,
     *,
     svg_only: bool = False,
+    number_formats: dict[str, Any] | None = None,
 ) -> list[str]:
     events_by_surface = events_by_surface or {}
     evidence_registry = evidence_registry or {}
@@ -529,6 +778,9 @@ def _paint_slide_body(
         "period_comparison",
         "comparison_cards",
         "single_chart",
+        "dual_chart",
+        "chart_hero_dual",
+        "metric_overview",
         "process_flow",
         "timeline",
         "layered_architecture",
@@ -561,6 +813,31 @@ def _paint_slide_body(
             out.extend(
                 _paint_single_chart(
                     slide, plans_by_id, events_by_surface, svg_only=svg_only
+                )
+            )
+        elif lt == "dual_chart":
+            out.extend(
+                _paint_dual_chart(
+                    slide, plans_by_id, events_by_surface, svg_only=svg_only
+                )
+            )
+        elif lt == "chart_hero_dual":
+            out.extend(
+                _paint_chart_hero_dual(
+                    slide,
+                    plans_by_id,
+                    events_by_surface,
+                    svg_only=svg_only,
+                    number_formats=number_formats,
+                )
+            )
+        elif lt == "metric_overview":
+            out.extend(
+                _paint_metric_overview(
+                    slide,
+                    plans_by_id,
+                    events_by_surface,
+                    number_formats=number_formats,
                 )
             )
         elif lt == "narrative":

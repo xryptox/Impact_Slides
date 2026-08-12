@@ -31,6 +31,15 @@ KERNEL_LINEAR_LAYOUTS = frozenset(
         "data_pipeline",
     }
 )
+KERNEL_COMPOSITE_LAYOUTS = frozenset(
+    (
+        "dual_chart",
+        "chart_hero_dual",
+        "metric_overview",
+    )
+)
+CHART_HERO_LEFT_GAP: Final = 12
+
 
 from ._version import __version__ as RENDERER_VERSION
 
@@ -596,6 +605,7 @@ def _collect_surfaces(
             and lt not in KERNEL_LINEAR_LAYOUTS
             and lt not in KERNEL_CARD_LAYOUTS
             and lt not in KERNEL_RELATIONSHIP_LAYOUTS
+            and lt not in KERNEL_COMPOSITE_LAYOUTS
         ):
             continue
 
@@ -717,7 +727,7 @@ def _collect_surfaces(
                         slot_order=10 + i,
                         design_stage_region=region,
                         role_sizes={"body": BODY_FLOOR},
-                        _text_items=items,
+_text_items=items,
                         _box_w=CONTENT_W,
                         _fit_role="body",
                         _typo=body_typo,
@@ -767,6 +777,13 @@ def _collect_surfaces(
                 lt,
                 region,
                 structural_defect=sn in relationship_defect_slides,
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
+        elif lt in KERNEL_COMPOSITE_LAYOUTS:
+            body_slots, body_plans = _collect_composite_body(
+                slide, deck, sn, slide_index, lt, region
             )
             for bp in body_plans:
                 out.append(bp)
@@ -939,6 +956,11 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                 )
                 h = max(h, lab * _line_box(size) + _line_box(value_px) + det * _line_box(size))
             return h
+        kind = (sp._table_spec or {}).get("kind")
+        if kind == "hero_card":
+            return _hero_fit_height(sp)
+        if kind == "metric_overview":
+            return _metric_overview_fit_height(sp, size)
         return _required_height(
             sp._text_items, size, sp._box_w, sp._margin_boxes, sp._indent_em, sp._unit_indent_ems
         )
@@ -950,7 +972,71 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         for sp in surfaces
     ]
     floors = [need(sp, size) for sp, size in zip(surfaces, baseline_sizes)]
-    remaining = max(0, available_h - sum(sp._chrome_h for sp in surfaces))
+    # Side-by-side compositions share one vertical band; count max once (D149/D150).
+    dual_groups: dict[int, list[int]] = {}
+    for i, sp in enumerate(surfaces):
+        if sp.layout_type == "dual_chart" and sp.role in _AXIS_CHART_ROLES:
+            dual_groups.setdefault(sp.slide_number, []).append(i)
+    dual_secondary: set[int] = set()
+    saved_chrome: dict[int, int] = {}
+    hero_restore: dict[int, tuple[int, int]] = {}
+    for idxs in dual_groups.values():
+        if len(idxs) < 2:
+            continue
+        for i in idxs:
+            saved_chrome[i] = surfaces[i]._chrome_h
+        body = max(floors[i] for i in idxs)
+        band = max(floors[i] + surfaces[i]._chrome_h for i in idxs)
+        primary = idxs[0]
+        floors[primary] = body
+        surfaces[primary]._chrome_h = band - body
+        for j in idxs[1:]:
+            dual_secondary.add(j)
+            floors[j] = 0
+            surfaces[j]._chrome_h = 0
+    # chart_hero_dual: left (chart + support) stacks; hero is the other column.
+    hero_slides: dict[int, dict[str, int]] = {}
+    for i, sp in enumerate(surfaces):
+        if sp.layout_type != "chart_hero_dual":
+            continue
+        slot = hero_slides.setdefault(sp.slide_number, {})
+        if sp.role in _AXIS_CHART_ROLES:
+            slot["chart"] = i
+        elif sp.role == "hero_card":
+            slot["hero"] = i
+        elif sp.role in {"metric_strip", "support_table", "outlined_support"}:
+            slot["support"] = i
+    band_members: dict[int, set[int]] = {
+        sn: set(slot.values())
+        for sn, slot in hero_slides.items()
+        if "hero" in slot
+    }
+    for slot in hero_slides.values():
+        chart_i = slot.get("chart")
+        hero_i = slot.get("hero")
+        if chart_i is None or hero_i is None:
+            continue
+        left_idxs = [chart_i]
+        if "support" in slot:
+            left_idxs.append(slot["support"])
+        surfaces[chart_i]._chrome_h += CHART_HERO_LEFT_GAP
+        left_total = sum(floors[i] + surfaces[i]._chrome_h for i in left_idxs)
+        hero_total = floors[hero_i] + surfaces[hero_i]._chrome_h
+        hero_restore[hero_i] = (floors[hero_i], surfaces[hero_i]._chrome_h)
+        if hero_total > left_total:
+            floors[chart_i] += hero_total - left_total
+        dual_secondary.add(hero_i)
+        floors[hero_i] = 0
+        surfaces[hero_i]._chrome_h = 0
+    remaining = max(
+        0,
+        available_h
+        - sum(
+            sp._chrome_h
+            for i, sp in enumerate(surfaces)
+            if i not in dual_secondary
+        ),
+    )
     allocations = [0] * len(surfaces)
     priority = sorted(
         range(len(surfaces)),
@@ -988,6 +1074,8 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                 break
 
     for i, sp in enumerate(surfaces):
+        if i in dual_secondary:
+            continue
         wanted = chart_targets.get(
             sp.surface_id,
             need(sp, sp._maximum_size or next(iter(sp.role_sizes.values()))),
@@ -995,6 +1083,32 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         extra = min(remaining, max(0, wanted - allocations[i]))
         allocations[i] += extra
         remaining -= extra
+    # Mirror dual primary height onto secondary panes; restore per-pane chrome.
+    for idxs in dual_groups.values():
+        if len(idxs) < 2:
+            continue
+        h = allocations[idxs[0]]
+        body_floor = floors[idxs[0]]
+        for j in idxs:
+            allocations[j] = h
+            floors[j] = body_floor
+            if j in saved_chrome:
+                surfaces[j]._chrome_h = saved_chrome[j]
+    for hero_i, (hero_floor, hero_chrome) in hero_restore.items():
+        sn = surfaces[hero_i].slide_number
+        stacked = sum(
+            allocations[i] + surfaces[i]._chrome_h
+            for i, sp in enumerate(surfaces)
+            if sp.slide_number == sn
+            and i not in band_members.get(sn, frozenset((hero_i,)))
+        )
+        band_allow = max(0, available_h - stacked)
+        restored = min(hero_floor, band_allow)
+        if restored < hero_floor:
+            surfaces[hero_i]._overflow = True
+        allocations[hero_i] = restored
+        floors[hero_i] = restored
+        surfaces[hero_i]._chrome_h = hero_chrome
 
     for sp, height, floor_h in zip(surfaces, allocations, floors):
         sp._box_h = height
@@ -1100,6 +1214,10 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             if not ok:
                 sp._overflow = True
                 _apply_composition_fallback(sp)
+            return
+        if (sp._table_spec or {}).get("kind") == "hero_card":
+            if _hero_fit_height(sp) > sp._box_h:
+                sp._overflow = True
             return
         px = next(iter(sp.role_sizes.values()))
         if not _text_fits(
@@ -1683,6 +1801,375 @@ def _table_surface_plan(
         _maximum_size=ceil,
         _table_spec=table_spec,
     )
+
+
+def _axis_chart_surface_plan(
+    chart: Any,
+    *,
+    deck: Any,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    slot_order: int,
+    box_w: int,
+) -> SurfacePlan:
+    """Freeze one axis chart into a SurfacePlan at a given width."""
+    from .charts import freeze_chart
+
+    chart_spec = freeze_chart(chart, deck.number_formats, box_w=box_w)
+    text_items = _chart_text_items(chart_spec)
+    role_sizes = dict(chart_spec["role_sizes"])
+    if chart.heading:
+        role_sizes["pane_title"] = 40
+        if chart.subtitle:
+            role_sizes["pane_subtitle"] = 22
+    chart_role = {
+        "line": "line_chart",
+        "grouped_bar": "grouped_bar_chart",
+        "horizontal_bar": "horizontal_bar_chart",
+        "stacked_bar": "stacked_bar_chart",
+    }.get(chart.chart_type, f"{chart.chart_type}_chart")
+    return SurfacePlan(
+        surface_id=chart.surface_id,
+        role=chart_role,
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=slot_order,
+        design_stage_region=region,
+        role_sizes=role_sizes,
+        display_identity_strategy=chart_spec["identity_strategy"],
+        expected_placement_classes=sorted(
+            {
+                p["class"]
+                for p in chart_spec["placements"]
+                if p.get("class") and p["class"] != "suppressed"
+            }
+        ),
+        _text_items=text_items,
+        _box_w=box_w,
+        _box_h=math.ceil(chart_spec["geometry"]["view_h"]),
+        _fit_role=None,
+        _mode=(
+            chart.typography.mode if chart.typography is not None else "adaptive"
+        ),
+        _margin_boxes=0,
+        _chrome_h=_chart_chrome_height(chart_spec, box_w),
+        _chart_spec=chart_spec,
+        _chart_visual=chart,
+        _chart_formats=deck.number_formats,
+    )
+
+
+
+def _collect_composite_body(
+    slide: Any,
+    deck: Any,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+) -> tuple[int, list[SurfacePlan]]:
+    """Plan dual_chart / chart_hero_dual / metric_overview body surfaces."""
+    from .format import format_semantic_value
+
+    def _fmt(val: Any) -> str:
+        return format_semantic_value(val, deck.number_formats).visible
+
+    payload = slide.payload
+    plans: list[SurfacePlan] = []
+    if lt == "dual_chart":
+        # D149: equal panes with renderer-owned gutter.
+        gutter = 24
+        pane_w = (CONTENT_W - gutter) // 2
+        for i, chart in enumerate(payload.panes):
+            plans.append(
+                _axis_chart_surface_plan(
+                    chart,
+                    deck=deck,
+                    sn=sn,
+                    slide_index=slide_index,
+                    lt=lt,
+                    region=region,
+                    slot_order=10 + i,
+                    box_w=pane_w,
+                )
+            )
+        return len(plans), plans
+
+    if lt == "chart_hero_dual":
+        # D150: fixed 2:1 stage ratio (chart:hero).
+        gutter = 24
+        chart_w = (CONTENT_W * 2) // 3 - gutter // 2
+        hero_w = CONTENT_W - chart_w - gutter
+        plans.append(
+            _axis_chart_surface_plan(
+                payload.primary_visual,
+                deck=deck,
+                sn=sn,
+                slide_index=slide_index,
+                lt=lt,
+                region=region,
+                slot_order=10,
+                box_w=chart_w,
+            )
+        )
+        hero = payload.hero_visual
+        hero_groups: list[list[tuple[str, bool]]] = []
+        if hero.heading:
+            hero_groups.append([(hero.heading, True)])
+        if hero.subtitle:
+            hero_groups.append([(hero.subtitle, False)])
+        if hero.type == "metric_stack":
+            for m in hero.metrics:
+                group: list[tuple[str, bool]] = [(m.label, False), (_fmt(m.value), True)]
+                if m.detail:
+                    group.append((m.detail, False))
+                hero_groups.append(group)
+        else:
+            for r in hero.rows:
+                group = [(r.label, False), (_fmt(r.value), True)]
+                if r.detail:
+                    group.append((r.detail, False))
+                hero_groups.append(group)
+        hero_items: list[tuple[str, bool]] = []
+        for i, group in enumerate(hero_groups):
+            if i:
+                hero_items.append(("\n", False))
+            hero_items.extend(group)
+        plans.append(
+            SurfacePlan(
+                surface_id=hero.surface_id,
+                role="hero_card",
+                slide_number=sn,
+                slide_index=slide_index,
+                layout_type=lt,
+                slot_order=11,
+                design_stage_region=region,
+                role_sizes={
+                    "heading": 22,
+                    "body": 16,
+                    "value": METRIC_STRIP_VALUE_PX,
+                },
+                _table_spec={
+                    "kind": "hero_card",
+                    "heading": hero.heading,
+                    "subtitle": hero.subtitle,
+                    "rows": [
+                        (r.label, r.detail)
+                        for r in (hero.metrics if hero.type == "metric_stack" else hero.rows)
+                    ],
+                },
+_text_items=hero_items or [(" ", False)],
+                _box_w=hero_w,
+                _box_h=400,
+                _fit_role=None,
+                _mode="fixed",
+                _margin_boxes=0,
+                _chrome_h=0,
+            )
+        )
+        support = payload.support_visual
+        if support is not None:
+            if getattr(support, "type", None) == "metric_strip":
+                items = [(m.label, False) for m in support.metrics]
+                plans.append(
+                    SurfacePlan(
+                        surface_id=support.surface_id,
+                        role="metric_strip",
+                        slide_number=sn,
+                        slide_index=slide_index,
+                        layout_type=lt,
+                        slot_order=12,
+                        design_stage_region=region,
+                        role_sizes={
+                            "body": METRIC_STRIP_FLOOR,
+                            "value": METRIC_STRIP_VALUE_PX,
+                        },
+                        _text_items=items or [(" ", False)],
+                        _box_w=chart_w,
+                        _fit_role="body",
+                        _mode="adaptive",
+                        _margin_boxes=0,
+                        _default_size=METRIC_STRIP_FLOOR,
+                        _maximum_size=METRIC_STRIP_CEIL,
+                        _chrome_h=METRIC_STRIP_PAD_Y,
+                    )
+                )
+            elif getattr(support, "type", None) == "outlined_support":
+                plans.append(
+                    _outlined_support_plan(
+                        support=support,
+                        chart=payload.primary_visual,
+                        chart_spec=plans[0]._chart_spec or {},
+                        deck=deck,
+                        sn=sn,
+                        slide_index=slide_index,
+                        lt=lt,
+                        region=region,
+                        slot_order=12,
+                    )
+                )
+            else:
+                table = support.table
+                table_spec = _build_table_spec(table, deck.number_formats)
+                table_plan = SurfacePlan(
+                    surface_id=table.surface_id,
+                    role="support_table",
+                    slide_number=sn,
+                    slide_index=slide_index,
+                    layout_type=lt,
+                    slot_order=12,
+                    design_stage_region=region,
+                    role_sizes={"table": TABLE_FLOOR},
+                    _text_items=[(t, False) for t in table_spec["all_texts"]],
+                    _box_w=chart_w,
+                    _fit_role="table",
+                    _mode="adaptive",
+                    _margin_boxes=0,
+                    _default_size=TABLE_FLOOR,
+                    _maximum_size=TABLE_CEIL,
+                    _table_spec=table_spec,
+                )
+                plans.append(table_plan)
+        return len(plans), plans
+
+    # metric_overview
+    items: list[tuple[str, bool]] = [(payload.heading, True)]
+    for m in payload.metrics:
+        items.append(("\n", False))
+        items.append((m.label, False))
+        items.append((_fmt(m.value), True))
+        if m.detail:
+            items.append((m.detail, False))
+    plans.append(
+        SurfacePlan(
+            surface_id=payload.surface_id,
+            role="metric_overview",
+            slide_number=sn,
+            slide_index=slide_index,
+            layout_type=lt,
+            slot_order=10,
+            design_stage_region=region,
+            role_sizes={
+                "heading": 22,
+                "body": BODY_FLOOR,
+                "value": METRIC_STRIP_VALUE_PX,
+            },
+            _text_items=items,
+                        _table_spec={
+                "kind": "metric_overview",
+                "heading": payload.heading,
+                "metrics": [(m.label, m.detail) for m in payload.metrics],
+            },
+_box_w=CONTENT_W,
+            _box_h=320,
+            _fit_role="body",
+            _mode="adaptive",
+            _margin_boxes=0,
+            _default_size=BODY_FLOOR,
+            _maximum_size=BODY_CEIL,
+            _chrome_h=24,
+        )
+    )
+    if payload.detail is not None:
+        d_items = [(payload.detail.heading, True)]
+        for block in payload.detail.blocks:
+            d_items.extend(_block_text_items(block))
+        plans.append(
+            SurfacePlan(
+                surface_id=payload.detail.surface_id,
+                role="metric_detail",
+                slide_number=sn,
+                slide_index=slide_index,
+                layout_type=lt,
+                slot_order=11,
+                design_stage_region=region,
+                role_sizes={"body": BODY_FLOOR},
+                _text_items=d_items,
+                _box_w=CONTENT_W,
+                _fit_role="body",
+                _mode="adaptive",
+                _margin_boxes=1,
+                _default_size=BODY_FLOOR,
+                _maximum_size=BODY_CEIL,
+            )
+        )
+    return len(plans), plans
+
+
+# ---------------------------------------------------------------------------
+# data_table measure (D24/D25/D44/D104)
+# ---------------------------------------------------------------------------
+
+
+
+def _hero_fit_height(sp: SurfacePlan) -> int:
+    """Per-row hero height matching paint: 16px card padding, h2 margin 8,
+    subtitle margin 12, ul gap 12, li gap 4, fixed KPI value row (D153)."""
+    assert sp._table_spec is not None
+    spec = sp._table_spec
+    heading_px = sp.role_sizes.get("heading", 22)
+    body_px = sp.role_sizes.get("body", 16)
+    value_px = sp.role_sizes.get("value", METRIC_STRIP_VALUE_PX)
+    inner_w = max(40, sp._box_w - 32)
+    h = 34
+    if spec.get("heading"):
+        h += (
+            len(_wrap_label_lines(spec["heading"], heading_px, inner_w))
+            * _line_box(heading_px)
+            + 8
+        )
+    if spec.get("subtitle"):
+        h += (
+            len(_wrap_label_lines(spec["subtitle"], body_px, inner_w))
+            * _line_box(body_px)
+            + 12
+        )
+    li_heights = []
+    for label, detail in spec.get("rows") or []:
+        li_h = _line_box(value_px) + 4
+        li_h += len(_wrap_label_lines(label, body_px, inner_w)) * _line_box(body_px)
+        if detail:
+            li_h += 4 + len(_wrap_label_lines(detail, body_px, inner_w)) * _line_box(
+                body_px
+            )
+        li_heights.append(li_h)
+    if li_heights:
+        h += sum(li_heights) + 12 * (len(li_heights) - 1)
+    return h
+
+
+
+def _metric_overview_fit_height(sp: SurfacePlan, size: int) -> int:
+    """Grid-board height matching paint: h2 margin 16, auto-fit minmax(200px)
+    columns with 16px gaps, li column gap 4, fixed KPI value row (D189/D190)."""
+    assert sp._table_spec is not None
+    spec = sp._table_spec
+    heading_px = sp.role_sizes.get("heading", 22)
+    value_px = sp.role_sizes.get("value", METRIC_STRIP_VALUE_PX)
+    w = sp._box_w
+    h = (
+        len(_wrap_label_lines(spec.get("heading") or "", heading_px, w))
+        * _line_box(heading_px)
+        + 16
+    )
+    cols = max(1, (w + 16) // 216)
+    col_w = (w - (cols - 1) * 16) // cols
+    li_heights = []
+    for label, detail in spec.get("metrics") or []:
+        li_h = _line_box(value_px) + 4
+        li_h += len(_wrap_label_lines(label, size, col_w)) * _line_box(size)
+        if detail:
+            li_h += 4 + len(_wrap_label_lines(detail, size, col_w)) * _line_box(size)
+        li_heights.append(li_h)
+    for i in range(0, len(li_heights), cols):
+        if i:
+            h += 16
+        h += max(li_heights[i : i + cols])
+    return h
+
 
 
 def _collect_single_chart_body(
@@ -3180,15 +3667,10 @@ def _collect_relationship_body(
     return 1, [sp]
 
 
-# ---------------------------------------------------------------------------
-# data_table measure (D24/D25/D44/D104)
-# ---------------------------------------------------------------------------
-
-
-def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
+def _chart_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -> int:
     height = BLOCK_MARGIN_Y
+    inner_w = max(1, box_w - 32)
     if chart_spec.get("heading"):
-        inner_w = CONTENT_W - 32
         height += CHART_PANE_PAD_Y + BLOCK_MARGIN_Y
         height += _required_height(
             [(chart_spec["heading"], True)], CHART_PANE_TITLE_PX, inner_w, 0
@@ -3206,7 +3688,7 @@ def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
         used = 0.0
         for series in chart_spec["series"]:
             width = _text_width(series["name"], px) + 52
-            if used and used + width > CONTENT_W:
+            if used and used + width > box_w:
                 rows += 1
                 used = 0.0
             used += width
@@ -3214,11 +3696,11 @@ def _chart_chrome_height(chart_spec: dict[str, Any]) -> int:
     return height
 
 
-def _heatmap_chrome_height(chart_spec: dict[str, Any]) -> int:
+def _heatmap_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -> int:
     """Pane title band only; scale key is part of the fitted table height."""
     height = BLOCK_MARGIN_Y
     if chart_spec.get("heading"):
-        inner_w = CONTENT_W - 32
+        inner_w = max(1, box_w - 32)
         height += CHART_PANE_PAD_Y + BLOCK_MARGIN_Y
         height += _required_height(
             [(chart_spec["heading"], True)], CHART_PANE_TITLE_PX, inner_w, 0
@@ -3749,6 +4231,10 @@ def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
         return _metric_strip_fit_detail(sp, size)
     if spec is not None and spec.get("kind") == "outlined_support":
         return _outlined_support_fit_detail(sp, size)
+    if spec is not None and spec.get("kind") == "hero_card":
+        return _hero_fit_height(sp) <= sp._box_h, False
+    if spec is not None and spec.get("kind") == "metric_overview":
+        return _metric_overview_fit_height(sp, size) <= sp._box_h, False
     return _text_fits_detail(
         sp._text_items,
         size,
@@ -4380,6 +4866,14 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
     if sp.role == "metric_strip":
         sp.role_sizes["label"] = size
         sp.role_sizes["detail"] = size
+        sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
+    elif sp.role == "metric_overview":
+        sp.role_sizes["body"] = size
+        sp.role_sizes.setdefault("heading", 22)
+        sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
+    elif sp.role == "hero_card":
+        sp.role_sizes.setdefault("heading", 22)
+        sp.role_sizes.setdefault("body", 16)
         sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
     elif sp.role == "outlined_support":
         sp.role_sizes["table"] = size
