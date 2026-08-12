@@ -409,7 +409,8 @@ def test_chartjs_combo_config_order_and_axes():
     assert scfg["options"]["scales"]["y"]["stacked"] is True
     line_ds = [d for d in scfg["data"]["datasets"] if d["type"] == "line"]
     assert line_ds and line_ds[0]["yAxisID"] == "y"
-    assert line_ds[0].get("stack") == scp["series"][-1]["series_id"]
+    assert line_ds[0].get("stack") == f"line:{scp['series'][-1]['series_id']}"
+    assert line_ds[0].get("stack") != "combo"
 
 
 def test_chartjs_stacked_multi_line_unique_stacks():
@@ -420,8 +421,8 @@ def test_chartjs_stacked_multi_line_unique_stacks():
     vis = _vis(raw, "dep-combo")
     vis["chart_data"]["series"].append(
         {
-            "series_id": "target",
-            "name": "Target",
+            "series_id": "combo",
+            "name": "Combo-named line",
             "mark_type": "line",
             "values": ["50", "55", "60", "65"],
         }
@@ -435,8 +436,9 @@ def test_chartjs_stacked_multi_line_unique_stacks():
     assert len(lines) == 2
     assert all(d.get("stack") == "combo" for d in bars)
     line_series_ids = [s["series_id"] for s in cp["series"] if s["mark_type"] == "line"]
-    assert [d.get("stack") for d in lines] == line_series_ids
+    assert [d.get("stack") for d in lines] == [f"line:{sid}" for sid in line_series_ids]
     assert len(set(d.get("stack") for d in lines)) == len(lines)
+    assert all(d.get("stack") != "combo" for d in lines)
 
 
 def test_mutation_flip_bar_mode_changes_geometry():

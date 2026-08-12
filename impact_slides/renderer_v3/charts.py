@@ -4617,7 +4617,7 @@ def _chartjs_combo_config(plan: dict[str, Any]) -> dict[str, Any]:
                 "yAxisID": y_id,
             }
             if stacked and y_id == "y":
-                line_ds["stack"] = s["series_id"]
+                line_ds["stack"] = f"line:{s['series_id']}"
             datasets.append(line_ds)
 
     d_min = float(Decimal(plan["domain"]["min"]))
