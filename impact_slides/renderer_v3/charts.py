@@ -4598,26 +4598,27 @@ def _chartjs_combo_config(plan: dict[str, Any]) -> dict[str, Any]:
                 "diamond": "rectRot",
             }[s["marker"]]
             y_id = "y1" if s.get("axis_key") == "secondary" else "y"
-            datasets.append(
-                {
-                    "type": "line",
-                    "label": s["name"],
-                    "data": data,
-                    "borderColor": s["color"],
-                    "backgroundColor": s["color"],
-                    "borderWidth": 2.5,
-                    "borderDash": border_dash,
-                    "pointStyle": point_style,
-                    "pointRadius": MARKER_R,
-                    "pointHoverRadius": MARKER_R,
-                    "spanGaps": False,
-                    "tension": 0,
-                    "fill": False,
-                    "clip": False,
-                    "order": 1,
-                    "yAxisID": y_id,
-                }
-            )
+            line_ds: dict[str, Any] = {
+                "type": "line",
+                "label": s["name"],
+                "data": data,
+                "borderColor": s["color"],
+                "backgroundColor": s["color"],
+                "borderWidth": 2.5,
+                "borderDash": border_dash,
+                "pointStyle": point_style,
+                "pointRadius": MARKER_R,
+                "pointHoverRadius": MARKER_R,
+                "spanGaps": False,
+                "tension": 0,
+                "fill": False,
+                "clip": False,
+                "order": 1,
+                "yAxisID": y_id,
+            }
+            if stacked and y_id == "y":
+                line_ds["stack"] = s["series_id"]
+            datasets.append(line_ds)
 
     d_min = float(Decimal(plan["domain"]["min"]))
     d_max = float(Decimal(plan["domain"]["max"]))

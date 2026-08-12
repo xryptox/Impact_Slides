@@ -409,6 +409,34 @@ def test_chartjs_combo_config_order_and_axes():
     assert scfg["options"]["scales"]["y"]["stacked"] is True
     line_ds = [d for d in scfg["data"]["datasets"] if d["type"] == "line"]
     assert line_ds and line_ds[0]["yAxisID"] == "y"
+    assert line_ds[0].get("stack") == scp["series"][-1]["series_id"]
+
+
+def test_chartjs_stacked_multi_line_unique_stacks():
+    """Primary lines must not share Chart.js stack under scales.y.stacked."""
+    from impact_slides.renderer_v3.charts import _chartjs_combo_config
+
+    raw = _s()
+    vis = _vis(raw, "dep-combo")
+    vis["chart_data"]["series"].append(
+        {
+            "series_id": "target",
+            "name": "Target",
+            "mark_type": "line",
+            "values": ["50", "55", "60", "65"],
+        }
+    )
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["dep-combo"].chart_paint
+    cfg = _chartjs_combo_config(cp)
+    assert cfg["options"]["scales"]["y"]["stacked"] is True
+    bars = [d for d in cfg["data"]["datasets"] if d["type"] == "bar"]
+    lines = [d for d in cfg["data"]["datasets"] if d["type"] == "line"]
+    assert len(lines) == 2
+    assert all(d.get("stack") == "combo" for d in bars)
+    line_series_ids = [s["series_id"] for s in cp["series"] if s["mark_type"] == "line"]
+    assert [d.get("stack") for d in lines] == line_series_ids
+    assert len(set(d.get("stack") for d in lines)) == len(lines)
 
 
 def test_mutation_flip_bar_mode_changes_geometry():
