@@ -2240,11 +2240,7 @@ class ComboChartVisual(ClosedModel):
             raise ValueError("combo forbids series_identity pane_title (D244)")
         if self.bar_mode == "grouped":
             _validate_nonstacked_display(self)
-        else:
-            # stacked combo: stack policies OK; ordinary_values still valid for lines.
-            disp = self.display
-            if disp is not None and disp.series_identity == "pane_title":
-                raise ValueError("combo forbids series_identity pane_title (D244)")
+        # stacked combo: stack policies OK; ordinary_values still valid for lines.
         _common_chart_heading_rules(self)
         _leading_break_rules(self, allow=False)
         if self.value_axes.secondary is not None:

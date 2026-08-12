@@ -1305,7 +1305,6 @@ def freeze_combo_chart(
         categories=cats,
         include_zero=True,
         stack_extents=stacked,
-        bar_only=stacked or line_axis_key == "secondary",
         all_series=list(data.series),
         line_axis_key=line_axis_key,
         axis_key="primary",
@@ -1318,7 +1317,6 @@ def freeze_combo_chart(
             categories=cats,
             include_zero=False,
             stack_extents=False,
-            bar_only=False,
             all_series=list(data.series),
             line_axis_key=line_axis_key,
             axis_key="secondary",
@@ -1873,7 +1871,6 @@ def freeze_combo_chart(
                     f"(missing contributor)"
                 )
 
-    # Build a chart-like object for _semantic_table primary format path.
     table = _semantic_table(
         chart,
         formats,
@@ -1881,21 +1878,11 @@ def freeze_combo_chart(
         primary_domain,
         identity=identity,
         scale_label=p_fmt.scale_label,
-        chart_type=table_type if not stacked else "stacked_bar",
+        chart_type=table_type,
         groups=groups_plan,
         boxed=extra_facts,
         stack_totals=stack_totals if stacked else None,
     )
-    # Force combo type wording even when reusing stacked table columns.
-    if stacked:
-        table["facts"] = [
-            f.replace("sign-separated stacked vertical bars", "stacked combo bars with line layers")
-            if isinstance(f, str)
-            else f
-            for f in table["facts"]
-        ]
-        if not any("Bar mode" in f for f in table["facts"]):
-            table["facts"].insert(1, f"Bar mode: {chart.bar_mode}")
 
     boxed_labels = boxed_plan.get("labels") or []
 
@@ -1976,7 +1963,6 @@ def _resolve_combo_domain(
     categories: list[Any],
     include_zero: bool,
     stack_extents: bool,
-    bar_only: bool,
     all_series: list[Any],
     line_axis_key: str,
     axis_key: str,
@@ -3055,12 +3041,7 @@ def _e(text: Any) -> str:
 def _ordinary_values_show(chart: AxisChartVisual) -> bool:
     if getattr(chart, "chart_type", None) == "stacked_bar":
         return False  # stacked uses stack_segments (D231/D295)
-    if (
-        getattr(chart, "chart_type", None) == "combo"
-        and getattr(chart, "bar_mode", None) == "stacked"
-    ):
-        # Stacked combo: ordinary_values govern line points only (D231/D244).
-        pass
+    # Stacked combo: ordinary_values still govern line points (D231/D244).
     if chart.display is None or chart.display.ordinary_values is None:
         return True
     return chart.display.ordinary_values == "show"
@@ -4307,9 +4288,18 @@ def _semantic_table(
     stack_totals: Optional[list[dict[str, Any]]] = None,
 ) -> dict[str, Any]:
     fmt_id = chart.value_axes.primary.format_id
+    # Per-series format: combo secondary lines use secondary axis format (D230/D247).
+    series_fmt: dict[str, str] = {}
+    sec = getattr(chart.value_axes, "secondary", None)
+    sec_fmt = sec.format_id if sec is not None else None
+    for sp in series_plans:
+        if sp.get("axis_key") == "secondary" and sec_fmt is not None:
+            series_fmt[sp["series_id"]] = sec_fmt
+        else:
+            series_fmt[sp["series_id"]] = fmt_id
     columns = [{"series_id": s["series_id"], "label": s["name"]} for s in series_plans]
-    # D247 stacked: series columns then positive/negative computed totals + authored.
-    if chart_type == "stacked_bar":
+    # D247 stacked (+ stacked combo): series columns then +/- computed totals + authored.
+    if chart_type in ("stacked_bar", "combo_stacked"):
         columns.extend(
             [
                 {"series_id": "_pos_total", "label": "Positive total"},
@@ -4330,11 +4320,12 @@ def _semantic_table(
         cells = []
         for s_i, s in enumerate(chart.chart_data.series):
             raw = s.values[c_i]
+            cell_fmt = series_fmt.get(s.series_id, fmt_id)
             if raw is None:
                 fv = format_semantic_value(MissingValue(), formats)
             else:
                 fv = format_semantic_value(
-                    NumberValue(value=raw, format_id=fmt_id), formats
+                    NumberValue(value=raw, format_id=cell_fmt), formats
                 )
             cells.append(
                 {
@@ -4344,7 +4335,7 @@ def _semantic_table(
                     "missing": raw is None,
                 }
             )
-        if chart_type == "stacked_bar":
+        if chart_type in ("stacked_bar", "combo_stacked"):
             sides = totals_by_cat.get(cat.category_id) or {}
             for side_key, col_id in (
                 ("positive", "_pos_total"),

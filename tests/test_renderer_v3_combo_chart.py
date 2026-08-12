@@ -263,6 +263,36 @@ def test_non_combo_still_forbids_secondary_axis():
 # ---------------------------------------------------------------------------
 
 
+def test_semantic_table_uses_secondary_format_for_line():
+    deck = validate_handoff(_s(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["cap-combo"].chart_paint
+    table = cp["semantic_table"]
+    col_ids = [c["series_id"] for c in table["columns"]]
+    roe_i = col_ids.index("roe")
+    # ROE 12.0 on pct_1 must not look like usd (no leading $).
+    cell = table["rows"][0]["cells"][roe_i]
+    assert "$" not in cell["visible"]
+    assert "12" in cell["visible"]
+
+
+def test_auto_identity_endpoints_and_bar_legend():
+    raw = _s()
+    del _vis(raw)["display"]  # auto
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["cap-combo"].chart_paint
+    assert cp["identity_strategy"] in ("endpoints_and_bar_legend", "legend")
+    if cp["identity_strategy"] == "endpoints_and_bar_legend":
+        id_places = [p for p in cp["placements"] if p.get("kind") == "identity"]
+        assert id_places
+        assert all(
+            next(s for s in cp["series"] if s["series_id"] == p["series_id"])[
+                "mark_type"
+            ]
+            == "line"
+            for p in id_places
+        )
+
+
 def test_freeze_grouped_layers_axes_and_identity():
     deck = validate_handoff(_s(), strict=True).deck
     chart = deck.slides[1].payload.primary_visual
