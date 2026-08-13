@@ -8,7 +8,8 @@ Repo tooling invoked by agents and CI — not product runtime.
 
 - `gen_layout_index.py` — builds/checks `wiki/renderer_v2_LAYOUTS.md`
 - `simulation_probe.py` — Playwright helpers for simulation geometry probes (#137 identity, #146 paint-ready charts)
-- `build_canonical_amex_v1.py` — rebuilds `tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json` (D314/#196) from corrected fixtures + worksheet; not a production migrator
+- `build_canonical_amex_v1.py` — rebuilds `tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json` (D314/#196) from corrected fixtures + worksheet; not a production migrator; pins the D315 release-PDF SHA-256 into evidence locators
+- `renderer_3_release.py` — builds/verifies `artifacts/renderer_3_release/3.0.0/` (D315/#198); `--build` needs the tracked Q1 2026 PDF + Playwright; `--verify` is hash/gate-only
 - `amex_handoff_mutations.py` — bounded Amex handoff authoring fixes applied before a fidelity pass (#148 slides 13–14 bars/pane order; #154 slide 24 growth bars, groups, support row, and reporting note; #155 slide 21 capital-return combo + ROE support row + right KPIs; #156 slide 27 three scenarios / Q1'25–Q1'28 / source note / E0026 PDF citation; #157 slides 33–37 annex matrices; #159 slide 32 grouped peer annex tables; #158 slide 28 pane subtitles / drop pseudo `top_total`); does not change renderer defaults. CLI: `python scripts/amex_handoff_mutations.py IN.json -o OUT.json`
 - `../artifacts/issue_156_slide27/` — #156 source-evidence E0026 and reproducible archived-v10/corrected 1920×1080 paint-ready recaptures.
 - Ad-hoc helpers (`render_slide_shot.py`, shell sims)
@@ -42,6 +43,8 @@ Repo tooling invoked by agents and CI — not product runtime.
 - `pytest -q tests/test_amex_annex_33_37_handoff.py` (#157 annex matrix restore contract)
 - `pytest -q tests/test_grouped_annex_table.py` (#159 slide-32 grouped peer annex contract)
 - `pytest -q tests/test_amex_s28_handoff_contract.py tests/test_multi_panel_pane_headings.py` (#158 slide-28 pane titles)
+- `python scripts/renderer_3_release.py --verify`
+- `pytest -q tests/test_renderer_v3_release_evidence.py` (#198 / D315)
 
 ## Child DOX Index
 

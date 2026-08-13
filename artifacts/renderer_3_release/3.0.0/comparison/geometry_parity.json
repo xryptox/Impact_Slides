@@ -1,0 +1,9 @@
+{
+  "tolerance_px": 2,
+  "plot_floor": [
+    320,
+    240
+  ],
+  "chartjs": "chartjs/geometry.json",
+  "svg": "svg/geometry.json"
+}

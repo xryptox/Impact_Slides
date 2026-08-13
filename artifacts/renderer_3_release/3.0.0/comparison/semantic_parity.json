@@ -1,0 +1,5255 @@
+{
+  "slide_count": 44,
+  "identical_modes": true,
+  "handoff_schema_version": 1,
+  "evidence_ids": [
+    "amex-q1-2026-p01",
+    "amex-q1-2026-p02",
+    "amex-q1-2026-p03",
+    "amex-q1-2026-p04",
+    "amex-q1-2026-p05",
+    "amex-q1-2026-p06",
+    "amex-q1-2026-p07",
+    "amex-q1-2026-p08",
+    "amex-q1-2026-p09",
+    "amex-q1-2026-p10",
+    "amex-q1-2026-p11",
+    "amex-q1-2026-p12",
+    "amex-q1-2026-p13",
+    "amex-q1-2026-p14",
+    "amex-q1-2026-p15",
+    "amex-q1-2026-p16",
+    "amex-q1-2026-p17",
+    "amex-q1-2026-p18",
+    "amex-q1-2026-p19",
+    "amex-q1-2026-p20",
+    "amex-q1-2026-p21",
+    "amex-q1-2026-p22",
+    "amex-q1-2026-p23",
+    "amex-q1-2026-p24",
+    "amex-q1-2026-p25",
+    "amex-q1-2026-p26",
+    "amex-q1-2026-p27",
+    "amex-q1-2026-p28",
+    "amex-q1-2026-p29",
+    "amex-q1-2026-p30",
+    "amex-q1-2026-p31",
+    "amex-q1-2026-p32",
+    "amex-q1-2026-p33",
+    "amex-q1-2026-p34",
+    "amex-q1-2026-p35",
+    "amex-q1-2026-p36",
+    "amex-q1-2026-p37",
+    "amex-q1-2026-p38",
+    "amex-q1-2026-p39",
+    "amex-q1-2026-p40",
+    "amex-q1-2026-p41",
+    "amex-q1-2026-p42",
+    "amex-q1-2026-p43",
+    "amex-q1-2026-p44"
+  ],
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout": "opening_cover",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 1,
+        "layout": "opening_cover",
+        "tables": [],
+        "headings": [
+          "American Express Earnings Conference Call"
+        ],
+        "surface_ids": [
+          "slide-1-cover"
+        ]
+      },
+      "svg": {
+        "slide_number": 1,
+        "layout": "opening_cover",
+        "tables": [],
+        "headings": [
+          "American Express Earnings Conference Call"
+        ],
+        "surface_ids": [
+          "slide-1-cover"
+        ]
+      }
+    },
+    {
+      "slide_number": 2,
+      "layout": "narrative",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 2,
+        "layout": "narrative",
+        "tables": [],
+        "headings": [
+          "Business Highlights",
+          "Statistical Tables See Statistical Tables for additional information."
+        ],
+        "surface_ids": [
+          "slide-2-block-biz-highlights",
+          "slide-2-disclosure-s2-disc",
+          "slide-2-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 2,
+        "layout": "narrative",
+        "tables": [],
+        "headings": [
+          "Business Highlights",
+          "Statistical Tables See Statistical Tables for additional information."
+        ],
+        "surface_ids": [
+          "slide-2-block-biz-highlights",
+          "slide-2-disclosure-s2-disc",
+          "slide-2-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 3,
+      "layout": "period_comparison",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 3,
+        "layout": "period_comparison",
+        "tables": [
+          {
+            "classes": [
+              "period-comparison"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "YoY"
+              ],
+              [
+                "Total Revenues Net of Interest Expense",
+                "$18,907",
+                "$16,967",
+                "11%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$17,210",
+                "10%"
+              ],
+              [
+                "Net Income",
+                "$2,971",
+                "$2,584",
+                "15%"
+              ],
+              [
+                "Diluted EPS**",
+                "$4.28",
+                "$3.64",
+                "18%"
+              ],
+              [
+                "Average Diluted Shares Outstanding",
+                "686",
+                "702",
+                "(2%)"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Summary Financial Performance",
+          "Non- GAAP / footnotes * Total Revenues Net of Interest Expense adjusted for FX is non- GAAP. ** Attributable to common shareholders."
+        ],
+        "surface_ids": [
+          "s3-fin",
+          "slide-3-disclosure-s3-disc",
+          "slide-3-subtitle",
+          "slide-3-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 3,
+        "layout": "period_comparison",
+        "tables": [
+          {
+            "classes": [
+              "period-comparison"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "YoY"
+              ],
+              [
+                "Total Revenues Net of Interest Expense",
+                "$18,907",
+                "$16,967",
+                "11%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$17,210",
+                "10%"
+              ],
+              [
+                "Net Income",
+                "$2,971",
+                "$2,584",
+                "15%"
+              ],
+              [
+                "Diluted EPS**",
+                "$4.28",
+                "$3.64",
+                "18%"
+              ],
+              [
+                "Average Diluted Shares Outstanding",
+                "686",
+                "702",
+                "(2%)"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Summary Financial Performance",
+          "Non- GAAP / footnotes * Total Revenues Net of Interest Expense adjusted for FX is non- GAAP. ** Attributable to common shareholders."
+        ],
+        "surface_ids": [
+          "s3-fin",
+          "slide-3-disclosure-s3-disc",
+          "slide-3-subtitle",
+          "slide-3-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 4,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 4,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Reported",
+                "FX-adjusted"
+              ],
+              [
+                "Q1'25",
+                "6%",
+                "6%"
+              ],
+              [
+                "Q2'25",
+                "7%",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "8%",
+                "9%"
+              ],
+              [
+                "Q4'25",
+                "8%",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "9%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Billed Business",
+          "Notes Leap Year Approx. (1%). G&S and T&E support values are category- aligned source facts retained in disclosure pending support_visual kernel wiring."
+        ],
+        "surface_ids": [
+          "s4-bb",
+          "slide-4-disclosure-s4-disc",
+          "slide-4-subtitle",
+          "slide-4-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 4,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Reported",
+                "FX-adjusted"
+              ],
+              [
+                "Q1'25",
+                "6%",
+                "6%"
+              ],
+              [
+                "Q2'25",
+                "7%",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "8%",
+                "9%"
+              ],
+              [
+                "Q4'25",
+                "8%",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "9%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Billed Business",
+          "Notes Leap Year Approx. (1%). G&S and T&E support values are category- aligned source facts retained in disclosure pending support_visual kernel wiring."
+        ],
+        "surface_ids": [
+          "s4-bb",
+          "slide-4-disclosure-s4-disc",
+          "slide-4-subtitle",
+          "slide-4-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 5,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 5,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "UCS Billings"
+              ],
+              [
+                "Q1'25",
+                "7%"
+              ],
+              [
+                "Q2'25",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "9%"
+              ],
+              [
+                "Q4'25",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "U. S. Consumer Services Billed Business",
+          "Generation support Q1'26 YoY: Gen- Z 38%, Millennials 13%, Gen- X 8%, Baby Boomer+ 4%, Total 10%. Share of total: 6%, 30%, 36%, 28%, 100%."
+        ],
+        "surface_ids": [
+          "s5-ucs",
+          "slide-5-disclosure-s5-disc",
+          "slide-5-subtitle",
+          "slide-5-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 5,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "UCS Billings"
+              ],
+              [
+                "Q1'25",
+                "7%"
+              ],
+              [
+                "Q2'25",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "9%"
+              ],
+              [
+                "Q4'25",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "U. S. Consumer Services Billed Business",
+          "Generation support Q1'26 YoY: Gen- Z 38%, Millennials 13%, Gen- X 8%, Baby Boomer+ 4%, Total 10%. Share of total: 6%, 30%, 36%, 28%, 100%."
+        ],
+        "surface_ids": [
+          "s5-ucs",
+          "slide-5-disclosure-s5-disc",
+          "slide-5-subtitle",
+          "slide-5-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 6,
+      "layout": "dual_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 6,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Spend growth"
+              ],
+              [
+                "Q1'25",
+                "7%"
+              ],
+              [
+                "Q2'25",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "9%"
+              ],
+              [
+                "Q4'25",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "10%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "2025",
+                "2026"
+              ],
+              [
+                "January",
+                "94%",
+                "96%"
+              ],
+              [
+                "February",
+                "95%",
+                "97%"
+              ],
+              [
+                "March",
+                "95%",
+                "97%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "U. S. Consumer Platinum Performance",
+          "Source claims Refresh event at Q3'25. Authored approximate measurement: + ~6 percentage points (source claim; not recomputed from displayed endpoints)."
+        ],
+        "surface_ids": [
+          "s6-ret",
+          "s6-spend",
+          "slide-6-disclosure-s6-disc",
+          "slide-6-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 6,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Spend growth"
+              ],
+              [
+                "Q1'25",
+                "7%"
+              ],
+              [
+                "Q2'25",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "9%"
+              ],
+              [
+                "Q4'25",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "10%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "2025",
+                "2026"
+              ],
+              [
+                "January",
+                "94%",
+                "96%"
+              ],
+              [
+                "February",
+                "95%",
+                "97%"
+              ],
+              [
+                "March",
+                "95%",
+                "97%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "U. S. Consumer Platinum Performance",
+          "Source claims Refresh event at Q3'25. Authored approximate measurement: + ~6 percentage points (source claim; not recomputed from displayed endpoints)."
+        ],
+        "surface_ids": [
+          "s6-ret",
+          "s6-spend",
+          "slide-6-disclosure-s6-disc",
+          "slide-6-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 7,
+      "layout": "comparison_cards",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 7,
+        "layout": "comparison_cards",
+        "tables": [
+          {
+            "classes": [
+              "data-table",
+              "sr-only-table"
+            ],
+            "rows": [
+              [
+                "Peer",
+                "Premium growth",
+                "UCS benchmark",
+                "Multiplier"
+              ],
+              [
+                "Lodging",
+                "50%",
+                "5%",
+                "10x"
+              ],
+              [
+                "Restaurants",
+                "20%",
+                "10%",
+                "2x"
+              ],
+              [
+                "Airlines",
+                "21%",
+                "11%",
+                "2x"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "U. S. Consumer: Membership Model Engagement",
+          "Lodging",
+          "Restaurants",
+          "Airlines",
+          "Member Airfares footnote Member Airfares offers Platinum and Centurion Card Members reduced fares on select premium international and domestic tickets booked through American Express Travel."
+        ],
+        "surface_ids": [
+          "s7-cards",
+          "slide-7-disclosure-s7-disc",
+          "slide-7-subtitle",
+          "slide-7-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 7,
+        "layout": "comparison_cards",
+        "tables": [
+          {
+            "classes": [
+              "data-table",
+              "sr-only-table"
+            ],
+            "rows": [
+              [
+                "Peer",
+                "Premium growth",
+                "UCS benchmark",
+                "Multiplier"
+              ],
+              [
+                "Lodging",
+                "50%",
+                "5%",
+                "10x"
+              ],
+              [
+                "Restaurants",
+                "20%",
+                "10%",
+                "2x"
+              ],
+              [
+                "Airlines",
+                "21%",
+                "11%",
+                "2x"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "U. S. Consumer: Membership Model Engagement",
+          "Lodging",
+          "Restaurants",
+          "Airlines",
+          "Member Airfares footnote Member Airfares offers Platinum and Centurion Card Members reduced fares on select premium international and domestic tickets booked through American Express Travel."
+        ],
+        "surface_ids": [
+          "s7-cards",
+          "slide-7-disclosure-s7-disc",
+          "slide-7-subtitle",
+          "slide-7-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 8,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 8,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FHR+THC",
+                "UCS Lodging"
+              ],
+              [
+                "Q1'25",
+                "40%",
+                "5%"
+              ],
+              [
+                "Q2'25",
+                "42%",
+                "5%"
+              ],
+              [
+                "Q3'25",
+                "45%",
+                "5%"
+              ],
+              [
+                "Q4'25",
+                "48%",
+                "5%"
+              ],
+              [
+                "Q1'26",
+                "50%",
+                "5%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Membership Model Engagement: Proprietary Lodging Assets",
+          "Program metrics Premium Global Properties 3, 400+; New Properties Selected (2026) 300+; Avg CM Value 2- Night Stay $550; Annual U. S. Plat Statement Credit $600; Partner- Funded 100%. Context fact: 10x."
+        ],
+        "surface_ids": [
+          "s8-lodging",
+          "slide-8-disclosure-s8-disc",
+          "slide-8-subtitle",
+          "slide-8-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 8,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FHR+THC",
+                "UCS Lodging"
+              ],
+              [
+                "Q1'25",
+                "40%",
+                "5%"
+              ],
+              [
+                "Q2'25",
+                "42%",
+                "5%"
+              ],
+              [
+                "Q3'25",
+                "45%",
+                "5%"
+              ],
+              [
+                "Q4'25",
+                "48%",
+                "5%"
+              ],
+              [
+                "Q1'26",
+                "50%",
+                "5%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Membership Model Engagement: Proprietary Lodging Assets",
+          "Program metrics Premium Global Properties 3, 400+; New Properties Selected (2026) 300+; Avg CM Value 2- Night Stay $550; Annual U. S. Plat Statement Credit $600; Partner- Funded 100%. Context fact: 10x."
+        ],
+        "surface_ids": [
+          "s8-lodging",
+          "slide-8-disclosure-s8-disc",
+          "slide-8-subtitle",
+          "slide-8-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 9,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 9,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Commercial FX-adj"
+              ],
+              [
+                "Q1'25",
+                "2%"
+              ],
+              [
+                "Q2'25",
+                "2%"
+              ],
+              [
+                "Q3'25",
+                "4%"
+              ],
+              [
+                "Q4'25",
+                "3%"
+              ],
+              [
+                "Q1'26",
+                "4%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Commercial Services Billed Business",
+          "Segment support Q1'26 YoY U. S. SME 4%, U. S. Large & Global 4%, Total 4%. Share 81% / 19% / 100%."
+        ],
+        "surface_ids": [
+          "s9-comm",
+          "slide-9-disclosure-s9-disc",
+          "slide-9-subtitle",
+          "slide-9-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 9,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Commercial FX-adj"
+              ],
+              [
+                "Q1'25",
+                "2%"
+              ],
+              [
+                "Q2'25",
+                "2%"
+              ],
+              [
+                "Q3'25",
+                "4%"
+              ],
+              [
+                "Q4'25",
+                "3%"
+              ],
+              [
+                "Q1'26",
+                "4%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Commercial Services Billed Business",
+          "Segment support Q1'26 YoY U. S. SME 4%, U. S. Large & Global 4%, Total 4%. Share 81% / 19% / 100%."
+        ],
+        "surface_ids": [
+          "s9-comm",
+          "slide-9-disclosure-s9-disc",
+          "slide-9-subtitle",
+          "slide-9-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 10,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 10,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FX-adjusted",
+                "Reported"
+              ],
+              [
+                "Q1'25",
+                "13%",
+                "9%"
+              ],
+              [
+                "Q2'25",
+                "12%",
+                "15%"
+              ],
+              [
+                "Q3'25",
+                "13%",
+                "14%"
+              ],
+              [
+                "Q4'25",
+                "12%",
+                "17%"
+              ],
+              [
+                "Q1'26",
+                "13%",
+                "20%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "International Card Services Billed Business",
+          "Segment support Q1'26 YoY Intl Consumer 13%, Intl SME & Large Corp. 12%, Total 13%."
+        ],
+        "surface_ids": [
+          "s10-ics",
+          "slide-10-disclosure-s10-disc",
+          "slide-10-subtitle",
+          "slide-10-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 10,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FX-adjusted",
+                "Reported"
+              ],
+              [
+                "Q1'25",
+                "13%",
+                "9%"
+              ],
+              [
+                "Q2'25",
+                "12%",
+                "15%"
+              ],
+              [
+                "Q3'25",
+                "13%",
+                "14%"
+              ],
+              [
+                "Q4'25",
+                "12%",
+                "17%"
+              ],
+              [
+                "Q1'26",
+                "13%",
+                "20%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "International Card Services Billed Business",
+          "Segment support Q1'26 YoY Intl Consumer 13%, Intl SME & Large Corp. 12%, Total 13%."
+        ],
+        "surface_ids": [
+          "s10-ics",
+          "slide-10-disclosure-s10-disc",
+          "slide-10-subtitle",
+          "slide-10-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 11,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 11,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Transaction Growth"
+              ],
+              [
+                "Q1'25",
+                "9%"
+              ],
+              [
+                "Q2'25",
+                "9%"
+              ],
+              [
+                "Q3'25",
+                "10%"
+              ],
+              [
+                "Q4'25",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Transaction Growth",
+          "Notes Leap- year chart explanation applies to transaction growth."
+        ],
+        "surface_ids": [
+          "s11-txn",
+          "slide-11-disclosure-s11-disc",
+          "slide-11-subtitle",
+          "slide-11-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 11,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Transaction Growth"
+              ],
+              [
+                "Q1'25",
+                "9%"
+              ],
+              [
+                "Q2'25",
+                "9%"
+              ],
+              [
+                "Q3'25",
+                "10%"
+              ],
+              [
+                "Q4'25",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Transaction Growth",
+          "Notes Leap- year chart explanation applies to transaction growth."
+        ],
+        "surface_ids": [
+          "s11-txn",
+          "slide-11-disclosure-s11-disc",
+          "slide-11-subtitle",
+          "slide-11-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 12,
+        "layout": "chart_hero_dual",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "New Cards"
+              ],
+              [
+                "Q1'25",
+                "1.5"
+              ],
+              [
+                "Q2'25",
+                "1.5"
+              ],
+              [
+                "Q3'25",
+                "1.5"
+              ],
+              [
+                "Q4'25",
+                "1.3"
+              ],
+              [
+                "Q1'26",
+                "1.3"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "New Acquisitions",
+          "Proprietary New Accounts Acquired",
+          "Definitions Proprietary new cards/accounts definitions per source statistical tables."
+        ],
+        "surface_ids": [
+          "s12-cards",
+          "s12-hero",
+          "slide-12-disclosure-s12-disc",
+          "slide-12-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 12,
+        "layout": "chart_hero_dual",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "New Cards"
+              ],
+              [
+                "Q1'25",
+                "1.5"
+              ],
+              [
+                "Q2'25",
+                "1.5"
+              ],
+              [
+                "Q3'25",
+                "1.5"
+              ],
+              [
+                "Q4'25",
+                "1.3"
+              ],
+              [
+                "Q1'26",
+                "1.3"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "New Acquisitions",
+          "Proprietary New Accounts Acquired",
+          "Definitions Proprietary new cards/accounts definitions per source statistical tables."
+        ],
+        "surface_ids": [
+          "s12-cards",
+          "s12-hero",
+          "slide-12-disclosure-s12-disc",
+          "slide-12-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 13,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 13,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Total Balances",
+                "Billed Business"
+              ],
+              [
+                "Q1'25",
+                "7%",
+                "6%"
+              ],
+              [
+                "Q2'25",
+                "6%",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "7%",
+                "8%"
+              ],
+              [
+                "Q4'25",
+                "7%",
+                "8%"
+              ],
+              [
+                "Q1'26",
+                "7%",
+                "9%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Balances and Billed Business"
+        ],
+        "surface_ids": [
+          "s13-bal",
+          "slide-13-subtitle",
+          "slide-13-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 13,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Total Balances",
+                "Billed Business"
+              ],
+              [
+                "Q1'25",
+                "7%",
+                "6%"
+              ],
+              [
+                "Q2'25",
+                "6%",
+                "7%"
+              ],
+              [
+                "Q3'25",
+                "7%",
+                "8%"
+              ],
+              [
+                "Q4'25",
+                "7%",
+                "8%"
+              ],
+              [
+                "Q1'26",
+                "7%",
+                "9%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Balances and Billed Business"
+        ],
+        "surface_ids": [
+          "s13-bal",
+          "slide-13-subtitle",
+          "slide-13-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 14,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "30+ Days Past Due"
+              ],
+              [
+                "Q1'25",
+                "1.3%"
+              ],
+              [
+                "Q2'25",
+                "1.3%"
+              ],
+              [
+                "Q3'25",
+                "1.3%"
+              ],
+              [
+                "Q4'25",
+                "1.3%"
+              ],
+              [
+                "Q1'26",
+                "1.3%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Net Write-Off Rates"
+              ],
+              [
+                "Q1'25",
+                "2.1%"
+              ],
+              [
+                "Q2'25",
+                "2.0%"
+              ],
+              [
+                "Q3'25",
+                "1.9%"
+              ],
+              [
+                "Q4'25",
+                "2.1%"
+              ],
+              [
+                "Q1'26",
+                "2.0%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Credit Metrics"
+        ],
+        "surface_ids": [
+          "s14-dpd",
+          "s14-nwo",
+          "slide-14-subtitle",
+          "slide-14-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 14,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "30+ Days Past Due"
+              ],
+              [
+                "Q1'25",
+                "1.3%"
+              ],
+              [
+                "Q2'25",
+                "1.3%"
+              ],
+              [
+                "Q3'25",
+                "1.3%"
+              ],
+              [
+                "Q4'25",
+                "1.3%"
+              ],
+              [
+                "Q1'26",
+                "1.3%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Net Write-Off Rates"
+              ],
+              [
+                "Q1'25",
+                "2.1%"
+              ],
+              [
+                "Q2'25",
+                "2.0%"
+              ],
+              [
+                "Q3'25",
+                "1.9%"
+              ],
+              [
+                "Q4'25",
+                "2.1%"
+              ],
+              [
+                "Q1'26",
+                "2.0%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Credit Metrics"
+        ],
+        "surface_ids": [
+          "s14-dpd",
+          "s14-nwo",
+          "slide-14-subtitle",
+          "slide-14-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 15,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 15,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Write-offs",
+                "Reserve Build/(Release)",
+                "Positive total",
+                "Negative total"
+              ],
+              [
+                "Q1'25",
+                "$1,223.0",
+                "($73.0)",
+                "$1,223.0",
+                "($73.0)"
+              ],
+              [
+                "Q2'25",
+                "$1,183.0",
+                "$222.0",
+                "$1,405.0",
+                "$0.0"
+              ],
+              [
+                "Q3'25",
+                "$1,162.0",
+                "$125.0",
+                "$1,287.0",
+                "$0.0"
+              ],
+              [
+                "Q4'25",
+                "$1,273.0",
+                "$141.0",
+                "$1,414.0",
+                "$0.0"
+              ],
+              [
+                "Q1'26",
+                "$1,275.0",
+                "($24.0)",
+                "$1,275.0",
+                "($24.0)"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Provision",
+          "Reserve rate Category- aligned outlined Reserve Rate support retained as disclosure pending support_visual on single_chart."
+        ],
+        "surface_ids": [
+          "s15-prov",
+          "slide-15-disclosure-s15-disc",
+          "slide-15-subtitle",
+          "slide-15-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 15,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Write-offs",
+                "Reserve Build/(Release)",
+                "Positive total",
+                "Negative total"
+              ],
+              [
+                "Q1'25",
+                "$1,223.0",
+                "($73.0)",
+                "$1,223.0",
+                "($73.0)"
+              ],
+              [
+                "Q2'25",
+                "$1,183.0",
+                "$222.0",
+                "$1,405.0",
+                "$0.0"
+              ],
+              [
+                "Q3'25",
+                "$1,162.0",
+                "$125.0",
+                "$1,287.0",
+                "$0.0"
+              ],
+              [
+                "Q4'25",
+                "$1,273.0",
+                "$141.0",
+                "$1,414.0",
+                "$0.0"
+              ],
+              [
+                "Q1'26",
+                "$1,275.0",
+                "($24.0)",
+                "$1,275.0",
+                "($24.0)"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Provision",
+          "Reserve rate Category- aligned outlined Reserve Rate support retained as disclosure pending support_visual on single_chart."
+        ],
+        "surface_ids": [
+          "s15-prov",
+          "slide-15-disclosure-s15-disc",
+          "slide-15-subtitle",
+          "slide-15-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 16,
+      "layout": "data_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 16,
+        "layout": "data_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "R…",
+                "F…"
+              ],
+              [
+                "Discount Revenue",
+                "$9,512",
+                "$8,743",
+                "9%",
+                "7%"
+              ],
+              [
+                "Net Card Fees",
+                "$2,752",
+                "$2,333",
+                "18%",
+                "16%"
+              ],
+              [
+                "Service Fees and Other Revenue",
+                "$1,951",
+                "$1,722",
+                "13%",
+                "9%"
+              ],
+              [
+                "Net Interest Income",
+                "$4,692",
+                "$4,169",
+                "13%",
+                "12%"
+              ],
+              [
+                "Revenues Net of Interest Expense",
+                "$18,907",
+                "$16,967",
+                "11%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Revenue Performance"
+        ],
+        "surface_ids": [
+          "s16-rev",
+          "slide-16-subtitle",
+          "slide-16-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 16,
+        "layout": "data_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "R…",
+                "F…"
+              ],
+              [
+                "Discount Revenue",
+                "$9,512",
+                "$8,743",
+                "9%",
+                "7%"
+              ],
+              [
+                "Net Card Fees",
+                "$2,752",
+                "$2,333",
+                "18%",
+                "16%"
+              ],
+              [
+                "Service Fees and Other Revenue",
+                "$1,951",
+                "$1,722",
+                "13%",
+                "9%"
+              ],
+              [
+                "Net Interest Income",
+                "$4,692",
+                "$4,169",
+                "13%",
+                "12%"
+              ],
+              [
+                "Revenues Net of Interest Expense",
+                "$18,907",
+                "$16,967",
+                "11%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Revenue Performance"
+        ],
+        "surface_ids": [
+          "s16-rev",
+          "slide-16-subtitle",
+          "slide-16-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 17,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Net Card Fees"
+              ],
+              [
+                "Q1'19",
+                "1%"
+              ],
+              [
+                "Q1'20",
+                "1%"
+              ],
+              [
+                "Q1'21",
+                "1%"
+              ],
+              [
+                "Q1'22",
+                "1%"
+              ],
+              [
+                "Q1'23",
+                "2%"
+              ],
+              [
+                "Q1'24",
+                "2%"
+              ],
+              [
+                "Q1'25",
+                "2%"
+              ],
+              [
+                "Q1'26",
+                "3%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FX-adjusted YoY"
+              ],
+              [
+                "Q1'24",
+                "16%"
+              ],
+              [
+                "Q2'24",
+                "16%"
+              ],
+              [
+                "Q3'24",
+                "18%"
+              ],
+              [
+                "Q4'24",
+                "19%"
+              ],
+              [
+                "Q1'25",
+                "20%"
+              ],
+              [
+                "Q2'25",
+                "20%"
+              ],
+              [
+                "Q3'25",
+                "17%"
+              ],
+              [
+                "Q4'25",
+                "16%"
+              ],
+              [
+                "Q1'26",
+                "16%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Net Card Fees",
+          "Qualification Authored 17% CAGR measurement is a source claim retained in disclosure."
+        ],
+        "surface_ids": [
+          "s17-fx",
+          "s17-ncf",
+          "slide-17-disclosure-s17-disc",
+          "slide-17-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 17,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Net Card Fees"
+              ],
+              [
+                "Q1'19",
+                "1%"
+              ],
+              [
+                "Q1'20",
+                "1%"
+              ],
+              [
+                "Q1'21",
+                "1%"
+              ],
+              [
+                "Q1'22",
+                "1%"
+              ],
+              [
+                "Q1'23",
+                "2%"
+              ],
+              [
+                "Q1'24",
+                "2%"
+              ],
+              [
+                "Q1'25",
+                "2%"
+              ],
+              [
+                "Q1'26",
+                "3%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FX-adjusted YoY"
+              ],
+              [
+                "Q1'24",
+                "16%"
+              ],
+              [
+                "Q2'24",
+                "16%"
+              ],
+              [
+                "Q3'24",
+                "18%"
+              ],
+              [
+                "Q4'24",
+                "19%"
+              ],
+              [
+                "Q1'25",
+                "20%"
+              ],
+              [
+                "Q2'25",
+                "20%"
+              ],
+              [
+                "Q3'25",
+                "17%"
+              ],
+              [
+                "Q4'25",
+                "16%"
+              ],
+              [
+                "Q1'26",
+                "16%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Net Card Fees",
+          "Qualification Authored 17% CAGR measurement is a source claim retained in disclosure."
+        ],
+        "surface_ids": [
+          "s17-fx",
+          "s17-ncf",
+          "slide-17-disclosure-s17-disc",
+          "slide-17-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 18,
+        "layout": "chart_hero_dual",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "NII"
+              ],
+              [
+                "Q1'25",
+                "4%"
+              ],
+              [
+                "Q2'25",
+                "4%"
+              ],
+              [
+                "Q3'25",
+                "5%"
+              ],
+              [
+                "Q4'25",
+                "5%"
+              ],
+              [
+                "Q1'26",
+                "5%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Premium Lending",
+          "NII: Volume & Margin Drivers"
+        ],
+        "surface_ids": [
+          "s18-driver",
+          "s18-nii",
+          "slide-18-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 18,
+        "layout": "chart_hero_dual",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "NII"
+              ],
+              [
+                "Q1'25",
+                "4%"
+              ],
+              [
+                "Q2'25",
+                "4%"
+              ],
+              [
+                "Q3'25",
+                "5%"
+              ],
+              [
+                "Q4'25",
+                "5%"
+              ],
+              [
+                "Q1'26",
+                "5%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Premium Lending",
+          "NII: Volume & Margin Drivers"
+        ],
+        "surface_ids": [
+          "s18-driver",
+          "s18-nii",
+          "slide-18-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 19,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 19,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FX-adjusted",
+                "Reported"
+              ],
+              [
+                "Q1'25",
+                "7%",
+                "8%"
+              ],
+              [
+                "Q2'25",
+                "9%",
+                "9%"
+              ],
+              [
+                "Q3'25",
+                "11%",
+                "11%"
+              ],
+              [
+                "Q4'25",
+                "10%",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "11%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Revenues Net of Interest Expense",
+          "Notes Leap- year explanation applies. USD support row retained in disclosure."
+        ],
+        "surface_ids": [
+          "s19-rev",
+          "slide-19-disclosure-s19-disc",
+          "slide-19-subtitle",
+          "slide-19-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 19,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "FX-adjusted",
+                "Reported"
+              ],
+              [
+                "Q1'25",
+                "7%",
+                "8%"
+              ],
+              [
+                "Q2'25",
+                "9%",
+                "9%"
+              ],
+              [
+                "Q3'25",
+                "11%",
+                "11%"
+              ],
+              [
+                "Q4'25",
+                "10%",
+                "9%"
+              ],
+              [
+                "Q1'26",
+                "11%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Total Revenues Net of Interest Expense",
+          "Notes Leap- year explanation applies. USD support row retained in disclosure."
+        ],
+        "surface_ids": [
+          "s19-rev",
+          "slide-19-disclosure-s19-disc",
+          "slide-19-subtitle",
+          "slide-19-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 20,
+      "layout": "period_comparison",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 20,
+        "layout": "period_comparison",
+        "tables": [
+          {
+            "classes": [
+              "period-comparison"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "Variance"
+              ],
+              [
+                "Card Member Rewards",
+                "$4,891",
+                "$4,378",
+                "12%"
+              ],
+              [
+                "Business Development",
+                "$1,591",
+                "$1,529",
+                "4%"
+              ],
+              [
+                "Card Member Services",
+                "$1,975",
+                "$1,328",
+                "49%"
+              ],
+              [
+                "Variable Customer Engagement Expenses",
+                "$8,457",
+                "$7,235",
+                "17%"
+              ],
+              [
+                "Marketing",
+                "$1,480",
+                "$1,486",
+                "0%"
+              ],
+              [
+                "Operating Expenses",
+                "$3,941",
+                "$3,766",
+                "5%"
+              ],
+              [
+                "Total Expenses",
+                "$13,878",
+                "$12,487",
+                "11%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Expense Performance",
+          "Commentary See additional commentary slides for expense variance detail."
+        ],
+        "surface_ids": [
+          "s20-exp",
+          "s20-vce",
+          "slide-20-disclosure-s20-disc",
+          "slide-20-subtitle",
+          "slide-20-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 20,
+        "layout": "period_comparison",
+        "tables": [
+          {
+            "classes": [
+              "period-comparison"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "Variance"
+              ],
+              [
+                "Card Member Rewards",
+                "$4,891",
+                "$4,378",
+                "12%"
+              ],
+              [
+                "Business Development",
+                "$1,591",
+                "$1,529",
+                "4%"
+              ],
+              [
+                "Card Member Services",
+                "$1,975",
+                "$1,328",
+                "49%"
+              ],
+              [
+                "Variable Customer Engagement Expenses",
+                "$8,457",
+                "$7,235",
+                "17%"
+              ],
+              [
+                "Marketing",
+                "$1,480",
+                "$1,486",
+                "0%"
+              ],
+              [
+                "Operating Expenses",
+                "$3,941",
+                "$3,766",
+                "5%"
+              ],
+              [
+                "Total Expenses",
+                "$13,878",
+                "$12,487",
+                "11%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Expense Performance",
+          "Commentary See additional commentary slides for expense variance detail."
+        ],
+        "surface_ids": [
+          "s20-exp",
+          "s20-vce",
+          "slide-20-disclosure-s20-disc",
+          "slide-20-subtitle",
+          "slide-20-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 21,
+        "layout": "chart_hero_dual",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Dividends",
+                "Share Repurchases",
+                "Positive total",
+                "Negative total",
+                "Authored total"
+              ],
+              [
+                "Q4'24",
+                "$0.5",
+                "$1.1",
+                "$1.6",
+                "$0.0",
+                "$1.6"
+              ],
+              [
+                "Q1'25",
+                "$0.6",
+                "$0.7",
+                "$1.3",
+                "$0.0",
+                "$1.3"
+              ],
+              [
+                "Q2'25",
+                "$0.6",
+                "$1.4",
+                "$2.0",
+                "$0.0",
+                "$2.0"
+              ],
+              [
+                "Q3'25",
+                "$0.6",
+                "$2.3",
+                "$2.9",
+                "$0.0",
+                "$2.9"
+              ],
+              [
+                "Q4'25",
+                "$0.6",
+                "$0.9",
+                "$1.5",
+                "$0.0",
+                "$1.5"
+              ],
+              [
+                "Q1'26",
+                "$0.7",
+                "$1.6",
+                "$2.3",
+                "$0.0",
+                "$2.3"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Capital",
+          "Capital Summary",
+          "Regulatory notes Capital Summary heading is approved neutral structural wording (D170/D314). ROE outlined support is category- aligned."
+        ],
+        "surface_ids": [
+          "s21-cap",
+          "s21-roe",
+          "s21-summary",
+          "slide-21-disclosure-s21-disc",
+          "slide-21-subtitle",
+          "slide-21-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 21,
+        "layout": "chart_hero_dual",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Dividends",
+                "Share Repurchases",
+                "Positive total",
+                "Negative total",
+                "Authored total"
+              ],
+              [
+                "Q4'24",
+                "$0.5",
+                "$1.1",
+                "$1.6",
+                "$0.0",
+                "$1.6"
+              ],
+              [
+                "Q1'25",
+                "$0.6",
+                "$0.7",
+                "$1.3",
+                "$0.0",
+                "$1.3"
+              ],
+              [
+                "Q2'25",
+                "$0.6",
+                "$1.4",
+                "$2.0",
+                "$0.0",
+                "$2.0"
+              ],
+              [
+                "Q3'25",
+                "$0.6",
+                "$2.3",
+                "$2.9",
+                "$0.0",
+                "$2.9"
+              ],
+              [
+                "Q4'25",
+                "$0.6",
+                "$0.9",
+                "$1.5",
+                "$0.0",
+                "$1.5"
+              ],
+              [
+                "Q1'26",
+                "$0.7",
+                "$1.6",
+                "$2.3",
+                "$0.0",
+                "$2.3"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Capital",
+          "Capital Summary",
+          "Regulatory notes Capital Summary heading is approved neutral structural wording (D170/D314). ROE outlined support is category- aligned."
+        ],
+        "surface_ids": [
+          "s21-cap",
+          "s21-roe",
+          "s21-summary",
+          "slide-21-disclosure-s21-disc",
+          "slide-21-subtitle",
+          "slide-21-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 22,
+      "layout": "metric_overview",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 22,
+        "layout": "metric_overview",
+        "tables": [],
+        "headings": [
+          "2026 Guidance",
+          "Full- Year 2026 Guidance"
+        ],
+        "surface_ids": [
+          "s22-guide",
+          "s22-qual",
+          "slide-22-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 22,
+        "layout": "metric_overview",
+        "tables": [],
+        "headings": [
+          "2026 Guidance",
+          "Full- Year 2026 Guidance"
+        ],
+        "surface_ids": [
+          "s22-guide",
+          "s22-qual",
+          "slide-22-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 23,
+      "layout": "section_divider",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 23,
+        "layout": "section_divider",
+        "tables": [],
+        "headings": [
+          "Appendix"
+        ],
+        "surface_ids": [
+          "slide-23-divider"
+        ]
+      },
+      "svg": {
+        "slide_number": 23,
+        "layout": "section_divider",
+        "tables": [],
+        "headings": [
+          "Appendix"
+        ],
+        "surface_ids": [
+          "slide-23-divider"
+        ]
+      }
+    },
+    {
+      "slide_number": 24,
+      "layout": "single_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 24,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "YoY growth"
+              ],
+              [
+                "U.S. Consumer Services",
+                "10%"
+              ],
+              [
+                "U.S. SME",
+                "4%"
+              ],
+              [
+                "U.S. Large & Global Corp.",
+                "4%"
+              ],
+              [
+                "Commercial Services (total)",
+                "4%"
+              ],
+              [
+                "Int'l Consumer",
+                "13%"
+              ],
+              [
+                "Int'l SME & Large Corp.",
+                "12%"
+              ],
+              [
+                "International Card Services",
+                "13%"
+              ],
+              [
+                "Processed Volumes",
+                "12%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Q1'26 Network Volumes Growth by Customer Type",
+          "Network volumes $486B Total Network Volumes. % of Total Network Volumes outlined support retained in disclosure."
+        ],
+        "surface_ids": [
+          "s24-growth",
+          "slide-24-disclosure-s24-disc",
+          "slide-24-subtitle",
+          "slide-24-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 24,
+        "layout": "single_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "YoY growth"
+              ],
+              [
+                "U.S. Consumer Services",
+                "10%"
+              ],
+              [
+                "U.S. SME",
+                "4%"
+              ],
+              [
+                "U.S. Large & Global Corp.",
+                "4%"
+              ],
+              [
+                "Commercial Services (total)",
+                "4%"
+              ],
+              [
+                "Int'l Consumer",
+                "13%"
+              ],
+              [
+                "Int'l SME & Large Corp.",
+                "12%"
+              ],
+              [
+                "International Card Services",
+                "13%"
+              ],
+              [
+                "Processed Volumes",
+                "12%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Q1'26 Network Volumes Growth by Customer Type",
+          "Network volumes $486B Total Network Volumes. % of Total Network Volumes outlined support retained in disclosure."
+        ],
+        "surface_ids": [
+          "s24-growth",
+          "slide-24-disclosure-s24-disc",
+          "slide-24-subtitle",
+          "slide-24-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 25,
+      "layout": "data_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 25,
+        "layout": "data_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q…",
+                "YoY…"
+              ],
+              [
+                "Euro EUR",
+                "5%",
+                "(10%)"
+              ],
+              [
+                "UK GBP",
+                "6%",
+                "(6%)"
+              ],
+              [
+                "Japan JPY",
+                "4%",
+                "3%"
+              ],
+              [
+                "Australia $",
+                "4%",
+                "(10%)"
+              ],
+              [
+                "Canada $",
+                "3%",
+                "(4%)"
+              ],
+              [
+                "Mexico $",
+                "2%",
+                "(15%)"
+              ],
+              [
+                "Top 6 Intl. Currencies",
+                "24%",
+                "(7%)"
+              ],
+              [
+                "All Other Intl. Currencies",
+                "3%",
+                "—"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "FX Impact on Billed Business",
+          "FX notes See source for FX- adjusted methodology. Unavailable values are missing."
+        ],
+        "surface_ids": [
+          "s25-fx",
+          "slide-25-disclosure-s25-disc",
+          "slide-25-subtitle",
+          "slide-25-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 25,
+        "layout": "data_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q…",
+                "YoY…"
+              ],
+              [
+                "Euro EUR",
+                "5%",
+                "(10%)"
+              ],
+              [
+                "UK GBP",
+                "6%",
+                "(6%)"
+              ],
+              [
+                "Japan JPY",
+                "4%",
+                "3%"
+              ],
+              [
+                "Australia $",
+                "4%",
+                "(10%)"
+              ],
+              [
+                "Canada $",
+                "3%",
+                "(4%)"
+              ],
+              [
+                "Mexico $",
+                "2%",
+                "(15%)"
+              ],
+              [
+                "Top 6 Intl. Currencies",
+                "24%",
+                "(7%)"
+              ],
+              [
+                "All Other Intl. Currencies",
+                "3%",
+                "—"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "FX Impact on Billed Business",
+          "FX notes See source for FX- adjusted methodology. Unavailable values are missing."
+        ],
+        "surface_ids": [
+          "s25-fx",
+          "slide-25-disclosure-s25-disc",
+          "slide-25-subtitle",
+          "slide-25-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 26,
+      "layout": "data_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 26,
+        "layout": "data_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Restaurants",
+                "Lodging",
+                "Airlines",
+                "Other",
+                "Total T&E"
+              ],
+              [
+                "YoY Growth",
+                "9%",
+                "6%",
+                "8%",
+                "13%",
+                "9%"
+              ],
+              [
+                "% of Total Billed Business",
+                "7%",
+                "5%",
+                "7%",
+                "9%",
+                "29%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Travel & Entertainment Billed Business"
+        ],
+        "surface_ids": [
+          "s26-te",
+          "slide-26-subtitle",
+          "slide-26-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 26,
+        "layout": "data_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Restaurants",
+                "Lodging",
+                "Airlines",
+                "Other",
+                "Total T&E"
+              ],
+              [
+                "YoY Growth",
+                "9%",
+                "6%",
+                "8%",
+                "13%",
+                "9%"
+              ],
+              [
+                "% of Total Billed Business",
+                "7%",
+                "5%",
+                "7%",
+                "9%",
+                "29%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Travel & Entertainment Billed Business"
+        ],
+        "surface_ids": [
+          "s26-te",
+          "slide-26-subtitle",
+          "slide-26-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 27,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Q1 Upside Scenario",
+                "Q1 Baseline Scenario",
+                "Q1 Downside Scenario"
+              ],
+              [
+                "Q1'25",
+                "4.1%",
+                "4.1%",
+                "4.1%"
+              ],
+              [
+                "Q2'25",
+                "4.2%",
+                "4.2%",
+                "4.2%"
+              ],
+              [
+                "Q3'25",
+                "4.3%",
+                "4.3%",
+                "4.3%"
+              ],
+              [
+                "Q4'25",
+                "4.5%",
+                "4.5%",
+                "4.5%"
+              ],
+              [
+                "Q1'26",
+                "4.5%",
+                "4.5%",
+                "4.5%"
+              ],
+              [
+                "Q2'26",
+                "4.0%",
+                "4.5%",
+                "6.1%"
+              ],
+              [
+                "Q3'26",
+                "3.6%",
+                "4.5%",
+                "7.2%"
+              ],
+              [
+                "Q4'26",
+                "3.5%",
+                "4.5%",
+                "8.0%"
+              ],
+              [
+                "Q1'27",
+                "3.4%",
+                "4.4%",
+                "8.4%"
+              ],
+              [
+                "Q2'27",
+                "3.4%",
+                "4.4%",
+                "8.4%"
+              ],
+              [
+                "Q3'27",
+                "3.5%",
+                "4.4%",
+                "8.3%"
+              ],
+              [
+                "Q4'27",
+                "3.7%",
+                "4.4%",
+                "8.0%"
+              ],
+              [
+                "Q1'28",
+                "3.8%",
+                "4.4%",
+                "7.6%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Q1 Upside Scenario",
+                "Q1 Baseline Scenario",
+                "Q1 Downside Scenario"
+              ],
+              [
+                "Q1'25",
+                "-0.6%",
+                "-0.6%",
+                "-0.6%"
+              ],
+              [
+                "Q2'25",
+                "3.9%",
+                "3.9%",
+                "3.9%"
+              ],
+              [
+                "Q3'25",
+                "4.4%",
+                "4.4%",
+                "4.4%"
+              ],
+              [
+                "Q4'25",
+                "2.9%",
+                "2.9%",
+                "2.9%"
+              ],
+              [
+                "Q1'26",
+                "3.1%",
+                "3.1%",
+                "3.1%"
+              ],
+              [
+                "Q2'26",
+                "4.8%",
+                "2.6%",
+                "-3.5%"
+              ],
+              [
+                "Q3'26",
+                "3.3%",
+                "2.0%",
+                "-3.2%"
+              ],
+              [
+                "Q4'26",
+                "3.2%",
+                "1.8%",
+                "-3.8%"
+              ],
+              [
+                "Q1'27",
+                "3.2%",
+                "1.7%",
+                "0.5%"
+              ],
+              [
+                "Q2'27",
+                "2.6%",
+                "1.7%",
+                "1.0%"
+              ],
+              [
+                "Q3'27",
+                "1.8%",
+                "1.8%",
+                "1.3%"
+              ],
+              [
+                "Q4'27",
+                "2.2%",
+                "1.9%",
+                "1.6%"
+              ],
+              [
+                "Q1'28",
+                "1.6%",
+                "1.9%",
+                "1.6%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Credit Reserve Macroeconomic Scenarios: Select Variables",
+          "Scenario / SAAR Reflects the range of variables available as of March 31, 2026. Forecast assumptions are from an independent third party and represent the range of forecasts from the macroeconomic scenarios used during the quarter without applying a weight to those scenarios. * Real GDP QoQ % Change Seasonally Adjusted to Annualized Rates (SAAR)."
+        ],
+        "surface_ids": [
+          "s27-gdp",
+          "s27-unemp",
+          "slide-27-disclosure-s27-disc",
+          "slide-27-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 27,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Q1 Upside Scenario",
+                "Q1 Baseline Scenario",
+                "Q1 Downside Scenario"
+              ],
+              [
+                "Q1'25",
+                "4.1%",
+                "4.1%",
+                "4.1%"
+              ],
+              [
+                "Q2'25",
+                "4.2%",
+                "4.2%",
+                "4.2%"
+              ],
+              [
+                "Q3'25",
+                "4.3%",
+                "4.3%",
+                "4.3%"
+              ],
+              [
+                "Q4'25",
+                "4.5%",
+                "4.5%",
+                "4.5%"
+              ],
+              [
+                "Q1'26",
+                "4.5%",
+                "4.5%",
+                "4.5%"
+              ],
+              [
+                "Q2'26",
+                "4.0%",
+                "4.5%",
+                "6.1%"
+              ],
+              [
+                "Q3'26",
+                "3.6%",
+                "4.5%",
+                "7.2%"
+              ],
+              [
+                "Q4'26",
+                "3.5%",
+                "4.5%",
+                "8.0%"
+              ],
+              [
+                "Q1'27",
+                "3.4%",
+                "4.4%",
+                "8.4%"
+              ],
+              [
+                "Q2'27",
+                "3.4%",
+                "4.4%",
+                "8.4%"
+              ],
+              [
+                "Q3'27",
+                "3.5%",
+                "4.4%",
+                "8.3%"
+              ],
+              [
+                "Q4'27",
+                "3.7%",
+                "4.4%",
+                "8.0%"
+              ],
+              [
+                "Q1'28",
+                "3.8%",
+                "4.4%",
+                "7.6%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Q1 Upside Scenario",
+                "Q1 Baseline Scenario",
+                "Q1 Downside Scenario"
+              ],
+              [
+                "Q1'25",
+                "-0.6%",
+                "-0.6%",
+                "-0.6%"
+              ],
+              [
+                "Q2'25",
+                "3.9%",
+                "3.9%",
+                "3.9%"
+              ],
+              [
+                "Q3'25",
+                "4.4%",
+                "4.4%",
+                "4.4%"
+              ],
+              [
+                "Q4'25",
+                "2.9%",
+                "2.9%",
+                "2.9%"
+              ],
+              [
+                "Q1'26",
+                "3.1%",
+                "3.1%",
+                "3.1%"
+              ],
+              [
+                "Q2'26",
+                "4.8%",
+                "2.6%",
+                "-3.5%"
+              ],
+              [
+                "Q3'26",
+                "3.3%",
+                "2.0%",
+                "-3.2%"
+              ],
+              [
+                "Q4'26",
+                "3.2%",
+                "1.8%",
+                "-3.8%"
+              ],
+              [
+                "Q1'27",
+                "3.2%",
+                "1.7%",
+                "0.5%"
+              ],
+              [
+                "Q2'27",
+                "2.6%",
+                "1.7%",
+                "1.0%"
+              ],
+              [
+                "Q3'27",
+                "1.8%",
+                "1.8%",
+                "1.3%"
+              ],
+              [
+                "Q4'27",
+                "2.2%",
+                "1.9%",
+                "1.6%"
+              ],
+              [
+                "Q1'28",
+                "1.6%",
+                "1.9%",
+                "1.6%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Credit Reserve Macroeconomic Scenarios: Select Variables",
+          "Scenario / SAAR Reflects the range of variables available as of March 31, 2026. Forecast assumptions are from an independent third party and represent the range of forecasts from the macroeconomic scenarios used during the quarter without applying a weight to those scenarios. * Real GDP QoQ % Change Seasonally Adjusted to Annualized Rates (SAAR)."
+        ],
+        "surface_ids": [
+          "s27-gdp",
+          "s27-unemp",
+          "slide-27-disclosure-s27-disc",
+          "slide-27-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 28,
+      "layout": "dual_chart",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 28,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Deposits",
+                "Unsecured Funding**",
+                "Short-term Funding / Card ABS*",
+                "Positive total",
+                "Negative total"
+              ],
+              [
+                "Q4'25",
+                "$72.0",
+                "$21.0",
+                "$7.0",
+                "$100.0",
+                "$0.0"
+              ],
+              [
+                "Q1'26",
+                "$72.0",
+                "$21.0",
+                "$7.0",
+                "$100.0",
+                "$0.0"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Savings and Direct CDs",
+                "Third Party CDs",
+                "Third Party Sweep",
+                "Checking",
+                "Positive total",
+                "Negative total"
+              ],
+              [
+                "Q4'25",
+                "$81.0",
+                "$10.0",
+                "$7.0",
+                "$2.0",
+                "$100.0",
+                "$0.0"
+              ],
+              [
+                "Q1'26",
+                "$82.0",
+                "$10.0",
+                "$6.0",
+                "$2.0",
+                "$100.0",
+                "$0.0"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Funding and Deposits",
+          "FDIC coverage Approved 92% FDIC coverage callout. No pseudo- title totals."
+        ],
+        "surface_ids": [
+          "s28-dep",
+          "s28-fund",
+          "slide-28-disclosure-s28-disc",
+          "slide-28-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 28,
+        "layout": "dual_chart",
+        "tables": [
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Deposits",
+                "Unsecured Funding**",
+                "Short-term Funding / Card ABS*",
+                "Positive total",
+                "Negative total"
+              ],
+              [
+                "Q4'25",
+                "$72.0",
+                "$21.0",
+                "$7.0",
+                "$100.0",
+                "$0.0"
+              ],
+              [
+                "Q1'26",
+                "$72.0",
+                "$21.0",
+                "$7.0",
+                "$100.0",
+                "$0.0"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "chart-semantic-table",
+              "visually-hidden"
+            ],
+            "rows": [
+              [
+                "Category",
+                "Savings and Direct CDs",
+                "Third Party CDs",
+                "Third Party Sweep",
+                "Checking",
+                "Positive total",
+                "Negative total"
+              ],
+              [
+                "Q4'25",
+                "$81.0",
+                "$10.0",
+                "$7.0",
+                "$2.0",
+                "$100.0",
+                "$0.0"
+              ],
+              [
+                "Q1'26",
+                "$82.0",
+                "$10.0",
+                "$6.0",
+                "$2.0",
+                "$100.0",
+                "$0.0"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Funding and Deposits",
+          "FDIC coverage Approved 92% FDIC coverage callout. No pseudo- title totals."
+        ],
+        "surface_ids": [
+          "s28-dep",
+          "s28-fund",
+          "slide-28-disclosure-s28-disc",
+          "slide-28-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 29,
+      "layout": "narrative",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 29,
+        "layout": "narrative",
+        "tables": [],
+        "headings": [
+          "Additional Commentary - Variance Analysis"
+        ],
+        "surface_ids": [
+          "slide-29-block-var-29",
+          "slide-29-subtitle",
+          "slide-29-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 29,
+        "layout": "narrative",
+        "tables": [],
+        "headings": [
+          "Additional Commentary - Variance Analysis"
+        ],
+        "surface_ids": [
+          "slide-29-block-var-29",
+          "slide-29-subtitle",
+          "slide-29-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 30,
+      "layout": "narrative",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 30,
+        "layout": "narrative",
+        "tables": [],
+        "headings": [
+          "Additional Commentary - Variance Analysis"
+        ],
+        "surface_ids": [
+          "slide-30-block-var-30",
+          "slide-30-subtitle",
+          "slide-30-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 30,
+        "layout": "narrative",
+        "tables": [],
+        "headings": [
+          "Additional Commentary - Variance Analysis"
+        ],
+        "surface_ids": [
+          "slide-30-block-var-30",
+          "slide-30-subtitle",
+          "slide-30-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 31,
+      "layout": "annex_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 31,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "Billed Business Reported",
+                "6%",
+                "7%",
+                "9%",
+                "9%",
+                "10%"
+              ],
+              [
+                "Billed Business FX- Adj*",
+                "6%",
+                "7%",
+                "8%",
+                "8%",
+                "9%"
+              ],
+              [
+                "G&S Reported",
+                "6%",
+                "8%",
+                "9%",
+                "9%",
+                "10%"
+              ],
+              [
+                "G&S FX- Adj*",
+                "7%",
+                "7%",
+                "9%",
+                "8%",
+                "8%"
+              ],
+              [
+                "T&E Reported",
+                "5%",
+                "6%",
+                "8%",
+                "9%",
+                "12%"
+              ],
+              [
+                "T&E FX- Adj*",
+                "6%",
+                "5%",
+                "8%",
+                "8%",
+                "9%"
+              ],
+              [
+                "Processed Volumes Reported",
+                "—",
+                "—",
+                "—",
+                "—",
+                "12%"
+              ],
+              [
+                "Processed Volumes FX- Adj*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "9%"
+              ],
+              [
+                "BB CAGR Q1'19- Q1'26 Reported",
+                "5%",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "BB CAGR Q1'19- Q1'26 FX- Adj*",
+                "8%",
+                "—",
+                "—",
+                "—",
+                "—"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 1 (1 of 2) Billed Business and Processed Volumes - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s31-annex",
+          "slide-31-subtitle",
+          "slide-31-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 31,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "Billed Business Reported",
+                "6%",
+                "7%",
+                "9%",
+                "9%",
+                "10%"
+              ],
+              [
+                "Billed Business FX- Adj*",
+                "6%",
+                "7%",
+                "8%",
+                "8%",
+                "9%"
+              ],
+              [
+                "G&S Reported",
+                "6%",
+                "8%",
+                "9%",
+                "9%",
+                "10%"
+              ],
+              [
+                "G&S FX- Adj*",
+                "7%",
+                "7%",
+                "9%",
+                "8%",
+                "8%"
+              ],
+              [
+                "T&E Reported",
+                "5%",
+                "6%",
+                "8%",
+                "9%",
+                "12%"
+              ],
+              [
+                "T&E FX- Adj*",
+                "6%",
+                "5%",
+                "8%",
+                "8%",
+                "9%"
+              ],
+              [
+                "Processed Volumes Reported",
+                "—",
+                "—",
+                "—",
+                "—",
+                "12%"
+              ],
+              [
+                "Processed Volumes FX- Adj*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "9%"
+              ],
+              [
+                "BB CAGR Q1'19- Q1'26 Reported",
+                "5%",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "BB CAGR Q1'19- Q1'26 FX- Adj*",
+                "8%",
+                "—",
+                "—",
+                "—",
+                "—"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 1 (1 of 2) Billed Business and Processed Volumes - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s31-annex",
+          "slide-31-subtitle",
+          "slide-31-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 32,
+        "layout": "grouped_annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Segment",
+                "…",
+                "F…"
+              ],
+              [
+                "U. S. Large and Global Corp.",
+                "4%",
+                "4%"
+              ],
+              [
+                "Total Billed Business",
+                "4%",
+                "4%"
+              ],
+              [
+                "G&S",
+                "3%",
+                "3%"
+              ],
+              [
+                "T&E",
+                "7%",
+                "6%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Segment",
+                "Q…",
+                "F…"
+              ],
+              [
+                "International Consumer",
+                "21%",
+                "13%"
+              ],
+              [
+                "International SME & Large Corp.",
+                "19%",
+                "12%"
+              ],
+              [
+                "Total Billed Business",
+                "20%",
+                "13%"
+              ],
+              [
+                "G&S",
+                "21%",
+                "14%"
+              ],
+              [
+                "T&E",
+                "18%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 1 (2 of 2) Billed Business - Reported & FX- Adjusted",
+          "Commercial Services",
+          "International Card Services"
+        ],
+        "surface_ids": [
+          "s32-peer-0",
+          "s32-peer-1",
+          "slide-32-subtitle",
+          "slide-32-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 32,
+        "layout": "grouped_annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Segment",
+                "…",
+                "F…"
+              ],
+              [
+                "U. S. Large and Global Corp.",
+                "4%",
+                "4%"
+              ],
+              [
+                "Total Billed Business",
+                "4%",
+                "4%"
+              ],
+              [
+                "G&S",
+                "3%",
+                "3%"
+              ],
+              [
+                "T&E",
+                "7%",
+                "6%"
+              ]
+            ]
+          },
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Segment",
+                "Q…",
+                "F…"
+              ],
+              [
+                "International Consumer",
+                "21%",
+                "13%"
+              ],
+              [
+                "International SME & Large Corp.",
+                "19%",
+                "12%"
+              ],
+              [
+                "Total Billed Business",
+                "20%",
+                "13%"
+              ],
+              [
+                "G&S",
+                "21%",
+                "14%"
+              ],
+              [
+                "T&E",
+                "18%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 1 (2 of 2) Billed Business - Reported & FX- Adjusted",
+          "Commercial Services",
+          "International Card Services"
+        ],
+        "surface_ids": [
+          "s32-peer-0",
+          "s32-peer-1",
+          "slide-32-subtitle",
+          "slide-32-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 33,
+      "layout": "annex_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 33,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'19",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Total Balances",
+                "$142",
+                "$194",
+                "$199",
+                "$202",
+                "$208",
+                "$207",
+                "$212",
+                "$216",
+                "$225",
+                "$224"
+              ],
+              [
+                "FX- Adjusted Total Balances*",
+                "$140",
+                "$193",
+                "$200",
+                "$202",
+                "$211",
+                "$209",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Total Balances",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%",
+                "7%",
+                "7%",
+                "8%",
+                "8%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Total Balances*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%",
+                "6%",
+                "7%",
+                "7%",
+                "7%"
+              ],
+              [
+                "GAAP Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%"
+              ],
+              [
+                "FX- Adjusted Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 2 Total Balances - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s33-annex",
+          "slide-33-subtitle",
+          "slide-33-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 33,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'19",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Total Balances",
+                "$142",
+                "$194",
+                "$199",
+                "$202",
+                "$208",
+                "$207",
+                "$212",
+                "$216",
+                "$225",
+                "$224"
+              ],
+              [
+                "FX- Adjusted Total Balances*",
+                "$140",
+                "$193",
+                "$200",
+                "$202",
+                "$211",
+                "$209",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Total Balances",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%",
+                "7%",
+                "7%",
+                "8%",
+                "8%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Total Balances*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%",
+                "6%",
+                "7%",
+                "7%",
+                "7%"
+              ],
+              [
+                "GAAP Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%"
+              ],
+              [
+                "FX- Adjusted Total Balances (incl. Card Balances HFS) Q1'19 - Q1'26 CAGR*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 2 Total Balances - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s33-annex",
+          "slide-33-subtitle",
+          "slide-33-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 34,
+      "layout": "annex_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 34,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "YoY% Inc/(Dec)"
+              ],
+              [
+                "Discount Revenue",
+                "$9,512",
+                "$8,743",
+                "9%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$8,857",
+                "7%"
+              ],
+              [
+                "Net Card Fees",
+                "$2,752",
+                "$2,333",
+                "18%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$2,374",
+                "16%"
+              ],
+              [
+                "Service Fees and Other Revenue",
+                "$1,951",
+                "$1,722",
+                "13%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$1,783",
+                "9%"
+              ],
+              [
+                "Net Interest Income",
+                "$4,692",
+                "$4,169",
+                "13%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$4,196",
+                "12%"
+              ],
+              [
+                "Revenues Net of Interest Expense",
+                "$18,907",
+                "$16,967",
+                "11%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$17,210",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 3 Revenue - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s34-annex",
+          "slide-34-subtitle",
+          "slide-34-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 34,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'26",
+                "Q1'25",
+                "YoY% Inc/(Dec)"
+              ],
+              [
+                "Discount Revenue",
+                "$9,512",
+                "$8,743",
+                "9%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$8,857",
+                "7%"
+              ],
+              [
+                "Net Card Fees",
+                "$2,752",
+                "$2,333",
+                "18%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$2,374",
+                "16%"
+              ],
+              [
+                "Service Fees and Other Revenue",
+                "$1,951",
+                "$1,722",
+                "13%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$1,783",
+                "9%"
+              ],
+              [
+                "Net Interest Income",
+                "$4,692",
+                "$4,169",
+                "13%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$4,196",
+                "12%"
+              ],
+              [
+                "Revenues Net of Interest Expense",
+                "$18,907",
+                "$16,967",
+                "11%"
+              ],
+              [
+                "FX- Adjusted*",
+                "—",
+                "$17,210",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 3 Revenue - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s34-annex",
+          "slide-34-subtitle",
+          "slide-34-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 35,
+      "layout": "annex_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 35,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'19",
+                "Q1'23",
+                "Q2'23",
+                "Q3'23",
+                "Q4'23",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Net Card Fees",
+                "$0.90",
+                "$1.70",
+                "$1.80",
+                "$1.80",
+                "$1.90",
+                "$2.00",
+                "$2.10",
+                "$2.20",
+                "$2.20",
+                "$2.30",
+                "$2.50",
+                "$2.60",
+                "$2.60",
+                "$2.80"
+              ],
+              [
+                "FX- Adjusted Net Card Fees*",
+                "$0.90",
+                "$1.70",
+                "$1.80",
+                "$1.80",
+                "$1.90",
+                "$2.00",
+                "$2.10",
+                "$2.20",
+                "$2.30",
+                "$2.40",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Net Card Fees",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "15%",
+                "15%",
+                "18%",
+                "18%",
+                "18%",
+                "20%",
+                "18%",
+                "17%",
+                "18%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Net Card Fees*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "16%",
+                "16%",
+                "18%",
+                "19%",
+                "20%",
+                "20%",
+                "17%",
+                "16%",
+                "16%"
+              ],
+              [
+                "GAAP Net Card Fees Q1'19 - Q1'26 CAGR",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "17%"
+              ],
+              [
+                "FX- Adjusted Net Card Fees Q1'19 - Q1'26 CAGR*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "17%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 4 Net Card Fees - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s35-annex",
+          "slide-35-subtitle",
+          "slide-35-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 35,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'19",
+                "Q1'23",
+                "Q2'23",
+                "Q3'23",
+                "Q4'23",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Net Card Fees",
+                "$0.90",
+                "$1.70",
+                "$1.80",
+                "$1.80",
+                "$1.90",
+                "$2.00",
+                "$2.10",
+                "$2.20",
+                "$2.20",
+                "$2.30",
+                "$2.50",
+                "$2.60",
+                "$2.60",
+                "$2.80"
+              ],
+              [
+                "FX- Adjusted Net Card Fees*",
+                "$0.90",
+                "$1.70",
+                "$1.80",
+                "$1.80",
+                "$1.90",
+                "$2.00",
+                "$2.10",
+                "$2.20",
+                "$2.30",
+                "$2.40",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Net Card Fees",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "15%",
+                "15%",
+                "18%",
+                "18%",
+                "18%",
+                "20%",
+                "18%",
+                "17%",
+                "18%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Net Card Fees*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "16%",
+                "16%",
+                "18%",
+                "19%",
+                "20%",
+                "20%",
+                "17%",
+                "16%",
+                "16%"
+              ],
+              [
+                "GAAP Net Card Fees Q1'19 - Q1'26 CAGR",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "17%"
+              ],
+              [
+                "FX- Adjusted Net Card Fees Q1'19 - Q1'26 CAGR*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "17%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 4 Net Card Fees - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s35-annex",
+          "slide-35-subtitle",
+          "slide-35-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 36,
+      "layout": "annex_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 36,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'19",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Net Interest Income",
+                "$2.10",
+                "$3.80",
+                "$3.70",
+                "$4.00",
+                "$4.00",
+                "$4.20",
+                "$4.20",
+                "$4.50",
+                "$4.50",
+                "$4.70"
+              ],
+              [
+                "FX- Adjusted Net Interest Income*",
+                "$2.10",
+                "$3.70",
+                "$3.70",
+                "$4.00",
+                "$4.10",
+                "$4.20",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Net Interest Income",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "11%",
+                "12%",
+                "12%",
+                "12%",
+                "13%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Net Interest Income*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "11%",
+                "12%",
+                "12%",
+                "12%",
+                "12%"
+              ],
+              [
+                "GAAP Net Interest Income Q1'19 - Q1'26 CAGR",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "12%"
+              ],
+              [
+                "FX- Adjusted Net Interest Income Q1'19 - Q1'26 CAGR*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "13%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 5 Net Interest Income - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s36-annex",
+          "slide-36-subtitle",
+          "slide-36-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 36,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'19",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Net Interest Income",
+                "$2.10",
+                "$3.80",
+                "$3.70",
+                "$4.00",
+                "$4.00",
+                "$4.20",
+                "$4.20",
+                "$4.50",
+                "$4.50",
+                "$4.70"
+              ],
+              [
+                "FX- Adjusted Net Interest Income*",
+                "$2.10",
+                "$3.70",
+                "$3.70",
+                "$4.00",
+                "$4.10",
+                "$4.20",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Net Interest Income",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "11%",
+                "12%",
+                "12%",
+                "12%",
+                "13%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Net Interest Income*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "11%",
+                "12%",
+                "12%",
+                "12%",
+                "12%"
+              ],
+              [
+                "GAAP Net Interest Income Q1'19 - Q1'26 CAGR",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "12%"
+              ],
+              [
+                "FX- Adjusted Net Interest Income Q1'19 - Q1'26 CAGR*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "—",
+                "13%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 5 Net Interest Income - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s36-annex",
+          "slide-36-subtitle",
+          "slide-36-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 37,
+      "layout": "annex_table",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 37,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Revenues Net of Interest Expense",
+                "$15.80",
+                "$16.30",
+                "$16.60",
+                "$17.20",
+                "$17.00",
+                "$17.90",
+                "$18.40",
+                "$19.00",
+                "$18.90"
+              ],
+              [
+                "FX- Adjusted Revenues Net of Interest Expense*",
+                "$15.70",
+                "$16.40",
+                "$16.70",
+                "$17.30",
+                "$17.20",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Revenues Net of Interest Expense",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%",
+                "9%",
+                "11%",
+                "10%",
+                "11%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Revenues Net of Interest Expense*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "8%",
+                "9%",
+                "11%",
+                "9%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 6 Revenues Net of Interest Expense - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s37-annex",
+          "slide-37-subtitle",
+          "slide-37-title"
+        ]
+      },
+      "svg": {
+        "slide_number": 37,
+        "layout": "annex_table",
+        "tables": [
+          {
+            "classes": [
+              "data-table"
+            ],
+            "rows": [
+              [
+                "Metric",
+                "Q1'24",
+                "Q2'24",
+                "Q3'24",
+                "Q4'24",
+                "Q1'25",
+                "Q2'25",
+                "Q3'25",
+                "Q4'25",
+                "Q1'26"
+              ],
+              [
+                "GAAP Revenues Net of Interest Expense",
+                "$15.80",
+                "$16.30",
+                "$16.60",
+                "$17.20",
+                "$17.00",
+                "$17.90",
+                "$18.40",
+                "$19.00",
+                "$18.90"
+              ],
+              [
+                "FX- Adjusted Revenues Net of Interest Expense*",
+                "$15.70",
+                "$16.40",
+                "$16.70",
+                "$17.30",
+                "$17.20",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "YoY% Inc/(Dec) in GAAP Revenues Net of Interest Expense",
+                "—",
+                "—",
+                "—",
+                "—",
+                "7%",
+                "9%",
+                "11%",
+                "10%",
+                "11%"
+              ],
+              [
+                "YoY% Inc/(Dec) in FX- Adjusted Revenues Net of Interest Expense*",
+                "—",
+                "—",
+                "—",
+                "—",
+                "8%",
+                "9%",
+                "11%",
+                "9%",
+                "10%"
+              ]
+            ]
+          }
+        ],
+        "headings": [
+          "Annex 6 Revenues Net of Interest Expense - Reported & FX- Adjusted"
+        ],
+        "surface_ids": [
+          "s37-annex",
+          "slide-37-subtitle",
+          "slide-37-title"
+        ]
+      }
+    },
+    {
+      "slide_number": 38,
+      "layout": "legal_notice",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 38,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [
+          "Cautionary Note Regarding Forward- Looking Statements"
+        ],
+        "surface_ids": [
+          "slide-38-legal"
+        ]
+      },
+      "svg": {
+        "slide_number": 38,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [
+          "Cautionary Note Regarding Forward- Looking Statements"
+        ],
+        "surface_ids": [
+          "slide-38-legal"
+        ]
+      }
+    },
+    {
+      "slide_number": 39,
+      "layout": "legal_notice",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 39,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-39-legal"
+        ]
+      },
+      "svg": {
+        "slide_number": 39,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-39-legal"
+        ]
+      }
+    },
+    {
+      "slide_number": 40,
+      "layout": "legal_notice",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 40,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-40-legal"
+        ]
+      },
+      "svg": {
+        "slide_number": 40,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-40-legal"
+        ]
+      }
+    },
+    {
+      "slide_number": 41,
+      "layout": "legal_notice",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 41,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-41-legal"
+        ]
+      },
+      "svg": {
+        "slide_number": 41,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-41-legal"
+        ]
+      }
+    },
+    {
+      "slide_number": 42,
+      "layout": "legal_notice",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 42,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-42-legal"
+        ]
+      },
+      "svg": {
+        "slide_number": 42,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-42-legal"
+        ]
+      }
+    },
+    {
+      "slide_number": 43,
+      "layout": "legal_notice",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 43,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-43-legal"
+        ]
+      },
+      "svg": {
+        "slide_number": 43,
+        "layout": "legal_notice",
+        "tables": [],
+        "headings": [],
+        "surface_ids": [
+          "slide-43-legal"
+        ]
+      }
+    },
+    {
+      "slide_number": 44,
+      "layout": "closing_cover",
+      "identical": true,
+      "chartjs": {
+        "slide_number": 44,
+        "layout": "closing_cover",
+        "tables": [],
+        "headings": [
+          "American Express"
+        ],
+        "surface_ids": [
+          "slide-44-cover"
+        ]
+      },
+      "svg": {
+        "slide_number": 44,
+        "layout": "closing_cover",
+        "tables": [],
+        "headings": [
+          "American Express"
+        ],
+        "surface_ids": [
+          "slide-44-cover"
+        ]
+      }
+    }
+  ]
+}

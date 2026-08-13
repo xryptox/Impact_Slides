@@ -1,0 +1,35 @@
+{
+  "fixtures": [
+    {
+      "kind": "sparse",
+      "path": "tests/fixtures/renderer_v3/minimal_line_chart.json",
+      "ok": true,
+      "errors": 0
+    },
+    {
+      "kind": "dense",
+      "path": "tests/fixtures/renderer_v3/annex_and_comparison_tables.json",
+      "ok": true,
+      "errors": 0
+    },
+    {
+      "kind": "long_label",
+      "path": "tests/fixtures/renderer_v3/cards_reviews_compositions.json",
+      "ok": true,
+      "errors": 0
+    },
+    {
+      "kind": "mixed_sign",
+      "path": "tests/fixtures/renderer_v3/minimal_stacked_bar.json",
+      "ok": true,
+      "errors": 0
+    }
+  ],
+  "malformed_rejected": true,
+  "kinds": [
+    "dense",
+    "long_label",
+    "mixed_sign",
+    "sparse"
+  ]
+}

@@ -1,0 +1,2002 @@
+{
+  "viewport": [
+    1920,
+    1080
+  ],
+  "mode": "chartjs",
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout": "opening_cover",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "de53922ca38251cc5033b9e73c5c7787f9e71656532ba75ab665941f252d67c0"
+    },
+    {
+      "slide_number": 2,
+      "layout": "narrative",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "1fcce73dc9b6cda671cea13bc52c6c623355991633731cb365d9c9ad2543d4bd"
+    },
+    {
+      "slide_number": 3,
+      "layout": "period_comparison",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "bfdcbba3eb32f2e12f16ca71c3b804611f04ba235bc62a4eb7a88edc522fec2d"
+    },
+    {
+      "slide_number": 4,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1648,
+          "height": 712,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 28,
+            "right": 1488,
+            "bottom": 648
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1648,
+          "height": 712,
+          "bg_width": 1648,
+          "bg_height": 712,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "endpoint"
+        },
+        {
+          "cls": "endpoint"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "6dbb01cd939f4e586e9610230f363807d7f09b36593b9199b2192b034bf38f64"
+    },
+    {
+      "slide_number": 5,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1648,
+          "height": 712,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 28,
+            "right": 1488,
+            "bottom": 648
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1648,
+          "height": 712,
+          "bg_width": 1648,
+          "bg_height": 712,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "endpoint"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "c61ac5148e00faf9f29fd4bc8fed7fad15f2e2e9f285bf8dd594e59989a9a116"
+    },
+    {
+      "slide_number": 6,
+      "layout": "dual_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 852,
+          "height": 642,
+          "chart_area": {
+            "width": 684,
+            "height": 538,
+            "left": 88,
+            "top": 40,
+            "right": 772,
+            "bottom": 578
+          }
+        },
+        {
+          "index": 1,
+          "width": 852,
+          "height": 642,
+          "chart_area": {
+            "width": 572,
+            "height": 550,
+            "left": 120,
+            "top": 28,
+            "right": 692,
+            "bottom": 578
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 852,
+          "height": 642,
+          "bg_width": 852,
+          "bg_height": 642,
+          "has_axis": true
+        },
+        {
+          "width": 852,
+          "height": 642,
+          "bg_width": 852,
+          "bg_height": 642,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "beyond_pos"
+        },
+        {
+          "cls": "beyond_pos"
+        },
+        {
+          "cls": "beyond_pos"
+        },
+        {
+          "cls": "beyond_pos"
+        },
+        {
+          "cls": "beyond_pos"
+        },
+        {
+          "cls": "beyond_pos"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "64698abb4a9c075ebf41aa92cd593319fa142d180015833289acc9200a4625ef"
+    },
+    {
+      "slide_number": 7,
+      "layout": "comparison_cards",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "45978dbcb489b0fb41318b0c72250b359f748f54625a979d7fabe71f627d96b2"
+    },
+    {
+      "slide_number": 8,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1648,
+          "height": 712,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 28,
+            "right": 1488,
+            "bottom": 648
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1648,
+          "height": 712,
+          "bg_width": 1648,
+          "bg_height": 712,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "endpoint"
+        },
+        {
+          "cls": "endpoint"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "a4b8f567417eaa7219ad163902ecf42e22745d5ce6d6d4379d2440c6893119e7"
+    },
+    {
+      "slide_number": 9,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1648,
+          "height": 712,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 28,
+            "right": 1488,
+            "bottom": 648
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1648,
+          "height": 712,
+          "bg_width": 1648,
+          "bg_height": 712,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "1070c8d8914604789bd9d78b9e1b20a4c0b67185f81cecb05fd2b44b55cd3d0f"
+    },
+    {
+      "slide_number": 10,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1648,
+          "height": 712,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 28,
+            "right": 1488,
+            "bottom": 648
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1648,
+          "height": 712,
+          "bg_width": 1648,
+          "bg_height": 712,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "endpoint"
+        },
+        {
+          "cls": "endpoint"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "fad8a26ad2253355c4cd81db9d8e8184d96ae81e711e3c1be7cf1de495877067"
+    },
+    {
+      "slide_number": 11,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1648,
+          "height": 712,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 28,
+            "right": 1488,
+            "bottom": 648
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1648,
+          "height": 712,
+          "bg_width": 1648,
+          "bg_height": 712,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "2a0df666ccc9e1957052076cf8de370d19c96165025043a29283256b72ebd7f2"
+    },
+    {
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1140,
+          "height": 651,
+          "chart_area": {
+            "width": 972,
+            "height": 547,
+            "left": 88,
+            "top": 40,
+            "right": 1060,
+            "bottom": 587
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1140,
+          "height": 651,
+          "bg_width": 1140,
+          "bg_height": 651,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "75b89a5ff36f58a0bf85164e5c2b1aff1a4f073e91f837b3230b40f6089b81b3"
+    },
+    {
+      "slide_number": 13,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1568,
+          "height": 724,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 40,
+            "right": 1488,
+            "bottom": 660
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1568,
+          "height": 724,
+          "bg_width": 1568,
+          "bg_height": 724,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "31c920d8215a186c1d069f591421140ded7d3e4667774b1d025b8bc7f3602409"
+    },
+    {
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 852,
+          "height": 701,
+          "chart_area": {
+            "width": 684,
+            "height": 597,
+            "left": 88,
+            "top": 40,
+            "right": 772,
+            "bottom": 637
+          }
+        },
+        {
+          "index": 1,
+          "width": 852,
+          "height": 701,
+          "chart_area": {
+            "width": 684,
+            "height": 597,
+            "left": 88,
+            "top": 40,
+            "right": 772,
+            "bottom": 637
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 852,
+          "height": 701,
+          "bg_width": 852,
+          "bg_height": 701,
+          "has_axis": true
+        },
+        {
+          "width": 852,
+          "height": 701,
+          "bg_width": 852,
+          "bg_height": 701,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "6f7fd0e2f10f9b4baedf7c513ed5ab8cc859834ce2152a6450f6c66fd4fe27b6"
+    },
+    {
+      "slide_number": 15,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1568,
+          "height": 737,
+          "chart_area": {
+            "width": 1400,
+            "height": 609,
+            "left": 88,
+            "top": 48,
+            "right": 1488,
+            "bottom": 657
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1568,
+          "height": 737,
+          "bg_width": 1568,
+          "bg_height": 737,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 1,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "9759d8d9b81b51dc5e7d44eed1cb151ef95990c746d07a0740f9e18b8d6d4431"
+    },
+    {
+      "slide_number": 16,
+      "layout": "data_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "26da7fd1df2190c3758569a9edc6eb39118adf39b406ecb94826d253cda6f2cd"
+    },
+    {
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 852,
+          "height": 698,
+          "chart_area": {
+            "width": 684,
+            "height": 594,
+            "left": 88,
+            "top": 40,
+            "right": 772,
+            "bottom": 634
+          }
+        },
+        {
+          "index": 1,
+          "width": 852,
+          "height": 698,
+          "chart_area": {
+            "width": 604,
+            "height": 606,
+            "left": 88,
+            "top": 28,
+            "right": 692,
+            "bottom": 634
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 852,
+          "height": 698,
+          "bg_width": 852,
+          "bg_height": 698,
+          "has_axis": true
+        },
+        {
+          "width": 852,
+          "height": 698,
+          "bg_width": 852,
+          "bg_height": 698,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "endpoint"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "784a57852542367e62f9fb75d8816f93105c7c975a3c633649fe41be312d5468"
+    },
+    {
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1140,
+          "height": 724,
+          "chart_area": {
+            "width": 972,
+            "height": 620,
+            "left": 88,
+            "top": 40,
+            "right": 1060,
+            "bottom": 660
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1140,
+          "height": 724,
+          "bg_width": 1140,
+          "bg_height": 724,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "a1d269fd3722c663944d114ccdb089ea8f3e4dc321ccf9b855ccc0d58a1eb71b"
+    },
+    {
+      "slide_number": 19,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1648,
+          "height": 712,
+          "chart_area": {
+            "width": 1400,
+            "height": 620,
+            "left": 88,
+            "top": 28,
+            "right": 1488,
+            "bottom": 648
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1648,
+          "height": 712,
+          "bg_width": 1648,
+          "bg_height": 712,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "endpoint"
+        },
+        {
+          "cls": "endpoint"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "a6df08dda85dc4370ee6d0407e780bd7bb88d96f396801c54a938e15d56d609f"
+    },
+    {
+      "slide_number": 20,
+      "layout": "period_comparison",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "aef28c1b88cf671db8a3cfa3ab7ed7e57cfabf3378e8bde4d4467190d89c123e"
+    },
+    {
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1140,
+          "height": 565,
+          "chart_area": {
+            "width": 972,
+            "height": 437,
+            "left": 88,
+            "top": 48,
+            "right": 1060,
+            "bottom": 485
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1140,
+          "height": 565,
+          "bg_width": 1140,
+          "bg_height": 565,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "total_authored"
+        },
+        {
+          "cls": "total_authored"
+        },
+        {
+          "cls": "total_authored"
+        },
+        {
+          "cls": "total_authored"
+        },
+        {
+          "cls": "total_authored"
+        },
+        {
+          "cls": "total_authored"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "b051939d45e1ab953cda344c6f822a0028fda206c78e80742ff0afd785995932"
+    },
+    {
+      "slide_number": 22,
+      "layout": "metric_overview",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "581fdf92b268246ee5c73609856614d1e7f1bfd32c502f7128282dda405c05ce"
+    },
+    {
+      "slide_number": 23,
+      "layout": "section_divider",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "4d7956029c9f40ff0f96868ab9123581b7421f4d33c3f22f922c8fa07b305d2f"
+    },
+    {
+      "slide_number": 24,
+      "layout": "single_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 1568,
+          "height": 737,
+          "chart_area": {
+            "width": 1400,
+            "height": 605,
+            "left": 88,
+            "top": 40,
+            "right": 1488,
+            "bottom": 645
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 1568,
+          "height": 737,
+          "bg_width": 1568,
+          "bg_height": 737,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "552a1b957607ea43159e7b707c7973ffdcc3afef18623afe6e3b4d9e498f2bab"
+    },
+    {
+      "slide_number": 25,
+      "layout": "data_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "63107525ebe3594f4d022405e15e78affc623c61a02027f5482faed59349e967"
+    },
+    {
+      "slide_number": 26,
+      "layout": "data_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "dec5ac5cd4cda07da6c3969cc0426aae2de1365c1dc367a2ad09019f2e3b86f8"
+    },
+    {
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 852,
+          "height": 678,
+          "chart_area": {
+            "width": 604,
+            "height": 586,
+            "left": 88,
+            "top": 28,
+            "right": 692,
+            "bottom": 614
+          }
+        },
+        {
+          "index": 1,
+          "width": 852,
+          "height": 678,
+          "chart_area": {
+            "width": 604,
+            "height": 586,
+            "left": 88,
+            "top": 28,
+            "right": 692,
+            "bottom": 614
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 852,
+          "height": 678,
+          "bg_width": 852,
+          "bg_height": 678,
+          "has_axis": true
+        },
+        {
+          "width": 852,
+          "height": 678,
+          "bg_width": 852,
+          "bg_height": 678,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "left"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "leader"
+        },
+        {
+          "cls": "leader"
+        },
+        {
+          "cls": "right"
+        },
+        {
+          "cls": "leader"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "right"
+        },
+        {
+          "cls": "leader"
+        },
+        {
+          "cls": "left"
+        },
+        {
+          "cls": "right"
+        },
+        {
+          "cls": "left"
+        },
+        {
+          "cls": "leader"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "above"
+        },
+        {
+          "cls": "below"
+        },
+        {
+          "cls": "above"
+        }
+      ],
+      "in_stage": true,
+      "screenshot_sha256": "93a99b27552f962b1c69a6f201a778ff22746dbb9ca6439a60afacd992e14a2d"
+    },
+    {
+      "slide_number": 28,
+      "layout": "dual_chart",
+      "charts": [
+        {
+          "index": 0,
+          "width": 852,
+          "height": 663,
+          "chart_area": {
+            "width": 684,
+            "height": 535,
+            "left": 88,
+            "top": 48,
+            "right": 772,
+            "bottom": 583
+          }
+        },
+        {
+          "index": 1,
+          "width": 852,
+          "height": 663,
+          "chart_area": {
+            "width": 684,
+            "height": 535,
+            "left": 88,
+            "top": 48,
+            "right": 772,
+            "bottom": 583
+          }
+        }
+      ],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [
+        {
+          "width": 852,
+          "height": 663,
+          "bg_width": 852,
+          "bg_height": 663,
+          "has_axis": true
+        },
+        {
+          "width": 852,
+          "height": 663,
+          "bg_width": 852,
+          "bg_height": 663,
+          "has_axis": true
+        }
+      ],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "29e7eebc20957eeffdaef3239e2bef579aee45eb92c860929fff160a58900559"
+    },
+    {
+      "slide_number": 29,
+      "layout": "narrative",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "6b49915d606be98e3e6b351677c10cd27184bf544c81df55694b4500b7cff285"
+    },
+    {
+      "slide_number": 30,
+      "layout": "narrative",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "fc81b08b01dc3058e3448a8bf896abc852f0cae000d4f3d070f1ca69f0136788"
+    },
+    {
+      "slide_number": 31,
+      "layout": "annex_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "c2af04115ab7fe25db82f7dcb8cf81bdc9d490eea5112849d91f81432eb2a2de"
+    },
+    {
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "95c48d7aeeaf4bf1151680371218a685fd32f8cf14b2343f98966115f98295db"
+    },
+    {
+      "slide_number": 33,
+      "layout": "annex_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "96944e1f2205838171f7b8e8728747bf1cce0745ea9e9eb5688c7ec4559ed8a5"
+    },
+    {
+      "slide_number": 34,
+      "layout": "annex_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "9a7f7cb7ed18a54668da8adeb83f01a96a893c7b5623d8abdf25dcf5a6b1d4e8"
+    },
+    {
+      "slide_number": 35,
+      "layout": "annex_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "924aac659d72bc7d6a46b929b5783f9b495a6cc90188b91c2f8e3ef5a331a042"
+    },
+    {
+      "slide_number": 36,
+      "layout": "annex_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "290da013ddbc1ab2caa6406a775ad0f425c8c28deb26419618b8f1abf1c0633a"
+    },
+    {
+      "slide_number": 37,
+      "layout": "annex_table",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "5f1d235e2a9d45339fe714359367e59274f1f96bf39ce797e499aee2dd950b02"
+    },
+    {
+      "slide_number": 38,
+      "layout": "legal_notice",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "80d66436211384a342a52347e5e471b63ffa8dc468bad643488587ed7dfd18d8"
+    },
+    {
+      "slide_number": 39,
+      "layout": "legal_notice",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "64d829e28f51d2f67efc8cbff1958d90c908e4861fc218d0221a26a37e8a225d"
+    },
+    {
+      "slide_number": 40,
+      "layout": "legal_notice",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "4f423f35566cc0b9a4ef321cd578f964de17cb178db217630555c03188e52203"
+    },
+    {
+      "slide_number": 41,
+      "layout": "legal_notice",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "01c8a7ee81a68119bddd58bfde4c5fb3766a52726fb61a2fc78f3c531bc27450"
+    },
+    {
+      "slide_number": 42,
+      "layout": "legal_notice",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "e000fe6c960623fb8b15b74199ad922f85884126c7dee5b3855a7e85c983aa3c"
+    },
+    {
+      "slide_number": 43,
+      "layout": "legal_notice",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "9dc43fd5708ad566c6651f3eeff023699c2a880136befd0ce5425ea25c26ed56"
+    },
+    {
+      "slide_number": 44,
+      "layout": "closing_cover",
+      "charts": [],
+      "ok": true,
+      "slide": {
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "left": 0
+      },
+      "overflow": false,
+      "plots": [],
+      "transparent_bodies": true,
+      "decorative_gridlines": 0,
+      "label_classes": [],
+      "in_stage": true,
+      "screenshot_sha256": "cf9a6777ad230d745004d9fb108923bcc16a77e1a26cfe3379fb106229f91802"
+    }
+  ]
+}
