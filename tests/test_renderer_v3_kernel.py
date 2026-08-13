@@ -413,11 +413,75 @@ def test_v2_payload_aliases_are_unknown_fields():
     with pytest.raises(RendererValidationError) as ei:
         validate_handoff(raw, strict=True)
     assert any(
-        e.code in {"validation.unknown_field", "validation.value", "validation.structure"}
+        e.code == "validation.value"
+        and "primary_visual" in str(e.expected or "")
         for e in ei.value.events
     )
     raw["slides"][1]["payload"] = {"chart": chart}
     assert validate_handoff(raw, strict=True).ok
+
+
+def _line_chart_from_fixture() -> dict:
+    raw = json.loads(
+        (ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    chart = deepcopy(raw["slides"][1]["payload"]["chart"])
+    chart["heading"] = "Billed business"
+    return chart
+
+
+def test_dual_and_hero_require_headings():
+    """D170/D253/D254: dual charts and chart/hero require authored headings."""
+    chart = _line_chart_from_fixture()
+    peer = deepcopy(chart)
+    peer["surface_id"] = "vol-peer"
+    peer["heading"] = "Peer billed"
+    raw = json.loads(
+        (ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["slides"][1]["layout_type"] = "dual_chart"
+    raw["slides"][1]["payload"] = {"charts": [deepcopy(chart), peer]}
+    raw["slides"][1]["payload"]["charts"][0].pop("heading", None)
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+    repaired = validate_handoff(raw, strict=False)
+    assert repaired.deck.slides[1].payload.charts[0].heading == "Untitled chart 1"
+
+    hero_raw = json.loads(
+        (ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    hero_chart = deepcopy(chart)
+    hero_chart.pop("heading", None)
+    hero_raw["slides"][1]["layout_type"] = "chart_hero_dual"
+    hero_raw["slides"][1]["payload"] = {
+        "chart": hero_chart,
+        "hero": {
+            "hero_type": "metric_stack",
+            "surface_id": "hero-stack",
+            "metrics": [
+                {
+                    "metric_id": "m1",
+                    "label": "Peak",
+                    "value": {
+                        "type": "number",
+                        "value": "5.0",
+                        "format_id": "pct_1",
+                    },
+                }
+            ],
+        },
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(hero_raw, strict=True)
+    hero_fixed = validate_handoff(hero_raw, strict=False)
+    assert hero_fixed.deck.slides[1].payload.chart.heading == "Untitled chart 1"
+    assert hero_fixed.deck.slides[1].payload.hero.heading == "Untitled summary"
 
 
 def test_fixture_file_is_strict_valid():

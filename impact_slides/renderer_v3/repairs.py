@@ -1738,6 +1738,80 @@ def repair_card_compositions(raw: Any, events: list[DiagnosticEvent]) -> Any:
     return out
 
 
+def repair_required_composition_headings(
+    raw: Any, events: list[DiagnosticEvent]
+) -> Any:
+    """D170 non-strict: fill missing dual/hero headings with neutral wording."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("slides"), list):
+        return raw
+    out = deepcopy(raw)
+    for i, slide in enumerate(out["slides"]):
+        if not isinstance(slide, dict):
+            continue
+        layout = slide.get("layout_type")
+        payload = slide.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        sn = _slide_number(slide)
+        if layout == "dual_chart":
+            charts = payload.get("charts")
+            if not isinstance(charts, list):
+                continue
+            for j, chart in enumerate(charts):
+                if isinstance(chart, dict) and not chart.get("heading"):
+                    chart["heading"] = f"Untitled chart {j + 1}"
+                    events.append(
+                        event(
+                            code="repair.policy_defaulted",
+                            severity="warning",
+                            phase="repair",
+                            role="heading",
+                            path=f"/slides/{i}/payload/charts/{j}/heading",
+                            action="default_display",
+                            result="canonicalized",
+                            slide_number=sn,
+                            layout_type=layout,
+                            expected="non-empty dual_chart heading",
+                        )
+                    )
+        elif layout == "chart_hero_dual":
+            chart = payload.get("chart")
+            if isinstance(chart, dict) and not chart.get("heading"):
+                chart["heading"] = "Untitled chart 1"
+                events.append(
+                    event(
+                        code="repair.policy_defaulted",
+                        severity="warning",
+                        phase="repair",
+                        role="heading",
+                        path=f"/slides/{i}/payload/chart/heading",
+                        action="default_display",
+                        result="canonicalized",
+                        slide_number=sn,
+                        layout_type=layout,
+                        expected="non-empty chart_hero_dual chart heading",
+                    )
+                )
+            hero = payload.get("hero")
+            if isinstance(hero, dict) and not hero.get("heading"):
+                hero["heading"] = "Untitled summary"
+                events.append(
+                    event(
+                        code="repair.policy_defaulted",
+                        severity="warning",
+                        phase="repair",
+                        role="heading",
+                        path=f"/slides/{i}/payload/hero/heading",
+                        action="default_display",
+                        result="canonicalized",
+                        slide_number=sn,
+                        layout_type=layout,
+                        expected="non-empty chart_hero_dual hero heading",
+                    )
+                )
+    return out
+
+
 REPAIR_REGISTRY: dict[str, RepairFn] = {
     "assume_schema_v1": assume_schema_v1,
     "drop_unknown_fields": drop_unknown_fields,
@@ -1748,6 +1822,7 @@ REPAIR_REGISTRY: dict[str, RepairFn] = {
     "repair_uncontained_fixed_domains": repair_uncontained_fixed_domains,
     "repair_invalid_heatmap_scales": repair_invalid_heatmap_scales,
     "repair_card_compositions": repair_card_compositions,
+    "repair_required_composition_headings": repair_required_composition_headings,
 }
 
 def apply_allowlisted_repairs(raw: Any) -> tuple[Any, list[DiagnosticEvent]]:

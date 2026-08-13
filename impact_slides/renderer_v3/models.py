@@ -2685,6 +2685,8 @@ class DualChartPayload(ClosedModel):
         for p in self.charts:
             if getattr(p, "chart_type", None) == "heatmap":
                 raise ValueError("dual_chart charts must be axis charts (D149)")
+            if not getattr(p, "heading", None):
+                raise ValueError("dual_chart charts require a non-empty heading (D170/D253)")
         return self
 
 
@@ -2877,6 +2879,10 @@ class ChartHeroDualPayload(ClosedModel):
             raise ValueError("chart_hero_dual surface_id values must be unique")
         if getattr(self.chart, "chart_type", None) == "heatmap":
             raise ValueError("chart_hero_dual chart must be an axis chart")
+        if not getattr(self.chart, "heading", None):
+            raise ValueError("chart_hero_dual chart requires a non-empty heading (D170/D254)")
+        if not getattr(self.hero, "heading", None):
+            raise ValueError("chart_hero_dual hero requires a non-empty heading (D170/D254)")
         if isinstance(support, OutlinedSupportVisual):
             cats = getattr(getattr(self.chart, "chart_data", None), "categories", None)
             chart_type = getattr(self.chart, "chart_type", None)
@@ -3738,9 +3744,6 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
             values.extend(m.value for m in hero.metrics)
         elif getattr(hero, "hero_type", None) == "driver_card":
             values.extend(r.value for r in hero.rows)
-        hsv = getattr(payload, "support", None)
-        if isinstance(hsv, MetricStripSupport):
-            values.extend(m.value for m in hsv.metrics)
     if lt == "metric_overview" and payload is not None:
         values.extend(m.value for m in payload.metrics)
     # Chart context_labels carry D213 values (D232/D296).
