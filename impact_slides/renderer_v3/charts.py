@@ -1,7 +1,8 @@
 """Chart freeze + painters: axis charts (line/bars/waterfall/stacked) + native heatmap.
 
 Covers D239/D240/D242–D243/D245/D247/D248/D302/D304/D307, shared D71–D73/D160
-geometry, and D163/D246–D248/D308 semantic heatmaps.
+geometry, D163/D246–D248/D308 semantic heatmaps, and collision-owned
+context/annotation/measurement chrome (D232–D234/D296–D298).
 """
 from __future__ import annotations
 
@@ -5614,7 +5615,7 @@ def freeze_heatmap(
     colored: bool = True,
     table_floor: int = 18,
 ) -> dict[str, Any]:
-    """Build one frozen native-heatmap plan (D69/D246/D308)."""
+    """Build one frozen native-heatmap plan plus shared fact chrome (D69/D246/D308)."""
     table = chart.table_data
     fmt_id = chart.shared_format_id
     fmt = formats[fmt_id]
@@ -5816,7 +5817,7 @@ def paint_heatmap_html(
     *,
     plan_attrs: str = "",
 ) -> list[str]:
-    """Emit one visible native heatmap table + scale key (D246/D247/D308)."""
+    """Emit one visible native heatmap table + scale key + fact chrome (D246/D247/D308)."""
     chart_sid = plan["surface_id"]
     # D255/D308: table DOM uses the nested table surface_id when distinct.
     table_sid = plan.get("table_surface_id") or chart_sid

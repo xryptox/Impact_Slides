@@ -2015,7 +2015,7 @@ HeatmapScale = Annotated[
 
 
 class HeatmapVisual(ClosedModel):
-    """Native semantic heatmap: one D255 table + one color scale (D163/D246/D308)."""
+    """Native semantic heatmap: one D255 table + scale; context/annotation facts only (D163/D246/D308)."""
 
     type: Literal["chart"] = "chart"
     surface_id: SemanticId
