@@ -1471,9 +1471,10 @@ unambiguous legacy title source; conflicts require human resolution.
 
 ### D140 — Single-chart support is one explicit typed slot
 
-A `single_chart` has exactly one chart `primary_visual` and at most one
-`support` slot (payload field `support`), typed as `support_table`, `outlined_support`, or
-`metric_strip`. Legacy keys `support_visual` and `secondary_visual` are invalid.
+A `single_chart` has exactly one chart and at most one typed support
+surface (`support_table`, `outlined_support`, or `metric_strip`).
+Payload slot names are owned by D252 (`chart`, `support`).
+Legacy keys `primary_visual`, `support_visual`, and `secondary_visual` are invalid.
 This composition no longer paints `secondary_visual` or
 `content.key_stats` implicitly. Each support visual owns a `surface_id`, typed
 content, typography plan, diagnostics, and accessibility structure. Table and
@@ -1583,8 +1584,8 @@ only when role, series, range, value, and format are unambiguous.
 
 ### D149 — `dual_chart` is an exact two-chart composition
 
-Schema v1 `dual_chart` contains exactly two ordered chart visuals in `panes`,
-left-to-right and in accessibility order. Both receive equal usable width at
+Schema v1 `dual_chart` contains exactly two ordered chart visuals in `charts`
+(payload slot name owned by D253), left-to-right and in accessibility order. Both receive equal usable width at
 the fixed stage with only D33's renderer-owned divider. Equivalent typography,
 title-band height, plot tops, and exterior gutters synchronize under D3, D46,
 and D82; data, axes, identities, annotations, and D106 semantic tables remain
@@ -1596,10 +1597,11 @@ unambiguously charts.
 
 ### D150 — `chart_hero_dual` is one chart plus one explicit hero surface
 
-Schema v1 `chart_hero_dual` contains exactly one left `primary_visual` chart
-and one right `hero_visual`, in the same accessibility order. The renderer owns
+Schema v1 `chart_hero_dual` contains exactly one left `chart`
+and one right `hero` (payload slot names owned by D254), in the same
+accessibility order. The renderer owns
 the fixed 2:1 stage ratio; widths, coordinates, CSS, and responsive authoring
-are invalid. `hero_visual.type` is initially closed to `metric_stack` for 1–3
+are invalid. `hero.hero_type` is initially closed to `metric_stack` for 1–3
 prominent metrics and `driver_card` for D151's structured explanatory rows.
 Both surfaces own stable `surface_id`, validation, diagnostics, typography
 plans, and accessibility. The chart follows D139 chrome and remains transparent
@@ -1640,8 +1642,8 @@ metrics produce an explicit unresolved hero surface without `content.key_stats`.
 
 ### D153 — `chart_hero_dual` may include one chart-aligned support surface
 
-`chart_hero_dual` may include one optional `support_visual` beneath its left
-chart; it is not a third pane. The closed types are D140's `support_table`,
+`chart_hero_dual` may include one optional `support` beneath its left
+chart (payload slot name owned by D254); it is not a third pane. The closed types are D140's `support_table`,
 `outlined_support`, and `metric_strip`. Table/outlined support aligns through
 `category_id`. Chart and support share the left two-thirds region under D10/D47
 while preserving the 320x240px chart floor and the composition's fixed 2:1
