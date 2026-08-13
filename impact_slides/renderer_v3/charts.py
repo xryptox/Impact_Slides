@@ -3772,6 +3772,7 @@ def _freeze_context_labels(
     plot_w: float,
     pad_r: float,
     plot_h: float,
+    view_h: float,
     role_sizes: Mapping[str, int],
     identity_names: list[str],
     occupied: list[tuple[float, float, float, float]],
@@ -3867,6 +3868,10 @@ def _freeze_context_labels(
                 forced.append((lab, fv, display, x_below, y, w, h))
                 y += h
             placed = forced
+        elif placed:
+            last_y, last_h = placed[-1][4], placed[-1][6]
+            if last_y + last_h / 2 > view_h:
+                overflow = True
 
     ids = [lab.context_id for lab, _fv in survivors]
     if used_short:
@@ -3966,7 +3971,6 @@ def _freeze_context_labels(
             "y0": y0,
             "y1": y1,
             "bottom": block_bottom,
-            "need_view_h": (block_bottom + PAD_B) if relocated and placed else None,
         },
     }
 
@@ -4272,6 +4276,7 @@ def _attach_chart_facts(
     pad_r = float(g.get("pad_r", PAD_R))
     plot_w = float(g.get("plot_w", g.get("view_w", PLOT_W) - pad_l - pad_r))
     plot_h = float(g.get("plot_h", 200))
+    view_h = float(g.get("view_h") or (pad_t + plot_h + float(g.get("pad_b", PAD_B))))
     role_sizes = plan.get("role_sizes") or {}
     cats = categories if categories is not None else list(plan.get("categories") or [])
     pts = points if points is not None else list(plan.get("points") or [])
@@ -4292,6 +4297,7 @@ def _attach_chart_facts(
         plot_w=plot_w,
         pad_r=pad_r,
         plot_h=plot_h,
+        view_h=view_h,
         role_sizes=role_sizes,
         identity_names=identity_names,
         occupied=occupied,
@@ -4350,14 +4356,6 @@ def _attach_chart_facts(
     plan["extra_facts"] = (
         list(plan["extra_facts"]) + ctx["facts"] + anns["facts"] + meas["facts"]
     )
-    need_vh = (ctx.get("block") or {}).get("need_view_h")
-    if need_vh is not None and "pad_b" in g:
-        view_h = float(g.get("view_h") or 0)
-        if float(need_vh) > view_h:
-            extra = float(need_vh) - view_h
-            g["view_h"] = float(need_vh)
-            g["pad_b"] = float(g.get("pad_b") or 0) + extra
-            plan["geometry"] = g
     return plan
 
 
@@ -5936,18 +5934,21 @@ def paint_heatmap_html(
     for place in plan.get("context_labels") or []:
         if place.get("suppressed"):
             continue
+        ctx_px = int(place.get("px") or plan.get("role_sizes", {}).get("context_labels", 16))
         out.append(
             f'<div class="context-label" data-context-id="{_e(place["context_id"])}" '
-            f'aria-hidden="true">'
+            f'aria-hidden="true" style="font-size:{ctx_px}px;line-height:1.4">'
             f'<span class="context-label-name">{_e(place["label"])}</span> '
             f'<span class="context-label-value">{_e(place["value_visible"])}</span></div>'
         )
     for place in plan.get("annotations") or []:
         if place.get("suppressed"):
             continue
+        ann_px = int(place.get("px") or plan.get("role_sizes", {}).get("annotations", 13))
         out.append(
             f'<div class="chart-annotation" data-annotation-id="{_e(place["annotation_id"])}" '
-            f'data-role="{_e(place["role"])}" aria-hidden="true">{_e(place["text"])}</div>'
+            f'data-role="{_e(place["role"])}" aria-hidden="true" '
+            f'style="font-size:{ann_px}px;line-height:1.4">{_e(place["text"])}</div>'
         )
     extra_facts = list((plan.get("semantic_table") or {}).get("facts") or [])
     if extra_facts:

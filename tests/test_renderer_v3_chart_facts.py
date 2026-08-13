@@ -16,7 +16,12 @@ from pathlib import Path
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
-from impact_slides.renderer_v3.plan import plan_deck
+from impact_slides.renderer_v3.plan import (
+    BLOCK_MARGIN_Y,
+    _heatmap_chrome_height,
+    _line_box,
+    plan_deck,
+)
 from impact_slides.renderer_v3.charts import (
     freeze_chart,
     freeze_heatmap,
@@ -244,12 +249,18 @@ def test_heatmap_facts_paint_once_inside_surface():
         s._chrome_h for s in plan_deck(result.deck, strict=True).surfaces if s.role == "heatmap"
     )
     assert fact_h > bare_h
+    assert fact_h - bare_h == _line_box(16) + _line_box(13) + BLOCK_MARGIN_Y
+    assert _heatmap_chrome_height(
+        freeze_heatmap(chart, result.deck.number_formats)
+    ) == fact_h
     assert html.count('data-context-id="note"') == 1
     assert html.count('data-annotation-id="col-note"') == 1
     ctx = html[html.find('data-context-id="note"') : html.find("</div>", html.find('data-context-id="note"'))]
     ann = html[html.find('data-annotation-id="col-note"') : html.find("</div>", html.find('data-annotation-id="col-note"'))]
     assert 'aria-hidden="true"' in ctx
+    assert 'style="font-size:16px;line-height:1.4"' in ctx
     assert 'aria-hidden="true"' in ann
+    assert 'style="font-size:13px;line-height:1.4"' in ann
     assert 'class="chart-facts visually-hidden"' in owned
 
 
@@ -343,7 +354,7 @@ def test_freeze_retains_facts_and_shared_chrome():
     assert 'data-annotation-id="evt-q2"' in chrome
 
     table_html = paint_semantic_table(plan)
-    assert "Context G&S" in table_html
+    assert "Context G&amp;S" in table_html
     assert "Promo wave" in table_html
 
 
@@ -452,7 +463,7 @@ def test_render_deck_includes_fact_chrome(tmp_path: Path):
     assert 'data-context-id="gs-yoy"' in html
     assert 'data-annotation-id="evt-q2"' in html
     assert 'data-measurement-id="chg-us"' in html
-    assert "Context G&S" in html
+    assert "Context G&amp;S" in html
 
 
 def test_fact_chrome_diagnostics_reach_run_meta_and_dom(tmp_path: Path):
@@ -570,20 +581,24 @@ def test_unplaceable_fact_omits_chrome_keeps_fact():
         assert f'data-annotation-id="{aid}"' not in svg
 
 
-def test_context_labels_relocate_as_complete_block():
-    raw = _line()
-    vis = _vis(raw)
-    vis.pop("annotations", None)
-    vis.pop("measurements", None)
-    vis["context_labels"] = [
+def _wide_context_labels(n: int) -> list[dict]:
+    return [
         {
             "context_id": f"ctx-{i}",
             "label": f"Gross and Services Mix Extra {i}",
             "short_label": "WWWWWWWWWW",
             "value": {"type": "number", "value": "3.0", "format_id": "pct_1"},
         }
-        for i in range(4)
+        for i in range(n)
     ]
+
+
+def test_context_labels_relocate_as_complete_block():
+    raw = _line()
+    vis = _vis(raw)
+    vis.pop("annotations", None)
+    vis.pop("measurements", None)
+    vis["context_labels"] = _wide_context_labels(4)
     result = validate_handoff(raw, strict=True)
     chart = result.deck.slides[1].payload.primary_visual
     plan = freeze_chart(chart, result.deck.number_formats)
@@ -597,19 +612,70 @@ def test_context_labels_relocate_as_complete_block():
     assert "plan.short_label_used" in codes
     ys = [float(p["y"]) for p in placed]
     assert len(set(ys)) == 4
-    px = float(plan["role_sizes"]["context_labels"])
-    bottoms = [float(p["y"]) + px * 1.35 for p in placed]
     g = plan["geometry"]
-    assert max(bottoms) <= float(g["view_h"])
     assert float(g["view_h"]) == pytest.approx(
         float(g["pad_t"]) + float(g["plot_h"]) + float(g["pad_b"])
     )
+    assert float(g["pad_b"]) == pytest.approx(64)
     facts = plan["semantic_table"]["facts"]
     for i in range(4):
         assert any(f"Gross and Services Mix Extra {i}" in f for f in facts)
     svg = paint_chart_svg(plan)
     for i in range(4):
         assert f'data-context-id="ctx-{i}"' in svg
+
+
+def test_relocated_context_fits_without_growing_view():
+    raw = _line()
+    vis = _vis(raw)
+    vis.pop("annotations", None)
+    vis.pop("measurements", None)
+    vis["context_labels"] = _wide_context_labels(1)
+    vis["context_labels"][0]["label"] = "Gross and Services Mix Extra Wide Label"
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats, box_w=1728, box_h=372)
+    placed = plan["context_labels"]
+    assert {p["class"] for p in placed} == {"below_plot"}
+    g = plan["geometry"]
+    view0 = float(g["pad_t"]) + float(g["plot_h"]) + float(g["pad_b"])
+    assert float(g["view_h"]) == pytest.approx(view0)
+    assert float(g["pad_b"]) == pytest.approx(64)
+    px = float(plan["role_sizes"]["context_labels"])
+    bottoms = [float(p["y"]) + px * 1.35 for p in placed]
+    assert max(bottoms) <= float(g["view_h"])
+    codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
+    assert "plan.surface_relocated" in codes
+    assert "plan.unresolved_overflow" not in codes
+
+
+def test_relocated_context_that_cannot_fit_strict_fails():
+    raw = _line()
+    vis = _vis(raw)
+    vis.pop("annotations", None)
+    vis.pop("measurements", None)
+    vis["context_labels"] = _wide_context_labels(4)
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.primary_visual
+    plan = freeze_chart(chart, result.deck.number_formats)
+    g = plan["geometry"]
+    assert {p["class"] for p in plan["context_labels"]} == {"below_plot"}
+    assert float(g["view_h"]) == pytest.approx(
+        float(g["pad_t"]) + float(g["plot_h"]) + float(g["pad_b"])
+    )
+    assert float(g["pad_b"]) == pytest.approx(64)
+    codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
+    assert "plan.unresolved_overflow" in codes
+    with pytest.raises(RendererValidationError) as ei:
+        plan_deck(result.deck, strict=True)
+    assert any(e.code == "plan.unresolved_overflow" for e in ei.value.events)
+
+
+def test_fixture_single_chart_renders_clean(tmp_path: Path):
+    out = tmp_path / "out"
+    render_deck(str(LINE), str(out), strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-chart-surface="vol-trend"' in html
 
 
 def test_schema_export_includes_fact_models():
