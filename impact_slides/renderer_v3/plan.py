@@ -2064,27 +2064,30 @@ _text_items=hero_items or [(" ", False)],
                     )
                 )
             else:
-                table = support.table
-                table_spec = _build_table_spec(table, deck.number_formats)
-                table_plan = SurfacePlan(
-                    surface_id=table.surface_id,
-                    role="support_table",
-                    slide_number=sn,
-                    slide_index=slide_index,
-                    layout_type=lt,
-                    slot_order=12,
-                    design_stage_region=region,
-                    role_sizes={"table": TABLE_FLOOR},
-                    _text_items=[(t, False) for t in table_spec["all_texts"]],
-                    _box_w=chart_w,
-                    _fit_role="table",
-                    _mode="adaptive",
-                    _margin_boxes=0,
-                    _default_size=TABLE_FLOOR,
-                    _maximum_size=TABLE_CEIL,
-                    _table_spec=table_spec,
+                alignment = getattr(support, "alignment", "independent")
+                hide_header = alignment == "category" and bool(
+                    getattr(payload.chart.category_axis, "visible", False)
                 )
-                plans.append(table_plan)
+                plans.append(
+                    _table_surface_plan(
+                        table=support.table,
+                        deck=deck,
+                        sn=sn,
+                        slide_index=slide_index,
+                        lt=lt,
+                        region=region,
+                        slot_order=12,
+                        box_w=chart_w,
+                        role="support_table",
+                        extra_spec={
+                            "kind": "support_table",
+                            "alignment": alignment,
+                            "hide_header": hide_header,
+                            "paint_as": "support_table",
+                            "chart_surface_id": payload.chart.surface_id,
+                        },
+                    )
+                )
         return len(plans), plans
 
     # metric_overview

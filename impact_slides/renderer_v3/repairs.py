@@ -212,6 +212,17 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
     return False
 
 
+def _chart_support_allowed(support: dict[str, Any]) -> set[str]:
+    st = support.get("support_type")
+    if st == "metric_strip":
+        return {"support_type", "surface_id", "metrics", "typography"}
+    if st == "support_table":
+        return {"support_type", "alignment", "table"}
+    if st == "outlined_support":
+        return {"support_type", "table"}
+    return set(support.keys())
+
+
 def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
     """Drop unknown fields on closed deck envelope and known slide shapes.
 
@@ -411,48 +422,18 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
-                if layout == "single_chart":
+                if layout in {"single_chart", "chart_hero_dual"}:
                     support = payload.get("support")
                     if isinstance(support, dict):
-                        st = support.get("support_type")
-                        if st == "metric_strip":
-                            allowed_s = {"support_type", "surface_id", "metrics", "typography"}
-                        elif st == "support_table":
-                            allowed_s = {"support_type", "alignment", "table"}
-                        elif st == "outlined_support":
-                            allowed_s = {"support_type", "table"}
-                        else:
-                            allowed_s = set(support.keys())
                         _drop_unknown_object(
                             support,
-                            allowed=allowed_s,
+                            allowed=_chart_support_allowed(support),
                             path=f"/slides/{i}/payload/support",
                             events=events,
                             role="chart_support",
                             slide_number=_slide_number(slide),
                             layout_type=layout,
                         )
-    if layout == "chart_hero_dual":
-        support = payload.get("support")
-        if isinstance(support, dict):
-            st = support.get("support_type")
-            if st == "metric_strip":
-                allowed_s = {"support_type", "surface_id", "metrics", "typography"}
-            elif st == "support_table":
-                allowed_s = {"support_type", "alignment", "table"}
-            elif st == "outlined_support":
-                allowed_s = {"support_type", "table"}
-            else:
-                allowed_s = set(support.keys())
-            _drop_unknown_object(
-                support,
-                allowed=allowed_s,
-                path=f"/slides/{i}/payload/support",
-                events=events,
-                role="chart_support",
-                slide_number=_slide_number(slide),
-                layout_type=layout,
-            )
     return out
 
 

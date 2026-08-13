@@ -535,20 +535,15 @@ def test_mutation_reorder_category_columns_fails():
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
-def _hero_with_outlined_support() -> dict:
-    """Minimal chart_hero_dual carrying outlined_support (hero path, not single_chart)."""
+def _hero_with_support(support: dict) -> dict:
     raw = _raw()
-    cats = raw["slides"][1]["payload"]["chart"]["chart_data"]["categories"]
     chart = deepcopy(raw["slides"][1]["payload"]["chart"])
     chart["surface_id"] = "hero-chart"
-    support = _outlined_support()
-    hero_support = support
-    hero_support["table"]["surface_id"] = "hero-outlined"
     raw["slides"][1] = {
         "slide_number": 2,
         "layout_type": "chart_hero_dual",
         "section_id": "trends",
-        "title": "Hero outlined",
+        "title": "Hero support",
         "payload": {
             "chart": chart,
             "hero": {
@@ -567,14 +562,17 @@ def _hero_with_outlined_support() -> dict:
                     }
                 ],
             },
-            "support": hero_support,
+            "support": deepcopy(support),
         },
         "evidence_ids": ["src-board-pack"],
     }
-    assert [c["category_id"] for c in cats] == [
-        c["column_id"] for c in hero_support["table"]["columns"]
-    ]
     return raw
+
+
+def _hero_with_outlined_support() -> dict:
+    support = _outlined_support()
+    support["table"]["surface_id"] = "hero-outlined"
+    return _hero_with_support(support)
 
 
 def test_hero_outlined_support_validates_and_plans():
@@ -613,4 +611,120 @@ def test_paint_hero_outlined_support_boxes(tmp_path: Path):
     assert "support-table" not in html.split("chart-hero-dual")[1].split(
         "chart-hero-right"
     )[0] or "outlined-support" in html
+
+
+def test_nonstrict_drops_unknown_hero_support_on_every_slide():
+    raw = _hero_with_outlined_support()
+    later = deepcopy(raw["slides"][1])
+    later["slide_number"] = 3
+    later["payload"]["chart"]["surface_id"] = "hero-chart-2"
+    later["payload"]["hero"]["surface_id"] = "hero-stack-2"
+    later["payload"]["support"]["table"]["surface_id"] = "hero-outlined-2"
+    raw["slides"][1]["payload"]["support"]["legacy_note"] = "drop-me"
+    later["payload"]["support"]["legacy_note"] = "drop-me-too"
+    raw["slides"].insert(2, later)
+    raw["slides"][-1]["slide_number"] = 4
+    result = validate_handoff(raw, strict=False)
+    assert result.ok
+    dumped = result.deck.model_dump(mode="json", exclude_none=True)
+    hero_supports = [
+        s["payload"]["support"]
+        for s in dumped["slides"]
+        if s["layout_type"] == "chart_hero_dual"
+    ]
+    assert len(hero_supports) == 2
+    assert all("legacy_note" not in support for support in hero_supports)
+    paths = {e.path for e in result.events if e.code == "repair.field_dropped"}
+    assert "/slides/1/payload/support/legacy_note" in paths
+    assert "/slides/2/payload/support/legacy_note" in paths
+
+
+def test_nonstrict_missing_slides_raises_validation_not_nameerror():
+    with pytest.raises(RendererValidationError):
+        validate_handoff({"meta": {"handoff_schema_version": 1}}, strict=False)
+
+
+def test_hero_support_table_category_validates_and_plans():
+    support = _cat_support_table()
+    support["table"]["surface_id"] = "hero-support"
+    result = validate_handoff(_hero_with_support(support), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    chart = next(s for s in plan.surfaces if s.surface_id == "hero-chart")
+    table = next(s for s in plan.surfaces if s.surface_id == "hero-support")
+    assert table.role == "support_table"
+    assert table.table_paint.get("alignment") == "category"
+    assert table.table_paint.get("category_centered") is True
+    assert table.table_paint.get("hide_header") is True
+    centers = table.table_paint.get("centers") or []
+    assert len(centers) == 4
+    cat_x = {c["category_id"]: c["x"] for c in chart.chart_paint["categories"]}
+    for c in centers:
+        assert abs(c["x"] - cat_x[c["category_id"]]) <= 2.0
+
+
+def test_hero_support_table_rejects_column_mismatch():
+    support = _cat_support_table()
+    support["table"]["surface_id"] = "hero-support"
+    raw = _hero_with_support(support)
+    cols = raw["slides"][1]["payload"]["support"]["table"]["columns"]
+    cols[0], cols[1] = cols[1], cols[0]
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_hero_rejects_category_support_on_horizontal_bar():
+    raw = json.loads(
+        (ROOT / "tests/fixtures/renderer_v3/minimal_horizontal_bar.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    chart = deepcopy(raw["slides"][1]["payload"]["chart"])
+    raw["slides"][1]["layout_type"] = "chart_hero_dual"
+    raw["slides"][1]["payload"] = {
+        "chart": chart,
+        "hero": {
+            "hero_type": "metric_stack",
+            "surface_id": "hero-stack",
+            "heading": "Summary",
+            "metrics": [
+                {
+                    "metric_id": "m1",
+                    "label": "Peak",
+                    "value": {
+                        "type": "number",
+                        "value": "5.0",
+                        "format_id": "pct_1",
+                    },
+                }
+            ],
+        },
+        "support": {
+            "support_type": "support_table",
+            "alignment": "category",
+            "table": {
+                "surface_id": "hbar-support",
+                "stub_header": {"label": "Metric"},
+                "columns": [
+                    {"column_id": "us", "label": "US"},
+                    {"column_id": "uk", "label": "UK"},
+                    {"column_id": "jp", "label": "JP"},
+                    {"column_id": "mx", "label": "MX"},
+                ],
+                "rows": [
+                    {
+                        "row_id": "mix",
+                        "label": "Mix",
+                        "cells": {
+                            "us": {"type": "number", "value": "1.0", "format_id": "pct_1"},
+                            "uk": {"type": "number", "value": "2.0", "format_id": "pct_1"},
+                            "jp": {"type": "number", "value": "3.0", "format_id": "pct_1"},
+                            "mx": {"type": "number", "value": "4.0", "format_id": "pct_1"},
+                        },
+                    }
+                ],
+            },
+        },
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
 

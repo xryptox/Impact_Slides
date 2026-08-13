@@ -2844,6 +2844,60 @@ ChartSupportVisual = Annotated[
 ]
 
 
+def _check_support_vs_chart(support: Any, chart: Any) -> None:
+    """D252 support-vs-chart contract; chart_hero_dual support follows the same rules."""
+    if support is None:
+        return
+    chart_sid = chart.surface_id
+    if isinstance(support, MetricStripSupport):
+        if support.surface_id == chart_sid:
+            raise ValueError("support surface_id must differ from chart surface_id")
+        return
+    table = support.table
+    if table.surface_id == chart_sid:
+        raise ValueError("support table.surface_id must differ from chart surface_id")
+    heat = getattr(chart, "table_data", None)
+    if heat is not None and table.surface_id == heat.surface_id:
+        raise ValueError("support table.surface_id must differ from heatmap table")
+    cats = getattr(getattr(chart, "chart_data", None), "categories", None)
+    chart_type = getattr(chart, "chart_type", None)
+    if isinstance(support, OutlinedSupportVisual):
+        if cats is None:
+            raise ValueError("outlined_support requires an axis chart with categories")
+        if chart_type == "horizontal_bar":
+            raise ValueError(
+                "outlined_support is not supported on horizontal_bar "
+                "(category axis is vertical)"
+            )
+        cat_ids = [c.category_id for c in cats]
+        col_ids = [c.column_id for c in table.columns]
+        if col_ids != cat_ids:
+            raise ValueError(
+                "outlined_support columns must match chart category_id order exactly"
+            )
+        if not getattr(chart.category_axis, "visible", False):
+            raise ValueError(
+                "outlined_support requires a visible category axis (D267)"
+            )
+    elif isinstance(support, SupportTableVisual) and support.alignment == "category":
+        if cats is None:
+            raise ValueError(
+                "category-aligned support_table requires an axis chart with categories"
+            )
+        if chart_type == "horizontal_bar":
+            raise ValueError(
+                "category-aligned support_table is not supported on horizontal_bar "
+                "(category axis is vertical); use alignment=independent"
+            )
+        cat_ids = [c.category_id for c in cats]
+        col_ids = [c.column_id for c in table.columns]
+        if col_ids != cat_ids:
+            raise ValueError(
+                "category-aligned support_table columns must match chart "
+                "category_id order exactly"
+            )
+
+
 class ChartHeroDualPayload(ClosedModel):
     """One left chart + right hero + optional left support (D150/D153/D254)."""
 
@@ -2883,26 +2937,7 @@ class ChartHeroDualPayload(ClosedModel):
             raise ValueError("chart_hero_dual chart requires a non-empty heading (D170/D254)")
         if not getattr(self.hero, "heading", None):
             raise ValueError("chart_hero_dual hero requires a non-empty heading (D170/D254)")
-        if isinstance(support, OutlinedSupportVisual):
-            cats = getattr(getattr(self.chart, "chart_data", None), "categories", None)
-            chart_type = getattr(self.chart, "chart_type", None)
-            if cats is None:
-                raise ValueError("outlined_support requires an axis chart with categories")
-            if chart_type == "horizontal_bar":
-                raise ValueError(
-                    "outlined_support is not supported on horizontal_bar "
-                    "(category axis is vertical)"
-                )
-            cat_ids = [c.category_id for c in cats]
-            col_ids = [c.column_id for c in support.table.columns]
-            if col_ids != cat_ids:
-                raise ValueError(
-                    "outlined_support columns must match chart category_id order exactly"
-                )
-            if not getattr(self.chart.category_axis, "visible", False):
-                raise ValueError(
-                    "outlined_support requires a visible category axis (D267)"
-                )
+        _check_support_vs_chart(support, self.chart)
         return self
 
 
@@ -2925,60 +2960,7 @@ class SingleChartPayload(ClosedModel):
 
     @model_validator(mode="after")
     def _support_contract(self) -> SingleChartPayload:
-        support = self.support
-        if support is None:
-            return self
-        chart = self.chart
-        chart_sid = chart.surface_id
-        if isinstance(support, MetricStripSupport):
-            if support.surface_id == chart_sid:
-                raise ValueError("support surface_id must differ from chart surface_id")
-            return self
-        table = support.table
-        if table.surface_id == chart_sid:
-            raise ValueError("support table.surface_id must differ from chart surface_id")
-        heat = getattr(chart, "table_data", None)
-        if heat is not None and table.surface_id == heat.surface_id:
-            raise ValueError("support table.surface_id must differ from heatmap table")
-        # Category / outlined alignment only against axis-chart D228 categories.
-        cats = getattr(getattr(chart, "chart_data", None), "categories", None)
-        chart_type = getattr(chart, "chart_type", None)
-        if isinstance(support, OutlinedSupportVisual):
-            if cats is None:
-                raise ValueError("outlined_support requires an axis chart with categories")
-            if chart_type == "horizontal_bar":
-                raise ValueError(
-                    "outlined_support is not supported on horizontal_bar "
-                    "(category axis is vertical)"
-                )
-            cat_ids = [c.category_id for c in cats]
-            col_ids = [c.column_id for c in table.columns]
-            if col_ids != cat_ids:
-                raise ValueError(
-                    "outlined_support columns must match chart category_id order exactly"
-                )
-            if not getattr(chart.category_axis, "visible", False):
-                raise ValueError(
-                    "outlined_support requires a visible category axis (D267)"
-                )
-        elif isinstance(support, SupportTableVisual) and support.alignment == "category":
-            if cats is None:
-                raise ValueError(
-                    "category-aligned support_table requires an axis chart with categories"
-                )
-            if chart_type == "horizontal_bar":
-                raise ValueError(
-                    "category-aligned support_table is not supported on horizontal_bar "
-                    "(category axis is vertical); use alignment=independent"
-                )
-            cat_ids = [c.category_id for c in cats]
-            col_ids = [c.column_id for c in table.columns]
-            if col_ids != cat_ids:
-                raise ValueError(
-                    "category-aligned support_table columns must match chart "
-                    "category_id order exactly"
-                )
-            # Hidden category axis makes support the visible category owner (D266).
+        _check_support_vs_chart(self.support, self.chart)
         return self
 
 
