@@ -22,7 +22,7 @@
       "title": "Capital returns",
       "content": {"subtitle": "Grouped combo"},
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "cap-combo",
           "chart_type": "combo",
@@ -92,7 +92,7 @@
       "title": "Deposit mix with share",
       "content": {"subtitle": "Stacked combo"},
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "dep-combo",
           "chart_type": "combo",

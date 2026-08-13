@@ -21,7 +21,7 @@
       "title": "Revenue bridge",
       "content": {"subtitle": "Reported currency"},
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "rev-bridge",
           "chart_type": "waterfall",

@@ -1935,7 +1935,7 @@ def _collect_composite_body(
         # D149: equal panes with renderer-owned gutter.
         gutter = 24
         pane_w = (CONTENT_W - gutter) // 2
-        for i, chart in enumerate(payload.panes):
+        for i, chart in enumerate(payload.charts):
             plans.append(
                 _axis_chart_surface_plan(
                     chart,
@@ -1957,7 +1957,7 @@ def _collect_composite_body(
         hero_w = CONTENT_W - chart_w - gutter
         plans.append(
             _axis_chart_surface_plan(
-                payload.primary_visual,
+                payload.chart,
                 deck=deck,
                 sn=sn,
                 slide_index=slide_index,
@@ -1967,13 +1967,13 @@ def _collect_composite_body(
                 box_w=chart_w,
             )
         )
-        hero = payload.hero_visual
+        hero = payload.hero
         hero_groups: list[list[tuple[str, bool]]] = []
         if hero.heading:
             hero_groups.append([(hero.heading, True)])
         if hero.subtitle:
             hero_groups.append([(hero.subtitle, False)])
-        if hero.type == "metric_stack":
+        if hero.hero_type == "metric_stack":
             for m in hero.metrics:
                 group: list[tuple[str, bool]] = [(m.label, False), (_fmt(m.value), True)]
                 if m.detail:
@@ -2010,7 +2010,7 @@ def _collect_composite_body(
                     "subtitle": hero.subtitle,
                     "rows": [
                         (r.label, r.detail)
-                        for r in (hero.metrics if hero.type == "metric_stack" else hero.rows)
+                        for r in (hero.metrics if hero.hero_type == "metric_stack" else hero.rows)
                     ],
                 },
 _text_items=hero_items or [(" ", False)],
@@ -2022,9 +2022,9 @@ _text_items=hero_items or [(" ", False)],
                 _chrome_h=0,
             )
         )
-        support = payload.support_visual
+        support = payload.support
         if support is not None:
-            if getattr(support, "type", None) == "metric_strip":
+            if getattr(support, "support_type", None) == "metric_strip":
                 items = [(m.label, False) for m in support.metrics]
                 plans.append(
                     SurfacePlan(
@@ -2049,11 +2049,11 @@ _text_items=hero_items or [(" ", False)],
                         _chrome_h=METRIC_STRIP_PAD_Y,
                     )
                 )
-            elif getattr(support, "type", None) == "outlined_support":
+            elif getattr(support, "support_type", None) == "outlined_support":
                 plans.append(
                     _outlined_support_plan(
                         support=support,
-                        chart=payload.primary_visual,
+                        chart=payload.chart,
                         chart_spec=plans[0]._chart_spec or {},
                         deck=deck,
                         sn=sn,
@@ -2244,7 +2244,7 @@ def _collect_single_chart_body(
     )
 
     plans: list[SurfacePlan] = []
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     slot = 10
     if isinstance(chart, HeatmapVisual):
         chart_spec = freeze_heatmap(

@@ -22,7 +22,7 @@
       "title": "Deposit mix",
       "content": {"subtitle": "Sign-separated stack"},
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "dep-mix",
           "chart_type": "stacked_bar",

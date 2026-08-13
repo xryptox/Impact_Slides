@@ -140,7 +140,7 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "disclosure",
                 "source_footer",
             }
-            payload_allowed = {"primary_visual", "support"}
+            payload_allowed = {"chart", "support"}
         elif layout in {"dual_chart", "chart_hero_dual", "metric_overview"}:
             allowed = common | {
                 "section_id",
@@ -151,8 +151,8 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "source_footer",
             }
             payload_allowed = {
-                "dual_chart": {"panes"},
-                "chart_hero_dual": {"primary_visual", "hero_visual", "support_visual"},
+                "dual_chart": {"charts"},
+                "chart_hero_dual": {"chart", "hero", "support"},
                 "metric_overview": {"surface_id", "heading", "metrics", "detail"},
             }[layout]
         elif layout in {
@@ -391,15 +391,15 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     "risk_opportunity_review": {"risks", "opportunities", "groups_repaired"},
                     "recommendation_case": {"recommendation", "rationales", "support_repaired"},
                     "state_transition": {"before", "after", "transition_steps"},
-                "decision_tree": {"root_id", "nodes"},
-                "feedback_loop": {"kind", "items"},
-                "hierarchy": {"relationship", "root_id", "nodes"},
-                "stakeholder_map": {"focal", "stakeholders"},
-                "quadrant_matrix": {"x_axis", "y_axis", "items"},
-                "single_chart": {"primary_visual", "support"},
-        "dual_chart": {"panes"},
-        "chart_hero_dual": {"primary_visual", "hero_visual", "support_visual"},
-        "metric_overview": {"surface_id", "heading", "metrics", "detail"},
+                    "decision_tree": {"root_id", "nodes"},
+                    "feedback_loop": {"kind", "items"},
+                    "hierarchy": {"relationship", "root_id", "nodes"},
+                    "stakeholder_map": {"focal", "stakeholders"},
+                    "quadrant_matrix": {"x_axis", "y_axis", "items"},
+                    "single_chart": {"chart", "support"},
+                    "dual_chart": {"charts"},
+                    "chart_hero_dual": {"chart", "hero", "support"},
+                    "metric_overview": {"surface_id", "heading", "metrics", "detail"},
             }
             if isinstance(payload, dict) and layout in payload_fields:
                 _drop_unknown_object(
@@ -433,19 +433,21 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                             layout_type=layout,
                         )
     if layout == "chart_hero_dual":
-        support = payload.get("support_visual")
+        support = payload.get("support")
         if isinstance(support, dict):
-            st = support.get("type")
+            st = support.get("support_type")
             if st == "metric_strip":
-                allowed_s = {"type", "surface_id", "metrics", "typography"}
-            elif st in {"support_table", "outlined_support"}:
-                allowed_s = {"type", "surface_id", "table"}
+                allowed_s = {"support_type", "surface_id", "metrics", "typography"}
+            elif st == "support_table":
+                allowed_s = {"support_type", "alignment", "table"}
+            elif st == "outlined_support":
+                allowed_s = {"support_type", "table"}
             else:
                 allowed_s = set(support.keys())
             _drop_unknown_object(
                 support,
                 allowed=allowed_s,
-                path=f"/slides/{i}/payload/support_visual",
+                path=f"/slides/{i}/payload/support",
                 events=events,
                 role="chart_support",
                 slide_number=_slide_number(slide),
@@ -622,7 +624,7 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
             if isinstance(table, dict):
                 located.append((f"/slides/{i}/payload/table", table))
         elif layout == "single_chart":
-            visual = payload.get("primary_visual")
+            visual = payload.get("chart")
             if (
                 isinstance(visual, dict)
                 and visual.get("chart_type") == "heatmap"
@@ -630,7 +632,7 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
             ):
                 located.append(
                     (
-                        f"/slides/{i}/payload/primary_visual/table_data",
+                        f"/slides/{i}/payload/chart/table_data",
                         visual["table_data"],
                     )
                 )
@@ -640,10 +642,10 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     (f"/slides/{i}/payload/support/table", support["table"])
                 )
         elif layout == "chart_hero_dual":
-            support = payload.get("support_visual")
+            support = payload.get("support")
             if isinstance(support, dict) and isinstance(support.get("table"), dict):
                 located.append(
-                    (f"/slides/{i}/payload/support_visual/table", support["table"])
+                    (f"/slides/{i}/payload/support/table", support["table"])
                 )
         elif layout == "grouped_annex_table":
             peers = payload.get("tables")
@@ -1236,7 +1238,7 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
         if not isinstance(slide, dict) or slide.get("layout_type") != "single_chart":
             continue
         payload = slide.get("payload")
-        visual = payload.get("primary_visual") if isinstance(payload, dict) else None
+        visual = payload.get("chart") if isinstance(payload, dict) else None
         if not isinstance(visual, dict) or visual.get("chart_type") not in (
             "line",
             "grouped_bar",
@@ -1333,7 +1335,7 @@ def repair_uncontained_fixed_domains(raw: Any, events: list[DiagnosticEvent]) ->
         if not finite:
             continue
         domain_path = (
-            f"/slides/{i}/payload/primary_visual/value_axes/primary/domain"
+            f"/slides/{i}/payload/chart/value_axes/primary/domain"
         )
         if domain.get("kind") == "fixed":
             try:
@@ -1402,7 +1404,7 @@ def repair_invalid_heatmap_scales(raw: Any, events: list[DiagnosticEvent]) -> An
         if not isinstance(slide, dict) or slide.get("layout_type") != "single_chart":
             continue
         payload = slide.get("payload")
-        visual = payload.get("primary_visual") if isinstance(payload, dict) else None
+        visual = payload.get("chart") if isinstance(payload, dict) else None
         if not isinstance(visual, dict) or visual.get("chart_type") != "heatmap":
             continue
         scale = visual.get("scale")
@@ -1420,7 +1422,7 @@ def repair_invalid_heatmap_scales(raw: Any, events: list[DiagnosticEvent]) -> An
                         finite.append(Decimal(str(cell.get("value"))))
                     except (InvalidOperation, TypeError, ValueError):
                         continue
-        path = f"/slides/{i}/payload/primary_visual/scale"
+        path = f"/slides/{i}/payload/chart/scale"
         bad = False
         if not isinstance(scale, dict) or scale.get("mode") not in ("generated", "fixed"):
             bad = True

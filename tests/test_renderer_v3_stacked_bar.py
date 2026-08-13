@@ -61,7 +61,7 @@ def test_stacked_bar_deck_validates():
     assert result.ok
     slide = result.deck.slides[1]
     assert isinstance(slide, SingleChartSlide)
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     assert isinstance(chart, StackedBarChartVisual)
     assert chart.chart_type == "stacked_bar"
     assert len(chart.chart_data.categories) == 4
@@ -80,7 +80,7 @@ def test_grouped_fixture_still_validates():
 
 def test_strict_rejects_one_series_stack():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["chart_data"]["series"] = [vis["chart_data"]["series"][0]]
     # Drop aux/coverage that may reference multi-series assumptions.
     del vis["auxiliary_series"]
@@ -90,7 +90,7 @@ def test_strict_rejects_one_series_stack():
 
 def test_strict_rejects_seven_series_stack():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     base = vis["chart_data"]["series"][0]
     extra = []
     for i in range(7):
@@ -105,7 +105,7 @@ def test_strict_rejects_seven_series_stack():
 
 def test_strict_rejects_leading_break_on_stack():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "generated",
         "min": "0",
@@ -118,7 +118,7 @@ def test_strict_rejects_leading_break_on_stack():
 
 def test_strict_rejects_ordinary_values_display_on_stack():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["display"] = {"ordinary_values": "show", "series_identity": "legend"}
     with pytest.raises(RendererValidationError) as excinfo:
         validate_handoff(raw, strict=True)
@@ -127,7 +127,7 @@ def test_strict_rejects_ordinary_values_display_on_stack():
 
 def test_strict_rejects_pane_title_identity_on_stack():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["display"] = {"series_identity": "pane_title", "stack_totals": "show"}
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -135,7 +135,7 @@ def test_strict_rejects_pane_title_identity_on_stack():
 
 def test_strict_rejects_boxed_label_on_stack():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["auxiliary_series"] = [
         {
             "auxiliary_id": "box",
@@ -152,7 +152,7 @@ def test_strict_rejects_boxed_label_on_stack():
 
 def test_strict_rejects_coverage_on_grouped():
     raw = json.loads(GROUPED.read_text(encoding="utf-8"))
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["coverage_callout"] = {
         "callout_id": "c1",
         "label": "Cov",
@@ -165,7 +165,7 @@ def test_strict_rejects_coverage_on_grouped():
 
 def test_strict_rejects_coverage_non_percent():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["coverage_callout"]["format_id"] = "usd_0"
     with pytest.raises(RendererValidationError) as excinfo:
         validate_handoff(raw, strict=True)
@@ -174,7 +174,7 @@ def test_strict_rejects_coverage_non_percent():
 
 def test_strict_rejects_coverage_out_of_range():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["coverage_callout"]["value"] = "150"
     with pytest.raises(RendererValidationError) as excinfo:
         validate_handoff(raw, strict=True)
@@ -183,7 +183,7 @@ def test_strict_rejects_coverage_out_of_range():
 
 def test_strict_rejects_authored_total_with_hide():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["display"] = {"stack_totals": "hide", "series_identity": "legend"}
     with pytest.raises(RendererValidationError) as excinfo:
         validate_handoff(raw, strict=True)
@@ -192,7 +192,7 @@ def test_strict_rejects_authored_total_with_hide():
 
 def test_strict_rejects_stack_domain_excluding_extent():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     # Q1 positive extent = 70; domain max 60 fails containment.
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
@@ -206,7 +206,7 @@ def test_strict_rejects_stack_domain_excluding_extent():
 
 def test_strict_rejects_json_number_stack_value():
     raw = _s()
-    _chart_slide(raw)["payload"]["primary_visual"]["chart_data"]["series"][0]["values"][
+    _chart_slide(raw)["payload"]["chart"]["chart_data"]["series"][0]["values"][
         0
     ] = 40
     with pytest.raises(RendererValidationError):
@@ -322,7 +322,7 @@ def test_stacked_plan_sign_separated_order_and_missing():
 
 def test_null_withholds_computed_totals():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     del vis["auxiliary_series"]
     deck = validate_handoff(raw, strict=True).deck
     cp = plan_deck(deck, strict=True).by_surface_id()["dep-mix"].chart_paint
@@ -338,7 +338,7 @@ def test_null_withholds_computed_totals():
 
 def test_computed_totals_without_authored():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     del vis["auxiliary_series"]
     # Keep stack_totals show via display.
     deck = validate_handoff(raw, strict=True).deck
@@ -361,7 +361,7 @@ def test_computed_totals_without_authored():
 
 def test_default_labels_hidden():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     del vis["display"]
     del vis["auxiliary_series"]  # else totals implied show
     deck = validate_handoff(raw, strict=True).deck
@@ -374,7 +374,7 @@ def test_default_labels_hidden():
 
 def test_freeze_assigns_stack_theme_colors():
     deck = validate_handoff(_s(), strict=True).deck
-    chart = deck.slides[1].payload.primary_visual
+    chart = deck.slides[1].payload.chart
     frozen = freeze_bar_chart(chart, deck.number_formats)
     assert len(frozen["series"]) == 3
     colors = [s["color"] for s in frozen["series"]]
@@ -519,7 +519,7 @@ def test_byte_identical_rerun_stacked(tmp_path: Path):
 
 def test_mutation_drop_callout_id_fails():
     raw = _s()
-    del _chart_slide(raw)["payload"]["primary_visual"]["coverage_callout"]["callout_id"]
+    del _chart_slide(raw)["payload"]["chart"]["coverage_callout"]["callout_id"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
@@ -535,7 +535,7 @@ def test_mutation_null_not_zero_filled():
 
 def test_mutation_swap_series_order_changes_stack_bases():
     raw = _s()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     # Swap retail/wholesale — first positive series becomes wholesale.
     vis["chart_data"]["series"] = [
         vis["chart_data"]["series"][1],
@@ -567,5 +567,5 @@ def test_v2_not_imported_by_charts_module(monkeypatch: pytest.MonkeyPatch):
     charts = importlib.import_module("impact_slides.renderer_v3.charts")
     deck = validate_handoff(_s(), strict=True).deck
     assert charts.freeze_bar_chart(
-        deck.slides[1].payload.primary_visual, deck.number_formats
+        deck.slides[1].payload.chart, deck.number_formats
     )

@@ -2156,16 +2156,6 @@ def paint_chart_html(
     return out
 
 
-def paint_line_chart_html(
-    plan: dict[str, Any],
-    *,
-    plan_attrs: str = "",
-    svg_only: bool = False,
-) -> list[str]:
-    """Back-compat alias for line-chart HTML paint."""
-    return paint_chart_html(plan, plan_attrs=plan_attrs, svg_only=svg_only)
-
-
 def paint_chart_svg(
     plan: dict[str, Any],
     *,
@@ -2185,16 +2175,6 @@ def paint_chart_svg(
     if ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
         return _paint_bar_svg(plan, marks=marks, chrome=chrome)
     return _paint_line_svg(plan, marks=marks, chrome=chrome)
-
-
-def paint_line_chart_svg(
-    plan: dict[str, Any],
-    *,
-    marks: bool = True,
-    chrome: bool = True,
-) -> str:
-    """Back-compat alias."""
-    return paint_chart_svg(plan, marks=marks, chrome=chrome)
 
 
 def _paint_combo_svg(

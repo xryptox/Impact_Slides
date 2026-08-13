@@ -60,7 +60,7 @@ def test_waterfall_deck_validates():
     assert result.ok
     slide = result.deck.slides[1]
     assert isinstance(slide, SingleChartSlide)
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     assert isinstance(chart, WaterfallChartVisual)
     assert chart.chart_type == "waterfall"
     steps = chart.waterfall_data.steps
@@ -72,7 +72,7 @@ def test_waterfall_deck_validates():
 
 def test_strict_rejects_first_not_total():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     steps[0]["role"] = "change"
     with pytest.raises(RendererValidationError) as excinfo:
         validate_handoff(raw, strict=True)
@@ -81,7 +81,7 @@ def test_strict_rejects_first_not_total():
 
 def test_strict_rejects_last_change():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     steps[-1] = {
         "category_id": "close",
         "label": "Closing",
@@ -95,7 +95,7 @@ def test_strict_rejects_last_change():
 
 def test_strict_rejects_computed_total_with_value():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     steps[-1]["value"] = "120"
     with pytest.raises(RendererValidationError) as excinfo:
         validate_handoff(raw, strict=True)
@@ -104,7 +104,7 @@ def test_strict_rejects_computed_total_with_value():
 
 def test_strict_rejects_change_without_value():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     del steps[1]["value"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -112,7 +112,7 @@ def test_strict_rejects_change_without_value():
 
 def test_strict_rejects_chart_data_field():
     raw = _w()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["chart_data"] = {
         "categories": [{"category_id": "a", "label": "A"}],
         "series": [{"series_id": "s", "name": "S", "values": ["1"]}],
@@ -124,7 +124,7 @@ def test_strict_rejects_chart_data_field():
 
 def test_strict_rejects_display_field():
     raw = _w()
-    _chart_slide(raw)["payload"]["primary_visual"]["display"] = {
+    _chart_slide(raw)["payload"]["chart"]["display"] = {
         "ordinary_values": "hide"
     }
     with pytest.raises(RendererValidationError) as excinfo:
@@ -134,7 +134,7 @@ def test_strict_rejects_display_field():
 
 def test_strict_rejects_leading_break():
     raw = _w()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "generated",
         "min": "0",
@@ -148,7 +148,7 @@ def test_strict_rejects_leading_break():
 
 def test_strict_rejects_duplicate_category_ids():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     steps[2]["category_id"] = steps[1]["category_id"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -156,7 +156,7 @@ def test_strict_rejects_duplicate_category_ids():
 
 def test_strict_rejects_domain_excluding_level():
     raw = _w()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",
@@ -175,7 +175,7 @@ def test_strict_rejects_domain_excluding_level():
 
 def test_total_resets_and_computed_follows_level():
     deck = validate_handoff(_w(), strict=True).deck
-    chart = deck.slides[1].payload.primary_visual
+    chart = deck.slides[1].payload.chart
     cp = freeze_waterfall_chart(chart, deck.number_formats)
     by_id = {s["category_id"]: s for s in cp["steps"]}
     assert by_id["open"]["level"] == Decimal("100")
@@ -200,7 +200,7 @@ def test_total_resets_and_computed_follows_level():
 
 def test_zero_change_is_real_not_computed():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     steps[1]["value"] = "0"
     deck = validate_handoff(raw, strict=True).deck
     cp = plan_deck(deck, strict=True).by_surface_id()["rev-bridge"].chart_paint
@@ -301,7 +301,7 @@ def test_render_waterfall_html(tmp_path: Path):
 
 def test_computed_total_stays_decimal_safe():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     steps[0]["value"] = "10.1"
     steps[1]["value"] = "0.2"
     steps[2]["value"] = "0.3"
@@ -400,7 +400,7 @@ def test_byte_identical_rerun(tmp_path: Path):
 
 def test_mutation_drop_role_fails():
     raw = _w()
-    del _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"][1][
+    del _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"][1][
         "role"
     ]
     with pytest.raises(RendererValidationError):
@@ -410,10 +410,10 @@ def test_mutation_drop_role_fails():
 def test_mutation_infer_total_from_sign_not_allowed():
     """Roles are never inferred from sign — a negative total is still a total."""
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     steps[0]["value"] = "-50"
     # Keep domain wide enough.
-    _chart_slide(raw)["payload"]["primary_visual"]["value_axes"]["primary"][
+    _chart_slide(raw)["payload"]["chart"]["value_axes"]["primary"][
         "domain"
     ] = {"kind": "generated", "target_ticks": 5}
     # Shrink later values so levels stay coherent for domain.
@@ -431,7 +431,7 @@ def test_mutation_infer_total_from_sign_not_allowed():
 
 def test_mutation_swap_step_order_changes_levels():
     raw = _w()
-    steps = _chart_slide(raw)["payload"]["primary_visual"]["waterfall_data"]["steps"]
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
     # Swap price and volume changes.
     steps[1], steps[2] = steps[2], steps[1]
     deck = validate_handoff(raw, strict=True).deck
@@ -459,7 +459,7 @@ def test_v2_not_imported_by_charts_module(monkeypatch: pytest.MonkeyPatch):
     charts = importlib.import_module("impact_slides.renderer_v3.charts")
     deck = validate_handoff(_w(), strict=True).deck
     assert charts.freeze_waterfall_chart(
-        deck.slides[1].payload.primary_visual, deck.number_formats
+        deck.slides[1].payload.chart, deck.number_formats
     )
 
 

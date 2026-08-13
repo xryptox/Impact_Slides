@@ -22,7 +22,7 @@
       "title": "Segment growth",
       "content": {"subtitle": "Reported currency"},
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "seg-growth",
           "chart_type": "grouped_bar",
