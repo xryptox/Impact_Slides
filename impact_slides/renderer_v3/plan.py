@@ -455,6 +455,54 @@ def plan_deck(
                 renderer_version=RENDERER_VERSION,
             )
 
+    for sp in surfaces:
+        spec = sp._chart_spec or {}
+        for raw in ((spec.get("fact_chrome") or {}).get("diagnostics") or []):
+            if hasattr(raw, "model_dump"):
+                events.append(raw)
+                continue
+            payload = dict(raw)
+            expected = payload.get("expected")
+            if isinstance(expected, dict):
+                expected = expected.get("contract")
+            action = payload.get("action")
+            if isinstance(action, dict):
+                action = action.get("name")
+            result_name = payload.get("result")
+            if isinstance(result_name, dict):
+                result_name = result_name.get("name")
+            events.append(
+                event(
+                    code=payload["code"],
+                    severity=payload["severity"],
+                    phase=payload.get("phase") or "plan",
+                    role=payload.get("role") or sp.role,
+                    path=payload.get("path") or f"/slides/{sp.slide_index}/{sp.role}",
+                    action=action,
+                    result=result_name,
+                    slide_number=payload.get("slide_number", sp.slide_number),
+                    layout_type=payload.get("layout_type", sp.layout_type),
+                    surface_id=payload.get("surface_id") or sp.surface_id,
+                    expected=expected,
+                    input_meta=payload.get("input"),
+                    occurrences=int(payload.get("occurrences") or 1),
+                )
+            )
+
+    if strict:
+        late_fit = [
+            e
+            for e in events
+            if e.severity == "error"
+            and e.code in ("plan.unresolved_overflow", "validation.fit")
+        ]
+        if late_fit:
+            raise RendererValidationError(
+                sort_events(events),
+                handoff_schema_version=deck.meta.handoff_schema_version,
+                renderer_version=RENDERER_VERSION,
+            )
+
     return DeckPlan(surfaces=surfaces, events=sort_events(events))
 
 
@@ -1128,6 +1176,8 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                 box_w=sp._box_w,
                 box_h=height + 40,
             )
+            if math.ceil(sp._chart_spec["geometry"]["view_h"]) > sp._box_h:
+                sp._overflow = True
             sp._text_items = _chart_text_items(sp._chart_spec)
             sp.role_sizes.update(sp._chart_spec["role_sizes"])
             sp.display_identity_strategy = sp._chart_spec["identity_strategy"]
@@ -3700,7 +3750,7 @@ def _chart_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -> 
 
 
 def _heatmap_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -> int:
-    """Pane title band only; scale key is part of the fitted table height."""
+    """Pane title band plus painted context/annotation rows; scale key is table height."""
     height = BLOCK_MARGIN_Y
     if chart_spec.get("heading"):
         inner_w = max(1, box_w - 32)
@@ -3715,6 +3765,21 @@ def _heatmap_chrome_height(chart_spec: dict[str, Any], box_w: int = CONTENT_W) -
                 inner_w,
                 0,
             )
+    ctx_px = int((chart_spec.get("fact_chrome") or {}).get("context_px") or 16)
+    ann_px = int((chart_spec.get("fact_chrome") or {}).get("annotation_px") or 13)
+    fact_rows = 0
+    for place in chart_spec.get("context_labels") or []:
+        if place.get("suppressed"):
+            continue
+        height += _line_box(ctx_px)
+        fact_rows += 1
+    for place in chart_spec.get("annotations") or []:
+        if place.get("suppressed"):
+            continue
+        height += _line_box(ann_px)
+        fact_rows += 1
+    if fact_rows:
+        height += BLOCK_MARGIN_Y
     return height
 
 

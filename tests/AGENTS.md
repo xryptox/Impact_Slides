@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/line_chart/heatmap/bar_charts/stacked_bar/combo_chart/waterfall/chart_support/linear_grouping/relationship/cards_reviews/migrate/canonical_amex.
+Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 kernel/publication/theme/plan/data_table/brand-legal/annex-comparison/chart_facts/line_chart/heatmap/bar_charts/stacked_bar/combo_chart/waterfall/chart_support/linear_grouping/relationship/cards_reviews/migrate/canonical_amex.
 
 ## Ownership
 
@@ -36,6 +36,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 - Renderer v3 brand/divider/legal (#191): `test_renderer_v3_brand_legal.py` + fixture `renderer_v3/brand_divider_legal.json` (cover/divider placement + registry labels, multipart legal sequence + exact paragraphs, forbidden fields, mutation traps)
 - Renderer v3 annex/comparison tables (#180): `test_renderer_v3_annex_comparison.py` + fixture `renderer_v3/annex_and_comparison_tables.json` (`annex_table`/`grouped_annex_table`/`period_comparison`/`comparison_cards`; grouped headers + disclosure; fixed period roles + metric strip; peer cards; non-strict complete-data fallbacks; pre-validation table cell/group repair; cards a11y/print contract; peer-heading fit threshold; sync floor bound; mutation traps)
 - Renderer v3 line chart (#182): `test_renderer_v3_line_chart.py` + fixture `renderer_v3/minimal_line_chart.json` (typed single_chart line envelope, null gaps, frozen plan, Chart.js + noscript SVG parity, one semantic table, identity/point labels, no gridlines, readiness payloads, mutation traps)
+- Renderer v3 chart facts (#188): `test_renderer_v3_chart_facts.py` + fixtures `renderer_v3/minimal_line_chart.json` / `minimal_heatmap.json` (structured context/annotation/measurement chrome; one-block short_label then below-plot relocate; relocated block must fit existing pad without growing `view_h`; heatmap chrome-height matches painted fact rows; heatmap forbids measurements + data_point; D247 retains facts when D97 suppresses identity chrome)
 - Renderer v3 heatmap (#187): `test_renderer_v3_heatmap.py` + fixture `renderer_v3/minimal_heatmap.json` (typed heatmap visual + shared format + generated/fixed scale, one visible native table, scale key, no canvas/SVG, missing neutral, readiness without chart painters, mutation traps)
 - Renderer v3 grouped/horizontal bars (#183): `test_renderer_v3_bar_charts.py` + fixtures `renderer_v3/minimal_grouped_bar.json` / `minimal_horizontal_bar.json` (signed/zero/null geometry, outside values, D237 groups + boxed labels, horizontal leading-break contract, Chart.js/SVG ≤2px parity, identity/order, mutation traps)
 - Renderer v3 stacked bars (#184): `test_renderer_v3_stacked_bar.py` + fixture `renderer_v3/minimal_stacked_bar.json` (sign-separated +/- stacks, independent segment/total policies, missing-aware computed totals, authored totals, coverage callout, Chart.js/SVG ≤2px parity, identity/order, mutation traps)
@@ -55,7 +56,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 ## Verification
 
 - `python -m pytest -q`
-- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_bar_charts.py tests/test_renderer_v3_stacked_bar.py tests/test_renderer_v3_combo_chart.py tests/test_renderer_v3_waterfall.py tests/test_renderer_v3_chart_support.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_relationship.py tests/test_renderer_v3_cards_reviews.py tests/test_renderer_v3_migrate.py tests/test_renderer_v3_canonical_amex.py`
+- Targeted: `pytest -q -k renderer_v2` or `pytest -q tests/test_renderer_v3_kernel.py tests/test_renderer_v3_publish.py tests/test_renderer_v3_theme.py tests/test_renderer_v3_plan.py tests/test_renderer_v3_data_table.py tests/test_renderer_v3_brand_legal.py tests/test_renderer_v3_annex_comparison.py tests/test_renderer_v3_chart_facts.py tests/test_renderer_v3_line_chart.py tests/test_renderer_v3_heatmap.py tests/test_renderer_v3_bar_charts.py tests/test_renderer_v3_stacked_bar.py tests/test_renderer_v3_combo_chart.py tests/test_renderer_v3_waterfall.py tests/test_renderer_v3_chart_support.py tests/test_renderer_v3_linear_grouping.py tests/test_renderer_v3_relationship.py tests/test_renderer_v3_cards_reviews.py tests/test_renderer_v3_migrate.py tests/test_renderer_v3_canonical_amex.py`
 
 ## Child DOX Index
 

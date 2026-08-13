@@ -301,6 +301,28 @@
       "title": "BoxedLabelAuxiliary",
       "type": "object"
     },
+    "CategoryAnchor": {
+      "additionalProperties": false,
+      "description": "Single category/column annotation anchor.",
+      "properties": {
+        "type": {
+          "const": "category",
+          "default": "category",
+          "title": "Type",
+          "type": "string"
+        },
+        "category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Category Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "category_id"
+      ],
+      "title": "CategoryAnchor",
+      "type": "object"
+    },
     "CategoryAxis": {
       "additionalProperties": false,
       "properties": {
@@ -371,6 +393,106 @@
         "category_ids"
       ],
       "title": "CategoryGroup",
+      "type": "object"
+    },
+    "CategoryRangeAnchor": {
+      "additionalProperties": false,
+      "description": "Inclusive authored-order category/column range anchor.",
+      "properties": {
+        "type": {
+          "const": "category_range",
+          "default": "category_range",
+          "title": "Type",
+          "type": "string"
+        },
+        "from_category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "From Category Id",
+          "type": "string"
+        },
+        "to_category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "To Category Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from_category_id",
+        "to_category_id"
+      ],
+      "title": "CategoryRangeAnchor",
+      "type": "object"
+    },
+    "ChartAnchor": {
+      "additionalProperties": false,
+      "description": "Whole-chart annotation anchor (D147/D233/D297).",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ChartAnchor",
+      "type": "object"
+    },
+    "ChartAnnotation": {
+      "additionalProperties": false,
+      "description": "Semantic-anchor annotation fact (D147/D233/D297).",
+      "properties": {
+        "annotation_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Annotation Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "event",
+            "explanation"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "anchor": {
+          "discriminator": {
+            "mapping": {
+              "category": "#/$defs/CategoryAnchor",
+              "category_range": "#/$defs/CategoryRangeAnchor",
+              "chart": "#/$defs/ChartAnchor",
+              "data_point": "#/$defs/DataPointAnchor"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ChartAnchor"
+            },
+            {
+              "$ref": "#/$defs/CategoryAnchor"
+            },
+            {
+              "$ref": "#/$defs/DataPointAnchor"
+            },
+            {
+              "$ref": "#/$defs/CategoryRangeAnchor"
+            }
+          ],
+          "title": "Anchor"
+        }
+      },
+      "required": [
+        "annotation_id",
+        "role",
+        "text",
+        "anchor"
+      ],
+      "title": "ChartAnnotation",
       "type": "object"
     },
     "ChartCategory": {
@@ -724,6 +846,66 @@
         "title"
       ],
       "title": "ChartHeroDualSlide",
+      "type": "object"
+    },
+    "ChartMeasurement": {
+      "additionalProperties": false,
+      "description": "Authored finite-endpoint quantitative fact (D148/D234/D298).",
+      "properties": {
+        "measurement_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Measurement Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "change",
+            "cagr"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "series_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Series Id",
+          "type": "string"
+        },
+        "from_category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "From Category Id",
+          "type": "string"
+        },
+        "to_category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "To Category Id",
+          "type": "string"
+        },
+        "value": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Value",
+          "type": "string"
+        },
+        "format_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Format Id",
+          "type": "string"
+        },
+        "approximate": {
+          "title": "Approximate",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "measurement_id",
+        "role",
+        "series_id",
+        "from_category_id",
+        "to_category_id",
+        "value",
+        "format_id",
+        "approximate"
+      ],
+      "title": "ChartMeasurement",
       "type": "object"
     },
     "ChartSeries": {
@@ -1313,6 +1495,57 @@
           ],
           "default": null,
           "title": "Auxiliary Series"
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        },
+        "measurements": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartMeasurement"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurements"
         }
       },
       "required": [
@@ -1481,6 +1714,68 @@
         "title"
       ],
       "title": "ComparisonCardsSlide",
+      "type": "object"
+    },
+    "ContextLabel": {
+      "additionalProperties": false,
+      "description": "Unanchored typed chart fact (D29/D168/D232/D296).",
+      "properties": {
+        "context_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Context Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "discriminator": {
+            "mapping": {
+              "missing": "#/$defs/MissingValue",
+              "number": "#/$defs/NumberValue",
+              "range": "#/$defs/RangeValue",
+              "text": "#/$defs/TextValue"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumberValue"
+            },
+            {
+              "$ref": "#/$defs/RangeValue"
+            },
+            {
+              "$ref": "#/$defs/TextValue"
+            },
+            {
+              "$ref": "#/$defs/MissingValue"
+            }
+          ],
+          "title": "Value"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        }
+      },
+      "required": [
+        "context_id",
+        "label",
+        "value"
+      ],
+      "title": "ContextLabel",
       "type": "object"
     },
     "CoverPayload": {
@@ -1722,6 +2017,34 @@
         "title"
       ],
       "title": "DataPipelineSlide",
+      "type": "object"
+    },
+    "DataPointAnchor": {
+      "additionalProperties": false,
+      "description": "Finite plotted point annotation anchor.",
+      "properties": {
+        "type": {
+          "const": "data_point",
+          "default": "data_point",
+          "title": "Type",
+          "type": "string"
+        },
+        "series_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Series Id",
+          "type": "string"
+        },
+        "category_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Category Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "series_id",
+        "category_id"
+      ],
+      "title": "DataPointAnchor",
       "type": "object"
     },
     "DataTablePayload": {
@@ -3531,6 +3854,57 @@
           ],
           "default": null,
           "title": "Auxiliary Series"
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        },
+        "measurements": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartMeasurement"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurements"
         }
       },
       "required": [
@@ -3544,7 +3918,7 @@
     },
     "HeatmapVisual": {
       "additionalProperties": false,
-      "description": "Native semantic heatmap: one D255 table + one color scale (D163/D246/D308).",
+      "description": "Native semantic heatmap: one D255 table + scale; context/annotation facts only (D163/D246/D308).",
       "properties": {
         "type": {
           "const": "chart",
@@ -3609,6 +3983,40 @@
             }
           ],
           "title": "Scale"
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
         }
       },
       "required": [
@@ -4031,6 +4439,57 @@
           ],
           "default": null,
           "title": "Auxiliary Series"
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        },
+        "measurements": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartMeasurement"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurements"
         }
       },
       "required": [
@@ -4386,6 +4845,57 @@
             }
           ],
           "default": null
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        },
+        "measurements": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartMeasurement"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurements"
         }
       },
       "required": [
@@ -7018,6 +7528,57 @@
             }
           ],
           "default": null
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        },
+        "measurements": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartMeasurement"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurements"
         }
       },
       "required": [
@@ -8179,6 +8740,57 @@
             }
           ],
           "default": null
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        },
+        "measurements": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartMeasurement"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurements"
         }
       },
       "required": [

@@ -1400,6 +1400,90 @@ class CoverageCallout(ClosedModel):
     period: Optional[NonEmptyStr] = None
 
 
+class ContextLabel(ClosedModel):
+    """Unanchored typed chart fact (D29/D168/D232/D296)."""
+
+    context_id: SemanticId
+    label: NonEmptyStr
+    value: SemanticValue
+    short_label: Optional[NonEmptyStr] = None
+
+
+class ChartAnchor(ClosedModel):
+    """Whole-chart annotation anchor (D147/D233/D297)."""
+
+    type: Literal["chart"] = "chart"
+
+
+class CategoryAnchor(ClosedModel):
+    """Single category/column annotation anchor."""
+
+    type: Literal["category"] = "category"
+    category_id: SemanticId
+
+
+class DataPointAnchor(ClosedModel):
+    """Finite plotted point annotation anchor."""
+
+    type: Literal["data_point"] = "data_point"
+    series_id: SemanticId
+    category_id: SemanticId
+
+
+class CategoryRangeAnchor(ClosedModel):
+    """Inclusive authored-order category/column range anchor."""
+
+    type: Literal["category_range"] = "category_range"
+    from_category_id: SemanticId
+    to_category_id: SemanticId
+
+    @model_validator(mode="after")
+    def _distinct_ends(self) -> CategoryRangeAnchor:
+        if self.from_category_id == self.to_category_id:
+            raise ValueError("category_range requires two distinct category ids")
+        return self
+
+
+AnnotationAnchor = Annotated[
+    Union[ChartAnchor, CategoryAnchor, DataPointAnchor, CategoryRangeAnchor],
+    Field(discriminator="type"),
+]
+
+
+class ChartAnnotation(ClosedModel):
+    """Semantic-anchor annotation fact (D147/D233/D297)."""
+
+    annotation_id: SemanticId
+    role: Literal["event", "explanation"]
+    text: NonEmptyStr
+    anchor: AnnotationAnchor
+
+    @model_validator(mode="after")
+    def _event_not_chart_wide(self) -> ChartAnnotation:
+        if self.role == "event" and self.anchor.type == "chart":
+            raise ValueError("event annotations cannot use chart-wide anchors (D233)")
+        return self
+
+
+class ChartMeasurement(ClosedModel):
+    """Authored finite-endpoint quantitative fact (D148/D234/D298)."""
+
+    measurement_id: SemanticId
+    role: Literal["change", "cagr"]
+    series_id: SemanticId
+    from_category_id: SemanticId
+    to_category_id: SemanticId
+    value: CanonicalDecimal
+    format_id: SemanticId
+    approximate: bool
+
+    @model_validator(mode="after")
+    def _distinct_range(self) -> ChartMeasurement:
+        if self.from_category_id == self.to_category_id:
+            raise ValueError("measurement range requires two distinct category ids")
+        return self
+
+
 class CategoryAxis(ClosedModel):
     visible: bool
     title: Optional[NonEmptyStr] = None
@@ -1612,6 +1696,182 @@ def _validate_authored_stack_totals(chart: Any) -> None:
         )
 
 
+def _chart_category_ids(chart: Any) -> list[str]:
+    data = getattr(chart, "chart_data", None)
+    if data is not None:
+        return [c.category_id for c in data.categories]
+    wf = getattr(chart, "waterfall_data", None)
+    if wf is not None:
+        return [s.category_id for s in wf.steps]
+    table = getattr(chart, "table_data", None)
+    if table is not None:
+        return [c.column_id for c in table.columns]
+    return []
+
+
+def _chart_series_ids(chart: Any) -> set[str]:
+    data = getattr(chart, "chart_data", None)
+    if data is not None:
+        return {s.series_id for s in data.series}
+    if getattr(chart, "chart_type", None) == "waterfall":
+        return {"waterfall"}
+    return set()
+
+
+def _finite_point_exists(chart: Any, series_id: str, category_id: str) -> bool:
+    data = getattr(chart, "chart_data", None)
+    if data is not None:
+        cat_ids = [c.category_id for c in data.categories]
+        if category_id not in cat_ids:
+            return False
+        c_i = cat_ids.index(category_id)
+        for s in data.series:
+            if s.series_id == series_id:
+                return s.values[c_i] is not None
+        return False
+    wf = getattr(chart, "waterfall_data", None)
+    if wf is not None:
+        if series_id != "waterfall":
+            return False
+        return any(s.category_id == category_id for s in wf.steps)
+    return False
+
+
+def _validate_context_labels(chart: Any) -> None:
+    labels = getattr(chart, "context_labels", None)
+    if not labels:
+        return
+    seen: set[str] = set()
+    for lab in labels:
+        if lab.context_id in seen:
+            raise ValueError("context_id values must be unique within the chart")
+        seen.add(lab.context_id)
+
+
+def _validate_annotations(chart: Any, *, allow_data_point: bool = True) -> None:
+    anns = getattr(chart, "annotations", None)
+    if not anns:
+        return
+    cat_ids = _chart_category_ids(chart)
+    cat_pos = {cid: i for i, cid in enumerate(cat_ids)}
+    ser_ids = _chart_series_ids(chart)
+    seen: set[str] = set()
+    for ann in anns:
+        if ann.annotation_id in seen:
+            raise ValueError("annotation_id values must be unique within the chart")
+        seen.add(ann.annotation_id)
+        anchor = ann.anchor
+        if anchor.type == "chart":
+            continue
+        if anchor.type == "category":
+            if anchor.category_id not in cat_pos:
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} references unknown "
+                    f"category_id {anchor.category_id!r}"
+                )
+            continue
+        if anchor.type == "category_range":
+            if anchor.from_category_id not in cat_pos:
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} references unknown "
+                    f"from_category_id {anchor.from_category_id!r}"
+                )
+            if anchor.to_category_id not in cat_pos:
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} references unknown "
+                    f"to_category_id {anchor.to_category_id!r}"
+                )
+            if cat_pos[anchor.from_category_id] >= cat_pos[anchor.to_category_id]:
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} category_range must be "
+                    "forward authored order"
+                )
+            continue
+        if anchor.type == "data_point":
+            if not allow_data_point:
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} forbids data_point anchors "
+                    "on this chart family (D297)"
+                )
+            if anchor.series_id not in ser_ids:
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} references unknown "
+                    f"series_id {anchor.series_id!r}"
+                )
+            if anchor.category_id not in cat_pos:
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} references unknown "
+                    f"category_id {anchor.category_id!r}"
+                )
+            if not _finite_point_exists(chart, anchor.series_id, anchor.category_id):
+                raise ValueError(
+                    f"annotation {ann.annotation_id!r} data_point requires a "
+                    "finite plotted value (D297)"
+                )
+
+
+def _validate_measurements(chart: Any) -> None:
+    measures = getattr(chart, "measurements", None)
+    if not measures:
+        return
+    if getattr(chart, "chart_type", None) == "heatmap":
+        raise ValueError("heatmap forbids measurements (D298)")
+    cat_ids = _chart_category_ids(chart)
+    cat_pos = {cid: i for i, cid in enumerate(cat_ids)}
+    ser_ids = _chart_series_ids(chart)
+    seen: set[str] = set()
+    keys: set[tuple[str, str, str, str]] = set()
+    for m in measures:
+        if m.measurement_id in seen:
+            raise ValueError("measurement_id values must be unique within the chart")
+        seen.add(m.measurement_id)
+        if m.series_id not in ser_ids:
+            raise ValueError(
+                f"measurement {m.measurement_id!r} references unknown "
+                f"series_id {m.series_id!r}"
+            )
+        if m.from_category_id not in cat_pos:
+            raise ValueError(
+                f"measurement {m.measurement_id!r} references unknown "
+                f"from_category_id {m.from_category_id!r}"
+            )
+        if m.to_category_id not in cat_pos:
+            raise ValueError(
+                f"measurement {m.measurement_id!r} references unknown "
+                f"to_category_id {m.to_category_id!r}"
+            )
+        if cat_pos[m.from_category_id] >= cat_pos[m.to_category_id]:
+            raise ValueError(
+                f"measurement {m.measurement_id!r} range must be forward authored order"
+            )
+        # Finite endpoints required (D234/D298). Intermediate nulls stay missing.
+        if getattr(chart, "chart_type", None) == "waterfall":
+            # Waterfall steps always resolve to finite display values.
+            pass
+        else:
+            if not _finite_point_exists(chart, m.series_id, m.from_category_id):
+                raise ValueError(
+                    f"measurement {m.measurement_id!r} from endpoint must be finite"
+                )
+            if not _finite_point_exists(chart, m.series_id, m.to_category_id):
+                raise ValueError(
+                    f"measurement {m.measurement_id!r} to endpoint must be finite"
+                )
+        key = (m.role, m.series_id, m.from_category_id, m.to_category_id)
+        if key in keys:
+            raise ValueError(
+                f"duplicate measurement role/series/range for {m.measurement_id!r}"
+            )
+        keys.add(key)
+
+
+def _validate_chart_facts(chart: Any, *, allow_data_point: bool = True) -> None:
+    """Shared context/annotation/measurement checks (D232–D234/D296–D298)."""
+    _validate_context_labels(chart)
+    _validate_annotations(chart, allow_data_point=allow_data_point)
+    _validate_measurements(chart)
+
+
 def _validate_stacked_display(chart: Any) -> None:
     """Stacked bars forbid ordinary_values + pane_title; allow segment/total (D295)."""
     disp = chart.display
@@ -1698,6 +1958,15 @@ class LineChartVisual(ClosedModel):
     value_axes: ValueAxes
     display: Optional[ChartDisplay] = None
     typography: Optional[ChartTypography] = None
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+    measurements: Optional[list[ChartMeasurement]] = Field(
+        default=None, min_length=1, max_length=4
+    )
 
     @model_validator(mode="after")
     def _line_invariants(self) -> LineChartVisual:
@@ -1715,6 +1984,7 @@ class LineChartVisual(ClosedModel):
         _leading_break_rules(self, allow=True)
         _domain_contains_finite(self)
         _validate_nonstacked_display(self)
+        _validate_chart_facts(self)
         return self
 
 
@@ -1745,7 +2015,7 @@ HeatmapScale = Annotated[
 
 
 class HeatmapVisual(ClosedModel):
-    """Native semantic heatmap: one D255 table + one color scale (D163/D246/D308)."""
+    """Native semantic heatmap: one D255 table + scale; context/annotation facts only (D163/D246/D308)."""
 
     type: Literal["chart"] = "chart"
     surface_id: SemanticId
@@ -1754,6 +2024,13 @@ class HeatmapVisual(ClosedModel):
     subtitle: Optional[NonEmptyStr] = None
     table_data: TableData
     scale: HeatmapScale
+
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -1766,12 +2043,11 @@ class HeatmapVisual(ClosedModel):
             "value_axes",
             "display",
             "typography",
-            "context_labels",
-            "annotations",
             "measurements",
             "category_groups",
             "auxiliary_series",
             "coverage",
+            "coverage_callout",
         )
         for key in forbidden:
             if key in data:
@@ -1820,6 +2096,7 @@ class HeatmapVisual(ClosedModel):
                     raise ValueError(
                         "fixed heatmap scale must contain every finite value"
                     )
+        _validate_chart_facts(self, allow_data_point=False)
         return self
 
     @property
@@ -1851,6 +2128,15 @@ class GroupedBarChartVisual(ClosedModel):
     auxiliary_series: Optional[list[BoxedLabelAuxiliary]] = Field(
         default=None, min_length=1
     )
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+    measurements: Optional[list[ChartMeasurement]] = Field(
+        default=None, min_length=1, max_length=4
+    )
 
     @model_validator(mode="after")
     def _grouped_invariants(self) -> GroupedBarChartVisual:
@@ -1879,6 +2165,7 @@ class GroupedBarChartVisual(ClosedModel):
             for a in (self.auxiliary_series or [])
         ):
             raise ValueError("grouped_bar forbids authored_stack_total (D235/D240)")
+        _validate_chart_facts(self)
         return self
 
 
@@ -1900,6 +2187,15 @@ class HorizontalBarChartVisual(ClosedModel):
     )
     auxiliary_series: Optional[list[BoxedLabelAuxiliary]] = Field(
         default=None, min_length=1
+    )
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+    measurements: Optional[list[ChartMeasurement]] = Field(
+        default=None, min_length=1, max_length=4
     )
 
     @model_validator(mode="after")
@@ -1929,6 +2225,7 @@ class HorizontalBarChartVisual(ClosedModel):
             for a in (self.auxiliary_series or [])
         ):
             raise ValueError("horizontal_bar forbids authored_stack_total (D235/D243)")
+        _validate_chart_facts(self)
         return self
 
 
@@ -1986,6 +2283,15 @@ class WaterfallChartVisual(ClosedModel):
     category_axis: CategoryAxis
     value_axes: ValueAxes
     typography: Optional[ChartTypography] = None
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+    measurements: Optional[list[ChartMeasurement]] = Field(
+        default=None, min_length=1, max_length=4
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -2029,6 +2335,7 @@ class WaterfallChartVisual(ClosedModel):
                 raise ValueError(
                     "authored domain bounds must contain every waterfall level"
                 )
+        _validate_chart_facts(self)
         return self
 
 
@@ -2068,6 +2375,15 @@ class StackedBarChartVisual(ClosedModel):
         default=None, min_length=1, max_length=1
     )
     coverage_callout: Optional[CoverageCallout] = None
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+    measurements: Optional[list[ChartMeasurement]] = Field(
+        default=None, min_length=1, max_length=4
+    )
 
     @model_validator(mode="after")
     def _stacked_invariants(self) -> StackedBarChartVisual:
@@ -2092,6 +2408,7 @@ class StackedBarChartVisual(ClosedModel):
         _validate_category_groups(self)
         _validate_authored_stack_totals(self)
         _validate_stacked_display(self)
+        _validate_chart_facts(self)
         return self
 
 
@@ -2186,6 +2503,15 @@ class ComboChartVisual(ClosedModel):
     auxiliary_series: Optional[list[ComboAuxiliary]] = Field(
         default=None, min_length=1, max_length=1
     )
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+    measurements: Optional[list[ChartMeasurement]] = Field(
+        default=None, min_length=1, max_length=4
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -2268,6 +2594,7 @@ class ComboChartVisual(ClosedModel):
             if any(a.role == "boxed_label" for a in aux):
                 raise ValueError("stacked combo forbids boxed_label (D235/D244)")
             _validate_authored_stack_totals(self)
+        _validate_chart_facts(self)
         return self
 
 
@@ -3441,6 +3768,10 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
             values.extend(m.value for m in hsv.metrics)
     if lt == "metric_overview" and payload is not None:
         values.extend(m.value for m in payload.metrics)
+    # Chart context_labels carry D213 values (D232/D296).
+    for chart in _axis_charts_on_slide(slide):
+        for lab in getattr(chart, "context_labels", None) or []:
+            values.append(lab.value)
     return values
 
 
@@ -3560,6 +3891,13 @@ class Deck(ClosedModel):
                         if afid not in self.number_formats:
                             raise ValueError(f"unresolved format_id {afid!r}")
                         referenced_formats.add(afid)
+                    # Measurement format_ids (D234/D298) — context values via
+                    # _slide_semantic_values.
+                    for meas in getattr(chart, "measurements", None) or []:
+                        mfid = meas.format_id
+                        if mfid not in self.number_formats:
+                            raise ValueError(f"unresolved format_id {mfid!r}")
+                        referenced_formats.add(mfid)
                     # Author series colors must be known palette keys (D16/D98/D130).
                     if not isinstance(chart, WaterfallChartVisual):
                         from .theme import palette_keys  # local; avoid import cycle
