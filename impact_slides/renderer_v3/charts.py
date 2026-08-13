@@ -3917,6 +3917,7 @@ def _freeze_context_labels(
 
     placements: list[dict[str, Any]] = []
     y1 = y0
+    block_bottom = y0
     for lab, fv, display, x, y, w, h in placed or []:
         candidates = [
             {"class": "exterior", "x": x_ext, "y": y0, "label": lab.label},
@@ -3953,13 +3954,20 @@ def _freeze_context_labels(
         )
         occupied.append(_fact_box(float(x), float(y), w, h))
         y1 = y + h
+        block_bottom = y + h / 2
     return {
         "placements": placements,
         "facts": facts,
         "suppressed": suppressed,
         "px": px,
         "diagnostics": diagnostics,
-        "block": {"x": x_ext if not relocated else pad_l + plot_w / 2, "y0": y0, "y1": y1},
+        "block": {
+            "x": x_ext if not relocated else pad_l + plot_w / 2,
+            "y0": y0,
+            "y1": y1,
+            "bottom": block_bottom,
+            "need_view_h": (block_bottom + PAD_B) if relocated and placed else None,
+        },
     }
 
 
@@ -4342,6 +4350,14 @@ def _attach_chart_facts(
     plan["extra_facts"] = (
         list(plan["extra_facts"]) + ctx["facts"] + anns["facts"] + meas["facts"]
     )
+    need_vh = (ctx.get("block") or {}).get("need_view_h")
+    if need_vh is not None and "pad_b" in g:
+        view_h = float(g.get("view_h") or 0)
+        if float(need_vh) > view_h:
+            extra = float(need_vh) - view_h
+            g["view_h"] = float(need_vh)
+            g["pad_b"] = float(g.get("pad_b") or 0) + extra
+            plan["geometry"] = g
     return plan
 
 

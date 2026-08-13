@@ -236,6 +236,14 @@ def test_heatmap_facts_paint_once_inside_surface():
     assert 'data-annotation-id="col-note"' in owned
     assert leftover.count("Board view") == 0
     assert leftover.count("Peak column") == 0
+    bare = validate_handoff(_heat(), strict=True)
+    bare_h = next(
+        s._chrome_h for s in plan_deck(bare.deck, strict=True).surfaces if s.role == "heatmap"
+    )
+    fact_h = next(
+        s._chrome_h for s in plan_deck(result.deck, strict=True).surfaces if s.role == "heatmap"
+    )
+    assert fact_h > bare_h
     assert html.count('data-context-id="note"') == 1
     assert html.count('data-annotation-id="col-note"') == 1
     ctx = html[html.find('data-context-id="note"') : html.find("</div>", html.find('data-context-id="note"'))]
@@ -569,41 +577,39 @@ def test_context_labels_relocate_as_complete_block():
     vis.pop("measurements", None)
     vis["context_labels"] = [
         {
-            "context_id": "ctx-a",
-            "label": "Gross and Services Mix Extra",
+            "context_id": f"ctx-{i}",
+            "label": f"Gross and Services Mix Extra {i}",
             "short_label": "WWWWWWWWWW",
             "value": {"type": "number", "value": "3.0", "format_id": "pct_1"},
-        },
-        {
-            "context_id": "ctx-b",
-            "label": "International Share Extra Wide",
-            "short_label": "XXXXXXXXXX",
-            "value": {"type": "number", "value": "1.5", "format_id": "pct_1"},
-        },
+        }
+        for i in range(4)
     ]
     result = validate_handoff(raw, strict=True)
     chart = result.deck.slides[1].payload.primary_visual
     plan = freeze_chart(chart, result.deck.number_formats)
     placed = plan["context_labels"]
-    assert {p["context_id"] for p in placed} == {"ctx-a", "ctx-b"}
+    assert {p["context_id"] for p in placed} == {f"ctx-{i}" for i in range(4)}
     classes = {p["class"] for p in placed}
-    assert len(classes) == 1
-    assert classes <= {"exterior", "exterior_short", "below_plot"}
-    assert "plan.label_suppressed" not in [
-        d["code"] for d in plan["fact_chrome"]["diagnostics"]
-    ]
+    assert classes == {"below_plot"}
     codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
-    if "below_plot" in classes:
-        assert "plan.surface_relocated" in codes
-        assert placed[0]["y"] != placed[1]["y"]
-    if classes != {"exterior"}:
-        assert "plan.short_label_used" in codes
+    assert "plan.label_suppressed" not in codes
+    assert "plan.surface_relocated" in codes
+    assert "plan.short_label_used" in codes
+    ys = [float(p["y"]) for p in placed]
+    assert len(set(ys)) == 4
+    px = float(plan["role_sizes"]["context_labels"])
+    bottoms = [float(p["y"]) + px * 1.35 for p in placed]
+    g = plan["geometry"]
+    assert max(bottoms) <= float(g["view_h"])
+    assert float(g["view_h"]) == pytest.approx(
+        float(g["pad_t"]) + float(g["plot_h"]) + float(g["pad_b"])
+    )
     facts = plan["semantic_table"]["facts"]
-    assert any("Gross and Services Mix Extra" in f for f in facts)
-    assert any("International Share Extra Wide" in f for f in facts)
+    for i in range(4):
+        assert any(f"Gross and Services Mix Extra {i}" in f for f in facts)
     svg = paint_chart_svg(plan)
-    assert 'data-context-id="ctx-a"' in svg
-    assert 'data-context-id="ctx-b"' in svg
+    for i in range(4):
+        assert f'data-context-id="ctx-{i}"' in svg
 
 
 def test_schema_export_includes_fact_models():
