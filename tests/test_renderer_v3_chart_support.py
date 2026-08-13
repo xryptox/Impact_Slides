@@ -662,6 +662,41 @@ def test_hero_support_table_category_validates_and_plans():
         assert abs(c["x"] - cat_x[c["category_id"]]) <= 2.0
 
 
+def test_paint_hero_support_table_uses_frozen_centers(tmp_path: Path):
+    support = _cat_support_table()
+    support["table"]["surface_id"] = "hero-support"
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(_hero_with_support(support)), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-table-surface="hero-support"' in html
+    assert 'data-category-centered="true"' in html
+    assert "support-cat-cell" in html
+    lefts = [float(x) for x in re.findall(r"support-cat-cell[^>]*left:([0-9.]+)px", html)]
+    assert len(lefts) == 4
+    result = validate_handoff(_hero_with_support(support), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    chart = next(s for s in plan.surfaces if s.surface_id == "hero-chart")
+    cat_x = [c["x"] for c in chart.chart_paint["categories"]]
+    for painted, frozen in zip(lefts, cat_x):
+        assert abs(painted - frozen) <= 2.0
+
+
+def test_paint_hero_metric_strip_complete(tmp_path: Path):
+    support = _metric_strip()
+    support["surface_id"] = "hero-metrics"
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(_hero_with_support(support)), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-metric-strip="hero-metrics"' in html
+    assert "Peak" in html
+    assert "Gap" in html
+    assert "—" in html
+
+
 def test_hero_support_table_rejects_column_mismatch():
     support = _cat_support_table()
     support["table"]["surface_id"] = "hero-support"

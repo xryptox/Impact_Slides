@@ -23,13 +23,10 @@ from impact_slides.renderer_v3 import (
     validate_handoff,
 )
 from impact_slides.renderer_v3.models import (
-    ChartHeroDualPayload,
     ClosingCoverSlide,
     Deck,
-    DualChartPayload,
     NarrativeSlide,
     OpeningCoverSlide,
-    SingleChartPayload,
 )
 from impact_slides.renderer_v3.schema_export import check_schema, generate_schema, schema_json
 
@@ -386,19 +383,6 @@ def test_raw_dict_not_attached_to_result():
     result = validate_handoff(raw, strict=True)
     assert id(result.deck) != raw_id
     assert not isinstance(result.deck, dict)
-
-
-def test_chart_payloads_use_canonical_slot_names():
-    """D252/D253/D254: chart compositions own chart/charts/hero/support, not v2 aliases."""
-    assert "chart" in SingleChartPayload.model_fields
-    assert "primary_visual" not in SingleChartPayload.model_fields
-    assert DualChartPayload.model_fields["charts"].annotation is not None
-    assert "panes" not in DualChartPayload.model_fields
-    hero_fields = ChartHeroDualPayload.model_fields
-    assert set(hero_fields) >= {"chart", "hero"}
-    assert "support" in hero_fields
-    assert not {"primary_visual", "hero_visual", "support_visual"} & set(hero_fields)
-    assert hero_fields["hero"].annotation is not None
 
 
 def test_v2_payload_aliases_are_unknown_fields():

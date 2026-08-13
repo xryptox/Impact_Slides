@@ -566,8 +566,6 @@ def _paint_chart_hero_dual(
     number_formats: dict[str, Any] | None = None,
 ) -> list[str]:
     """2:1 chart + hero with optional left support (D150/D153)."""
-    from .format import format_semantic_value
-
     p = slide.payload
     formats = number_formats or {}
     out = ['<div class="chart-hero-dual">', '<div class="chart-hero-left">']
@@ -578,36 +576,9 @@ def _paint_chart_hero_dual(
     )
     support = p.support
     if support is not None:
-        if getattr(support, "support_type", None) == "metric_strip":
-            sp = plans_by_id.get(support.surface_id)
-            out.append(
-                f'<div class="metric-strip" {_plan_attrs(sp, events_by_surface)}>'
-            )
-            for m in support.metrics:
-                vis = format_semantic_value(m.value, formats).visible
-                out.append(
-                    f'<div class="metric-cell" data-metric-id="{_escape(m.metric_id)}">'
-                    f'<p class="metric-label">{_soft_break_html(m.label)}</p>'
-                    f'<p class="metric-value">{_escape(vis)}</p></div>'
-                )
-            out.append("</div>")
-        elif getattr(support, "support_type", None) == "outlined_support":
-            out.extend(
-                _paint_chart_support(
-                    support,
-                    plans_by_id,
-                    events_by_surface,
-                )
-            )
-        else:
-            out.extend(
-                _paint_table_surface(
-                    support.table,
-                    plans_by_id,
-                    events_by_surface,
-                    table_class="support-table",
-                )
-            )
+        out.extend(
+            _paint_chart_support(support, plans_by_id, events_by_surface)
+        )
     out.append('</div><div class="chart-hero-right">')
     out.extend(
         _paint_hero_visual(p.hero, plans_by_id, events_by_surface, formats)

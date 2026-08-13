@@ -2025,28 +2025,16 @@ _text_items=hero_items or [(" ", False)],
         support = payload.support
         if support is not None:
             if getattr(support, "support_type", None) == "metric_strip":
-                items = [(m.label, False) for m in support.metrics]
                 plans.append(
-                    SurfacePlan(
-                        surface_id=support.surface_id,
-                        role="metric_strip",
-                        slide_number=sn,
+                    _metric_strip_plan(
+                        support,
+                        deck,
+                        sn=sn,
                         slide_index=slide_index,
-                        layout_type=lt,
+                        lt=lt,
+                        region=region,
                         slot_order=12,
-                        design_stage_region=region,
-                        role_sizes={
-                            "body": METRIC_STRIP_FLOOR,
-                            "value": METRIC_STRIP_VALUE_PX,
-                        },
-                        _text_items=items or [(" ", False)],
-                        _box_w=chart_w,
-                        _fit_role="body",
-                        _mode="adaptive",
-                        _margin_boxes=0,
-                        _default_size=METRIC_STRIP_FLOOR,
-                        _maximum_size=METRIC_STRIP_CEIL,
-                        _chrome_h=METRIC_STRIP_PAD_Y,
+                        box_w=chart_w,
                     )
                 )
             elif getattr(support, "support_type", None) == "outlined_support":
@@ -2568,6 +2556,7 @@ def _metric_strip_plan(
     lt: str,
     region: int,
     slot_order: int,
+    box_w: int = CONTENT_W,
 ) -> SurfacePlan:
     from .format import format_semantic_value
 
@@ -2593,7 +2582,7 @@ def _metric_strip_plan(
         if m.detail:
             texts.append((m.detail, False))
     n = max(1, len(metrics))
-    cell_w = (CONTENT_W - METRIC_STRIP_GAP * (n - 1)) // n
+    cell_w = (box_w - METRIC_STRIP_GAP * (n - 1)) // n
     return SurfacePlan(
         surface_id=strip.surface_id,
         role="metric_strip",
