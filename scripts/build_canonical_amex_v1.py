@@ -623,7 +623,7 @@ def build() -> dict:
             "Total Billed Business",
             "earnings",
             {
-                "primary_visual": line_chart(
+                "chart": line_chart(
                     "s4-bb",
                     cats,
                     [
@@ -652,7 +652,7 @@ def build() -> dict:
             "U.S. Consumer Services Billed Business",
             "earnings",
             {
-                "primary_visual": line_chart(
+                "chart": line_chart(
                     "s5-ucs",
                     cats,
                     [("UCS Billings", [7, 7, 9, 9, 10], "navy")],
@@ -677,7 +677,7 @@ def build() -> dict:
             "U.S. Consumer Platinum Performance",
             "earnings",
             {
-                "panes": [
+                "charts": [
                     grouped_bar(
                         "s6-spend",
                         cats,
@@ -796,7 +796,7 @@ def build() -> dict:
             "Membership Model Engagement: Proprietary Lodging Assets",
             "earnings",
             {
-                "primary_visual": line_chart(
+                "chart": line_chart(
                     "s8-lodging",
                     cats,
                     [
@@ -824,7 +824,7 @@ def build() -> dict:
             "Commercial Services Billed Business",
             "earnings",
             {
-                "primary_visual": line_chart(
+                "chart": line_chart(
                     "s9-comm",
                     cats,
                     [("Commercial FX-adj", [2, 2, 4, 3, 4], "navy")],
@@ -849,7 +849,7 @@ def build() -> dict:
             "International Card Services Billed Business",
             "earnings",
             {
-                "primary_visual": line_chart(
+                "chart": line_chart(
                     "s10-ics",
                     cats,
                     [
@@ -882,7 +882,7 @@ def build() -> dict:
             s11["title"],
             "earnings",
             {
-                "primary_visual": line_chart(
+                "chart": line_chart(
                     "s11-txn",
                     labs11,
                     [("Transaction Growth", vals11, "navy")],
@@ -933,9 +933,9 @@ def build() -> dict:
             s12["title"],
             "earnings",
             {
-                "primary_visual": chart12,
-                "hero_visual": {
-                    "type": "metric_stack",
+                "chart": chart12,
+                "hero": {
+                    "hero_type": "metric_stack",
                     "surface_id": "s12-hero",
                     "heading": "Proprietary New Accounts Acquired",
                     "subtitle": "Q1'2026",
@@ -984,7 +984,7 @@ def build() -> dict:
             "Total Balances and Billed Business",
             "earnings",
             {
-                "primary_visual": grouped_bar(
+                "chart": grouped_bar(
                     "s13-bal",
                     labs13,
                     [
@@ -1012,7 +1012,7 @@ def build() -> dict:
             "Credit Metrics",
             "earnings",
             {
-                "panes": [
+                "charts": [
                     grouped_bar(
                         "s14-dpd",
                         [r["label"] for r in p14["steps_or_data"]],
@@ -1079,7 +1079,7 @@ def build() -> dict:
             "single_chart",
             s15["title"],
             "earnings",
-            {"primary_visual": chart15},
+            {"chart": chart15},
             subtitle=s15["content"].get("subtitle") or None,
             disclosure=disclosure_from_text(
                 "s15-disc",
@@ -1171,7 +1171,7 @@ def build() -> dict:
             "dual_chart",
             s17["title"],
             "earnings",
-            {"panes": [pane_a, pane_b]},
+            {"charts": [pane_a, pane_b]},
             disclosure=disclosure_from_text(
                 "s17-disc",
                 "Qualification",
@@ -1198,15 +1198,15 @@ def build() -> dict:
             s18["title"],
             "earnings",
             {
-                "primary_visual": grouped_bar(
+                "chart": grouped_bar(
                     "s18-nii",
                     labs18,
                     [("NII", vals18, "navy")],
                     heading="Net Interest Income",
                     fmt="pct_0",
                 ),
-                "hero_visual": {
-                    "type": "driver_card",
+                "hero": {
+                    "hero_type": "driver_card",
                     "surface_id": "s18-driver",
                     "heading": "NII: Volume & Margin Drivers",
                     "rows": [
@@ -1271,7 +1271,7 @@ def build() -> dict:
                 s19["title"],
                 "earnings",
                 {
-                    "primary_visual": line_chart(
+                    "chart": line_chart(
                         "s19-rev",
                         [r["label"] for r in st19],
                         [
@@ -1306,7 +1306,7 @@ def build() -> dict:
                 s19["title"],
                 "earnings",
                 {
-                    "primary_visual": line_chart(
+                    "chart": line_chart(
                         "s19-rev",
                         cats,
                         [
@@ -1390,7 +1390,7 @@ def build() -> dict:
             "Capital",
             "earnings",
             {
-                "primary_visual": stacked_bar(
+                "chart": stacked_bar(
                     "s21-cap",
                     labs21,
                     series21,
@@ -1398,8 +1398,8 @@ def build() -> dict:
                     fmt="usd_1",
                     totals=totals21,
                 ),
-                "hero_visual": {
-                    "type": "driver_card",
+                "hero": {
+                    "hero_type": "driver_card",
                     "surface_id": "s21-summary",
                     "heading": "Capital Summary",
                     "rows": [
@@ -1442,9 +1442,8 @@ def build() -> dict:
                         },
                     ],
                 },
-                "support_visual": {
-                    "type": "outlined_support",
-                    "surface_id": "s21-roe-wrap",
+                "support": {
+                    "support_type": "outlined_support",
                     "table": {
                         "surface_id": "s21-roe",
                         "stub_header": {"label": "Metric"},
@@ -1635,7 +1634,7 @@ def build() -> dict:
             "single_chart",
             s24["title"],
             "appendix",
-            {"primary_visual": chart24},
+            {"chart": chart24},
             subtitle=s24["content"].get("subtitle") or None,
             disclosure=disclosure_from_text(
                 "s24-disc",
@@ -1717,7 +1716,7 @@ def build() -> dict:
             s27["title"],
             "appendix",
             {
-                "panes": [
+                "charts": [
                     line_chart(
                         "s27-unemp",
                         labs_u,
@@ -1796,7 +1795,7 @@ def build() -> dict:
             "dual_chart",
             s28["title"],
             "appendix",
-            {"panes": [p0, p1]},
+            {"charts": [p0, p1]},
             disclosure=disclosure_from_text(
                 "s28-disc",
                 "FDIC coverage",

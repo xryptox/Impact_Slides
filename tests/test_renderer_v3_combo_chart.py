@@ -38,14 +38,14 @@ def _chart_slide(raw: dict, surface: str = "cap-combo") -> dict:
     for s in raw["slides"]:
         if s.get("layout_type") != "single_chart":
             continue
-        vis = s.get("payload", {}).get("primary_visual", {})
+        vis = s.get("payload", {}).get("chart", {})
         if vis.get("surface_id") == surface:
             return s
     raise KeyError(surface)
 
 
 def _vis(raw: dict, surface: str = "cap-combo") -> dict:
-    return _chart_slide(raw, surface)["payload"]["primary_visual"]
+    return _chart_slide(raw, surface)["payload"]["chart"]
 
 
 # ---------------------------------------------------------------------------
@@ -58,7 +58,7 @@ def test_combo_deck_validates_grouped_and_stacked():
     assert result.ok
     g = result.deck.slides[1]
     assert isinstance(g, SingleChartSlide)
-    gc = g.payload.primary_visual
+    gc = g.payload.chart
     assert isinstance(gc, ComboChartVisual)
     assert gc.chart_type == "combo"
     assert gc.bar_mode == "grouped"
@@ -66,7 +66,7 @@ def test_combo_deck_validates_grouped_and_stacked():
     marks = [s.mark_type for s in gc.chart_data.series]
     assert marks.count("bar") == 2 and marks.count("line") == 1
 
-    sc = result.deck.slides[2].payload.primary_visual
+    sc = result.deck.slides[2].payload.chart
     assert isinstance(sc, ComboChartVisual)
     assert sc.bar_mode == "stacked"
     assert sc.value_axes.secondary is None
@@ -245,7 +245,7 @@ def test_strict_rejects_line_style_on_bar():
 def test_non_combo_still_forbids_secondary_axis():
     raw = json.loads(STACKED.read_text(encoding="utf-8"))
     vis = next(
-        s["payload"]["primary_visual"]
+        s["payload"]["chart"]
         for s in raw["slides"]
         if s.get("layout_type") == "single_chart"
     )
@@ -295,7 +295,7 @@ def test_auto_identity_endpoints_and_bar_legend():
 
 def test_freeze_grouped_layers_axes_and_identity():
     deck = validate_handoff(_s(), strict=True).deck
-    chart = deck.slides[1].payload.primary_visual
+    chart = deck.slides[1].payload.chart
     frozen = freeze_combo_chart(chart, deck.number_formats)
     assert frozen["chart_type"] == "combo"
     assert frozen["bar_mode"] == "grouped"
@@ -322,7 +322,7 @@ def test_freeze_grouped_layers_axes_and_identity():
 
 def test_freeze_stacked_sign_order_and_totals():
     deck = validate_handoff(_s(), strict=True).deck
-    chart = deck.slides[2].payload.primary_visual
+    chart = deck.slides[2].payload.chart
     frozen = freeze_combo_chart(chart, deck.number_formats)
     assert frozen["bar_mode"] == "stacked"
     assert frozen["geometry"]["stacked"] is True
@@ -444,7 +444,7 @@ def test_chartjs_stacked_multi_line_unique_stacks():
 def test_mutation_flip_bar_mode_changes_geometry():
     """Discriminating probe: grouped vs stacked bar x positions differ."""
     deck = validate_handoff(_s(), strict=True).deck
-    g = freeze_combo_chart(deck.slides[1].payload.primary_visual, deck.number_formats)
+    g = freeze_combo_chart(deck.slides[1].payload.chart, deck.number_formats)
     # Mutate model to stacked on same data (rebuild via handoff).
     raw = _s()
     vis = _vis(raw)
@@ -455,7 +455,7 @@ def test_mutation_flip_bar_mode_changes_geometry():
     vis["display"] = {"series_identity": "legend", "stack_totals": "show"}
     # Remove groups optional OK.
     deck2 = validate_handoff(raw, strict=True).deck
-    s = freeze_combo_chart(deck2.slides[1].payload.primary_visual, deck2.number_formats)
+    s = freeze_combo_chart(deck2.slides[1].payload.chart, deck2.number_formats)
     g_bars = [b for b in g["bars"] if b["series_id"] == "buybacks" and b["category_id"] == "q1"]
     s_bars = [b for b in s["bars"] if b["series_id"] == "buybacks" and b["category_id"] == "q1"]
     assert g_bars and s_bars

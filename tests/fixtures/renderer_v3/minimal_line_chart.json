@@ -25,7 +25,7 @@
       "title": "Volume trend",
       "content": { "subtitle": "Reported currency" },
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "vol-trend",
           "chart_type": "line",

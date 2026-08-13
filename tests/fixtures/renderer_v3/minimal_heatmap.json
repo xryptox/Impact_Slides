@@ -40,7 +40,7 @@
         "subtitle": "Share of billed volume"
       },
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "region-heat",
           "chart_type": "heatmap",

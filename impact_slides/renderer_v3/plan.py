@@ -1935,7 +1935,7 @@ def _collect_composite_body(
         # D149: equal panes with renderer-owned gutter.
         gutter = 24
         pane_w = (CONTENT_W - gutter) // 2
-        for i, chart in enumerate(payload.panes):
+        for i, chart in enumerate(payload.charts):
             plans.append(
                 _axis_chart_surface_plan(
                     chart,
@@ -1957,7 +1957,7 @@ def _collect_composite_body(
         hero_w = CONTENT_W - chart_w - gutter
         plans.append(
             _axis_chart_surface_plan(
-                payload.primary_visual,
+                payload.chart,
                 deck=deck,
                 sn=sn,
                 slide_index=slide_index,
@@ -1967,13 +1967,13 @@ def _collect_composite_body(
                 box_w=chart_w,
             )
         )
-        hero = payload.hero_visual
+        hero = payload.hero
         hero_groups: list[list[tuple[str, bool]]] = []
         if hero.heading:
             hero_groups.append([(hero.heading, True)])
         if hero.subtitle:
             hero_groups.append([(hero.subtitle, False)])
-        if hero.type == "metric_stack":
+        if hero.hero_type == "metric_stack":
             for m in hero.metrics:
                 group: list[tuple[str, bool]] = [(m.label, False), (_fmt(m.value), True)]
                 if m.detail:
@@ -2010,7 +2010,7 @@ def _collect_composite_body(
                     "subtitle": hero.subtitle,
                     "rows": [
                         (r.label, r.detail)
-                        for r in (hero.metrics if hero.type == "metric_stack" else hero.rows)
+                        for r in (hero.metrics if hero.hero_type == "metric_stack" else hero.rows)
                     ],
                 },
 _text_items=hero_items or [(" ", False)],
@@ -2022,38 +2022,26 @@ _text_items=hero_items or [(" ", False)],
                 _chrome_h=0,
             )
         )
-        support = payload.support_visual
+        support = payload.support
         if support is not None:
-            if getattr(support, "type", None) == "metric_strip":
-                items = [(m.label, False) for m in support.metrics]
+            if getattr(support, "support_type", None) == "metric_strip":
                 plans.append(
-                    SurfacePlan(
-                        surface_id=support.surface_id,
-                        role="metric_strip",
-                        slide_number=sn,
+                    _metric_strip_plan(
+                        support,
+                        deck,
+                        sn=sn,
                         slide_index=slide_index,
-                        layout_type=lt,
+                        lt=lt,
+                        region=region,
                         slot_order=12,
-                        design_stage_region=region,
-                        role_sizes={
-                            "body": METRIC_STRIP_FLOOR,
-                            "value": METRIC_STRIP_VALUE_PX,
-                        },
-                        _text_items=items or [(" ", False)],
-                        _box_w=chart_w,
-                        _fit_role="body",
-                        _mode="adaptive",
-                        _margin_boxes=0,
-                        _default_size=METRIC_STRIP_FLOOR,
-                        _maximum_size=METRIC_STRIP_CEIL,
-                        _chrome_h=METRIC_STRIP_PAD_Y,
+                        box_w=chart_w,
                     )
                 )
-            elif getattr(support, "type", None) == "outlined_support":
+            elif getattr(support, "support_type", None) == "outlined_support":
                 plans.append(
                     _outlined_support_plan(
                         support=support,
-                        chart=payload.primary_visual,
+                        chart=payload.chart,
                         chart_spec=plans[0]._chart_spec or {},
                         deck=deck,
                         sn=sn,
@@ -2064,27 +2052,30 @@ _text_items=hero_items or [(" ", False)],
                     )
                 )
             else:
-                table = support.table
-                table_spec = _build_table_spec(table, deck.number_formats)
-                table_plan = SurfacePlan(
-                    surface_id=table.surface_id,
-                    role="support_table",
-                    slide_number=sn,
-                    slide_index=slide_index,
-                    layout_type=lt,
-                    slot_order=12,
-                    design_stage_region=region,
-                    role_sizes={"table": TABLE_FLOOR},
-                    _text_items=[(t, False) for t in table_spec["all_texts"]],
-                    _box_w=chart_w,
-                    _fit_role="table",
-                    _mode="adaptive",
-                    _margin_boxes=0,
-                    _default_size=TABLE_FLOOR,
-                    _maximum_size=TABLE_CEIL,
-                    _table_spec=table_spec,
+                alignment = getattr(support, "alignment", "independent")
+                hide_header = alignment == "category" and bool(
+                    getattr(payload.chart.category_axis, "visible", False)
                 )
-                plans.append(table_plan)
+                plans.append(
+                    _table_surface_plan(
+                        table=support.table,
+                        deck=deck,
+                        sn=sn,
+                        slide_index=slide_index,
+                        lt=lt,
+                        region=region,
+                        slot_order=12,
+                        box_w=chart_w,
+                        role="support_table",
+                        extra_spec={
+                            "kind": "support_table",
+                            "alignment": alignment,
+                            "hide_header": hide_header,
+                            "paint_as": "support_table",
+                            "chart_surface_id": payload.chart.surface_id,
+                        },
+                    )
+                )
         return len(plans), plans
 
     # metric_overview
@@ -2244,7 +2235,7 @@ def _collect_single_chart_body(
     )
 
     plans: list[SurfacePlan] = []
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     slot = 10
     if isinstance(chart, HeatmapVisual):
         chart_spec = freeze_heatmap(
@@ -2565,6 +2556,7 @@ def _metric_strip_plan(
     lt: str,
     region: int,
     slot_order: int,
+    box_w: int = CONTENT_W,
 ) -> SurfacePlan:
     from .format import format_semantic_value
 
@@ -2590,7 +2582,7 @@ def _metric_strip_plan(
         if m.detail:
             texts.append((m.detail, False))
     n = max(1, len(metrics))
-    cell_w = (CONTENT_W - METRIC_STRIP_GAP * (n - 1)) // n
+    cell_w = (box_w - METRIC_STRIP_GAP * (n - 1)) // n
     return SurfacePlan(
         surface_id=strip.surface_id,
         role="metric_strip",

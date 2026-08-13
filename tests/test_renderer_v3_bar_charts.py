@@ -71,7 +71,7 @@ def test_grouped_bar_deck_validates():
     assert result.ok
     slide = result.deck.slides[1]
     assert isinstance(slide, SingleChartSlide)
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     assert isinstance(chart, GroupedBarChartVisual)
     assert chart.chart_type == "grouped_bar"
     assert len(chart.chart_data.categories) == 4
@@ -85,7 +85,7 @@ def test_grouped_bar_deck_validates():
 def test_horizontal_bar_deck_validates():
     result = validate_handoff(_h(), strict=True)
     assert result.ok
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     assert isinstance(chart, HorizontalBarChartVisual)
     assert chart.chart_type == "horizontal_bar"
     assert chart.value_axes.primary.leading_break is not None
@@ -98,7 +98,7 @@ def test_line_fixture_still_validates():
 
 def test_strict_rejects_grouped_leading_break():
     raw = _g()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "generated",
         "min": "0",
@@ -112,7 +112,7 @@ def test_strict_rejects_grouped_leading_break():
 
 def test_strict_rejects_hbar_mixed_sign_with_break():
     raw = _h()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["chart_data"]["series"][0]["values"] = ["62.5", "-5.0", "55.2", "50.0"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -120,7 +120,7 @@ def test_strict_rejects_hbar_mixed_sign_with_break():
 
 def test_strict_rejects_hbar_nonpositive_side_with_break():
     raw = _h()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "generated",
         "min": "-20",
@@ -135,7 +135,7 @@ def test_strict_rejects_hbar_nonpositive_side_with_break():
 
 def test_line_leading_break_allows_negative_values():
     raw = json.loads(LINE.read_text(encoding="utf-8"))
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["chart_data"]["series"][0]["values"] = ["-8.0", "-7.0", None, "-2.0"]
     vis["chart_data"]["series"][1]["values"] = ["-6.0", "-5.0", "-4.0", "-3.0"]
     vis["value_axes"]["primary"]["domain"] = {
@@ -149,7 +149,7 @@ def test_line_leading_break_allows_negative_values():
 
 def test_line_leading_break_error_never_cites_d243():
     raw = json.loads(LINE.read_text(encoding="utf-8"))
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "generated",
         "min": "-20",
@@ -165,7 +165,7 @@ def test_line_leading_break_error_never_cites_d243():
 
 def test_hbar_fixed_domain_break_requires_tick_at_break_to():
     raw = _h()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",
@@ -179,7 +179,7 @@ def test_hbar_fixed_domain_break_requires_tick_at_break_to():
 
 def test_hbar_fixed_domain_break_with_tick_at_to_plans():
     raw = _h()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",
@@ -193,7 +193,7 @@ def test_hbar_fixed_domain_break_with_tick_at_to_plans():
 
 def test_line_fixed_domain_break_requires_tick_at_break_to():
     raw = json.loads(LINE.read_text(encoding="utf-8"))
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",
@@ -207,7 +207,7 @@ def test_line_fixed_domain_break_requires_tick_at_break_to():
 
 def test_line_fixed_domain_break_with_tick_at_to_validates():
     raw = json.loads(LINE.read_text(encoding="utf-8"))
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",
@@ -220,7 +220,7 @@ def test_line_fixed_domain_break_with_tick_at_to_validates():
 
 def test_strict_rejects_overlapping_category_groups():
     raw = _g()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["category_groups"][1]["category_ids"] = ["intl", "smob"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -228,7 +228,7 @@ def test_strict_rejects_overlapping_category_groups():
 
 def test_strict_rejects_noncontiguous_category_group():
     raw = _g()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["category_groups"] = [
         {
             "group_id": "skip",
@@ -242,7 +242,7 @@ def test_strict_rejects_noncontiguous_category_group():
 
 def test_strict_rejects_boxed_unknown_target_series():
     raw = _g()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["auxiliary_series"][0]["target_series_id"] = "nope"
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -250,7 +250,7 @@ def test_strict_rejects_boxed_unknown_target_series():
 
 def test_strict_rejects_bar_domain_excluding_zero():
     raw = _g()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "1",
@@ -263,7 +263,7 @@ def test_strict_rejects_bar_domain_excluding_zero():
 
 def test_strict_rejects_json_number_bar_value():
     raw = _g()
-    _chart_slide(raw)["payload"]["primary_visual"]["chart_data"]["series"][0]["values"][
+    _chart_slide(raw)["payload"]["chart"]["chart_data"]["series"][0]["values"][
         0
     ] = 3.2
     with pytest.raises(RendererValidationError):
@@ -367,7 +367,7 @@ def test_horizontal_leading_break_contract():
 
 def test_freeze_assigns_bar_theme_colors():
     deck = validate_handoff(_g(), strict=True).deck
-    chart = deck.slides[1].payload.primary_visual
+    chart = deck.slides[1].payload.chart
     frozen = freeze_bar_chart(chart, deck.number_formats)
     assert frozen["series"][0]["color"].startswith("#")
     assert frozen["series"][1]["color"].startswith("#")
@@ -551,7 +551,7 @@ def test_byte_identical_rerun_grouped(tmp_path: Path):
 
 def test_mutation_drop_group_id_fails():
     raw = _g()
-    del _chart_slide(raw)["payload"]["primary_visual"]["category_groups"][0]["group_id"]
+    del _chart_slide(raw)["payload"]["chart"]["category_groups"][0]["group_id"]
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
@@ -567,7 +567,7 @@ def test_mutation_null_not_zero_filled():
 
 def test_mutation_swap_series_order_changes_paint():
     raw = _g()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["chart_data"]["series"] = list(reversed(vis["chart_data"]["series"]))
     deck = validate_handoff(raw, strict=True).deck
     cp = plan_deck(deck, strict=True).by_surface_id()["seg-growth"].chart_paint
@@ -582,7 +582,7 @@ def test_mutation_swap_series_order_changes_paint():
 
 def test_hide_ordinary_values_suppresses_only_ordinary():
     raw = _g()
-    _chart_slide(raw)["payload"]["primary_visual"]["display"] = {
+    _chart_slide(raw)["payload"]["chart"]["display"] = {
         "ordinary_values": "hide",
         "series_identity": "legend",
     }
@@ -612,13 +612,13 @@ def test_v2_not_imported_by_charts_module(monkeypatch: pytest.MonkeyPatch):
     charts = importlib.import_module("impact_slides.renderer_v3.charts")
     deck = validate_handoff(_g(), strict=True).deck
     assert charts.freeze_bar_chart(
-        deck.slides[1].payload.primary_visual, deck.number_formats
+        deck.slides[1].payload.chart, deck.number_formats
     )
 
 
 def test_single_series_grouped_valid():
     raw = _g()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["chart_data"]["series"] = [vis["chart_data"]["series"][1]]
     del vis["auxiliary_series"]
     del raw["number_formats"]["usd_0"]

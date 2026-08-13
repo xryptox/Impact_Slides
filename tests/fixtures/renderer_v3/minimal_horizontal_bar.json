@@ -21,7 +21,7 @@
       "title": "Network share",
       "content": {"subtitle": "Selected markets"},
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "net-share",
           "chart_type": "horizontal_bar",

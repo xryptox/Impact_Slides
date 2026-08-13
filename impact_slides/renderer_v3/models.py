@@ -2666,18 +2666,27 @@ ChartVisual = Annotated[
 
 
 class DualChartPayload(ClosedModel):
-    """Exactly two ordered equal-width chart panes (D149)."""
+    """Exactly two ordered equal-width charts (D149/D253)."""
 
-    panes: list[ChartVisual] = Field(min_length=2, max_length=2)
+    charts: list[ChartVisual] = Field(min_length=2, max_length=2)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_legacy_pane_key(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "panes" in data:
+            raise ValueError("panes is invalid; use payload.charts")
+        return data
 
     @model_validator(mode="after")
     def _two_charts(self) -> DualChartPayload:
-        ids = [p.surface_id for p in self.panes]
+        ids = [p.surface_id for p in self.charts]
         if len(ids) != len(set(ids)):
-            raise ValueError("dual_chart pane surface_id values must be unique")
-        for p in self.panes:
+            raise ValueError("dual_chart chart surface_id values must be unique")
+        for p in self.charts:
             if getattr(p, "chart_type", None) == "heatmap":
-                raise ValueError("dual_chart panes must be axis charts (D149)")
+                raise ValueError("dual_chart charts must be axis charts (D149)")
+            if not getattr(p, "heading", None):
+                raise ValueError("dual_chart charts require a non-empty heading (D170/D253)")
         return self
 
 
@@ -2693,7 +2702,7 @@ class MetricStackMetric(ClosedModel):
 class MetricStackVisual(ClosedModel):
     """Ordered 1-3 prominent metrics (D152)."""
 
-    type: Literal["metric_stack"] = "metric_stack"
+    hero_type: Literal["metric_stack"] = "metric_stack"
     surface_id: SemanticId
     heading: Optional[NonEmptyStr] = None
     subtitle: Optional[NonEmptyStr] = None
@@ -2723,7 +2732,7 @@ class DriverCardRow(ClosedModel):
 class DriverCardVisual(ClosedModel):
     """Structured explanatory rows (D151)."""
 
-    type: Literal["driver_card"] = "driver_card"
+    hero_type: Literal["driver_card"] = "driver_card"
     surface_id: SemanticId
     heading: NonEmptyStr
     subtitle: Optional[NonEmptyStr] = None
@@ -2739,102 +2748,8 @@ class DriverCardVisual(ClosedModel):
 
 HeroVisual = Annotated[
     Union[MetricStackVisual, DriverCardVisual],
-    Field(discriminator="type"),
+    Field(discriminator="hero_type"),
 ]
-
-
-class HeroSupportTableVisual(ClosedModel):
-    """Category-aligned support under chart_hero_dual (D140/D153)."""
-
-    type: Literal["support_table"] = "support_table"
-    surface_id: SemanticId
-    table: TableData
-
-
-class HeroOutlinedSupportVisual(ClosedModel):
-    """Outlined support under chart_hero_dual (D140/D153/D166/D267)."""
-
-    type: Literal["outlined_support"] = "outlined_support"
-    surface_id: SemanticId
-    table: TableData
-
-    @model_validator(mode="after")
-    def _one_row_no_groups(self) -> HeroOutlinedSupportVisual:
-        if len(self.table.rows) != 1:
-            raise ValueError("outlined_support requires exactly one row")
-        if self.table.column_groups is not None:
-            raise ValueError("outlined_support forbids column_groups (D267)")
-        return self
-
-
-class HeroMetricStripVisual(ClosedModel):
-    """Metric strip under chart_hero_dual (D140/D153)."""
-
-    type: Literal["metric_strip"] = "metric_strip"
-    surface_id: SemanticId
-    metrics: list[MetricItem] = Field(min_length=1, max_length=6)
-    typography: Optional[Typography] = None
-
-    @model_validator(mode="after")
-    def _unique_metrics(self) -> HeroMetricStripVisual:
-        ids = [m.metric_id for m in self.metrics]
-        if len(ids) != len(set(ids)):
-            raise ValueError("metric_id values must be unique within the strip")
-        return self
-
-
-HeroSupportVisual = Annotated[
-    Union[HeroSupportTableVisual, HeroOutlinedSupportVisual, HeroMetricStripVisual],
-    Field(discriminator="type"),
-]
-
-
-class ChartHeroDualPayload(ClosedModel):
-    """One left chart + right hero + optional left support (D150/D153)."""
-
-    primary_visual: ChartVisual
-    hero_visual: HeroVisual
-    support_visual: Optional[HeroSupportVisual] = None
-
-    @model_validator(mode="after")
-    def _hero_ids(self) -> ChartHeroDualPayload:
-        ids = [
-            self.primary_visual.surface_id,
-            self.hero_visual.surface_id,
-        ]
-        if self.support_visual is not None:
-            sid = self.support_visual.surface_id
-            ids.append(sid)
-            table = getattr(self.support_visual, "table", None)
-            if table is not None:
-                ids.append(table.surface_id)
-        if len(ids) != len(set(ids)):
-            raise ValueError("chart_hero_dual surface_id values must be unique")
-        if getattr(self.primary_visual, "chart_type", None) == "heatmap":
-            raise ValueError("chart_hero_dual primary must be an axis chart")
-        support = self.support_visual
-        if isinstance(support, HeroOutlinedSupportVisual):
-            chart = self.primary_visual
-            cats = getattr(getattr(chart, "chart_data", None), "categories", None)
-            chart_type = getattr(chart, "chart_type", None)
-            if cats is None:
-                raise ValueError("outlined_support requires an axis chart with categories")
-            if chart_type == "horizontal_bar":
-                raise ValueError(
-                    "outlined_support is not supported on horizontal_bar "
-                    "(category axis is vertical)"
-                )
-            cat_ids = [c.category_id for c in cats]
-            col_ids = [c.column_id for c in support.table.columns]
-            if col_ids != cat_ids:
-                raise ValueError(
-                    "outlined_support columns must match chart category_id order exactly"
-                )
-            if not getattr(chart.category_axis, "visible", False):
-                raise ValueError(
-                    "outlined_support requires a visible category axis (D267)"
-                )
-        return self
 
 
 class MetricOverviewDetail(ClosedModel):
@@ -2929,79 +2844,123 @@ ChartSupportVisual = Annotated[
 ]
 
 
-class SingleChartPayload(ClosedModel):
-    """single_chart: one primary chart + optional typed support (D140/D252)."""
+def _check_support_vs_chart(support: Any, chart: Any) -> None:
+    """D252 support-vs-chart contract; chart_hero_dual support follows the same rules."""
+    if support is None:
+        return
+    chart_sid = chart.surface_id
+    if isinstance(support, MetricStripSupport):
+        if support.surface_id == chart_sid:
+            raise ValueError("support surface_id must differ from chart surface_id")
+        return
+    table = support.table
+    if table.surface_id == chart_sid:
+        raise ValueError("support table.surface_id must differ from chart surface_id")
+    heat = getattr(chart, "table_data", None)
+    if heat is not None and table.surface_id == heat.surface_id:
+        raise ValueError("support table.surface_id must differ from heatmap table")
+    cats = getattr(getattr(chart, "chart_data", None), "categories", None)
+    chart_type = getattr(chart, "chart_type", None)
+    if isinstance(support, OutlinedSupportVisual):
+        if cats is None:
+            raise ValueError("outlined_support requires an axis chart with categories")
+        if chart_type == "horizontal_bar":
+            raise ValueError(
+                "outlined_support is not supported on horizontal_bar "
+                "(category axis is vertical)"
+            )
+        cat_ids = [c.category_id for c in cats]
+        col_ids = [c.column_id for c in table.columns]
+        if col_ids != cat_ids:
+            raise ValueError(
+                "outlined_support columns must match chart category_id order exactly"
+            )
+        if not getattr(chart.category_axis, "visible", False):
+            raise ValueError(
+                "outlined_support requires a visible category axis (D267)"
+            )
+    elif isinstance(support, SupportTableVisual) and support.alignment == "category":
+        if cats is None:
+            raise ValueError(
+                "category-aligned support_table requires an axis chart with categories"
+            )
+        if chart_type == "horizontal_bar":
+            raise ValueError(
+                "category-aligned support_table is not supported on horizontal_bar "
+                "(category axis is vertical); use alignment=independent"
+            )
+        cat_ids = [c.category_id for c in cats]
+        col_ids = [c.column_id for c in table.columns]
+        if col_ids != cat_ids:
+            raise ValueError(
+                "category-aligned support_table columns must match chart "
+                "category_id order exactly"
+            )
 
-    primary_visual: ChartVisual
+
+class ChartHeroDualPayload(ClosedModel):
+    """One left chart + right hero + optional left support (D150/D153/D254)."""
+
+    chart: ChartVisual
+    hero: HeroVisual
+    support: Optional[ChartSupportVisual] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_legacy_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for key in ("primary_visual", "hero_visual", "support_visual"):
+                if key in data:
+                    raise ValueError(
+                        f"{key} is invalid; use payload.chart, payload.hero, payload.support"
+                    )
+        return data
+
+    @model_validator(mode="after")
+    def _hero_ids(self) -> ChartHeroDualPayload:
+        ids = [self.chart.surface_id, self.hero.surface_id]
+        support = self.support
+        if support is not None:
+            sid = getattr(support, "surface_id", None)
+            if sid is None and getattr(support, "table", None) is not None:
+                sid = support.table.surface_id
+            if sid is not None:
+                ids.append(sid)
+            table = getattr(support, "table", None)
+            if table is not None and table.surface_id not in ids:
+                ids.append(table.surface_id)
+        if len(ids) != len(set(ids)):
+            raise ValueError("chart_hero_dual surface_id values must be unique")
+        if getattr(self.chart, "chart_type", None) == "heatmap":
+            raise ValueError("chart_hero_dual chart must be an axis chart")
+        if not getattr(self.chart, "heading", None):
+            raise ValueError("chart_hero_dual chart requires a non-empty heading (D170/D254)")
+        if not getattr(self.hero, "heading", None):
+            raise ValueError("chart_hero_dual hero requires a non-empty heading (D170/D254)")
+        _check_support_vs_chart(support, self.chart)
+        return self
+
+
+class SingleChartPayload(ClosedModel):
+    """single_chart: one chart + optional typed support (D140/D252)."""
+
+    chart: ChartVisual
     support: Optional[ChartSupportVisual] = None
 
     @model_validator(mode="before")
     @classmethod
     def _forbid_legacy_support_keys(cls, data: Any) -> Any:
         if isinstance(data, dict):
-            for key in ("support_visual", "secondary_visual"):
+            for key in ("primary_visual", "support_visual", "secondary_visual"):
                 if key in data:
                     raise ValueError(
-                        f"{key} is invalid; use payload.support with support_type"
+                        f"{key} is invalid; use payload.chart and payload.support"
                     )
         return data
 
     @model_validator(mode="after")
     def _support_contract(self) -> SingleChartPayload:
-        support = self.support
-        if support is None:
-            return self
-        chart = self.primary_visual
-        chart_sid = chart.surface_id
-        if isinstance(support, MetricStripSupport):
-            if support.surface_id == chart_sid:
-                raise ValueError("support surface_id must differ from chart surface_id")
-            return self
-        table = support.table
-        if table.surface_id == chart_sid:
-            raise ValueError("support table.surface_id must differ from chart surface_id")
-        heat = getattr(chart, "table_data", None)
-        if heat is not None and table.surface_id == heat.surface_id:
-            raise ValueError("support table.surface_id must differ from heatmap table")
-        # Category / outlined alignment only against axis-chart D228 categories.
-        cats = getattr(getattr(chart, "chart_data", None), "categories", None)
-        chart_type = getattr(chart, "chart_type", None)
-        if isinstance(support, OutlinedSupportVisual):
-            if cats is None:
-                raise ValueError("outlined_support requires an axis chart with categories")
-            if chart_type == "horizontal_bar":
-                raise ValueError(
-                    "outlined_support is not supported on horizontal_bar "
-                    "(category axis is vertical)"
-                )
-            cat_ids = [c.category_id for c in cats]
-            col_ids = [c.column_id for c in table.columns]
-            if col_ids != cat_ids:
-                raise ValueError(
-                    "outlined_support columns must match chart category_id order exactly"
-                )
-            if not getattr(chart.category_axis, "visible", False):
-                raise ValueError(
-                    "outlined_support requires a visible category axis (D267)"
-                )
-        elif isinstance(support, SupportTableVisual) and support.alignment == "category":
-            if cats is None:
-                raise ValueError(
-                    "category-aligned support_table requires an axis chart with categories"
-                )
-            if chart_type == "horizontal_bar":
-                raise ValueError(
-                    "category-aligned support_table is not supported on horizontal_bar "
-                    "(category axis is vertical); use alignment=independent"
-                )
-            cat_ids = [c.category_id for c in cats]
-            col_ids = [c.column_id for c in table.columns]
-            if col_ids != cat_ids:
-                raise ValueError(
-                    "category-aligned support_table columns must match chart "
-                    "category_id order exactly"
-                )
-            # Hidden category axis makes support the visible category owner (D266).
+        _check_support_vs_chart(self.support, self.chart)
         return self
 
 
@@ -3686,11 +3645,11 @@ def _axis_charts_on_slide(slide: Any) -> list[Any]:
     lt = getattr(slide, "layout_type", None)
     payload = getattr(slide, "payload", None)
     if lt == "single_chart":
-        return [payload.primary_visual]
+        return [payload.chart]
     if lt == "dual_chart":
-        return list(payload.panes)
+        return list(payload.charts)
     if lt == "chart_hero_dual":
-        return [payload.primary_visual]
+        return [payload.chart]
     return []
 
 
@@ -3713,7 +3672,7 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
         return [peer.table.surface_id for peer in payload.tables]
     if lt == "single_chart":
         ids: list[str] = []
-        chart = payload.primary_visual
+        chart = payload.chart
         # Heatmap owns a nested D255 table with its own deck-unique surface (D308).
         table = getattr(chart, "table_data", None)
         if table is not None:
@@ -3727,13 +3686,17 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
         return ids
     if lt == "chart_hero_dual":
         ids: list[str] = []
-        support = getattr(payload, "support_visual", None)
+        support = getattr(payload, "support", None)
         if support is not None:
-            ids.append(support.surface_id)
+            sid = getattr(support, "surface_id", None)
+            if sid is None and getattr(support, "table", None) is not None:
+                sid = support.table.surface_id
+            if sid is not None:
+                ids.append(sid)
             table = getattr(support, "table", None)
             if table is not None and table.surface_id not in ids:
                 ids.append(table.surface_id)
-        ids.append(payload.hero_visual.surface_id)
+        ids.append(payload.hero.surface_id)
         return ids
     if lt == "metric_overview":
         ids = [payload.surface_id]
@@ -3758,14 +3721,11 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
         values.extend(m.value for m in support.metrics)
     lt = getattr(slide, "layout_type", None)
     if lt == "chart_hero_dual" and payload is not None:
-        hero = payload.hero_visual
-        if getattr(hero, "type", None) == "metric_stack":
+        hero = payload.hero
+        if getattr(hero, "hero_type", None) == "metric_stack":
             values.extend(m.value for m in hero.metrics)
-        elif getattr(hero, "type", None) == "driver_card":
+        elif getattr(hero, "hero_type", None) == "driver_card":
             values.extend(r.value for r in hero.rows)
-        hsv = getattr(payload, "support_visual", None)
-        if hsv is not None and getattr(hsv, "type", None) == "metric_strip":
-            values.extend(m.value for m in hsv.metrics)
     if lt == "metric_overview" and payload is not None:
         values.extend(m.value for m in payload.metrics)
     # Chart context_labels carry D213 values (D232/D296).
@@ -3789,7 +3749,7 @@ def _slide_tables(slide: Any) -> list[TableData]:
         return [peer.table for peer in payload.tables]
     if lt == "single_chart":
         tables: list[TableData] = []
-        table = getattr(payload.primary_visual, "table_data", None)
+        table = getattr(payload.chart, "table_data", None)
         if table is not None:
             tables.append(table)
         support = getattr(payload, "support", None)
@@ -3797,8 +3757,8 @@ def _slide_tables(slide: Any) -> list[TableData]:
             tables.append(support.table)
         return tables
     if lt == "chart_hero_dual":
-        support = getattr(payload, "support_visual", None)
-        if support is not None and getattr(support, "type", None) != "metric_strip":
+        support = getattr(payload, "support", None)
+        if support is not None and not isinstance(support, MetricStripSupport):
             return [support.table]
         return []
     return []

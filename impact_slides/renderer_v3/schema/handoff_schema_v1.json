@@ -634,9 +634,9 @@
     },
     "ChartHeroDualPayload": {
       "additionalProperties": false,
-      "description": "One left chart + right hero + optional left support (D150/D153).",
+      "description": "One left chart + right hero + optional left support (D150/D153/D254).",
       "properties": {
-        "primary_visual": {
+        "chart": {
           "discriminator": {
             "mapping": {
               "combo": "#/$defs/ComboChartVisual",
@@ -672,15 +672,15 @@
               "$ref": "#/$defs/HeatmapVisual"
             }
           ],
-          "title": "Primary Visual"
+          "title": "Chart"
         },
-        "hero_visual": {
+        "hero": {
           "discriminator": {
             "mapping": {
               "driver_card": "#/$defs/DriverCardVisual",
               "metric_stack": "#/$defs/MetricStackVisual"
             },
-            "propertyName": "type"
+            "propertyName": "hero_type"
           },
           "oneOf": [
             {
@@ -690,28 +690,28 @@
               "$ref": "#/$defs/DriverCardVisual"
             }
           ],
-          "title": "Hero Visual"
+          "title": "Hero"
         },
-        "support_visual": {
+        "support": {
           "anyOf": [
             {
               "discriminator": {
                 "mapping": {
-                  "metric_strip": "#/$defs/HeroMetricStripVisual",
-                  "outlined_support": "#/$defs/HeroOutlinedSupportVisual",
-                  "support_table": "#/$defs/HeroSupportTableVisual"
+                  "metric_strip": "#/$defs/MetricStripSupport",
+                  "outlined_support": "#/$defs/OutlinedSupportVisual",
+                  "support_table": "#/$defs/SupportTableVisual"
                 },
-                "propertyName": "type"
+                "propertyName": "support_type"
               },
               "oneOf": [
                 {
-                  "$ref": "#/$defs/HeroSupportTableVisual"
+                  "$ref": "#/$defs/SupportTableVisual"
                 },
                 {
-                  "$ref": "#/$defs/HeroOutlinedSupportVisual"
+                  "$ref": "#/$defs/OutlinedSupportVisual"
                 },
                 {
-                  "$ref": "#/$defs/HeroMetricStripVisual"
+                  "$ref": "#/$defs/MetricStripSupport"
                 }
               ]
             },
@@ -720,12 +720,12 @@
             }
           ],
           "default": null,
-          "title": "Support Visual"
+          "title": "Support"
         }
       },
       "required": [
-        "primary_visual",
-        "hero_visual"
+        "chart",
+        "hero"
       ],
       "title": "ChartHeroDualPayload",
       "type": "object"
@@ -2597,10 +2597,10 @@
       "additionalProperties": false,
       "description": "Structured explanatory rows (D151).",
       "properties": {
-        "type": {
+        "hero_type": {
           "const": "driver_card",
           "default": "driver_card",
-          "title": "Type",
+          "title": "Hero Type",
           "type": "string"
         },
         "surface_id": {
@@ -2646,9 +2646,9 @@
     },
     "DualChartPayload": {
       "additionalProperties": false,
-      "description": "Exactly two ordered equal-width chart panes (D149).",
+      "description": "Exactly two ordered equal-width charts (D149/D253).",
       "properties": {
-        "panes": {
+        "charts": {
           "items": {
             "discriminator": {
               "mapping": {
@@ -2688,12 +2688,12 @@
           },
           "maxItems": 2,
           "minItems": 2,
-          "title": "Panes",
+          "title": "Charts",
           "type": "array"
         }
       },
       "required": [
-        "panes"
+        "charts"
       ],
       "title": "DualChartPayload",
       "type": "object"
@@ -4027,101 +4027,6 @@
       "title": "HeatmapVisual",
       "type": "object"
     },
-    "HeroMetricStripVisual": {
-      "additionalProperties": false,
-      "description": "Metric strip under chart_hero_dual (D140/D153).",
-      "properties": {
-        "type": {
-          "const": "metric_strip",
-          "default": "metric_strip",
-          "title": "Type",
-          "type": "string"
-        },
-        "surface_id": {
-          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
-          "title": "Surface Id",
-          "type": "string"
-        },
-        "metrics": {
-          "items": {
-            "$ref": "#/$defs/MetricItem"
-          },
-          "maxItems": 6,
-          "minItems": 1,
-          "title": "Metrics",
-          "type": "array"
-        },
-        "typography": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Typography"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        }
-      },
-      "required": [
-        "surface_id",
-        "metrics"
-      ],
-      "title": "HeroMetricStripVisual",
-      "type": "object"
-    },
-    "HeroOutlinedSupportVisual": {
-      "additionalProperties": false,
-      "description": "Outlined support under chart_hero_dual (D140/D153/D166/D267).",
-      "properties": {
-        "type": {
-          "const": "outlined_support",
-          "default": "outlined_support",
-          "title": "Type",
-          "type": "string"
-        },
-        "surface_id": {
-          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
-          "title": "Surface Id",
-          "type": "string"
-        },
-        "table": {
-          "$ref": "#/$defs/TableData"
-        }
-      },
-      "required": [
-        "surface_id",
-        "table"
-      ],
-      "title": "HeroOutlinedSupportVisual",
-      "type": "object"
-    },
-    "HeroSupportTableVisual": {
-      "additionalProperties": false,
-      "description": "Category-aligned support under chart_hero_dual (D140/D153).",
-      "properties": {
-        "type": {
-          "const": "support_table",
-          "default": "support_table",
-          "title": "Type",
-          "type": "string"
-        },
-        "surface_id": {
-          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
-          "title": "Surface Id",
-          "type": "string"
-        },
-        "table": {
-          "$ref": "#/$defs/TableData"
-        }
-      },
-      "required": [
-        "surface_id",
-        "table"
-      ],
-      "title": "HeroSupportTableVisual",
-      "type": "object"
-    },
     "HierarchyNode": {
       "additionalProperties": false,
       "description": "One hierarchy node with ordered child IDs (D198/D278).",
@@ -5242,10 +5147,10 @@
       "additionalProperties": false,
       "description": "Ordered 1-3 prominent metrics (D152).",
       "properties": {
-        "type": {
+        "hero_type": {
           "const": "metric_stack",
           "default": "metric_stack",
-          "title": "Type",
+          "title": "Hero Type",
           "type": "string"
         },
         "surface_id": {
@@ -7211,9 +7116,9 @@
     },
     "SingleChartPayload": {
       "additionalProperties": false,
-      "description": "single_chart: one primary chart + optional typed support (D140/D252).",
+      "description": "single_chart: one chart + optional typed support (D140/D252).",
       "properties": {
-        "primary_visual": {
+        "chart": {
           "discriminator": {
             "mapping": {
               "combo": "#/$defs/ComboChartVisual",
@@ -7249,7 +7154,7 @@
               "$ref": "#/$defs/HeatmapVisual"
             }
           ],
-          "title": "Primary Visual"
+          "title": "Chart"
         },
         "support": {
           "anyOf": [
@@ -7283,7 +7188,7 @@
         }
       },
       "required": [
-        "primary_visual"
+        "chart"
       ],
       "title": "SingleChartPayload",
       "type": "object"

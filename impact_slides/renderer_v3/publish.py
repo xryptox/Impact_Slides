@@ -351,18 +351,20 @@ def build_presentation_html(
         ]
     )
     # Chart.js only for axis-family charts; heatmaps are native HTML (D248).
+    from .models import _axis_charts_on_slide
+
+    _axis_types = {
+        "line",
+        "grouped_bar",
+        "horizontal_bar",
+        "stacked_bar",
+        "combo",
+        "waterfall",
+    }
     has_chart = any(
-        s.layout_type == "single_chart"
-        and getattr(s.payload.primary_visual, "chart_type", None)
-        in (
-            "line",
-            "grouped_bar",
-            "horizontal_bar",
-            "stacked_bar",
-            "combo",
-            "waterfall",
-        )
+        getattr(c, "chart_type", None) in _axis_types
         for s in deck.slides
+        for c in _axis_charts_on_slide(s)
     )
     for slide in deck.slides:
         sid = f"slide-{slide.slide_number}"
@@ -485,7 +487,7 @@ def _paint_dual_chart(
 ) -> list[str]:
     """Equal synchronized dual panes (D149)."""
     out = ['<div class="dual-chart">']
-    for chart in slide.payload.panes:
+    for chart in slide.payload.charts:
         out.append('<div class="dual-chart-pane">')
         out.extend(
             _paint_one_chart_surface(
@@ -511,14 +513,14 @@ def _paint_hero_visual(
     heading_px = sp.role_sizes.get("heading") if sp else None
     body_px = sp.role_sizes.get("body") if sp else None
     value_px = sp.role_sizes.get("value") if sp else None
-    out = [f'<div class="hero-card" data-hero-type="{_escape(hero.type)}" {attrs}>']
+    out = [f'<div class="hero-card" data-hero-type="{_escape(hero.hero_type)}" {attrs}>']
     if hero.heading:
         out.append(f"<h2{_style_font(heading_px)}>{_soft_break_html(hero.heading)}</h2>")
     if hero.subtitle:
         out.append(
             f'<p class="hero-subtitle"{_style_font(body_px)}>{_soft_break_html(hero.subtitle)}</p>'
         )
-    if hero.type == "metric_stack":
+    if hero.hero_type == "metric_stack":
         out.append('<ul class="metric-stack">')
         for m in hero.metrics:
             vis = format_semantic_value(m.value, formats).visible
@@ -564,53 +566,22 @@ def _paint_chart_hero_dual(
     number_formats: dict[str, Any] | None = None,
 ) -> list[str]:
     """2:1 chart + hero with optional left support (D150/D153)."""
-    from .format import format_semantic_value
-
     p = slide.payload
     formats = number_formats or {}
     out = ['<div class="chart-hero-dual">', '<div class="chart-hero-left">']
     out.extend(
         _paint_one_chart_surface(
-            p.primary_visual, plans_by_id, events_by_surface, svg_only=svg_only
+            p.chart, plans_by_id, events_by_surface, svg_only=svg_only
         )
     )
-    support = p.support_visual
+    support = p.support
     if support is not None:
-        if getattr(support, "type", None) == "metric_strip":
-            sp = plans_by_id.get(support.surface_id)
-            out.append(
-                f'<div class="metric-strip" {_plan_attrs(sp, events_by_surface)}>'
-            )
-            for m in support.metrics:
-                vis = format_semantic_value(m.value, formats).visible
-                out.append(
-                    f'<div class="metric-cell" data-metric-id="{_escape(m.metric_id)}">'
-                    f'<p class="metric-label">{_soft_break_html(m.label)}</p>'
-                    f'<p class="metric-value">{_escape(vis)}</p></div>'
-                )
-            out.append("</div>")
-        elif getattr(support, "type", None) == "outlined_support":
-            from .models import OutlinedSupportVisual
-
-            out.extend(
-                _paint_chart_support(
-                    OutlinedSupportVisual(table=support.table),
-                    plans_by_id,
-                    events_by_surface,
-                )
-            )
-        else:
-            out.extend(
-                _paint_table_surface(
-                    support.table,
-                    plans_by_id,
-                    events_by_surface,
-                    table_class="support-table",
-                )
-            )
+        out.extend(
+            _paint_chart_support(support, plans_by_id, events_by_surface)
+        )
     out.append('</div><div class="chart-hero-right">')
     out.extend(
-        _paint_hero_visual(p.hero_visual, plans_by_id, events_by_surface, formats)
+        _paint_hero_visual(p.hero, plans_by_id, events_by_surface, formats)
     )
     out.append("</div></div>")
     return out
@@ -987,7 +958,7 @@ def _paint_single_chart(
     svg_only: bool = False,
 ) -> list[str]:
     """Paint single_chart axis/heatmap + optional support (D69/D140/D248/D252)."""
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     sp = plans_by_id.get(chart.surface_id)
     if sp is None or not getattr(sp, "chart_paint", None):
         raise RuntimeError(
@@ -1192,20 +1163,6 @@ def _paint_outlined_support(
         )
     out.append("</div>")
     return out
-
-
-def _paint_data_table(
-    slide: Any,
-    plans_by_id: dict[str, Any],
-    events_by_surface: dict[str, list[DiagnosticEvent]],
-) -> list[str]:
-    """Back-compat wrapper — ordinary data_table paint."""
-    return _paint_table_surface(
-        slide.payload.table,
-        plans_by_id,
-        events_by_surface,
-        table_class="data-table",
-    )
 
 
 def _paint_table_surface(
@@ -3191,7 +3148,7 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                     peer.table.surface_id for peer in slide.payload.tables
                 )
             elif slide.layout_type == "single_chart":
-                surface_ids.append(slide.payload.primary_visual.surface_id)
+                surface_ids.append(slide.payload.chart.surface_id)
                 support = getattr(slide.payload, "support", None)
                 if support is not None:
                     sid = getattr(support, "surface_id", None)
@@ -3242,7 +3199,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
         is_chart = slide.layout_type == "single_chart"
         painters: list[str] = []
         if is_chart:
-            ctype = getattr(slide.payload.primary_visual, "chart_type", None)
+            ctype = getattr(slide.payload.chart, "chart_type", None)
             if ctype in (
             "line",
             "grouped_bar",

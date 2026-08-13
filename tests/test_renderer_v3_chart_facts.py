@@ -57,7 +57,7 @@ def _hbar() -> dict:
 
 def _vis(raw: dict) -> dict:
     return next(
-        s["payload"]["primary_visual"]
+        s["payload"]["chart"]
         for s in raw["slides"]
         if s.get("layout_type") == "single_chart"
     )
@@ -111,7 +111,7 @@ def test_line_accepts_structured_facts():
     _facts_on_line(raw)
     result = validate_handoff(raw, strict=True)
     assert result.ok
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     assert chart.context_labels and chart.context_labels[0].context_id == "gs-yoy"
     assert len(chart.annotations) == 2
     assert chart.measurements[0].role == "change"
@@ -182,7 +182,7 @@ def test_duplicate_identity_emits_plan_diagnostic():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     codes = [d["code"] for d in plan["fact_chrome"]["diagnostics"]]
     assert "plan.chrome_deduplicated" in codes
@@ -231,7 +231,7 @@ def test_heatmap_facts_paint_once_inside_surface():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     html = "".join(paint_heatmap_html(freeze_heatmap(chart, result.deck.number_formats)))
     body_open = html.find('data-chart-surface=')
     body_close = html.rfind("</div>")
@@ -321,7 +321,7 @@ def test_freeze_retains_facts_and_shared_chrome():
     raw = _line()
     _facts_on_line(raw)
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
 
     assert len(plan["context_labels"]) == 1
@@ -370,7 +370,7 @@ def test_duplicate_identity_context_suppresses_chrome_keeps_fact():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     assert plan["context_labels"] == [] or all(
         p.get("suppressed") for p in plan.get("context_labels") or []
@@ -396,7 +396,7 @@ def test_waterfall_data_point_annotation_anchors_to_step():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     assert plan["points"], "waterfall freeze must emit anchor points"
     ann = next(a for a in plan["annotations"] if a["annotation_id"] == "price-note")
@@ -425,7 +425,7 @@ def test_duplicate_identity_annotation_suppresses_chrome_keeps_fact():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     assert all(a["annotation_id"] != "dup-us-ann" for a in plan.get("annotations") or [])
     assert any("Explanation: US" in f for f in plan["semantic_table"]["facts"])
@@ -446,7 +446,7 @@ def test_context_with_distinct_value_not_duplicate():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     assert len(plan["context_labels"]) == 1
     assert plan["context_labels"][0]["suppressed"] is False
@@ -501,7 +501,7 @@ def test_d96_norm_dedupes_trailing_punct_identity():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     assert all(a["annotation_id"] != "us-colon" for a in plan.get("annotations") or [])
     assert any("Explanation: US:" in f for f in plan["semantic_table"]["facts"])
@@ -535,7 +535,7 @@ def test_hbar_category_and_measurement_use_row_y():
         }
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     cats = {c["category_id"]: c for c in plan["categories"]}
     ann = next(a for a in plan["annotations"] if a["annotation_id"] == "uk-note")
@@ -566,7 +566,7 @@ def test_unplaceable_fact_omits_chrome_keeps_fact():
         for i in range(8)
     ]
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     placed = {a["annotation_id"] for a in plan["annotations"]}
     omitted = [f"pile-{i}" for i in range(8) if f"pile-{i}" not in placed]
@@ -600,7 +600,7 @@ def test_context_labels_relocate_as_complete_block():
     vis.pop("measurements", None)
     vis["context_labels"] = _wide_context_labels(4)
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     placed = plan["context_labels"]
     assert {p["context_id"] for p in placed} == {f"ctx-{i}" for i in range(4)}
@@ -633,7 +633,7 @@ def test_relocated_context_fits_without_growing_view():
     vis["context_labels"] = _wide_context_labels(1)
     vis["context_labels"][0]["label"] = "Gross and Services Mix Extra Wide Label"
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats, box_w=1728, box_h=372)
     placed = plan["context_labels"]
     assert {p["class"] for p in placed} == {"below_plot"}
@@ -656,7 +656,7 @@ def test_relocated_context_that_cannot_fit_strict_fails():
     vis.pop("measurements", None)
     vis["context_labels"] = _wide_context_labels(4)
     result = validate_handoff(raw, strict=True)
-    chart = result.deck.slides[1].payload.primary_visual
+    chart = result.deck.slides[1].payload.chart
     plan = freeze_chart(chart, result.deck.number_formats)
     g = plan["geometry"]
     assert {p["class"] for p in plan["context_labels"]} == {"below_plot"}

@@ -48,7 +48,7 @@ def test_heatmap_deck_validates():
     assert result.ok
     slide = result.deck.slides[1]
     assert isinstance(slide, SingleChartSlide)
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     assert isinstance(chart, HeatmapVisual)
     assert chart.surface_id == "region-heat"
     assert chart.chart_type == "heatmap"
@@ -64,7 +64,7 @@ def test_line_fixture_still_validates():
 
 def test_strict_rejects_text_cell():
     raw = _raw()
-    cells = raw["slides"][1]["payload"]["primary_visual"]["table_data"]["rows"][0]["cells"]
+    cells = raw["slides"][1]["payload"]["chart"]["table_data"]["rows"][0]["cells"]
     cells["q1"] = {"type": "text", "text": "n/a"}
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -77,7 +77,7 @@ def test_strict_rejects_mixed_formats():
         "value_decimals": 0,
         "negative_style": "minus",
     }
-    cells = raw["slides"][1]["payload"]["primary_visual"]["table_data"]["rows"][0]["cells"]
+    cells = raw["slides"][1]["payload"]["chart"]["table_data"]["rows"][0]["cells"]
     cells["q1"]["format_id"] = "usd_0"
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -85,7 +85,7 @@ def test_strict_rejects_mixed_formats():
 
 def test_strict_rejects_all_missing():
     raw = _raw()
-    for row in raw["slides"][1]["payload"]["primary_visual"]["table_data"]["rows"]:
+    for row in raw["slides"][1]["payload"]["chart"]["table_data"]["rows"]:
         row["cells"] = {cid: {"type": "missing"} for cid in row["cells"]}
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
@@ -93,7 +93,7 @@ def test_strict_rejects_all_missing():
 
 def test_strict_rejects_fixed_scale_out_of_range():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["scale"] = {
+    raw["slides"][1]["payload"]["chart"]["scale"] = {
         "mode": "fixed",
         "min": "0.0",
         "max": "10.0",
@@ -104,7 +104,7 @@ def test_strict_rejects_fixed_scale_out_of_range():
 
 def test_strict_rejects_axis_fields_on_heatmap():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["chart_data"] = {
+    raw["slides"][1]["payload"]["chart"]["chart_data"] = {
         "categories": [{"category_id": "a", "label": "A"}, {"category_id": "b", "label": "B"}],
         "series": [{"series_id": "s", "name": "S", "values": ["1.0", "2.0"]}],
     }
@@ -114,7 +114,7 @@ def test_strict_rejects_axis_fields_on_heatmap():
 
 def test_strict_rejects_thirteen_columns():
     raw = _raw()
-    table = raw["slides"][1]["payload"]["primary_visual"]["table_data"]
+    table = raw["slides"][1]["payload"]["chart"]["table_data"]
     for i in range(4, 14):
         cid = f"c{i}"
         table["columns"].append({"column_id": cid, "label": cid.upper()})
@@ -130,7 +130,7 @@ def test_strict_rejects_thirteen_columns():
 
 def test_fixed_scale_containing_values_ok():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["scale"] = {
+    raw["slides"][1]["payload"]["chart"]["scale"] = {
         "mode": "fixed",
         "min": "0.0",
         "max": "30.0",
@@ -145,7 +145,7 @@ def test_fixed_scale_containing_values_ok():
 
 def test_freeze_assigns_fills_and_scale_key():
     deck = validate_handoff(_raw(), strict=True).deck
-    chart = deck.slides[1].payload.primary_visual
+    chart = deck.slides[1].payload.chart
     frozen = freeze_heatmap(chart, deck.number_formats)
     assert frozen["chart_type"] == "heatmap"
     assert frozen["colored"] is True
@@ -187,7 +187,7 @@ def test_heatmap_ink_contrast_threshold():
 
 def test_equal_values_use_midpoint_key():
     raw = _raw()
-    table = raw["slides"][1]["payload"]["primary_visual"]["table_data"]
+    table = raw["slides"][1]["payload"]["chart"]["table_data"]
     for row in table["rows"]:
         for cid in list(row["cells"]):
             row["cells"][cid] = {
@@ -196,7 +196,7 @@ def test_equal_values_use_midpoint_key():
                 "format_id": "pct_1",
             }
     deck = validate_handoff(raw, strict=True).deck
-    frozen = freeze_heatmap(deck.slides[1].payload.primary_visual, deck.number_formats)
+    frozen = freeze_heatmap(deck.slides[1].payload.chart, deck.number_formats)
     assert frozen["scale"]["equal"] is True
     assert len(frozen["scale"]["key_stops"]) == 1
     assert frozen["scale"]["key_stops"][0]["role"] == "shared"
@@ -251,7 +251,7 @@ def test_readiness_has_semantic_table_no_painters(tmp_path: Path):
 def test_non_strict_invalid_scale_paints_uncolored_table(tmp_path: Path):
     raw = _raw()
     # Fixed scale that fails containment → repaired generated + uncolored paint.
-    raw["slides"][1]["payload"]["primary_visual"]["scale"] = {
+    raw["slides"][1]["payload"]["chart"]["scale"] = {
         "mode": "fixed",
         "min": "0.0",
         "max": "1.0",
@@ -287,7 +287,7 @@ def test_schema_export_includes_heatmap():
 
 def test_paint_heatmap_html_unit():
     deck = validate_handoff(_raw(), strict=True).deck
-    frozen = freeze_heatmap(deck.slides[1].payload.primary_visual, deck.number_formats)
+    frozen = freeze_heatmap(deck.slides[1].payload.chart, deck.number_formats)
     html = "\n".join(paint_heatmap_html(frozen))
     assert "heatmap-table" in html
     assert "heatmap-scale-key" in html
@@ -298,7 +298,7 @@ def test_paint_heatmap_html_unit():
 def test_uncolored_freeze_keeps_all_cells():
     deck = validate_handoff(_raw(), strict=True).deck
     frozen = freeze_heatmap(
-        deck.slides[1].payload.primary_visual,
+        deck.slides[1].payload.chart,
         deck.number_formats,
         colored=False,
     )
@@ -319,7 +319,7 @@ def test_uncolored_freeze_keeps_all_cells():
 )
 def test_tiny_values_render_canonical_scale_key(tmp_path: Path, values: list[str]):
     raw = _raw()
-    table = raw["slides"][1]["payload"]["primary_visual"]["table_data"]
+    table = raw["slides"][1]["payload"]["chart"]["table_data"]
     idx = 0
     for row in table["rows"]:
         for cid in list(row["cells"]):
@@ -330,7 +330,7 @@ def test_tiny_values_render_canonical_scale_key(tmp_path: Path, values: list[str
             }
             idx += 1
     deck = validate_handoff(raw, strict=True).deck
-    frozen = freeze_heatmap(deck.slides[1].payload.primary_visual, deck.number_formats)
+    frozen = freeze_heatmap(deck.slides[1].payload.chart, deck.number_formats)
     canonical = re.compile(r"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")
     assert canonical.match(frozen["scale"]["min"])
     assert canonical.match(frozen["scale"]["max"])

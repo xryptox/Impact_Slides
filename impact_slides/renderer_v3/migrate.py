@@ -1184,7 +1184,7 @@ def _convert_line_chart(
     out = {
         "slide_number": slide_number,
         "layout_type": "single_chart",
-        "payload": {"primary_visual": visual},
+        "payload": {"chart": visual},
         **_common_fields(
             slide,
             section_id=section_id,

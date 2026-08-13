@@ -22,7 +22,7 @@ import pytest
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
 from impact_slides.renderer_v3.charts import (
     freeze_line_chart,
-    paint_line_chart_svg,
+    paint_chart_svg,
     paint_semantic_table,
 )
 from impact_slides.renderer_v3.format import MISSING_ACCESSIBLE, MISSING_VISIBLE
@@ -49,7 +49,7 @@ def test_line_chart_deck_validates():
     assert result.ok
     slide = result.deck.slides[1]
     assert isinstance(slide, SingleChartSlide)
-    chart = slide.payload.primary_visual
+    chart = slide.payload.chart
     assert isinstance(chart, LineChartVisual)
     assert chart.surface_id == "vol-trend"
     assert chart.chart_type == "line"
@@ -65,7 +65,7 @@ def test_data_table_fixture_still_validates():
 
 def test_strict_rejects_ragged_series():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["series"][0]["values"] = [
+    raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][0]["values"] = [
         "1.0",
         "2.0",
     ]
@@ -75,7 +75,7 @@ def test_strict_rejects_ragged_series():
 
 def test_strict_rejects_one_finite_point_series():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["series"] = [
+    raw["slides"][1]["payload"]["chart"]["chart_data"]["series"] = [
         {
             "series_id": "solo",
             "name": "Solo",
@@ -88,14 +88,14 @@ def test_strict_rejects_one_finite_point_series():
 
 def test_strict_rejects_duplicate_series_names():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["series"][1]["name"] = "US"
+    raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][1]["name"] = "US"
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
 
 def test_strict_rejects_pane_title_without_heading():
     raw = _raw()
-    chart = raw["slides"][1]["payload"]["primary_visual"]
+    chart = raw["slides"][1]["payload"]["chart"]
     del chart["heading"]
     del chart["subtitle"]
     chart["chart_data"]["series"] = [chart["chart_data"]["series"][0]]
@@ -106,21 +106,21 @@ def test_strict_rejects_pane_title_without_heading():
 
 def test_strict_rejects_json_number_plotted_value():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["series"][0]["values"][0] = 3.2
+    raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][0]["values"][0] = 3.2
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
 
 def test_strict_rejects_decorated_plotted_value():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["series"][0]["values"][0] = "3.2%"
+    raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][0]["values"][0] = "3.2%"
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
 
 def test_strict_rejects_unknown_format():
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["value_axes"]["primary"][
+    raw["slides"][1]["payload"]["chart"]["value_axes"]["primary"][
         "format_id"
     ] = "nope"
     with pytest.raises(RendererValidationError):
@@ -129,7 +129,7 @@ def test_strict_rejects_unknown_format():
 
 def test_strict_rejects_five_series():
     raw = _raw()
-    series = raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["series"]
+    series = raw["slides"][1]["payload"]["chart"]["chart_data"]["series"]
     for i in range(3, 6):
         series.append(
             {
@@ -174,7 +174,7 @@ def test_plan_freezes_identity_and_null_gaps():
 
 def test_freeze_assigns_theme_colors_and_styles():
     deck = validate_handoff(_raw(), strict=True).deck
-    chart = deck.slides[1].payload.primary_visual
+    chart = deck.slides[1].payload.chart
     frozen = freeze_line_chart(chart, deck.number_formats)
     assert frozen["series"][0]["color"].startswith("#")
     assert frozen["series"][0]["line_style"] == "solid"
@@ -259,7 +259,7 @@ def test_svg_preserves_null_gap_no_interpolation():
     deck = validate_handoff(_raw(), strict=True).deck
     plan = plan_deck(deck, strict=True)
     cp = plan.by_surface_id()["vol-trend"].chart_paint
-    svg = paint_line_chart_svg(cp)
+    svg = paint_chart_svg(cp)
     # US series has null at q3 → two separate polylines or fewer points, never a 4-point continuous path through gap
     us_points = [p for p in cp["points"] if p["series_id"] == "us"]
     finite_us = [p for p in us_points if p["finite"]]
@@ -303,7 +303,7 @@ def test_byte_identical_rerun(tmp_path: Path):
 
 def test_mutation_drop_category_id_fails():
     raw = _raw()
-    del raw["slides"][1]["payload"]["primary_visual"]["chart_data"]["categories"][0][
+    del raw["slides"][1]["payload"]["chart"]["chart_data"]["categories"][0][
         "category_id"
     ]
     with pytest.raises(RendererValidationError):
@@ -336,7 +336,7 @@ def test_v2_not_imported_by_charts_module(monkeypatch: pytest.MonkeyPatch):
     sys.modules.pop("impact_slides.renderer_v3.charts", None)
     charts = importlib.import_module("impact_slides.renderer_v3.charts")
     deck = validate_handoff(_raw(), strict=True).deck
-    assert charts.freeze_line_chart(deck.slides[1].payload.primary_visual, deck.number_formats)
+    assert charts.freeze_line_chart(deck.slides[1].payload.chart, deck.number_formats)
 
 
 def test_chartjs_chart_area_pinned_to_frozen_plot(tmp_path: Path):
@@ -372,22 +372,22 @@ def test_chartjs_chart_area_pinned_to_frozen_plot(tmp_path: Path):
 def test_svg_chrome_paints_axis_titles():
     deck = validate_handoff(_raw(), strict=True).deck
     cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
-    chrome = paint_line_chart_svg(cp, marks=False)
+    chrome = paint_chart_svg(cp, marks=False)
     assert "Quarter" in chrome
     assert "YoY %" in chrome
-    assert "Quarter" in paint_line_chart_svg(cp)
+    assert "Quarter" in paint_chart_svg(cp)
     raw = _raw()
-    raw["slides"][1]["payload"]["primary_visual"]["category_axis"]["visible"] = False
+    raw["slides"][1]["payload"]["chart"]["category_axis"]["visible"] = False
     deck2 = validate_handoff(raw, strict=True).deck
     cp2 = plan_deck(deck2, strict=True).by_surface_id()["vol-trend"].chart_paint
-    chrome2 = paint_line_chart_svg(cp2, marks=False)
+    chrome2 = paint_chart_svg(cp2, marks=False)
     assert "Quarter" not in chrome2
     assert "YoY %" in chrome2
 
 
 def test_generated_domain_covers_data_at_max_target_ticks():
     raw = _raw()
-    visual = raw["slides"][1]["payload"]["primary_visual"]
+    visual = raw["slides"][1]["payload"]["chart"]
     visual["value_axes"]["primary"]["domain"]["target_ticks"] = 8
     visual["chart_data"]["series"][0]["values"] = ["0", "20", "40", "70"]
     visual["chart_data"]["series"][1]["values"] = ["5", "15", "25", "35"]
@@ -422,11 +422,11 @@ def _chart_slide(raw: dict) -> dict:
 
 def test_rev13_generated_ticks_are_plain_canonical_decimals():
     raw = _raw()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["chart_data"]["series"][0]["values"] = ["0", "250000", "1000000", "1250000"]
     vis["chart_data"]["series"][1]["values"] = ["100000", "300000", "900000", "1100000"]
     deck = validate_handoff(raw, strict=True).deck
-    frozen = freeze_line_chart(deck.slides[1].payload.primary_visual, deck.number_formats)
+    frozen = freeze_line_chart(deck.slides[1].payload.chart, deck.number_formats)
     domain = frozen["domain"]
     assert domain["kind"] == "generated"
     for text in [domain["min"], domain["max"], *domain["ticks"]]:
@@ -436,7 +436,7 @@ def test_rev13_generated_ticks_are_plain_canonical_decimals():
 
 def test_rev14_strict_rejects_value_outside_fixed_domain():
     raw = _raw()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",
@@ -449,7 +449,7 @@ def test_rev14_strict_rejects_value_outside_fixed_domain():
 
 def test_rev14_non_strict_repairs_uncontained_fixed_domain():
     raw = _raw()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     expected_series = [list(s["values"]) for s in vis["chart_data"]["series"]]
     expected_categories = [c["category_id"] for c in vis["chart_data"]["categories"]]
     vis["value_axes"]["primary"]["domain"] = {
@@ -468,7 +468,7 @@ def test_rev14_non_strict_repairs_uncontained_fixed_domain():
     assert ev.result.name == "generated"
     assert ev.phase == "repair"
     assert ev.path.endswith("/value_axes/primary/domain")
-    repaired_vis = result.deck.slides[1].payload.primary_visual
+    repaired_vis = result.deck.slides[1].payload.chart
     assert repaired_vis.value_axes.primary.domain.kind == "generated"
     # Non-semantic repair: only the domain changes; chart facts are preserved.
     assert [list(s.values) for s in repaired_vis.chart_data.series] == expected_series
@@ -477,7 +477,7 @@ def test_rev14_non_strict_repairs_uncontained_fixed_domain():
 
 def test_generated_domain_authored_max_below_data_strict_rejects():
     raw = _raw()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "generated",
         "min": "0",
@@ -489,7 +489,7 @@ def test_generated_domain_authored_max_below_data_strict_rejects():
 
 def test_generated_domain_authored_max_below_data_non_strict_repairs():
     raw = _raw()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "generated",
         "min": "0",
@@ -508,7 +508,7 @@ def test_generated_domain_authored_max_below_data_non_strict_repairs():
     assert ev.result.name == "dropped"
     assert ev.phase == "repair"
     assert ev.path.endswith("/value_axes/primary/domain/max")
-    repaired_vis = result.deck.slides[1].payload.primary_visual
+    repaired_vis = result.deck.slides[1].payload.chart
     domain = repaired_vis.value_axes.primary.domain
     assert domain.kind == "generated"
     assert domain.min == "0"
@@ -549,7 +549,7 @@ def test_rev12_facts_follow_semantic_table_visibility():
 
 def test_rev14_fixed_domain_containing_values_passes():
     raw = _raw()
-    vis = _chart_slide(raw)["payload"]["primary_visual"]
+    vis = _chart_slide(raw)["payload"]["chart"]
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",

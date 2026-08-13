@@ -104,7 +104,7 @@ def test_slide6_source_claim_and_slide21_capital_summary(handoff: dict) -> None:
 
     s21 = next(s for s in handoff["slides"] if s["slide_number"] == 21)
     assert s21["layout_type"] == "chart_hero_dual"
-    assert s21["payload"]["hero_visual"]["heading"] == "Capital Summary"
+    assert s21["payload"]["hero"]["heading"] == "Capital Summary"
 
 
 def test_strict_validate_clean(handoff: dict) -> None:
@@ -156,10 +156,10 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
 def test_mutation_drops_capital_summary_heading(handoff: dict) -> None:
     """Adversarial: corpus identity requires authored Capital Summary on slide 21."""
     s21 = next(s for s in handoff["slides"] if s["slide_number"] == 21)
-    assert s21["payload"]["hero_visual"]["heading"] == "Capital Summary"
+    assert s21["payload"]["hero"]["heading"] == "Capital Summary"
     mutated = json.loads(json.dumps(handoff))
     m21 = next(s for s in mutated["slides"] if s["slide_number"] == 21)
-    del m21["payload"]["hero_visual"]["heading"]
+    del m21["payload"]["hero"]["heading"]
     from impact_slides.renderer_v3 import RendererValidationError
 
     with pytest.raises(RendererValidationError):

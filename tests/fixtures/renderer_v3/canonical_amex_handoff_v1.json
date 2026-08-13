@@ -789,7 +789,7 @@
       "section_id": "earnings",
       "title": "Total Billed Business",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s4-bb",
           "chart_type": "line",
@@ -905,7 +905,7 @@
       "section_id": "earnings",
       "title": "U.S. Consumer Services Billed Business",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s5-ucs",
           "chart_type": "line",
@@ -1001,7 +1001,7 @@
       "section_id": "earnings",
       "title": "U.S. Consumer Platinum Performance",
       "payload": {
-        "panes": [
+        "charts": [
           {
             "type": "chart",
             "surface_id": "s6-spend",
@@ -1279,7 +1279,7 @@
       "section_id": "earnings",
       "title": "Membership Model Engagement: Proprietary Lodging Assets",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s8-lodging",
           "chart_type": "line",
@@ -1387,7 +1387,7 @@
       "section_id": "earnings",
       "title": "Commercial Services Billed Business",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s9-comm",
           "chart_type": "line",
@@ -1483,7 +1483,7 @@
       "section_id": "earnings",
       "title": "International Card Services Billed Business",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s10-ics",
           "chart_type": "line",
@@ -1599,7 +1599,7 @@
       "section_id": "earnings",
       "title": "Transaction Growth",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s11-txn",
           "chart_type": "line",
@@ -1687,7 +1687,7 @@
       "section_id": "earnings",
       "title": "New Acquisitions",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s12-cards",
           "chart_type": "grouped_bar",
@@ -1749,8 +1749,8 @@
           "heading": "Proprietary New Cards Acquired",
           "subtitle": "in millions"
         },
-        "hero_visual": {
-          "type": "metric_stack",
+        "hero": {
+          "hero_type": "metric_stack",
           "surface_id": "s12-hero",
           "heading": "Proprietary New Accounts Acquired",
           "subtitle": "Q1'2026",
@@ -1800,7 +1800,7 @@
       "section_id": "earnings",
       "title": "Total Balances and Billed Business",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s13-bal",
           "chart_type": "grouped_bar",
@@ -1894,7 +1894,7 @@
       "section_id": "earnings",
       "title": "Credit Metrics",
       "payload": {
-        "panes": [
+        "charts": [
           {
             "type": "chart",
             "surface_id": "s14-dpd",
@@ -2048,7 +2048,7 @@
       "section_id": "earnings",
       "title": "Total Provision",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s15-prov",
           "chart_type": "stacked_bar",
@@ -2317,7 +2317,7 @@
       "section_id": "earnings",
       "title": "Net Card Fees",
       "payload": {
-        "panes": [
+        "charts": [
           {
             "type": "chart",
             "surface_id": "s17-ncf",
@@ -2501,7 +2501,7 @@
       "section_id": "earnings",
       "title": "Premium Lending",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s18-nii",
           "chart_type": "grouped_bar",
@@ -2562,8 +2562,8 @@
           },
           "heading": "Net Interest Income"
         },
-        "hero_visual": {
-          "type": "driver_card",
+        "hero": {
+          "hero_type": "driver_card",
           "surface_id": "s18-driver",
           "heading": "NII: Volume & Margin Drivers",
           "rows": [
@@ -2624,7 +2624,7 @@
       "section_id": "earnings",
       "title": "Total Revenues Net of Interest Expense",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s19-rev",
           "chart_type": "line",
@@ -2944,7 +2944,7 @@
       "section_id": "earnings",
       "title": "Capital",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s21-cap",
           "chart_type": "stacked_bar",
@@ -3038,8 +3038,8 @@
             }
           ]
         },
-        "hero_visual": {
-          "type": "driver_card",
+        "hero": {
+          "hero_type": "driver_card",
           "surface_id": "s21-summary",
           "heading": "Capital Summary",
           "rows": [
@@ -3082,9 +3082,8 @@
             }
           ]
         },
-        "support_visual": {
-          "type": "outlined_support",
-          "surface_id": "s21-roe-wrap",
+        "support": {
+          "support_type": "outlined_support",
           "table": {
             "surface_id": "s21-roe",
             "stub_header": {
@@ -3248,7 +3247,7 @@
       "section_id": "appendix",
       "title": "Q1'26 Network Volumes Growth by Customer Type",
       "payload": {
-        "primary_visual": {
+        "chart": {
           "type": "chart",
           "surface_id": "s24-growth",
           "chart_type": "grouped_bar",
@@ -3655,7 +3654,7 @@
       "section_id": "appendix",
       "title": "Credit Reserve Macroeconomic Scenarios: Select Variables",
       "payload": {
-        "panes": [
+        "charts": [
           {
             "type": "chart",
             "surface_id": "s27-unemp",
@@ -3972,7 +3971,7 @@
       "section_id": "appendix",
       "title": "Funding and Deposits",
       "payload": {
-        "panes": [
+        "charts": [
           {
             "type": "chart",
             "surface_id": "s28-fund",
