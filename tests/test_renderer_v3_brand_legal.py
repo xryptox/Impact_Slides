@@ -319,6 +319,21 @@ def test_legal_notice_paints_payload_list_hierarchy(tmp_path: Path):
     assert "net card fees<ul" in compact.replace("<wbr>", "")
 
 
+def test_legal_plan_margin_boxes_match_painted_blocks():
+    from impact_slides.renderer_v3.plan import _legal_body_blocks
+
+    unmarked = ["grow EPS", "grow revenue"]
+    mixed = ["Intro.", "- grow EPS", "- grow revenue", "Close."]
+    assert _legal_body_blocks(unmarked) == [("ul", [(0, "grow EPS"), (0, "grow revenue")])]
+    kinds = [kind for kind, _ in _legal_body_blocks(mixed)]
+    assert kinds == ["p", "ul", "p"]
+
+    deck = validate_handoff(_brand(), strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    legal = next(s for s in plan.surfaces if s.surface_id == "slide-5-legal")
+    assert legal._margin_boxes == len(_legal_body_blocks(deck.slides[4].payload.paragraphs))
+
+
 def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
     """Amex s38–43 payload is unmarked bullets; paint them as one <ul>."""
     raw = _brand()

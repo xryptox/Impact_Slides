@@ -661,19 +661,13 @@ def test_grouped_annex_paints_full_amex_headers(tmp_path: Path):
 
 
 def test_grouped_annex_header_cells_do_not_clip(tmp_path: Path):
-    """Acceptance: s32-style header cells keep scrollWidth <= clientWidth."""
+    """Acceptance: s32 header cells keep scrollWidth <= clientWidth."""
     pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright
 
-    raw = _raw()
-    slide = next(s for s in raw["slides"] if s["layout_type"] == "grouped_annex_table")
-    for peer in slide["payload"]["tables"]:
-        peer["table"]["columns"][0]["label"] = "Q1'26 Reported"
-        peer["table"]["columns"][1]["label"] = "FX-Adj.*"
-    handoff = tmp_path / "handoff.json"
-    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    corpus = ROOT / "tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json"
     out = tmp_path / "out"
-    render_deck(handoff, out, strict=True)
+    render_deck(corpus, out, strict=True)
     html_path = (out / "presentation.html").resolve()
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
@@ -681,7 +675,7 @@ def test_grouped_annex_header_cells_do_not_clip(tmp_path: Path):
         page.goto(html_path.as_uri(), wait_until="networkidle")
         measured = page.evaluate(
             """() => {
-              const slide = document.querySelector('[data-layout="grouped_annex_table"]');
+              const slide = document.querySelector('[data-slide-number="32"]');
               const peers = [...slide.querySelectorAll('.grouped-annex-peer')];
               return peers.map(peer => {
                 const headers = [...peer.querySelectorAll('thead th')].map(th => ({
@@ -700,7 +694,7 @@ def test_grouped_annex_header_cells_do_not_clip(tmp_path: Path):
         assert any("Q1'26 Reported" in t for t in texts)
         assert any("FX-Adj." in t for t in texts)
         for cell in headers:
-            assert cell["scrollWidth"] <= cell["clientWidth"] + 1
+            assert cell["scrollWidth"] <= cell["clientWidth"]
 
 
 def test_mutation_token_mins_still_clip_fx_adj():

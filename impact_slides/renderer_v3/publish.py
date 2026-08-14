@@ -19,7 +19,7 @@ from .diagnostics import (
     sort_events,
 )
 from .models import Deck
-from .plan import DeckPlan, _legal_list_item
+from .plan import DeckPlan, _legal_body_blocks
 from .schema_export import schema_path
 from .theme import THEME_ID, generate_theme_css
 
@@ -930,47 +930,40 @@ def _paint_legal_body(paragraphs: list[str], body_px: int | None) -> list[str]:
     """Paint legal paragraphs; marked or unmarked bullets become <ul> hierarchy."""
     out: list[str] = []
     style = _style_font(body_px)
-    marked = [(_legal_list_item(para), para) for para in paragraphs]
-    if not any(item[0] is not None for item in marked):
-        out.append("<ul>")
-        for para in paragraphs:
-            out.append(f"<li{style}>{_soft_break_html(para)}</li>")
-        out.append("</ul>")
-        return out
-    depth = 0
-    li_open = False
-
-    def close_to(target: int) -> None:
-        nonlocal depth, li_open
-        if li_open:
-            out.append("</li>")
-            li_open = False
-        while depth > target:
-            out.append("</ul>")
-            depth -= 1
-            if depth:
-                out.append("</li>")
-
-    for parsed, para in marked:
-        if parsed is None:
-            close_to(0)
-            out.append(f"<p{style}>{_soft_break_html(para)}</p>")
+    for kind, payload in _legal_body_blocks(paragraphs):
+        if kind == "p":
+            out.append(f"<p{style}>{_soft_break_html(str(payload))}</p>")
             continue
-        level, text = parsed
-        target = level + 1
-        if target > depth:
-            while depth < target:
-                out.append("<ul>")
-                depth += 1
-        elif target == depth:
+        items = list(payload)
+        depth = 0
+        li_open = False
+
+        def close_to(target: int) -> None:
+            nonlocal depth, li_open
             if li_open:
                 out.append("</li>")
                 li_open = False
-        else:
-            close_to(target)
-        out.append(f"<li{style}>{_soft_break_html(text)}")
-        li_open = True
-    close_to(0)
+            while depth > target:
+                out.append("</ul>")
+                depth -= 1
+                if depth:
+                    out.append("</li>")
+
+        for level, text in items:
+            target = level + 1
+            if target > depth:
+                while depth < target:
+                    out.append("<ul>")
+                    depth += 1
+            elif target == depth:
+                if li_open:
+                    out.append("</li>")
+                    li_open = False
+            else:
+                close_to(target)
+            out.append(f"<li{style}>{_soft_break_html(text)}")
+            li_open = True
+        close_to(0)
     return out
 
 

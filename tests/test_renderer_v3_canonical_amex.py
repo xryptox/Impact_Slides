@@ -140,12 +140,19 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
     from html import unescape
 
     visible = unescape(html).replace("<wbr>", "")
-    assert visible.count("Q1'26 Reported") >= 2
-    assert visible.count("FX-Adj.*") >= 2
-    assert "Q\u2026" not in visible and "F\u2026" not in visible
+    s32 = html.split('id="slide-32"', 1)[1].split("<section", 1)[0]
+    s32_vis = unescape(s32).replace("<wbr>", "")
+    assert s32_vis.count("Q1'26 Reported") >= 2
+    assert s32_vis.count("FX-Adj.*") >= 2
+    assert "Q\u2026" not in s32_vis and "F\u2026" not in s32_vis
+    by_n = {s["slide_number"]: s for s in json.loads(FIXTURE.read_text(encoding="utf-8"))["slides"]}
     for n in range(38, 44):
         chunk = html.split(f'id="slide-{n}"', 1)[1].split("<section", 1)[0]
-        assert "<ul" in chunk and "<li" in chunk
+        body = chunk.split('legal-body">', 1)[1].split("</div>", 1)[0]
+        paras = by_n[n]["payload"]["paragraphs"]
+        assert body.count("<ul") == 1
+        assert body.count("<li") == len(paras)
+        assert "<p" not in body
 
     # SVG-only via public CLI flag path used by publication options.
     from impact_slides.renderer_v3.cli import main as cli_main

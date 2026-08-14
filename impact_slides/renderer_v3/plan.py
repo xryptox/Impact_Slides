@@ -643,7 +643,7 @@ def _collect_surfaces(
                     _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
                     _fit_role=None,
                     _mode="fixed",
-                    _margin_boxes=len(p.paragraphs),
+                    _margin_boxes=len(_legal_body_blocks(p.paragraphs)),
                     _chrome_h=(
                         LEGAL_HEADING_MARGIN_Y
                         + (LEGAL_PART_MARGIN_Y if p.part > 1 else 0)
@@ -1489,9 +1489,8 @@ def _cover_fits(sp: SurfacePlan) -> bool:
     """Measure each fixed element and its renderer-owned chrome."""
     need_h = sp._chrome_h
     body_texts = [t for t, rk in sp._cover_items if rk == "body"]
-    unmarked_list = bool(body_texts) and all(
-        _legal_list_item(t) is None for t in body_texts
-    )
+    legal_blocks = _legal_body_blocks(body_texts) if body_texts else []
+    unmarked_list = bool(legal_blocks) and all(kind == "ul" for kind, _ in legal_blocks)
     for text_c, role_key in sp._cover_items:
         px = sp.role_sizes[role_key]
         strong = role_key == "title"
@@ -4017,6 +4016,27 @@ def _legal_list_item(text: str) -> tuple[int, str] | None:
         if stripped.startswith(marker):
             return indent // 2, stripped[len(marker) :]
     return None
+
+
+def _legal_body_blocks(
+    paragraphs: list[str],
+) -> list[tuple[str, str | list[tuple[int, str]]]]:
+    """Painted legal block boxes: ('p', text) or ('ul', [(level, text), ...])."""
+    marked = [(_legal_list_item(para), para) for para in paragraphs]
+    if not any(item[0] is not None for item in marked):
+        return [("ul", [(0, para) for para in paragraphs])]
+    blocks: list[tuple[str, str | list[tuple[int, str]]]] = []
+    current: list[tuple[int, str]] | None = None
+    for parsed, para in marked:
+        if parsed is None:
+            current = None
+            blocks.append(("p", para))
+            continue
+        if current is None:
+            current = []
+            blocks.append(("ul", current))
+        current.append(parsed)
+    return blocks
 
 
 def _ellipsis_to_width(text: str, px: int, box_w: int, *, strong: bool = False) -> str:
