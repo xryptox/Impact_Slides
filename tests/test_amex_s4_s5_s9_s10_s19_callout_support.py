@@ -11,12 +11,9 @@ from __future__ import annotations
 
 import json
 import re
-from copy import deepcopy
 from pathlib import Path
 
-import pytest
-
-from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
+from impact_slides.renderer_v3 import render_deck
 
 FIXTURE = (
     Path(__file__).resolve().parent
@@ -179,22 +176,29 @@ def test_strict_render_shows_callout_text_and_support_rows(tmp_path: Path) -> No
     assert "$17.0" in s19 and "$18.9" in s19
 
 
-def test_mutation_dropping_s4_annotation_fails_contract() -> None:
+def test_mutation_dropping_s4_annotation_omits_callout_from_dom(tmp_path: Path) -> None:
+    """Renderer does not invent the leap-year box; corpus must carry it."""
     handoff = _load()
     del _slide(handoff, 4)["payload"]["chart"]["annotations"]
-    with pytest.raises((AssertionError, KeyError)):
-        anns = _slide(handoff, 4)["payload"]["chart"]["annotations"]
-        assert anns and anns[0]["text"] == LEAP
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    s4 = _section((out / "presentation.html").read_text(encoding="utf-8"), 4)
+    assert LEAP not in s4
+    assert 'data-annotation-id="' not in s4
+    assert "support-table" in s4  # table still paints; only the callout is gone
 
 
-def test_mutation_dropping_s5_support_fails_validate_or_contract() -> None:
+def test_mutation_dropping_s5_support_omits_generation_rows(tmp_path: Path) -> None:
+    """Renderer does not invent the generation table; corpus must carry it."""
     handoff = _load()
     del _slide(handoff, 5)["payload"]["support"]
-    with pytest.raises((AssertionError, KeyError)):
-        _assert_support(_slide(handoff, 5), alignment="independent", n_rows=2)
-    # Corpus identity: a deck missing the generation table is not the D314 payload.
-    mutated = deepcopy(handoff)
-    result = validate_handoff(mutated, strict=True)
-    assert result.ok  # still schema-valid; contract (not schema) owns the furniture
-    with pytest.raises(AssertionError):
-        assert "support" in _slide(mutated, 5)["payload"]
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    s5 = _section((out / "presentation.html").read_text(encoding="utf-8"), 5)
+    assert "support-table" not in s5
+    assert "Gen-Z" not in s5
+    assert "38%" not in s5
