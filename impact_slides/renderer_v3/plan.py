@@ -1488,12 +1488,24 @@ def _required_height(
 def _cover_fits(sp: SurfacePlan) -> bool:
     """Measure each fixed element and its renderer-owned chrome."""
     need_h = sp._chrome_h
+    body_texts = [t for t, rk in sp._cover_items if rk == "body"]
+    unmarked_list = bool(body_texts) and all(
+        _legal_list_item(t) is None for t in body_texts
+    )
     for text_c, role_key in sp._cover_items:
         px = sp.role_sizes[role_key]
         strong = role_key == "title"
+        box_w = sp._box_w
+        if role_key == "body":
+            parsed = _legal_list_item(text_c)
+            if parsed is not None:
+                level, text_c = parsed
+                box_w = max(1, sp._box_w - math.ceil(px * LIST_INDENT_EM * (level + 1)))
+            elif unmarked_list:
+                box_w = max(1, sp._box_w - math.ceil(px * LIST_INDENT_EM))
         hard_lines = text_c.split("\n") if sp._preserve_newlines else [text_c]
         for hard_line in hard_lines:
-            lines, wo = _wrap_lines([(hard_line, strong)], px, sp._box_w)
+            lines, wo = _wrap_lines([(hard_line, strong)], px, box_w)
             if wo:
                 return False
             need_h += max(1, len(lines)) * _line_box(px)
@@ -3971,6 +3983,42 @@ def _wrap_label_lines(text: str, px: int, box_w: int, *, strong: bool = False) -
     return lines or [""]
 
 
+def _min_wrap_width(text: str, px: int, max_lines: int, *, strong: bool = False) -> float:
+    """Narrowest width that keeps a label within max_lines without clipping."""
+    if not text:
+        return 0.0
+    full = _text_width(text, px, strong=strong)
+    if max_lines <= 1:
+        return full
+
+    def fits(width: int) -> bool:
+        lines = _wrap_label_lines(text, px, width, strong=strong)
+        if len(lines) > max_lines:
+            return False
+        return all(_text_width(ln, px, strong=strong) <= width for ln in lines)
+
+    lo, hi = 1, max(1, int(math.ceil(full)))
+    best = full
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if fits(mid):
+            best = float(mid)
+            hi = mid - 1
+        else:
+            lo = mid + 1
+    return best
+
+
+def _legal_list_item(text: str) -> tuple[int, str] | None:
+    """Map a marked legal paragraph to (nest_level, visible text)."""
+    stripped = text.lstrip(" ")
+    indent = len(text) - len(stripped)
+    for marker in ("- ", "* ", "• ", "•"):
+        if stripped.startswith(marker):
+            return indent // 2, stripped[len(marker) :]
+    return None
+
+
 def _ellipsis_to_width(text: str, px: int, box_w: int, *, strong: bool = False) -> str:
     """Ellipsize label only; values never call this (D25)."""
     if _text_width(text, px, strong=strong) <= box_w:
@@ -4024,23 +4072,18 @@ def _table_fit_detail(
     def try_widths(h_labels: list[str], r_labels: list[str], g_labels: list[str] | None):
         mins = [0.0] * total_cols
         # Recompute label-driven mins for current label set.
-        tokens = _wrap_tokens(h_labels[0])
-        mins[0] = max(
-            (_text_width(tok.rstrip(), px, strong=True) for _, tok in tokens),
-            default=_text_width(h_labels[0], px, strong=True),
-        ) + TABLE_CELL_PAD_X
-        for lab in r_labels:
-            toks = _wrap_tokens(lab)
-            tw = max(
-                (_text_width(tok.rstrip(), px, strong=True) for _, tok in toks),
-                default=_text_width(lab, px, strong=True),
+        mins[0] = (
+            _min_wrap_width(
+                h_labels[0], px, TABLE_MAX_LABEL_LINES, strong=True
             )
+            + TABLE_CELL_PAD_X
+        )
+        for lab in r_labels:
+            tw = _min_wrap_width(lab, px, TABLE_MAX_LABEL_LINES, strong=True)
             mins[0] = max(mins[0], tw + TABLE_CELL_PAD_X)
         for c in range(n_value_cols):
-            toks = _wrap_tokens(h_labels[c + 1])
-            tw = max(
-                (_text_width(tok.rstrip(), px, strong=True) for _, tok in toks),
-                default=_text_width(h_labels[c + 1], px, strong=True),
+            tw = _min_wrap_width(
+                h_labels[c + 1], px, TABLE_MAX_LABEL_LINES, strong=True
             )
             mins[c + 1] = max(tw + TABLE_CELL_PAD_X, value_mins[c])
         # Group labels need span width.

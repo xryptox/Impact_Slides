@@ -41,6 +41,7 @@ _BRAND_SELECTOR_RULES = [
     ".section-divider .divider-rule",
     ".legal-notice h1,.legal-notice .legal-continued",
     ".legal-notice .legal-body p",
+    ".legal-notice .legal-body li",
     ".legal-notice .legal-part",
 ]
 
@@ -284,6 +285,57 @@ def test_legal_preserves_exact_paragraph_boundaries(tmp_path: Path):
     assert "Em-dash --- and (parentheses) stay exact." in plain
 
 
+def test_legal_notice_paints_payload_list_hierarchy(tmp_path: Path):
+    """R-D: legal payload bullets paint as <ul> hierarchy, not a paragraph wall."""
+    raw = _brand()
+    raw["slides"][4]["payload"]["paragraphs"] = [
+        "Intro sentence stays a paragraph.",
+        "- ability to grow EPS",
+        "- ability to grow revenue",
+    ]
+    raw["slides"][5]["payload"]["paragraphs"] = [
+        "- net card fees",
+        "  - including premium cards",
+        "Closing paragraph after the list.",
+    ]
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(path, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    s5 = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
+    s6 = html.split('id="slide-6"', 1)[1].split("<section", 1)[0]
+    assert "<ul" in s5 and "<li" in s5
+    assert "ability to grow EPS" in s5.replace("<wbr>", "")
+    assert "ability to grow revenue" in s5.replace("<wbr>", "")
+    assert s5.count("<li") == 2
+    assert "<p" in s5 and "Intro sentence stays a paragraph." in s5.replace("<wbr>", "")
+    assert "<ul" in s6 and s6.count("<ul") == 2
+    assert "net card fees" in s6.replace("<wbr>", "")
+    assert "including premium cards" in s6.replace("<wbr>", "")
+    assert "Closing paragraph after the list." in s6.replace("<wbr>", "")
+    compact = s6.replace("\n", "")
+    assert "</li><ul" not in compact
+    assert "net card fees<ul" in compact.replace("<wbr>", "")
+
+
+def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
+    """Amex s38–43 payload is unmarked bullets; paint them as one <ul>."""
+    raw = _brand()
+    raw["slides"][4]["payload"]["paragraphs"] = [
+        "the company's ability to grow EPS",
+        "the company's ability to grow revenue",
+    ]
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(path, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    s5 = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
+    assert "<ul" in s5 and s5.count("<li") == 2
+    assert "<p" not in s5.split('legal-body">', 1)[1]
+
+
 # ---------------------------------------------------------------------------
 # Non-strict / fallback
 # ---------------------------------------------------------------------------
@@ -337,6 +389,7 @@ def test_publish_css_selectors_match_brand_markup(tmp_path: Path):
             )
             assert matched, alternative
     assert "white-space:pre-wrap" in rules[".legal-notice .legal-body p"]
+    assert "white-space:pre-wrap" in rules[".legal-notice .legal-body li"]
     overflow_rule = ".legal-overflow,.cover-overflow,.divider-overflow"
     assert overflow_rule in rules
     assert "outline" in rules[overflow_rule]

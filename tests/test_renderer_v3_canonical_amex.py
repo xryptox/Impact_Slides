@@ -137,6 +137,15 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
     assert s7.count("metric-circle") == 6
     for token in ("50%", "5%", "10x", "20%", "10%", "2x", "21%", "11%"):
         assert token in s7
+    from html import unescape
+
+    visible = unescape(html).replace("<wbr>", "")
+    assert visible.count("Q1'26 Reported") >= 2
+    assert visible.count("FX-Adj.*") >= 2
+    assert "Q\u2026" not in visible and "F\u2026" not in visible
+    for n in range(38, 44):
+        chunk = html.split(f'id="slide-{n}"', 1)[1].split("<section", 1)[0]
+        assert "<ul" in chunk and "<li" in chunk
 
     # SVG-only via public CLI flag path used by publication options.
     from impact_slides.renderer_v3.cli import main as cli_main

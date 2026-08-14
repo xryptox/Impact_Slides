@@ -19,7 +19,7 @@ from .diagnostics import (
     sort_events,
 )
 from .models import Deck
-from .plan import DeckPlan
+from .plan import DeckPlan, _legal_list_item
 from .schema_export import schema_path
 from .theme import THEME_ID, generate_theme_css
 
@@ -125,6 +125,8 @@ def build_presentation_html(
             ".legal-notice{height:100%;overflow:visible}",
             ".legal-notice h1,.legal-notice .legal-continued{margin:0 0 var(--space-md);font-weight:var(--font-weight-title)}",
             ".legal-notice .legal-body p{margin:0 0 var(--space-sm);white-space:pre-wrap}",
+            ".legal-notice .legal-body ul{margin:0 0 var(--space-sm);padding:0}",
+            ".legal-notice .legal-body li{margin:0 0 0 1.25em;padding:0;white-space:pre-wrap}",
             ".legal-notice .legal-part{margin:var(--space-md) 0 0;color:var(--color-ink)}",
             ".legal-overflow,.cover-overflow,.divider-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             ".takeaway{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:var(--space-sm) var(--space-md);margin-top:var(--space-md)}",
@@ -741,9 +743,7 @@ def _paint_slide_body(
                 f"{_soft_break_html('— continued')}</p>"
             )
         out.append('<div class="legal-body">')
-        for para in p.paragraphs:
-            # Exact paragraphs; only safe escaping + soft-break markers.
-            out.append(f"<p{_style_font(body_px)}>{_soft_break_html(para)}</p>")
+        out.extend(_paint_legal_body(p.paragraphs, body_px))
         out.append("</div>")
         # D271: visible part-of-total chrome is for continuation parts.
         if p.part > 1:
@@ -923,6 +923,54 @@ def _paint_slide_body(
             )
         return out
     out.append(f"<p>Unsupported layout in kernel paint: {_escape(lt)}</p>")
+    return out
+
+
+def _paint_legal_body(paragraphs: list[str], body_px: int | None) -> list[str]:
+    """Paint legal paragraphs; marked or unmarked bullets become <ul> hierarchy."""
+    out: list[str] = []
+    style = _style_font(body_px)
+    marked = [(_legal_list_item(para), para) for para in paragraphs]
+    if not any(item[0] is not None for item in marked):
+        out.append("<ul>")
+        for para in paragraphs:
+            out.append(f"<li{style}>{_soft_break_html(para)}</li>")
+        out.append("</ul>")
+        return out
+    depth = 0
+    li_open = False
+
+    def close_to(target: int) -> None:
+        nonlocal depth, li_open
+        if li_open:
+            out.append("</li>")
+            li_open = False
+        while depth > target:
+            out.append("</ul>")
+            depth -= 1
+            if depth:
+                out.append("</li>")
+
+    for parsed, para in marked:
+        if parsed is None:
+            close_to(0)
+            out.append(f"<p{style}>{_soft_break_html(para)}</p>")
+            continue
+        level, text = parsed
+        target = level + 1
+        if target > depth:
+            while depth < target:
+                out.append("<ul>")
+                depth += 1
+        elif target == depth:
+            if li_open:
+                out.append("</li>")
+                li_open = False
+        else:
+            close_to(target)
+        out.append(f"<li{style}>{_soft_break_html(text)}")
+        li_open = True
+    close_to(0)
     return out
 
 
