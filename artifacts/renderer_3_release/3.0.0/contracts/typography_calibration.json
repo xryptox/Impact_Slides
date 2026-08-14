@@ -1,7 +1,16 @@
 {
-  "source_sans_embedded": true,
-  "ibm_plex_embedded": true,
-  "tabular_nums": 668,
-  "tabular_on_values": true,
-  "design_stage": true
+  "chartjs": {
+    "source_sans_embedded": true,
+    "ibm_plex_embedded": true,
+    "tabular_nums": 668,
+    "tabular_on_values": true,
+    "design_stage": true
+  },
+  "svg": {
+    "source_sans_embedded": true,
+    "ibm_plex_embedded": true,
+    "tabular_nums": 339,
+    "tabular_on_values": true,
+    "design_stage": true
+  }
 }

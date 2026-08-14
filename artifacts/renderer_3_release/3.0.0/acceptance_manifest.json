@@ -406,8 +406,8 @@
     },
     {
       "path": "comparison/geometry_parity.json",
-      "sha256": "c46ee189a2f8472c416bbf552c1fb487c21c100b8e4a8871eb0df6f60900cf9e",
-      "bytes": 132,
+      "sha256": "39e2600bd7fb0d9dcc754173a4542b691efc042961399630e689f895a0000278",
+      "bytes": 15232,
       "media_type": "application/json",
       "purpose": "PDF comparison"
     },
@@ -462,8 +462,8 @@
     },
     {
       "path": "contracts/typography_calibration.json",
-      "sha256": "5ec92b4a1defc0ba9f33474a631e700109589a880b11f87b9508499ccef7970c",
-      "bytes": 140,
+      "sha256": "47c771f7e51b21a14c062970d5f9bab38104375a4054adba73d67714c99d7780",
+      "bytes": 331,
       "media_type": "application/json",
       "purpose": "required gate contract"
     },

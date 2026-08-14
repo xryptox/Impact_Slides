@@ -407,7 +407,18 @@ def _capture_mode(html_path: Path, shots_dir: Path, mode: str) -> tuple[dict[str
             page.locator(f'section.slide[data-slide-number="{n}"]').screenshot(path=str(png))
             digest = sha256_file(png)
             row["screenshot_sha256"] = digest
-            ready_flag = bool(fonts_ok and geo.get("ok") and geo.get("in_stage") and charts_ready)
+            frozen_plan_attached = bool(
+                page.locator(
+                    f'section.slide[data-slide-number="{n}"] [data-plan-sizes]'
+                ).count()
+            )
+            ready_flag = bool(
+                fonts_ok
+                and geo.get("ok")
+                and geo.get("in_stage")
+                and charts_ready
+                and frozen_plan_attached
+            )
             slides.append(row)
             readiness_slides.append(
                 {
@@ -415,11 +426,7 @@ def _capture_mode(html_path: Path, shots_dir: Path, mode: str) -> tuple[dict[str
                     "layout": layout,
                     "ready": ready_flag,
                     "fonts_loaded": fonts_ok,
-                    "frozen_plan_attached": bool(
-                        page.locator(
-                            f'section.slide[data-slide-number="{n}"] [data-plan-sizes]'
-                        ).count()
-                    ),
+                    "frozen_plan_attached": frozen_plan_attached,
                     "chart_count": len(row.get("charts") or []),
                     "screenshot": f"slides/{n:02d}.png",
                     "screenshot_sha256": digest,
@@ -496,6 +503,76 @@ def _font_calibration(html: str) -> dict[str, Any]:
         + html.count('font-variant-numeric="tabular-nums"'),
         "tabular_on_values": "td.num{text-align:right;font-variant-numeric:tabular-nums lining-nums}" in html,
         "design_stage": 'content="1920x1080"' in html,
+    }
+
+
+def _font_ok(font: dict[str, Any]) -> bool:
+    return bool(
+        font.get("source_sans_embedded")
+        and font.get("ibm_plex_embedded")
+        and font.get("tabular_on_values")
+        and font.get("tabular_nums", 0) > 0
+        and font.get("design_stage")
+    )
+
+
+_PLOT_BOX_KEYS = ("width", "height", "bg_width", "bg_height")
+
+
+def _plot_delta(a: dict[str, Any], b: dict[str, Any]) -> dict[str, float]:
+    return {
+        key: abs(float(a.get(key) or 0) - float(b.get(key) or 0))
+        for key in _PLOT_BOX_KEYS
+    }
+
+
+def _geometry_parity_report(geo_js: dict[str, Any], geo_svg: dict[str, Any]) -> dict[str, Any]:
+    slides: list[dict[str, Any]] = []
+    max_delta = 0.0
+    compared = 0
+    ok = True
+    js_slides = geo_js.get("slides") or []
+    svg_by_n = {s.get("slide_number"): s for s in (geo_svg.get("slides") or [])}
+    if len(js_slides) != len(svg_by_n):
+        ok = False
+    for js_slide in js_slides:
+        n = js_slide.get("slide_number")
+        svg_slide = svg_by_n.get(n)
+        plots_js = js_slide.get("plots") or []
+        plots_svg = (svg_slide or {}).get("plots") or []
+        row: dict[str, Any] = {"slide_number": n, "ok": True, "plots": []}
+        if svg_slide is None or len(plots_js) != len(plots_svg):
+            row["ok"] = False
+            row["plot_count_chartjs"] = len(plots_js)
+            row["plot_count_svg"] = len(plots_svg)
+            ok = False
+        for i, (js_plot, svg_plot) in enumerate(zip(plots_js, plots_svg)):
+            delta = _plot_delta(js_plot, svg_plot)
+            compared += 1
+            max_delta = max([max_delta, *delta.values()])
+            plot_ok = all(value <= 2 for value in delta.values())
+            if not plot_ok:
+                row["ok"] = False
+                ok = False
+            row["plots"].append(
+                {
+                    "index": i,
+                    "chartjs": {key: js_plot.get(key) for key in _PLOT_BOX_KEYS if key in js_plot},
+                    "svg": {key: svg_plot.get(key) for key in _PLOT_BOX_KEYS if key in svg_plot},
+                    "delta_px": delta,
+                    "ok": plot_ok,
+                }
+            )
+        slides.append(row)
+    return {
+        "tolerance_px": 2,
+        "plot_floor": [CHART_PLOT_FLOOR_W, CHART_PLOT_FLOOR_H],
+        "chartjs": "chartjs/geometry.json",
+        "svg": "svg/geometry.json",
+        "identical_within_tolerance": ok,
+        "max_delta_px": max_delta,
+        "compared_plots": compared,
+        "slides": slides,
     }
 
 
@@ -731,7 +808,10 @@ def build_release(pdf: Path) -> Path:
     a11y_js = _a11y_report(html_js)
     a11y_svg = _a11y_report(html_svg)
     write_json(RELEASE_DIR / "contracts" / "accessibility.json", a11y_js)
-    write_json(RELEASE_DIR / "contracts" / "typography_calibration.json", _font_calibration(html_js))
+    write_json(
+        RELEASE_DIR / "contracts" / "typography_calibration.json",
+        {"chartjs": _font_calibration(html_js), "svg": _font_calibration(html_svg)},
+    )
     write_json(RELEASE_DIR / "contracts" / "targeted_fixtures.json", _targeted_fixture_report())
 
     write_json(RELEASE_DIR / "comparison" / "slide_map.json", _slide_map())
@@ -741,12 +821,7 @@ def build_release(pdf: Path) -> Path:
     )
     write_json(
         RELEASE_DIR / "comparison" / "geometry_parity.json",
-        {
-            "tolerance_px": 2,
-            "plot_floor": [CHART_PLOT_FLOOR_W, CHART_PLOT_FLOOR_H],
-            "chartjs": "chartjs/geometry.json",
-            "svg": "svg/geometry.json",
-        },
+        _geometry_parity_report(geo_js, geo_svg),
     )
     write_json(
         RELEASE_DIR / "comparison" / "accessibility_parity.json",
@@ -944,7 +1019,13 @@ def verify_release(root: Path) -> VerifyResult:
         if (
             ready.get("ready_count") != 44
             or len(slides) != 44
-            or any(not s.get("ready") or not s.get("fonts_loaded") or not s.get("in_stage") for s in slides)
+            or any(
+                not s.get("ready")
+                or not s.get("fonts_loaded")
+                or not s.get("in_stage")
+                or not s.get("frozen_plan_attached")
+                for s in slides
+            )
             or unique != 44
         ):
             fail(gate, f"{mode} readiness is not 44/44 unique in-stage captures")
@@ -1001,6 +1082,24 @@ def verify_release(root: Path) -> VerifyResult:
                 if plot.get("width", 0) < CHART_PLOT_FLOOR_W or plot.get("height", 0) < CHART_PLOT_FLOOR_H:
                     geo_ok = False
                     fail("geometry_parity", f"plot box floor {mode} slide {slide.get('slide_number')}")
+    geo_js_path = root / "chartjs" / "geometry.json"
+    geo_svg_path = root / "svg" / "geometry.json"
+    if geo_js_path.is_file() and geo_svg_path.is_file():
+        parity = _geometry_parity_report(
+            json.loads(geo_js_path.read_text(encoding="utf-8")),
+            json.loads(geo_svg_path.read_text(encoding="utf-8")),
+        )
+        recorded_path = root / "comparison" / "geometry_parity.json"
+        recorded = json.loads(recorded_path.read_text(encoding="utf-8")) if recorded_path.is_file() else {}
+        if not parity.get("identical_within_tolerance"):
+            geo_ok = False
+            fail("geometry_parity", "chartjs/svg plot boxes diverge beyond 2px")
+        elif recorded != parity:
+            geo_ok = False
+            fail("geometry_parity", "geometry_parity.json is not a cross-mode comparison")
+    elif geo_ok:
+        geo_ok = False
+        fail("geometry_parity", "missing chartjs/svg geometry for cross-mode compare")
     if geo_ok and "geometry_parity" not in gates:
         gates["geometry_parity"] = "passed"
 
@@ -1039,21 +1138,18 @@ def verify_release(root: Path) -> VerifyResult:
     else:
         fail("determinism", "missing determinism.json")
 
-    font_path = root / "contracts" / "typography_calibration.json"
-    if font_path.is_file():
-        font = json.loads(font_path.read_text(encoding="utf-8"))
-        if (
-            font.get("source_sans_embedded")
-            and font.get("ibm_plex_embedded")
-            and font.get("tabular_on_values")
-            and font.get("tabular_nums", 0) > 0
-            and font.get("design_stage")
-        ):
-            gates["font_calibration"] = "passed"
-        else:
-            fail("font_calibration", "font calibration failed")
-    else:
-        fail("font_calibration", "missing typography_calibration.json")
+    font_ok = True
+    for mode in ("chartjs", "svg"):
+        html_path = root / mode / "render" / "presentation.html"
+        if not html_path.is_file():
+            font_ok = False
+            fail("font_calibration", f"missing {mode} presentation.html")
+            continue
+        if not _font_ok(_font_calibration(html_path.read_text(encoding="utf-8"))):
+            font_ok = False
+            fail("font_calibration", f"{mode} font calibration failed")
+    if font_ok and "font_calibration" not in gates:
+        gates["font_calibration"] = "passed"
 
     tgt_path = root / "contracts" / "targeted_fixtures.json"
     if tgt_path.is_file():
@@ -1076,7 +1172,7 @@ def verify_release(root: Path) -> VerifyResult:
         low = raw.lower()
         if b"mae" in low or b"ssim" in low or b"similarity" in low:
             fail("pdf_review", "pdf review used similarity scoring")
-        elif b"DIV-001" not in raw or b"approved" not in low:
+        elif any(token not in raw for token in (b"DIV-001", b"DIV-002", b"DIV-003", b"DIV-004")) or b"approved" not in low:
             fail("pdf_review", "pdf review missing approved divergences")
         else:
             gates["pdf_review"] = "passed"

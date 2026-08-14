@@ -187,6 +187,59 @@ def test_mutation_zero_plot_on_chart_slide_fails(tmp_path: Path) -> None:
     assert any("plot" in e or "floor" in e or "geometry" in e for e in result.errors)
 
 
+def test_mutation_cross_mode_plot_width_fails(tmp_path: Path) -> None:
+    dest = tmp_path / "bundle"
+    shutil.copytree(RELEASE_DIR, dest)
+    geo_path = dest / "chartjs" / "geometry.json"
+    geo = json.loads(geo_path.read_text(encoding="utf-8"))
+    for slide in geo["slides"]:
+        if slide.get("plots"):
+            slide["plots"][0]["width"] = 400
+            break
+    geo_path.write_text(json.dumps(geo, indent=2) + "\n", encoding="utf-8")
+    result = verify_release(dest)
+    assert result.ok is False
+    assert result.gates.get("geometry_parity") == "failed"
+
+
+def test_mutation_missing_frozen_plan_fails(tmp_path: Path) -> None:
+    dest = tmp_path / "bundle"
+    shutil.copytree(RELEASE_DIR, dest)
+    ready_path = dest / "chartjs" / "readiness.json"
+    ready = json.loads(ready_path.read_text(encoding="utf-8"))
+    ready["slides"][0]["frozen_plan_attached"] = False
+    ready_path.write_text(json.dumps(ready, indent=2) + "\n", encoding="utf-8")
+    result = verify_release(dest)
+    assert result.ok is False
+    assert result.gates.get("paint_readiness_chartjs") == "failed"
+
+
+def test_mutation_missing_div_002_fails(tmp_path: Path) -> None:
+    dest = tmp_path / "bundle"
+    shutil.copytree(RELEASE_DIR, dest)
+    review = dest / "comparison" / "pdf_review.md"
+    review.write_bytes(review.read_bytes().replace(b"DIV-002", b"DIV-xxx"))
+    result = verify_release(dest)
+    assert result.ok is False
+    assert result.gates.get("pdf_review") == "failed"
+
+
+def test_mutation_svg_font_face_fails(tmp_path: Path) -> None:
+    dest = tmp_path / "bundle"
+    shutil.copytree(RELEASE_DIR, dest)
+    html = dest / "svg" / "render" / "presentation.html"
+    html.write_text(
+        html.read_text(encoding="utf-8").replace(
+            "@font-face{font-family:'Source Sans 3'",
+            "@font-face{font-family:'Not Source Sans'",
+        ),
+        encoding="utf-8",
+    )
+    result = verify_release(dest)
+    assert result.ok is False
+    assert result.gates.get("font_calibration") == "failed"
+
+
 def test_handoff_locators_pin_release_pdf() -> None:
     pdf = RELEASE_DIR / "inputs" / "Q1-2026-Earnings-Presentation.pdf"
     digest = _sha(pdf.read_bytes())

@@ -13,7 +13,7 @@ Immutable versioned acceptance evidence for Impact Slide Renderer 3. D315 owns t
 
 - Layout is exactly D315. `chartjs/render/` and `svg/render/` each contain only the five D250 files.
 - `acceptance_manifest.json`, `README.md`, and `checksums.sha256` are the only unlisted files.
-- Required gates must be `passed`. No whole-slide MAE/SSIM/similarity scoring.
+- Required gates must be `passed`. `comparison/geometry_parity.json` is the Chart.js↔SVG 2px plot-box comparison, not file pointers. No whole-slide MAE/SSIM/similarity scoring.
 - Evidence is immutable; a correction is a new renderer-version directory.
 
 ## Work Guidance
