@@ -10,7 +10,7 @@
   "repository": "https://github.com/xryptox/Impact_Slides.git",
   "commit": "00d4b1fca670936d97d01596e6d2bdf5536f6132",
   "inputs": {
-    "handoff_sha256": "24cda2dbb2c5ce14ee80f0dbec45f4c3c0c0f7002344d2524218bdbf3ba12b8d",
+    "handoff_sha256": "d1350359119b090f45659d319329155e3e958dc1d04b38ba6411a7281df04e4a",
     "schema_sha256": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
     "pdf_sha256": "a87c11625c84e0dabb02d523f6a2d2508b892f18ee242ef197a9b40157bd3faf"
   },
@@ -476,8 +476,8 @@
     },
     {
       "path": "inputs/canonical_amex_handoff_v1.json",
-      "sha256": "24cda2dbb2c5ce14ee80f0dbec45f4c3c0c0f7002344d2524218bdbf3ba12b8d",
-      "bytes": 213147,
+      "sha256": "d1350359119b090f45659d319329155e3e958dc1d04b38ba6411a7281df04e4a",
+      "bytes": 206638,
       "media_type": "application/json",
       "purpose": "canonical input"
     },

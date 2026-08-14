@@ -15,6 +15,7 @@ Immutable versioned acceptance evidence for Impact Slide Renderer 3. D315 owns t
 - `acceptance_manifest.json`, `README.md`, and `checksums.sha256` are the only unlisted files.
 - Required gates must be `passed`. `comparison/geometry_parity.json` is the Chart.js↔SVG 2px plot-box comparison, not file pointers. No whole-slide MAE/SSIM/similarity scoring.
 - Evidence is immutable; a correction is a new renderer-version directory.
+- Text files stay LF in the working tree (`.gitattributes` `eol=lf`); hash pins are the LF bytes.
 
 ## Work Guidance
 
