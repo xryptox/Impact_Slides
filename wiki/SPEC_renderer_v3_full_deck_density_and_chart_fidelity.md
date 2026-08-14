@@ -2452,8 +2452,9 @@ migrate only with explicit direction and comparison basis; isolated arrows or
 Schema v1 removes `comparison_grid`, `comparison_with_metrics`, and
 `three_column_comparison` as separate layouts. D187 `comparison_cards` owns every
 peer fact—including metrics—through shared D141 fact columns; D172 may summarize
-the comparison. Detached metric strips, circle/ratio graphics, duplicate bullets,
-and secondary fact sources are invalid. Metrics that cannot map consistently to
+the comparison. Detached metric strips, authored circle/ratio graphics, duplicate bullets,
+and secondary fact sources are invalid. A renderer-owned circular dual-metric
+visual may be derived from two numeric facts plus one `Nx` multiplier (D261). Metrics that cannot map consistently to
 every peer use D189 when primary or another semantic composition/slide when
 independent. The renderer never aligns orphan facts by position, label
 similarity, or count. Migration requires one canonical complete peer-row/shared-

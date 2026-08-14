@@ -179,7 +179,7 @@ table.heatmap-table td.heatmap-missing{background:transparent}
 .comparison-cards.circular-dual-metric .dual-metric-row{display:flex;align-items:flex-start;justify-content:center;gap:8px}
 .comparison-cards.circular-dual-metric .metric-node{display:flex;flex-direction:column;align-items:center;min-width:0}
 .comparison-cards.circular-dual-metric .metric-circle{border-radius:50%;border:var(--border-width-hairline) solid var(--color-panel-border);background:var(--color-surface);display:flex;align-items:center;justify-content:center;box-sizing:border-box;font-variant-numeric:tabular-nums lining-nums;color:var(--color-navy);text-align:center}
-.comparison-cards.circular-dual-metric .metric-caption{margin:8px 0 0;text-align:center}
+.comparison-cards.circular-dual-metric .metric-caption{margin:8px 0 0;text-align:center;max-width:100%}
 .comparison-cards.circular-dual-metric .dual-metric-connector{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--color-ink);font-variant-numeric:tabular-nums lining-nums}
 .process-flow,.timeline,.data-pipeline{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}
 .process-flow.horizontal,.timeline.horizontal,.data-pipeline.horizontal{flex-direction:row}
@@ -454,29 +454,29 @@ table.heatmap-table td.heatmap-missing{background:transparent}
 <section class="slide" id="slide-7" data-layout="comparison_cards" data-slide-number="7" data-surface-id="slide-7" data-diagnostic-codes="" data-diagnostic-count="0">
 <h1 data-surface-id="slide-7-title" data-plan-sizes="title:56" data-plan-adaptations="" data-diagnostic-codes="" data-diagnostic-count="0" style="font-size:56px">U.<wbr>S. Consumer: Membership Model Engagement</h1>
 <p class="subtitle" data-surface-id="slide-7-subtitle" data-plan-sizes="subtitle:26" data-plan-adaptations="plan.geometry_reallocated,plan.typography_grown" data-diagnostic-codes="plan.typography_grown" data-diagnostic-count="1" style="font-size:26px">Card Member Spend Growth Rates; % Increase/(decrease) vs. Prior year</p>
-<div class="comparison-cards cols-3 circular-dual-metric" aria-hidden="true" data-surface-id="s7-cards" data-plan-sizes="caption:18,heading:26,label:18,table:24,value:24" data-plan-adaptations="plan.geometry_reallocated,plan.typography_grown,plan.text_wrapped" data-diagnostic-codes="plan.text_wrapped,plan.typography_grown" data-diagnostic-count="2" data-table-surface="s7-cards">
+<div class="comparison-cards cols-3 circular-dual-metric" aria-hidden="true" data-surface-id="s7-cards" data-plan-sizes="caption:18,circle_d:120,connector_w:48,heading:26,label:18,table:24,value:24" data-plan-adaptations="plan.geometry_reallocated,plan.typography_grown,plan.text_wrapped" data-diagnostic-codes="plan.text_wrapped,plan.typography_grown" data-diagnostic-count="2" data-table-surface="s7-cards">
 <article class="comparison-card" data-row-id="lodging">
 <h2 title="Lodging" style="font-size:26px">Lodging</h2>
 <div class="dual-metric-row">
-<div class="metric-node" data-column-id="premium"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="50 percent">50%</div><p class="metric-caption" style="font-size:18px">Premium growth</p></div>
+<div class="metric-node" data-column-id="premium" style="width:120px"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="50 percent">50%</div><p class="metric-caption" style="font-size:18px">Premium growth</p></div>
 <div class="dual-metric-connector" style="width:48px;min-height:120px;font-size:24px"><span class="connector-arrow">→</span><span class="connector-mult">10x</span></div>
-<div class="metric-node" data-column-id="ucs"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="5 percent">5%</div><p class="metric-caption" style="font-size:18px">UCS benchmark</p></div>
+<div class="metric-node" data-column-id="ucs" style="width:120px"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="5 percent">5%</div><p class="metric-caption" style="font-size:18px">UCS benchmark</p></div>
 </div>
 </article>
 <article class="comparison-card" data-row-id="restaurants">
 <h2 title="Restaurants" style="font-size:26px">Restaurants</h2>
 <div class="dual-metric-row">
-<div class="metric-node" data-column-id="premium"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="20 percent">20%</div><p class="metric-caption" style="font-size:18px">Premium growth</p></div>
+<div class="metric-node" data-column-id="premium" style="width:120px"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="20 percent">20%</div><p class="metric-caption" style="font-size:18px">Premium growth</p></div>
 <div class="dual-metric-connector" style="width:48px;min-height:120px;font-size:24px"><span class="connector-arrow">→</span><span class="connector-mult">2x</span></div>
-<div class="metric-node" data-column-id="ucs"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="10 percent">10%</div><p class="metric-caption" style="font-size:18px">UCS benchmark</p></div>
+<div class="metric-node" data-column-id="ucs" style="width:120px"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="10 percent">10%</div><p class="metric-caption" style="font-size:18px">UCS benchmark</p></div>
 </div>
 </article>
 <article class="comparison-card" data-row-id="airlines">
 <h2 title="Airlines" style="font-size:26px">Airlines</h2>
 <div class="dual-metric-row">
-<div class="metric-node" data-column-id="premium"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="21 percent">21%</div><p class="metric-caption" style="font-size:18px">Premium growth</p></div>
+<div class="metric-node" data-column-id="premium" style="width:120px"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="21 percent">21%</div><p class="metric-caption" style="font-size:18px">Premium growth</p></div>
 <div class="dual-metric-connector" style="width:48px;min-height:120px;font-size:24px"><span class="connector-arrow">→</span><span class="connector-mult">2x</span></div>
-<div class="metric-node" data-column-id="ucs"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="11 percent">11%</div><p class="metric-caption" style="font-size:18px">UCS benchmark</p></div>
+<div class="metric-node" data-column-id="ucs" style="width:120px"><div class="metric-circle" style="width:120px;height:120px;font-size:24px" aria-label="11 percent">11%</div><p class="metric-caption" style="font-size:18px">UCS benchmark</p></div>
 </div>
 </article>
 </div>

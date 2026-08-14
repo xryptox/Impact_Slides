@@ -229,6 +229,8 @@ def test_circular_dual_metric_plan_and_paint(tmp_path: Path):
     assert cards.role_sizes["heading"] >= 22
     assert cards.role_sizes["caption"] >= 14
     assert cards.role_sizes["value"] >= 22
+    assert cards.role_sizes["circle_d"] >= 48
+    assert cards.role_sizes["connector_w"] == 48
 
     handoff = tmp_path / "handoff.json"
     handoff.write_text(json.dumps(raw), encoding="utf-8")
@@ -246,6 +248,9 @@ def test_circular_dual_metric_plan_and_paint(tmp_path: Path):
     assert "Lodging" in html and "Restaurants" in html and "Airlines" in html
     assert 'aria-hidden="true"' in html
     assert "sr-only-table" in html
+    css = html.encode("utf-8")
+    assert css.count(b".comparison-cards.circular-dual-metric .metric-circle{") == 1
+    assert css.count(b".comparison-cards.circular-dual-metric.metric-circle{") == 0
 
 
 def test_circular_dual_metric_mutation_keeps_text_board(tmp_path: Path):

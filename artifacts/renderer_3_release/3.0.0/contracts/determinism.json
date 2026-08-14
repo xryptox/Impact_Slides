@@ -2,8 +2,8 @@
   "chartjs": {
     "evidence_manifest.json": "6b8c217a8b2384a4d09c7b24d2b52b3d5472d3761867ef8d0b3cc0af0244e3c5",
     "handoff_schema_v1.json": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
-    "presentation.html": "674ba7da74fa4c1265b35b79fedc3ec5e9abf9d4aeca54ec96b923f411cd94c5",
-    "run_meta.json": "af99c0220517501efab77f1e94eb8c651074acbdd8b92d578e26aaaf320c567d",
+    "presentation.html": "c6904f35b3c328316d3b1524947f259ce3845329c59e90ef9bf0d53c52b5deef",
+    "run_meta.json": "4b997ecd1699eab86cdd6551525cfd5ba4a0a17427b7560d83884ac3c2551706",
     "slide_notes.md": "78823a5fba725aa5deb5961399a066b9a6935af1cf724bc851f2a8b079b4ae8e"
   },
   "chartjs_identical": true,
@@ -11,8 +11,8 @@
   "svg": {
     "evidence_manifest.json": "6b8c217a8b2384a4d09c7b24d2b52b3d5472d3761867ef8d0b3cc0af0244e3c5",
     "handoff_schema_v1.json": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
-    "presentation.html": "ebc4bbd75900aa6c0696964eb098329a328181b735087190641805bae70e7486",
-    "run_meta.json": "4a96ce45cee9dfff6ad0db78f0ad45340c3356b3765d0a426940fe3464e243a3",
+    "presentation.html": "c26b5bec4c6d89c3a0992d89e96994a9f872dc21c824f879af99e1e4e9d36b66",
+    "run_meta.json": "7ab801e3ef3f90a365998841be1227890710acbafdcab5f297565c2a010be982",
     "slide_notes.md": "78823a5fba725aa5deb5961399a066b9a6935af1cf724bc851f2a8b079b4ae8e"
   },
   "svg_identical": true

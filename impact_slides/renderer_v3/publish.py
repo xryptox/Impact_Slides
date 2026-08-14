@@ -208,7 +208,7 @@ def build_presentation_html(
             ".comparison-cards.circular-dual-metric .dual-metric-row{display:flex;align-items:flex-start;justify-content:center;gap:8px}",
             ".comparison-cards.circular-dual-metric .metric-node{display:flex;flex-direction:column;align-items:center;min-width:0}",
             ".comparison-cards.circular-dual-metric .metric-circle{border-radius:50%;border:var(--border-width-hairline) solid var(--color-panel-border);background:var(--color-surface);display:flex;align-items:center;justify-content:center;box-sizing:border-box;font-variant-numeric:tabular-nums lining-nums;color:var(--color-navy);text-align:center}",
-            ".comparison-cards.circular-dual-metric .metric-caption{margin:8px 0 0;text-align:center}",
+            ".comparison-cards.circular-dual-metric .metric-caption{margin:8px 0 0;text-align:center;max-width:100%}",
             ".comparison-cards.circular-dual-metric .dual-metric-connector{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--color-ink);font-variant-numeric:tabular-nums lining-nums}",
             # Linear + grouping compositions (D192/D193/D196/D197/D272-D277).
             ".process-flow,.timeline,.data-pipeline{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
@@ -1502,9 +1502,8 @@ def _paint_comparison_cards(
     # accessibility source and the print source.
     col_ids = list(paint["col_ids"])
     fact_labels = list(paint["header_full"][1:])
-    roles = (paint.get("card_role_sizes") or {})
-    circle_d = int(roles.get("circle_d") or 96)
-    connector_w = int(roles.get("connector_w") or 48)
+    circle_d = int(sp.role_sizes.get("circle_d") or 0)
+    connector_w = int(sp.role_sizes.get("connector_w") or 0)
     for r_i, row in enumerate(table.rows):
         out.append(
             f'<article class="comparison-card" data-row-id="{_escape(row.row_id)}">'
@@ -1528,7 +1527,8 @@ def _paint_comparison_cards(
             )
             out.append('<div class="dual-metric-row">')
             out.append(
-                f'<div class="metric-node" data-column-id="{_escape(col_ids[0])}">'
+                f'<div class="metric-node" data-column-id="{_escape(col_ids[0])}" '
+                f'style="width:{circle_d}px">'
                 f'<div class="metric-circle" style="width:{circle_d}px;height:{circle_d}px;'
                 f'font-size:{int(value_px or 22)}px"{left_aria}>{_escape(left_v)}</div>'
                 f'<p class="metric-caption"{_style_font(caption_px)}>'
@@ -1541,7 +1541,8 @@ def _paint_comparison_cards(
                 f'<span class="connector-mult">{_escape(mult_v)}</span></div>'
             )
             out.append(
-                f'<div class="metric-node" data-column-id="{_escape(col_ids[1])}">'
+                f'<div class="metric-node" data-column-id="{_escape(col_ids[1])}" '
+                f'style="width:{circle_d}px">'
                 f'<div class="metric-circle" style="width:{circle_d}px;height:{circle_d}px;'
                 f'font-size:{int(value_px or 22)}px"{right_aria}>{_escape(right_v)}</div>'
                 f'<p class="metric-caption"{_style_font(caption_px)}>'

@@ -2730,6 +2730,8 @@
       },
       "role_sizes": {
         "caption": 18,
+        "circle_d": 120,
+        "connector_w": 48,
         "heading": 26,
         "label": 18,
         "table": 24,
@@ -2758,7 +2760,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "f75a24b2d745209548a4b9574d36ac4bb4da2c977d7f94ba5e5ca83b6d3b612e"
+      "painter_plan_digest": "3cb3083517c3f88039397159da9f8e8a94e5a27a0bed5a7fe649645b3c0c42d4"
     },
     {
       "surface_id": "slide-7-disclosure-s7-disc",
@@ -7396,8 +7398,8 @@
   "artifacts": [
     {
       "name": "presentation.html",
-      "bytes": 767805,
-      "sha256": "674ba7da74fa4c1265b35b79fedc3ec5e9abf9d4aeca54ec96b923f411cd94c5"
+      "bytes": 767968,
+      "sha256": "c6904f35b3c328316d3b1524947f259ce3845329c59e90ef9bf0d53c52b5deef"
     },
     {
       "name": "slide_notes.md",
