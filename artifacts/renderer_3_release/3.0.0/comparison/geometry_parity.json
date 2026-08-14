@@ -1,0 +1,758 @@
+{
+  "tolerance_px": 2,
+  "plot_floor": [
+    320,
+    240
+  ],
+  "chartjs": "chartjs/geometry.json",
+  "svg": "svg/geometry.json",
+  "identical_within_tolerance": true,
+  "max_delta_px": 0.0,
+  "compared_plots": 23,
+  "slides": [
+    {
+      "slide_number": 1,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 2,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 3,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 4,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "svg": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 5,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "svg": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 6,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 852,
+            "height": 642,
+            "bg_width": 852,
+            "bg_height": 642
+          },
+          "svg": {
+            "width": 852,
+            "height": 642,
+            "bg_width": 852,
+            "bg_height": 642
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        },
+        {
+          "index": 1,
+          "chartjs": {
+            "width": 852,
+            "height": 642,
+            "bg_width": 852,
+            "bg_height": 642
+          },
+          "svg": {
+            "width": 852,
+            "height": 642,
+            "bg_width": 852,
+            "bg_height": 642
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 7,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 8,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "svg": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 9,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "svg": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 10,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "svg": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 11,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "svg": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 12,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1140,
+            "height": 651,
+            "bg_width": 1140,
+            "bg_height": 651
+          },
+          "svg": {
+            "width": 1140,
+            "height": 651,
+            "bg_width": 1140,
+            "bg_height": 651
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 13,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1568,
+            "height": 724,
+            "bg_width": 1568,
+            "bg_height": 724
+          },
+          "svg": {
+            "width": 1568,
+            "height": 724,
+            "bg_width": 1568,
+            "bg_height": 724
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 14,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 852,
+            "height": 701,
+            "bg_width": 852,
+            "bg_height": 701
+          },
+          "svg": {
+            "width": 852,
+            "height": 701,
+            "bg_width": 852,
+            "bg_height": 701
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        },
+        {
+          "index": 1,
+          "chartjs": {
+            "width": 852,
+            "height": 701,
+            "bg_width": 852,
+            "bg_height": 701
+          },
+          "svg": {
+            "width": 852,
+            "height": 701,
+            "bg_width": 852,
+            "bg_height": 701
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 15,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1568,
+            "height": 737,
+            "bg_width": 1568,
+            "bg_height": 737
+          },
+          "svg": {
+            "width": 1568,
+            "height": 737,
+            "bg_width": 1568,
+            "bg_height": 737
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 16,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 17,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 852,
+            "height": 698,
+            "bg_width": 852,
+            "bg_height": 698
+          },
+          "svg": {
+            "width": 852,
+            "height": 698,
+            "bg_width": 852,
+            "bg_height": 698
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        },
+        {
+          "index": 1,
+          "chartjs": {
+            "width": 852,
+            "height": 698,
+            "bg_width": 852,
+            "bg_height": 698
+          },
+          "svg": {
+            "width": 852,
+            "height": 698,
+            "bg_width": 852,
+            "bg_height": 698
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 18,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1140,
+            "height": 724,
+            "bg_width": 1140,
+            "bg_height": 724
+          },
+          "svg": {
+            "width": 1140,
+            "height": 724,
+            "bg_width": 1140,
+            "bg_height": 724
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 19,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "svg": {
+            "width": 1648,
+            "height": 712,
+            "bg_width": 1648,
+            "bg_height": 712
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 20,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 21,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1140,
+            "height": 565,
+            "bg_width": 1140,
+            "bg_height": 565
+          },
+          "svg": {
+            "width": 1140,
+            "height": 565,
+            "bg_width": 1140,
+            "bg_height": 565
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 22,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 23,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 24,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 1568,
+            "height": 737,
+            "bg_width": 1568,
+            "bg_height": 737
+          },
+          "svg": {
+            "width": 1568,
+            "height": 737,
+            "bg_width": 1568,
+            "bg_height": 737
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 25,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 26,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 27,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 852,
+            "height": 678,
+            "bg_width": 852,
+            "bg_height": 678
+          },
+          "svg": {
+            "width": 852,
+            "height": 678,
+            "bg_width": 852,
+            "bg_height": 678
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        },
+        {
+          "index": 1,
+          "chartjs": {
+            "width": 852,
+            "height": 678,
+            "bg_width": 852,
+            "bg_height": 678
+          },
+          "svg": {
+            "width": 852,
+            "height": 678,
+            "bg_width": 852,
+            "bg_height": 678
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 28,
+      "ok": true,
+      "plots": [
+        {
+          "index": 0,
+          "chartjs": {
+            "width": 852,
+            "height": 663,
+            "bg_width": 852,
+            "bg_height": 663
+          },
+          "svg": {
+            "width": 852,
+            "height": 663,
+            "bg_width": 852,
+            "bg_height": 663
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        },
+        {
+          "index": 1,
+          "chartjs": {
+            "width": 852,
+            "height": 663,
+            "bg_width": 852,
+            "bg_height": 663
+          },
+          "svg": {
+            "width": 852,
+            "height": 663,
+            "bg_width": 852,
+            "bg_height": 663
+          },
+          "delta_px": {
+            "width": 0.0,
+            "height": 0.0,
+            "bg_width": 0.0,
+            "bg_height": 0.0
+          },
+          "ok": true
+        }
+      ]
+    },
+    {
+      "slide_number": 29,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 30,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 31,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 32,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 33,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 34,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 35,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 36,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 37,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 38,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 39,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 40,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 41,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 42,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 43,
+      "ok": true,
+      "plots": []
+    },
+    {
+      "slide_number": 44,
+      "ok": true,
+      "plots": []
+    }
+  ]
+}

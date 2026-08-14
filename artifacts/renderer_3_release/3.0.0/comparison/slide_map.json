@@ -1,0 +1,361 @@
+{
+  "viewport": [
+    1920,
+    1080
+  ],
+  "pdf": "inputs/Q1-2026-Earnings-Presentation.pdf",
+  "mapping": [
+    {
+      "slide_number": 1,
+      "pdf_page": 1,
+      "pdf_index": 0,
+      "layout": "opening_cover",
+      "chartjs": "chartjs/slides/01.png",
+      "svg": "svg/slides/01.png"
+    },
+    {
+      "slide_number": 2,
+      "pdf_page": 2,
+      "pdf_index": 1,
+      "layout": "narrative",
+      "chartjs": "chartjs/slides/02.png",
+      "svg": "svg/slides/02.png"
+    },
+    {
+      "slide_number": 3,
+      "pdf_page": 3,
+      "pdf_index": 2,
+      "layout": "period_comparison",
+      "chartjs": "chartjs/slides/03.png",
+      "svg": "svg/slides/03.png"
+    },
+    {
+      "slide_number": 4,
+      "pdf_page": 4,
+      "pdf_index": 3,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/04.png",
+      "svg": "svg/slides/04.png"
+    },
+    {
+      "slide_number": 5,
+      "pdf_page": 5,
+      "pdf_index": 4,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/05.png",
+      "svg": "svg/slides/05.png"
+    },
+    {
+      "slide_number": 6,
+      "pdf_page": 6,
+      "pdf_index": 5,
+      "layout": "dual_chart",
+      "chartjs": "chartjs/slides/06.png",
+      "svg": "svg/slides/06.png"
+    },
+    {
+      "slide_number": 7,
+      "pdf_page": 7,
+      "pdf_index": 6,
+      "layout": "comparison_cards",
+      "chartjs": "chartjs/slides/07.png",
+      "svg": "svg/slides/07.png"
+    },
+    {
+      "slide_number": 8,
+      "pdf_page": 8,
+      "pdf_index": 7,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/08.png",
+      "svg": "svg/slides/08.png"
+    },
+    {
+      "slide_number": 9,
+      "pdf_page": 9,
+      "pdf_index": 8,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/09.png",
+      "svg": "svg/slides/09.png"
+    },
+    {
+      "slide_number": 10,
+      "pdf_page": 10,
+      "pdf_index": 9,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/10.png",
+      "svg": "svg/slides/10.png"
+    },
+    {
+      "slide_number": 11,
+      "pdf_page": 11,
+      "pdf_index": 10,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/11.png",
+      "svg": "svg/slides/11.png"
+    },
+    {
+      "slide_number": 12,
+      "pdf_page": 12,
+      "pdf_index": 11,
+      "layout": "chart_hero_dual",
+      "chartjs": "chartjs/slides/12.png",
+      "svg": "svg/slides/12.png"
+    },
+    {
+      "slide_number": 13,
+      "pdf_page": 13,
+      "pdf_index": 12,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/13.png",
+      "svg": "svg/slides/13.png"
+    },
+    {
+      "slide_number": 14,
+      "pdf_page": 14,
+      "pdf_index": 13,
+      "layout": "dual_chart",
+      "chartjs": "chartjs/slides/14.png",
+      "svg": "svg/slides/14.png"
+    },
+    {
+      "slide_number": 15,
+      "pdf_page": 15,
+      "pdf_index": 14,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/15.png",
+      "svg": "svg/slides/15.png"
+    },
+    {
+      "slide_number": 16,
+      "pdf_page": 16,
+      "pdf_index": 15,
+      "layout": "data_table",
+      "chartjs": "chartjs/slides/16.png",
+      "svg": "svg/slides/16.png"
+    },
+    {
+      "slide_number": 17,
+      "pdf_page": 17,
+      "pdf_index": 16,
+      "layout": "dual_chart",
+      "chartjs": "chartjs/slides/17.png",
+      "svg": "svg/slides/17.png"
+    },
+    {
+      "slide_number": 18,
+      "pdf_page": 18,
+      "pdf_index": 17,
+      "layout": "chart_hero_dual",
+      "chartjs": "chartjs/slides/18.png",
+      "svg": "svg/slides/18.png"
+    },
+    {
+      "slide_number": 19,
+      "pdf_page": 19,
+      "pdf_index": 18,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/19.png",
+      "svg": "svg/slides/19.png"
+    },
+    {
+      "slide_number": 20,
+      "pdf_page": 20,
+      "pdf_index": 19,
+      "layout": "period_comparison",
+      "chartjs": "chartjs/slides/20.png",
+      "svg": "svg/slides/20.png"
+    },
+    {
+      "slide_number": 21,
+      "pdf_page": 21,
+      "pdf_index": 20,
+      "layout": "chart_hero_dual",
+      "chartjs": "chartjs/slides/21.png",
+      "svg": "svg/slides/21.png"
+    },
+    {
+      "slide_number": 22,
+      "pdf_page": 22,
+      "pdf_index": 21,
+      "layout": "metric_overview",
+      "chartjs": "chartjs/slides/22.png",
+      "svg": "svg/slides/22.png"
+    },
+    {
+      "slide_number": 23,
+      "pdf_page": 23,
+      "pdf_index": 22,
+      "layout": "section_divider",
+      "chartjs": "chartjs/slides/23.png",
+      "svg": "svg/slides/23.png"
+    },
+    {
+      "slide_number": 24,
+      "pdf_page": 24,
+      "pdf_index": 23,
+      "layout": "single_chart",
+      "chartjs": "chartjs/slides/24.png",
+      "svg": "svg/slides/24.png"
+    },
+    {
+      "slide_number": 25,
+      "pdf_page": 25,
+      "pdf_index": 24,
+      "layout": "data_table",
+      "chartjs": "chartjs/slides/25.png",
+      "svg": "svg/slides/25.png"
+    },
+    {
+      "slide_number": 26,
+      "pdf_page": 26,
+      "pdf_index": 25,
+      "layout": "data_table",
+      "chartjs": "chartjs/slides/26.png",
+      "svg": "svg/slides/26.png"
+    },
+    {
+      "slide_number": 27,
+      "pdf_page": 27,
+      "pdf_index": 26,
+      "layout": "dual_chart",
+      "chartjs": "chartjs/slides/27.png",
+      "svg": "svg/slides/27.png"
+    },
+    {
+      "slide_number": 28,
+      "pdf_page": 28,
+      "pdf_index": 27,
+      "layout": "dual_chart",
+      "chartjs": "chartjs/slides/28.png",
+      "svg": "svg/slides/28.png"
+    },
+    {
+      "slide_number": 29,
+      "pdf_page": 29,
+      "pdf_index": 28,
+      "layout": "narrative",
+      "chartjs": "chartjs/slides/29.png",
+      "svg": "svg/slides/29.png"
+    },
+    {
+      "slide_number": 30,
+      "pdf_page": 30,
+      "pdf_index": 29,
+      "layout": "narrative",
+      "chartjs": "chartjs/slides/30.png",
+      "svg": "svg/slides/30.png"
+    },
+    {
+      "slide_number": 31,
+      "pdf_page": 31,
+      "pdf_index": 30,
+      "layout": "annex_table",
+      "chartjs": "chartjs/slides/31.png",
+      "svg": "svg/slides/31.png"
+    },
+    {
+      "slide_number": 32,
+      "pdf_page": 32,
+      "pdf_index": 31,
+      "layout": "grouped_annex_table",
+      "chartjs": "chartjs/slides/32.png",
+      "svg": "svg/slides/32.png"
+    },
+    {
+      "slide_number": 33,
+      "pdf_page": 33,
+      "pdf_index": 32,
+      "layout": "annex_table",
+      "chartjs": "chartjs/slides/33.png",
+      "svg": "svg/slides/33.png"
+    },
+    {
+      "slide_number": 34,
+      "pdf_page": 34,
+      "pdf_index": 33,
+      "layout": "annex_table",
+      "chartjs": "chartjs/slides/34.png",
+      "svg": "svg/slides/34.png"
+    },
+    {
+      "slide_number": 35,
+      "pdf_page": 35,
+      "pdf_index": 34,
+      "layout": "annex_table",
+      "chartjs": "chartjs/slides/35.png",
+      "svg": "svg/slides/35.png"
+    },
+    {
+      "slide_number": 36,
+      "pdf_page": 36,
+      "pdf_index": 35,
+      "layout": "annex_table",
+      "chartjs": "chartjs/slides/36.png",
+      "svg": "svg/slides/36.png"
+    },
+    {
+      "slide_number": 37,
+      "pdf_page": 37,
+      "pdf_index": 36,
+      "layout": "annex_table",
+      "chartjs": "chartjs/slides/37.png",
+      "svg": "svg/slides/37.png"
+    },
+    {
+      "slide_number": 38,
+      "pdf_page": 38,
+      "pdf_index": 37,
+      "layout": "legal_notice",
+      "chartjs": "chartjs/slides/38.png",
+      "svg": "svg/slides/38.png"
+    },
+    {
+      "slide_number": 39,
+      "pdf_page": 39,
+      "pdf_index": 38,
+      "layout": "legal_notice",
+      "chartjs": "chartjs/slides/39.png",
+      "svg": "svg/slides/39.png"
+    },
+    {
+      "slide_number": 40,
+      "pdf_page": 40,
+      "pdf_index": 39,
+      "layout": "legal_notice",
+      "chartjs": "chartjs/slides/40.png",
+      "svg": "svg/slides/40.png"
+    },
+    {
+      "slide_number": 41,
+      "pdf_page": 41,
+      "pdf_index": 40,
+      "layout": "legal_notice",
+      "chartjs": "chartjs/slides/41.png",
+      "svg": "svg/slides/41.png"
+    },
+    {
+      "slide_number": 42,
+      "pdf_page": 42,
+      "pdf_index": 41,
+      "layout": "legal_notice",
+      "chartjs": "chartjs/slides/42.png",
+      "svg": "svg/slides/42.png"
+    },
+    {
+      "slide_number": 43,
+      "pdf_page": 43,
+      "pdf_index": 42,
+      "layout": "legal_notice",
+      "chartjs": "chartjs/slides/43.png",
+      "svg": "svg/slides/43.png"
+    },
+    {
+      "slide_number": 44,
+      "pdf_page": 44,
+      "pdf_index": 43,
+      "layout": "closing_cover",
+      "chartjs": "chartjs/slides/44.png",
+      "svg": "svg/slides/44.png"
+    }
+  ]
+}

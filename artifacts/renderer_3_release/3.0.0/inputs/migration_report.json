@@ -1,0 +1,704 @@
+{
+  "source": "tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json",
+  "note": "Canonical Amex input is already schema v1 (D314). D119 migrator is not applied; zero unresolved decisions remain.",
+  "inventory": [
+    {
+      "legacy_input": "annex_table",
+      "classification": "deterministic",
+      "target": "annex_table",
+      "candidates": [],
+      "proof": "One complete dense typed matrix and disclosure boundaries.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "before_after",
+      "classification": "deterministic",
+      "target": "state_transition",
+      "candidates": [],
+      "proof": "Explicit before/after boundaries.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "before_after_detailed",
+      "classification": "deterministic",
+      "target": "state_transition",
+      "candidates": [],
+      "proof": "Explicit before/after boundaries; optional steps.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "brand_cover",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "opening_cover",
+        "closing_cover"
+      ],
+      "proof": "One recipe served both deck boundaries.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "brand_divider",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "section_divider",
+        "closing_cover"
+      ],
+      "proof": "Current Amex uses both meanings.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "causal_loop",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "feedback_loop"
+      ],
+      "proof": "Legacy arrows do not prove causal edge polarity.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "chart_hero_dual",
+      "classification": "deterministic",
+      "target": "chart_hero_dual",
+      "candidates": [],
+      "proof": "Exactly one chart, recognized hero, at most one typed support.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "circular_process",
+      "classification": "deterministic",
+      "target": "feedback_loop",
+      "candidates": [],
+      "proof": "One explicit ordered cycle.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "combo_chart",
+      "classification": "deterministic",
+      "target": "single_chart/combo",
+      "candidates": [],
+      "proof": "Explicit combo marks/axes/categories/values/formats/identities.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "comparison_grid",
+      "classification": "deterministic",
+      "target": "comparison_cards",
+      "candidates": [],
+      "proof": "One complete 2–4 peer by 2–4 shared-fact table.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "comparison_with_metrics",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "comparison_cards",
+        "metric_overview"
+      ],
+      "proof": "Detached metric ownership is ambiguous.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "cover",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "opening_cover",
+        "closing_cover",
+        "other"
+      ],
+      "proof": "Alias of ambiguous title_or_opening.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "data_flow_diagram",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "data_pipeline",
+        "process_flow",
+        "layered_architecture",
+        "future"
+      ],
+      "proof": "Generic graph does not prove relationship semantics.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "data_table",
+      "classification": "deterministic",
+      "target": "data_table",
+      "candidates": [],
+      "proof": "One complete typed ordinary table.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "data_table_with_insight",
+      "classification": "deterministic",
+      "target": "data_table",
+      "candidates": [],
+      "proof": "Complete table and one unambiguous slide-level insight.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "decision_tree",
+      "classification": "deterministic",
+      "target": "decision_tree",
+      "candidates": [],
+      "proof": "Explicit root, decisions, labeled branches, targets, outcomes.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "default",
+      "classification": "removed_sentinel",
+      "target": null,
+      "candidates": [],
+      "proof": "No target; prove a D210 composition or leave unresolved.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "dual_chart",
+      "classification": "deterministic",
+      "target": "dual_chart",
+      "candidates": [],
+      "proof": "Exactly two ordered charts with no hero/support semantics.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "ecosystem_map",
+      "classification": "deterministic",
+      "target": "stakeholder_map",
+      "candidates": [],
+      "proof": "One focal entity and only explicitly labeled/directed focal spokes.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "evidence_cards",
+      "classification": "deterministic",
+      "target": "evidence_review",
+      "candidates": [],
+      "proof": "Exact findings and explicit evidence mappings.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "freeform_grid",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "any_d210_composition"
+      ],
+      "proof": "Coordinates are presentation, not semantics.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "full_process_flow",
+      "classification": "deterministic",
+      "target": "process_flow",
+      "candidates": [],
+      "proof": "Genuinely linear ordered steps.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "grouped_annex_table",
+      "classification": "deterministic",
+      "target": "grouped_annex_table",
+      "candidates": [],
+      "proof": "One or two explicitly headed complete annex matrices.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "grouped_bar_chart",
+      "classification": "deterministic",
+      "target": "single_chart/grouped_bar",
+      "candidates": [],
+      "proof": "Explicit vertical non-stacked data, format, and identity.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "guidance_statement_card",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "metric_overview"
+      ],
+      "proof": "Ranges, periods, status, and qualification ownership need confirmation.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "heatmap",
+      "classification": "deterministic",
+      "target": "single_chart/heatmap",
+      "candidates": [],
+      "proof": "Rectangular identities, numeric/missing cells, one format, explicit scale.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "hierarchy_tree",
+      "classification": "deterministic",
+      "target": "hierarchy",
+      "candidates": [],
+      "proof": "Explicit root, uniform relation, links, and sibling order.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "horizontal_bar_chart",
+      "classification": "deterministic",
+      "target": "single_chart/horizontal_bar",
+      "candidates": [],
+      "proof": "Explicit grouped horizontal semantics.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "horizontal_process",
+      "classification": "deterministic",
+      "target": "process_flow",
+      "candidates": [],
+      "proof": "Genuinely linear ordered steps.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "icon_grid",
+      "classification": "deterministic",
+      "target": "feature_cards",
+      "candidates": [],
+      "proof": "Equal-rank cards and decorative icons from the closed registry.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "insight_with_evidence",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "evidence_review",
+        "recommendation_case",
+        "narrative",
+        "other"
+      ],
+      "proof": "Insight and evidence ownership are ambiguous.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "ir_bullet_sheet",
+      "classification": "deterministic",
+      "target": "narrative",
+      "candidates": [],
+      "proof": "Text-only with explicit paragraph/list boundaries.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "kpi_trend_cards",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "metric_overview",
+        "comparison_cards",
+        "single_chart"
+      ],
+      "proof": "Cards may encode metrics, peers, trends, or duplicates.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "line_chart",
+      "classification": "deterministic",
+      "target": "single_chart/line",
+      "candidates": [],
+      "proof": "Explicit categories, series, values, axes, formats, and identities.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "metric",
+      "classification": "deterministic",
+      "target": "metric_overview",
+      "candidates": [],
+      "proof": "One canonical 2–6 metric source without unresolved duplicates.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "metric_dashboard",
+      "classification": "deterministic",
+      "target": "metric_overview",
+      "candidates": [],
+      "proof": "One canonical 2–6 metric source without unresolved duplicates.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "metric_row_with_breakdown",
+      "classification": "deterministic",
+      "target": "metric_overview",
+      "candidates": [],
+      "proof": "Explicit metric and narrative-detail boundaries.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "multi_panel",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "dual_chart",
+        "chart_hero_dual",
+        "named_composition",
+        "future"
+      ],
+      "proof": "Only exact recognized semantic shapes can convert.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "other",
+      "classification": "removed_sentinel",
+      "target": null,
+      "candidates": [],
+      "proof": "No target; prove a D210 composition or leave unresolved.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "pill_comparison",
+      "classification": "deterministic",
+      "target": "period_comparison",
+      "candidates": [],
+      "proof": "Explicit current/comparison/variance roles.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "priority_matrix",
+      "classification": "deterministic",
+      "target": "quadrant_matrix",
+      "candidates": [],
+      "proof": "Explicit binary axes/endpoints and item assignments.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "process_with_decisions",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "decision_tree",
+        "process_flow",
+        "future"
+      ],
+      "proof": "Branch targets and node roles are not explicit.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "quote_card",
+      "classification": "deterministic",
+      "target": "quotation",
+      "candidates": [],
+      "proof": "Explicit quote paragraphs and attribution fields.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "recommendation_with_rationale",
+      "classification": "deterministic",
+      "target": "recommendation_case",
+      "candidates": [],
+      "proof": "One exact recommendation and explicit rationales.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "risk_opportunity",
+      "classification": "deterministic",
+      "target": "risk_opportunity_review",
+      "candidates": [],
+      "proof": "Explicit risk/opportunity membership.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "roadmap",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "timeline",
+        "process_flow",
+        "future"
+      ],
+      "proof": "Chronology versus procedure/phases is ambiguous.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "section_divider",
+      "classification": "deterministic",
+      "target": "section_divider",
+      "candidates": [],
+      "proof": "Registered section and correct immediate placement.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "source_deep_dive",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "evidence_review",
+        "quotation",
+        "narrative",
+        "other"
+      ],
+      "proof": "Finding, quotation, and provenance ownership are unclear.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "split_text_visual",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "narrative",
+        "state_transition",
+        "comparison_cards",
+        "other"
+      ],
+      "proof": "Split geometry does not identify semantic roles.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "stacked_bar_chart",
+      "classification": "deterministic",
+      "target": "single_chart/stacked_bar",
+      "candidates": [],
+      "proof": "Explicit stack order/data/format/display.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "system_architecture",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "layered_architecture",
+        "hierarchy",
+        "data_pipeline",
+        "stakeholder_map",
+        "future"
+      ],
+      "proof": "Nodes and links do not prove grouping, parentage, flow, or spokes.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "table",
+      "classification": "deterministic",
+      "target": "data_table",
+      "candidates": [],
+      "proof": "One complete typed ordinary table.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "three_column_comparison",
+      "classification": "deterministic",
+      "target": "comparison_cards",
+      "candidates": [],
+      "proof": "One complete 2–4 peer by 2–4 shared-fact table.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "timeline",
+      "classification": "deterministic",
+      "target": "timeline",
+      "candidates": [],
+      "proof": "Explicit milestones/time labels in authored order.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "title_or_opening",
+      "classification": "human",
+      "target": null,
+      "candidates": [
+        "opening_cover",
+        "closing_cover",
+        "section_divider",
+        "ordinary"
+      ],
+      "proof": "Legacy name conflates title and deck role.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "waterfall_chart",
+      "classification": "deterministic",
+      "target": "single_chart/waterfall",
+      "candidates": [],
+      "proof": "Explicit ordered step roles, values, format, and resets.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    },
+    {
+      "legacy_input": "",
+      "classification": "removed_sentinel",
+      "target": null,
+      "candidates": [],
+      "proof": "No target; prove a D210 composition or leave unresolved.",
+      "proof_result": "n/a",
+      "present_in_source": false,
+      "decision_status": "not_present",
+      "source_paths": []
+    }
+  ],
+  "slide_dispositions": [],
+  "unresolved_decisions": [],
+  "version_marked": true,
+  "validation_errors": []
+}

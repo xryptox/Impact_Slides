@@ -10,6 +10,7 @@ Source: renderer-v3 wave `ab6a85b4` (2026-08-11; #184/#186/#189/#193/#194/#196 â
 2. **When the same fix "fails to land" repeatedly, suspect the measurement channel before the fixer.** Three identical failures were a corrupted read, not a broken write.
 3. **Discriminating probes beat suite-green as evidence.** Build a minimal mutation that flips behavior between fixed and unfixed code (e.g. content that exceeds the stage budget only when the defect is present). It proves the fix works *and* produces no false positives. Keep the probe content calibrated: overshooting windows trigger unrelated overflows and destroy discrimination.
 4. **Playwright full-deck audit tests flake under full-suite concurrency.** Before calling a regression, rerun the failing test standalone on both the PR head and main.
+4b. **Stacked 1920Ã—1080 slides screenshot as one cover if you only toggle `.active`.** v3 CSS has no `.active` hide rule and a fit script scales every section. Isolate one `section.slide` (`display:none` on siblings, reset stage transform) and screenshot that node; then hash-count unique PNGs. 88 identical files passed suite-green until that check.
 
 ## Pipeline mechanics (no-mistakes + herdr)
 

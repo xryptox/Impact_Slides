@@ -59,8 +59,8 @@ def _clean_obj(o):
 
 # D314 evidence: amex-q1-2026-p01..p44
 SOURCE_NAME = "American Express Q1 2026 Earnings Presentation"
-# Opaque placeholder hash — real PDF hash lands with release evidence (#198).
-PDF_HASH = "0" * 64
+# Opaque PDF hash pinned by release evidence (#198 / D315).
+PDF_HASH = "a87c11625c84e0dabb02d523f6a2d2508b892f18ee242ef197a9b40157bd3faf"
 
 
 def ev_id(n: int) -> str:
