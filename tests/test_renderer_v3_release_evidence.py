@@ -24,6 +24,8 @@ from renderer_3_release import (  # noqa: E402
     RELEASE_DIR,
     REQUIRED_GATES,
     UNLISTED,
+    _copy_d250,
+    _lf_bytes,
     verify_release,
 )
 
@@ -248,3 +250,16 @@ def test_handoff_locators_pin_release_pdf() -> None:
     assert locators == {digest}
     pinned = json.loads((RELEASE_DIR / "inputs" / "canonical_amex_handoff_v1.json").read_text(encoding="utf-8"))
     assert pinned == handoff
+
+
+def test_handoff_and_d250_copies_normalize_crlf(tmp_path: Path) -> None:
+    crlf = b'{"ok": true}\r\n'
+    src = tmp_path / "src"
+    dest = tmp_path / "dest"
+    src.mkdir()
+    for name in D250:
+        (src / name).write_bytes(crlf)
+    assert _lf_bytes(src / D250[0]) == b'{"ok": true}\n'
+    _copy_d250(src, dest)
+    for name in D250:
+        assert (dest / name).read_bytes() == b'{"ok": true}\n'

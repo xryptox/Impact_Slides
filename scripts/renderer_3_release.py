@@ -146,14 +146,18 @@ class VerifyResult:
     errors: list[str] = field(default_factory=list)
 
 
+def _lf_bytes(path: Path) -> bytes:
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def _schema_bytes() -> bytes:
-    return SCHEMA_SRC.read_bytes().replace(b"\r\n", b"\n")
+    return _lf_bytes(SCHEMA_SRC)
 
 
 def _copy_d250(src: Path, dest: Path) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     for name in D250:
-        shutil.copy2(src / name, dest / name)
+        (dest / name).write_bytes(_lf_bytes(src / name))
 
 
 def _write_migration_report(path: Path) -> None:
@@ -733,7 +737,7 @@ def build_release(pdf: Path) -> Path:
         (RELEASE_DIR / mode / "slides").mkdir()
 
     shutil.copy2(pdf, RELEASE_DIR / "inputs" / "Q1-2026-Earnings-Presentation.pdf")
-    shutil.copy2(HANDOFF_SRC, RELEASE_DIR / "inputs" / "canonical_amex_handoff_v1.json")
+    (RELEASE_DIR / "inputs" / "canonical_amex_handoff_v1.json").write_bytes(_lf_bytes(HANDOFF_SRC))
     (RELEASE_DIR / "inputs" / "handoff_schema_v1.json").write_bytes(_schema_bytes())
     _write_migration_report(RELEASE_DIR / "inputs" / "migration_report.json")
     write_json(
