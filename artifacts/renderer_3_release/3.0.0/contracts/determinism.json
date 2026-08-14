@@ -1,19 +1,19 @@
 {
-  "reruns": 2,
-  "chartjs_identical": true,
-  "svg_identical": true,
   "chartjs": {
-    "presentation.html": "fe2c4b0a2ff9134e02373cc0b6005970c3e87b38608961679d6a9caec691744d",
-    "slide_notes.md": "78823a5fba725aa5deb5961399a066b9a6935af1cf724bc851f2a8b079b4ae8e",
     "evidence_manifest.json": "6b8c217a8b2384a4d09c7b24d2b52b3d5472d3761867ef8d0b3cc0af0244e3c5",
-    "run_meta.json": "cc48c5935401a9f6d5abf355d334d17ee480bfc49fac815d32c02afec00207a7",
-    "handoff_schema_v1.json": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414"
+    "handoff_schema_v1.json": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
+    "presentation.html": "674ba7da74fa4c1265b35b79fedc3ec5e9abf9d4aeca54ec96b923f411cd94c5",
+    "run_meta.json": "af99c0220517501efab77f1e94eb8c651074acbdd8b92d578e26aaaf320c567d",
+    "slide_notes.md": "78823a5fba725aa5deb5961399a066b9a6935af1cf724bc851f2a8b079b4ae8e"
   },
+  "chartjs_identical": true,
+  "reruns": 2,
   "svg": {
-    "presentation.html": "4909f4b4b23b169970199914b73a73edb31b0d0dc4adf0929d36914f430ba419",
-    "slide_notes.md": "78823a5fba725aa5deb5961399a066b9a6935af1cf724bc851f2a8b079b4ae8e",
     "evidence_manifest.json": "6b8c217a8b2384a4d09c7b24d2b52b3d5472d3761867ef8d0b3cc0af0244e3c5",
-    "run_meta.json": "0a080642f6fbbad26a71c1f7f6b614650eeb45d7893cc4c585f4d4ac0bc4c741",
-    "handoff_schema_v1.json": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414"
-  }
+    "handoff_schema_v1.json": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
+    "presentation.html": "ebc4bbd75900aa6c0696964eb098329a328181b735087190641805bae70e7486",
+    "run_meta.json": "4a96ce45cee9dfff6ad0db78f0ad45340c3356b3765d0a426940fe3464e243a3",
+    "slide_notes.md": "78823a5fba725aa5deb5961399a066b9a6935af1cf724bc851f2a8b079b4ae8e"
+  },
+  "svg_identical": true
 }

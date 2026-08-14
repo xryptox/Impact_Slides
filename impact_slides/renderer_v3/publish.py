@@ -205,6 +205,11 @@ def build_presentation_html(
             ".comparison-card .fact{margin:0 0 8px}",
             ".comparison-card .fact-label{margin:0 0 2px}",
             ".comparison-card .fact-value{margin:0;font-variant-numeric:tabular-nums lining-nums}",
+            ".comparison-cards.circular-dual-metric .dual-metric-row{display:flex;align-items:flex-start;justify-content:center;gap:8px}",
+            ".comparison-cards.circular-dual-metric .metric-node{display:flex;flex-direction:column;align-items:center;min-width:0}",
+            ".comparison-cards.circular-dual-metric .metric-circle{border-radius:50%;border:var(--border-width-hairline) solid var(--color-panel-border);background:var(--color-surface);display:flex;align-items:center;justify-content:center;box-sizing:border-box;font-variant-numeric:tabular-nums lining-nums;color:var(--color-navy);text-align:center}",
+            ".comparison-cards.circular-dual-metric .metric-caption{margin:8px 0 0;text-align:center}",
+            ".comparison-cards.circular-dual-metric .dual-metric-connector{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--color-ink);font-variant-numeric:tabular-nums lining-nums}",
             # Linear + grouping compositions (D192/D193/D196/D197/D272-D277).
             ".process-flow,.timeline,.data-pipeline{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
             ".process-flow.horizontal,.timeline.horizontal,.data-pipeline.horizontal{flex-direction:row}",
@@ -1484,9 +1489,12 @@ def _paint_comparison_cards(
     heading_px = sp.role_sizes.get("heading")
     label_px = sp.role_sizes.get("label")
     value_px = sp.role_sizes.get("value")
+    caption_px = sp.role_sizes.get("caption", label_px)
     overflow_cls = " table-overflow" if sp._overflow else ""
+    circular = paint.get("recipe") == "circular_dual_metric"
+    recipe_cls = " circular-dual-metric" if circular else ""
     out = [
-        f'<div class="comparison-cards cols-{int(cols)}{overflow_cls}" '
+        f'<div class="comparison-cards cols-{int(cols)}{recipe_cls}{overflow_cls}" '
         f'aria-hidden="true" {_plan_attrs(sp, events_by_surface)} '
         f'data-table-surface="{_escape(table.surface_id)}">'
     ]
@@ -1494,6 +1502,9 @@ def _paint_comparison_cards(
     # accessibility source and the print source.
     col_ids = list(paint["col_ids"])
     fact_labels = list(paint["header_full"][1:])
+    roles = (paint.get("card_role_sizes") or {})
+    circle_d = int(roles.get("circle_d") or 96)
+    connector_w = int(roles.get("connector_w") or 48)
     for r_i, row in enumerate(table.rows):
         out.append(
             f'<article class="comparison-card" data-row-id="{_escape(row.row_id)}">'
@@ -1504,24 +1515,58 @@ def _paint_comparison_cards(
             f'<h2 title="{_escape(full_h)}"{_style_font(heading_px)}>'
             f"{_soft_break_html(heading)}</h2>"
         )
-        for c_i, cid in enumerate(col_ids):
-            visible = paint["cells_vis"][r_i][c_i]
-            accessible = paint["cells_acc"][r_i][c_i]
-            out.append(f'<div class="fact" data-column-id="{_escape(cid)}">')
-            out.append(
-                f'<p class="fact-label"{_style_font(label_px)}>'
-                f"{_soft_break_html(fact_labels[c_i])}</p>"
+        if circular:
+            left_v, right_v, mult_v = paint["cells_vis"][r_i]
+            left_a, right_a, _mult_a = paint["cells_acc"][r_i]
+            left_aria = (
+                f' aria-label="{_escape(left_a)}"'
+                if left_a != left_v else ""
             )
-            aria = (
-                f' aria-label="{_escape(accessible)}"'
-                if accessible != visible
-                else ""
+            right_aria = (
+                f' aria-label="{_escape(right_a)}"'
+                if right_a != right_v else ""
+            )
+            out.append('<div class="dual-metric-row">')
+            out.append(
+                f'<div class="metric-node" data-column-id="{_escape(col_ids[0])}">'
+                f'<div class="metric-circle" style="width:{circle_d}px;height:{circle_d}px;'
+                f'font-size:{int(value_px or 22)}px"{left_aria}>{_escape(left_v)}</div>'
+                f'<p class="metric-caption"{_style_font(caption_px)}>'
+                f"{_soft_break_html(fact_labels[0])}</p></div>"
             )
             out.append(
-                f'<p class="fact-value"{_style_font(value_px)}{aria}>'
-                f"{_escape(visible)}</p>"
+                f'<div class="dual-metric-connector" style="width:{connector_w}px;'
+                f'min-height:{circle_d}px;font-size:{int(value_px or 22)}px">'
+                f'<span class="connector-arrow">→</span>'
+                f'<span class="connector-mult">{_escape(mult_v)}</span></div>'
+            )
+            out.append(
+                f'<div class="metric-node" data-column-id="{_escape(col_ids[1])}">'
+                f'<div class="metric-circle" style="width:{circle_d}px;height:{circle_d}px;'
+                f'font-size:{int(value_px or 22)}px"{right_aria}>{_escape(right_v)}</div>'
+                f'<p class="metric-caption"{_style_font(caption_px)}>'
+                f"{_soft_break_html(fact_labels[1])}</p></div>"
             )
             out.append("</div>")
+        else:
+            for c_i, cid in enumerate(col_ids):
+                visible = paint["cells_vis"][r_i][c_i]
+                accessible = paint["cells_acc"][r_i][c_i]
+                out.append(f'<div class="fact" data-column-id="{_escape(cid)}">')
+                out.append(
+                    f'<p class="fact-label"{_style_font(label_px)}>'
+                    f"{_soft_break_html(fact_labels[c_i])}</p>"
+                )
+                aria = (
+                    f' aria-label="{_escape(accessible)}"'
+                    if accessible != visible
+                    else ""
+                )
+                out.append(
+                    f'<p class="fact-value"{_style_font(value_px)}{aria}>'
+                    f"{_escape(visible)}</p>"
+                )
+                out.append("</div>")
         out.append("</article>")
     out.append("</div>")
     # Complete D255 table is the a11y/print source (D261); cards are visual.

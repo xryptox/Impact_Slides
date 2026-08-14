@@ -118,6 +118,9 @@ COMPARISON_CARD_PAD: Final = 16
 COMPARISON_CARD_HEADING_FLOOR: Final = 22
 COMPARISON_CARD_LABEL_FLOOR: Final = 14
 COMPARISON_CARD_VALUE_FLOOR: Final = 22
+COMPARISON_CIRCLE_MIN_D: Final = 48
+COMPARISON_CIRCLE_MAX_D: Final = 120
+_CIRCULAR_MULT_RE = re.compile(r"^\d+(?:\.\d+)?x$", re.IGNORECASE)
 # D60 fixed first-delivery type for geometry-specialized linear/grouping comps.
 LINEAR_HEADING_PX: Final = 22
 LINEAR_DETAIL_PX: Final = 16
@@ -2666,6 +2669,22 @@ def _collect_grouped_annex_body(
     return len(plans), plans
 
 
+def _circular_dual_metric_recipe(spec: dict[str, Any]) -> bool:
+    """Renderer-owned path: 2 numeric facts + one Nx multiplier per peer."""
+    if spec.get("n_cols") != 3 or not spec.get("n_rows"):
+        return False
+    roles = spec.get("cells_role") or []
+    vis = spec.get("cells_vis") or []
+    if len(roles) != spec["n_rows"] or len(vis) != spec["n_rows"]:
+        return False
+    for role_row, vis_row in zip(roles, vis):
+        if role_row[:2] != ["number", "number"] or role_row[2] != "text":
+            return False
+        if not _CIRCULAR_MULT_RE.match((vis_row[2] or "").strip()):
+            return False
+    return True
+
+
 def _collect_comparison_cards_body(
     slide: Any,
     deck: Deck,
@@ -2679,6 +2698,12 @@ def _collect_comparison_cards_body(
     n_peers = len(table.rows)
     cols = 2 if n_peers == 4 else n_peers
     card_w = (CONTENT_W - COMPARISON_CARD_GAP * (cols - 1)) // cols
+    extra_spec = {
+        "variant": "comparison_cards",
+        "peer_count": n_peers,
+        "grid_cols": cols,
+        "card_w": card_w,
+    }
     sp = _table_surface_plan(
         table=table,
         deck=deck,
@@ -2689,13 +2714,11 @@ def _collect_comparison_cards_body(
         slot_order=10,
         box_w=card_w - 2 * COMPARISON_CARD_PAD,
         role="comparison_cards",
-        extra_spec={
-            "variant": "comparison_cards",
-            "peer_count": n_peers,
-            "grid_cols": cols,
-            "card_w": card_w,
-        },
+        extra_spec=extra_spec,
     )
+    if _circular_dual_metric_recipe(sp._table_spec or {}):
+        extra_spec["recipe"] = "circular_dual_metric"
+        sp._table_spec["recipe"] = "circular_dual_metric"
     # Multi-role fit: heading / label / value share grow decisions via table size
     # for the a11y table fallback path; card paint uses role_sizes below.
     sp.role_sizes = {
@@ -2704,6 +2727,8 @@ def _collect_comparison_cards_body(
         "label": COMPARISON_CARD_LABEL_FLOOR,
         "value": COMPARISON_CARD_VALUE_FLOOR,
     }
+    if extra_spec.get("recipe") == "circular_dual_metric":
+        sp.role_sizes["caption"] = COMPARISON_CARD_LABEL_FLOOR
     sp._default_size = TABLE_FLOOR
     sp._maximum_size = TABLE_CEIL
     return 1, [sp]
@@ -4887,6 +4912,12 @@ def _comparison_cards_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool
     n_peers = spec["peer_count"]
     cols = spec["grid_cols"]
     rows_of_cards = 2 if n_peers == 4 else 1
+    circular = spec.get("recipe") == "circular_dual_metric"
+    connector_w = 48
+    circle_d = 0
+    if circular:
+        remain = card_w - connector_w - 8
+        circle_d = max(COMPARISON_CIRCLE_MIN_D, min(COMPARISON_CIRCLE_MAX_D, remain // 2))
     # Measure one card height from tallest peer.
     max_card_h = 0
     wrapped = False
@@ -4897,16 +4928,38 @@ def _comparison_cards_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool
         if len(h_lines) > 1:
             wrapped = True
         h = len(h_lines) * _line_box(heading_px) + COMPARISON_CARD_PAD
-        for c_i, col_lab in enumerate(spec["header_full"][1:]):
-            l_lines = _wrap_label_lines(col_lab, label_px, card_w)
-            if len(l_lines) > 2:
-                return False, True
-            if len(l_lines) > 1:
-                wrapped = True
-            val = spec["cells_vis"][r_i][c_i]
-            if _text_width(val, value_px) > card_w:
+        if circular:
+            cap_w = circle_d
+            for c_i in (0, 1):
+                cap_lines = _wrap_label_lines(
+                    spec["header_full"][c_i + 1], label_px, cap_w
+                )
+                if len(cap_lines) > 2:
+                    return False, True
+                if len(cap_lines) > 1:
+                    wrapped = True
+                val = spec["cells_vis"][r_i][c_i]
+                if _text_width(val, value_px) > circle_d - 8:
+                    return False, wrapped
+            mult = spec["cells_vis"][r_i][2]
+            if _text_width(mult, value_px) > connector_w:
                 return False, wrapped
-            h += len(l_lines) * _line_box(label_px) + _line_box(value_px) + 8
+            cap_h = max(
+                len(_wrap_label_lines(spec["header_full"][1], label_px, cap_w)),
+                len(_wrap_label_lines(spec["header_full"][2], label_px, cap_w)),
+            ) * _line_box(label_px)
+            h += circle_d + 8 + cap_h
+        else:
+            for c_i, col_lab in enumerate(spec["header_full"][1:]):
+                l_lines = _wrap_label_lines(col_lab, label_px, card_w)
+                if len(l_lines) > 2:
+                    return False, True
+                if len(l_lines) > 1:
+                    wrapped = True
+                val = spec["cells_vis"][r_i][c_i]
+                if _text_width(val, value_px) > card_w:
+                    return False, wrapped
+                h += len(l_lines) * _line_box(label_px) + _line_box(value_px) + 8
         max_card_h = max(max_card_h, h + COMPARISON_CARD_PAD)
     total_h = rows_of_cards * max_card_h + (rows_of_cards - 1) * COMPARISON_CARD_GAP
     fits = total_h <= sp._box_h if sp._box_h > 0 else True
@@ -4918,6 +4971,10 @@ def _comparison_cards_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool
             "value": value_px,
             "card_h": max_card_h,
         }
+        if circular:
+            spec["card_role_sizes"]["caption"] = label_px
+            spec["card_role_sizes"]["circle_d"] = circle_d
+            spec["card_role_sizes"]["connector_w"] = connector_w
     return fits, wrapped
 
 
@@ -4958,6 +5015,8 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
             sp.role_sizes["heading"] = roles["heading"]
             sp.role_sizes["label"] = roles["label"]
             sp.role_sizes["value"] = roles["value"]
+            if "caption" in roles:
+                sp.role_sizes["caption"] = roles["caption"]
         sp.role_sizes["table"] = size
     elif sp.role == "feature_cards":
         sp.role_sizes["detail"] = size
