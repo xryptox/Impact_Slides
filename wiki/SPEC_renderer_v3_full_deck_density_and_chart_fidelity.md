@@ -2452,8 +2452,9 @@ migrate only with explicit direction and comparison basis; isolated arrows or
 Schema v1 removes `comparison_grid`, `comparison_with_metrics`, and
 `three_column_comparison` as separate layouts. D187 `comparison_cards` owns every
 peer fact—including metrics—through shared D141 fact columns; D172 may summarize
-the comparison. Detached metric strips, circle/ratio graphics, duplicate bullets,
-and secondary fact sources are invalid. Metrics that cannot map consistently to
+the comparison. Detached metric strips, authored circle/ratio graphics, duplicate bullets,
+and secondary fact sources are invalid. A renderer-owned circular dual-metric
+visual may be derived from two numeric facts plus one `Nx` multiplier (D261). Metrics that cannot map consistently to
 every peer use D189 when primary or another semantic composition/slide when
 independent. The renderer never aligns orphan facts by position, label
 similarity, or count. Migration requires one canonical complete peer-row/shared-
@@ -3381,8 +3382,12 @@ print/no-JS preserve all facts without duplicate announcements. Strict rejects
 counts, incomplete schemas, malformed values or role-floor fit failure.
 Non-strict renders the full ordinary accessible table, never dropping cards or
 facts. Authored grid/geometry/icons/style/ranking/sorting/badges/HTML/CSS or
-detached metrics are invalid. Migration requires one canonical complete
-peer-by-fact source; duplicate sources require human selection.
+detached metrics are invalid. The renderer may derive a circular dual-metric
+visual (two circles, connector arrow, category captions) when every peer is
+exactly two numeric facts plus one `Nx` multiplier text; other boards stay
+text facts. The D255 table remains the accessibility/print source. Migration
+requires one canonical complete peer-by-fact source; duplicate sources require
+human selection.
 
 ### D262 — `metric_overview` has one metric group and optional narrative detail
 

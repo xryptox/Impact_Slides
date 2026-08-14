@@ -132,6 +132,11 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
     assert html.count('data-slide-number="') == 44
     assert "Capital Summary" in html
     assert "6 percentage" in html
+    s7 = html[html.index('data-slide-number="7"') : html.index('data-slide-number="8"')]
+    assert "circular-dual-metric" in s7
+    assert s7.count("metric-circle") == 6
+    for token in ("50%", "5%", "10x", "20%", "10%", "2x", "21%", "11%"):
+        assert token in s7
 
     # SVG-only via public CLI flag path used by publication options.
     from impact_slides.renderer_v3.cli import main as cli_main

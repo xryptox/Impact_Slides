@@ -116,6 +116,166 @@ def test_comparison_cards_paint_all_facts(tmp_path: Path):
     assert "Watch" in html
     # Missing growth remains visible missing marker.
     assert html.count("—") + html.count("\u2014") >= 1
+    # Ordinary 3-fact boards stay text; the circular recipe is shape-gated.
+    cards_start = html.index('class="comparison-cards cols-3')
+    cards_tag = html[cards_start : html.index(">", cards_start)]
+    assert "circular-dual-metric" not in cards_tag
+    body = html[cards_start : html.index("</div>", cards_start)]
+    assert "metric-circle" not in body
+
+
+def _dual_metric_handoff() -> dict:
+    return {
+        "meta": {"handoff_schema_version": 1},
+        "sections": [{"section_id": "earnings", "label": "Earnings"}],
+        "number_formats": {
+            "pct_0": {
+                "unit": "percent",
+                "value_decimals": 0,
+                "negative_style": "parentheses",
+            }
+        },
+        "evidence_registry": {
+            "src-board-pack": {"source_name": "Board pack Q4"}
+        },
+        "slides": [
+            {
+                "slide_number": 1,
+                "layout_type": "opening_cover",
+                "payload": {"title": "Dual metric"},
+                "evidence_ids": ["src-board-pack"],
+            },
+            {
+                "slide_number": 2,
+                "layout_type": "comparison_cards",
+                "section_id": "earnings",
+                "title": "U.S. Consumer: Membership Model Engagement",
+                "payload": {
+                    "table": {
+                        "surface_id": "s7-cards",
+                        "stub_header": {"label": "Peer"},
+                        "columns": [
+                            {"column_id": "premium", "label": "Premium growth"},
+                            {"column_id": "ucs", "label": "UCS benchmark"},
+                            {"column_id": "mult", "label": "Multiplier"},
+                        ],
+                        "rows": [
+                            {
+                                "row_id": "lodging",
+                                "label": "Lodging",
+                                "cells": {
+                                    "premium": {
+                                        "type": "number",
+                                        "value": "50",
+                                        "format_id": "pct_0",
+                                    },
+                                    "ucs": {
+                                        "type": "number",
+                                        "value": "5",
+                                        "format_id": "pct_0",
+                                    },
+                                    "mult": {"type": "text", "text": "10x"},
+                                },
+                            },
+                            {
+                                "row_id": "restaurants",
+                                "label": "Restaurants",
+                                "cells": {
+                                    "premium": {
+                                        "type": "number",
+                                        "value": "20",
+                                        "format_id": "pct_0",
+                                    },
+                                    "ucs": {
+                                        "type": "number",
+                                        "value": "10",
+                                        "format_id": "pct_0",
+                                    },
+                                    "mult": {"type": "text", "text": "2x"},
+                                },
+                            },
+                            {
+                                "row_id": "airlines",
+                                "label": "Airlines",
+                                "cells": {
+                                    "premium": {
+                                        "type": "number",
+                                        "value": "21",
+                                        "format_id": "pct_0",
+                                    },
+                                    "ucs": {
+                                        "type": "number",
+                                        "value": "11",
+                                        "format_id": "pct_0",
+                                    },
+                                    "mult": {"type": "text", "text": "2x"},
+                                },
+                            },
+                        ],
+                    }
+                },
+                "evidence_ids": ["src-board-pack"],
+            },
+        ],
+    }
+
+
+def test_circular_dual_metric_plan_and_paint(tmp_path: Path):
+    raw = _dual_metric_handoff()
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    cards = next(s for s in plan.surfaces if s.role == "comparison_cards")
+    assert cards.table_paint["recipe"] == "circular_dual_metric"
+    assert cards.role_sizes["heading"] >= 22
+    assert cards.role_sizes["caption"] >= 14
+    assert cards.role_sizes["value"] >= 22
+    assert cards.role_sizes["circle_d"] >= 48
+    assert cards.role_sizes["connector_w"] == 48
+
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    cards_start = html.index('class="comparison-cards cols-3 circular-dual-metric')
+    cards_html = html[cards_start : html.index('class="sr-only"', cards_start)]
+    assert cards_html.count("metric-circle") == 6
+    assert cards_html.count("dual-metric-connector") == 3
+    for token in ("50%", "5%", "10x", "20%", "10%", "2x", "21%", "11%"):
+        assert token in html
+    assert "Premium growth" in html
+    assert "UCS benchmark" in html
+    assert "Lodging" in html and "Restaurants" in html and "Airlines" in html
+    assert 'aria-hidden="true"' in html
+    assert "sr-only-table" in html
+    css = html.encode("utf-8")
+    assert css.count(b".comparison-cards.circular-dual-metric .metric-circle{") == 1
+    assert css.count(b".comparison-cards.circular-dual-metric.metric-circle{") == 0
+
+
+def test_circular_dual_metric_mutation_keeps_text_board(tmp_path: Path):
+    raw = _dual_metric_handoff()
+    raw["slides"][1]["payload"]["table"]["rows"][0]["cells"]["mult"] = {
+        "type": "text",
+        "text": "Lead",
+    }
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    cards = next(s for s in plan.surfaces if s.role == "comparison_cards")
+    assert cards.table_paint.get("recipe") != "circular_dual_metric"
+
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    cards_start = html.index('class="comparison-cards cols-3')
+    cards_tag = html[cards_start : html.index(">", cards_start)]
+    assert "circular-dual-metric" not in cards_tag
+    body = html[cards_start : html.index('class="sr-only"', cards_start)]
+    assert "metric-circle" not in body
+    assert "Lead" in html
+    assert "10x" not in html
 
 
 def test_period_comparison_rejects_wrong_column_ids():

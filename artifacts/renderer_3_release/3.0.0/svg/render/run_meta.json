@@ -411,7 +411,7 @@
     }
   ],
   "severity_counts": {
-    "info": 67,
+    "info": 68,
     "warning": 0,
     "error": 0
   },
@@ -552,6 +552,23 @@
         "type": "int",
         "value": 26
       }
+    },
+    {
+      "code": "plan.text_wrapped",
+      "severity": "info",
+      "phase": "plan",
+      "role": "comparison_cards",
+      "path": "/slides/6/comparison_cards",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 7,
+      "layout_type": "comparison_cards",
+      "surface_id": "s7-cards"
     },
     {
       "code": "plan.typography_grown",
@@ -2709,9 +2726,12 @@
       "design_stage_region": 7,
       "available_geometry": {
         "width": 533,
-        "height": 273
+        "height": 249
       },
       "role_sizes": {
+        "caption": 18,
+        "circle_d": 120,
+        "connector_w": 48,
         "heading": 26,
         "label": 18,
         "table": 24,
@@ -2725,12 +2745,13 @@
       "synchronization_group": null,
       "adaptation_codes": [
         "plan.geometry_reallocated",
-        "plan.typography_grown"
+        "plan.typography_grown",
+        "plan.text_wrapped"
       ],
       "reservations": [
         {
           "kind": "text",
-          "height": 273
+          "height": 249
         },
         {
           "kind": "chrome",
@@ -2739,7 +2760,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "dae324ee30248262e2f6ef55e5ed39e69d51ba3ec108f417db0429c7c1f9c7cc"
+      "painter_plan_digest": "3cb3083517c3f88039397159da9f8e8a94e5a27a0bed5a7fe649645b3c0c42d4"
     },
     {
       "surface_id": "slide-7-disclosure-s7-disc",
@@ -7377,8 +7398,8 @@
   "artifacts": [
     {
       "name": "presentation.html",
-      "bytes": 430477,
-      "sha256": "4909f4b4b23b169970199914b73a73edb31b0d0dc4adf0929d36914f430ba419"
+      "bytes": 431993,
+      "sha256": "c26b5bec4c6d89c3a0992d89e96994a9f872dc21c824f879af99e1e4e9d36b66"
     },
     {
       "name": "slide_notes.md",
