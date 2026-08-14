@@ -550,6 +550,46 @@ def test_mutation_swap_series_order_changes_stack_bases():
     assert by[("retail", "q1")]["stack_base"] == 30.0
 
 
+def test_stacked_plan_freezes_value_label_floors():
+    deck = validate_handoff(_s(), strict=True).deck
+    sizes = plan_deck(deck, strict=True).by_surface_id()["dep-mix"].role_sizes
+    assert sizes["category_ticks"] >= 20
+    assert sizes["value_ticks"] >= 20
+    assert sizes["segment_labels"] >= 18
+    assert sizes["stack_totals"] >= 18
+    assert sizes["segment_labels"] <= 24
+    assert sizes["stack_totals"] <= 24
+
+
+def test_stacked_painters_emit_semibold_tick_and_value_weight(tmp_path: Path):
+    out = tmp_path / "out"
+    render_deck(STACKED, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    m = re.search(
+        r'<script type="application/json" id="cfg-dep-mix">(.*?)</script>',
+        html,
+        re.S,
+    )
+    assert m is not None
+    cfg = json.loads(m.group(1))
+    assert cfg["options"]["scales"]["x"]["ticks"]["font"]["weight"] == 600
+    assert cfg["options"]["scales"]["y"]["ticks"]["font"]["weight"] == 600
+    painted = cfg["v3"]["painted_values"]["font"]
+    assert painted["weight"] == 600
+
+    deck = validate_handoff(_s(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["dep-mix"].chart_paint
+    svg = paint_chart_svg(cp)
+    cat_px = cp["role_sizes"]["category_ticks"]
+    val_px = cp["role_sizes"]["value_ticks"]
+    seg_px = cp["role_sizes"]["segment_labels"]
+    tot_px = cp["role_sizes"]["stack_totals"]
+    assert f'font-size="{cat_px}" font-weight="600"' in svg
+    assert f'font-size="{val_px}" font-weight="600"' in svg
+    assert f'font-size="{seg_px}" font-weight="600"' in svg
+    assert f'font-size="{tot_px}" font-weight="600"' in svg
+
+
 def test_schema_export_check_passes():
     check_schema()
 

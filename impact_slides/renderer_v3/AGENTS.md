@@ -68,6 +68,7 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Schema artifact is generated: `python -m impact_slides.renderer_v3.schema_export` (write) or `--check` (CI)
 - Theme CSS artifact is generated from the Python manifest: `python -m impact_slides.renderer_v3.theme_export` (write) or `--check` (CI); painters resolve colors via `theme.resolve_color` / CSS `var(--color-*)` only (D129-D131)
 - Chart plot/body surfaces stay transparent and flat via generated `.chart-plot`/`.chart-body` rules (D5/D6)
+- Chart typography floors (DP-1): category/value ticks ≥20, ordinary/segment/stack-total values ≥18; ceilings unchanged. Frozen `role_sizes` never go below those floors. Chart.js tick + painted-value `font.weight` is 600; SVG tick/value `<text>` carries `font-weight="600"`
 
 ## Work Guidance
 

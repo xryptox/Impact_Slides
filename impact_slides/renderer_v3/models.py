@@ -1262,9 +1262,9 @@ class ChartTypography(ClosedModel):
 
     mode: Literal["adaptive", "fixed"] = "adaptive"
     sync_group: Optional[SemanticId] = None
-    category_ticks: Optional[int] = Field(default=None, ge=14, le=24)
-    value_ticks: Optional[int] = Field(default=None, ge=14, le=28)
-    ordinary_values: Optional[int] = Field(default=None, ge=14, le=32)
+    category_ticks: Optional[int] = Field(default=None, ge=20, le=24)
+    value_ticks: Optional[int] = Field(default=None, ge=20, le=28)
+    ordinary_values: Optional[int] = Field(default=None, ge=18, le=32)
     legend: Optional[int] = Field(default=None, ge=16, le=24)
     series_labels: Optional[int] = Field(default=None, ge=16, le=24)
     axis_titles: Optional[int] = Field(default=None, ge=13, le=24)

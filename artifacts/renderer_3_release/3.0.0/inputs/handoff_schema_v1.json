@@ -1032,7 +1032,7 @@
           "anyOf": [
             {
               "maximum": 24,
-              "minimum": 14,
+              "minimum": 20,
               "type": "integer"
             },
             {
@@ -1046,7 +1046,7 @@
           "anyOf": [
             {
               "maximum": 28,
-              "minimum": 14,
+              "minimum": 20,
               "type": "integer"
             },
             {
@@ -1060,7 +1060,7 @@
           "anyOf": [
             {
               "maximum": 32,
-              "minimum": 14,
+              "minimum": 18,
               "type": "integer"
             },
             {

@@ -63,22 +63,22 @@
     },
     {
       "path": "chartjs/render/handoff_schema_v1.json",
-      "sha256": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
+      "sha256": "8a650ad61f5c8a4a1b97f0d16cf53c03f651b958bc23339a3f7b5824ea0622c1",
       "bytes": 213896,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },
     {
       "path": "chartjs/render/presentation.html",
-      "sha256": "c6904f35b3c328316d3b1524947f259ce3845329c59e90ef9bf0d53c52b5deef",
-      "bytes": 767968,
+      "sha256": "373eb968ed47424d25bac1d1a9d8b4b3e93a570e4c76d322f335742cc6ccca40",
+      "bytes": 787717,
       "media_type": "text/html",
       "purpose": "D250 presentation"
     },
     {
       "path": "chartjs/render/run_meta.json",
-      "sha256": "4b997ecd1699eab86cdd6551525cfd5ba4a0a17427b7560d83884ac3c2551706",
-      "bytes": 195937,
+      "sha256": "d972e3d8324b076c7b41947377d806212f1f278660ae6937282ebb810b0e59ad",
+      "bytes": 195871,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },
@@ -441,7 +441,7 @@
     },
     {
       "path": "contracts/determinism.json",
-      "sha256": "ce7bce40fec44ab9fe73fad6e7e794e9ab061a09339fb54d6ca71c65ac731a9f",
+      "sha256": "292bd34ec03cfae721adc66b0a13af78576a3eb9cedf98ecce311ea6a03b27f8",
       "bytes": 1042,
       "media_type": "application/json",
       "purpose": "required gate contract"
@@ -483,7 +483,7 @@
     },
     {
       "path": "inputs/handoff_schema_v1.json",
-      "sha256": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
+      "sha256": "8a650ad61f5c8a4a1b97f0d16cf53c03f651b958bc23339a3f7b5824ea0622c1",
       "bytes": 213896,
       "media_type": "application/json",
       "purpose": "canonical input"
@@ -532,22 +532,22 @@
     },
     {
       "path": "svg/render/handoff_schema_v1.json",
-      "sha256": "86fd45455dcc2ee8e99b8b546b36118ede283dad0349427328724702ce215414",
+      "sha256": "8a650ad61f5c8a4a1b97f0d16cf53c03f651b958bc23339a3f7b5824ea0622c1",
       "bytes": 213896,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },
     {
       "path": "svg/render/presentation.html",
-      "sha256": "c26b5bec4c6d89c3a0992d89e96994a9f872dc21c824f879af99e1e4e9d36b66",
-      "bytes": 431993,
+      "sha256": "19d78023568b8d1f9d39542a03eed0d681b7e5d626aee5cda20776f34db0af63",
+      "bytes": 440867,
       "media_type": "text/html",
       "purpose": "D250 presentation"
     },
     {
       "path": "svg/render/run_meta.json",
-      "sha256": "7ab801e3ef3f90a365998841be1227890710acbafdcab5f297565c2a010be982",
-      "bytes": 195936,
+      "sha256": "11125316c7937133c37e81453d4fd57f8b50a75adbb719b25ed583e10d521489",
+      "bytes": 195870,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },
