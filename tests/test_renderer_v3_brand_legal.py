@@ -1,13 +1,15 @@
-"""Renderer v3 brand, section divider, and legal compositions (#191).
+"""Renderer v3 brand, section divider, and legal compositions (#191/#232/#238).
 
 Covers D178–D182, D215, D223, D225–D226, D268–D271, D287:
 - cover/divider placement + renderer-owned chrome
 - legal multipart sequence + exact paragraphs
 - invalid placement / fit → complete fallback without moving content
+- legal wrapper-<li> indent matches plan on skipped/leading nests
 """
 from __future__ import annotations
 
 import json
+import math
 import re
 from copy import deepcopy
 from html.parser import HTMLParser
@@ -20,7 +22,13 @@ from impact_slides.renderer_v3.models import (
     LegalNoticeSlide,
     SectionDividerSlide,
 )
-from impact_slides.renderer_v3.plan import plan_deck
+from impact_slides.renderer_v3.plan import (
+    LEGAL_BODY_PX,
+    LIST_INDENT_EM,
+    _legal_list_item,
+    plan_deck,
+)
+from impact_slides.renderer_v3.publish import _paint_legal_body
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/brand_divider_legal.json"
@@ -355,6 +363,64 @@ def test_legal_notice_skipped_nest_wraps_lists(tmp_path: Path):
     assert "leading grandchild" in compact
     assert "skipped grandchild" in compact
     assert ">parent<ul" in compact
+
+
+@pytest.mark.parametrize(
+    "paragraphs",
+    [
+        ["  - grandchild"],  # leading nest 0→1 (2 spaces)
+        ["- parent", "  - grandchild"],  # adjacent 0→1 (regression)
+        ["    - grandchild"],  # skipped 0→2 (4 spaces)
+        ["- parent", "    - grandchild"],  # skipped 0→2 after a parent
+        [  # Amex s38–43 unmarked flat (regression)
+            "the company's ability to grow EPS",
+            "the company's ability to grow revenue",
+        ],
+    ],
+    ids=[
+        "leading-nest",
+        "adjacent-0-1",
+        "skipped-0-2",
+        "parent-then-skip",
+        "flat-unmarked",
+    ],
+)
+def test_legal_wrapper_li_indent_matches_planned_em(paragraphs):
+    """#238: wrapper <li>s resolve 1.25em at LEGAL_BODY_PX, not --text-body."""
+    planned = math.ceil(LEGAL_BODY_PX * LIST_INDENT_EM)
+    assert planned == 20
+    body = "".join(_paint_legal_body(paragraphs, LEGAL_BODY_PX))
+    # Every painted <li> (text + skipped-level wrappers) must carry the 16px
+    # inline size the planner uses for em indent. Bare <li> inherits 22px.
+    assert "<li>" not in body
+    assert body.count("<li ") == body.count("</li>")
+    for m in re.finditer(r"<li([^>]*)>", body):
+        assert f"font-size:{LEGAL_BODY_PX}px" in m.group(1)
+    # Plan width for each authored item still uses LEGAL_BODY_PX * em * (level+1).
+    for para in paragraphs:
+        parsed = _legal_list_item(para)
+        if parsed is None:
+            continue
+        level, _ = parsed
+        assert math.ceil(LEGAL_BODY_PX * LIST_INDENT_EM * (level + 1)) == planned * (
+            level + 1
+        )
+
+
+def test_mutation_unstyled_wrapper_li_fails():
+    """Dropping the wrapper <li{style}> reintroduces the 22px em indent."""
+    import inspect
+
+    import impact_slides.renderer_v3.publish as pub
+
+    src = inspect.getsource(pub._paint_legal_body)
+    assert 'markup.append(f"<li{style}>")' in src
+    mutated = src.replace('markup.append(f"<li{style}>")', 'markup.append("<li>")', 1)
+    assert mutated != src
+    ns: dict = {}
+    exec(compile(mutated, pub.__file__, "exec"), pub.__dict__, ns)
+    body = "".join(ns["_paint_legal_body"](["    - grandchild"], LEGAL_BODY_PX))
+    assert "<li>" in body
 
 
 def test_legal_list_items_keep_only_authored_newlines(tmp_path: Path):
