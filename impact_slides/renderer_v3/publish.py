@@ -126,6 +126,7 @@ def build_presentation_html(
             ".legal-notice h1,.legal-notice .legal-continued{margin:0 0 var(--space-md);font-weight:var(--font-weight-title)}",
             ".legal-notice .legal-body p{margin:0 0 var(--space-sm);white-space:pre-wrap}",
             ".legal-notice .legal-body ul{margin:0 0 var(--space-sm);padding:0}",
+            ".legal-notice .legal-body ul ul{margin:0}",
             ".legal-notice .legal-body li{margin:0 0 0 1.25em;padding:0;white-space:pre-wrap}",
             ".legal-notice .legal-part{margin:var(--space-md) 0 0;color:var(--color-ink)}",
             ".legal-overflow,.cover-overflow,.divider-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
@@ -953,8 +954,11 @@ def _paint_legal_body(paragraphs: list[str], body_px: int | None) -> list[str]:
             target = level + 1
             if target > depth:
                 while depth < target:
+                    if depth and not li_open:
+                        out.append("<li>")
                     out.append("<ul>")
                     depth += 1
+                    li_open = False
             elif target == depth:
                 if li_open:
                     out.append("</li>")

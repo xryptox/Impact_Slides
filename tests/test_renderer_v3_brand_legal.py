@@ -334,6 +334,29 @@ def test_legal_plan_margin_boxes_match_painted_blocks():
     assert legal._margin_boxes == len(_legal_body_blocks(deck.slides[4].payload.paragraphs))
 
 
+def test_legal_notice_skipped_nest_wraps_lists(tmp_path: Path):
+    raw = _brand()
+    raw["slides"][4]["payload"]["paragraphs"] = [
+        "    - leading grandchild",
+        "- parent",
+        "    - skipped grandchild",
+    ]
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(path, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    s5 = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
+    compact = s5.replace("\n", "").replace("<wbr>", "")
+    assert "<ul><ul" not in compact
+    assert "</li><ul" not in compact
+    assert compact.count("<ul") == compact.count("</ul")
+    assert compact.count("<li") == compact.count("</li")
+    assert "leading grandchild" in compact
+    assert "skipped grandchild" in compact
+    assert ">parent<" in compact
+
+
 def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
     """Amex s38–43 payload is unmarked bullets; paint them as one <ul>."""
     raw = _brand()
@@ -405,6 +428,7 @@ def test_publish_css_selectors_match_brand_markup(tmp_path: Path):
             assert matched, alternative
     assert "white-space:pre-wrap" in rules[".legal-notice .legal-body p"]
     assert "white-space:pre-wrap" in rules[".legal-notice .legal-body li"]
+    assert rules[".legal-notice .legal-body ul ul"] == "margin:0"
     overflow_rule = ".legal-overflow,.cover-overflow,.divider-overflow"
     assert overflow_rule in rules
     assert "outline" in rules[overflow_rule]
