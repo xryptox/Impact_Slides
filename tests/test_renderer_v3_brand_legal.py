@@ -22,12 +22,7 @@ from impact_slides.renderer_v3.models import (
     LegalNoticeSlide,
     SectionDividerSlide,
 )
-from impact_slides.renderer_v3.plan import (
-    LEGAL_BODY_PX,
-    LIST_INDENT_EM,
-    _legal_list_item,
-    plan_deck,
-)
+from impact_slides.renderer_v3.plan import LEGAL_BODY_PX, LIST_INDENT_EM, plan_deck
 from impact_slides.renderer_v3.publish import _paint_legal_body
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -385,26 +380,25 @@ def test_legal_notice_skipped_nest_wraps_lists(tmp_path: Path):
         "flat-unmarked",
     ],
 )
-def test_legal_wrapper_li_indent_matches_planned_em(paragraphs):
+def test_legal_wrapper_li_indent_matches_planned_em(paragraphs, tmp_path: Path):
     """#238: wrapper <li>s resolve 1.25em at LEGAL_BODY_PX, not --text-body."""
-    planned = math.ceil(LEGAL_BODY_PX * LIST_INDENT_EM)
-    assert planned == 20
-    body = "".join(_paint_legal_body(paragraphs, LEGAL_BODY_PX))
+    assert math.ceil(LEGAL_BODY_PX * LIST_INDENT_EM) == 20
+    raw = _brand()
+    raw["slides"][4]["payload"]["paragraphs"] = paragraphs
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    # strict render_deck plans via _cover_fits then paints; overflow would fail.
+    assert render_deck(path, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    body = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
+    body = body.split('legal-body">', 1)[1].split("</div>", 1)[0]
     # Every painted <li> (text + skipped-level wrappers) must carry the 16px
     # inline size the planner uses for em indent. Bare <li> inherits 22px.
     assert "<li>" not in body
     assert body.count("<li ") == body.count("</li>")
     for m in re.finditer(r"<li([^>]*)>", body):
         assert f"font-size:{LEGAL_BODY_PX}px" in m.group(1)
-    # Plan width for each authored item still uses LEGAL_BODY_PX * em * (level+1).
-    for para in paragraphs:
-        parsed = _legal_list_item(para)
-        if parsed is None:
-            continue
-        level, _ = parsed
-        assert math.ceil(LEGAL_BODY_PX * LIST_INDENT_EM * (level + 1)) == planned * (
-            level + 1
-        )
 
 
 def test_mutation_unstyled_wrapper_li_fails():
