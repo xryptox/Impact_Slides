@@ -4,6 +4,7 @@
 Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 (#226: s4/s19 leap-year annotations + category support; s5/s9/s10 independent support;
 #227: s6 +6pp elbow annotation; s8 lodging metric_strip; s15 reserve-rate outlined row + stack totals;
+#228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
@@ -1003,34 +1004,53 @@ def build() -> dict:
         )
     )
 
-    # 12 chart_hero_dual acquisitions
+    # 12 chart_hero_dual — PDF three-band NCA stack (UCS / Commercial / ICS)
     s12 = slides_in[12]
     pv12 = s12["visual_spec"]["primary_visual"]
-    # steps may be matrix
     steps12 = pv12.get("steps_or_data") or []
+    from decimal import Decimal, InvalidOperation
+
     if steps12 and isinstance(steps12[0], list):
-        labs = [r[0] for r in steps12[1:]]
-        # try first numeric col
-        ser_vals = []
+        header12 = steps12[0]
+        labs12 = [r[0] for r in steps12[1:]]
+        series12 = []
+        colors12 = ["navy", "primary_blue", "neutral"]
+        for ci, name in enumerate(header12[1:]):
+            series12.append(
+                (
+                    str(name),
+                    [r[ci + 1] if ci + 1 < len(r) else None for r in steps12[1:]],
+                    colors12[ci] if ci < len(colors12) else None,
+                )
+            )
+        totals12 = []
         for r in steps12[1:]:
-            ser_vals.append(r[1] if len(r) > 1 else None)
-        chart12 = grouped_bar(
+            try:
+                totals12.append(str(sum(Decimal(str(v)) for v in r[1:] if v is not None)))
+            except (InvalidOperation, TypeError, ValueError):
+                totals12.append(None)
+        chart12 = stacked_bar(
             "s12-cards",
-            labs if labs else cats,
-            [("New Cards", ser_vals if ser_vals else [1, 1, 1, 1, 1], "navy")],
+            labs12,
+            series12,
             heading="Proprietary New Cards Acquired",
             fmt="num_1",
+            totals=totals12,
         )
-        chart12["subtitle"] = "in millions"
     else:
-        chart12 = grouped_bar(
+        chart12 = stacked_bar(
             "s12-cards",
             cats,
-            [("New Cards", [1.2, 1.3, 1.4, 1.5, 1.6], "navy")],
+            [
+                ("U.S. Consumer Services", [1.5, 1.5, 1.5, 1.3, 1.3], "navy"),
+                ("Commercial Services", [0.8, 0.7, 0.7, 0.7, 0.8], "primary_blue"),
+                ("International Card Services", [1.1, 0.9, 1.0, 0.9, 1.0], "neutral"),
+            ],
             heading="Proprietary New Cards Acquired",
             fmt="num_1",
+            totals=["3.4", "3.1", "3.2", "2.9", "3.1"],
         )
-        chart12["subtitle"] = "in millions"
+    chart12["subtitle"] = "in millions"
     slides.append(
         ordinary(
             12,
