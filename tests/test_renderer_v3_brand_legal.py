@@ -357,6 +357,26 @@ def test_legal_notice_skipped_nest_wraps_lists(tmp_path: Path):
     assert ">parent<" in compact
 
 
+def test_legal_list_items_keep_only_authored_newlines(tmp_path: Path):
+    raw = _brand()
+    raw["slides"][4]["payload"]["paragraphs"] = [
+        "- grow EPS",
+        "- grow\nrevenue",
+        "  - nested child",
+    ]
+    path = tmp_path / "handoff.json"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(path, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    s5 = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
+    body = s5.split('legal-body">', 1)[1].split("</div>", 1)[0].strip()
+    assert body.startswith("<ul")
+    assert ">\n" not in body
+    assert "\n<" not in body
+    assert "grow\nrevenue" in body.replace("<wbr>", "")
+
+
 def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
     """Amex s38–43 payload is unmarked bullets; paint them as one <ul>."""
     raw = _brand()

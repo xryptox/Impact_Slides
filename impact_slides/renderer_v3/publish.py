@@ -938,36 +938,38 @@ def _paint_legal_body(paragraphs: list[str], body_px: int | None) -> list[str]:
         items = list(payload)
         depth = 0
         li_open = False
+        markup: list[str] = []
 
         def close_to(target: int) -> None:
             nonlocal depth, li_open
             if li_open:
-                out.append("</li>")
+                markup.append("</li>")
                 li_open = False
             while depth > target:
-                out.append("</ul>")
+                markup.append("</ul>")
                 depth -= 1
                 if depth:
-                    out.append("</li>")
+                    markup.append("</li>")
 
         for level, text in items:
             target = level + 1
             if target > depth:
                 while depth < target:
                     if depth and not li_open:
-                        out.append("<li>")
-                    out.append("<ul>")
+                        markup.append("<li>")
+                    markup.append("<ul>")
                     depth += 1
                     li_open = False
             elif target == depth:
                 if li_open:
-                    out.append("</li>")
+                    markup.append("</li>")
                     li_open = False
             else:
                 close_to(target)
-            out.append(f"<li{style}>{_soft_break_html(text)}")
+            markup.append(f"<li{style}>{_soft_break_html(text)}")
             li_open = True
         close_to(0)
+        out.append("".join(markup))
     return out
 
 
