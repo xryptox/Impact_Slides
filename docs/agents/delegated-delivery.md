@@ -18,7 +18,7 @@ Expected roles:
 - `implementer` — implements one issue in an isolated feature worktree
 - `gate-driver` — recovery-only driver for an existing no-mistakes run; Kimi `review` model, `bash` only, all skills/extensions disabled (the role invokes the installed `no-mistakes` CLI directly)
 - `reviewer` — Kimi read-only correctness/data-loss review with project/cwd DOX context, CodeMapper only, and no unrelated extensions
-- `general-purpose` subagent in `~/.pi/agent/agents/general-purpose.md` — read-only Grok Latest worker required by the implement skill's two-axis `code-review` pass
+- `general-purpose` subagent in `~/.pi/agent/agents/general-purpose.md` — read-only Grok Latest worker for ad-hoc reviews; no longer required by the implement flow since 2026-08-15 (no-mistakes is the sole verification gate)
 - `merger` — cheap-model, approval-gated merge of one exact PR head; `bash` only with all skills/extensions disabled
 
 The current `dev` alias and general-purpose Standards/Spec subagent use `openrouter/~x-ai/grok-latest` with high thinking. `review` remains the independent Kimi model and `cheap` remains reserved for merging. Terra is not used by the active delegated-delivery pipeline.
@@ -48,7 +48,7 @@ Durable workflow scripts:
 - `~/.pi/agent/pi-extensible-workflows/scripts/preflight-approved-pr.ps1` — deterministic base/head/check/mergeability/closing-reference preflight
 - `~/.pi/agent/pi-extensible-workflows/scripts/Invoke-ApprovedMerge.ps1` — exact-head approved squash merge outside PEW persistence, used when Windows journal renames are unreliable
 
-The launcher deliberately uses the user's normal Pi settings plus the `dev` alias resolved from the global PEW settings and the `implement` skill. The alias is the single model source; `wave.json` records its resolved value. This path preserves the real Pi TUI, repository tools, code-review subagents, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
+The launcher deliberately uses the user's normal Pi settings plus the `dev` alias resolved from the global PEW settings and the `implement` skill. The alias is the single model source; `wave.json` records its resolved value. This path preserves the real Pi TUI, repository tools, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
 ### Canonical launch and supervision
 
@@ -89,7 +89,7 @@ Each implementer must:
 - launch through `orchestrate-herdr-implement-visible.ps1` (or `orchestrate-herdr-repair-visible.ps1` for returned work), which delegates tab creation to `launch-visible-implementer.ps1` in the supervising session's current Herdr workspace;
 - immediately start one background return-on-first-event watcher using `watch-visible-implementers.ps1` for every pane in the wave; rearm it after each delivered event until every implementer reaches its collected terminal report;
 - invoke/read the `implement` skill explicitly;
-- use TDD where practical and run the `code-review` skill's parallel Standards and Spec subagents before no-mistakes;
+- use TDD where practical; the full `no-mistakes axi` gate is the sole verification pipeline (the pre-axi two-axis `code-review` subagents were dropped 2026-08-15 — the supervisor compensates with a host diff/fixture spec-completeness scan and closing-reference check at every `pr-ready`);
 - change only its issue scope;
 - run focused checks, mutation/adversarial proof, one final full suite, and `python scripts/gen_layout_index.py --check` when relevant;
 - complete the DOX pass;
