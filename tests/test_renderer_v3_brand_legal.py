@@ -354,7 +354,7 @@ def test_legal_notice_skipped_nest_wraps_lists(tmp_path: Path):
     assert compact.count("<li") == compact.count("</li")
     assert "leading grandchild" in compact
     assert "skipped grandchild" in compact
-    assert ">parent<" in compact
+    assert ">parent<ul" in compact
 
 
 def test_legal_list_items_keep_only_authored_newlines(tmp_path: Path):
