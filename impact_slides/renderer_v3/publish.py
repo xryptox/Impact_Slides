@@ -956,7 +956,7 @@ def _paint_legal_body(paragraphs: list[str], body_px: int | None) -> list[str]:
             if target > depth:
                 while depth < target:
                     if depth and not li_open:
-                        markup.append("<li>")
+                        markup.append(f"<li{style}>")
                     markup.append("<ul>")
                     depth += 1
                     li_open = False
