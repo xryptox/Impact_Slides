@@ -4068,7 +4068,7 @@ def _table_fit_detail(
     allow_short: bool = True,
     allow_ellipsis: bool = True,
 ) -> tuple[bool, list[str], int]:
-    """Try to fit table at one common size. Mutates spec display fields on success path callers."""
+    """Try to fit table at one common size. Label mins use 2-line wrap width."""
     codes: list[str] = []
     n_cols = spec["n_cols"]
     n_value_cols = n_cols

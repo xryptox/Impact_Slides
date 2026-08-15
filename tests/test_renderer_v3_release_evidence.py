@@ -3,7 +3,7 @@
 Seams:
 - committed ``artifacts/renderer_3_release/3.0.0/`` tree
 - ``scripts/renderer_3_release.py`` verify (hash-pin, exact file set, required gates)
-- live re-render of both modes matches committed D250 bytes
+- live re-render stays strict-clean and matches frozen notes/evidence/schema bytes; HTML/`run_meta` may diverge after later packing
 """
 from __future__ import annotations
 
