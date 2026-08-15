@@ -5,7 +5,8 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 (#226: s4/s19 leap-year annotations + category support; s5/s9/s10 independent support;
 #227: s6 +6pp elbow annotation; s8 lodging metric_strip; s15 reserve-rate outlined row + stack totals;
 #228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
-#225: s11 Transaction Growth pins domain.kind=fixed 0–15).
+#225: s11 Transaction Growth pins domain.kind=fixed 0–15;
+#229: s17 usd_1 + CAGR measurements; s18 usd_1 + boxed YoY labels + PDF driver-card rows).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
 from __future__ import annotations
