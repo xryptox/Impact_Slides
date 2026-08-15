@@ -1243,7 +1243,19 @@
               "ordinary_values": "show",
               "series_identity": "auto"
             },
-            "heading": "Spend Growth is Accelerating"
+            "heading": "Spend Growth is Accelerating",
+            "annotations": [
+              {
+                "annotation_id": "spend-elbow",
+                "role": "explanation",
+                "text": "+ ~6 percentage points",
+                "anchor": {
+                  "type": "category_range",
+                  "from_category_id": "q1-25",
+                  "to_category_id": "q1-26"
+                }
+              }
+            ]
           },
           {
             "type": "chart",
@@ -1532,6 +1544,46 @@
             "ordinary_values": "show",
             "series_identity": "auto"
           }
+        },
+        "support": {
+          "support_type": "metric_strip",
+          "surface_id": "s8-kpis",
+          "metrics": [
+            {
+              "metric_id": "properties",
+              "label": "Premium Global Properties",
+              "value": {
+                "type": "text",
+                "text": "3,400+"
+              }
+            },
+            {
+              "metric_id": "new-properties",
+              "label": "New Properties Selected (2026)",
+              "value": {
+                "type": "text",
+                "text": "300+"
+              }
+            },
+            {
+              "metric_id": "statement-credit",
+              "label": "Annual U.S. Plat Statement Credit",
+              "value": {
+                "type": "number",
+                "value": "600",
+                "format_id": "usd_0"
+              }
+            },
+            {
+              "metric_id": "stay-value",
+              "label": "Avg CM Value 2-Night Stay",
+              "value": {
+                "type": "number",
+                "value": "550",
+                "format_id": "usd_0"
+              }
+            }
+          ]
         }
       },
       "evidence_ids": [
@@ -1548,7 +1600,7 @@
             "items": [
               {
                 "kind": "paragraph",
-                "text": "Premium Global Properties 3,400+; New Properties Selected (2026) 300+; Avg CM Value 2-Night Stay $550; Annual U.S. Plat Statement Credit $600; Partner-Funded 100%. Context fact: 10x."
+                "text": "Partner-Funded 100%. Context fact: 10x."
               }
             ]
           }
@@ -2398,7 +2450,7 @@
           "value_axes": {
             "primary": {
               "visible": true,
-              "format_id": "usd_1",
+              "format_id": "usd_0",
               "domain": {
                 "kind": "generated",
                 "target_ticks": 5
@@ -2407,6 +2459,85 @@
           },
           "display": {
             "series_identity": "legend"
+          },
+          "auxiliary_series": [
+            {
+              "auxiliary_id": "s15-prov-totals",
+              "role": "authored_stack_total",
+              "label": "Total",
+              "format_id": "usd_0",
+              "values": [
+                "1150",
+                "1405",
+                "1287",
+                "1414",
+                "1251"
+              ]
+            }
+          ]
+        },
+        "support": {
+          "support_type": "outlined_support",
+          "table": {
+            "surface_id": "s15-reserve",
+            "stub_header": {
+              "label": "Reserve Rate for Total Balances"
+            },
+            "columns": [
+              {
+                "column_id": "q1-25",
+                "label": "Q1'25"
+              },
+              {
+                "column_id": "q2-25",
+                "label": "Q2'25"
+              },
+              {
+                "column_id": "q3-25",
+                "label": "Q3'25"
+              },
+              {
+                "column_id": "q4-25",
+                "label": "Q4'25"
+              },
+              {
+                "column_id": "q1-26",
+                "label": "Q1'26"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "reserve-rate-for-total-balances",
+                "label": "Reserve Rate for Total Balances",
+                "cells": {
+                  "q1-25": {
+                    "type": "number",
+                    "value": "2.9",
+                    "format_id": "pct_1"
+                  },
+                  "q2-25": {
+                    "type": "number",
+                    "value": "2.8",
+                    "format_id": "pct_1"
+                  },
+                  "q3-25": {
+                    "type": "number",
+                    "value": "2.8",
+                    "format_id": "pct_1"
+                  },
+                  "q4-25": {
+                    "type": "number",
+                    "value": "2.8",
+                    "format_id": "pct_1"
+                  },
+                  "q1-26": {
+                    "type": "number",
+                    "value": "2.8",
+                    "format_id": "pct_1"
+                  }
+                }
+              }
+            ]
           }
         }
       },
@@ -2420,11 +2551,11 @@
         "sections": [
           {
             "surface_id": "s15-disc",
-            "title": "Reserve rate",
+            "title": "Provision notes",
             "items": [
               {
                 "kind": "paragraph",
-                "text": "Category-aligned outlined Reserve Rate support retained as disclosure pending support_visual on single_chart."
+                "text": "See Variance Commentary in the appendix section for an explanation of the provision variance versus last year."
               }
             ]
           }
