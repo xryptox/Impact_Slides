@@ -3,6 +3,7 @@
 
 Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 (#226: s4/s19 leap-year annotations + category support; s5/s9/s10 independent support;
+#227: s6 +6pp elbow annotation; s8 lodging metric_strip; s15 reserve-rate outlined row + stack totals;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
@@ -209,6 +210,21 @@ def leap_year_ann() -> list[dict]:
     ]
 
 
+def spend_elbow_ann() -> list[dict]:
+    return [
+        {
+            "annotation_id": "spend-elbow",
+            "role": "explanation",
+            "text": "+ ~6 percentage points",
+            "anchor": {
+                "type": "category_range",
+                "from_category_id": "q1-25",
+                "to_category_id": "q1-26",
+            },
+        }
+    ]
+
+
 def support_from_v2(
     surface_id: str,
     steps: list[list],
@@ -235,6 +251,14 @@ def support_from_v2(
         "alignment": alignment,
         "table": table,
     }
+
+
+def outlined_from_v2(surface_id: str, steps: list[list], *, fmt: str = "pct_1") -> dict:
+    table = support_from_v2(surface_id, steps, alignment="category", fmt=fmt)["table"]
+    if table["rows"]:
+        # Painter uses stub_header, not the row label (D166).
+        table["stub_header"] = {"label": table["rows"][0]["label"]}
+    return {"support_type": "outlined_support", "table": table}
 
 
 def period_table(surface_id: str, steps: list[list], *, labels: tuple[str, str, str]) -> dict:
@@ -713,7 +737,16 @@ def build() -> dict:
         )
     )
 
-    # 6 dual_chart spend + retention
+    # 6 dual_chart spend + retention + PDF +6pp elbow on the left chart
+    spend6 = grouped_bar(
+        "s6-spend",
+        cats,
+        [("Spend growth", [7, 7, 9, 9, 10], "navy")],
+        heading="Spend Growth is Accelerating",
+        fmt="pct_0",
+        domain=("0", "12"),
+    )
+    spend6["annotations"] = spend_elbow_ann()
     slides.append(
         ordinary(
             6,
@@ -722,14 +755,7 @@ def build() -> dict:
             "earnings",
             {
                 "charts": [
-                    grouped_bar(
-                        "s6-spend",
-                        cats,
-                        [("Spend growth", [7, 7, 9, 9, 10], "navy")],
-                        heading="Spend Growth is Accelerating",
-                        fmt="pct_0",
-                        domain=("0", "12"),
-                    ),
+                    spend6,
                     hbar(
                         "s6-ret",
                         ["January", "February", "March"],
@@ -832,7 +858,7 @@ def build() -> dict:
         )
     )
 
-    # 8 lodging line
+    # 8 lodging line + right-side KPI stack (PDF 3,400+ / 300+ / $600 / $550)
     slides.append(
         ordinary(
             8,
@@ -849,13 +875,47 @@ def build() -> dict:
                     ],
                     fmt="pct_0",
                     domain=("0", "60"),
-                )
+                ),
+                "support": {
+                    "support_type": "metric_strip",
+                    "surface_id": "s8-kpis",
+                    "metrics": [
+                        {
+                            "metric_id": "properties",
+                            "label": "Premium Global Properties",
+                            "value": {"type": "text", "text": "3,400+"},
+                        },
+                        {
+                            "metric_id": "new-properties",
+                            "label": "New Properties Selected (2026)",
+                            "value": {"type": "text", "text": "300+"},
+                        },
+                        {
+                            "metric_id": "statement-credit",
+                            "label": "Annual U.S. Plat Statement Credit",
+                            "value": {
+                                "type": "number",
+                                "value": "600",
+                                "format_id": "usd_0",
+                            },
+                        },
+                        {
+                            "metric_id": "stay-value",
+                            "label": "Avg CM Value 2-Night Stay",
+                            "value": {
+                                "type": "number",
+                                "value": "550",
+                                "format_id": "usd_0",
+                            },
+                        },
+                    ],
+                },
             },
             subtitle=slides_in[8]["content"].get("subtitle"),
             disclosure=disclosure_from_text(
                 "s8-disc",
                 "Program metrics",
-                "Premium Global Properties 3,400+; New Properties Selected (2026) 300+; Avg CM Value 2-Night Stay $550; Annual U.S. Plat Statement Credit $600; Partner-Funded 100%. Context fact: 10x.",
+                "Partner-Funded 100%. Context fact: 10x.",
             ),
         )
     )
@@ -1107,7 +1167,17 @@ def build() -> dict:
                     None,
                 )
             )
-        chart15 = stacked_bar("s15-prov", labs15, series15, fmt="usd_1")
+        from decimal import Decimal, InvalidOperation
+
+        totals15 = []
+        for r in steps15[1:]:
+            try:
+                totals15.append(str(Decimal(str(r[1])) + Decimal(str(r[2]))))
+            except (InvalidOperation, TypeError, ValueError, IndexError):
+                totals15.append(None)
+        chart15 = stacked_bar(
+            "s15-prov", labs15, series15, fmt="usd_0", totals=totals15
+        )
     else:
         chart15 = stacked_bar(
             "s15-prov",
@@ -1116,20 +1186,29 @@ def build() -> dict:
                 ("Card Member", [1, 1, 1, 1, 1], "navy"),
                 ("Other", [0.5, 0.5, 0.5, 0.5, 0.5], "primary_blue"),
             ],
-            fmt="usd_1",
+            fmt="usd_0",
+            totals=["1150", "1405", "1287", "1414", "1251"],
         )
+    sec15 = s15["visual_spec"].get("secondary_visual") or {}
     slides.append(
         ordinary(
             15,
             "single_chart",
             s15["title"],
             "earnings",
-            {"chart": chart15},
+            {
+                "chart": chart15,
+                "support": outlined_from_v2(
+                    "s15-reserve",
+                    sec15["steps_or_data"],
+                    fmt="pct_1",
+                ),
+            },
             subtitle=s15["content"].get("subtitle") or None,
             disclosure=disclosure_from_text(
                 "s15-disc",
-                "Reserve rate",
-                "Category-aligned outlined Reserve Rate support retained as disclosure pending support_visual on single_chart.",
+                "Provision notes",
+                "See Variance Commentary in the appendix section for an explanation of the provision variance versus last year.",
             ),
         )
     )
