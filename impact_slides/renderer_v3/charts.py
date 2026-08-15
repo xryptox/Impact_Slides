@@ -97,13 +97,20 @@ BAR_MAX_THICKNESS = 56
 BAR_CATEGORY_GAP_RATIO = 0.28
 BAR_SERIES_GAP_RATIO = 0.12
 
-# Chart typography floors / ceilings (D294).
+# Chart typography floors / ceilings (D294 / DP-1).
+_CHART_LABEL_WEIGHT = 600
+
+
+def _label_font(size: int) -> dict[str, int]:
+    return {"size": size, "weight": _CHART_LABEL_WEIGHT}
+
+
 _ROLE_BOUNDS: dict[str, tuple[int, int]] = {
-    "category_ticks": (14, 24),
-    "value_ticks": (14, 28),
-    "ordinary_values": (14, 32),
-    "segment_labels": (14, 24),  # stacked segments (D79/D304)
-    "stack_totals": (14, 24),  # computed/authored totals (D79/D304)
+    "category_ticks": (20, 24),
+    "value_ticks": (20, 28),
+    "ordinary_values": (18, 32),
+    "segment_labels": (18, 24),  # stacked segments (D79/D304)
+    "stack_totals": (18, 24),  # computed/authored totals (D79/D304)
     "legend": (16, 24),
     "series_labels": (16, 24),
     "axis_titles": (13, 24),
@@ -2219,7 +2226,7 @@ def _paint_combo_svg(
             for cat in plan["categories"]:
                 parts.append(
                     f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
-                    f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                    f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
                 )
         if plan["value_axis"]["visible"]:
             span = (d_max - d_min) or 1.0
@@ -2228,7 +2235,7 @@ def _paint_combo_svg(
                 y = pt + ph - ((tv - d_min) / span) * ph
                 parts.append(
                     f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
-                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{val_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(ink)}">{_e(label)}</text>'
                 )
         sec = plan.get("secondary_value_axis")
@@ -2249,7 +2256,7 @@ def _paint_combo_svg(
                 y = pt + ph - ((tv - s_min) / s_span) * ph
                 parts.append(
                     f'<text x="{pl + pw + 10}" y="{y + 4:.1f}" text-anchor="start" '
-                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{val_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(ink)}">{_e(label)}</text>'
                 )
             if sec.get("title"):
@@ -2282,7 +2289,7 @@ def _paint_combo_svg(
                 f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
                 f'stroke="{_e(border)}" stroke-width="1.5"/>'
                 f'<text x="{(x1 + x2) / 2:.1f}" y="{y2 + 14:.1f}" text-anchor="middle" '
-                f'font-size="{cat_px}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
+                f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
                 f"</g>"
             )
 
@@ -2374,7 +2381,7 @@ def _paint_combo_svg(
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(label_color)}" data-placement="{place["class"]}">'
                     f"{_e(text)}</text>"
                 )
@@ -2390,7 +2397,7 @@ def _paint_combo_svg(
                     f'width="{tw:.1f}" height="{th:.1f}" '
                     f'fill="{_e(surface)}" stroke="{_e(border)}" stroke-width="1" rx="2"/>'
                     f'<text x="{tx:.1f}" y="{ty + lab_px * 0.35:.1f}" text-anchor="middle" '
-                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(ink)}" data-placement="boxed">{_e(place["text"])}</text>'
                     f"</g>"
                 )
@@ -2399,7 +2406,7 @@ def _paint_combo_svg(
                 series_color = series_by_id[place["series_id"]]["color"]
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                    f'font-size="{plan["role_sizes"]["segment_labels"]}" '
+                    f'font-size="{plan["role_sizes"]["segment_labels"]}" font-weight="{_CHART_LABEL_WEIGHT}" '
                     f'font-variant-numeric="tabular-nums" fill="{_e(series_color)}" '
                     f'data-placement="segment">{_e(place["text"])}</text>'
                 )
@@ -2407,7 +2414,7 @@ def _paint_combo_svg(
                 tx, ty = place["x"], place["y"]
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                    f'font-size="{plan["role_sizes"]["stack_totals"]}" '
+                    f'font-size="{plan["role_sizes"]["stack_totals"]}" font-weight="{_CHART_LABEL_WEIGHT}" '
                     f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
                     f'data-placement="stack-total">{_e(place["text"])}</text>'
                 )
@@ -2466,7 +2473,7 @@ def _paint_line_svg(
             for cat in plan["categories"]:
                 parts.append(
                     f'<text x="{cat["x"]:.1f}" y="{pt + ph + 22}" text-anchor="middle" '
-                    f'font-size="{cat_px}" fill="{_e(resolve_color("navy", role="text_on_light"))}">'
+                    f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(resolve_color("navy", role="text_on_light"))}">'
                     f'{_e(cat["label"])}</text>'
                 )
         if plan["value_axis"]["visible"]:
@@ -2478,7 +2485,7 @@ def _paint_line_svg(
                 y = pt + ph - ((tv - y_min) / span) * ph
                 parts.append(
                     f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
-                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{val_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(resolve_color("navy", role="text_on_light"))}">'
                     f"{_e(label)}</text>"
                 )
@@ -2555,7 +2562,7 @@ def _paint_line_svg(
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
                     f'data-placement="{place["class"]}">{_e(p["visible"])}</text>'
                 )
@@ -2654,12 +2661,12 @@ def _paint_bar_svg(
                 if horizontal:
                     parts.append(
                         f'<text x="{cat["x"]:.1f}" y="{cat["y"] + 4:.1f}" text-anchor="end" '
-                        f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                        f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
                     )
                 else:
                     parts.append(
                         f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
-                        f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                        f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
                     )
         if plan["value_axis"]["visible"]:
             vis_min = float(Decimal(leading)) if leading is not None else d_min
@@ -2673,14 +2680,14 @@ def _paint_bar_svg(
                     x = pl + ((tv - vis_min) / span) * pw
                     parts.append(
                         f'<text x="{x:.1f}" y="{pt + ph + 22}" text-anchor="middle" '
-                        f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                        f'font-size="{val_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                         f'fill="{_e(ink)}">{_e(label)}</text>'
                     )
                 else:
                     y = pt + ph - ((tv - vis_min) / span) * ph
                     parts.append(
                         f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
-                        f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                        f'font-size="{val_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                         f'fill="{_e(ink)}">{_e(label)}</text>'
                     )
         title_px = plan["role_sizes"]["axis_titles"]
@@ -2719,7 +2726,7 @@ def _paint_bar_svg(
                 f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
                 f'stroke="{_e(border)}" stroke-width="1.5"/>'
                 f'<text x="{(x1 + x2) / 2:.1f}" y="{y2 + 14:.1f}" text-anchor="middle" '
-                f'font-size="{cat_px}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
+                f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
                 f"</g>"
             )
 
@@ -2757,7 +2764,7 @@ def _paint_bar_svg(
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(label_color)}" data-placement="{place["class"]}">'
                     f'{_e(place["text"])}</text>'
                 )
@@ -2773,7 +2780,7 @@ def _paint_bar_svg(
                     f'width="{tw:.1f}" height="{th:.1f}" '
                     f'fill="{_e(surface)}" stroke="{_e(border)}" stroke-width="1" rx="2"/>'
                     f'<text x="{tx:.1f}" y="{ty + lab_px * 0.35:.1f}" text-anchor="middle" '
-                    f'font-size="{lab_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(ink)}" data-placement="boxed">{_e(place["text"])}</text>'
                     f"</g>"
                 )
@@ -2791,7 +2798,7 @@ def _paint_bar_svg(
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                    f'font-size="{seg_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{seg_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(color)}" data-placement="{place["class"]}" '
                     f'data-kind="segment">{_e(place["text"])}</text>'
                 )
@@ -2800,7 +2807,7 @@ def _paint_bar_svg(
                 tot_px = plan["role_sizes"].get("stack_totals", lab_px)
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
-                    f'font-size="{tot_px}" font-weight="700" '
+                    f'font-size="{tot_px}" font-weight="{_CHART_LABEL_WEIGHT}" '
                     f'font-variant-numeric="tabular-nums" '
                     f'fill="{_e(place.get("color") or ink)}" '
                     f'data-placement="{place["class"]}" data-kind="stack_total">'
@@ -2921,7 +2928,7 @@ def _paint_waterfall_svg(
             for cat in plan["categories"]:
                 parts.append(
                     f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
-                    f'font-size="{cat_px}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                    f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
                 )
         if plan["value_axis"]["visible"]:
             span = (d_max - d_min) or 1.0
@@ -2930,7 +2937,7 @@ def _paint_waterfall_svg(
                 y = pt + ph - ((tv - d_min) / span) * ph
                 parts.append(
                     f'<text x="{pl - 10}" y="{y + 4:.1f}" text-anchor="end" '
-                    f'font-size="{val_px}" font-variant-numeric="tabular-nums" '
+                    f'font-size="{val_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                     f'fill="{_e(ink)}">{_e(label)}</text>'
                 )
         title_px = plan["role_sizes"]["axis_titles"]
@@ -2966,7 +2973,7 @@ def _paint_waterfall_svg(
                 continue
             parts.append(
                 f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
-                f'text-anchor="middle" font-size="{lab_px}" font-weight="700" '
+                f'text-anchor="middle" font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" '
                 f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
                 f'data-placement="structural" data-category="{_e(place["category_id"])}">'
                 f'{_e(place["text"])}</text>'
@@ -3000,7 +3007,7 @@ def _paint_waterfall_svg(
                     continue
                 parts.append(
                     f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
-                    f'text-anchor="middle" font-size="{lab_px}" font-weight="700" '
+                    f'text-anchor="middle" font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" '
                     f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
                     f'data-placement="structural" data-category="{_e(place["category_id"])}">'
                     f'{_e(place["text"])}</text>'
@@ -5183,12 +5190,22 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     """Settled Chart.js config — animation off, no gridlines (D63/D108)."""
     ctype = plan.get("chart_type", "line")
     if ctype == "waterfall":
-        return _chartjs_waterfall_config(plan)
-    if ctype == "combo":
-        return _chartjs_combo_config(plan)
-    if ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
-        return _chartjs_bar_config(plan)
-    return _chartjs_line_config(plan)
+        cfg = _chartjs_waterfall_config(plan)
+    elif ctype == "combo":
+        cfg = _chartjs_combo_config(plan)
+    elif ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
+        cfg = _chartjs_bar_config(plan)
+    else:
+        cfg = _chartjs_line_config(plan)
+    roles = plan["role_sizes"]
+    painted = (
+        roles.get("ordinary_values")
+        or roles.get("segment_labels")
+        or roles.get("stack_totals")
+        or roles.get("structural_values")
+    )
+    cfg.setdefault("v3", {})["painted_values"] = {"font": _label_font(painted)}
+    return cfg
 
 
 def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
@@ -5239,7 +5256,7 @@ def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
                     "display": False,
                     "grid": {"display": False, "drawBorder": True},
                     "ticks": {
-                        "font": {"size": plan["role_sizes"]["category_ticks"]},
+                        "font": _label_font(plan["role_sizes"]["category_ticks"]),
                         "color": resolve_color("navy", role="text_on_light"),
                     },
                     "title": {
@@ -5254,7 +5271,7 @@ def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
                     "grid": {"display": False, "drawBorder": True},
                     "stacked": False,
                     "ticks": {
-                        "font": {"size": plan["role_sizes"]["value_ticks"]},
+                        "font": _label_font(plan["role_sizes"]["value_ticks"]),
                         "color": resolve_color("navy", role="text_on_light"),
                     },
                     "title": {
@@ -5389,7 +5406,7 @@ def _chartjs_combo_config(plan: dict[str, Any]) -> dict[str, Any]:
             "grid": {"display": False, "drawBorder": True},
             "stacked": stacked,
             "ticks": {
-                "font": {"size": plan["role_sizes"]["category_ticks"]},
+                "font": _label_font(plan["role_sizes"]["category_ticks"]),
                 "color": resolve_color("navy", role="text_on_light"),
             },
             "title": {
@@ -5405,7 +5422,7 @@ def _chartjs_combo_config(plan: dict[str, Any]) -> dict[str, Any]:
             "grid": {"display": False, "drawBorder": True},
             "stacked": stacked,
             "ticks": {
-                "font": {"size": plan["role_sizes"]["value_ticks"]},
+                "font": _label_font(plan["role_sizes"]["value_ticks"]),
                 "color": resolve_color("navy", role="text_on_light"),
             },
             "title": {
@@ -5425,7 +5442,7 @@ def _chartjs_combo_config(plan: dict[str, Any]) -> dict[str, Any]:
             "grid": {"display": False, "drawBorder": False},
             "stacked": False,
             "ticks": {
-                "font": {"size": plan["role_sizes"]["value_ticks"]},
+                "font": _label_font(plan["role_sizes"]["value_ticks"]),
                 "color": resolve_color("navy", role="text_on_light"),
             },
             "title": {
@@ -5539,7 +5556,7 @@ def _chartjs_line_config(plan: dict[str, Any]) -> dict[str, Any]:
                     "display": False,
                     "grid": {"display": False, "drawBorder": True},
                     "ticks": {
-                        "font": {"size": plan["role_sizes"]["category_ticks"]},
+                        "font": _label_font(plan["role_sizes"]["category_ticks"]),
                         "color": resolve_color("navy", role="text_on_light"),
                     },
                     "title": {
@@ -5553,7 +5570,7 @@ def _chartjs_line_config(plan: dict[str, Any]) -> dict[str, Any]:
                     "max": y_max,
                     "grid": {"display": False, "drawBorder": True},
                     "ticks": {
-                        "font": {"size": plan["role_sizes"]["value_ticks"]},
+                        "font": _label_font(plan["role_sizes"]["value_ticks"]),
                         "color": resolve_color("navy", role="text_on_light"),
                         "callback": None,  # formatted client-side via labels map
                     },
@@ -6046,7 +6063,7 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
         "grid": {"display": False, "drawBorder": True},
         "stacked": stacked,
         "ticks": {
-            "font": {"size": plan["role_sizes"]["value_ticks"]},
+            "font": _label_font(plan["role_sizes"]["value_ticks"]),
             "color": resolve_color("navy", role="text_on_light"),
         },
         "title": {
@@ -6059,7 +6076,7 @@ def _chartjs_bar_config(plan: dict[str, Any]) -> dict[str, Any]:
         "grid": {"display": False, "drawBorder": True},
         "stacked": stacked,
         "ticks": {
-            "font": {"size": plan["role_sizes"]["category_ticks"]},
+            "font": _label_font(plan["role_sizes"]["category_ticks"]),
             "color": resolve_color("navy", role="text_on_light"),
         },
         "title": {

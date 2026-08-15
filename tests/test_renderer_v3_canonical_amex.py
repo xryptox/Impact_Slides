@@ -157,6 +157,19 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
     assert meta_svg["ok"] is True
     assert meta_svg["slide_count"] == 44
 
+    tick_roles = ("category_ticks", "value_ticks")
+    value_roles = ("ordinary_values", "segment_labels", "stack_totals")
+    for plan in meta_js["plans"]:
+        sizes = plan.get("role_sizes") or {}
+        if not any(role in sizes for role in tick_roles + value_roles):
+            continue
+        for role in tick_roles:
+            if role in sizes:
+                assert sizes[role] >= 20, (plan["surface_id"], role, sizes[role])
+        for role in value_roles:
+            if role in sizes:
+                assert sizes[role] >= 18, (plan["surface_id"], role, sizes[role])
+
 
 def test_mutation_drops_capital_summary_heading(handoff: dict) -> None:
     """Adversarial: corpus identity requires authored Capital Summary on slide 21."""

@@ -26,7 +26,7 @@ from impact_slides.renderer_v3.charts import (
     paint_semantic_table,
 )
 from impact_slides.renderer_v3.format import MISSING_ACCESSIBLE, MISSING_VISIBLE
-from impact_slides.renderer_v3.models import LineChartVisual, SingleChartSlide
+from impact_slides.renderer_v3.models import ChartTypography, LineChartVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema
 
@@ -557,3 +557,72 @@ def test_rev14_fixed_domain_containing_values_passes():
         "ticks": ["0", "2", "4", "6"],
     }
     assert validate_handoff(raw, strict=True).ok
+
+
+# ---------------------------------------------------------------------------
+# DP-1 typography floors + semibold weights
+# ---------------------------------------------------------------------------
+
+TICK_FLOOR = 20
+VALUE_FLOOR = 18
+SEMIBOLD = 600
+
+
+def test_line_plan_freezes_tick_and_value_floors():
+    deck = validate_handoff(_raw(), strict=True).deck
+    sizes = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].role_sizes
+    assert sizes["category_ticks"] >= TICK_FLOOR
+    assert sizes["value_ticks"] >= TICK_FLOOR
+    assert sizes["ordinary_values"] >= VALUE_FLOOR
+    assert sizes["category_ticks"] <= 24
+    assert sizes["value_ticks"] <= 28
+    assert sizes["ordinary_values"] <= 32
+
+
+def test_chart_typography_rejects_sizes_below_parity_floors():
+    with pytest.raises(Exception):
+        ChartTypography(category_ticks=14)
+    with pytest.raises(Exception):
+        ChartTypography(value_ticks=19)
+    with pytest.raises(Exception):
+        ChartTypography(ordinary_values=14)
+    ok = ChartTypography(category_ticks=20, value_ticks=20, ordinary_values=18)
+    assert ok.category_ticks == 20
+    assert ok.value_ticks == 20
+    assert ok.ordinary_values == 18
+    raw = _raw()
+    raw["slides"][1]["payload"]["chart"]["typography"] = {
+        "mode": "fixed",
+        "category_ticks": 14,
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_line_painters_emit_semibold_tick_and_value_weight(tmp_path: Path):
+    out = tmp_path / "out"
+    render_deck(FIXTURE, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    m = re.search(
+        r'<script type="application/json" id="cfg-vol-trend">(.*?)</script>',
+        html,
+        re.S,
+    )
+    assert m is not None
+    cfg = json.loads(m.group(1))
+    x_font = cfg["options"]["scales"]["x"]["ticks"]["font"]
+    y_font = cfg["options"]["scales"]["y"]["ticks"]["font"]
+    assert x_font["weight"] == SEMIBOLD
+    assert y_font["weight"] == SEMIBOLD
+    painted = cfg["v3"]["painted_values"]["font"]
+    assert painted["weight"] == SEMIBOLD
+
+    deck = validate_handoff(_raw(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    svg = paint_chart_svg(cp)
+    cat_px = cp["role_sizes"]["category_ticks"]
+    val_px = cp["role_sizes"]["value_ticks"]
+    lab_px = cp["role_sizes"]["ordinary_values"]
+    assert f'font-size="{cat_px}" font-weight="{SEMIBOLD}"' in svg
+    assert f'font-size="{val_px}" font-weight="{SEMIBOLD}"' in svg
+    assert f'font-size="{lab_px}" font-weight="{SEMIBOLD}"' in svg
