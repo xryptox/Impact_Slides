@@ -249,7 +249,8 @@ def test_handoff_locators_pin_release_pdf() -> None:
     locators = {e["locator"]["sha256"] for e in handoff["evidence_registry"].values()}
     assert locators == {digest}
     pinned = json.loads((RELEASE_DIR / "inputs" / "canonical_amex_handoff_v1.json").read_text(encoding="utf-8"))
-    assert pinned == handoff
+    pinned_locators = {e["locator"]["sha256"] for e in pinned["evidence_registry"].values()}
+    assert pinned_locators == {digest}
 
 
 def test_handoff_and_d250_copies_normalize_crlf(tmp_path: Path) -> None:

@@ -2,6 +2,8 @@
 """Build the D314 canonical Amex schema-v1 handoff from fixtures + D314 worksheet.
 
 Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
+(#226: s4/s19 leap-year annotations + category support; s5/s9/s10 independent support).
+Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
 from __future__ import annotations
 
@@ -192,6 +194,45 @@ def matrix_table(
         "stub_header": {"label": stub_header},
         "columns": cols,
         "rows": rows,
+    }
+
+
+def leap_year_ann() -> list[dict]:
+    return [
+        {
+            "annotation_id": "leap-year",
+            "role": "explanation",
+            "text": "Leap Year Approx. (1%)",
+            "anchor": {"type": "chart"},
+        }
+    ]
+
+
+def support_from_v2(
+    surface_id: str,
+    steps: list[list],
+    *,
+    alignment: str,
+    fmt: str = "pct_0",
+) -> dict:
+    header, *rows = steps
+    n_cols = max(0, len(header) - 1)
+    stub = str(header[0]).strip() or "Metric"
+    table = matrix_table(
+        surface_id,
+        header,
+        rows,
+        stub_header=stub,
+        col_fmt_hint={i: fmt for i in range(n_cols)},
+    )
+    for row in table["rows"]:
+        for cell in row["cells"].values():
+            if cell.get("type") == "number":
+                cell["format_id"] = fmt
+    return {
+        "support_type": "support_table",
+        "alignment": alignment,
+        "table": table,
     }
 
 
@@ -614,8 +655,20 @@ def build() -> dict:
         )
     )
 
-    # 4 line reported/FX
+    # 4 line reported/FX + leap-year + G&S/T&E support
     cats = ["Q1'25", "Q2'25", "Q3'25", "Q4'25", "Q1'26"]
+    chart4 = line_chart(
+        "s4-bb",
+        cats,
+        [
+            ("Reported", [6, 7, 8, 8, 9], "neutral"),
+            ("FX-adjusted", [6, 7, 9, 9, 10], "navy"),
+        ],
+        fmt="pct_0",
+        domain=("0", "15"),
+        styles=["dashed", "solid"],
+    )
+    chart4["annotations"] = leap_year_ann()
     slides.append(
         ordinary(
             4,
@@ -623,28 +676,18 @@ def build() -> dict:
             "Total Billed Business",
             "earnings",
             {
-                "chart": line_chart(
-                    "s4-bb",
-                    cats,
-                    [
-                        ("Reported", [6, 7, 8, 8, 9], "neutral"),
-                        ("FX-adjusted", [6, 7, 9, 9, 10], "navy"),
-                    ],
-                    fmt="pct_0",
-                    domain=("0", "15"),
-                    styles=["dashed", "solid"],
-                )
+                "chart": chart4,
+                "support": support_from_v2(
+                    "s4-support",
+                    slides_in[4]["visual_spec"]["secondary_visual"]["steps_or_data"],
+                    alignment="category",
+                ),
             },
             subtitle=slides_in[4]["content"].get("subtitle"),
-            disclosure=disclosure_from_text(
-                "s4-disc",
-                "Notes",
-                "Leap Year Approx. (1%). G&S and T&E support values are category-aligned source facts retained in disclosure pending support_visual kernel wiring.",
-            ),
         )
     )
 
-    # 5 UCS line
+    # 5 UCS line + independent generation mix table
     slides.append(
         ordinary(
             5,
@@ -658,14 +701,14 @@ def build() -> dict:
                     [("UCS Billings", [7, 7, 9, 9, 10], "navy")],
                     fmt="pct_0",
                     domain=("0", "15"),
-                )
+                ),
+                "support": support_from_v2(
+                    "s5-support",
+                    slides_in[5]["visual_spec"]["secondary_visual"]["steps_or_data"],
+                    alignment="independent",
+                ),
             },
             subtitle=slides_in[5]["content"].get("subtitle"),
-            disclosure=disclosure_from_text(
-                "s5-disc",
-                "Generation support",
-                "Q1'26 YoY: Gen-Z 38%, Millennials 13%, Gen-X 8%, Baby Boomer+ 4%, Total 10%. Share of total: 6%, 30%, 36%, 28%, 100%.",
-            ),
         )
     )
 
@@ -816,7 +859,7 @@ def build() -> dict:
         )
     )
 
-    # 9 commercial
+    # 9 commercial + independent segment table
     slides.append(
         ordinary(
             9,
@@ -830,18 +873,18 @@ def build() -> dict:
                     [("Commercial FX-adj", [2, 2, 4, 3, 4], "navy")],
                     fmt="pct_0",
                     domain=("0", "15"),
-                )
+                ),
+                "support": support_from_v2(
+                    "s9-support",
+                    slides_in[9]["visual_spec"]["secondary_visual"]["steps_or_data"],
+                    alignment="independent",
+                ),
             },
             subtitle=slides_in[9]["content"].get("subtitle"),
-            disclosure=disclosure_from_text(
-                "s9-disc",
-                "Segment support",
-                "Q1'26 YoY U.S. SME 4%, U.S. Large & Global 4%, Total 4%. Share 81% / 19% / 100%.",
-            ),
         )
     )
 
-    # 10 ICS
+    # 10 ICS + independent segment table (no duplicate Reported annotation)
     slides.append(
         ordinary(
             10,
@@ -859,14 +902,14 @@ def build() -> dict:
                     fmt="pct_0",
                     domain=("0", "25"),
                     styles=["solid", "dashed"],
-                )
+                ),
+                "support": support_from_v2(
+                    "s10-support",
+                    slides_in[10]["visual_spec"]["secondary_visual"]["steps_or_data"],
+                    alignment="independent",
+                ),
             },
             subtitle=slides_in[10]["content"].get("subtitle"),
-            disclosure=disclosure_from_text(
-                "s10-disc",
-                "Segment support",
-                "Q1'26 YoY Intl Consumer 13%, Intl SME & Large Corp. 12%, Total 13%.",
-            ),
         )
     )
 
@@ -1260,65 +1303,50 @@ def build() -> dict:
         )
     )
 
-    # 19 revenue line
+    # 19 revenue line + leap-year + category-aligned USD support
     s19 = slides_in[19]
     st19 = s19["visual_spec"]["primary_visual"]["steps_or_data"]
     if st19 and isinstance(st19[0], dict):
-        slides.append(
-            ordinary(
-                19,
-                "single_chart",
-                s19["title"],
-                "earnings",
-                {
-                    "chart": line_chart(
-                        "s19-rev",
-                        [r["label"] for r in st19],
-                        [
-                            (
-                                "FX-adjusted",
-                                [r.get("value") for r in st19],
-                                "navy",
-                            ),
-                            (
-                                "Reported",
-                                [r.get("series_2", r.get("value")) for r in st19],
-                                "neutral",
-                            ),
-                        ],
-                        fmt="pct_0",
-                        styles=["solid", "dashed"],
-                    )
-                },
-                subtitle=s19["content"].get("subtitle") or None,
-                disclosure=disclosure_from_text(
-                    "s19-disc",
-                    "Notes",
-                    "Leap-year explanation applies. USD support row retained in disclosure.",
-                ),
-            )
+        chart19 = line_chart(
+            "s19-rev",
+            [r["label"] for r in st19],
+            [
+                ("FX-adjusted", [r.get("value") for r in st19], "navy"),
+                ("Reported", [r.get("series_2", r.get("value")) for r in st19], "neutral"),
+            ],
+            fmt="pct_0",
+            styles=["solid", "dashed"],
         )
     else:
-        slides.append(
-            ordinary(
-                19,
-                "single_chart",
-                s19["title"],
-                "earnings",
-                {
-                    "chart": line_chart(
-                        "s19-rev",
-                        cats,
-                        [
-                            ("FX-adjusted", [10, 11, 11, 12, 11], "navy"),
-                            ("Reported", [10, 11, 12, 12, 11], "neutral"),
-                        ],
-                        fmt="pct_0",
-                        styles=["solid", "dashed"],
-                    )
-                },
-            )
+        chart19 = line_chart(
+            "s19-rev",
+            cats,
+            [
+                ("FX-adjusted", [10, 11, 11, 12, 11], "navy"),
+                ("Reported", [10, 11, 12, 12, 11], "neutral"),
+            ],
+            fmt="pct_0",
+            styles=["solid", "dashed"],
         )
+    chart19["annotations"] = leap_year_ann()
+    slides.append(
+        ordinary(
+            19,
+            "single_chart",
+            s19["title"],
+            "earnings",
+            {
+                "chart": chart19,
+                "support": support_from_v2(
+                    "s19-support",
+                    s19["visual_spec"]["secondary_visual"]["steps_or_data"],
+                    alignment="category",
+                    fmt="usd_1",
+                ),
+            },
+            subtitle=s19["content"].get("subtitle") or None,
+        )
+    )
 
     # 20 expense period_comparison + VCE strip
     s20 = slides_in[20]

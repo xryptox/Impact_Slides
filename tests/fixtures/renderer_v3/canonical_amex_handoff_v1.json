@@ -875,6 +875,112 @@
           "display": {
             "ordinary_values": "show",
             "series_identity": "auto"
+          },
+          "annotations": [
+            {
+              "annotation_id": "leap-year",
+              "role": "explanation",
+              "text": "Leap Year Approx. (1%)",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ]
+        },
+        "support": {
+          "support_type": "support_table",
+          "alignment": "category",
+          "table": {
+            "surface_id": "s4-support",
+            "stub_header": {
+              "label": "Metric"
+            },
+            "columns": [
+              {
+                "column_id": "q1-25",
+                "label": "Q1'25"
+              },
+              {
+                "column_id": "q2-25",
+                "label": "Q2'25"
+              },
+              {
+                "column_id": "q3-25",
+                "label": "Q3'25"
+              },
+              {
+                "column_id": "q4-25",
+                "label": "Q4'25"
+              },
+              {
+                "column_id": "q1-26",
+                "label": "Q1'26"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "g-s",
+                "label": "G&S",
+                "cells": {
+                  "q1-25": {
+                    "type": "number",
+                    "value": "7",
+                    "format_id": "pct_0"
+                  },
+                  "q2-25": {
+                    "type": "number",
+                    "value": "7",
+                    "format_id": "pct_0"
+                  },
+                  "q3-25": {
+                    "type": "number",
+                    "value": "9",
+                    "format_id": "pct_0"
+                  },
+                  "q4-25": {
+                    "type": "number",
+                    "value": "8",
+                    "format_id": "pct_0"
+                  },
+                  "q1-26": {
+                    "type": "number",
+                    "value": "8",
+                    "format_id": "pct_0"
+                  }
+                }
+              },
+              {
+                "row_id": "t-e",
+                "label": "T&E",
+                "cells": {
+                  "q1-25": {
+                    "type": "number",
+                    "value": "6",
+                    "format_id": "pct_0"
+                  },
+                  "q2-25": {
+                    "type": "number",
+                    "value": "5",
+                    "format_id": "pct_0"
+                  },
+                  "q3-25": {
+                    "type": "number",
+                    "value": "8",
+                    "format_id": "pct_0"
+                  },
+                  "q4-25": {
+                    "type": "number",
+                    "value": "8",
+                    "format_id": "pct_0"
+                  },
+                  "q1-26": {
+                    "type": "number",
+                    "value": "9",
+                    "format_id": "pct_0"
+                  }
+                }
+              }
+            ]
           }
         }
       },
@@ -883,20 +989,6 @@
       ],
       "content": {
         "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted unless otherwise stated)"
-      },
-      "disclosure": {
-        "sections": [
-          {
-            "surface_id": "s4-disc",
-            "title": "Notes",
-            "items": [
-              {
-                "kind": "paragraph",
-                "text": "Leap Year Approx. (1%). G&S and T&E support values are category-aligned source facts retained in disclosure pending support_visual kernel wiring."
-              }
-            ]
-          }
-        ]
       }
     },
     {
@@ -972,6 +1064,102 @@
             "ordinary_values": "show",
             "series_identity": "auto"
           }
+        },
+        "support": {
+          "support_type": "support_table",
+          "alignment": "independent",
+          "table": {
+            "surface_id": "s5-support",
+            "stub_header": {
+              "label": "Q1'26"
+            },
+            "columns": [
+              {
+                "column_id": "gen-z",
+                "label": "Gen-Z"
+              },
+              {
+                "column_id": "millennials",
+                "label": "Millennials"
+              },
+              {
+                "column_id": "gen-x",
+                "label": "Gen-X"
+              },
+              {
+                "column_id": "baby-boomer",
+                "label": "Baby Boomer +"
+              },
+              {
+                "column_id": "total",
+                "label": "Total"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "yoy",
+                "label": "YoY",
+                "cells": {
+                  "gen-z": {
+                    "type": "number",
+                    "value": "38",
+                    "format_id": "pct_0"
+                  },
+                  "millennials": {
+                    "type": "number",
+                    "value": "13",
+                    "format_id": "pct_0"
+                  },
+                  "gen-x": {
+                    "type": "number",
+                    "value": "8",
+                    "format_id": "pct_0"
+                  },
+                  "baby-boomer": {
+                    "type": "number",
+                    "value": "4",
+                    "format_id": "pct_0"
+                  },
+                  "total": {
+                    "type": "number",
+                    "value": "10",
+                    "format_id": "pct_0"
+                  }
+                }
+              },
+              {
+                "row_id": "of-total",
+                "label": "% of Total",
+                "cells": {
+                  "gen-z": {
+                    "type": "number",
+                    "value": "6",
+                    "format_id": "pct_0"
+                  },
+                  "millennials": {
+                    "type": "number",
+                    "value": "30",
+                    "format_id": "pct_0"
+                  },
+                  "gen-x": {
+                    "type": "number",
+                    "value": "36",
+                    "format_id": "pct_0"
+                  },
+                  "baby-boomer": {
+                    "type": "number",
+                    "value": "28",
+                    "format_id": "pct_0"
+                  },
+                  "total": {
+                    "type": "number",
+                    "value": "100",
+                    "format_id": "pct_0"
+                  }
+                }
+              }
+            ]
+          }
         }
       },
       "evidence_ids": [
@@ -979,20 +1167,6 @@
       ],
       "content": {
         "subtitle": "% Increase/(decrease) vs. Prior year"
-      },
-      "disclosure": {
-        "sections": [
-          {
-            "surface_id": "s5-disc",
-            "title": "Generation support",
-            "items": [
-              {
-                "kind": "paragraph",
-                "text": "Q1'26 YoY: Gen-Z 38%, Millennials 13%, Gen-X 8%, Baby Boomer+ 4%, Total 10%. Share of total: 6%, 30%, 36%, 28%, 100%."
-              }
-            ]
-          }
-        ]
       }
     },
     {
@@ -1454,6 +1628,74 @@
             "ordinary_values": "show",
             "series_identity": "auto"
           }
+        },
+        "support": {
+          "support_type": "support_table",
+          "alignment": "independent",
+          "table": {
+            "surface_id": "s9-support",
+            "stub_header": {
+              "label": "Q1'26"
+            },
+            "columns": [
+              {
+                "column_id": "u-s-sme",
+                "label": "U.S. SME"
+              },
+              {
+                "column_id": "u-s-large-global-corp",
+                "label": "U.S. Large & Global Corp."
+              },
+              {
+                "column_id": "total",
+                "label": "Total"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "yoy",
+                "label": "YoY",
+                "cells": {
+                  "u-s-sme": {
+                    "type": "number",
+                    "value": "4",
+                    "format_id": "pct_0"
+                  },
+                  "u-s-large-global-corp": {
+                    "type": "number",
+                    "value": "4",
+                    "format_id": "pct_0"
+                  },
+                  "total": {
+                    "type": "number",
+                    "value": "4",
+                    "format_id": "pct_0"
+                  }
+                }
+              },
+              {
+                "row_id": "of-total",
+                "label": "% of Total",
+                "cells": {
+                  "u-s-sme": {
+                    "type": "number",
+                    "value": "81",
+                    "format_id": "pct_0"
+                  },
+                  "u-s-large-global-corp": {
+                    "type": "number",
+                    "value": "19",
+                    "format_id": "pct_0"
+                  },
+                  "total": {
+                    "type": "number",
+                    "value": "100",
+                    "format_id": "pct_0"
+                  }
+                }
+              }
+            ]
+          }
         }
       },
       "evidence_ids": [
@@ -1461,20 +1703,6 @@
       ],
       "content": {
         "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted)"
-      },
-      "disclosure": {
-        "sections": [
-          {
-            "surface_id": "s9-disc",
-            "title": "Segment support",
-            "items": [
-              {
-                "kind": "paragraph",
-                "text": "Q1'26 YoY U.S. SME 4%, U.S. Large & Global 4%, Total 4%. Share 81% / 19% / 100%."
-              }
-            ]
-          }
-        ]
       }
     },
     {
@@ -1570,6 +1798,74 @@
             "ordinary_values": "show",
             "series_identity": "auto"
           }
+        },
+        "support": {
+          "support_type": "support_table",
+          "alignment": "independent",
+          "table": {
+            "surface_id": "s10-support",
+            "stub_header": {
+              "label": "Q1'26"
+            },
+            "columns": [
+              {
+                "column_id": "intl-consumer",
+                "label": "Intl Consumer"
+              },
+              {
+                "column_id": "intl-sme-large-corp",
+                "label": "Intl SME & Large Corp."
+              },
+              {
+                "column_id": "total",
+                "label": "Total"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "yoy",
+                "label": "YoY",
+                "cells": {
+                  "intl-consumer": {
+                    "type": "number",
+                    "value": "13",
+                    "format_id": "pct_0"
+                  },
+                  "intl-sme-large-corp": {
+                    "type": "number",
+                    "value": "12",
+                    "format_id": "pct_0"
+                  },
+                  "total": {
+                    "type": "number",
+                    "value": "13",
+                    "format_id": "pct_0"
+                  }
+                }
+              },
+              {
+                "row_id": "of-total",
+                "label": "% of Total",
+                "cells": {
+                  "intl-consumer": {
+                    "type": "number",
+                    "value": "65",
+                    "format_id": "pct_0"
+                  },
+                  "intl-sme-large-corp": {
+                    "type": "number",
+                    "value": "35",
+                    "format_id": "pct_0"
+                  },
+                  "total": {
+                    "type": "number",
+                    "value": "100",
+                    "format_id": "pct_0"
+                  }
+                }
+              }
+            ]
+          }
         }
       },
       "evidence_ids": [
@@ -1577,20 +1873,6 @@
       ],
       "content": {
         "subtitle": "% Increase/(decrease) vs. Prior year (FX-adjusted unless otherwise stated)"
-      },
-      "disclosure": {
-        "sections": [
-          {
-            "surface_id": "s10-disc",
-            "title": "Segment support",
-            "items": [
-              {
-                "kind": "paragraph",
-                "text": "Q1'26 YoY Intl Consumer 13%, Intl SME & Large Corp. 12%, Total 13%."
-              }
-            ]
-          }
-        ]
       }
     },
     {
@@ -2702,6 +2984,81 @@
           "display": {
             "ordinary_values": "show",
             "series_identity": "auto"
+          },
+          "annotations": [
+            {
+              "annotation_id": "leap-year",
+              "role": "explanation",
+              "text": "Leap Year Approx. (1%)",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ]
+        },
+        "support": {
+          "support_type": "support_table",
+          "alignment": "category",
+          "table": {
+            "surface_id": "s19-support",
+            "stub_header": {
+              "label": "Metric"
+            },
+            "columns": [
+              {
+                "column_id": "q1-25",
+                "label": "Q1'25"
+              },
+              {
+                "column_id": "q2-25",
+                "label": "Q2'25"
+              },
+              {
+                "column_id": "q3-25",
+                "label": "Q3'25"
+              },
+              {
+                "column_id": "q4-25",
+                "label": "Q4'25"
+              },
+              {
+                "column_id": "q1-26",
+                "label": "Q1'26"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "b",
+                "label": "$B",
+                "cells": {
+                  "q1-25": {
+                    "type": "number",
+                    "value": "17.0",
+                    "format_id": "usd_1"
+                  },
+                  "q2-25": {
+                    "type": "number",
+                    "value": "17.9",
+                    "format_id": "usd_1"
+                  },
+                  "q3-25": {
+                    "type": "number",
+                    "value": "18.4",
+                    "format_id": "usd_1"
+                  },
+                  "q4-25": {
+                    "type": "number",
+                    "value": "19.0",
+                    "format_id": "usd_1"
+                  },
+                  "q1-26": {
+                    "type": "number",
+                    "value": "18.9",
+                    "format_id": "usd_1"
+                  }
+                }
+              }
+            ]
           }
         }
       },
@@ -2710,20 +3067,6 @@
       ],
       "content": {
         "subtitle": "$ in billions - % Increase/(decrease) vs. Prior year"
-      },
-      "disclosure": {
-        "sections": [
-          {
-            "surface_id": "s19-disc",
-            "title": "Notes",
-            "items": [
-              {
-                "kind": "paragraph",
-                "text": "Leap-year explanation applies. USD support row retained in disclosure."
-              }
-            ]
-          }
-        ]
       }
     },
     {
