@@ -429,9 +429,9 @@ def test_label_line_budget_falls_through_to_short():
         "n_rows": 2,
         "header_full": [
             "Segment",
-            "Revenue growth versus prior year period",
-            "Net income margin percentage",
-            "Operating expense ratio trend",
+            "RevenueGrowthVersusPriorYearPeriodWithoutBreaksXXXXXX",
+            "NetIncomeMarginPercentageWithoutBreaksXXXXXXXXXXXX",
+            "OperatingExpenseRatioTrendWithoutBreaksXXXXXXXXXXXX",
         ],
         "header_short": ["Seg", "Rev", "NIM", "Opex"],
         "row_labels_full": ["Card Member Loans", "Auto Finance Book"],

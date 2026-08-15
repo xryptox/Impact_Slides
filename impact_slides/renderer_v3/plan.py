@@ -643,7 +643,7 @@ def _collect_surfaces(
                     _box_h=DESIGN_STAGE_H - PAD_TOP - PAD_BOTTOM,
                     _fit_role=None,
                     _mode="fixed",
-                    _margin_boxes=len(p.paragraphs),
+                    _margin_boxes=len(_legal_body_blocks(p.paragraphs)),
                     _chrome_h=(
                         LEGAL_HEADING_MARGIN_Y
                         + (LEGAL_PART_MARGIN_Y if p.part > 1 else 0)
@@ -1488,12 +1488,23 @@ def _required_height(
 def _cover_fits(sp: SurfacePlan) -> bool:
     """Measure each fixed element and its renderer-owned chrome."""
     need_h = sp._chrome_h
+    body_texts = [t for t, rk in sp._cover_items if rk == "body"]
+    legal_blocks = _legal_body_blocks(body_texts) if body_texts else []
+    unmarked_list = bool(legal_blocks) and all(kind == "ul" for kind, _ in legal_blocks)
     for text_c, role_key in sp._cover_items:
         px = sp.role_sizes[role_key]
         strong = role_key == "title"
+        box_w = sp._box_w
+        if role_key == "body":
+            parsed = _legal_list_item(text_c)
+            if parsed is not None:
+                level, text_c = parsed
+                box_w = max(1, sp._box_w - math.ceil(px * LIST_INDENT_EM * (level + 1)))
+            elif unmarked_list:
+                box_w = max(1, sp._box_w - math.ceil(px * LIST_INDENT_EM))
         hard_lines = text_c.split("\n") if sp._preserve_newlines else [text_c]
         for hard_line in hard_lines:
-            lines, wo = _wrap_lines([(hard_line, strong)], px, sp._box_w)
+            lines, wo = _wrap_lines([(hard_line, strong)], px, box_w)
             if wo:
                 return False
             need_h += max(1, len(lines)) * _line_box(px)
@@ -3971,6 +3982,63 @@ def _wrap_label_lines(text: str, px: int, box_w: int, *, strong: bool = False) -
     return lines or [""]
 
 
+def _min_wrap_width(text: str, px: int, max_lines: int, *, strong: bool = False) -> float:
+    """Narrowest width that keeps a label within max_lines without clipping."""
+    if not text:
+        return 0.0
+    full = _text_width(text, px, strong=strong)
+    if max_lines <= 1:
+        return full
+
+    def fits(width: int) -> bool:
+        lines = _wrap_label_lines(text, px, width, strong=strong)
+        if len(lines) > max_lines:
+            return False
+        return all(_text_width(ln, px, strong=strong) <= width for ln in lines)
+
+    lo, hi = 1, max(1, int(math.ceil(full)))
+    best = full
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if fits(mid):
+            best = float(mid)
+            hi = mid - 1
+        else:
+            lo = mid + 1
+    return best
+
+
+def _legal_list_item(text: str) -> tuple[int, str] | None:
+    """Map a marked legal paragraph to (nest_level, visible text)."""
+    stripped = text.lstrip(" ")
+    indent = len(text) - len(stripped)
+    for marker in ("- ", "* ", "• ", "•"):
+        if stripped.startswith(marker):
+            return indent // 2, stripped[len(marker) :]
+    return None
+
+
+def _legal_body_blocks(
+    paragraphs: list[str],
+) -> list[tuple[str, str | list[tuple[int, str]]]]:
+    """Painted legal block boxes: ('p', text) or ('ul', [(level, text), ...])."""
+    marked = [(_legal_list_item(para), para) for para in paragraphs]
+    if not any(item[0] is not None for item in marked):
+        return [("ul", [(0, para) for para in paragraphs])]
+    blocks: list[tuple[str, str | list[tuple[int, str]]]] = []
+    current: list[tuple[int, str]] | None = None
+    for parsed, para in marked:
+        if parsed is None:
+            current = None
+            blocks.append(("p", para))
+            continue
+        if current is None:
+            current = []
+            blocks.append(("ul", current))
+        current.append(parsed)
+    return blocks
+
+
 def _ellipsis_to_width(text: str, px: int, box_w: int, *, strong: bool = False) -> str:
     """Ellipsize label only; values never call this (D25)."""
     if _text_width(text, px, strong=strong) <= box_w:
@@ -4000,7 +4068,7 @@ def _table_fit_detail(
     allow_short: bool = True,
     allow_ellipsis: bool = True,
 ) -> tuple[bool, list[str], int]:
-    """Try to fit table at one common size. Mutates spec display fields on success path callers."""
+    """Try to fit table at one common size. Label mins use 2-line wrap width."""
     codes: list[str] = []
     n_cols = spec["n_cols"]
     n_value_cols = n_cols
@@ -4024,23 +4092,18 @@ def _table_fit_detail(
     def try_widths(h_labels: list[str], r_labels: list[str], g_labels: list[str] | None):
         mins = [0.0] * total_cols
         # Recompute label-driven mins for current label set.
-        tokens = _wrap_tokens(h_labels[0])
-        mins[0] = max(
-            (_text_width(tok.rstrip(), px, strong=True) for _, tok in tokens),
-            default=_text_width(h_labels[0], px, strong=True),
-        ) + TABLE_CELL_PAD_X
-        for lab in r_labels:
-            toks = _wrap_tokens(lab)
-            tw = max(
-                (_text_width(tok.rstrip(), px, strong=True) for _, tok in toks),
-                default=_text_width(lab, px, strong=True),
+        mins[0] = (
+            _min_wrap_width(
+                h_labels[0], px, TABLE_MAX_LABEL_LINES, strong=True
             )
+            + TABLE_CELL_PAD_X
+        )
+        for lab in r_labels:
+            tw = _min_wrap_width(lab, px, TABLE_MAX_LABEL_LINES, strong=True)
             mins[0] = max(mins[0], tw + TABLE_CELL_PAD_X)
         for c in range(n_value_cols):
-            toks = _wrap_tokens(h_labels[c + 1])
-            tw = max(
-                (_text_width(tok.rstrip(), px, strong=True) for _, tok in toks),
-                default=_text_width(h_labels[c + 1], px, strong=True),
+            tw = _min_wrap_width(
+                h_labels[c + 1], px, TABLE_MAX_LABEL_LINES, strong=True
             )
             mins[c + 1] = max(tw + TABLE_CELL_PAD_X, value_mins[c])
         # Group labels need span width.

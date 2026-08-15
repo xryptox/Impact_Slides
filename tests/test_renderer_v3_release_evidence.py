@@ -3,7 +3,7 @@
 Seams:
 - committed ``artifacts/renderer_3_release/3.0.0/`` tree
 - ``scripts/renderer_3_release.py`` verify (hash-pin, exact file set, required gates)
-- live re-render of both modes matches committed D250 bytes
+- live re-render stays strict-clean and matches frozen notes/evidence/schema bytes; HTML/`run_meta` may diverge after later packing
 """
 from __future__ import annotations
 
@@ -93,13 +93,19 @@ def test_both_run_metas_are_clean_300() -> None:
 
 
 def test_live_rerender_matches_committed_d250(tmp_path: Path) -> None:
+    """3.0.0 D250 is a frozen snapshot (D315). Later packing may change HTML."""
     src = RELEASE_DIR / "inputs" / "canonical_amex_handoff_v1.json"
     out_js = tmp_path / "chartjs"
     out_svg = tmp_path / "svg"
     render_deck(src, out_js, strict=True)
     assert cli_main(["--handoff", str(src), "--out", str(out_svg), "--svg-only"]) == 0
+    frozen = ("slide_notes.md", "evidence_manifest.json", "handoff_schema_v1.json")
     for mode, out in (("chartjs", out_js), ("svg", out_svg)):
-        for name in D250:
+        assert {p.name for p in out.iterdir() if p.is_file()} == set(D250)
+        meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+        assert meta["status"] == "clean"
+        assert meta["ok"] is True
+        for name in frozen:
             committed = (RELEASE_DIR / mode / "render" / name).read_bytes()
             assert _sha((out / name).read_bytes()) == _sha(committed), (mode, name)
 

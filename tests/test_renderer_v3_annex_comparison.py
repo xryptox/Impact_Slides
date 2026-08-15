@@ -583,3 +583,134 @@ def test_grouped_annex_single_peer_full_width(tmp_path: Path):
     assert "US Consumer" in html
     assert 'class="grouped-annex-divider"' not in html
     assert 'data-table-surface="peer-us"' in html
+
+
+def test_grouped_annex_headers_keep_full_text_when_peer_has_leftover():
+    """R-C: leftover peer width funds 2-line headers instead of Q…/F…."""
+    from impact_slides.renderer_v3.plan import _table_fit_detail
+
+    spec = {
+        "n_cols": 2,
+        "n_rows": 4,
+        "header_full": ["Segment", "Q1'26 Reported", "FX-Adj.*"],
+        "header_short": ["Segment", "Q1'26 Reported", "FX-Adj.*"],
+        "row_labels_full": [
+            "U.S. Large and Global Corp.",
+            "Total Billed Business",
+            "G&S",
+            "T&E",
+        ],
+        "row_labels_short": [
+            "U.S. Large and Global Corp.",
+            "Total Billed Business",
+            "G&S",
+            "T&E",
+        ],
+        "cells_vis": [["4%", "4%"], ["4%", "4%"], ["3%", "3%"], ["7%", "6%"]],
+        "cells_acc": [["4%", "4%"], ["4%", "4%"], ["3%", "3%"], ["7%", "6%"]],
+        "cells_role": [["number", "number"]] * 4,
+        "cells_align": [["right", "right"]] * 4,
+        "col_ids": ["q1-26-reported", "fx-adj"],
+        "groups": None,
+        "scale_labels": [],
+        "col_widths": [],
+        "display_headers": None,
+        "display_row_labels": None,
+        "display_groups": None,
+        "ellipsized": False,
+        "short_label_used": False,
+        "all_texts": [],
+    }
+    ok, codes, _h = _table_fit_detail(spec, 24, 852, 10**9)
+    assert ok, codes
+    assert spec["display_headers"] == ["Segment", "Q1'26 Reported", "FX-Adj.*"]
+    assert spec["ellipsized"] is False
+    assert "\u2026" not in "".join(spec["display_headers"])
+    assert "plan.label_ellipsized" not in codes
+
+
+def test_grouped_annex_paints_full_amex_headers(tmp_path: Path):
+    raw = _raw()
+    slide = next(s for s in raw["slides"] if s["layout_type"] == "grouped_annex_table")
+    for peer in slide["payload"]["tables"]:
+        peer["table"]["stub_header"]["label"] = "Segment"
+        peer["table"]["columns"][0]["label"] = "Q1'26 Reported"
+        peer["table"]["columns"][1]["label"] = "FX-Adj.*"
+        peer["table"]["rows"][0]["label"] = "U.S. Large and Global Corp."
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    peers = [s for s in plan.surfaces if s.role == "grouped_annex_table"]
+    assert peers
+    for peer in peers:
+        assert peer.table_paint["display_headers"] == [
+            "Segment",
+            "Q1'26 Reported",
+            "FX-Adj.*",
+        ]
+        assert peer.table_paint["ellipsized"] is False
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    from html import unescape
+
+    html = unescape((out / "presentation.html").read_text(encoding="utf-8")).replace("<wbr>", "")
+    assert html.count("Q1'26 Reported") >= 2
+    assert html.count("FX-Adj.*") >= 2
+    assert "Q\u2026" not in html and "F\u2026" not in html
+
+
+def test_grouped_annex_header_cells_do_not_clip(tmp_path: Path):
+    """Acceptance: s32 header cells keep scrollWidth <= clientWidth."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    corpus = ROOT / "tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json"
+    out = tmp_path / "out"
+    render_deck(corpus, out, strict=True)
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        measured = page.evaluate(
+            """() => {
+              const slide = document.querySelector('[data-slide-number="32"]');
+              const peers = [...slide.querySelectorAll('.grouped-annex-peer')];
+              return peers.map(peer => {
+                const headers = [...peer.querySelectorAll('thead th')].map(th => ({
+                  text: th.innerText.replace(/\\s+/g, ' ').trim(),
+                  scrollWidth: th.scrollWidth,
+                  clientWidth: th.clientWidth,
+                }));
+                return headers;
+              });
+            }"""
+        )
+        browser.close()
+    assert len(measured) == 2
+    for headers in measured:
+        texts = [h["text"] for h in headers]
+        assert any("Q1'26 Reported" in t for t in texts)
+        assert any("FX-Adj." in t for t in texts)
+        for cell in headers:
+            assert cell["scrollWidth"] <= cell["clientWidth"]
+
+
+def test_mutation_token_mins_still_clip_fx_adj():
+    """Guard: longest-token header mins leave FX-Adj.* needing three lines."""
+    from impact_slides.renderer_v3.plan import (
+        TABLE_CELL_PAD_X,
+        _min_wrap_width,
+        _text_width,
+        _wrap_tokens,
+    )
+
+    label = "FX-Adj.*"
+    token = max(
+        _text_width(tok.rstrip(), 24, strong=True)
+        for _, tok in _wrap_tokens(label)
+    )
+    two_line = _min_wrap_width(label, 24, 2, strong=True)
+    assert two_line > token
+    assert two_line + TABLE_CELL_PAD_X > token + TABLE_CELL_PAD_X
