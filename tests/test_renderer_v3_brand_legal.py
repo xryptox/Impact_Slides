@@ -23,7 +23,6 @@ from impact_slides.renderer_v3.models import (
     SectionDividerSlide,
 )
 from impact_slides.renderer_v3.plan import LEGAL_BODY_PX, LIST_INDENT_EM, plan_deck
-from impact_slides.renderer_v3.publish import _paint_legal_body
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/brand_divider_legal.json"
@@ -399,22 +398,6 @@ def test_legal_wrapper_li_indent_matches_planned_em(paragraphs, tmp_path: Path):
     assert body.count("<li ") == body.count("</li>")
     for m in re.finditer(r"<li([^>]*)>", body):
         assert f"font-size:{LEGAL_BODY_PX}px" in m.group(1)
-
-
-def test_mutation_unstyled_wrapper_li_fails():
-    """Dropping the wrapper <li{style}> reintroduces the 22px em indent."""
-    import inspect
-
-    import impact_slides.renderer_v3.publish as pub
-
-    src = inspect.getsource(pub._paint_legal_body)
-    assert 'markup.append(f"<li{style}>")' in src
-    mutated = src.replace('markup.append(f"<li{style}>")', 'markup.append("<li>")', 1)
-    assert mutated != src
-    ns: dict = {}
-    exec(compile(mutated, pub.__file__, "exec"), pub.__dict__, ns)
-    body = "".join(ns["_paint_legal_body"](["    - grandchild"], LEGAL_BODY_PX))
-    assert "<li>" in body
 
 
 def test_legal_list_items_keep_only_authored_newlines(tmp_path: Path):
