@@ -226,6 +226,60 @@ def spend_elbow_ann() -> list[dict]:
     ]
 
 
+def _s18_nii(labs: list, vals: list) -> dict:
+    chart = grouped_bar(
+        "s18-nii",
+        labs,
+        [("NII", vals, "navy")],
+        heading="Net Interest Income",
+        fmt="usd_1",
+    )
+    chart["auxiliary_series"] = [
+        {
+            "auxiliary_id": "s18-yoy",
+            "role": "boxed_label",
+            "label": "YoY Growth",
+            "format_id": "pct_0",
+            "target_series_id": chart["chart_data"]["series"][0]["series_id"],
+            "values": ["11", "12", "12", "12", "12"],
+        }
+    ]
+    return chart
+
+
+def _s18_driver() -> dict:
+    rows = [
+        ("billed", "Billed Business", "8", None),
+        ("nii", "Net Interest Income", "13", None),
+        ("volume", "Volume", "7", "Total Balances"),
+        (
+            "margin",
+            "Margin",
+            "5",
+            "Net Interest Income / Average Total Balances",
+        ),
+    ]
+    out_rows = []
+    for rid, label, value, detail in rows:
+        row = {
+            "row_id": rid,
+            "label": label,
+            "value": {"type": "number", "value": value, "format_id": "pct_0"},
+            "direction": "up",
+            "tone": "positive",
+        }
+        if detail:
+            row["detail"] = detail
+        out_rows.append(row)
+    return {
+        "hero_type": "driver_card",
+        "surface_id": "s18-driver",
+        "heading": "NII: Volume & Margin Drivers",
+        "subtitle": "CAGR % vs. Q1'19 (FX-adjusted except Margin)",
+        "rows": out_rows,
+    }
+
+
 def support_from_v2(
     surface_id: str,
     steps: list[list],
@@ -1261,7 +1315,7 @@ def build() -> dict:
             labs17,
             [("Net Card Fees", vals17, "navy")],
             heading="Net Card Fees",
-            fmt="pct_0",
+            fmt="usd_1",
         )
     else:
         steps = p17.get("steps_or_data") or []
@@ -1273,7 +1327,7 @@ def build() -> dict:
                 labs17,
                 [("Net Card Fees", vals17, "navy")],
                 heading="Net Card Fees",
-                fmt="pct_0",
+                fmt="usd_1",
             )
         else:
             pane_a = grouped_bar(
@@ -1281,8 +1335,21 @@ def build() -> dict:
                 cats,
                 [("Net Card Fees", [10, 11, 12, 13, 14], "navy")],
                 heading="Net Card Fees",
-                fmt="pct_0",
+                fmt="usd_1",
             )
+    cats17 = [c["category_id"] for c in pane_a["chart_data"]["categories"]]
+    pane_a["measurements"] = [
+        {
+            "measurement_id": "s17-ncf-cagr",
+            "role": "cagr",
+            "series_id": pane_a["chart_data"]["series"][0]["series_id"],
+            "from_category_id": cats17[0],
+            "to_category_id": cats17[-1],
+            "value": "17",
+            "format_id": "pct_0",
+            "approximate": False,
+        }
+    ]
     if sec17.get("steps_or_data"):
         st = sec17["steps_or_data"]
         if st and isinstance(st[0], dict):
@@ -1316,11 +1383,6 @@ def build() -> dict:
             s17["title"],
             "earnings",
             {"charts": [pane_a, pane_b]},
-            disclosure=disclosure_from_text(
-                "s17-disc",
-                "Qualification",
-                "Authored 17% CAGR measurement is a source claim retained in disclosure.",
-            ),
         )
     )
 
@@ -1342,64 +1404,8 @@ def build() -> dict:
             s18["title"],
             "earnings",
             {
-                "chart": grouped_bar(
-                    "s18-nii",
-                    labs18,
-                    [("NII", vals18, "navy")],
-                    heading="Net Interest Income",
-                    fmt="pct_0",
-                ),
-                "hero": {
-                    "hero_type": "driver_card",
-                    "surface_id": "s18-driver",
-                    "heading": "NII: Volume & Margin Drivers",
-                    "rows": [
-                        {
-                            "row_id": "vol",
-                            "label": "Loan growth",
-                            "value": {
-                                "type": "number",
-                                "value": "7",
-                                "format_id": "pct_0",
-                            },
-                            "direction": "up",
-                            "tone": "positive",
-                        },
-                        {
-                            "row_id": "yield",
-                            "label": "Net yield",
-                            "value": {
-                                "type": "number",
-                                "value": "12.1",
-                                "format_id": "pct_1",
-                            },
-                            "direction": "up",
-                            "tone": "positive",
-                        },
-                        {
-                            "row_id": "funding",
-                            "label": "Funding cost",
-                            "value": {
-                                "type": "number",
-                                "value": "3.2",
-                                "format_id": "pct_1",
-                            },
-                            "direction": "flat",
-                            "tone": "neutral",
-                        },
-                        {
-                            "row_id": "mix",
-                            "label": "Mix",
-                            "value": {
-                                "type": "number",
-                                "value": "0.4",
-                                "format_id": "pp_1",
-                            },
-                            "direction": "up",
-                            "tone": "positive",
-                        },
-                    ],
-                },
+                "chart": _s18_nii(labs18, vals18),
+                "hero": _s18_driver(),
             },
         )
     )
