@@ -4647,16 +4647,16 @@ outrank the archived v10 handoff.
 | 3 | `period_comparison` | Five metric rows; Q1'26/Q1'25/YoY roles; typed financial/EPS/share values; FX/non-GAAP notes in disclosure. |
 | 4 | `single_chart` | Reported/FX-adjusted line over Q1'25–Q1'26, percent axis, category-aligned G&S/T&E support, leap-year explanation annotation. |
 | 5 | `single_chart` | One UCS billed-business line plus independent generation support table; D302 collision contract applies. |
-| 6 | `dual_chart` | Spend Growth grouped bars and Retention horizontal bars with valid 90% leading break; `Refresh` event annotation; authored approximate `6` percentage-point D298 measurement is retained as a source claim and not recomputed from displayed endpoints. |
+| 6 | `dual_chart` | Spend Growth grouped bars and Retention horizontal bars with valid 90% leading break; left-chart `+ ~6 percentage points` explanation annotation (category_range q1-25–q1-26); disclosure retains the 6pp source claim and is not recomputed from displayed endpoints. |
 | 7 | `comparison_cards` | Lodging/Restaurants/Airlines peers with shared premium/member-growth, UCS benchmark, and multiplier facts; benefit detail in disclosure. |
-| 8 | `single_chart` | FHR+THC/UCS Lodging line, five-item property/benefit metric strip, `10x` context fact, program/application detail in disclosure; duplicate 50%/5% metrics removed as chrome. |
+| 8 | `single_chart` | FHR+THC/UCS Lodging line, four-item lodging `metric_strip` (3,400+ / 300+ / $600 / $550), `10x` / partner-funded detail in disclosure; duplicate 50%/5% metrics removed as chrome. |
 | 9 | `single_chart` | Commercial FX-adjusted line plus independent U.S. SME/Large & Global/Total support table. |
 | 10 | `single_chart` | ICS Reported/FX-adjusted line plus independent segment support; duplicate `Reported` annotation removed. |
 | 11 | `single_chart` | Transaction Growth line with leap-year chart explanation. |
 | 12 | `chart_hero_dual` | Stacked chart heading `Proprietary New Cards Acquired`, subtitle `in millions`; metric-stack heading `Proprietary New Accounts Acquired`, subtitle `Q1'2026`, with 66% and 73%; definitions in disclosure. |
 | 13 | `single_chart` | Two-series grouped bars for Total Balances/Billed Business, outside percent-0 values, Q1'25–Q1'26. |
 | 14 | `dual_chart` | Grouped-bar panes `30+ Days Past Due` and `Net Write-Off Rates`; percent-1 preserves 1.3% and 2.0%; correct pane ownership. |
-| 15 | `single_chart` | Signed stacked Total Provision with segment/totals policy and category-aligned outlined Reserve Rate support; no duplicate key-stat total. |
+| 15 | `single_chart` | Signed stacked Total Provision with usd_0 authored stack totals and category-aligned outlined Reserve Rate support (`stub_header` = row label); no duplicate key-stat total. |
 | 16 | `data_table` | Five revenue rows with Q1'26/Q1'25/reported YoY/FX-adjusted YoY and typed USD/percent cells. |
 | 17 | `dual_chart` | Net Card Fees grouped bars Q1'19–Q1'26 with authored 17% CAGR measurement; FX-adjusted YoY line Q1'24–Q1'26; qualification disclosure. |
 | 18 | `chart_hero_dual` | NII grouped bars with YoY boxed labels; `NII: Volume & Margin Drivers` driver card with all four source rows. |
