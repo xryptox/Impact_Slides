@@ -2945,7 +2945,21 @@
       },
       "evidence_ids": [
         "amex-q1-2026-p17"
-      ]
+      ],
+      "disclosure": {
+        "sections": [
+          {
+            "surface_id": "s17-disc",
+            "title": "Qualification",
+            "items": [
+              {
+                "kind": "paragraph",
+                "text": "Authored 17% CAGR measurement is a source claim retained in disclosure."
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "slide_number": 18,

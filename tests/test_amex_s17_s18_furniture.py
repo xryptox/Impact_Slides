@@ -88,6 +88,12 @@ def test_corpus_payloads_carry_s17_s18_furniture() -> None:
     fx = s17["payload"]["charts"][1]
     assert fx["value_axes"]["primary"]["format_id"] == "pct_0"
     assert "measurements" not in fx
+    disc = s17["disclosure"]["sections"][0]
+    assert disc["surface_id"] == "s17-disc"
+    assert disc["title"] == "Qualification"
+    assert disc["items"][0]["text"] == (
+        "Authored 17% CAGR measurement is a source claim retained in disclosure."
+    )
 
     s18 = _slide(handoff, 18)
     nii = s18["payload"]["chart"]
@@ -133,6 +139,10 @@ def test_strict_render_shows_s17_s18_furniture(tmp_path: Path) -> None:
     assert 'data-measurement-id="' in s17
     assert 'data-role="cagr"' in s17
     assert "17%" in s17
+    assert (
+        "Authored 17% CAGR measurement is a source claim retained in disclosure."
+        in s17
+    )
 
     s18 = unescape(_section(html, 18)).replace("<wbr>", "")
     for token in S18_LABELS:

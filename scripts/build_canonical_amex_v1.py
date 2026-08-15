@@ -1384,6 +1384,11 @@ def build() -> dict:
             s17["title"],
             "earnings",
             {"charts": [pane_a, pane_b]},
+            disclosure=disclosure_from_text(
+                "s17-disc",
+                "Qualification",
+                "Authored 17% CAGR measurement is a source claim retained in disclosure.",
+            ),
         )
     )
 
