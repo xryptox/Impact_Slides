@@ -599,6 +599,87 @@ def test_chart_typography_rejects_sizes_below_parity_floors():
         validate_handoff(raw, strict=True)
 
 
+def test_fixed_percent_domain_pin_is_honored():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "15",
+        "ticks": ["0", "3.75", "7.5", "11.25", "15"],
+    }
+    vis["chart_data"]["series"] = [
+        {
+            "series_id": "txn",
+            "name": "Txn",
+            "values": ["9", "9", "10", "9"],
+        }
+    ]
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    assert cp["domain"]["kind"] == "fixed"
+    assert cp["domain"]["min"] == "0"
+    assert cp["domain"]["max"] == "15"
+    assert [str(t) for t in cp["domain"]["ticks"]] == [
+        "0",
+        "3.75",
+        "7.5",
+        "11.25",
+        "15",
+    ]
+    ys = [p["y"] for p in cp["points"] if p["finite"]]
+    assert max(ys) - min(ys) < 0.15 * cp["geometry"]["plot_h"]
+
+
+def test_generated_percent_domain_enforces_minimum_span():
+    raw = _raw()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["chart_data"]["series"] = [
+        {
+            "series_id": "txn",
+            "name": "Txn",
+            "values": ["9", "9", "10", "9"],
+        }
+    ]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "target_ticks": 5,
+    }
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    lo = float(cp["domain"]["min"])
+    hi = float(cp["domain"]["max"])
+    assert lo <= 0.0
+    assert hi >= 15.0
+    assert hi - lo >= 15.0
+    ys = [p["y"] for p in cp["points"] if p["finite"]]
+    assert max(ys) - min(ys) < 0.15 * cp["geometry"]["plot_h"]
+
+
+def test_generated_non_percent_domain_still_tracks_low_variance():
+    raw = _raw()
+    raw["number_formats"] = {
+        "num_0": {"value_decimals": 0, "negative_style": "minus"}
+    }
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["value_axes"]["primary"]["format_id"] = "num_0"
+    vis["chart_data"]["series"] = [
+        {
+            "series_id": "txn",
+            "name": "Txn",
+            "values": ["9", "9", "10", "9"],
+        }
+    ]
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "target_ticks": 5,
+    }
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    assert float(cp["domain"]["max"]) - float(cp["domain"]["min"]) < 8.0
+    assert float(cp["domain"]["min"]) > 5.0
+
+
 def test_line_painters_emit_semibold_tick_and_value_weight(tmp_path: Path):
     out = tmp_path / "out"
     render_deck(FIXTURE, out, strict=True)

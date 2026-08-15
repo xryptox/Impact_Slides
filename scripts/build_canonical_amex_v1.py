@@ -2,7 +2,8 @@
 """Build the D314 canonical Amex schema-v1 handoff from fixtures + D314 worksheet.
 
 Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
-(#226: s4/s19 leap-year annotations + category support; s5/s9/s10 independent support).
+(#226: s4/s19 leap-year annotations + category support; s5/s9/s10 independent support;
+#225: s11 Transaction Growth pins domain.kind=fixed 0–15).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
 from __future__ import annotations
@@ -930,6 +931,7 @@ def build() -> dict:
                     labs11,
                     [("Transaction Growth", vals11, "navy")],
                     fmt="pct_0",
+                    domain=("0", "15"),
                 )
             },
             subtitle=s11["content"].get("subtitle") or None,

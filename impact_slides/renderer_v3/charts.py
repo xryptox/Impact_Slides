@@ -138,7 +138,7 @@ def freeze_line_chart(
     data = chart.chart_data
     cats = list(data.categories)
     series_plans = _resolve_series(data)
-    domain = _resolve_domain(chart, data)
+    domain = _resolve_domain(chart, data, fmt=fmt)
     ticks = list(domain["ticks"])
     show_values = _ordinary_values_show(chart)
 
@@ -313,7 +313,7 @@ def _freeze_grouped_bar_chart(
     data = chart.chart_data
     cats = list(data.categories)
     series_plans = _resolve_series(data, family="grouped_bar")
-    domain = _resolve_domain(chart, data, include_zero=True)
+    domain = _resolve_domain(chart, data, include_zero=True, fmt=fmt)
     ticks = list(domain["ticks"])
     show_values = _ordinary_values_show(chart)
     leading = (
@@ -624,7 +624,7 @@ def _freeze_stacked_bar_chart(
     cats = list(data.categories)
     series_plans = _resolve_series(data, family="stacked_bar")
     domain = _resolve_domain(
-        chart, data, include_zero=True, stack_extents=True
+        chart, data, include_zero=True, stack_extents=True, fmt=fmt
     )
     ticks = list(domain["ticks"])
     show_segments = _stack_segments_show(chart)
@@ -1339,6 +1339,7 @@ def freeze_combo_chart(
         all_series=list(data.series),
         line_axis_key=line_axis_key,
         axis_key="primary",
+        fmt=p_fmt,
     )
     secondary_domain = None
     if secondary is not None:
@@ -1351,6 +1352,7 @@ def freeze_combo_chart(
             all_series=list(data.series),
             line_axis_key=line_axis_key,
             axis_key="secondary",
+            fmt=formats[secondary.format_id],
         )
 
     show_values = _ordinary_values_show(chart)
@@ -1997,6 +1999,7 @@ def _resolve_combo_domain(
     all_series: list[Any],
     line_axis_key: str,
     axis_key: str,
+    fmt: NumberFormat | None = None,
 ) -> dict[str, Any]:
     """Domain for one combo value axis from the series that plot on it."""
     finite: list[Decimal] = []
@@ -2060,6 +2063,8 @@ def _resolve_combo_domain(
     if lo == hi:
         lo -= Decimal("1")
         hi += Decimal("1")
+    if axis.leading_break is None:
+        lo, hi = _apply_percent_min_span(lo, hi, fmt)
     pad = (hi - lo) * Decimal("0.08")
     lo_f = lo if (include_zero and lo == 0) else lo - pad
     hi_f = hi + pad
@@ -3388,12 +3393,33 @@ def _resolve_series(
     return out
 
 
+_PCT_MIN_SPAN = Decimal("15")
+
+
+def _apply_percent_min_span(
+    lo: Decimal, hi: Decimal, fmt: NumberFormat | None
+) -> tuple[Decimal, Decimal]:
+    """Keep low-variance percent auto-domains from collapsing (DP-3)."""
+    if fmt is None or fmt.unit != "percent":
+        return lo, hi
+    span = hi - lo
+    if span >= _PCT_MIN_SPAN:
+        return lo, hi
+    if lo >= 0 and lo < _PCT_MIN_SPAN:
+        return Decimal(0), max(hi, _PCT_MIN_SPAN)
+    if hi <= 0 and hi > -_PCT_MIN_SPAN:
+        return min(lo, -_PCT_MIN_SPAN), Decimal(0)
+    extra = _PCT_MIN_SPAN - span
+    return lo - extra / 2, hi + extra / 2
+
+
 def _resolve_domain(
     chart: AxisChartVisual,
     data: ChartData,
     *,
     include_zero: bool = False,
     stack_extents: bool = False,
+    fmt: NumberFormat | None = None,
 ) -> dict[str, Any]:
     axis = chart.value_axes.primary
     finite: list[Decimal] = []
@@ -3447,6 +3473,8 @@ def _resolve_domain(
     if lo == hi:
         lo -= Decimal("1")
         hi += Decimal("1")
+    if leading is None:
+        lo, hi = _apply_percent_min_span(lo, hi, fmt)
     # headroom ~8% (label clearance D72)
     pad = (hi - lo) * Decimal("0.08")
     lo_f = lo if (include_zero and lo == 0) or leading is not None else lo - pad

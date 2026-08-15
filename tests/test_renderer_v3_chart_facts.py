@@ -593,11 +593,22 @@ def _wide_context_labels(n: int) -> list[dict]:
     ]
 
 
+def _pin_tight_percent_domain(vis: dict) -> None:
+    # Relocation tests need the pre-DP-3 vertical spread, not the 0–15 floor.
+    vis["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "6",
+        "ticks": ["0", "2", "4", "6"],
+    }
+
+
 def test_context_labels_relocate_as_complete_block():
     raw = _line()
     vis = _vis(raw)
     vis.pop("annotations", None)
     vis.pop("measurements", None)
+    _pin_tight_percent_domain(vis)
     vis["context_labels"] = _wide_context_labels(4)
     result = validate_handoff(raw, strict=True)
     chart = result.deck.slides[1].payload.chart
@@ -630,6 +641,7 @@ def test_relocated_context_fits_without_growing_view():
     vis = _vis(raw)
     vis.pop("annotations", None)
     vis.pop("measurements", None)
+    _pin_tight_percent_domain(vis)
     vis["context_labels"] = _wide_context_labels(1)
     vis["context_labels"][0]["label"] = "Gross and Services Mix Extra Wide Label"
     result = validate_handoff(raw, strict=True)
@@ -654,6 +666,7 @@ def test_relocated_context_that_cannot_fit_strict_fails():
     vis = _vis(raw)
     vis.pop("annotations", None)
     vis.pop("measurements", None)
+    _pin_tight_percent_domain(vis)
     vis["context_labels"] = _wide_context_labels(4)
     result = validate_handoff(raw, strict=True)
     chart = result.deck.slides[1].payload.chart

@@ -1931,8 +1931,16 @@
               "visible": true,
               "format_id": "pct_0",
               "domain": {
-                "kind": "generated",
-                "target_ticks": 5
+                "kind": "fixed",
+                "min": "0",
+                "max": "15",
+                "ticks": [
+                  "0",
+                  "3.75",
+                  "7.5",
+                  "11.25",
+                  "15"
+                ]
               }
             }
           },
