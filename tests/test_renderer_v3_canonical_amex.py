@@ -269,6 +269,48 @@ def test_dual_and_hero_equal_band_and_stage_fit(handoff: dict) -> None:
         assert fixed + band <= stage, (sn, fixed + band, stage)
 
 
+def test_slide11_pins_fixed_percent_domain_and_stays_near_flat(handoff: dict) -> None:
+    """DP-3 / #225: s11 stays near-flat inside an authored 0–15 frame."""
+    from impact_slides.renderer_v3.plan import plan_deck
+
+    s11 = next(s for s in handoff["slides"] if s["slide_number"] == 11)
+    domain = s11["payload"]["chart"]["value_axes"]["primary"]["domain"]
+    assert domain["kind"] == "fixed"
+    assert domain["min"] == "0"
+    assert domain["max"] == "15"
+    assert domain["ticks"][0] == "0"
+    assert domain["ticks"][-1] == "15"
+    assert s11["payload"]["chart"]["chart_data"]["series"][0]["values"] == [
+        "9",
+        "9",
+        "10",
+        "9",
+        "10",
+    ]
+
+    deck = validate_handoff(handoff, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["s11-txn"].chart_paint
+    assert cp["domain"]["kind"] == "fixed"
+    assert float(cp["domain"]["min"]) == 0.0
+    assert float(cp["domain"]["max"]) == 15.0
+    ys = [p["y"] for p in cp["points"] if p["finite"]]
+    assert max(ys) - min(ys) < 0.15 * cp["geometry"]["plot_h"]
+
+    mutated = json.loads(json.dumps(handoff))
+    m11 = next(s for s in mutated["slides"] if s["slide_number"] == 11)
+    m11["payload"]["chart"]["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "target_ticks": 5,
+    }
+    # Guard still frames generated pct, but the corpus pin itself is gone.
+    assert (
+        mutated["slides"][10]["payload"]["chart"]["value_axes"]["primary"][
+            "domain"
+        ]["kind"]
+        != "fixed"
+    )
+
+
 def test_slide21_outlined_support_geometry(handoff: dict, tmp_path: Path) -> None:
     """Capital Summary hero support paints outlined boxes, not a plain table."""
     result = validate_handoff(handoff, strict=True)
