@@ -1,7 +1,7 @@
 """#229 — restore s17/s18 $B formats, CAGR rule, YoY boxes, driver rows.
 
 Pins the live D314 corpus (not renderer defaults):
-- s17 Net Card Fees uses usd_1; labels read $0.9…$2.8; CAGR rule paints
+- s17 Net Card Fees uses usd_1; labels read $0.9…$2.8; CAGR rule paints; Qualification disclosure
 - s18 NII uses usd_1; labels read $4.2…; five boxed YoY labels; PDF driver rows
 - renderer does not invent the furniture
 - strict render of the canonical corpus stays clean
