@@ -6,7 +6,7 @@ Use this workflow for parallel issue implementation, adversarial host review, no
 
 This process depends on user-global tools and configuration, not files vendored in this repository:
 
-- Pi Extensible Workflows (PEW)
+- Pi Extensible Workflows package files (roles and settings only; the delivery scripts are standalone PowerShell, no PEW runtime)
 - Herdr
 - `no-mistakes axi`
 - `gh` authenticated for `xryptox/Impact_Slides`
@@ -25,20 +25,20 @@ The current `dev` alias and general-purpose Standards/Spec subagent use `supergr
 
 ## Why Herdr wraps implementation
 
-PEW's native child runtime resolves models before dynamically registered providers are loaded. A provider registered by an extension, such as SuperGrok, may therefore work in normal Pi but fail in native `agent(...)` calls with `UNKNOWN_MODEL`.
+The legacy workflow child runtime resolves models before dynamically registered providers are loaded. A provider registered by an extension, such as SuperGrok, may therefore work in normal Pi but fail in native `agent(...)` calls with `UNKNOWN_MODEL`.
 
-When that applies, use PEW for orchestration and isolated worktrees, but launch each full interactive Pi implementer in a visible tab in the supervising session's current Herdr workspace. Do not create a separate workspace or use `pi --print`: progress must remain observable alongside the supervisor. Start a supervising workflow watcher for each launched wave so idle/done/blocked panes—especially no-mistakes `ask-user` gates—produce a follow-up in the host session; Herdr status alone does not notify the host. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
+When that applies, use the delegated-delivery scripts for orchestration and isolated worktrees, but launch each full interactive Pi implementer in a visible tab in the supervising session's current Herdr workspace. Do not create a separate workspace or use `pi --print`: progress must remain observable alongside the supervisor. Start a supervising workflow watcher for each launched wave so idle/done/blocked panes—especially no-mistakes `ask-user` gates—produce a follow-up in the host session; Herdr status alone does not notify the host. Close a temporary tab only after collecting its final report and Git/no-mistakes state.
 
 Durable workflow scripts:
 
-- `~/.pi/agent/delegated-delivery/start-ticket-wave.ps1` — primary interface: generates a delivery RunId, resolves the focused repo workspace and `dev` model, creates run-owned worktrees, launches tabs, and persists `wave.json` plus watcher targets
+- `~/.pi/agent/delegated-delivery/start-ticket-wave.ps1` — primary interface: generates a wave id (UUID), resolves the focused repo workspace and `dev` model, creates wave-owned worktrees, launches tabs, and persists `wave.json` plus watcher targets
 - `~/.pi/agent/delegated-delivery/inspect-ticket-wave.ps1` — derives branch heads, cleanliness, exact-branch PRs, closing-reference state, CI metadata, and branch-bound no-mistakes state from `wave.json`
 - `~/.pi/agent/delegated-delivery/watch-ticket-wave.ps1` — persistent outer supervisor around the return-on-first-event watcher; keeps polling automatically and writes each event to the manifest's host follow-up file as one bare compressed JSON object per line; legacy PowerShell-wrapped lines are no longer produced
 - `~/.pi/agent/delegated-delivery/resume-ticket-wave.ps1` — explicit restart for a wave paused after two unanswered decision notifications; clears only the selected decision reminder state, starts a replacement watcher, and rebinds the registry/manifest `sessionId` to `$env:PI_SESSION_ID` so follow-up delivery tracks the resuming session
 - `~/.pi/agent/extensions/ticket-wave-followups.ts` — global Pi extension that watches active-wave follow-up files for the current session and injects each event as a real supervising-session user follow-up; it defensively unwraps legacy wrapped lines and extracts heads from quoted or short formats
 - `~/.pi/agent/delegated-delivery/cleanup-ticket-wave.ps1` — derives merged PR numbers from run-owned branches, supports issue-scoped partial cleanup, updates manifest/targets, and delegates dry-run/apply deletion to verified cleanup
-- `~/.pi/agent/delegated-delivery/teardown-ticket-wave.ps1` — terminal-wave sweep, dry-run/-Apply; refuses unless every manifest issue is CLOSED and no manifest branch has an open PR, then stops the watcher, deregisters the wave from the active-wave registry, removes leftover worktrees/branches of all tickets (including unmerged ones cleanup refuses), deletes orphaned age-gated no-mistakes daemon worktrees for the wave's gate repo, closes Herdr panes whose cwd belongs to the wave's worktrees, and removes the wave root; does not touch PEW /workflow metadata.
-- `~/.pi/agent/delegated-delivery/create-run-owned-worktree.ps1` — internal primitive that creates `pi-extensible-workflows/<RunId>/issue-<N>`
+- `~/.pi/agent/delegated-delivery/teardown-ticket-wave.ps1` — terminal-wave sweep, dry-run/-Apply; refuses unless every manifest issue is CLOSED and no manifest branch has an open PR, then stops the watcher, deregisters the wave from the active-wave registry, removes leftover worktrees/branches of all tickets (including unmerged ones cleanup refuses), deletes orphaned age-gated no-mistakes daemon worktrees for the wave's gate repo, closes Herdr panes whose cwd belongs to the wave's worktrees, and removes the wave root; does not touch /workflow engine metadata.
+- `~/.pi/agent/delegated-delivery/create-run-owned-worktree.ps1` — internal primitive that creates `ticket-wave/<wave-id>/issue-<N>` (legacy waves used `pi-extensible-workflows/<wave-id>/issue-<N>`; the scripts still sweep that prefix)
 - `~/.pi/agent/delegated-delivery/launch-visible-implementer.ps1` — internal primitive that verifies run ownership, creates the current-workspace tab, and starts a genuine interactive Pi TUI
 - `~/.pi/agent/delegated-delivery/orchestrate-herdr-implement-visible.ps1` — writes the implementation contract and launches the visible implementer
 - `~/.pi/agent/delegated-delivery/orchestrate-herdr-repair-visible.ps1` — writes the host-repair contract and launches the visible repair session
@@ -46,19 +46,19 @@ Durable workflow scripts:
 - `~/.pi/agent/delegated-delivery/watch-visible-implementers.ps1` — deduplicating return-on-first-event watcher that returns one idle/done/blocked, ask-user, gate-parked (a parked gate with outstanding findings), pr-ready (active run with a PR URL under CI monitoring: the exact-head merge-approval handoff), or loop-limit event and no-mistakes state, and keeps supervising through a placeholder pane when the implementer pane has vanished, raises a Herdr notification, persists its seen-state for rearming, and applies verified cleanup after every run-owned PR is merged and linked issue closed
 - `~/.pi/agent/delegated-delivery/cleanup-merged-workflow.ps1` — dry-run-first cleanup of merged workflow worktrees/branches after exact PR-head verification; tolerates already-deleted GitHub branches and partial waves, and terminates processes whose launch-time working directory is inside a worktree before directory removal
 - `~/.pi/agent/delegated-delivery/preflight-approved-pr.ps1` — deterministic base/head/check/mergeability/closing-reference preflight
-- `~/.pi/agent/delegated-delivery/Invoke-ApprovedMerge.ps1` — exact-head approved squash merge outside PEW persistence, used when Windows journal renames are unreliable
+- `~/.pi/agent/delegated-delivery/Invoke-ApprovedMerge.ps1` — exact-head approved squash merge outside workflow-journal persistence, used when Windows journal renames are unreliable
 
-The launcher deliberately uses the user's normal Pi settings plus the `dev` alias resolved from the global PEW settings and the `implement` skill. The alias is the single model source; `wave.json` records its resolved value. This path preserves the real Pi TUI, repository tools, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
+The launcher deliberately uses the user's normal Pi settings plus the `dev` alias resolved from the global workflow settings and the `implement` skill. The alias is the single model source; `wave.json` records its resolved value. This path preserves the real Pi TUI, repository tools, and no-mistakes behavior. The former lean/RPC path was removed because injected lean sessions intermittently lost tools and RPC exposed raw JSON instead of the requested TUI. A workflow may create ticket briefs and result artifacts under `%TEMP%`, but must not depend on temporary launcher copies.
 
 ### Canonical launch and supervision
 
-1. Start a wave with `start-ticket-wave.ps1 -Issue N,N,...`; normally provide no RunId, model, workspace, branch, worktree, pane, or targets-file input. The script infers and persists them in `wave.json`.
+1. Start a wave with `start-ticket-wave.ps1 -Issue N,N,...`; normally provide no wave id, model, workspace, branch, worktree, pane, or targets-file input. The script infers and persists them in `wave.json`.
 2. `start-ticket-wave.ps1` starts `watch-ticket-wave.ps1` automatically as the persistent outer supervisor (pass `-SkipWatcherStart` only for deterministic tests). A manifest-scoped singleton lock permits only one outer watcher per wave. It repeatedly invokes the deduplicating return-on-first-event watcher and keeps polling without manual rearm; unchanged idle/done/blocked signatures emit once, `loop-limit` deduplicates per run, breached kind, and review-fix round (minute/head churn within a round never re-fires; a new round or new breached kind does), while `ask-user` alone retains the two-notification pause policy. Startup records the supervising `PI_SESSION_ID` and append-only follow-up queue in the active-wave registry; the global `ticket-wave-followups.ts` extension injects every queued event into that exact session, so resume after a session change must rebind the registry `sessionId` (resume-ticket-wave.ps1 does this automatically). If no session ID is available, the watcher still persists and prints events for the caller.
 
 The watcher emits `pr-ready` once per run/head/PR when CI monitoring begins; the CI phase is exempt from quiet limits because monitoring until merge or closure is indefinite by design. Every `awaiting_approval` gate (rebase, document, and others, not only review) surfaces through the ask-user path. If an implementer pane disappears (reboot or accidental close), the watcher synthesizes a placeholder pane and continues gate/terminal supervision; only pane steering is lost. Restore visibility by relaunching `launch-visible-implementer.ps1` with a recovery brief that states current custody, updating the pane id in `wave.json` and `targets.json`, and restarting the outer watcher.
 3. Treat each delivered watcher event as the host notification. If it surfaces `ask-user`, present the finding verbatim and send the decision to the same pane. An unchanged unanswered decision is notified at most twice; the second event is `ask-user-paused`, sets `rearm: false`, and stops supervision without changing Git or no-mistakes custody. Resume only after an explicit user instruction with `resume-ticket-wave.ps1 -ManifestPath <wave.json> [-Issue N]`. If an event surfaces `loop-limit`, approve no further fixes: preserve custody and request controlled recovery. Default limits are more than 5 review-fix rounds, more than 90 minutes in review fixing, or quiet time confirmed by a CPU-delta check that finds the agent process dead or CPU-flat: more than 10 minutes during an active fix round, or more than 25 minutes during the initial review (a single long model call). Persisted state suppresses other unchanged repeats until the reminder interval.
 4. Use `inspect-ticket-wave.ps1 -ManifestPath <wave.json>` for authoritative branch/PR/gate collection instead of manually copying identifiers.
-5. Launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -RunId <wave RunId>` against the manifest worktree. It writes `repair-prompt.md`, copies the authoritative host findings, and explicitly supersedes the original implementation prompt. Do not substitute direct branches, `herdr pane run`, RPC, `pi --print`, or another workspace.
+5. Launch returned host findings with `orchestrate-herdr-repair-visible.ps1 -WaveId <wave id>` (accepts legacy `-RunId` alias) against the manifest worktree. It writes `repair-prompt.md`, copies the authoritative host findings, and explicitly supersedes the original implementation prompt. Do not substitute direct branches, `herdr pane run`, RPC, `pi --print`, or another workspace.
 6. Keep tabs open while a decision or pipeline action remains outstanding. Inspection and watching bind no-mistakes status to the ticket branch's recorded run ID rather than trusting the CLI's most-recent run. After every run-owned PR is `MERGED`, every linked issue is closed, and each implementer is terminal with its final report collectible, the watcher closes the tabs, runs `cleanup-ticket-wave.ps1` dry-run then `-Apply`, emits the cleanup result, and exits. For an already merged subset, pass `-Issue N,...`; partial cleanup updates `wave.json` and `targets.json`.
 7. A PR that is only `CLOSED` is not cleanup authorization. The watcher reports the block and preserves all artifacts. Herdr desktop notifications are best-effort and must never terminate supervision. Cleanup treats Git-registration removal plus a temporarily locked empty Windows directory as partial success: it retries the manifest-recorded directory independently and remains idempotent after registration or refs disappear. If automatic cleanup still fails, inspect `wave.json` and rerun `cleanup-ticket-wave.ps1 -ManifestPath <wave.json>` manually.
 
@@ -79,8 +79,8 @@ Watcher follow-up events are token-trimmed before delivery; the supervising sess
 - Read the root and applicable child `AGENTS.md` files.
 - Fetch each issue and its comments/labels.
 - Group only independent tickets in the same parallel wave.
-- Give every ticket its own run-owned branch and worktree via `create-run-owned-worktree.ps1`; use one shared RunId for a cleanup batch.
-- Record the RunId, starting SHA, issue number, worktree, branch, and expected changed paths.
+- Give every ticket its own wave-owned branch and worktree via `create-run-owned-worktree.ps1`; use one shared wave id for a cleanup batch.
+- Record the wave id, starting SHA, issue number, worktree, branch, and expected changed paths.
 
 ### 2. Implement in visible tabs
 
@@ -149,7 +149,7 @@ Record the exact head SHA presented for approval.
 
 The user may approve one exact PR or a named batch. Batch approval is conditional and serial:
 
-1. Launch the `merger` role once per PR, or invoke `Invoke-ApprovedMerge.ps1` with the same literal approval and exact-head inputs when Windows PEW persistence is unreliable.
+1. Launch the `merger` role once per PR, or invoke `Invoke-ApprovedMerge.ps1` with the same literal approval and exact-head inputs when Windows workflow-journal persistence is unreliable.
 2. Supply PR number, reviewed head SHA, and literal `HUMAN_APPROVAL: true`.
 3. Recheck against current `main` after every preceding merge.
 4. Squash-merge and delete the remote branch only when all role checks pass.
@@ -172,11 +172,11 @@ After merges:
 
 ## Windows failure modes
 
-- PEW journal persistence can fail with `EPERM` during atomic rename after an external merge succeeded. Prefer `Invoke-ApprovedMerge.ps1` for the deterministic merge side effect; if a PEW merger was used, query the PR before retrying and never assume exactly-once external effects.
+- Workflow-journal persistence can fail with `EPERM` during atomic rename after an external merge succeeded. Prefer `Invoke-ApprovedMerge.ps1` for the deterministic merge side effect; if a workflow merger was used, query the PR before retrying and never assume exactly-once external effects.
 - PowerShell native stderr can be promoted to an exception. Classify using exit code and authoritative state, not stderr text alone.
 - Herdr marks a completed interactive Pi as `done`; `herdr wait agent-status --status idle` does not accept/observe that terminal state. Poll `herdr pane list` for `done` or `idle`, then collect the report and close the tab.
 - Quote Git revision ranges as one normal argument (`base..head`); malformed nested quoting can make Git treat the range as a filename.
-- PEW workflow JavaScript is sandboxed: do not assume `Date.now()` or Bash shell syntax is available; `shell()` uses the host Windows shell.
+- The `/workflow` tool JavaScript is sandboxed: do not assume `Date.now()` or Bash shell syntax is available; `shell()` uses the host Windows shell.
 - A local branch deletion may fail while its linked worktree exists even though the GitHub merge and remote branch deletion succeeded.
 - Reboots orphan Herdr pane shells and can remove registered panes entirely. The watcher placeholder keeps supervision alive; relaunch the pane with a recovery brief instead of restarting the gate. Surviving shell processes can still hold worktree directories; cleanup terminates launch-time cwd holders before removal.
 - Shell/LLM transport can display file bytes incorrectly (commas rendered as dots, collapsed whitespace runs). Before trusting a repeated byte-level re-flag of an already-applied fix, prove the actual bytes with a hex dump (`xxd`) or `git hash-object` comparison; the REV-04 incident otherwise cost four blind fix rounds.
