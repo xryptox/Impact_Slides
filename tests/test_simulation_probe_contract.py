@@ -17,6 +17,13 @@ Plus DP-6 design-ledger probes (#233):
 10. computed tick font-weight below 600 (incl. CSS override of a 600 attribute)
 11. zero tick texts / zero furniture matches are failures
 
+Plus DP-6 extensions (#249):
+12. stub column share above 45% of table width
+13. support header cells missing band background or hairline borders
+14. forbidden #0A7D55 among non-semantic series colors / missing authored sky_blue
+15. metric-strip value font-size below 40px
+16. bar occupancy (bar width / category pitch) below 0.5
+
 Playwright is optional in CI (importorskip); must run locally when installed.
 """
 from __future__ import annotations
@@ -34,11 +41,23 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 
 from simulation_probe import (  # noqa: E402
+    DESIGN_LEDGER_BAR_OCCUPANCY_SLIDES,
     DESIGN_LEDGER_FURNITURE,
+    DESIGN_LEDGER_METRIC_FLOOR_SLIDES,
+    DESIGN_LEDGER_PALETTE_SLIDES,
+    DESIGN_LEDGER_STUB_RATIO_SLIDES,
+    DESIGN_LEDGER_SUPPORT_CHROME_SLIDES,
+    FORBIDDEN_SERIES_HEX,
+    SKY_BLUE_HEX,
     ProbeError,
     activate_slide,
     count_in_slide,
     furniture_presence,
+    measured_bar_occupancy,
+    measured_metric_value_styles,
+    measured_series_palette,
+    measured_stub_ratio,
+    measured_support_chrome,
     measured_tick_styles,
     painted_datalabel_lines,
     wait_for_paint_ready_charts,
@@ -165,6 +184,60 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
     <div class="outlined-support">ROE 35%</div>
   </div>
 </section>
+<section class="slide" data-slide-number="50" data-layout="stub_ok">
+  <table class="data-table" style="width:400px;table-layout:fixed">
+    <colgroup><col style="width:120px"/><col style="width:140px"/><col style="width:140px"/></colgroup>
+    <thead><tr><th class="stub">Metric</th><th>Q1</th><th>Q2</th></tr></thead>
+    <tbody><tr><td class="stub">Revenue</td><td>1</td><td>2</td></tr></tbody>
+  </table>
+</section>
+<section class="slide" data-slide-number="51" data-layout="stub_wide">
+  <table class="data-table" style="width:400px;table-layout:fixed">
+    <colgroup><col style="width:240px"/><col style="width:80px"/><col style="width:80px"/></colgroup>
+    <thead><tr><th class="stub">Metric</th><th>Q1</th><th>Q2</th></tr></thead>
+    <tbody><tr><td class="stub">Revenue</td><td>1</td><td>2</td></tr></tbody>
+  </table>
+</section>
+<section class="slide" data-slide-number="52" data-layout="chrome_ok">
+  <div class="support-table category-aligned" style="position:relative;height:60px;width:400px">
+    <div class="support-cat-cell head" style="position:absolute;left:40px;top:0;width:80px;height:24px;
+      background:#1B3A6B;color:#fff;border:1px solid #1B3A6B;box-sizing:border-box">G&S</div>
+    <div class="support-cat-stub head" style="position:absolute;left:0;top:0;width:36px;height:24px;
+      background:#1B3A6B;color:#fff;border:1px solid #1B3A6B;box-sizing:border-box">%</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="53" data-layout="chrome_plain">
+  <div class="support-table category-aligned" style="position:relative;height:60px;width:400px">
+    <div class="support-cat-cell head" style="position:absolute;left:40px;top:0;width:80px;height:24px;
+      background:#ffffff;color:#000;border:0;box-sizing:border-box">G&S</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="54" data-layout="palette_ok">
+  <canvas id="c54" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="55" data-layout="palette_forbid">
+  <canvas id="c55" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="56" data-layout="palette_no_sky">
+  <canvas id="c56" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="57" data-layout="metric_ok">
+  <div class="metric-strip">
+    <div class="metric-cell"><p class="metric-value" style="font-size:44px">3,400+</p></div>
+    <div class="metric-cell"><p class="metric-value" style="font-size:44px">300+</p></div>
+  </div>
+</section>
+<section class="slide" data-slide-number="58" data-layout="metric_small">
+  <div class="metric-strip">
+    <div class="metric-cell"><p class="metric-value" style="font-size:28px">3,400+</p></div>
+  </div>
+</section>
+<section class="slide" data-slide-number="59" data-layout="bar_ok">
+  <canvas id="c59" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="60" data-layout="bar_thin">
+  <canvas id="c60" width="200" height="100"></canvas>
+</section>
 <script>
 // Fake Chart registry: options.plugins.datalabels is display-only (pre-bind
 // trap), while $datalabels._labels[*].model().lines holds painted strings.
@@ -212,6 +285,48 @@ function __paintChart(opts) {{
   }});
   // Already paint-ready multi-check baseline.
   document.getElementById('c36').__fakeChart = __paintChart({{}});
+  function __seriesChart(colors, elements) {{
+    var chart = __paintChart({{ elements: elements }});
+    chart.data = {{
+      labels: ['Q1', 'Q2'],
+      datasets: colors.map(function (c, i) {{
+        return {{
+          label: 's' + i,
+          backgroundColor: c,
+          borderColor: c,
+          data: [1, 2],
+        }};
+      }})
+    }};
+    var els = elements || [{{ x: 20, y: 40, skip: false, width: 60, height: 30 }}];
+    chart.getDatasetMeta = function () {{
+      return __paintMeta(false, els);
+    }};
+    chart.config = {{ type: 'bar' }};
+    return chart;
+  }}
+  document.getElementById('c54').__fakeChart = __seriesChart(
+    ['#1B3A6B', '#80C8FF'],
+    [{{ x: 20, y: 40, skip: false, width: 60, height: 30 }}]
+  );
+  document.getElementById('c55').__fakeChart = __seriesChart(
+    ['#0A7D55', '#1B3A6B'],
+    [{{ x: 20, y: 40, skip: false, width: 60, height: 30 }}]
+  );
+  document.getElementById('c56').__fakeChart = __seriesChart(
+    ['#1B3A6B', '#006FCF'],
+    [{{ x: 20, y: 40, skip: false, width: 60, height: 30 }}]
+  );
+  // pitch = 180/2 = 90; bar 60 => ratio 0.667 >= 0.5
+  document.getElementById('c59').__fakeChart = __seriesChart(
+    ['#1B3A6B'],
+    [{{ x: 20, y: 40, skip: false, width: 60, height: 30 }}]
+  );
+  // bar 20 => ratio 0.222 < 0.5
+  document.getElementById('c60').__fakeChart = __seriesChart(
+    ['#1B3A6B'],
+    [{{ x: 20, y: 40, skip: false, width: 20, height: 30 }}]
+  );
 }})();
 </script>
 </body></html>
@@ -523,3 +638,84 @@ def test_design_ledger_s21_shares_line_not_heading(page):
             spec["selector"],
             expected_text=spec["expected_text"],
         )
+
+
+def test_design_ledger_extension_slide_maps():
+    """#249 maps pin the V1–V3 fidelity slides the sim must probe."""
+    assert DESIGN_LEDGER_STUB_RATIO_SLIDES == (3, 16, 31, 32, 33, 34, 35, 36, 37)
+    assert DESIGN_LEDGER_SUPPORT_CHROME_SLIDES == (4, 19)
+    assert DESIGN_LEDGER_PALETTE_SLIDES[24]["require_sky_blue"] is False
+    assert DESIGN_LEDGER_PALETTE_SLIDES[28]["require_sky_blue"] is True
+    assert DESIGN_LEDGER_METRIC_FLOOR_SLIDES == (8, 12)
+    assert DESIGN_LEDGER_BAR_OCCUPANCY_SLIDES == (28,)
+    assert FORBIDDEN_SERIES_HEX.upper() == "#0A7D55"
+    assert SKY_BLUE_HEX.upper() == "#80C8FF"
+
+
+def test_measured_stub_ratio_happy(page):
+    row = measured_stub_ratio(page, 50, "stub_ok")
+    assert row["slide_number"] == 50
+    assert row["max_stub_share"] <= 0.45
+    assert row["ok"] is True
+
+
+def test_measured_stub_ratio_rejects_wide_stub(page):
+    """Mutation 12: stub > 45% of table width must fail."""
+    with pytest.raises(ProbeError, match=r"stub share|0\.45|cap"):
+        measured_stub_ratio(page, 51, "stub_wide")
+
+
+def test_measured_support_chrome_happy(page):
+    row = measured_support_chrome(page, 52, "chrome_ok")
+    assert row["head_count"] >= 1
+    assert row["ok"] is True
+    assert row["heads"][0]["border_top_px"] >= 1.0
+
+
+def test_measured_support_chrome_rejects_plain_header(page):
+    """Mutation 13: white header without hairline is not authored chrome."""
+    with pytest.raises(ProbeError, match=r"band background|hairline|border"):
+        measured_support_chrome(page, 53, "chrome_plain")
+
+
+def test_measured_series_palette_happy(page):
+    row = measured_series_palette(page, 54, "palette_ok", require_sky_blue=True)
+    assert row["has_sky_blue"] is True
+    assert FORBIDDEN_SERIES_HEX.upper() not in row["colors"]
+    assert row["ok"] is True
+
+
+def test_measured_series_palette_rejects_forbidden_green(page):
+    """Mutation 14a: #0A7D55 on a non-semantic series must fail."""
+    with pytest.raises(ProbeError, match=r"forbidden|0A7D55|#0A7D55"):
+        measured_series_palette(page, 55, "palette_forbid")
+
+
+def test_measured_series_palette_requires_authored_sky(page):
+    """Mutation 14b: missing authored sky_blue must fail when required."""
+    with pytest.raises(ProbeError, match=r"sky_blue|80C8FF"):
+        measured_series_palette(page, 56, "palette_no_sky", require_sky_blue=True)
+
+
+def test_measured_metric_value_styles_happy(page):
+    row = measured_metric_value_styles(page, 57, "metric_ok")
+    assert row["min_font_size_px"] >= 40
+    assert row["ok"] is True
+
+
+def test_measured_metric_value_styles_rejects_subfloor(page):
+    """Mutation 15: metric value below 40px must fail."""
+    with pytest.raises(ProbeError, match=r"font-size|floor|40"):
+        measured_metric_value_styles(page, 58, "metric_small")
+
+
+def test_measured_bar_occupancy_happy(page):
+    row = measured_bar_occupancy(page, 59, "bar_ok")
+    assert row["min_occupancy"] >= 0.5
+    assert row["ok"] is True
+
+
+def test_measured_bar_occupancy_rejects_thin_bars(page):
+    """Mutation 16: bar width / pitch below 0.5 must fail."""
+    with pytest.raises(ProbeError, match=r"occupancy|0\.5|floor"):
+        measured_bar_occupancy(page, 60, "bar_thin")

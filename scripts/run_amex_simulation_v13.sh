@@ -144,10 +144,26 @@ For every entry in DESIGN_LEDGER_FURNITURE call furniture_presence with that
 selector and expected_text. Zero matches or missing text are failures, never
 a green row.
 
+Also run the #249 DP-6 extension probes (import the DESIGN_LEDGER_* maps and
+helpers from simulation_probe.py; zero matches / ProbeError = failure):
+- measured_stub_ratio on DESIGN_LEDGER_STUB_RATIO_SLIDES (s3/s16/s31-37;
+  stub share <= 0.45)
+- measured_support_chrome on DESIGN_LEDGER_SUPPORT_CHROME_SLIDES (s4/s19;
+  computed band background + hairline borders)
+- measured_series_palette on DESIGN_LEDGER_PALETTE_SLIDES (s24/s28; no
+  #0A7D55 series fill; require_sky_blue per map)
+- measured_metric_value_styles on DESIGN_LEDGER_METRIC_FLOOR_SLIDES (s8/s12;
+  value font-size >= 40px)
+- measured_bar_occupancy on DESIGN_LEDGER_BAR_OCCUPANCY_SLIDES (s28;
+  bar width / category pitch >= 0.5)
+
 Record one design-ledger object per slide in comparison_manifest.json:
   slide_number, layout, tick_count, min_font_size_px, min_font_weight,
-  furniture rows (selector, expected_text, count, ok), and overall ok.
-Non-chart slides record design_ledger: {ok: true, ticks: null, furniture: []}.
+  furniture rows (selector, expected_text, count, ok), #249 extension rows
+  present for the slides above (stub_ratio / support_chrome / palette /
+  metric_floor / bar_occupancy), and overall ok.
+Non-chart slides without an extension target record design_ledger:
+  {ok: true, ticks: null, furniture: []}.
 A ProbeError is a capture/design failure for that slide — do not invent a
 green row. Classification may add "design-parity verified" only when the
 slide's design ledger is ok.

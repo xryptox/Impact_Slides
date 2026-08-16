@@ -12,6 +12,11 @@ Usage (from a Playwright page that already loaded a deck HTML)::
         activate_slide,
         count_in_slide,
         furniture_presence,
+        measured_bar_occupancy,
+        measured_metric_value_styles,
+        measured_series_palette,
+        measured_stub_ratio,
+        measured_support_chrome,
         measured_tick_styles,
         painted_datalabel_lines,
         wait_for_paint_ready_charts,
@@ -26,6 +31,7 @@ Usage (from a Playwright page that already loaded a deck HTML)::
 """
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 
@@ -116,6 +122,25 @@ class ProbeError(RuntimeError):
 # painted SVG overlay (Chart.js scale ticks are display:false).
 TICK_FONT_SIZE_FLOOR_PX = 20
 TICK_FONT_WEIGHT_FLOOR = 600
+# DP-6 extensions (#249): V1–V3 fidelity properties that must not regress silently.
+TABLE_STUB_MAX_SHARE = 0.45
+METRIC_VALUE_FLOOR_PX = 40
+BAR_OCCUPANCY_FLOOR = 0.5
+# Theme success green is semantic-only (#248); never a non-semantic series fill.
+FORBIDDEN_SERIES_HEX = "#0A7D55"
+SKY_BLUE_HEX = "#80C8FF"
+# Table slides that must keep stub ≤ 45% (s29–30 are narrative; annex starts 31).
+DESIGN_LEDGER_STUB_RATIO_SLIDES: tuple[int, ...] = (
+    3, 16, 31, 32, 33, 34, 35, 36, 37,
+)
+DESIGN_LEDGER_SUPPORT_CHROME_SLIDES: tuple[int, ...] = (4, 19)
+# s28 authors sky_blue stacks; s24 is a single navy series (no sky required).
+DESIGN_LEDGER_PALETTE_SLIDES: dict[int, dict[str, bool]] = {
+    24: {"require_sky_blue": False},
+    28: {"require_sky_blue": True},
+}
+DESIGN_LEDGER_METRIC_FLOOR_SLIDES: tuple[int, ...] = (8, 12)
+DESIGN_LEDGER_BAR_OCCUPANCY_SLIDES: tuple[int, ...] = (28,)
 
 
 def _identity(slide_number: int, layout: str) -> dict[str, Any]:
@@ -720,5 +745,515 @@ def furniture_presence(
     if expected_text:
         out["expected_text"] = expected_text
     out["count"] = int(result["count"])
+    out["ok"] = True
+    return out
+
+
+def _normalize_hex_color(raw: Any) -> str | None:
+    """Normalize #rgb / #rrggbb / rgb()/rgba() to uppercase #RRGGBB."""
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if not text or text.lower() in {"transparent", "inherit", "initial", "none"}:
+        return None
+    if text.startswith("#"):
+        h = text[1:]
+        if len(h) == 3 and re.fullmatch(r"[0-9a-fA-F]{3}", h):
+            h = "".join(ch * 2 for ch in h)
+        if len(h) == 6 and re.fullmatch(r"[0-9a-fA-F]{6}", h):
+            return f"#{h.upper()}"
+        if len(h) == 8 and re.fullmatch(r"[0-9a-fA-F]{8}", h):
+            return f"#{h[:6].upper()}"
+        return None
+    m = re.fullmatch(
+        r"rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*[0-9.]+)?\s*\)",
+        text,
+        flags=re.I,
+    )
+    if not m:
+        return None
+    r, g, b = (max(0, min(255, int(float(m.group(i))))) for i in (1, 2, 3))
+    return f"#{r:02X}{g:02X}{b:02X}"
+
+
+def measured_stub_ratio(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+    *,
+    max_share: float = TABLE_STUB_MAX_SHARE,
+) -> dict[str, Any]:
+    """Assert painted stub column width ≤ *max_share* of table width (DP-7).
+
+    Measures the first visible ``th.stub``/``td.stub`` (or annex stub) against
+    its table's bounding box. Zero tables / zero stub cells fail.
+    """
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    result = page.evaluate(
+        """({sn}) => {
+          const slide = document.querySelector(
+            'section.slide[data-slide-number="' + sn + '"]'
+          );
+          if (!slide) {
+            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+          }
+          const tables = [...slide.querySelectorAll(
+            'table.data-table, table.period-comparison, table.annex-table,'
+            + ' table.support-table, table.grouped-annex-table, .grouped-annex table'
+          )].filter((t) => {
+            const r = t.getBoundingClientRect();
+            return r.width > 1 && r.height > 1;
+          });
+          if (!tables.length) {
+            return {ok: false, err: '0 painted tables on slide ' + sn};
+          }
+          const rows = [];
+          for (const table of tables) {
+            const tr = table.getBoundingClientRect();
+            const stub = table.querySelector(
+              'th.stub, td.stub, th.gl-annex-stub, td.gl-annex-stub,'
+              + ' .gl-annex-stub, colgroup col:first-child'
+            );
+            if (!stub) {
+              return {
+                ok: false,
+                err: '0 stub cells in table on slide ' + sn,
+              };
+            }
+            let stubW;
+            if (stub.tagName === 'COL') {
+              stubW = parseFloat(String(stub.style.width || '').replace('px', '')) || 0;
+              if (!(stubW > 0)) {
+                const cell = table.querySelector('th.stub, td.stub, th.gl-annex-stub, td.gl-annex-stub');
+                stubW = cell ? cell.getBoundingClientRect().width : 0;
+              }
+            } else {
+              stubW = stub.getBoundingClientRect().width;
+            }
+            if (!(tr.width > 0) || !(stubW > 0)) {
+              return {
+                ok: false,
+                err: 'unreadable stub/table width on slide ' + sn
+                  + ' (stub=' + stubW + ', table=' + tr.width + ')',
+              };
+            }
+            rows.push({
+              table_width_px: tr.width,
+              stub_width_px: stubW,
+              share: stubW / tr.width,
+            });
+          }
+          return {ok: true, tables: rows};
+        }""",
+        {"sn": sn},
+    )
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "measured_stub_ratio failed"
+        raise ProbeError(err)
+    tables = list(result["tables"] or [])
+    max_observed = max(float(t["share"]) for t in tables)
+    if max_observed > float(max_share) + 1e-9:
+        raise ProbeError(
+            f"stub share {max_observed:.3f} exceeds cap {float(max_share):.2f} "
+            f"on slide {sn}"
+        )
+    out = dict(identity)
+    out["tables"] = tables
+    out["table_count"] = len(tables)
+    out["max_stub_share"] = max_observed
+    out["max_share"] = float(max_share)
+    out["ok"] = True
+    return out
+
+
+def measured_support_chrome(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+) -> dict[str, Any]:
+    """Assert visible category-aligned support headers carry band + hairlines.
+
+    Targets ``.support-table.category-aligned .support-cat-cell.head`` (and
+    matching stubs). Zero visible headers fail. Computed style is authoritative.
+    """
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    result = page.evaluate(
+        """({sn}) => {
+          const slide = document.querySelector(
+            'section.slide[data-slide-number="' + sn + '"]'
+          );
+          if (!slide) {
+            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+          }
+          const vis = (el) => {
+            const r = el.getBoundingClientRect();
+            return r.width > 1 && r.height > 1;
+          };
+          const heads = [...slide.querySelectorAll(
+            '.support-table.category-aligned .support-cat-cell.head,'
+            + ' .support-table.category-aligned .support-cat-stub.head'
+          )].filter(vis);
+          if (!heads.length) {
+            return {
+              ok: false,
+              err: '0 visible support header cells on slide ' + sn,
+            };
+          }
+          const pack = (el) => {
+            const s = getComputedStyle(el);
+            return {
+              bg: s.backgroundColor,
+              borderTop: s.borderTopWidth,
+              borderRight: s.borderRightWidth,
+              borderBottom: s.borderBottomWidth,
+              borderLeft: s.borderLeftWidth,
+            };
+          };
+          return {ok: true, heads: heads.map(pack)};
+        }""",
+        {"sn": sn},
+    )
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "measured_support_chrome failed"
+        raise ProbeError(err)
+    heads: list[dict[str, Any]] = []
+    for raw in result["heads"]:
+        bg = _normalize_hex_color(raw.get("bg"))
+        if bg is None:
+            raise ProbeError(
+                f"support header missing band background on slide {sn}: "
+                f"bg={raw.get('bg')!r}"
+            )
+        # Transparent / pure white is not a band fill.
+        if bg in {"#FFFFFF", "#00000000"}:
+            raise ProbeError(
+                f"support header missing band background on slide {sn}: "
+                f"bg={raw.get('bg')!r}"
+            )
+        borders = [
+            str(raw.get("borderTop") or ""),
+            str(raw.get("borderRight") or ""),
+            str(raw.get("borderBottom") or ""),
+            str(raw.get("borderLeft") or ""),
+        ]
+
+        def _border_px(v: str) -> float:
+            try:
+                return float(v.replace("px", "").strip() or 0)
+            except ValueError:
+                return 0.0
+
+        if not any(_border_px(b) >= 1.0 for b in borders):
+            raise ProbeError(
+                f"support header missing hairline border on slide {sn}: "
+                f"borders={borders!r}"
+            )
+        heads.append(
+            {
+                "background": bg,
+                "border_top_px": _border_px(borders[0]),
+                "border_right_px": _border_px(borders[1]),
+                "border_bottom_px": _border_px(borders[2]),
+                "border_left_px": _border_px(borders[3]),
+            }
+        )
+    out = dict(identity)
+    out["heads"] = heads
+    out["head_count"] = len(heads)
+    out["ok"] = True
+    return out
+
+
+def measured_series_palette(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+    *,
+    forbid_hex: str = FORBIDDEN_SERIES_HEX,
+    require_sky_blue: bool = False,
+    sky_hex: str = SKY_BLUE_HEX,
+) -> dict[str, Any]:
+    """Assert non-semantic series colors avoid *forbid_hex*; optional sky presence.
+
+    Reads Chart.js dataset ``backgroundColor`` / ``borderColor`` after paint.
+    Zero datasets fail. *forbid_hex* among series colors is a probe failure.
+    """
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    measure_js = (
+        "({sn}) => {"
+        + _CHART_FROM_CANVAS
+        + """
+          const slide = document.querySelector(
+            'section.slide[data-slide-number="' + sn + '"]'
+          );
+          if (!slide) {
+            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+          }
+          const colors = [];
+          const canvases = slide.querySelectorAll('canvas');
+          if (!canvases.length) {
+            return {ok: false, err: '0 chart canvases on slide ' + sn};
+          }
+          for (let i = 0; i < canvases.length; i++) {
+            const chart = chartFromCanvas(canvases[i]);
+            if (!chart || !chart.data || !chart.data.datasets) {
+              return {
+                ok: false,
+                err: 'missing chart datasets on slide ' + sn + ' canvas ' + i,
+              };
+            }
+            const datasets = chart.data.datasets;
+            if (!datasets.length) {
+              return {ok: false, err: '0 datasets on slide ' + sn + ' canvas ' + i};
+            }
+            for (let di = 0; di < datasets.length; di++) {
+              const ds = datasets[di];
+              const bag = [];
+              const push = (c) => {
+                if (c == null) return;
+                if (Array.isArray(c)) c.forEach(push);
+                else bag.push(String(c));
+              };
+              push(ds.backgroundColor);
+              push(ds.borderColor);
+              if (!bag.length) {
+                return {
+                  ok: false,
+                  err: 'dataset ' + di + ' has no series colors on slide ' + sn,
+                };
+              }
+              colors.push({
+                canvas: i,
+                dataset: di,
+                label: ds.label || '',
+                colors: bag,
+              });
+            }
+          }
+          return {ok: true, series: colors};
+        }"""
+    )
+    result = page.evaluate(measure_js, {"sn": sn})
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "measured_series_palette failed"
+        raise ProbeError(err)
+    forbid = (_normalize_hex_color(forbid_hex) or str(forbid_hex).upper())
+    sky = (_normalize_hex_color(sky_hex) or str(sky_hex).upper())
+    series_out: list[dict[str, Any]] = []
+    all_hex: list[str] = []
+    for raw in result["series"]:
+        norms: list[str] = []
+        for c in raw.get("colors") or []:
+            hx = _normalize_hex_color(c)
+            if hx is None:
+                raise ProbeError(
+                    f"unreadable series color on slide {sn}: {c!r}"
+                )
+            norms.append(hx)
+            all_hex.append(hx)
+            if hx == forbid:
+                raise ProbeError(
+                    f"forbidden series color {forbid} on slide {sn} "
+                    f"(dataset={raw.get('label')!r})"
+                )
+        series_out.append(
+            {
+                "canvas": raw.get("canvas"),
+                "dataset": raw.get("dataset"),
+                "label": raw.get("label") or "",
+                "colors": norms,
+            }
+        )
+    if not all_hex:
+        raise ProbeError(f"0 series colors on slide {sn}")
+    if require_sky_blue and sky not in all_hex:
+        raise ProbeError(
+            f"authored sky_blue {sky} missing from series colors on slide {sn}"
+        )
+    out = dict(identity)
+    out["series"] = series_out
+    out["colors"] = sorted(set(all_hex))
+    out["has_sky_blue"] = sky in all_hex
+    out["ok"] = True
+    return out
+
+
+def measured_metric_value_styles(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+    *,
+    size_floor_px: int = METRIC_VALUE_FLOOR_PX,
+) -> dict[str, Any]:
+    """Assert metric-strip / hero metric values meet the painted px floor.
+
+    Targets ``.metric-strip .metric-value`` and hero ``.metric-value`` /
+    ``.driver-value``. Zero matches fail. Computed font-size is authoritative.
+    """
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    result = page.evaluate(
+        """({sn}) => {
+          const slide = document.querySelector(
+            'section.slide[data-slide-number="' + sn + '"]'
+          );
+          if (!slide) {
+            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+          }
+          const nodes = slide.querySelectorAll(
+            '.metric-strip .metric-value, .metric-value, .driver-value'
+          );
+          if (!nodes.length) {
+            return {ok: false, err: '0 metric values on slide ' + sn};
+          }
+          const values = [];
+          nodes.forEach((el) => {
+            const cs = getComputedStyle(el);
+            values.push({
+              text: (el.textContent || '').trim(),
+              font_size_px: parseFloat(cs.fontSize),
+            });
+          });
+          return {ok: true, values};
+        }""",
+        {"sn": sn},
+    )
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "measured_metric_value_styles failed"
+        raise ProbeError(err)
+    values: list[dict[str, Any]] = []
+    for raw in result["values"]:
+        size = float(raw.get("font_size_px") or 0)
+        if not (size > 0):
+            raise ProbeError(
+                f"unreadable metric value font-size on slide {sn}: "
+                f"{raw.get('font_size_px')!r}"
+            )
+        values.append({"text": raw.get("text") or "", "font_size_px": size})
+    min_size = min(v["font_size_px"] for v in values)
+    if min_size < float(size_floor_px):
+        raise ProbeError(
+            f"metric value font-size {min_size}px below floor "
+            f"{int(size_floor_px)} on slide {sn}"
+        )
+    out = dict(identity)
+    out["values"] = values
+    out["value_count"] = len(values)
+    out["min_font_size_px"] = min_size
+    out["ok"] = True
+    return out
+
+
+def measured_bar_occupancy(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+    *,
+    min_ratio: float = BAR_OCCUPANCY_FLOOR,
+) -> dict[str, Any]:
+    """Assert painted bar width / category pitch ≥ *min_ratio* (DP-7 sparse).
+
+    Uses Chart.js element geometry after paint-ready. Zero bar elements fail.
+    """
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    measure_js = (
+        "({sn}) => {"
+        + _CHART_FROM_CANVAS
+        + """
+          const slide = document.querySelector(
+            'section.slide[data-slide-number="' + sn + '"]'
+          );
+          if (!slide) {
+            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+          }
+          const canvases = slide.querySelectorAll('canvas');
+          if (!canvases.length) {
+            return {ok: false, err: '0 chart canvases on slide ' + sn};
+          }
+          const charts = [];
+          for (let i = 0; i < canvases.length; i++) {
+            const chart = chartFromCanvas(canvases[i]);
+            if (!chart) {
+              return {ok: false, err: 'missing chart on slide ' + sn + ' canvas ' + i};
+            }
+            const area = chart.chartArea || {};
+            const areaW = (typeof area.width === 'number')
+              ? area.width
+              : (Number(area.right) - Number(area.left));
+            const labels = (chart.data && chart.data.labels) || [];
+            const nCat = labels.length;
+            if (!(nCat > 0) || !(areaW > 0)) {
+              return {
+                ok: false,
+                err: 'unreadable category pitch on slide ' + sn
+                  + ' (nCat=' + nCat + ', areaW=' + areaW + ')',
+              };
+            }
+            const pitch = areaW / nCat;
+            let maxBar = 0;
+            let barCount = 0;
+            const datasets = (chart.data && chart.data.datasets) || [];
+            for (let di = 0; di < datasets.length; di++) {
+              if (typeof chart.isDatasetVisible === 'function'
+                  && !chart.isDatasetVisible(di)) continue;
+              const meta = chart.getDatasetMeta
+                ? chart.getDatasetMeta(di) : null;
+              if (!meta || meta.hidden) continue;
+              const t = (meta.type || (chart.config && chart.config.type) || '')
+                .toString().toLowerCase();
+              // Stacked/grouped bars only; skip pure line datasets on combos.
+              if (t && t !== 'bar') continue;
+              const els = meta.data || [];
+              for (let ei = 0; ei < els.length; ei++) {
+                const el = els[ei];
+                if (!el || el.skip) continue;
+                const w = Math.abs(Number(el.width) || 0);
+                const h = Math.abs(Number(el.height) || 0);
+                // Vertical bars: width is thickness; horizontal: height.
+                const thick = Math.max(w, 0);
+                if (thick > 0 || h > 0) {
+                  barCount += 1;
+                  if (thick > maxBar) maxBar = thick;
+                }
+              }
+            }
+            if (barCount === 0 || !(maxBar > 0)) {
+              return {
+                ok: false,
+                err: '0 painted bars on slide ' + sn + ' canvas ' + i,
+              };
+            }
+            charts.push({
+              canvas: i,
+              n_cat: nCat,
+              category_pitch: pitch,
+              bar_width: maxBar,
+              ratio: maxBar / pitch,
+              bar_count: barCount,
+            });
+          }
+          return {ok: true, charts};
+        }"""
+    )
+    result = page.evaluate(measure_js, {"sn": sn})
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "measured_bar_occupancy failed"
+        raise ProbeError(err)
+    charts = list(result["charts"] or [])
+    min_observed = min(float(c["ratio"]) for c in charts)
+    if min_observed + 1e-9 < float(min_ratio):
+        raise ProbeError(
+            f"bar occupancy {min_observed:.3f} below floor {float(min_ratio):.2f} "
+            f"on slide {sn}"
+        )
+    out = dict(identity)
+    out["charts"] = charts
+    out["chart_count"] = len(charts)
+    out["min_occupancy"] = min_observed
+    out["min_ratio"] = float(min_ratio)
     out["ok"] = True
     return out
