@@ -7,7 +7,8 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15;
 #229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows;
-#230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals).
+#230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals;
+#248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
 from __future__ import annotations
@@ -228,6 +229,24 @@ def spend_elbow_ann() -> list[dict]:
     ]
 
 
+def refresh_chip_ann() -> dict:
+    return {
+        "annotation_id": "s6-refresh",
+        "role": "event",
+        "text": "Refresh",
+        "anchor": {"type": "category", "category_id": "q3-25"},
+    }
+
+
+def tenx_callout_ann() -> dict:
+    return {
+        "annotation_id": "s8-10x",
+        "role": "explanation",
+        "text": "10x",
+        "anchor": {"type": "chart"},
+    }
+
+
 def _s18_nii(labs: list, vals: list) -> dict:
     chart = grouped_bar(
         "s18-nii",
@@ -438,7 +457,7 @@ def line_chart(
         cats.append({"category_id": cid, "label": str(c)})
     ser = []
     sused: set[str] = set()
-    colors = ["navy", "primary_blue", "neutral", "success"]
+    colors = ["navy", "primary_blue", "sky_blue", "neutral"]
     for si, (name, values, color) in enumerate(series):
         sid = _slug(name, sused, f"s{si}")
         style = None
@@ -500,7 +519,7 @@ def grouped_bar(
         cats.append({"category_id": cid, "label": str(c)})
     ser = []
     sused: set[str] = set()
-    colors = ["navy", "primary_blue", "success", "neutral"]
+    colors = ["navy", "primary_blue", "sky_blue", "neutral"]
     for si, (name, values, color) in enumerate(series):
         sid = _slug(name, sused, f"s{si}")
         ser.append(
@@ -614,7 +633,7 @@ def stacked_bar(
         cats.append({"category_id": cid, "label": str(c)})
     ser = []
     sused: set[str] = set()
-    colors = ["navy", "primary_blue", "success", "neutral", "warning", "primary_blue"]
+    colors = ["navy", "primary_blue", "sky_blue", "neutral", "warning", "primary_blue"]
     for si, (name, values, color) in enumerate(series):
         sid = _slug(name, sused, f"s{si}")
         ser.append(
@@ -870,7 +889,7 @@ def build() -> dict:
         fmt="pct_0",
         domain=("0", "12"),
     )
-    spend6["annotations"] = spend_elbow_ann()
+    spend6["annotations"] = spend_elbow_ann() + [refresh_chip_ann()]
     slides.append(
         ordinary(
             6,
@@ -983,6 +1002,17 @@ def build() -> dict:
     )
 
     # 8 lodging line + right-side KPI stack (PDF 3,400+ / 300+ / $600 / $550)
+    lodging8 = line_chart(
+        "s8-lodging",
+        cats,
+        [
+            ("FHR+THC", [40, 42, 45, 48, 50], "primary_blue"),
+            ("UCS Lodging", [5, 5, 5, 5, 5], "sky_blue"),
+        ],
+        fmt="pct_0",
+        domain=("0", "60"),
+    )
+    lodging8["annotations"] = [tenx_callout_ann()]
     slides.append(
         ordinary(
             8,
@@ -990,16 +1020,7 @@ def build() -> dict:
             "Membership Model Engagement: Proprietary Lodging Assets",
             "earnings",
             {
-                "chart": line_chart(
-                    "s8-lodging",
-                    cats,
-                    [
-                        ("FHR+THC", [40, 42, 45, 48, 50], "navy"),
-                        ("UCS Lodging", [5, 5, 5, 5, 5], "neutral"),
-                    ],
-                    fmt="pct_0",
-                    domain=("0", "60"),
-                ),
+                "chart": lodging8,
                 "support": {
                     "support_type": "metric_strip",
                     "surface_id": "s8-kpis",
@@ -1302,12 +1323,13 @@ def build() -> dict:
         header = steps15[0]
         labs15 = [r[0] for r in steps15[1:]]
         series15 = []
+        s15_colors = {"Write-offs": "primary_blue", "Reserve Build/(Release)": "sky_blue"}
         for ci, name in enumerate(header[1:]):
             series15.append(
                 (
                     str(name),
                     [r[ci + 1] if ci + 1 < len(r) else None for r in steps15[1:]],
-                    None,
+                    s15_colors.get(str(name)),
                 )
             )
         from decimal import Decimal, InvalidOperation
@@ -1333,6 +1355,13 @@ def build() -> dict:
             totals=["1150", "1405", "1287", "1414", "1251"],
         )
     sec15 = s15["visual_spec"].get("secondary_visual") or {}
+    support15 = outlined_from_v2(
+        "s15-reserve", sec15["steps_or_data"], fmt="pct_1"
+    )
+    # PDF Q2–Q4 reserve rate is 2.9% (#248 C-G′); Q1 / Q1'26 already match.
+    row15 = support15["table"]["rows"][0]["cells"]
+    for cid in ("q2-25", "q3-25", "q4-25"):
+        row15[cid]["value"] = "2.9"
     slides.append(
         ordinary(
             15,
@@ -1341,11 +1370,7 @@ def build() -> dict:
             "earnings",
             {
                 "chart": chart15,
-                "support": outlined_from_v2(
-                    "s15-reserve",
-                    sec15["steps_or_data"],
-                    fmt="pct_1",
-                ),
+                "support": support15,
             },
             subtitle=s15["content"].get("subtitle") or None,
             disclosure=disclosure_from_text(
@@ -1902,7 +1927,7 @@ def build() -> dict:
     ][0]
     tiles = s28["visual_spec"]["primary_visual"]["tiles"]
 
-    def tile_to_stacked(tile, sid, totals):
+    def tile_to_stacked(tile, sid, totals, colors):
         steps = tile["steps_or_data"]
         labs = [r[0] for r in steps[1:]]
         series = []
@@ -1911,7 +1936,7 @@ def build() -> dict:
                 (
                     str(name),
                     [r[ci + 1] if ci + 1 < len(r) else None for r in steps[1:]],
-                    None,
+                    colors[ci],
                 )
             )
         chart = stacked_bar(
@@ -1927,9 +1952,19 @@ def build() -> dict:
         return chart
 
     chart_tiles = [t for t in tiles if t.get("kind") == "chart"][:2]
-    p0 = tile_to_stacked(chart_tiles[0], "s28-fund", ["210", "219"])
+    p0 = tile_to_stacked(
+        chart_tiles[0],
+        "s28-fund",
+        ["210", "219"],
+        ["navy", "primary_blue", "sky_blue"],
+    )
     p0["subtitle"] = "$ in billions"
-    p1 = tile_to_stacked(chart_tiles[1], "s28-dep", ["151", "157"])
+    p1 = tile_to_stacked(
+        chart_tiles[1],
+        "s28-dep",
+        ["151", "157"],
+        ["navy", "primary_blue", "sky_blue", "neutral"],
+    )
     p1["subtitle"] = "$ in billions"
     p1["annotations"] = [
         {

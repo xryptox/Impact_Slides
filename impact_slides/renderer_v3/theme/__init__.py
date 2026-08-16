@@ -40,7 +40,8 @@ _PALETTE: tuple[PaletteEntry, ...] = (
         "series_identity", "fill", "text_on_light", "border",
     })),
     PaletteEntry("sky_blue", "#80C8FF", frozenset({
-        "fill",  # non-text fill only (D131)
+        "series_identity",  # fill-identity accent; not text-on-white (D43/#248)
+        "fill",
     })),
     PaletteEntry("success", "#0A7D55", frozenset({
         "series_identity", "fill", "text_on_light",
@@ -82,12 +83,12 @@ _PALETTE: tuple[PaletteEntry, ...] = (
 
 _BY_KEY: Mapping[str, PaletteEntry] = {e.key: e for e in _PALETTE}
 
-# D43 default series cycles — identity-safe keys only (D131).
+# D43 default series cycles — success reserved for semantic +/- (#248).
 _LINE_SERIES_KEYS: tuple[str, ...] = (
-    "navy", "primary_blue", "success", "neutral", "warning",
+    "navy", "primary_blue", "sky_blue", "neutral", "warning",
 )
 _BAR_SERIES_KEYS: tuple[str, ...] = (
-    "primary_blue", "navy", "success", "neutral", "warning",
+    "primary_blue", "navy", "sky_blue", "neutral", "warning",
 )
 
 _LINE_STYLE_KEYS: tuple[str, ...] = ("solid", "dashed", "dotted", "dash_dot")

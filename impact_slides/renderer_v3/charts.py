@@ -2373,7 +2373,7 @@ def _paint_combo_svg(
                     continue
                 if mark == "bar" and not plan["show_ordinary_values"]:
                     continue
-                label_color = series_color if place["class"] == "leader" or mark == "line" else ink
+                label_color = place.get("color") or ink
                 tx, ty = place["x"], place["y"]
                 text = place.get("text")
                 if text is None:
@@ -2384,7 +2384,7 @@ def _paint_combo_svg(
                         f'<line x1="{place.get("anchor_x", tx):.1f}" '
                         f'y1="{place.get("anchor_y", ty):.1f}" '
                         f'x2="{tx:.1f}" y2="{ty:.1f}" '
-                        f'stroke="{_e(series_color)}" stroke-width="1" opacity="0.7"/>'
+                        f'stroke="{_e(place.get("connector_color") or series_color)}" stroke-width="1" opacity="0.7"/>'
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
@@ -2410,11 +2410,10 @@ def _paint_combo_svg(
                 )
             elif kind == "segment" and plan.get("show_segment_labels"):
                 tx, ty = place["x"], place["y"]
-                series_color = series_by_id[place["series_id"]]["color"]
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
                     f'font-size="{plan["role_sizes"]["segment_labels"]}" font-weight="{_CHART_LABEL_WEIGHT}" '
-                    f'font-variant-numeric="tabular-nums" fill="{_e(series_color)}" '
+                    f'font-variant-numeric="tabular-nums" fill="{_e(place.get("color") or ink)}" '
                     f'data-placement="segment">{_e(place["text"])}</text>'
                 )
             elif kind == "stack_total" and plan.get("show_stack_totals"):
@@ -2437,7 +2436,7 @@ def _paint_combo_svg(
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="start" '
                     f'font-size="{ser_px}" '
-                    f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
+                    f'fill="{_e(place.get("color") or ink)}" '
                     f'data-placement="endpoint">{_e(name)}</text>'
                 )
 
@@ -2560,17 +2559,18 @@ def _paint_line_svg(
                 continue
             if place.get("kind") == "value" and plan["show_ordinary_values"]:
                 tx, ty = place["x"], place["y"]
+                series_color = series_by_id[p["series_id"]]["color"]
                 if place["class"] == "leader":
                     parts.append(
                         f'<line x1="{p["x"]:.1f}" y1="{p["y"]:.1f}" '
                         f'x2="{tx:.1f}" y2="{ty:.1f}" '
-                        f'stroke="{_e(series_by_id[p["series_id"]]["color"])}" '
+                        f'stroke="{_e(place.get("connector_color") or series_color)}" '
                         f'stroke-width="1" opacity="0.7"/>'
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
                     f'font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
-                    f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
+                    f'fill="{_e(place.get("color") or _label_ink_on_white(series_color))}" '
                     f'data-placement="{place["class"]}">{_e(p["visible"])}</text>'
                 )
             if (
@@ -2579,10 +2579,11 @@ def _paint_line_svg(
             ):
                 tx, ty = place["x"], place["y"]
                 name = series_by_id[p["series_id"]]["name"]
+                series_color = series_by_id[p["series_id"]]["color"]
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="start" '
                     f'font-size="{ser_px}" '
-                    f'fill="{_e(series_by_id[p["series_id"]]["color"])}" '
+                    f'fill="{_e(place.get("color") or _label_ink_on_white(series_color))}" '
                     f'data-placement="endpoint">{_e(name)}</text>'
                 )
 
@@ -2758,16 +2759,15 @@ def _paint_bar_svg(
                 continue
             kind = place.get("kind")
             if kind == "value" and plan["show_ordinary_values"]:
-                # D80/D303: ordinary bar values are navy; leaders may use series color.
                 series_color = series_by_id[place["series_id"]]["color"]
-                label_color = series_color if place["class"] == "leader" else ink
+                label_color = place.get("color") or ink
                 tx, ty = place["x"], place["y"]
                 if place["class"] == "leader":
                     parts.append(
                         f'<line x1="{place.get("anchor_x", tx):.1f}" '
                         f'y1="{place.get("anchor_y", ty):.1f}" '
                         f'x2="{tx:.1f}" y2="{ty:.1f}" '
-                        f'stroke="{_e(series_color)}" stroke-width="1" opacity="0.7"/>'
+                        f'stroke="{_e(place.get("connector_color") or series_color)}" stroke-width="1" opacity="0.7"/>'
                     )
                 parts.append(
                     f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
@@ -3068,6 +3068,14 @@ def chart_boot_script() -> str:
 
 def _e(text: Any) -> str:
     return html.escape(str(text), quote=True)
+
+
+def _label_ink_on_white(series_color: str) -> str:
+    navy = resolve_color("navy", role="text_on_light")
+    white = resolve_color("white", role="surface")
+    if contrast_ratio(series_color, white) < 4.5:
+        return navy
+    return series_color
 
 
 def _ordinary_values_show(chart: AxisChartVisual) -> bool:
@@ -4502,6 +4510,8 @@ def _place_bar_labels(
     """Outside-end ordinary bar values (D71–D73); first/last retained."""
     placements: list[dict[str, Any]] = []
     occupied: list[tuple[float, float, float, float]] = []
+    series_by_id = {s["series_id"]: s for s in series_plans}
+    navy = resolve_color("navy", role="text_on_light")
     finite_bars = [b for b in bars if b.get("finite") and not b.get("missing")]
     # Priority: first/last category per series, extrema, then authored order.
     by_series: dict[str, list[dict[str, Any]]] = {}
@@ -4640,20 +4650,23 @@ def _place_bar_labels(
                     )
                     continue
         occupied.append(box)
-        placements.append(
-            {
-                "series_id": p["series_id"],
-                "category_id": p["category_id"],
-                "kind": "value",
-                "class": cls,
-                "x": x,
-                "y": y,
-                "text": p["visible"],
-                "anchor_x": end_x,
-                "anchor_y": end_y,
-                "priority": p.get("_rank", "coverage"),
-            }
-        )
+        series_color = series_by_id[p["series_id"]]["color"]
+        rec = {
+            "series_id": p["series_id"],
+            "category_id": p["category_id"],
+            "kind": "value",
+            "class": cls,
+            "x": x,
+            "y": y,
+            "text": p["visible"],
+            "anchor_x": end_x,
+            "anchor_y": end_y,
+            "color": _label_ink_on_white(series_color) if cls == "leader" else navy,
+            "priority": p.get("_rank", "coverage"),
+        }
+        if cls == "leader":
+            rec["connector_color"] = series_color
+        placements.append(rec)
     return placements
 
 
@@ -4865,6 +4878,7 @@ def _place_point_labels(
     """Deterministic D7/D36/D53 placement; first/last never suppressed."""
     placements: list[dict[str, Any]] = []
     occupied: list[tuple[float, float, float, float]] = []
+    series_by_id = {s["series_id"]: s for s in series_plans}
     by_series: dict[str, list[dict[str, Any]]] = {}
     for p in points:
         by_series.setdefault(p["series_id"], []).append(p)
@@ -4925,17 +4939,22 @@ def _place_point_labels(
             continue
         cls, x, y, box = chosen
         occupied.append(box)
-        placements.append(
-            {
-                "series_id": p["series_id"],
-                "category_id": p["category_id"],
-                "kind": "value",
-                "class": cls,
-                "x": x,
-                "y": y,
-                "priority": p.get("_rank", "coverage"),
-            }
-        )
+        series_color = series_by_id[p["series_id"]]["color"]
+        rec = {
+            "series_id": p["series_id"],
+            "category_id": p["category_id"],
+            "kind": "value",
+            "class": cls,
+            "x": x,
+            "y": y,
+            "color": _label_ink_on_white(series_color),
+            "priority": p.get("_rank", "coverage"),
+        }
+        if cls == "leader":
+            rec["connector_color"] = series_color
+            rec["anchor_x"] = p["x"]
+            rec["anchor_y"] = p["y"]
+        placements.append(rec)
 
     # Endpoint identity labels only under complete-endpoint strategy (D15/D37).
     if identity == "endpoints":
@@ -4952,6 +4971,7 @@ def _place_point_labels(
                     "class": "endpoint",
                     "x": last["x"] + MARKER_R + 8,
                     "y": last["y"] + label_px / 3,
+                    "color": _label_ink_on_white(sp["color"]),
                     "priority": "identity",
                 }
             )
