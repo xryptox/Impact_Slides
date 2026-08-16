@@ -21,6 +21,8 @@ import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
 from impact_slides.renderer_v3.charts import (
+    BAR_MAX_THICKNESS,
+    _bar_slot_geometry,
     chart_boot_script,
     freeze_bar_chart,
     paint_chart_svg,
@@ -268,6 +270,20 @@ def test_strict_rejects_json_number_bar_value():
     ] = 3.2
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
+
+
+def test_few_category_bar_occupancy_meets_pdf_weight():
+    """n_cat<=6 bars occupy >=50% of pitch; denser charts keep the theme cap (#246)."""
+    for n_cat in (2, 6):
+        geom = _bar_slot_geometry(
+            plot_w=1400, plot_h=620, n_cat=n_cat, n_ser=1, horizontal=False
+        )
+        assert geom["thickness"] / geom["category_pitch"] >= 0.50
+        assert geom["thickness"] > BAR_MAX_THICKNESS
+    dense = _bar_slot_geometry(
+        plot_w=1400, plot_h=620, n_cat=13, n_ser=1, horizontal=False
+    )
+    assert dense["thickness"] == BAR_MAX_THICKNESS
 
 
 # ---------------------------------------------------------------------------

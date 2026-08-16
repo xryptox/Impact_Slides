@@ -114,7 +114,7 @@ def test_strict_validate_clean(handoff: dict) -> None:
     assert not any(e.severity == "error" for e in result.events)
 
 
-def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
+def test_strict_render_chartjs_and_svg_clean(tmp_path: Path, handoff: dict) -> None:
     out_js = tmp_path / "chartjs"
     out_svg = tmp_path / "svg"
     out_js.mkdir()
@@ -172,6 +172,35 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
     assert meta_svg["status"] == "clean"
     assert meta_svg["ok"] is True
     assert meta_svg["slide_count"] == 44
+
+    from impact_slides.renderer_v3.plan import plan_deck
+
+    planned = plan_deck(validate_handoff(handoff, strict=True).deck, strict=True)
+    s3 = next(sp for sp in planned.surfaces if sp.slide_number == 3 and sp.table_paint)
+    stub_w = s3.table_paint["col_widths"][0]
+    table_w = sum(s3.table_paint["col_widths"])
+    assert stub_w / table_w <= 0.45
+    assert s3.table_paint["ellipsized"] is False
+    assert not any(
+        sp.table_paint.get("ellipsized")
+        for sp in planned.surfaces
+        if sp.table_paint
+    )
+    assert not any(e.severity != "info" for e in planned.events)
+    for sn in (24, 28):
+        for sp in planned.surfaces:
+            if sp.slide_number != sn or not sp.chart_paint:
+                continue
+            geom = sp.chart_paint["geometry"]
+            n_cat = len(sp.chart_paint.get("categories") or [])
+            if n_cat > 6:
+                continue
+            assert geom["thickness"] / geom["category_pitch"] >= 0.50, (
+                sn,
+                sp.surface_id,
+                geom["thickness"],
+                geom["category_pitch"],
+            )
 
     tick_roles = ("category_ticks", "value_ticks")
     value_roles = ("ordinary_values", "segment_labels", "stack_totals")

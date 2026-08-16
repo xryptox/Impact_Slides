@@ -70,15 +70,15 @@
     },
     {
       "path": "chartjs/render/presentation.html",
-      "sha256": "373eb968ed47424d25bac1d1a9d8b4b3e93a570e4c76d322f335742cc6ccca40",
-      "bytes": 787717,
+      "sha256": "30fad3927f8c735e949a749ef23de43156a23095890c7c49d6bed74b6d362495",
+      "bytes": 832945,
       "media_type": "text/html",
       "purpose": "D250 presentation"
     },
     {
       "path": "chartjs/render/run_meta.json",
-      "sha256": "d972e3d8324b076c7b41947377d806212f1f278660ae6937282ebb810b0e59ad",
-      "bytes": 195871,
+      "sha256": "12ca0c83d4889a6be2be49a97be9cb741b52346f6d7004278f613ecd9915a4d8",
+      "bytes": 197466,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },
@@ -441,8 +441,8 @@
     },
     {
       "path": "contracts/determinism.json",
-      "sha256": "292bd34ec03cfae721adc66b0a13af78576a3eb9cedf98ecce311ea6a03b27f8",
-      "bytes": 1042,
+      "sha256": "6e07264ea5a215e07b97d76cda2ca14e6e85fc92b6add285f5bf59dcda0474b6",
+      "bytes": 955,
       "media_type": "application/json",
       "purpose": "required gate contract"
     },
@@ -539,15 +539,15 @@
     },
     {
       "path": "svg/render/presentation.html",
-      "sha256": "19d78023568b8d1f9d39542a03eed0d681b7e5d626aee5cda20776f34db0af63",
-      "bytes": 440867,
+      "sha256": "2706994ce97f934652f00d512224fe7070bb55b1bdc7dc741d50f7737e8a0b79",
+      "bytes": 471963,
       "media_type": "text/html",
       "purpose": "D250 presentation"
     },
     {
       "path": "svg/render/run_meta.json",
-      "sha256": "11125316c7937133c37e81453d4fd57f8b50a75adbb719b25ed583e10d521489",
-      "bytes": 195870,
+      "sha256": "8f8852add3113ba147d01b21c7d2fc42418890128c15d69167ef0d9cacbae027",
+      "bytes": 197465,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },

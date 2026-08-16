@@ -1,6 +1,6 @@
 # SPEC: renderer_v3 PDF Design & Data Parity (Amex Q1'26)
 
-**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233). The v13 observation sim itself is still unrun.
+**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. The v13 observation sim itself is still unrun.
 **Scope:** renderer_v3 (schema-v1, 3.0.0) + canonical D314 corpus, full 44-page Amex Q1'26 deck.
 **Extends, does not replace:** `SPEC_renderer_v3_full_deck_density_and_chart_fidelity.md` (still the binding v3 contract). Brand-seal art stays R3-wontfix.
 
@@ -89,6 +89,13 @@ s1/s23/s44 seal/full-bleed covers remain R3-wontfix; recipe chrome is accepted d
 ### DP-6 Parity verification axis (C3)
 
 Every future sim adds a **design ledger** beside the content ledger: per chart slide, measured-px assertions (tick px ≥ floor, computed `font-weight`, furniture DOM presence per DP-2 map) recorded in the manifest. Helpers: `scripts/simulation_probe.py` `measured_tick_styles` / `furniture_presence` / `DESIGN_LEDGER_FURNITURE` (unique `data-slide-number` + `data-layout`; zero matches = failure). Launcher: `scripts/run_amex_simulation_v13.sh`. Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
+
+### DP-7 Table stub-slack cap & sparse bar occupancy (#246)
+
+Renderer-owned geometry overrides (density-spec requirements unchanged; this spec carries the DP override):
+
+- Semantic tables (`data_table`, `annex_table`, `grouped_annex_table`, `period_comparison`): leftover box width is not dumped into the stub. Stub share ≤ 45% unless the stub’s own minimum exceeds that; remaining slack goes to value columns (evenly). D25/D70 (never wrap/ellipsize values) and D69/D167 category-center contracts stay as written.
+- Bar families with ≤6 categories: painted thickness occupies ≥50% of category pitch (target 55%). Theme `BAR_MAX_THICKNESS` (56px) remains the dense-chart cap. Chart.js `categoryPercentage` follows freeze geometry (D160).
 
 ## 4. Data-layer parity: corpus backfill manifest
 

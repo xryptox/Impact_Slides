@@ -381,6 +381,55 @@ def test_byte_identical_rerun(tmp_path: Path):
         assert (a / name).read_bytes() == (b / name).read_bytes()
 
 
+def test_table_slack_is_shared_not_dumped_into_stub():
+    """Leftover box width must not all land in the stub column (#246)."""
+    from impact_slides.renderer_v3.plan import (
+        CONTENT_W,
+        TABLE_CELL_PAD_X,
+        _table_fit_detail,
+        _text_width,
+    )
+
+    px = 20
+    stub = "Metric"
+    headers = ["Q1'26", "Q1'25", "YoY"]
+    values = ["$17.9B", "$16.6B", "8%"]
+    spec = {
+        "n_cols": 3,
+        "n_rows": 1,
+        "header_full": [stub] + headers,
+        "header_short": [stub] + headers,
+        "row_labels_full": ["Revenue"],
+        "row_labels_short": ["Revenue"],
+        "cells_vis": [list(values)],
+        "cells_acc": [list(values)],
+        "cells_role": [["metric"] * 3],
+        "cells_align": [["right"] * 3],
+        "col_ids": ["cur", "prior", "yoy"],
+        "groups": None,
+        "scale_labels": [],
+        "col_widths": [],
+        "display_headers": None,
+        "display_row_labels": None,
+        "display_groups": None,
+        "ellipsized": False,
+        "short_label_used": False,
+        "all_texts": [],
+    }
+    ok, codes, _h = _table_fit_detail(spec, px, CONTENT_W, 10**9)
+    assert ok, codes
+    widths = spec["col_widths"]
+    assert len(widths) == 4
+    assert sum(widths) == CONTENT_W
+    assert widths[0] / CONTENT_W <= 0.45
+    value_mins = [_text_width(v, px) + TABLE_CELL_PAD_X for v in values]
+    for c, vmin in enumerate(value_mins):
+        assert widths[c + 1] >= math.ceil(vmin)
+        assert widths[c + 1] > math.ceil(vmin)
+    assert spec["ellipsized"] is False
+    assert "plan.label_ellipsized" not in codes
+
+
 def test_ellipsis_pack_keeps_value_ceil_widths_when_float_mins_fit():
     """Value-feasible tables must not false-overflow after integer packing."""
     from impact_slides.renderer_v3.plan import CONTENT_W, TABLE_CELL_PAD_X, _table_fit_detail, _text_width
