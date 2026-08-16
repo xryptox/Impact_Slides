@@ -56,7 +56,7 @@ Grounded targets (PDF pages 4/13, ×2 scale). All values are plan floors; ceilin
 | `axis_titles` / `annotations` | (13, 24) | 16 | 600 for axis titles |
 | `metric_strip` values | 28 (D265) | **44** (painted floor ≥ **40** on s8) | 600 |
 
-#248 palette override (D43/D131): default cycles are bar `primary_blue, navy, sky_blue, neutral, warning` and line `navy, primary_blue, sky_blue, neutral, warning`. `success` is reserved for semantic increase/decrease. `sky_blue` may identify a series as a fill accent.
+#248 palette override (D43/D131): default cycles are bar `primary_blue, navy, sky_blue, neutral, warning` and line `navy, primary_blue, sky_blue, neutral, warning`. `success` is reserved for semantic increase/decrease. `sky_blue` may identify a series as a fill accent. Direct labels on a series that fails 4.5:1 on white use navy ink + series-color connectors (D304; line/combo/bar/stack).
 
 Chart.js options must emit `font.weight` for ticks and painted values (both painters: Chart.js config + SVG `font-weight`); the SVG painter currently sets no weight on tick `<text>`. Acceptance: computed-style probes per chart slide (presentation attributes alone are not evidence).
 

@@ -9,6 +9,7 @@ Seams under test:
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from impact_slides.renderer_v3.format import MISSING_VISIBLE
 from impact_slides.renderer_v3.models import ComboChartVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema
+from impact_slides.renderer_v3.theme import contrast_ratio, resolve_color
 
 ROOT = Path(__file__).resolve().parents[1]
 COMBO = ROOT / "tests/fixtures/renderer_v3/minimal_combo_chart.json"
@@ -386,6 +388,35 @@ def test_svg_bars_behind_lines_and_table():
     table = paint_semantic_table(cp)
     assert "Buybacks" in table and "ROE" in table and "Q1" in table
     assert MISSING_VISIBLE in table  # null dividend@q4
+
+
+def test_low_contrast_combo_line_labels_use_navy_ink():
+    deck = validate_handoff(_s(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["cap-combo"].chart_paint
+    by_id = {s["series_id"]: s for s in cp["series"]}
+    sky = resolve_color("sky_blue", role="series_identity").lower()
+    navy = resolve_color("navy", role="text_on_light").lower()
+    white = resolve_color("white", role="surface")
+    assert by_id["roe"]["color"].lower() == sky
+    assert by_id["roe"]["mark_type"] == "line"
+    for place in cp["placements"]:
+        if place.get("series_id") != "roe" or place["class"] == "suppressed":
+            continue
+        if place.get("kind") in ("value", "identity"):
+            assert place.get("color", "").lower() == navy
+    svg = paint_chart_svg(cp, marks=False)
+    fills = []
+    for m in re.finditer(r"<text\b([^>]*)>", svg):
+        attrs = m.group(1)
+        fill = re.search(r'fill="(#[0-9A-Fa-f]{6})"', attrs)
+        place = re.search(r'data-placement="([^"]+)"', attrs)
+        if fill and place:
+            fills.append(fill.group(1).lower())
+    assert fills
+    assert navy in fills
+    assert sky not in fills
+    for fill in fills:
+        assert contrast_ratio(fill, white) >= 4.5
 
 
 def test_chartjs_combo_config_order_and_axes():

@@ -29,6 +29,7 @@ from impact_slides.renderer_v3.format import MISSING_ACCESSIBLE, MISSING_VISIBLE
 from impact_slides.renderer_v3.models import ChartTypography, LineChartVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema
+from impact_slides.renderer_v3.theme import contrast_ratio, resolve_color
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json"
@@ -707,3 +708,49 @@ def test_line_painters_emit_semibold_tick_and_value_weight(tmp_path: Path):
     assert f'font-size="{cat_px}" font-weight="{SEMIBOLD}"' in svg
     assert f'font-size="{val_px}" font-weight="{SEMIBOLD}"' in svg
     assert f'font-size="{lab_px}" font-weight="{SEMIBOLD}"' in svg
+
+
+def _svg_placed_text(svg: str) -> list[tuple[str, str, str]]:
+    out: list[tuple[str, str, str]] = []
+    for m in re.finditer(r"<text\b([^>]*)>(.*?)</text>", svg):
+        attrs, body = m.group(1), m.group(2)
+        fill = re.search(r'fill="(#[0-9A-Fa-f]{6})"', attrs)
+        place = re.search(r'data-placement="([^"]+)"', attrs)
+        if fill and place:
+            out.append((place.group(1), fill.group(1).lower(), body))
+    return out
+
+
+def test_low_contrast_line_labels_use_navy_ink():
+    raw = _raw()
+    vis = raw["slides"][1]["payload"]["chart"]
+    vis["chart_data"]["series"].append(
+        {
+            "series_id": "lodging",
+            "name": "Lodging",
+            "values": ["2.0", "2.2", "2.5", "2.7"],
+        }
+    )
+    vis["display"] = {"ordinary_values": "show", "series_identity": "auto"}
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
+    by_id = {s["series_id"]: s for s in cp["series"]}
+    sky = resolve_color("sky_blue", role="series_identity").lower()
+    navy = resolve_color("navy", role="text_on_light").lower()
+    primary = resolve_color("primary_blue", role="series_identity").lower()
+    white = resolve_color("white", role="surface")
+    assert by_id["lodging"]["color"].lower() == sky
+    assert by_id["intl"]["color"].lower() == primary
+    for place in cp["placements"]:
+        if place["class"] == "suppressed" or place.get("series_id") != "lodging":
+            continue
+        if place.get("kind") in ("value", "identity"):
+            assert place.get("color", "").lower() == navy
+    svg = paint_chart_svg(cp, marks=False)
+    placed = _svg_placed_text(svg)
+    assert placed
+    assert any(cls == "endpoint" and fill == navy and body == "Lodging" for cls, fill, body in placed)
+    assert any(fill == primary for cls, fill, body in placed if body != "Lodging")
+    assert all(fill != sky for _, fill, _ in placed)
+    for _, fill, _ in placed:
+        assert contrast_ratio(fill, white) >= 4.5
