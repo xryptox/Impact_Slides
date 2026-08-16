@@ -1,6 +1,6 @@
 # SPEC: renderer_v3 PDF Design & Data Parity (Amex Q1'26)
 
-**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. The v13 observation sim itself is still unrun.
+**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233); #249 extends the DP-6 design-ledger probes (stub ratio, support chrome, series palette, metric-value floor, bar occupancy). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. The v13 observation sim itself is still unrun.
 **Scope:** renderer_v3 (schema-v1, 3.0.0) + canonical D314 corpus, full 44-page Amex Q1'26 deck.
 **Extends, does not replace:** `SPEC_renderer_v3_full_deck_density_and_chart_fidelity.md` (still the binding v3 contract). Brand-seal art stays R3-wontfix.
 
@@ -54,7 +54,7 @@ Grounded targets (PDF pages 4/13, ×2 scale). All values are plan floors; ceilin
 | `ordinary_values` / `segment_labels` / `stack_totals` | (14, 24–32) | **18** | **600** for authored values |
 | `legend` / `series_labels` | (16, 24) | 16 (hold) | 400 (hold) |
 | `axis_titles` / `annotations` | (13, 24) | 16 | 600 for axis titles |
-| `metric_strip` values | 28 (D265) | **44** (painted floor ≥ **40** on s8) | 600 |
+| `metric_strip` values | 28 (D265) | **44** (painted floor ≥ **40** on s8/s12) | 600 |
 
 #248 palette override (D43/D131): default cycles are bar `primary_blue, navy, sky_blue, neutral, warning` and line `navy, primary_blue, sky_blue, neutral, warning`. `success` is reserved for semantic increase/decrease. `sky_blue` may identify a series as a fill accent. Direct labels on a series that fails 4.5:1 on white use navy ink + series-color connectors (D304; line/combo/bar/stack).
 
@@ -91,7 +91,11 @@ s1/s23/s44 seal/full-bleed covers remain R3-wontfix; recipe chrome is accepted d
 
 ### DP-6 Parity verification axis (C3)
 
-Every future sim adds a **design ledger** beside the content ledger: per chart slide, measured-px assertions (tick px ≥ floor, computed `font-weight`, furniture DOM presence per DP-2 map) recorded in the manifest. Helpers: `scripts/simulation_probe.py` `measured_tick_styles` / `furniture_presence` / `DESIGN_LEDGER_FURNITURE` (unique `data-slide-number` + `data-layout`; zero matches = failure). Launcher: `scripts/run_amex_simulation_v13.sh`. Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
+Every future sim adds a **design ledger** beside the content ledger: per chart slide, measured-px assertions (tick px ≥ floor, computed `font-weight`, furniture DOM presence per DP-2 map) recorded in the manifest. Helpers in `scripts/simulation_probe.py` (unique `data-slide-number` + `data-layout`; zero matches / `ProbeError` = failure):
+- `#233`: `measured_tick_styles`, `furniture_presence`, `DESIGN_LEDGER_FURNITURE`
+- `#249` extensions (slide maps + floors live next to the helpers): `measured_stub_ratio` (`DESIGN_LEDGER_STUB_RATIO_SLIDES` s3/s16/s31–37, stub ≤45%), `measured_support_chrome` (s4/s19 band+hairline), `measured_series_palette` (s24/s28; no non-semantic `#0A7D55`; sky_blue where authored), `measured_metric_value_styles` (s8/s12 ≥40px), `measured_bar_occupancy` (s28 ≥0.5)
+
+Launcher: `scripts/run_amex_simulation_v13.sh` (prompt wires the #249 rows into the design-ledger manifest). Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
 
 ### DP-7 Table stub-slack cap & sparse bar occupancy (#246)
 
@@ -118,7 +122,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 
 1. Unit tests per change batch in `tests/` (renderer roles/weights; corpus fixture contracts like the existing `test_amex_*_handoff_contract.py` pattern).
 2. `python -m impact_slides.renderer_v3` strict render of the updated corpus: exit 0 clean.
-3. Observation sim (v13, `scripts/run_amex_simulation_v13.sh`; user-triggered, not part of #233): full 44-page SBS re-run **with the DP-6 design ledger**; classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
+3. Observation sim (v13, `scripts/run_amex_simulation_v13.sh`; user-triggered, not part of #233/#249): full 44-page SBS re-run **with the DP-6 design ledger** (including #249 extension probes); classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
 4. Definition of done: 44/44 slides classified faithful reproduction or accepted v3 design divergence **with the design ledger green**; R-A…R-D closed or explicitly re-accepted.
 
 ## 6. Out of scope

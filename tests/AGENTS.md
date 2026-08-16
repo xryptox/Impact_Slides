@@ -16,7 +16,7 @@ Regression suite and fixtures for preprocessor, renderer_v2, and renderer_v3 ker
 - Some real-world fixtures are machine-local — CI shows extra skips; local pass count can be higher
 - Renderer layout index tests must not embed bare layout-name literals or search probes that match the test file itself (`test_gen_layout_index.py` pattern)
 - Prefer tests that fail under mutation of the production guard they claim to pin
-- Simulation probe contract (`test_simulation_probe_contract.py`) also pins DP-6 design-ledger helpers: computed tick floors (20px / weight 600, computed style not attributes) and furniture presence (zero matches / missing text fail)
+- Simulation probe contract (`test_simulation_probe_contract.py`) also pins DP-6 design-ledger helpers: computed tick floors (20px / weight 600, computed style not attributes), furniture presence (zero matches / missing text fail), and #249 extensions (stub share ≤45%, support header band+hairline, forbidden #0A7D55 / authored sky_blue palette, metric-value ≥40px, bar occupancy ≥0.5) each with authored-not-invented mutation traps
 
 ## Work Guidance
 
