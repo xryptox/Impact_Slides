@@ -41,7 +41,7 @@ The v11/v12 sims verified identity, paint-readiness, geometry alignment, and con
 
 R-A s11: low-variance % series auto-domain collapses to ~9–10% → false drama (PDF frames 0–15%). R-B s7: `comparison_cards` has no circular dual-metric card recipe. R-C s32: grouped-annex column headers clip (`Q…`/`F…`). R-D s38–43: `legal_notice` paints a dense wall, losing bullet hierarchy.
 
-## 3. Design-parity contract (DP-1 … DP-6)
+## 3. Design-parity contract (DP-1 … DP-7)
 
 ### DP-1 Chart typography floors & weights (C2)
 
