@@ -20,6 +20,7 @@ Plus DP-6 design-ledger probes (#233):
 Plus DP-6 extensions (#249):
 12. stub column share above 45% of table width
 13. support header cells missing band background or hairline borders
+    (incl. fully transparent computed fills reported as rgba(0,0,0,0))
 14. forbidden #0A7D55 among non-semantic series colors / missing authored sky_blue
 15. metric-strip value font-size below 40px
 16. bar occupancy (bar width / category pitch) below 0.5
@@ -210,6 +211,12 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
   <div class="support-table category-aligned" style="position:relative;height:60px;width:400px">
     <div class="support-cat-cell head" style="position:absolute;left:40px;top:0;width:80px;height:24px;
       background:#ffffff;color:#000;border:0;box-sizing:border-box">G&S</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="61" data-layout="chrome_transparent">
+  <div class="support-table category-aligned" style="position:relative;height:60px;width:400px">
+    <div class="support-cat-cell head" style="position:absolute;left:40px;top:0;width:80px;height:24px;
+      background:transparent;color:#000;border:1px solid #1B3A6B;box-sizing:border-box">G&S</div>
   </div>
 </section>
 <section class="slide" data-slide-number="54" data-layout="palette_ok">
@@ -676,6 +683,12 @@ def test_measured_support_chrome_rejects_plain_header(page):
     """Mutation 13: white header without hairline is not authored chrome."""
     with pytest.raises(ProbeError, match=r"band background|hairline|border"):
         measured_support_chrome(page, 53, "chrome_plain")
+
+
+def test_measured_support_chrome_rejects_transparent_band(page):
+    """Mutation 13b: transparent fill must not pass as a painted band."""
+    with pytest.raises(ProbeError, match=r"band background"):
+        measured_support_chrome(page, 61, "chrome_transparent")
 
 
 def test_measured_series_palette_happy(page):

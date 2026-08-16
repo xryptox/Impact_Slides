@@ -750,7 +750,11 @@ def furniture_presence(
 
 
 def _normalize_hex_color(raw: Any) -> str | None:
-    """Normalize #rgb / #rrggbb / rgb()/rgba() to uppercase #RRGGBB."""
+    """Normalize #rgb / #rrggbb / rgb()/rgba() to uppercase #RRGGBB.
+
+    Fully transparent colors (``transparent``, ``rgba(*,*,*,0)``, ``#RRGGBB00``)
+    return None so support-chrome band checks cannot treat empty fills as paint.
+    """
     if raw is None:
         return None
     text = str(raw).strip()
@@ -763,14 +767,19 @@ def _normalize_hex_color(raw: Any) -> str | None:
         if len(h) == 6 and re.fullmatch(r"[0-9a-fA-F]{6}", h):
             return f"#{h.upper()}"
         if len(h) == 8 and re.fullmatch(r"[0-9a-fA-F]{8}", h):
+            # #RRGGBBAA — alpha 00 is unpainted, not a band fill.
+            if h[6:8].lower() == "00":
+                return None
             return f"#{h[:6].upper()}"
         return None
     m = re.fullmatch(
-        r"rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*[0-9.]+)?\s*\)",
+        r"rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)",
         text,
         flags=re.I,
     )
     if not m:
+        return None
+    if m.group(4) is not None and float(m.group(4)) <= 0.0:
         return None
     r, g, b = (max(0, min(255, int(float(m.group(i))))) for i in (1, 2, 3))
     return f"#{r:02X}{g:02X}{b:02X}"
@@ -926,8 +935,7 @@ def measured_support_chrome(
                 f"support header missing band background on slide {sn}: "
                 f"bg={raw.get('bg')!r}"
             )
-        # Transparent / pure white is not a band fill.
-        if bg in {"#FFFFFF", "#00000000"}:
+        if bg == "#FFFFFF":
             raise ProbeError(
                 f"support header missing band background on slide {sn}: "
                 f"bg={raw.get('bg')!r}"
