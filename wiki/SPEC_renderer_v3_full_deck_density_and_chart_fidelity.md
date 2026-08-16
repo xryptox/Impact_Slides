@@ -4665,11 +4665,11 @@ outrank the archived v10 handoff.
 | 21 | `chart_hero_dual` | Left stacked-bar/secondary-line combo `Capital Return & Common Shares Outstanding`, authored stack totals, ROE outlined support; right driver card heading `Capital Summary` with 58%, 74%, 10.5%, and 10–11% facts; regulatory notes in disclosure. `Capital Summary` is new neutral structural wording required by D170—not source-derived—and becomes explicitly authored only through final approval of this candidate. |
 | 22 | `metric_overview` | `Full-Year 2026 Guidance`: revenue-growth 9–10% and EPS $17.30–$17.90 ranges plus exact qualification detail; no inferred midpoint/status/tone. |
 | 23 | `section_divider` | Payload only references `appendix`; visible wording derives from registry. |
-| 24 | `single_chart` | Six customer-type growth bars, three explicit category groups, aligned `% of Total Network Volumes` outlined row, and `$486B Total Network Volumes` context fact. |
+| 24 | `single_chart` | Six customer-type growth bars, three explicit category groups, boxed-label `% of Total Network Volumes` series (not `outlined_support`; long stub overflows the role floor), and `$486B Total Network Volumes` annotation. |
 | 25 | `data_table` | Currency exposure table with share and signed YoY currency change; unavailable value is missing; both FX notes disclosed. |
 | 26 | `data_table` | Correct source orientation: columns Restaurants/Lodging/Airlines/Other/Total T&E; rows YoY Growth and % of Total Billed Business. |
 | 27 | `dual_chart` | Unemployment and GDP line panes, three stable scenario identities each, Q1'25–Q1'28, percent-1 including negatives, exact scenario/SAAR disclosure. |
-| 28 | `dual_chart` | Stacked panes `Funding Mix` and `Deposit Programs`, each subtitle `$ in billions`; explicit totals and one approved 92% FDIC coverage callout, no pseudo-title totals. |
+| 28 | `dual_chart` | Stacked panes `Funding Mix` and `Deposit Programs`, each subtitle `$ in billions`; authored usd_0 stack totals, on-stack percent segments, and one approved 92% FDIC annotation; no pseudo-title totals. |
 | 29 | `narrative` | Variance-analysis introduction and first six exact ordered items; no freeform geometry. |
 | 30 | `narrative` | Remaining six exact ordered variance items; no synthetic `(cont.)` title. |
 | 31 | `annex_table` | Flat Q1'25–Q1'26 table with no column groups; Reported/FX-adjusted Billed Business, G&S, T&E, Processed Volumes and CAGR rows; sparse Processed/CAGR values sit under Q1'26 and preceding cells are missing. |
