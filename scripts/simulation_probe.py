@@ -11,6 +11,8 @@ Usage (from a Playwright page that already loaded a deck HTML)::
     from simulation_probe import (
         activate_slide,
         count_in_slide,
+        furniture_presence,
+        measured_tick_styles,
         painted_datalabel_lines,
         wait_for_paint_ready_charts,
     )
@@ -19,6 +21,8 @@ Usage (from a Playwright page that already loaded a deck HTML)::
     wait_for_paint_ready_charts(page, 12, "chart_hero_dual")
     row = count_in_slide(page, 12, "chart_hero_dual", ".gl-hero-stack")
     labels = painted_datalabel_lines(page, 12, "chart_hero_dual")
+    ticks = measured_tick_styles(page, 12, "chart_hero_dual")
+    furn = furniture_presence(page, 12, "chart_hero_dual", ".support-table")
 """
 from __future__ import annotations
 
@@ -106,6 +110,12 @@ _CHART_PAINT_READY = """
 
 class ProbeError(RuntimeError):
     """Raised when a simulation probe cannot make a conclusive measurement."""
+
+
+# DP-1 / DP-6 design-ledger floors. Tick probes measure computed style on the
+# painted SVG overlay (Chart.js scale ticks are display:false).
+TICK_FONT_SIZE_FLOOR_PX = 20
+TICK_FONT_WEIGHT_FLOOR = 600
 
 
 def _identity(slide_number: int, layout: str) -> dict[str, Any]:
@@ -446,4 +456,259 @@ def wait_for_paint_ready_charts(
     charts = list(result.get("charts") or [])
     out["charts"] = charts
     out["chart_count"] = len(charts)
+    return out
+
+
+# DP-2 furniture probes for the design ledger. The sim records one presence
+# row per entry; helpers still require unique slide identity + ≥1 match.
+DESIGN_LEDGER_FURNITURE: dict[int, tuple[dict[str, str], ...]] = {
+    4: (
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+        },
+        {"selector": ".support-table", "expected_text": "G&S"},
+    ),
+    5: ({"selector": ".support-table", "expected_text": "Gen-Z"},),
+    6: (
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "+ ~6 percentage points",
+        },
+    ),
+    8: ({"selector": ".metric-strip", "expected_text": "3,400+"},),
+    9: ({"selector": ".support-table", "expected_text": "U.S. SME"},),
+    10: ({"selector": ".support-table", "expected_text": "Intl Consumer"},),
+    12: (
+        {
+            "selector": '[data-chart-type="stacked_bar"]',
+            "expected_text": "International Card Services",
+        },
+    ),
+    15: (
+        {
+            "selector": ".outlined-support",
+            "expected_text": "Reserve Rate for Total Balances",
+        },
+    ),
+    17: (
+        {
+            "selector": '[data-measurement-id][data-role="cagr"]',
+            "expected_text": "17%",
+        },
+    ),
+    18: (
+        {"selector": ".boxed-label", "expected_text": "11%"},
+        {
+            "selector": '[data-hero-type="driver_card"]',
+            "expected_text": "Billed Business",
+        },
+    ),
+    19: (
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+        },
+        {"selector": ".support-table", "expected_text": "$17.0"},
+    ),
+    21: (
+        {
+            "selector": '[data-chart-type="combo"]',
+            "expected_text": "Common Shares Outstanding",
+        },
+        {"selector": ".outlined-support", "expected_text": "ROE"},
+    ),
+    24: (
+        {"selector": ".category-group", "expected_text": "Commercial Services"},
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "$486B Total Network Volumes",
+        },
+        {"selector": ".boxed-label", "expected_text": "37%"},
+    ),
+    28: (
+        {"selector": "[data-annotation-id]", "expected_text": "92% FDIC"},
+    ),
+}
+
+
+def _parse_font_weight(raw: Any) -> int | None:
+    if raw is None:
+        return None
+    text = str(raw).strip().lower()
+    if text == "normal":
+        return 400
+    if text == "bold":
+        return 700
+    try:
+        return int(float(text))
+    except (TypeError, ValueError):
+        return None
+
+
+def measured_tick_styles(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+    *,
+    size_floor_px: int = TICK_FONT_SIZE_FLOOR_PX,
+    weight_floor: int = TICK_FONT_WEIGHT_FLOOR,
+) -> dict[str, Any]:
+    """Measure computed tick font-size/weight on the painted SVG overlay.
+
+    Ticks are overlay ``<text>`` nodes that carry ``font-weight`` and do not
+    have ``data-placement`` (value labels) or live inside furniture groups.
+    Computed style is authoritative — presentation attributes alone are not.
+    Zero ticks, size below *size_floor_px*, or weight below *weight_floor*
+    raise :class:`ProbeError`.
+    """
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    result = page.evaluate(
+        """({sn}) => {
+          const slide = document.querySelector(
+            'section.slide[data-slide-number="' + sn + '"]'
+          );
+          if (!slide) {
+            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+          }
+          const svgs = slide.querySelectorAll('.chart-label-overlay svg.chart-svg');
+          if (svgs.length === 0) {
+            return {
+              ok: false,
+              err: '0 tick texts in overlay on slide ' + sn
+                + ' (no chart-label-overlay svg)',
+            };
+          }
+          const skip = '.category-group, .boxed-label, .context-label,'
+            + ' .chart-annotation, .chart-measurement, .coverage-callout';
+          const ticks = [];
+          svgs.forEach((svg) => {
+            svg.querySelectorAll('text').forEach((el) => {
+              if (el.closest(skip)) return;
+              if (el.hasAttribute('data-placement')) return;
+              if (!el.hasAttribute('font-weight')) return;
+              const cs = getComputedStyle(el);
+              ticks.push({
+                text: (el.textContent || '').trim(),
+                font_size_px: parseFloat(cs.fontSize),
+                font_weight: cs.fontWeight,
+              });
+            });
+          });
+          if (ticks.length === 0) {
+            return {ok: false, err: '0 tick texts in overlay on slide ' + sn};
+          }
+          return {ok: true, ticks};
+        }""",
+        {"sn": sn},
+    )
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "measured_tick_styles failed"
+        raise ProbeError(err)
+    ticks: list[dict[str, Any]] = []
+    for raw in result["ticks"]:
+        size = float(raw.get("font_size_px") or 0)
+        weight = _parse_font_weight(raw.get("font_weight"))
+        if weight is None or not (size > 0):
+            raise ProbeError(
+                f"unreadable tick computed style on slide {sn}: "
+                f"font-size={raw.get('font_size_px')!r} "
+                f"font-weight={raw.get('font_weight')!r}"
+            )
+        ticks.append(
+            {
+                "text": raw.get("text") or "",
+                "font_size_px": size,
+                "font_weight": weight,
+            }
+        )
+    min_size = min(t["font_size_px"] for t in ticks)
+    min_weight = min(t["font_weight"] for t in ticks)
+    if min_size < float(size_floor_px):
+        raise ProbeError(
+            f"tick font-size {min_size}px below floor {int(size_floor_px)} "
+            f"on slide {sn}"
+        )
+    if min_weight < int(weight_floor):
+        raise ProbeError(
+            f"tick font-weight {min_weight} below floor {int(weight_floor)} "
+            f"on slide {sn}"
+        )
+    out = dict(identity)
+    out["ticks"] = ticks
+    out["tick_count"] = len(ticks)
+    out["min_font_size_px"] = min_size
+    out["min_font_weight"] = min_weight
+    out["ok"] = True
+    return out
+
+
+def furniture_presence(
+    page: Any,
+    slide_number: int,
+    expected_layout: str,
+    selector: str,
+    *,
+    expected_text: str | None = None,
+) -> dict[str, Any]:
+    """Assert furniture *selector* is present inside the identified slide.
+
+    Zero matches raise :class:`ProbeError`. When *expected_text* is set, at
+    least one matched node's ``textContent`` must contain it.
+    """
+    if not selector or not str(selector).strip():
+        raise ProbeError("selector must be non-empty")
+    identity = activate_slide(page, slide_number, expected_layout)
+    sn = identity["slide_number"]
+    result = page.evaluate(
+        """({sn, selector, expected}) => {
+          const slide = document.querySelector(
+            'section.slide[data-slide-number="' + sn + '"]'
+          );
+          if (!slide) {
+            return {ok: false, err: 'slide disappeared: data-slide-number=' + sn};
+          }
+          let nodes;
+          try {
+            nodes = slide.querySelectorAll(selector);
+          } catch (e) {
+            return {ok: false, err: 'invalid selector: ' + String(e)};
+          }
+          if (nodes.length === 0) {
+            return {
+              ok: false,
+              err: 'selector matched 0 elements in slide ' + sn
+                + ' (selector=' + JSON.stringify(selector) + ')',
+            };
+          }
+          if (expected) {
+            let hit = false;
+            for (let i = 0; i < nodes.length; i++) {
+              if ((nodes[i].textContent || '').includes(expected)) {
+                hit = true;
+                break;
+              }
+            }
+            if (!hit) {
+              return {
+                ok: false,
+                err: 'expected text ' + JSON.stringify(expected)
+                  + ' not in matched furniture on slide ' + sn,
+              };
+            }
+          }
+          return {ok: true, count: nodes.length};
+        }""",
+        {"sn": sn, "selector": selector, "expected": expected_text or ""},
+    )
+    if not result or not result.get("ok"):
+        err = (result or {}).get("err") or "furniture_presence failed"
+        raise ProbeError(err)
+    out = dict(identity)
+    out["selector"] = selector
+    if expected_text:
+        out["expected_text"] = expected_text
+    out["count"] = int(result["count"])
+    out["ok"] = True
     return out

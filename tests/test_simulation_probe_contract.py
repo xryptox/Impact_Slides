@@ -12,6 +12,11 @@ Plus paint-ready Chart.js geometry (#146):
 7. degenerate dataset element geometry
 8. capture before the next animation frame settles
 
+Plus DP-6 design-ledger probes (#233):
+9. computed tick font-size below the 20px floor
+10. computed tick font-weight below 600 (incl. CSS override of a 600 attribute)
+11. zero tick texts / zero furniture matches are failures
+
 Playwright is optional in CI (importorskip); must run locally when installed.
 """
 from __future__ import annotations
@@ -29,9 +34,12 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 
 from simulation_probe import (  # noqa: E402
+    DESIGN_LEDGER_FURNITURE,
     ProbeError,
     activate_slide,
     count_in_slide,
+    furniture_presence,
+    measured_tick_styles,
     painted_datalabel_lines,
     wait_for_paint_ready_charts,
 )
@@ -83,6 +91,55 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
 </section>
 <section class="slide" data-slide-number="36" data-layout="geom_ready">
   <canvas id="c36" width="200" height="100"></canvas>
+</section>
+<section class="slide" data-slide-number="40" data-layout="design_ok">
+  <div class="chart-plot" style="position:relative;width:200px;height:100px">
+    <div class="chart-label-overlay">
+      <svg class="chart-svg" width="200" height="100">
+        <text x="40" y="90" font-size="20" font-weight="600">Q1</text>
+        <text x="10" y="40" font-size="20" font-weight="600" font-variant-numeric="tabular-nums">10</text>
+        <text x="100" y="20" font-size="16">Axis title</text>
+        <text x="80" y="30" font-size="18" font-weight="600" data-placement="outside">$1.1</text>
+      </svg>
+    </div>
+    <div class="support-table">G&S 7%</div>
+    <div class="chart-annotation" data-annotation-id="leap">Leap Year Approx. (1%)</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="41" data-layout="design_small">
+  <div class="chart-plot">
+    <div class="chart-label-overlay">
+      <svg class="chart-svg">
+        <text x="40" y="90" font-size="14" font-weight="600">Q1</text>
+      </svg>
+    </div>
+  </div>
+</section>
+<section class="slide" data-slide-number="42" data-layout="design_thin">
+  <div class="chart-plot">
+    <div class="chart-label-overlay">
+      <svg class="chart-svg">
+        <text x="40" y="90" font-size="20" font-weight="400">Q1</text>
+      </svg>
+    </div>
+  </div>
+</section>
+<section class="slide" data-slide-number="43" data-layout="design_empty">
+  <div class="chart-plot">
+    <div class="chart-label-overlay">
+      <svg class="chart-svg"></svg>
+    </div>
+  </div>
+</section>
+<section class="slide" data-slide-number="44" data-layout="design_css">
+  <style>#shrink-tick {{ font-size: 14px !important; font-weight: 400 !important; }}</style>
+  <div class="chart-plot">
+    <div class="chart-label-overlay">
+      <svg class="chart-svg">
+        <text id="shrink-tick" x="40" y="90" font-size="20" font-weight="600">Q1</text>
+      </svg>
+    </div>
+  </div>
 </section>
 <script>
 // Fake Chart registry: options.plugins.datalabels is display-only (pre-bind
@@ -322,3 +379,98 @@ def test_paint_ready_happy_includes_identity(page):
     assert row["chart_count"] == 1
     assert row["charts"][0]["width"] > 0
     assert row["charts"][0]["chart_area"]["width"] > 0
+
+
+def test_design_ledger_furniture_covers_dp2_slides():
+    assert set(DESIGN_LEDGER_FURNITURE) == {
+        4, 5, 6, 8, 9, 10, 12, 15, 17, 18, 19, 21, 24, 28,
+    }
+    for specs in DESIGN_LEDGER_FURNITURE.values():
+        assert specs
+        for spec in specs:
+            assert spec["selector"].strip()
+            assert spec["expected_text"].strip()
+
+
+def test_measured_tick_styles_happy_includes_identity(page):
+    row = measured_tick_styles(page, 40, "design_ok")
+    assert row["slide_number"] == 40
+    assert row["layout"] == "design_ok"
+    assert row["tick_count"] == 2
+    assert row["min_font_size_px"] >= 20
+    assert row["min_font_weight"] >= 600
+    assert row["ok"] is True
+
+
+def test_measured_tick_styles_rejects_subfloor_size(page):
+    """Mutation 9: 14px ticks must fail, not report success."""
+    with pytest.raises(ProbeError, match=r"font-size|floor|20"):
+        measured_tick_styles(page, 41, "design_small")
+
+
+def test_measured_tick_styles_rejects_regular_weight(page):
+    """Mutation 10: weight 400 must fail even when size is at floor."""
+    with pytest.raises(ProbeError, match=r"font-weight|600"):
+        measured_tick_styles(page, 42, "design_thin")
+
+
+def test_measured_tick_styles_zero_ticks_fails(page):
+    """Mutation 11: empty overlay is a probe failure, never a green ledger."""
+    with pytest.raises(ProbeError, match=r"0 tick|no tick|matched 0"):
+        measured_tick_styles(page, 43, "design_empty")
+
+
+def test_measured_tick_styles_uses_computed_style_not_attribute(page):
+    """Attribute 20/600 with computed 14/400 must fail (v12 regression class)."""
+    with pytest.raises(ProbeError, match=r"font-size|font-weight|floor|20|600"):
+        measured_tick_styles(page, 44, "design_css")
+
+
+def test_furniture_presence_happy_includes_identity(page):
+    row = furniture_presence(
+        page, 40, "design_ok", ".support-table", expected_text="G&S"
+    )
+    assert row["slide_number"] == 40
+    assert row["layout"] == "design_ok"
+    assert row["count"] >= 1
+    assert row["ok"] is True
+    leap = furniture_presence(
+        page, 40, "design_ok", "[data-annotation-id]", expected_text="Leap Year"
+    )
+    assert leap["ok"] is True
+
+
+def test_design_ledger_s4_map_matches_fixture(page):
+    """DP-2 s4 selectors must hit the fixture; zero matches stay a failure."""
+    for spec in DESIGN_LEDGER_FURNITURE[4]:
+        row = furniture_presence(
+            page,
+            40,
+            "design_ok",
+            spec["selector"],
+            expected_text=spec["expected_text"],
+        )
+        assert row["ok"] is True
+        assert row["count"] >= 1
+
+
+def test_furniture_presence_empty_selector_fails(page):
+    with pytest.raises(ProbeError, match="selector"):
+        furniture_presence(page, 40, "design_ok", "")
+
+
+def test_furniture_presence_wrong_layout_fails(page):
+    with pytest.raises(ProbeError, match="layout"):
+        furniture_presence(page, 40, _HERO, ".support-table")
+
+
+def test_furniture_presence_zero_matches_fails(page):
+    with pytest.raises(ProbeError, match=r"matched 0|0 elements"):
+        furniture_presence(page, 40, "design_ok", ".definitely-absent-furniture")
+
+
+def test_furniture_presence_missing_expected_text_fails(page):
+    with pytest.raises(ProbeError, match=r"NOT IN DOM|text"):
+        furniture_presence(
+            page, 40, "design_ok", ".support-table", expected_text="NOT IN DOM"
+        )

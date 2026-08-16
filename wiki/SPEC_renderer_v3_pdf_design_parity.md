@@ -1,6 +1,6 @@
 # SPEC: renderer_v3 PDF Design & Data Parity (Amex Q1'26)
 
-**Status:** proposed — drives the next implementation tickets and the v13 observation sim.
+**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233). The v13 observation sim itself is still unrun.
 **Scope:** renderer_v3 (schema-v1, 3.0.0) + canonical D314 corpus, full 44-page Amex Q1'26 deck.
 **Extends, does not replace:** `SPEC_renderer_v3_full_deck_density_and_chart_fidelity.md` (still the binding v3 contract). Brand-seal art stays R3-wontfix.
 
@@ -87,7 +87,7 @@ s1/s23/s44 seal/full-bleed covers remain R3-wontfix; recipe chrome is accepted d
 
 ### DP-6 Parity verification axis (C3)
 
-Every future sim adds a **design ledger** beside the content ledger: per chart slide, measured-px assertions (tick px ≥ floor, computed `font-weight`, furniture DOM presence per DP-2 map) recorded in the manifest. Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden.
+Every future sim adds a **design ledger** beside the content ledger: per chart slide, measured-px assertions (tick px ≥ floor, computed `font-weight`, furniture DOM presence per DP-2 map) recorded in the manifest. Helpers: `scripts/simulation_probe.py` `measured_tick_styles` / `furniture_presence` / `DESIGN_LEDGER_FURNITURE` (unique `data-slide-number` + `data-layout`; zero matches = failure). Launcher: `scripts/run_amex_simulation_v13.sh`. Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
 
 ## 4. Data-layer parity: corpus backfill manifest
 
@@ -107,7 +107,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 
 1. Unit tests per change batch in `tests/` (renderer roles/weights; corpus fixture contracts like the existing `test_amex_*_handoff_contract.py` pattern).
 2. `python -m impact_slides.renderer_v3` strict render of the updated corpus: exit 0 clean.
-3. Next observation sim (v13, `scripts/run_amex_simulation_v13.sh`): full 44-page SBS re-run **with the DP-6 design ledger**; classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
+3. Observation sim (v13, `scripts/run_amex_simulation_v13.sh`; user-triggered, not part of #233): full 44-page SBS re-run **with the DP-6 design ledger**; classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
 4. Definition of done: 44/44 slides classified faithful reproduction or accepted v3 design divergence **with the design ledger green**; R-A…R-D closed or explicitly re-accepted.
 
 ## 6. Out of scope
