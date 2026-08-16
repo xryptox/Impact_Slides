@@ -99,9 +99,9 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 | 5, 9, 10 | generation / segment supports | `support_table` | DOM: KPI values present |
 | 17 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
 | 18 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
-| 21 | shares line 702→682; ROE 35/34/36/36/34/35 | combo line + `outlined_support` values | dataset line + ROE row exact |
-| 24 | braces; `$486B`; %-of-total boxes; drop aggregate bars | `category_groups` + `annotations` | DOM: `$486B Total Network Volumes` |
-| 28 | FDIC callout; on-stack % + $ totals | `annotations` + `auxiliary_series` | DOM: `92% FDIC` + totals |
+| 21 | shipped #230 | combo line + `outlined_support` values | `tests/test_amex_s21_s24_s28_furniture.py` |
+| 24 | shipped #230 | `category_groups` + `$486B` annotation + boxed %-of-total | `tests/test_amex_s21_s24_s28_furniture.py` |
+| 28 | shipped #230 | `annotations` + authored $ totals + on-stack % | `tests/test_amex_s21_s24_s28_furniture.py` |
 
 ## 5. Acceptance & verification
 

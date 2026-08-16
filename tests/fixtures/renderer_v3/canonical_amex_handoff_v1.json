@@ -3493,7 +3493,9 @@
         "chart": {
           "type": "chart",
           "surface_id": "s21-cap",
-          "chart_type": "stacked_bar",
+          "chart_type": "combo",
+          "bar_mode": "stacked",
+          "heading": "Capital Return & Common Shares Outstanding",
           "chart_data": {
             "categories": [
               {
@@ -3525,6 +3527,7 @@
               {
                 "series_id": "dividends",
                 "name": "Dividends",
+                "mark_type": "bar",
                 "values": [
                   "0.5",
                   "0.6",
@@ -3538,6 +3541,7 @@
               {
                 "series_id": "share-repurchases",
                 "name": "Share Repurchases",
+                "mark_type": "bar",
                 "values": [
                   "1.1",
                   "0.7",
@@ -3547,6 +3551,21 @@
                   "1.6"
                 ],
                 "color": "primary_blue"
+              },
+              {
+                "series_id": "common-shares-outstanding",
+                "name": "Common Shares Outstanding",
+                "mark_type": "line",
+                "axis_key": "secondary",
+                "values": [
+                  "702",
+                  "701",
+                  "696",
+                  "689",
+                  "686",
+                  "682"
+                ],
+                "color": "neutral"
               }
             ]
           },
@@ -3561,12 +3580,27 @@
                 "kind": "generated",
                 "target_ticks": 5
               }
+            },
+            "secondary": {
+              "visible": true,
+              "format_id": "num_0",
+              "domain": {
+                "kind": "fixed",
+                "min": "670",
+                "max": "710",
+                "ticks": [
+                  "670",
+                  "680",
+                  "690",
+                  "700",
+                  "710"
+                ]
+              }
             }
           },
           "display": {
             "series_identity": "legend"
           },
-          "heading": "Capital Return & Common Shares Outstanding",
           "auxiliary_series": [
             {
               "auxiliary_id": "s21-cap-totals",
@@ -3633,7 +3667,7 @@
           "table": {
             "surface_id": "s21-roe",
             "stub_header": {
-              "label": "Metric"
+              "label": "ROE"
             },
             "columns": [
               {
@@ -3673,22 +3707,22 @@
                   },
                   "q1-25": {
                     "type": "number",
-                    "value": "35",
+                    "value": "34",
                     "format_id": "pct_0"
                   },
                   "q2-25": {
                     "type": "number",
-                    "value": "35",
+                    "value": "36",
                     "format_id": "pct_0"
                   },
                   "q3-25": {
                     "type": "number",
-                    "value": "35",
+                    "value": "36",
                     "format_id": "pct_0"
                   },
                   "q4-25": {
                     "type": "number",
-                    "value": "35",
+                    "value": "34",
                     "format_id": "pct_0"
                   },
                   "q1-26": {
@@ -3812,10 +3846,6 @@
                 "label": "U.S. Large & Global Corp."
               },
               {
-                "category_id": "commercial-services-total",
-                "label": "Commercial Services (total)"
-              },
-              {
                 "category_id": "int-l-consumer",
                 "label": "Int'l Consumer"
               },
@@ -3824,27 +3854,21 @@
                 "label": "Int'l SME & Large Corp."
               },
               {
-                "category_id": "international-card-services",
-                "label": "International Card Services"
-              },
-              {
                 "category_id": "processed-volumes",
                 "label": "Processed Volumes"
               }
             ],
             "series": [
               {
-                "series_id": "yoy",
+                "series_id": "yoy-growth",
                 "name": "YoY growth",
                 "values": [
                   "10",
                   "4",
                   "4",
-                  "4",
                   "13",
                   "12",
-                  "13",
-                  "12"
+                  "9"
                 ],
                 "color": "navy"
               }
@@ -3863,36 +3887,62 @@
               }
             }
           },
+          "display": {
+            "ordinary_values": "show",
+            "series_identity": "auto"
+          },
           "category_groups": [
             {
-              "group_id": "us",
-              "label": "U.S.",
+              "group_id": "us-consumer-services",
+              "label": "U.S. Consumer Services",
               "category_ids": [
-                "u-s-consumer-services",
-                "u-s-sme"
+                "u-s-consumer-services"
               ]
             },
             {
-              "group_id": "us-lg",
-              "label": "U.S. Large",
+              "group_id": "commercial-services",
+              "label": "Commercial Services",
               "category_ids": [
-                "u-s-large-global-corp",
-                "commercial-services-total"
+                "u-s-sme",
+                "u-s-large-global-corp"
               ]
             },
             {
-              "group_id": "intl",
-              "label": "International",
+              "group_id": "international-card-services",
+              "label": "International Card Services",
               "category_ids": [
                 "int-l-consumer",
                 "int-l-sme-large-corp"
               ]
             }
           ],
-          "display": {
-            "ordinary_values": "show",
-            "series_identity": "auto"
-          }
+          "annotations": [
+            {
+              "annotation_id": "s24-tnv",
+              "role": "explanation",
+              "text": "$486B Total Network Volumes",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ],
+          "auxiliary_series": [
+            {
+              "auxiliary_id": "s24-share",
+              "role": "boxed_label",
+              "label": "% of Total Network Volumes",
+              "format_id": "pct_0",
+              "target_series_id": "yoy-growth",
+              "values": [
+                "37",
+                "22",
+                "5",
+                "15",
+                "8",
+                "12"
+              ]
+            }
+          ]
         }
       },
       "evidence_ids": [
@@ -3905,11 +3955,11 @@
         "sections": [
           {
             "surface_id": "s24-disc",
-            "title": "Network volumes",
+            "title": "FX-adjusted reporting note",
             "items": [
               {
                 "kind": "paragraph",
-                "text": "$486B Total Network Volumes. % of Total Network Volumes outlined support retained in disclosure."
+                "text": "See Annex 1 for reported rates. Processed Volumes growth is FX-adjusted."
               }
             ]
           }
@@ -4569,7 +4619,7 @@
             "value_axes": {
               "primary": {
                 "visible": true,
-                "format_id": "usd_1",
+                "format_id": "pct_0",
                 "domain": {
                   "kind": "generated",
                   "target_ticks": 5
@@ -4577,9 +4627,22 @@
               }
             },
             "display": {
-              "series_identity": "legend"
+              "series_identity": "legend",
+              "stack_segments": "show"
             },
             "heading": "Funding Mix",
+            "auxiliary_series": [
+              {
+                "auxiliary_id": "s28-fund-totals",
+                "role": "authored_stack_total",
+                "label": "Total",
+                "format_id": "usd_0",
+                "values": [
+                  "210",
+                  "219"
+                ]
+              }
+            ],
             "subtitle": "$ in billions"
           },
           {
@@ -4642,7 +4705,7 @@
             "value_axes": {
               "primary": {
                 "visible": true,
-                "format_id": "usd_1",
+                "format_id": "pct_0",
                 "domain": {
                   "kind": "generated",
                   "target_ticks": 5
@@ -4650,10 +4713,33 @@
               }
             },
             "display": {
-              "series_identity": "legend"
+              "series_identity": "legend",
+              "stack_segments": "show"
             },
             "heading": "Deposit Programs",
-            "subtitle": "$ in billions"
+            "auxiliary_series": [
+              {
+                "auxiliary_id": "s28-dep-totals",
+                "role": "authored_stack_total",
+                "label": "Total",
+                "format_id": "usd_0",
+                "values": [
+                  "151",
+                  "157"
+                ]
+              }
+            ],
+            "subtitle": "$ in billions",
+            "annotations": [
+              {
+                "annotation_id": "s28-fdic",
+                "role": "explanation",
+                "text": "92% FDIC insured at Q1'26",
+                "anchor": {
+                  "type": "chart"
+                }
+              }
+            ]
           }
         ]
       },

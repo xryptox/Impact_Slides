@@ -6,7 +6,8 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #227: s6 +6pp elbow annotation; s8 lodging metric_strip; s15 reserve-rate outlined row + stack totals;
 #228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15;
-#229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows).
+#229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows;
+#230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
 from __future__ import annotations
@@ -246,6 +247,73 @@ def _s18_nii(labs: list, vals: list) -> dict:
         }
     ]
     return chart
+
+
+def _s21_combo(labs: list, bar_series: list, shares: list, totals: list) -> dict:
+    used: set[str] = set()
+    cats = [
+        {"category_id": _slug(str(c), used, f"cat{i}"), "label": str(c)}
+        for i, c in enumerate(labs)
+    ]
+    sused: set[str] = set()
+    colors = ["navy", "primary_blue"]
+    series = []
+    for si, (name, values) in enumerate(bar_series):
+        series.append(
+            {
+                "series_id": _slug(name, sused, f"s{si}"),
+                "name": name,
+                "mark_type": "bar",
+                "values": [None if v is None else str(v) for v in values],
+                "color": colors[si % len(colors)],
+            }
+        )
+    series.append(
+        {
+            "series_id": _slug("Common Shares Outstanding", sused, "shares"),
+            "name": "Common Shares Outstanding",
+            "mark_type": "line",
+            "axis_key": "secondary",
+            "values": [str(v) for v in shares],
+            "color": "neutral",
+        }
+    )
+    return {
+        "type": "chart",
+        "surface_id": "s21-cap",
+        "chart_type": "combo",
+        "bar_mode": "stacked",
+        "heading": "Capital Return & Common Shares Outstanding",
+        "chart_data": {"categories": cats, "series": series},
+        "category_axis": {"visible": True},
+        "value_axes": {
+            "primary": {
+                "visible": True,
+                "format_id": "usd_1",
+                "domain": {"kind": "generated", "target_ticks": 5},
+            },
+            "secondary": {
+                "visible": True,
+                "format_id": "num_0",
+                "domain": {
+                    "kind": "fixed",
+                    "min": "670",
+                    "max": "710",
+                    "ticks": ["670", "680", "690", "700", "710"],
+                },
+            },
+        },
+        "display": {"series_identity": "legend"},
+        "auxiliary_series": [
+            {
+                "auxiliary_id": "s21-cap-totals",
+                "role": "authored_stack_total",
+                "label": "Total",
+                "format_id": "usd_1",
+                "values": [None if v is None else str(v) for v in totals],
+            }
+        ],
+    }
 
 
 def _s18_driver() -> dict:
@@ -1501,29 +1569,26 @@ def build() -> dict:
         )
     )
 
-    # 21 capital chart_hero_dual Capital Summary
+    # 21 capital chart_hero_dual: stacked combo + shares line + exact ROE
     s21 = json.loads((FIX / "amex_s21_v10_broken.json").read_text(encoding="utf-8"))[
         "slides"
     ][0]
     tile = s21["visual_spec"]["primary_visual"]["tiles"][0]
     steps21 = tile["steps_or_data"]
     labs21 = [r[0] for r in steps21[1:]]
-    series21 = []
-    for ci, name in enumerate(steps21[0][1:]):
-        series21.append(
-            (
-                str(name),
-                [r[ci + 1] for r in steps21[1:]],
-                None,
-            )
-        )
-    totals21 = []
+    series21 = [
+        (str(name), [r[ci + 1] for r in steps21[1:]])
+        for ci, name in enumerate(steps21[0][1:])
+    ]
     from decimal import Decimal, InvalidOperation
+    totals21 = []
     for r in steps21[1:]:
         try:
             totals21.append(str(Decimal(str(r[1])) + Decimal(str(r[2]))))
         except (InvalidOperation, TypeError, ValueError):
             totals21.append(None)
+    shares21 = ["702", "701", "696", "689", "686", "682"]
+    roe21 = ["35", "34", "36", "36", "34", "35"]
     slides.append(
         ordinary(
             21,
@@ -1531,14 +1596,7 @@ def build() -> dict:
             "Capital",
             "earnings",
             {
-                "chart": stacked_bar(
-                    "s21-cap",
-                    labs21,
-                    series21,
-                    heading="Capital Return & Common Shares Outstanding",
-                    fmt="usd_1",
-                    totals=totals21,
-                ),
+                "chart": _s21_combo(labs21, series21, shares21, totals21),
                 "hero": {
                     "hero_type": "driver_card",
                     "surface_id": "s21-summary",
@@ -1583,34 +1641,11 @@ def build() -> dict:
                         },
                     ],
                 },
-                "support": {
-                    "support_type": "outlined_support",
-                    "table": {
-                        "surface_id": "s21-roe",
-                        "stub_header": {"label": "Metric"},
-                        "columns": [
-                            {
-                                "column_id": _slug(str(c), set(), f"c{i}"),
-                                "label": str(c),
-                            }
-                            for i, c in enumerate(labs21)
-                        ],
-                        "rows": [
-                            {
-                                "row_id": "roe",
-                                "label": "ROE",
-                                "cells": {
-                                    _slug(str(c), set(), f"c{i}"): {
-                                        "type": "number",
-                                        "value": "35",
-                                        "format_id": "pct_0",
-                                    }
-                                    for i, c in enumerate(labs21)
-                                },
-                            }
-                        ],
-                    },
-                },
+                "support": outlined_from_v2(
+                    "s21-roe",
+                    [["", *labs21], ["ROE", *roe21]],
+                    fmt="pct_0",
+                ),
             },
             subtitle=s21["content"].get("subtitle"),
             disclosure=disclosure_from_text(
@@ -1686,89 +1721,62 @@ def build() -> dict:
         }
     )
 
-    # 24 growth bars with groups
+    # 24 six growth bars, group braces, $486B callout, %-of-total boxes
     s24 = json.loads((FIX / "amex_s24_v10_broken.json").read_text(encoding="utf-8"))[
         "slides"
     ][0]
-    steps24 = s24["visual_spec"]["primary_visual"]["steps_or_data"]
-    # expect label + value rows or matrix
-    if steps24 and isinstance(steps24[0], list):
-        # try customer types as rows
-        labs24 = [r[0] for r in steps24[1:]]
-        vals24 = [r[1] if len(r) > 1 else None for r in steps24[1:]]
-    else:
-        labs24 = [
-            "U.S. Consumer",
-            "U.S. Small Business",
-            "U.S. Large & Global",
-            "Intl Consumer",
-            "Intl Commercial",
-            "Other",
-        ]
-        vals24 = [10, 8, 4, 13, 12, 5]
-    # three groups of two
-    gids = []
-    usedg: set[str] = set()
-    cat_ids = []
-    usedc: set[str] = set()
-    for lab in labs24:
-        cat_ids.append(_slug(lab, usedc, "c"))
-    groups = [
+    labs24 = [
+        "U.S. Consumer Services",
+        "U.S. SME",
+        "U.S. Large & Global Corp.",
+        "Int'l Consumer",
+        "Int'l SME & Large Corp.",
+        "Processed Volumes",
+    ]
+    vals24 = ["10", "4", "4", "13", "12", "9"]
+    share24 = ["37", "22", "5", "15", "8", "12"]
+    chart24 = grouped_bar(
+        "s24-growth",
+        labs24,
+        [("YoY growth", vals24, "navy")],
+        fmt="pct_0",
+    )
+    cat_ids24 = [c["category_id"] for c in chart24["chart_data"]["categories"]]
+    chart24["category_groups"] = [
         {
-            "group_id": "us",
-            "label": "U.S.",
-            "category_ids": cat_ids[0:2] if len(cat_ids) >= 2 else cat_ids[:1],
+            "group_id": "us-consumer-services",
+            "label": "U.S. Consumer Services",
+            "category_ids": [cat_ids24[0]],
         },
         {
-            "group_id": "us-lg",
-            "label": "U.S. Large",
-            "category_ids": cat_ids[2:4] if len(cat_ids) >= 4 else cat_ids[2:3],
+            "group_id": "commercial-services",
+            "label": "Commercial Services",
+            "category_ids": cat_ids24[1:3],
         },
         {
-            "group_id": "intl",
-            "label": "International",
-            "category_ids": cat_ids[4:6] if len(cat_ids) >= 6 else cat_ids[4:],
+            "group_id": "international-card-services",
+            "label": "International Card Services",
+            "category_ids": cat_ids24[3:5],
         },
     ]
-    # rebuild chart with stable cat ids matching groups
-    cats24 = [
-        {"category_id": cid, "label": lab} for cid, lab in zip(cat_ids, labs24)
+    chart24["annotations"] = [
+        {
+            "annotation_id": "s24-tnv",
+            "role": "explanation",
+            "text": "$486B Total Network Volumes",
+            "anchor": {"type": "chart"},
+        }
     ]
-    chart24 = {
-        "type": "chart",
-        "surface_id": "s24-growth",
-        "chart_type": "grouped_bar",
-        "chart_data": {
-            "categories": cats24,
-            "series": [
-                {
-                    "series_id": "yoy",
-                    "name": "YoY growth",
-                    "values": [
-                        None
-                        if v is None
-                        else (
-                            str(v).replace("%", "").split()[0]
-                            if re.match(r"^-?\d", str(v).replace("%", "").strip())
-                            else None
-                        )
-                        for v in vals24
-                    ],
-                    "color": "navy",
-                }
-            ],
-        },
-        "category_axis": {"visible": True},
-        "value_axes": {
-            "primary": {
-                "visible": True,
-                "format_id": "pct_0",
-                "domain": {"kind": "generated", "target_ticks": 5},
-            }
-        },
-        "category_groups": [g for g in groups if g["category_ids"]],
-        "display": {"ordinary_values": "show", "series_identity": "auto"},
-    }
+    chart24["auxiliary_series"] = [
+        {
+            "auxiliary_id": "s24-share",
+            "role": "boxed_label",
+            "label": "% of Total Network Volumes",
+            "format_id": "pct_0",
+            "target_series_id": chart24["chart_data"]["series"][0]["series_id"],
+            "values": share24,
+        }
+    ]
     slides.append(
         ordinary(
             24,
@@ -1779,8 +1787,8 @@ def build() -> dict:
             subtitle=s24["content"].get("subtitle") or None,
             disclosure=disclosure_from_text(
                 "s24-disc",
-                "Network volumes",
-                "$486B Total Network Volumes. % of Total Network Volumes outlined support retained in disclosure.",
+                "FX-adjusted reporting note",
+                "See Annex 1 for reported rates. Processed Volumes growth is FX-adjusted.",
             ),
         )
     )
@@ -1894,42 +1902,43 @@ def build() -> dict:
     ][0]
     tiles = s28["visual_spec"]["primary_visual"]["tiles"]
 
-    def tile_to_stacked(tile, sid):
+    def tile_to_stacked(tile, sid, totals):
         steps = tile["steps_or_data"]
-        if steps and isinstance(steps[0], list):
-            labs = [r[0] for r in steps[1:]]
-            series = []
-            for ci, name in enumerate(steps[0][1:]):
-                series.append(
-                    (
-                        str(name),
-                        [r[ci + 1] if ci + 1 < len(r) else None for r in steps[1:]],
-                        None,
-                    )
+        labs = [r[0] for r in steps[1:]]
+        series = []
+        for ci, name in enumerate(steps[0][1:]):
+            series.append(
+                (
+                    str(name),
+                    [r[ci + 1] if ci + 1 < len(r) else None for r in steps[1:]],
+                    None,
                 )
-            return stacked_bar(
-                sid,
-                labs,
-                series,
-                heading=tile.get("label") or None,
-                fmt="usd_1",
             )
-        return stacked_bar(
+        chart = stacked_bar(
             sid,
-            cats,
-            [("A", [1, 1, 1, 1, 1], "navy"), ("B", [1, 1, 1, 1, 1], "primary_blue")],
-            heading=tile.get("label"),
-            fmt="usd_1",
+            labs,
+            series,
+            heading=tile.get("label") or None,
+            fmt="pct_0",
+            totals=totals,
         )
+        chart["auxiliary_series"][0]["format_id"] = "usd_0"
+        chart["display"]["stack_segments"] = "show"
+        return chart
 
-    # dual_chart needs exactly 2 charts; take first two chart tiles
     chart_tiles = [t for t in tiles if t.get("kind") == "chart"][:2]
-    if len(chart_tiles) < 2:
-        chart_tiles = tiles[:2]
-    p0 = tile_to_stacked(chart_tiles[0], "s28-fund")
+    p0 = tile_to_stacked(chart_tiles[0], "s28-fund", ["210", "219"])
     p0["subtitle"] = "$ in billions"
-    p1 = tile_to_stacked(chart_tiles[1], "s28-dep")
+    p1 = tile_to_stacked(chart_tiles[1], "s28-dep", ["151", "157"])
     p1["subtitle"] = "$ in billions"
+    p1["annotations"] = [
+        {
+            "annotation_id": "s28-fdic",
+            "role": "explanation",
+            "text": "92% FDIC insured at Q1'26",
+            "anchor": {"type": "chart"},
+        }
+    ]
     slides.append(
         ordinary(
             28,
