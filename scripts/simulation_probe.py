@@ -513,7 +513,7 @@ DESIGN_LEDGER_FURNITURE: dict[int, tuple[dict[str, str], ...]] = {
     ),
     21: (
         {
-            "selector": '[data-chart-type="combo"]',
+            "selector": '[data-chart-type="combo"] [data-semantic-table]',
             "expected_text": "Common Shares Outstanding",
         },
         {"selector": ".outlined-support", "expected_text": "ROE"},

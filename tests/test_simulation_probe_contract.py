@@ -141,6 +141,30 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
     </div>
   </div>
 </section>
+<section class="slide" data-slide-number="45" data-layout="design_s21">
+  <div class="chart-body" data-chart-type="combo">
+    <div class="band-title chart-pane-title">
+      <span>Capital Return & Common Shares Outstanding</span>
+    </div>
+    <table class="chart-semantic-table" data-semantic-table="1">
+      <thead><tr><th>Category</th><th>Dividends</th><th>Common Shares Outstanding</th></tr></thead>
+      <tbody><tr><th>Q1</th><td>0.6</td><td>682</td></tr></tbody>
+    </table>
+    <div class="outlined-support">ROE 35%</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="46" data-layout="design_s21_noline">
+  <div class="chart-body" data-chart-type="combo">
+    <div class="band-title chart-pane-title">
+      <span>Capital Return & Common Shares Outstanding</span>
+    </div>
+    <table class="chart-semantic-table" data-semantic-table="1">
+      <thead><tr><th>Category</th><th>Dividends</th><th>Share Repurchases</th></tr></thead>
+      <tbody><tr><th>Q1</th><td>0.6</td><td>1.6</td></tr></tbody>
+    </table>
+    <div class="outlined-support">ROE 35%</div>
+  </div>
+</section>
 <script>
 // Fake Chart registry: options.plugins.datalabels is display-only (pre-bind
 // trap), while $datalabels._labels[*].model().lines holds painted strings.
@@ -473,4 +497,29 @@ def test_furniture_presence_missing_expected_text_fails(page):
     with pytest.raises(ProbeError, match=r"NOT IN DOM|text"):
         furniture_presence(
             page, 40, "design_ok", ".support-table", expected_text="NOT IN DOM"
+        )
+
+
+def test_design_ledger_s21_shares_line_hits_semantic_table(page):
+    spec = DESIGN_LEDGER_FURNITURE[21][0]
+    row = furniture_presence(
+        page,
+        45,
+        "design_s21",
+        spec["selector"],
+        expected_text=spec["expected_text"],
+    )
+    assert row["ok"] is True
+    assert row["count"] >= 1
+
+
+def test_design_ledger_s21_shares_line_not_heading(page):
+    spec = DESIGN_LEDGER_FURNITURE[21][0]
+    with pytest.raises(ProbeError, match=r"expected text|matched 0|0 elements"):
+        furniture_presence(
+            page,
+            46,
+            "design_s21_noline",
+            spec["selector"],
+            expected_text=spec["expected_text"],
         )
