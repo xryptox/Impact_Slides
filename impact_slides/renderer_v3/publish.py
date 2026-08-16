@@ -190,6 +190,8 @@ def build_presentation_html(
             "table.support-table th.stub,table.support-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis);background:transparent}",
             "table.support-table td.num{font-variant-numeric:tabular-nums lining-nums;text-align:right}",
             ".support-table.category-aligned{width:100%;margin:0 0 var(--space-sm);background:transparent}",
+            ".support-table.category-aligned .support-cat-cell,.support-table.category-aligned .support-cat-stub{box-sizing:border-box;border:var(--border-width-hairline) solid var(--color-rule)}",
+            ".support-table.category-aligned .support-cat-cell.head,.support-table.category-aligned .support-cat-stub.head{background:var(--color-band);color:var(--color-band-ink);font-weight:var(--font-weight-emphasis)}",
             ".support-table.category-aligned .support-cat-cell.num{font-variant-numeric:tabular-nums lining-nums}",
             ".outlined-support{position:relative;width:100%;margin:0 0 var(--space-sm);min-height:48px}",
             ".outlined-support-label{position:absolute;left:0;top:50%;transform:translateY(-50%);margin:0;font-weight:var(--font-weight-emphasis);box-sizing:border-box;padding-right:8px}",
@@ -1120,7 +1122,7 @@ def _paint_category_support_table(
     y = 0
     if not hide_header and len(headers) > 1:
         out.append(
-            f'<p class="support-cat-stub" style="position:absolute;left:0;top:{y}px;'
+            f'<p class="support-cat-stub head" style="position:absolute;left:0;top:{y}px;'
             f'width:{lane_w}px;margin:0;font-weight:var(--font-weight-emphasis)">'
             f"{_soft_break_html(headers[0])}</p>"
         )

@@ -65,6 +65,7 @@ Every PDF furniture element must map to an existing schema-v1 construct — new 
 |---------------|---------------------|
 | side callout boxes (Leap Year, elbow, FDIC) | `annotations` / `context_labels` (+ `coverage_callout` for stacks) |
 | bottom support tables / outlined rows | `support.support_table` / `support.outlined_support` |
+| category-aligned support chrome (#247) | visible `.support-cat-cell` / `.support-cat-stub` carry navy header band + hairline borders; sr-only semantic twin and frozen category centers stay byte-identical |
 | side KPI stacks | `support.metric_strip` |
 | under-bar YoY boxes | boxed-label `auxiliary_series` |
 | braces / group labels (s24) | `category_groups` |
@@ -79,7 +80,7 @@ Percent series with low variance must not auto-collapse: pin `domain.kind=fixed`
 
 - `comparison_cards`: add the circular dual-metric card recipe (or document an accepted divergence with numbers complete).
 - `grouped_annex_table`: header cells must fit full text (no `Q…` ellipsis) — measure `scrollWidth ≤ clientWidth` on both groups.
-- `legal_notice`: preserve payload list hierarchy as painted `<ul>` structure, not a flattened stream.
+- `legal_notice`: preserve payload list hierarchy as painted `<ul>` structure, not a flattened stream. Unmarked-only payloads paint one `<ul>` per paragraph so logical groups keep `--space-sm` spacing (#247 R-D).
 
 ### DP-5 Brand art exclusion
 

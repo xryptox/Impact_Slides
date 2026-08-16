@@ -150,7 +150,7 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path) -> None:
         chunk = html.split(f'id="slide-{n}"', 1)[1].split("<section", 1)[0]
         body = chunk.split('legal-body">', 1)[1].split("</div>", 1)[0]
         paras = by_n[n]["payload"]["paragraphs"]
-        assert body.count("<ul") == 1
+        assert body.count("<ul") == len(paras)
         assert body.count("<li") == len(paras)
         assert "<p" not in body
 
