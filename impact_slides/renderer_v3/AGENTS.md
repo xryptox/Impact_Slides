@@ -70,6 +70,8 @@ Schema-v1 canonical rendering kernel for Impact Slide Renderer 3. Sibling of fro
 - Chart plot/body surfaces stay transparent and flat via generated `.chart-plot`/`.chart-body` rules (D5/D6)
 - Chart typography floors (DP-1): category/value ticks ≥20, ordinary/segment/stack-total values ≥18; ceilings unchanged. Frozen `role_sizes` never go below those floors. Chart.js tick + painted-value `font.weight` is 600; SVG tick/value `<text>` carries `font-weight="600"`
 - Percent auto-domain floor (DP-3 / #225): generated `unit=percent` domains keep a minimum 15-point span (0–15 when data sits in that band); authored `domain.kind=fixed` pins stay authoritative. D314 s11 Transaction Growth is pinned 0–15.
+- Table stub-slack cap (DP-7 / #246): leftover table width is shared; stub ≤ 45% unless its own min exceeds that. Values stay unwrapped (D25/D70); category-center support tables stay on D167 centers.
+- Sparse bar occupancy (DP-7 / #246): `n_cat<=6` bars occupy ≥50% of category pitch (target 55%); dense charts keep theme `BAR_MAX_THICKNESS` 56px.
 
 ## Work Guidance
 

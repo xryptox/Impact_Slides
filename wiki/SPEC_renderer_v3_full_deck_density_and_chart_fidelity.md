@@ -2,6 +2,8 @@
 
 Status: **FINAL — user-approved in full; implementation tickets may now be prepared.**
 
+Inventory (no requirement change): renderer-owned DP-7 geometry overrides live in `SPEC_renderer_v3_pdf_design_parity.md` (#246 stub-slack cap + sparse bar occupancy).
+
 Evidence baseline: user-reviewed v11 44-slide PDF↔HTML comparisons from
 `origin/gnhf/objective-produce-th-5765a4` at `42f620c`.
 

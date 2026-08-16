@@ -154,6 +154,7 @@ TABLE_MAX_LABEL_LINES: Final = 2
 TABLE_CELL_PAD_X: Final = 16
 TABLE_CELL_PAD_Y: Final = 12
 TABLE_RULE_Y: Final = 1
+TABLE_STUB_MAX_SHARE: Final = 0.45  # leftover slack is not dumped into the stub (#246)
 
 LINE_HEIGHT: Final = 1.4
 # Must match publish.py / boardroom_amex theme box model.
@@ -4039,6 +4040,27 @@ def _legal_body_blocks(
     return blocks
 
 
+def _distribute_table_slack(widths: list[int], box_w: int) -> list[int]:
+    """Cap the stub and share leftover box width across value columns (#246)."""
+    if not widths:
+        return widths
+    leftover = box_w - sum(widths)
+    if leftover <= 0:
+        return widths
+    stub_cap = max(widths[0], int(box_w * TABLE_STUB_MAX_SHARE))
+    stub_add = min(leftover, stub_cap - widths[0])
+    widths[0] += stub_add
+    leftover -= stub_add
+    n_other = len(widths) - 1
+    if leftover and n_other:
+        base, rem = divmod(leftover, n_other)
+        for i in range(1, len(widths)):
+            widths[i] += base + (1 if i <= rem else 0)
+    elif leftover:
+        widths[0] += leftover
+    return widths
+
+
 def _ellipsis_to_width(text: str, px: int, box_w: int, *, strong: bool = False) -> str:
     """Ellipsize label only; values never call this (D25)."""
     if _text_width(text, px, strong=strong) <= box_w:
@@ -4125,10 +4147,8 @@ def _table_fit_detail(
         if sum(widths) > box_w:
             # Float mins fit but integer floors do not — try label adaptations.
             return None
-        # Give leftover to the stub column.
-        if widths:
-            widths[0] += box_w - sum(widths)
-        return widths
+        # Share leftover across columns; stub stays <= 45% unless its min exceeds that.
+        return _distribute_table_slack(widths, box_w)
 
     def ellipsize_labels(
         h_labels: list[str], r_labels: list[str], g_labels: list[str] | None, widths: list[int]

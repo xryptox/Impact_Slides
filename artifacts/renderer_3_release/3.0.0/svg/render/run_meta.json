@@ -46,7 +46,7 @@
         "slide-4-title",
         "slide-4-subtitle",
         "s4-bb",
-        "slide-4-disclosure-s4-disc"
+        "s4-support"
       ],
       "section_id": "earnings"
     },
@@ -57,7 +57,7 @@
         "slide-5-title",
         "slide-5-subtitle",
         "s5-ucs",
-        "slide-5-disclosure-s5-disc"
+        "s5-support"
       ],
       "section_id": "earnings"
     },
@@ -85,6 +85,7 @@
         "slide-8-title",
         "slide-8-subtitle",
         "s8-lodging",
+        "s8-kpis",
         "slide-8-disclosure-s8-disc"
       ],
       "section_id": "earnings"
@@ -96,7 +97,7 @@
         "slide-9-title",
         "slide-9-subtitle",
         "s9-comm",
-        "slide-9-disclosure-s9-disc"
+        "s9-support"
       ],
       "section_id": "earnings"
     },
@@ -107,7 +108,7 @@
         "slide-10-title",
         "slide-10-subtitle",
         "s10-ics",
-        "slide-10-disclosure-s10-disc"
+        "s10-support"
       ],
       "section_id": "earnings"
     },
@@ -151,6 +152,7 @@
         "slide-15-title",
         "slide-15-subtitle",
         "s15-prov",
+        "s15-reserve",
         "slide-15-disclosure-s15-disc"
       ],
       "section_id": "earnings"
@@ -184,7 +186,7 @@
         "slide-19-title",
         "slide-19-subtitle",
         "s19-rev",
-        "slide-19-disclosure-s19-disc"
+        "s19-support"
       ],
       "section_id": "earnings"
     },
@@ -411,7 +413,7 @@
     }
   ],
   "severity_counts": {
-    "info": 68,
+    "info": 64,
     "warning": 0,
     "error": 0
   },
@@ -509,6 +511,30 @@
       "code": "plan.typography_grown",
       "severity": "info",
       "phase": "plan",
+      "role": "support_table",
+      "path": "/slides/3/support_table",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 4,
+      "layout_type": "single_chart",
+      "surface_id": "s4-support",
+      "expected": {
+        "contract": "table grew to 24px"
+      },
+      "input": {
+        "type": "int",
+        "value": 24
+      }
+    },
+    {
+      "code": "plan.typography_grown",
+      "severity": "info",
+      "phase": "plan",
       "role": "subtitle",
       "path": "/slides/3/subtitle",
       "action": {
@@ -527,6 +553,30 @@
       "input": {
         "type": "int",
         "value": 26
+      }
+    },
+    {
+      "code": "plan.typography_grown",
+      "severity": "info",
+      "phase": "plan",
+      "role": "support_table",
+      "path": "/slides/4/support_table",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 5,
+      "layout_type": "single_chart",
+      "surface_id": "s5-support",
+      "expected": {
+        "contract": "table grew to 24px"
+      },
+      "input": {
+        "type": "int",
+        "value": 24
       }
     },
     {
@@ -622,6 +672,30 @@
       "code": "plan.typography_grown",
       "severity": "info",
       "phase": "plan",
+      "role": "metric_strip",
+      "path": "/slides/7/metric_strip",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 8,
+      "layout_type": "single_chart",
+      "surface_id": "s8-kpis",
+      "expected": {
+        "contract": "label grew to 24px"
+      },
+      "input": {
+        "type": "int",
+        "value": 24
+      }
+    },
+    {
+      "code": "plan.typography_grown",
+      "severity": "info",
+      "phase": "plan",
       "role": "subtitle",
       "path": "/slides/7/subtitle",
       "action": {
@@ -646,6 +720,30 @@
       "code": "plan.typography_grown",
       "severity": "info",
       "phase": "plan",
+      "role": "support_table",
+      "path": "/slides/8/support_table",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 9,
+      "layout_type": "single_chart",
+      "surface_id": "s9-support",
+      "expected": {
+        "contract": "table grew to 24px"
+      },
+      "input": {
+        "type": "int",
+        "value": 24
+      }
+    },
+    {
+      "code": "plan.typography_grown",
+      "severity": "info",
+      "phase": "plan",
       "role": "subtitle",
       "path": "/slides/8/subtitle",
       "action": {
@@ -664,6 +762,30 @@
       "input": {
         "type": "int",
         "value": 26
+      }
+    },
+    {
+      "code": "plan.typography_grown",
+      "severity": "info",
+      "phase": "plan",
+      "role": "support_table",
+      "path": "/slides/9/support_table",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 10,
+      "layout_type": "single_chart",
+      "surface_id": "s10-support",
+      "expected": {
+        "contract": "table grew to 24px"
+      },
+      "input": {
+        "type": "int",
+        "value": 24
       }
     },
     {
@@ -763,6 +885,47 @@
       }
     },
     {
+      "code": "plan.text_wrapped",
+      "severity": "info",
+      "phase": "plan",
+      "role": "outlined_support",
+      "path": "/slides/14/outlined_support",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 15,
+      "layout_type": "single_chart",
+      "surface_id": "s15-reserve"
+    },
+    {
+      "code": "plan.typography_grown",
+      "severity": "info",
+      "phase": "plan",
+      "role": "outlined_support",
+      "path": "/slides/14/outlined_support",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 15,
+      "layout_type": "single_chart",
+      "surface_id": "s15-reserve",
+      "expected": {
+        "contract": "table grew to 24px"
+      },
+      "input": {
+        "type": "int",
+        "value": 24
+      }
+    },
+    {
       "code": "plan.typography_grown",
       "severity": "info",
       "phase": "plan",
@@ -785,40 +948,6 @@
         "type": "int",
         "value": 26
       }
-    },
-    {
-      "code": "plan.label_ellipsized",
-      "severity": "info",
-      "phase": "plan",
-      "role": "data_table",
-      "path": "/slides/15/data_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 16,
-      "layout_type": "data_table",
-      "surface_id": "s16-rev"
-    },
-    {
-      "code": "plan.short_label_used",
-      "severity": "info",
-      "phase": "plan",
-      "role": "data_table",
-      "path": "/slides/15/data_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 16,
-      "layout_type": "data_table",
-      "surface_id": "s16-rev"
     },
     {
       "code": "plan.typography_grown",
@@ -866,6 +995,30 @@
       "input": {
         "type": "int",
         "value": 26
+      }
+    },
+    {
+      "code": "plan.typography_grown",
+      "severity": "info",
+      "phase": "plan",
+      "role": "support_table",
+      "path": "/slides/18/support_table",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 19,
+      "layout_type": "single_chart",
+      "surface_id": "s19-support",
+      "expected": {
+        "contract": "table grew to 24px"
+      },
+      "input": {
+        "type": "int",
+        "value": 24
       }
     },
     {
@@ -1085,24 +1238,7 @@
       }
     },
     {
-      "code": "plan.label_ellipsized",
-      "severity": "info",
-      "phase": "plan",
-      "role": "data_table",
-      "path": "/slides/24/data_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 25,
-      "layout_type": "data_table",
-      "surface_id": "s25-fx"
-    },
-    {
-      "code": "plan.short_label_used",
+      "code": "plan.text_wrapped",
       "severity": "info",
       "phase": "plan",
       "role": "data_table",
@@ -1165,23 +1301,6 @@
         "type": "int",
         "value": 26
       }
-    },
-    {
-      "code": "plan.text_wrapped",
-      "severity": "info",
-      "phase": "plan",
-      "role": "data_table",
-      "path": "/slides/25/data_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 26,
-      "layout_type": "data_table",
-      "surface_id": "s26-te"
     },
     {
       "code": "plan.typography_grown",
@@ -1410,74 +1529,6 @@
       }
     },
     {
-      "code": "plan.label_ellipsized",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-0"
-    },
-    {
-      "code": "plan.label_ellipsized",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-0"
-    },
-    {
-      "code": "plan.short_label_used",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-0"
-    },
-    {
-      "code": "plan.short_label_used",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-0"
-    },
-    {
       "code": "plan.synchronized",
       "severity": "info",
       "phase": "plan",
@@ -1524,74 +1575,6 @@
         "type": "int",
         "value": 24
       }
-    },
-    {
-      "code": "plan.label_ellipsized",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-1"
-    },
-    {
-      "code": "plan.label_ellipsized",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-1"
-    },
-    {
-      "code": "plan.short_label_used",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-1"
-    },
-    {
-      "code": "plan.short_label_used",
-      "severity": "info",
-      "phase": "plan",
-      "role": "grouped_annex_table",
-      "path": "/slides/31/grouped_annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 32,
-      "layout_type": "grouped_annex_table",
-      "surface_id": "s32-peer-1"
     },
     {
       "code": "plan.synchronized",
@@ -1666,6 +1649,23 @@
       }
     },
     {
+      "code": "plan.text_wrapped",
+      "severity": "info",
+      "phase": "plan",
+      "role": "annex_table",
+      "path": "/slides/32/annex_table",
+      "action": {
+        "name": "measure"
+      },
+      "result": {
+        "name": "accepted"
+      },
+      "occurrences": 1,
+      "slide_number": 33,
+      "layout_type": "annex_table",
+      "surface_id": "s33-annex"
+    },
+    {
       "code": "plan.typography_grown",
       "severity": "info",
       "phase": "plan",
@@ -1712,23 +1712,6 @@
         "type": "int",
         "value": 26
       }
-    },
-    {
-      "code": "plan.text_wrapped",
-      "severity": "info",
-      "phase": "plan",
-      "role": "annex_table",
-      "path": "/slides/33/annex_table",
-      "action": {
-        "name": "measure"
-      },
-      "result": {
-        "name": "accepted"
-      },
-      "occurrences": 1,
-      "slide_number": 34,
-      "layout_type": "annex_table",
-      "surface_id": "s34-annex"
     },
     {
       "code": "plan.typography_grown",
@@ -2306,30 +2289,33 @@
       "chart_type": "line"
     },
     {
-      "surface_id": "slide-4-disclosure-s4-disc",
-      "role": "disclosure",
+      "surface_id": "s4-support",
+      "role": "support_table",
       "slide_number": 4,
       "layout_type": "single_chart",
-      "semantic_digest": "33500307e70ed3fbd992bb9e7919a3980a4e5776ce24b6d6ce2fd493b64a7d13",
+      "semantic_digest": "b5d5dc0447e37566829ab15ae3d742546a14c7e54126971ec36778af4d595086",
       "design_stage_region": 4,
       "available_geometry": {
         "width": 1728,
-        "height": 52
+        "height": 106
       },
       "role_sizes": {
-        "body": 14
+        "table": 24
       },
-      "default_size": null,
-      "selected_size": null,
-      "maximum_size": null,
-      "mode": "fixed",
+      "default_size": 14,
+      "selected_size": 24,
+      "maximum_size": 24,
+      "mode": "adaptive",
       "explicit_override": null,
       "synchronization_group": null,
-      "adaptation_codes": [],
+      "adaptation_codes": [
+        "plan.geometry_reallocated",
+        "plan.typography_grown"
+      ],
       "reservations": [
         {
           "kind": "text",
-          "height": 52
+          "height": 106
         },
         {
           "kind": "chrome",
@@ -2338,7 +2324,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "839c858aba7755f6bc9a410eea25e2a635fe280bb2ecb1e5fba92cf1439a4a49"
+      "painter_plan_digest": "e74c6185feba814df3c89709f0258b9e4243184240ffa3848df24fc782982b4c"
     },
     {
       "surface_id": "slide-5-title",
@@ -2413,7 +2399,7 @@
       "design_stage_region": 5,
       "available_geometry": {
         "width": 1728,
-        "height": 712
+        "height": 671
       },
       "role_sizes": {
         "annotations": 13,
@@ -2439,7 +2425,7 @@
       "reservations": [
         {
           "kind": "text",
-          "height": 712
+          "height": 671
         },
         {
           "kind": "chrome",
@@ -2456,30 +2442,33 @@
       "chart_type": "line"
     },
     {
-      "surface_id": "slide-5-disclosure-s5-disc",
-      "role": "disclosure",
+      "surface_id": "s5-support",
+      "role": "support_table",
       "slide_number": 5,
       "layout_type": "single_chart",
-      "semantic_digest": "5c19a01aeea78d836c6d4c0dba01705349e09c4099952acf5373826c32188c2e",
+      "semantic_digest": "c57b1fb0351e4b2e87ce4c2b50c7b308856dce538b055e9077b29c0194f00fb8",
       "design_stage_region": 5,
       "available_geometry": {
         "width": 1728,
-        "height": 52
+        "height": 153
       },
       "role_sizes": {
-        "body": 14
+        "table": 24
       },
-      "default_size": null,
-      "selected_size": null,
-      "maximum_size": null,
-      "mode": "fixed",
+      "default_size": 14,
+      "selected_size": 24,
+      "maximum_size": 24,
+      "mode": "adaptive",
       "explicit_override": null,
       "synchronization_group": null,
-      "adaptation_codes": [],
+      "adaptation_codes": [
+        "plan.geometry_reallocated",
+        "plan.typography_grown"
+      ],
       "reservations": [
         {
           "kind": "text",
-          "height": 52
+          "height": 153
         },
         {
           "kind": "chrome",
@@ -2488,7 +2477,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "d7dd9fe9d0bbd7b4cfd41bf1a56133041ed39fc79082bb044b6f70da2a32b55b"
+      "painter_plan_digest": "658718c87fcf072e38bb63234ca96ba4dfcac6709bfb065395196dfd10b3961f"
     },
     {
       "surface_id": "slide-6-title",
@@ -2870,7 +2859,7 @@
       "design_stage_region": 8,
       "available_geometry": {
         "width": 1728,
-        "height": 712
+        "height": 670
       },
       "role_sizes": {
         "annotations": 13,
@@ -2896,7 +2885,7 @@
       "reservations": [
         {
           "kind": "text",
-          "height": 712
+          "height": 670
         },
         {
           "kind": "chrome",
@@ -2913,11 +2902,51 @@
       "chart_type": "line"
     },
     {
+      "surface_id": "s8-kpis",
+      "role": "metric_strip",
+      "slide_number": 8,
+      "layout_type": "single_chart",
+      "semantic_digest": "585b291308d535fb59f732f108d278817e683268e81644c5a7cf83354268c8f8",
+      "design_stage_region": 8,
+      "available_geometry": {
+        "width": 404,
+        "height": 74
+      },
+      "role_sizes": {
+        "detail": 24,
+        "label": 24,
+        "value": 28
+      },
+      "default_size": 14,
+      "selected_size": 24,
+      "maximum_size": 24,
+      "mode": "adaptive",
+      "explicit_override": null,
+      "synchronization_group": null,
+      "adaptation_codes": [
+        "plan.geometry_reallocated",
+        "plan.typography_grown"
+      ],
+      "reservations": [
+        {
+          "kind": "text",
+          "height": 74
+        },
+        {
+          "kind": "chrome",
+          "height": 28
+        }
+      ],
+      "fallback": null,
+      "expected_placement_classes": [],
+      "painter_plan_digest": "3249c28843515c75288bac5fa5f2e0d03150165c35e0d51ecf764b53160d8092"
+    },
+    {
       "surface_id": "slide-8-disclosure-s8-disc",
       "role": "disclosure",
       "slide_number": 8,
       "layout_type": "single_chart",
-      "semantic_digest": "49468ba4b69c2db2e485e2809cfd32bdf2effc715f8becf223f79ba67bb2340c",
+      "semantic_digest": "724b13ddcbb56008353724714151e1f88c5f9815bcf0e4718571846fa94184b5",
       "design_stage_region": 8,
       "available_geometry": {
         "width": 1728,
@@ -3020,7 +3049,7 @@
       "design_stage_region": 9,
       "available_geometry": {
         "width": 1728,
-        "height": 712
+        "height": 636
       },
       "role_sizes": {
         "annotations": 13,
@@ -3046,7 +3075,7 @@
       "reservations": [
         {
           "kind": "text",
-          "height": 712
+          "height": 636
         },
         {
           "kind": "chrome",
@@ -3062,30 +3091,33 @@
       "chart_type": "line"
     },
     {
-      "surface_id": "slide-9-disclosure-s9-disc",
-      "role": "disclosure",
+      "surface_id": "s9-support",
+      "role": "support_table",
       "slide_number": 9,
       "layout_type": "single_chart",
-      "semantic_digest": "860658c78b8e441731b639662284b2cf8125bdb376807d16f8ec79e213c1cabe",
+      "semantic_digest": "a57754b79589a62b17e7e78a5603084d93cecdf9808d11d97f9e2c57aa2a87e9",
       "design_stage_region": 9,
       "available_geometry": {
         "width": 1728,
-        "height": 52
+        "height": 153
       },
       "role_sizes": {
-        "body": 14
+        "table": 24
       },
-      "default_size": null,
-      "selected_size": null,
-      "maximum_size": null,
-      "mode": "fixed",
+      "default_size": 14,
+      "selected_size": 24,
+      "maximum_size": 24,
+      "mode": "adaptive",
       "explicit_override": null,
       "synchronization_group": null,
-      "adaptation_codes": [],
+      "adaptation_codes": [
+        "plan.geometry_reallocated",
+        "plan.typography_grown"
+      ],
       "reservations": [
         {
           "kind": "text",
-          "height": 52
+          "height": 153
         },
         {
           "kind": "chrome",
@@ -3094,7 +3126,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "93f137201e24f7da74701f15503ad6be2072230d000ae2d94e09b420b3e44a7a"
+      "painter_plan_digest": "59daaa8eb5d17b92fa910385a8f7e573b131b89dcc99ae1e9dc1e33c95a17e9c"
     },
     {
       "surface_id": "slide-10-title",
@@ -3169,7 +3201,7 @@
       "design_stage_region": 10,
       "available_geometry": {
         "width": 1728,
-        "height": 712
+        "height": 671
       },
       "role_sizes": {
         "annotations": 13,
@@ -3195,7 +3227,7 @@
       "reservations": [
         {
           "kind": "text",
-          "height": 712
+          "height": 671
         },
         {
           "kind": "chrome",
@@ -3212,30 +3244,33 @@
       "chart_type": "line"
     },
     {
-      "surface_id": "slide-10-disclosure-s10-disc",
-      "role": "disclosure",
+      "surface_id": "s10-support",
+      "role": "support_table",
       "slide_number": 10,
       "layout_type": "single_chart",
-      "semantic_digest": "4bf086b43f962a7f1962770eeece68e8f25364c4cab328a8737ce2a6bb5f6ef2",
+      "semantic_digest": "a3214536409e85c9622e16721011d8a5c32697e17d485436bf2783b7de5531f9",
       "design_stage_region": 10,
       "available_geometry": {
         "width": 1728,
-        "height": 52
+        "height": 153
       },
       "role_sizes": {
-        "body": 14
+        "table": 24
       },
-      "default_size": null,
-      "selected_size": null,
-      "maximum_size": null,
-      "mode": "fixed",
+      "default_size": 14,
+      "selected_size": 24,
+      "maximum_size": 24,
+      "mode": "adaptive",
       "explicit_override": null,
       "synchronization_group": null,
-      "adaptation_codes": [],
+      "adaptation_codes": [
+        "plan.geometry_reallocated",
+        "plan.typography_grown"
+      ],
       "reservations": [
         {
           "kind": "text",
-          "height": 52
+          "height": 153
         },
         {
           "kind": "chrome",
@@ -3244,7 +3279,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "20aa6c1c5e634e0e5131ca24147e2fc76575e45b7f0ab4f4c0bfa09fafe3e9e0"
+      "painter_plan_digest": "f6653db866b59cb1ea8eb1aaed1bf587566cd2833053592258405fa30d269bfa"
     },
     {
       "surface_id": "slide-11-title",
@@ -3423,10 +3458,10 @@
     },
     {
       "surface_id": "s12-cards",
-      "role": "grouped_bar_chart",
+      "role": "stacked_bar_chart",
       "slide_number": 12,
       "layout_type": "chart_hero_dual",
-      "semantic_digest": "5f90cf8fc22f63c7d117f8774cf6743f1a6e5bbc01673cf813da4fef92e8819b",
+      "semantic_digest": "0f58a489b8c8b39dccbf1415b184ae544e836557cb90613c3963d45955429b84",
       "design_stage_region": 12,
       "available_geometry": {
         "width": 1140,
@@ -3467,11 +3502,11 @@
       ],
       "fallback": null,
       "expected_placement_classes": [
-        "above"
+        "total_authored"
       ],
-      "painter_plan_digest": "6529ebdd7b712929b0b7ede701a069588f58da8b02651efe607e440f2a669b25",
+      "painter_plan_digest": "fd402475659571d76cd1633ccbcc635e2a20260cf1e8dd8516a161d50f373f60",
       "display_identity_strategy": "legend",
-      "chart_type": "grouped_bar"
+      "chart_type": "stacked_bar"
     },
     {
       "surface_id": "s12-hero",
@@ -3894,11 +3929,11 @@
       "role": "stacked_bar_chart",
       "slide_number": 15,
       "layout_type": "single_chart",
-      "semantic_digest": "cb242748ac3d00ca6ad63b82b1677e2f90e0aca602f89b4053e3f584552f934f",
+      "semantic_digest": "7f3e70760d8de1bf43faa90a52ccc2fb1ad025231c3a6aaa92fbca16da74df25",
       "design_stage_region": 15,
       "available_geometry": {
         "width": 1728,
-        "height": 737
+        "height": 645
       },
       "role_sizes": {
         "annotations": 13,
@@ -3924,7 +3959,7 @@
       "reservations": [
         {
           "kind": "text",
-          "height": 737
+          "height": 645
         },
         {
           "kind": "chrome",
@@ -3932,17 +3967,59 @@
         }
       ],
       "fallback": null,
-      "expected_placement_classes": [],
+      "expected_placement_classes": [
+        "total_authored"
+      ],
       "painter_plan_digest": "88dfc181c4bb2bab3ac605eb2bbd342fb20f8a3dfc1e2ef93b77e58ab5e6d548",
       "display_identity_strategy": "legend",
       "chart_type": "stacked_bar"
+    },
+    {
+      "surface_id": "s15-reserve",
+      "role": "outlined_support",
+      "slide_number": 15,
+      "layout_type": "single_chart",
+      "semantic_digest": "bd7e3d90c7aee794de218a7953a81e61ece1a6066e0029dc4fbf15554bf688ef",
+      "design_stage_region": 15,
+      "available_geometry": {
+        "width": 1728,
+        "height": 80
+      },
+      "role_sizes": {
+        "label": 24,
+        "table": 24
+      },
+      "default_size": 22,
+      "selected_size": 24,
+      "maximum_size": 24,
+      "mode": "adaptive",
+      "explicit_override": null,
+      "synchronization_group": null,
+      "adaptation_codes": [
+        "plan.geometry_reallocated",
+        "plan.typography_grown",
+        "plan.text_wrapped"
+      ],
+      "reservations": [
+        {
+          "kind": "text",
+          "height": 80
+        },
+        {
+          "kind": "chrome",
+          "height": 12
+        }
+      ],
+      "fallback": null,
+      "expected_placement_classes": [],
+      "painter_plan_digest": "5a5741d76448d8402a98a153644c6eb974ea486603297434fe857bc0410106bd"
     },
     {
       "surface_id": "slide-15-disclosure-s15-disc",
       "role": "disclosure",
       "slide_number": 15,
       "layout_type": "single_chart",
-      "semantic_digest": "a24fe834b5e07b0f3127f7e7a7fe5c85312f280e28474e3d6dbf01106b589194",
+      "semantic_digest": "53bda1df3869769e67d45d3edfe892d622cb3ece38fad8c027f5535615e7329e",
       "design_stage_region": 15,
       "available_geometry": {
         "width": 1728,
@@ -4058,9 +4135,7 @@
       "synchronization_group": null,
       "adaptation_codes": [
         "plan.geometry_reallocated",
-        "plan.typography_grown",
-        "plan.short_label_used",
-        "plan.label_ellipsized"
+        "plan.typography_grown"
       ],
       "reservations": [
         {
@@ -4074,7 +4149,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "786314ef4a3b3a14d54b85f170f7c15459de09357b90f299329a3f5b46f586c1"
+      "painter_plan_digest": "2cf68fc60b94a72087916efbc5e6fcbbb24f326bd7e2aafdab07e2b07dc97343"
     },
     {
       "surface_id": "slide-17-title",
@@ -4107,7 +4182,7 @@
       "role": "grouped_bar_chart",
       "slide_number": 17,
       "layout_type": "dual_chart",
-      "semantic_digest": "24782833c34a19f25b5f28006f849e1e1585d853004dd8aee571849b3747da93",
+      "semantic_digest": "094e1afe0d0d7ba6abdb07442d5bdf50727382f983c549051e249944528dddc3",
       "design_stage_region": 17,
       "available_geometry": {
         "width": 852,
@@ -4271,7 +4346,7 @@
       "role": "grouped_bar_chart",
       "slide_number": 18,
       "layout_type": "chart_hero_dual",
-      "semantic_digest": "f317c261126c1b89ace3d049490e41f802373e7396fb8950f3ed5816d304ec7c",
+      "semantic_digest": "d15b1d70f254e672a43ae755e1f6923b3fc34f4f9c7a3dff7417f79fc734d96b",
       "design_stage_region": 18,
       "available_geometry": {
         "width": 1140,
@@ -4311,7 +4386,8 @@
       ],
       "fallback": null,
       "expected_placement_classes": [
-        "above"
+        "above",
+        "boxed"
       ],
       "painter_plan_digest": "05d674ca029a7008d01570651d089aee8b351139b78a52d29c5af295fb6d8123",
       "display_identity_strategy": "legend",
@@ -4322,11 +4398,11 @@
       "role": "hero_card",
       "slide_number": 18,
       "layout_type": "chart_hero_dual",
-      "semantic_digest": "279848362f0b1980832f18549bb1b5cf250e13f63abccb9facb190526a1e4ce2",
+      "semantic_digest": "d6b11ce12b13111b3f673bc68a77a18a54563e307350fa1fd22929dadb0e0cb9",
       "design_stage_region": 18,
       "available_geometry": {
         "width": 564,
-        "height": 377
+        "height": 466
       },
       "role_sizes": {
         "body": 16,
@@ -4343,7 +4419,7 @@
       "reservations": [
         {
           "kind": "text",
-          "height": 377
+          "height": 466
         },
         {
           "kind": "chrome",
@@ -4471,30 +4547,33 @@
       "chart_type": "line"
     },
     {
-      "surface_id": "slide-19-disclosure-s19-disc",
-      "role": "disclosure",
+      "surface_id": "s19-support",
+      "role": "support_table",
       "slide_number": 19,
       "layout_type": "single_chart",
-      "semantic_digest": "87dda58e377d9cd47b6c3f580490600e030571dc8310cc0dbf01da08ab30a866",
+      "semantic_digest": "628fa16f281ee1b5956be384b94a8d43b23366ab815426bcfb54df96afd46f94",
       "design_stage_region": 19,
       "available_geometry": {
         "width": 1728,
-        "height": 52
+        "height": 59
       },
       "role_sizes": {
-        "body": 14
+        "table": 24
       },
-      "default_size": null,
-      "selected_size": null,
-      "maximum_size": null,
-      "mode": "fixed",
+      "default_size": 14,
+      "selected_size": 24,
+      "maximum_size": 24,
+      "mode": "adaptive",
       "explicit_override": null,
       "synchronization_group": null,
-      "adaptation_codes": [],
+      "adaptation_codes": [
+        "plan.geometry_reallocated",
+        "plan.typography_grown"
+      ],
       "reservations": [
         {
           "kind": "text",
-          "height": 52
+          "height": 59
         },
         {
           "kind": "chrome",
@@ -4503,7 +4582,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "e540e4315a69a7cdd128587e535cdc3ae80625cc26902058f4bfbd0d7819ff1a"
+      "painter_plan_digest": "48c4b4424cbf7a77f102e09547fe1b978c204a48903a06791d80a46d415bc3b2"
     },
     {
       "surface_id": "slide-20-title",
@@ -4748,10 +4827,10 @@
     },
     {
       "surface_id": "s21-cap",
-      "role": "stacked_bar_chart",
+      "role": "combo_chart",
       "slide_number": 21,
       "layout_type": "chart_hero_dual",
-      "semantic_digest": "2d17f064531f818cb2ff96083c28652e27efa7058d7654ab78442abf3e4848eb",
+      "semantic_digest": "eb03de99a69d0180fb8fbb376a25fb87e14f74d98a1b93ad5613c2f04db13003",
       "design_stage_region": 21,
       "available_geometry": {
         "width": 1140,
@@ -4791,11 +4870,12 @@
       ],
       "fallback": null,
       "expected_placement_classes": [
+        "above",
         "total_authored"
       ],
-      "painter_plan_digest": "af976549e1654d9f581f0de0e9d8a519b2898291b635da1b737eff9c94fe6e8f",
+      "painter_plan_digest": "7f3e7208f8e2021d56c164fe4fe88285df389298ecbf6c168787b2a050f95166",
       "display_identity_strategy": "legend",
-      "chart_type": "stacked_bar"
+      "chart_type": "combo"
     },
     {
       "surface_id": "s21-summary",
@@ -4839,7 +4919,7 @@
       "role": "outlined_support",
       "slide_number": 21,
       "layout_type": "chart_hero_dual",
-      "semantic_digest": "f03b39b0c3fce2b830d7d2eb590cc924b7d08e924b321da4c82902b88dff14dd",
+      "semantic_digest": "4f6c4a9087f723d2469947e81c071562fc6dcfbb9f6ab75a915a8cc49c513b30",
       "design_stage_region": 21,
       "available_geometry": {
         "width": 1728,
@@ -5107,7 +5187,7 @@
       "role": "grouped_bar_chart",
       "slide_number": 24,
       "layout_type": "single_chart",
-      "semantic_digest": "14b4a1bbbccb0cd22cb2e578733f77a25c67da089167bf810f5a5083c6e847f7",
+      "semantic_digest": "8a0c877f108b0a6f2bb2d5859b356ceb6f64e280388b15cc570cc1d3eb09ccaf",
       "design_stage_region": 24,
       "available_geometry": {
         "width": 1728,
@@ -5146,7 +5226,8 @@
       ],
       "fallback": null,
       "expected_placement_classes": [
-        "above"
+        "above",
+        "boxed"
       ],
       "painter_plan_digest": "c7bb613e8c57c0c984b9535c6e1b8b51fadf5df7d6fe9052498a910ae922ed5c",
       "display_identity_strategy": "legend",
@@ -5157,7 +5238,7 @@
       "role": "disclosure",
       "slide_number": 24,
       "layout_type": "single_chart",
-      "semantic_digest": "db6c363fcfea611353ab21e2b5d467fd6394e151be74d271aa82f3ad298272f1",
+      "semantic_digest": "f55e883c7d379d399c88f0d673f50250e491bc16deed37a768c769325b2ad303",
       "design_stage_region": 24,
       "available_geometry": {
         "width": 1728,
@@ -5260,7 +5341,7 @@
       "design_stage_region": 25,
       "available_geometry": {
         "width": 1728,
-        "height": 435
+        "height": 469
       },
       "role_sizes": {
         "table": 24
@@ -5274,13 +5355,12 @@
       "adaptation_codes": [
         "plan.geometry_reallocated",
         "plan.typography_grown",
-        "plan.short_label_used",
-        "plan.label_ellipsized"
+        "plan.text_wrapped"
       ],
       "reservations": [
         {
           "kind": "text",
-          "height": 435
+          "height": 469
         },
         {
           "kind": "chrome",
@@ -5289,7 +5369,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "20f25912adb2d713f4a6e1fce2301fae28b67f8469f7f49536ae179c3b927400"
+      "painter_plan_digest": "825848c0bf30d1d58c52be24da9e938bc3b659b3230bbe5963d18b92b2d68872"
     },
     {
       "surface_id": "slide-25-disclosure-s25-disc",
@@ -5399,7 +5479,7 @@
       "design_stage_region": 26,
       "available_geometry": {
         "width": 1728,
-        "height": 187
+        "height": 153
       },
       "role_sizes": {
         "table": 24
@@ -5412,13 +5492,12 @@
       "synchronization_group": null,
       "adaptation_codes": [
         "plan.geometry_reallocated",
-        "plan.typography_grown",
-        "plan.text_wrapped"
+        "plan.typography_grown"
       ],
       "reservations": [
         {
           "kind": "text",
-          "height": 187
+          "height": 153
         },
         {
           "kind": "chrome",
@@ -5427,7 +5506,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "aae4faa136027d09a8482e147c116f6c0082ba4bf6ea6c11941392a2c87f3514"
+      "painter_plan_digest": "5a55723e63bdfcfd46275a742677ade0013488e6c2e66b6161e41f62c467c4ee"
     },
     {
       "surface_id": "slide-27-title",
@@ -5627,7 +5706,7 @@
       "role": "stacked_bar_chart",
       "slide_number": 28,
       "layout_type": "dual_chart",
-      "semantic_digest": "ae9b1cfd892a95b75ffbe733afa4032762a3fdae5d474288e233f6a4f2fc3681",
+      "semantic_digest": "aa2aa032b911072518b5e6cbc42d727065e808828e0504f8b022527bad4d427d",
       "design_stage_region": 28,
       "available_geometry": {
         "width": 852,
@@ -5667,7 +5746,10 @@
         }
       ],
       "fallback": null,
-      "expected_placement_classes": [],
+      "expected_placement_classes": [
+        "inside",
+        "total_authored"
+      ],
       "painter_plan_digest": "ca3b905669a9bb44f88bda95fef91b03a4dc4f1494eadc4b9062cd03e5e72e8c",
       "display_identity_strategy": "legend",
       "chart_type": "stacked_bar"
@@ -5677,7 +5759,7 @@
       "role": "stacked_bar_chart",
       "slide_number": 28,
       "layout_type": "dual_chart",
-      "semantic_digest": "3f70c8667b1f6493f0c1f08b54a5a04d9c3a6fec217c893d481e08e9bd1cb4d0",
+      "semantic_digest": "380dfb6631a01ab397ef695658d19411ed09bc5fe0676551b5bca63fb87260bb",
       "design_stage_region": 28,
       "available_geometry": {
         "width": 852,
@@ -5717,7 +5799,11 @@
         }
       ],
       "fallback": null,
-      "expected_placement_classes": [],
+      "expected_placement_classes": [
+        "inside",
+        "outside_above",
+        "total_authored"
+      ],
       "painter_plan_digest": "2f630607f6de8b5ec1f018950226fafb95b39e0368ba2b361cbce42d8a5afb91",
       "display_identity_strategy": "legend",
       "chart_type": "stacked_bar"
@@ -6152,8 +6238,6 @@
       "adaptation_codes": [
         "plan.geometry_reallocated",
         "plan.typography_grown",
-        "plan.short_label_used",
-        "plan.label_ellipsized",
         "plan.synchronized"
       ],
       "reservations": [
@@ -6168,7 +6252,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "1b6741d87c3930e210d3c1077c236534768f0202e64473687c8f83e5fc17a38e"
+      "painter_plan_digest": "dcaeee634ef308f63d6858344cd8d8e48c26a9d53e8d0020c4b708f1470d3472"
     },
     {
       "surface_id": "s32-peer-1",
@@ -6193,8 +6277,6 @@
       "adaptation_codes": [
         "plan.geometry_reallocated",
         "plan.typography_grown",
-        "plan.short_label_used",
-        "plan.label_ellipsized",
         "plan.synchronized"
       ],
       "reservations": [
@@ -6209,7 +6291,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "937a037d685e3395d3720a12f6ebb39899a4f435c384025e5e0f7861a2feb809"
+      "painter_plan_digest": "b91b052ee5ff80057e4d28b7350d70125f572aaa747726b5db2966523d9d5d96"
     },
     {
       "surface_id": "slide-33-title",
@@ -6284,7 +6366,7 @@
       "design_stage_region": 33,
       "available_geometry": {
         "width": 1728,
-        "height": 341
+        "height": 375
       },
       "role_sizes": {
         "table": 24
@@ -6297,12 +6379,13 @@
       "synchronization_group": null,
       "adaptation_codes": [
         "plan.geometry_reallocated",
-        "plan.typography_grown"
+        "plan.typography_grown",
+        "plan.text_wrapped"
       ],
       "reservations": [
         {
           "kind": "text",
-          "height": 341
+          "height": 375
         },
         {
           "kind": "chrome",
@@ -6311,7 +6394,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "d57365278f110d27024f7640c2e3202c1dc88ff927975bb0b1b8db7a9f9ed8dd"
+      "painter_plan_digest": "857be462835eaccffcf4ce194fd27864cf157eb620fcac0ea53d36687b82bcc3"
     },
     {
       "surface_id": "slide-34-title",
@@ -6386,7 +6469,7 @@
       "design_stage_region": 34,
       "available_geometry": {
         "width": 1728,
-        "height": 563
+        "height": 529
       },
       "role_sizes": {
         "table": 24
@@ -6399,13 +6482,12 @@
       "synchronization_group": null,
       "adaptation_codes": [
         "plan.geometry_reallocated",
-        "plan.typography_grown",
-        "plan.text_wrapped"
+        "plan.typography_grown"
       ],
       "reservations": [
         {
           "kind": "text",
-          "height": 563
+          "height": 529
         },
         {
           "kind": "chrome",
@@ -6414,7 +6496,7 @@
       ],
       "fallback": null,
       "expected_placement_classes": [],
-      "painter_plan_digest": "17daa2588be31e442baac5df4437b4591cfcac4c4e4e27bf9f5af60487213771"
+      "painter_plan_digest": "5e21956485fcfeffbc86a66f55e947e85a9c8f815bbabc62b474f8a2918afea2"
     },
     {
       "surface_id": "slide-35-title",
@@ -7394,8 +7476,8 @@
   "artifacts": [
     {
       "name": "presentation.html",
-      "bytes": 440867,
-      "sha256": "19d78023568b8d1f9d39542a03eed0d681b7e5d626aee5cda20776f34db0af63"
+      "bytes": 471963,
+      "sha256": "2706994ce97f934652f00d512224fe7070bb55b1bdc7dc741d50f7737e8a0b79"
     },
     {
       "name": "slide_notes.md",

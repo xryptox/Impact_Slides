@@ -96,6 +96,8 @@ BAR_MIN_THICKNESS = 12
 BAR_MAX_THICKNESS = 56
 BAR_CATEGORY_GAP_RATIO = 0.28
 BAR_SERIES_GAP_RATIO = 0.12
+BAR_SPARSE_CATEGORY_LIMIT = 6
+BAR_SPARSE_OCCUPANCY = 0.55  # PDF-weight bars when n_cat<=6 (#246)
 
 # Chart typography floors / ceilings (D294 / DP-1).
 _CHART_LABEL_WEIGHT = 600
@@ -3538,11 +3540,15 @@ def _bar_slot_geometry(
     n_ser = max(1, n_ser)
     axis_span = plot_h if horizontal else plot_w
     pitch = axis_span / n_cat
-    cat_gap = pitch * BAR_CATEGORY_GAP_RATIO
+    sparse = n_cat <= BAR_SPARSE_CATEGORY_LIMIT
+    cat_gap = pitch * (
+        (1.0 - BAR_SPARSE_OCCUPANCY) if sparse else BAR_CATEGORY_GAP_RATIO
+    )
     inner = max(1.0, pitch - cat_gap)
     ser_gap = inner * BAR_SERIES_GAP_RATIO / max(1, n_ser)
     raw_thick = (inner - ser_gap * max(0, n_ser - 1)) / n_ser
-    thick = max(BAR_MIN_THICKNESS, min(BAR_MAX_THICKNESS, raw_thick))
+    thick_cap = inner if sparse else BAR_MAX_THICKNESS
+    thick = max(BAR_MIN_THICKNESS, min(thick_cap, raw_thick))
     cluster = n_ser * thick + max(0, n_ser - 1) * ser_gap
     slots: list[dict[str, Any]] = []
     ser_slot = cluster / n_ser
