@@ -301,6 +301,103 @@ def test_paint_support_table_complete_rows(tmp_path: Path):
         assert abs(painted - frozen) <= 2.0
 
 
+def test_category_support_visible_cells_carry_table_chrome(tmp_path: Path):
+    """#247: visible category cells get navy header band + hairline borders."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from impact_slides.renderer_v3.theme import resolve_color
+
+    raw = _with_support(_cat_support_table())
+    # Hidden category axis keeps category alignment but paints the visual header.
+    raw["slides"][1]["payload"]["chart"]["category_axis"]["visible"] = False
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html_path = (out / "presentation.html").resolve()
+
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    chart = next(s for s in plan.surfaces if s.surface_id == "vol-trend")
+    cat_x = [c["x"] for c in chart.chart_paint["categories"]]
+    navy = resolve_color("navy", role="band")
+    ink = resolve_color("white", role="text_on_dark")
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        styles = page.evaluate(
+            """() => {
+              const vis = (el) => {
+                const r = el.getBoundingClientRect();
+                return r.width > 1 && r.height > 1;
+              };
+              const cells = [...document.querySelectorAll(
+                '.support-table.category-aligned .support-cat-cell'
+              )].filter(vis);
+              const heads = cells.filter(el => el.classList.contains('head'));
+              const bodies = cells.filter(el => !el.classList.contains('head'));
+              const stubs = [...document.querySelectorAll(
+                '.support-table.category-aligned .support-cat-stub'
+              )].filter(vis);
+              const cs = (el) => getComputedStyle(el);
+              const pack = (el) => {
+                const s = cs(el);
+                return {
+                  bg: s.backgroundColor,
+                  color: s.color,
+                  weight: s.fontWeight,
+                  borderTop: s.borderTopWidth,
+                  borderRight: s.borderRightWidth,
+                  borderBottom: s.borderBottomWidth,
+                  borderLeft: s.borderLeftWidth,
+                  borderColor: s.borderTopColor,
+                  left: parseFloat(s.left),
+                };
+              };
+              return {
+                heads: heads.map(pack),
+                bodies: bodies.map(pack),
+                stubs: stubs.map(pack),
+              };
+            }"""
+        )
+        browser.close()
+
+    def _rgb(hex_color: str) -> str:
+        h = hex_color.lstrip("#")
+        return f"rgb({int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)})"
+
+    navy_rgb = _rgb(navy)
+    ink_rgb = _rgb(ink)
+    assert styles["heads"], "visible header cells must paint"
+    assert styles["bodies"], "visible body cells must paint"
+    assert styles["stubs"], "visible stub labels must paint"
+    for head in styles["heads"]:
+        assert head["bg"] == navy_rgb
+        assert head["color"] == ink_rgb
+        assert int(head["weight"]) >= 600
+        assert head["borderTop"] == "1px"
+        assert head["borderBottom"] == "1px"
+    for body in styles["bodies"]:
+        assert body["borderTop"] == "1px"
+        assert body["borderRight"] == "1px"
+        assert body["borderBottom"] == "1px"
+        assert body["borderLeft"] == "1px"
+        assert body["borderColor"] == navy_rgb
+        assert body["bg"] != navy_rgb
+    for stub in styles["stubs"]:
+        assert stub["borderTop"] == "1px"
+        assert stub["borderRight"] == "1px"
+        assert stub["borderBottom"] == "1px"
+        assert stub["borderLeft"] == "1px"
+    painted_lefts = [h["left"] for h in styles["heads"]]
+    for painted, frozen in zip(painted_lefts, cat_x):
+        assert abs(painted - frozen) <= 2.0
+
+
 def test_paint_outlined_support_alignment(tmp_path: Path):
     handoff = tmp_path / "h.json"
     handoff.write_text(json.dumps(_with_support(_outlined_support())), encoding="utf-8")

@@ -4024,7 +4024,7 @@ def _legal_body_blocks(
     """Painted legal block boxes: ('p', text) or ('ul', [(level, text), ...])."""
     marked = [(_legal_list_item(para), para) for para in paragraphs]
     if not any(item[0] is not None for item in marked):
-        return [("ul", [(0, para) for para in paragraphs])]
+        return [("ul", [(0, para)]) for para in paragraphs]
     blocks: list[tuple[str, str | list[tuple[int, str]]]] = []
     current: list[tuple[int, str]] | None = None
     for parsed, para in marked:

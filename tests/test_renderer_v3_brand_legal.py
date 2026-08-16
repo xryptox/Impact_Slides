@@ -326,7 +326,10 @@ def test_legal_plan_margin_boxes_match_painted_blocks():
 
     unmarked = ["grow EPS", "grow revenue"]
     mixed = ["Intro.", "- grow EPS", "- grow revenue", "Close."]
-    assert _legal_body_blocks(unmarked) == [("ul", [(0, "grow EPS"), (0, "grow revenue")])]
+    assert _legal_body_blocks(unmarked) == [
+        ("ul", [(0, "grow EPS")]),
+        ("ul", [(0, "grow revenue")]),
+    ]
     kinds = [kind for kind, _ in _legal_body_blocks(mixed)]
     assert kinds == ["p", "ul", "p"]
 
@@ -421,7 +424,7 @@ def test_legal_list_items_keep_only_authored_newlines(tmp_path: Path):
 
 
 def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
-    """Amex s38–43 payload is unmarked bullets; paint them as one <ul>."""
+    """Amex s38–43 unmarked bullets stay lists, one group per payload paragraph."""
     raw = _brand()
     raw["slides"][4]["payload"]["paragraphs"] = [
         "the company's ability to grow EPS",
@@ -433,8 +436,12 @@ def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
     assert render_deck(path, out, strict=True)["ok"] is True
     html = (out / "presentation.html").read_text(encoding="utf-8")
     s5 = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
-    assert "<ul" in s5 and s5.count("<li") == 2
-    assert "<p" not in s5.split('legal-body">', 1)[1]
+    body = s5.split('legal-body">', 1)[1].split("</div>", 1)[0]
+    assert body.count("<ul") == 2
+    assert body.count("<li") == 2
+    assert "<p" not in body
+    # Mutation trap: flattening the two paragraphs into one <ul> must fail.
+    assert "</ul><ul" in body.replace("\n", "")
 
 
 # ---------------------------------------------------------------------------
