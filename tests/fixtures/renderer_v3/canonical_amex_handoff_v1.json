@@ -42,11 +42,6 @@
       "value_decimals": 1,
       "negative_style": "minus"
     },
-    "pp_1": {
-      "unit": "percentage_points",
-      "value_decimals": 1,
-      "negative_style": "minus"
-    },
     "num_0": {
       "value_decimals": 0,
       "negative_style": "minus"
@@ -2840,7 +2835,7 @@
             "value_axes": {
               "primary": {
                 "visible": true,
-                "format_id": "pct_0",
+                "format_id": "usd_1",
                 "domain": {
                   "kind": "generated",
                   "target_ticks": 5
@@ -2851,7 +2846,19 @@
               "ordinary_values": "show",
               "series_identity": "auto"
             },
-            "heading": "Net Card Fees"
+            "heading": "Net Card Fees",
+            "measurements": [
+              {
+                "measurement_id": "s17-ncf-cagr",
+                "role": "cagr",
+                "series_id": "net-card-fees",
+                "from_category_id": "q1-19",
+                "to_category_id": "q1-26",
+                "value": "17",
+                "format_id": "pct_0",
+                "approximate": false
+              }
+            ]
           },
           {
             "type": "chart",
@@ -3008,7 +3015,7 @@
           "value_axes": {
             "primary": {
               "visible": true,
-              "format_id": "pct_0",
+              "format_id": "usd_1",
               "domain": {
                 "kind": "generated",
                 "target_ticks": 5
@@ -3019,56 +3026,75 @@
             "ordinary_values": "show",
             "series_identity": "auto"
           },
-          "heading": "Net Interest Income"
+          "heading": "Net Interest Income",
+          "auxiliary_series": [
+            {
+              "auxiliary_id": "s18-yoy",
+              "role": "boxed_label",
+              "label": "YoY Growth",
+              "format_id": "pct_0",
+              "target_series_id": "nii",
+              "values": [
+                "11",
+                "12",
+                "12",
+                "12",
+                "12"
+              ]
+            }
+          ]
         },
         "hero": {
           "hero_type": "driver_card",
           "surface_id": "s18-driver",
           "heading": "NII: Volume & Margin Drivers",
+          "subtitle": "CAGR % vs. Q1'19 (FX-adjusted except Margin)",
           "rows": [
             {
-              "row_id": "vol",
-              "label": "Loan growth",
+              "row_id": "billed",
+              "label": "Billed Business",
               "value": {
                 "type": "number",
-                "value": "7",
+                "value": "8",
                 "format_id": "pct_0"
               },
               "direction": "up",
               "tone": "positive"
             },
             {
-              "row_id": "yield",
-              "label": "Net yield",
+              "row_id": "nii",
+              "label": "Net Interest Income",
               "value": {
                 "type": "number",
-                "value": "12.1",
-                "format_id": "pct_1"
+                "value": "13",
+                "format_id": "pct_0"
               },
               "direction": "up",
               "tone": "positive"
             },
             {
-              "row_id": "funding",
-              "label": "Funding cost",
+              "row_id": "volume",
+              "label": "Volume",
               "value": {
                 "type": "number",
-                "value": "3.2",
-                "format_id": "pct_1"
-              },
-              "direction": "flat",
-              "tone": "neutral"
-            },
-            {
-              "row_id": "mix",
-              "label": "Mix",
-              "value": {
-                "type": "number",
-                "value": "0.4",
-                "format_id": "pp_1"
+                "value": "7",
+                "format_id": "pct_0"
               },
               "direction": "up",
-              "tone": "positive"
+              "tone": "positive",
+              "detail": "Total Balances"
+            },
+            {
+              "row_id": "margin",
+              "label": "Margin",
+              "value": {
+                "type": "number",
+                "value": "5",
+                "format_id": "pct_0"
+              },
+              "direction": "up",
+              "tone": "positive",
+              "detail": "Net Interest Income / Average Total Balances"
             }
           ]
         }

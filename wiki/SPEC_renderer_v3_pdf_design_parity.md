@@ -97,8 +97,8 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 |------:|-----------------|-----------|------------------|
 | 4, 5, 9, 10, 19 | Leap-Year callout; bottom support table | `annotations` + `support_table` | DOM: callout text + support rows |
 | 5, 9, 10 | generation / segment supports | `support_table` | DOM: KPI values present |
-| 17 | `$B` format; CAGR rule | `format_id` fix + `measurements` | labels read `$0.9…$2.8` |
-| 18 | NII `$` format; YoY boxes; driver rows | `format_id` fix + boxed labels + driver_card | labels `$4.2…`; 5 YoY boxes |
+| 17 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
+| 18 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
 | 21 | shares line 702→682; ROE 35/34/36/36/34/35 | combo line + `outlined_support` values | dataset line + ROE row exact |
 | 24 | braces; `$486B`; %-of-total boxes; drop aggregate bars | `category_groups` + `annotations` | DOM: `$486B Total Network Volumes` |
 | 28 | FDIC callout; on-stack % + $ totals | `annotations` + `auxiliary_series` | DOM: `92% FDIC` + totals |
