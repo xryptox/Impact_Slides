@@ -144,6 +144,40 @@ def test_corpus_payloads_carry_s21_s24_s28_furniture() -> None:
     assert fund["auxiliary_series"][0]["format_id"] == "usd_0"
     assert dep["auxiliary_series"][0]["values"] == S28_DEP_TOTALS
     assert any(a["text"].startswith(S28_FDIC) for a in dep["annotations"])
+    fund_colors = {s["name"]: s["color"] for s in fund["chart_data"]["series"]}
+    dep_colors = {s["name"]: s["color"] for s in dep["chart_data"]["series"]}
+    assert fund_colors == {
+        "Deposits": "navy",
+        "Unsecured Funding**": "primary_blue",
+        "Short-term Funding / Card ABS*": "sky_blue",
+    }
+    assert dep_colors == {
+        "Savings and Direct CDs": "navy",
+        "Third Party CDs": "primary_blue",
+        "Third Party Sweep": "sky_blue",
+        "Checking": "neutral",
+    }
+    assert "success" not in fund_colors.values()
+    assert "success" not in dep_colors.values()
+
+
+def test_corpus_has_no_nonsemantic_green_series() -> None:
+    """#248: success green is reserved; default/generic series stay navy/blue/sky/gray."""
+    handoff = _load()
+    greens = []
+    for slide in handoff["slides"]:
+        payload = slide.get("payload") or {}
+        charts = list(payload.get("charts") or [])
+        if "chart" in payload:
+            charts.append(payload["chart"])
+        for chart in charts:
+            data = (chart or {}).get("chart_data") or {}
+            for series in data.get("series") or []:
+                if series.get("color") == "success":
+                    greens.append(
+                        (slide["slide_number"], series.get("name"), chart.get("chart_type"))
+                    )
+    assert greens == []
 
 
 def test_strict_render_shows_s21_s24_s28_furniture(tmp_path: Path) -> None:
@@ -187,6 +221,10 @@ def test_strict_render_shows_s21_s24_s28_furniture(tmp_path: Path) -> None:
     assert "$151" in s28 and "$157" in s28
     for token in S28_SEGMENTS:
         assert token in s28
+    from impact_slides.renderer_v3.theme import resolve_color
+
+    assert resolve_color("sky_blue", role="series_identity").lower() in s28.lower()
+    assert resolve_color("success", role="series_identity").lower() not in s28.lower()
 
 
 def test_mutation_dropping_s21_line_and_roe_omits_furniture(tmp_path: Path) -> None:

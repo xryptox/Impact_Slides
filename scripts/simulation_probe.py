@@ -475,8 +475,18 @@ DESIGN_LEDGER_FURNITURE: dict[int, tuple[dict[str, str], ...]] = {
             "selector": "[data-annotation-id]",
             "expected_text": "+ ~6 percentage points",
         },
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Refresh",
+        },
     ),
-    8: ({"selector": ".metric-strip", "expected_text": "3,400+"},),
+    8: (
+        {"selector": ".metric-strip", "expected_text": "3,400+"},
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "10x",
+        },
+    ),
     9: ({"selector": ".support-table", "expected_text": "U.S. SME"},),
     10: ({"selector": ".support-table", "expected_text": "Intl Consumer"},),
     12: (

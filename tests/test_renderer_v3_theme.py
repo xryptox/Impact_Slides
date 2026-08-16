@@ -63,21 +63,24 @@ def test_palette_keys_match_d130_d131():
 
 
 def test_identity_keys_pass_text_contrast_on_white():
-    """D131: series-identity keys pass 4.5:1 on the transparent white body."""
+    """D131: text-safe identity keys pass 4.5:1 on the transparent white body."""
     white = resolve_color("white", role="surface")
     for key in ("navy", "primary_blue", "success", "neutral", "warning"):
         ink = resolve_color(key, role="series_identity")
         assert contrast_ratio(ink, white) >= 4.5, (key, ink, contrast_ratio(ink, white))
+    # sky_blue is a fill-identity accent (#248); not a text-on-white key.
+    assert contrast_ratio(
+        resolve_color("sky_blue", role="series_identity"), white
+    ) < 4.5
 
 
 def test_neutral_is_accessible_muted_ink():
     assert resolve_color("neutral", role="series_identity").lower() == "#63666a"
 
 
-def test_sky_blue_cannot_identify_a_series():
-    with pytest.raises(ValueError, match="role"):
-        resolve_color("sky_blue", role="series_identity")
-    # fill on dark/outlined surfaces remains valid
+def test_sky_blue_identifies_a_series_as_fill_accent():
+    """#248: sky_blue is the light default-cycle accent (not text-on-white)."""
+    assert resolve_color("sky_blue", role="series_identity").lower() == "#80c8ff"
     assert resolve_color("sky_blue", role="fill").lower() == "#80c8ff"
 
 
@@ -94,13 +97,17 @@ def test_white_restricted_to_dark_surfaces():
 
 
 def test_default_series_cycles_follow_d43():
-    assert default_series_keys("line")[0] == "navy"
-    assert default_series_keys("bar")[0] == "primary_blue"
-    # only identity-safe keys
+    assert default_series_keys("line") == (
+        "navy", "primary_blue", "sky_blue", "neutral", "warning"
+    )
+    assert default_series_keys("bar") == (
+        "primary_blue", "navy", "sky_blue", "neutral", "warning"
+    )
+    assert default_series_keys("combo") == default_series_keys("bar")
     for family in ("line", "bar"):
         for key in default_series_keys(family):
             resolve_color(key, role="series_identity")
-            assert key != "sky_blue"
+            assert key != "success"
             assert key != "white"
 
 
@@ -109,7 +116,7 @@ def test_resolve_series_colors_returns_hex_from_manifest():
     assert colors == [
         resolve_color("primary_blue", role="series_identity"),
         resolve_color("navy", role="series_identity"),
-        resolve_color("success", role="series_identity"),
+        resolve_color("sky_blue", role="series_identity"),
     ]
     # Chart.js + SVG share the same resolved list
     assert all(c.startswith("#") and len(c) == 7 for c in colors)

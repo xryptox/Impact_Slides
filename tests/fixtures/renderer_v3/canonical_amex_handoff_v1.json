@@ -1249,6 +1249,15 @@
                   "from_category_id": "q1-25",
                   "to_category_id": "q1-26"
                 }
+              },
+              {
+                "annotation_id": "s6-refresh",
+                "role": "event",
+                "text": "Refresh",
+                "anchor": {
+                  "type": "category",
+                  "category_id": "q3-25"
+                }
               }
             ]
           },
@@ -1498,7 +1507,7 @@
                   "48",
                   "50"
                 ],
-                "color": "navy"
+                "color": "primary_blue"
               },
               {
                 "series_id": "ucs-lodging",
@@ -1510,7 +1519,7 @@
                   "5",
                   "5"
                 ],
-                "color": "neutral"
+                "color": "sky_blue"
               }
             ]
           },
@@ -1538,7 +1547,17 @@
           "display": {
             "ordinary_values": "show",
             "series_identity": "auto"
-          }
+          },
+          "annotations": [
+            {
+              "annotation_id": "s8-10x",
+              "role": "explanation",
+              "text": "10x",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ]
         },
         "support": {
           "support_type": "metric_strip",
@@ -2461,7 +2480,7 @@
                   "1273",
                   "1275"
                 ],
-                "color": "navy"
+                "color": "primary_blue"
               },
               {
                 "series_id": "reserve-build-release",
@@ -2473,7 +2492,7 @@
                   "141",
                   "-24"
                 ],
-                "color": "primary_blue"
+                "color": "sky_blue"
               }
             ]
           },
@@ -2550,17 +2569,17 @@
                   },
                   "q2-25": {
                     "type": "number",
-                    "value": "2.8",
+                    "value": "2.9",
                     "format_id": "pct_1"
                   },
                   "q3-25": {
                     "type": "number",
-                    "value": "2.8",
+                    "value": "2.9",
                     "format_id": "pct_1"
                   },
                   "q4-25": {
                     "type": "number",
-                    "value": "2.8",
+                    "value": "2.9",
                     "format_id": "pct_1"
                   },
                   "q1-26": {
@@ -4369,7 +4388,7 @@
                     "8.0",
                     "7.6"
                   ],
-                  "color": "neutral"
+                  "color": "sky_blue"
                 }
               ]
             },
@@ -4518,7 +4537,7 @@
                     "1.6",
                     "1.6"
                   ],
-                  "color": "neutral"
+                  "color": "sky_blue"
                 }
               ]
             },
@@ -4609,7 +4628,7 @@
                     "7",
                     "7"
                   ],
-                  "color": "success"
+                  "color": "sky_blue"
                 }
               ]
             },
@@ -4686,7 +4705,7 @@
                     "7",
                     "6"
                   ],
-                  "color": "success"
+                  "color": "sky_blue"
                 },
                 {
                   "series_id": "checking",

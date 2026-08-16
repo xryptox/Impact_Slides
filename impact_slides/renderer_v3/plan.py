@@ -107,7 +107,7 @@ ANNEX_TABLE_FLOOR: Final = 12  # D44 annex + grouped annex
 ANNEX_TABLE_CEIL: Final = 24
 METRIC_STRIP_FLOOR: Final = 14  # D265 support labels
 METRIC_STRIP_CEIL: Final = 24
-METRIC_STRIP_VALUE_PX: Final = 28  # fixed KPI display (not 70px hero)
+METRIC_STRIP_VALUE_PX: Final = 44  # DP-1 calibration; painted floor >= 40 (#248)
 METRIC_STRIP_GAP: Final = 16
 METRIC_STRIP_PAD_Y: Final = 16
 METRIC_STRIP_PAD_X: Final = 16
