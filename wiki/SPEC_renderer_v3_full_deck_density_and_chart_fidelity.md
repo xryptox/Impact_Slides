@@ -1372,16 +1372,15 @@ key and resolved canonical color.
 Series-identity keys are `navy`, `primary_blue`, `success`, `neutral`, and
 `warning`; each passes 4.5:1 on the transparent white chart body because direct
 labels inherit series color. `neutral` resolves to the existing accessible
-muted ink `#63666A`. Light colors such as `sky_blue` are restricted to
-non-text semantic fills on approved dark or sufficiently outlined surfaces and
-cannot identify a series. White is restricted to text or marks on approved dark
-surfaces. The Amex migration replaces legacy `#8A93A6` series uses with
-`neutral`. Every key declares allowed roles/backgrounds; other use is malformed
-under D98, and default series cycles use only identity-safe keys.
+muted ink `#63666A`. #248 overrides the original ban on `sky_blue` as series
+identity: see `SPEC_renderer_v3_pdf_design_parity.md` DP-1. White is restricted
+to text or marks on approved dark surfaces. The Amex migration replaces legacy
+`#8A93A6` series uses with `neutral`. Every key declares allowed
+roles/backgrounds; other use is malformed under D98.
 
 ### D132 — Bar fills and identities share one resolved series key
 
-Every bar series resolves one identity-safe palette key. Bars, legend swatches,
+Every bar series resolves one series-identity palette key (D131/#248). Bars, legend swatches,
 connectors, and direct identity treatments derive from that same key. Ordinary
 numeric bar-value text remains dark navy under D80 rather than inheriting the
 fill. A stacked label inside a segment uses white only when contrast passes;
