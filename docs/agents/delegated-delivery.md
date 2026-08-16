@@ -141,7 +141,7 @@ Before approval, run `preflight-approved-pr.ps1` (or equivalent inspection) and 
 - is clean/mergeable;
 - has green required checks;
 - has the reviewed exact head SHA;
-- contains `Closes #N` (or equivalent). The watcher repairs a missing reference deterministically at pr-ready (once per run/head/PR, so post-push body overwrites are re-repaired); `metadata-blocked` still fires before terminal delivery if it is nonetheless absent.
+- contains `Closes #N` (or equivalent). The daemon's PR step appends it deterministically when the branch name matches `issue-<n>` (custom build, fork commit `ca9e2e0`); the watcher additionally repairs a missing reference at pr-ready (once per run/head/PR, covering repair re-pushes) as a second layer; `metadata-blocked` still fires before terminal delivery if it is nonetheless absent.
 
 Record the exact head SHA presented for approval.
 
