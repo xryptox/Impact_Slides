@@ -33,9 +33,9 @@ v3 chart role bounds (`charts.py::_ROLE_BOUNDS`, D294) floor at 13–16px with *
 
 Ticks render at ~58% of source size and lose the bold treatment. This is the user-visible "small, thin axis labels" regression. It slipped through because no verification axis measured it (C3).
 
-### C3 — No design-parity verification axis exists
+### C3 — No design-parity verification axis existed (v11/v12)
 
-The v11/v12 sims verified identity, paint-readiness, geometry alignment, and content — but nothing asserts rendered px size / computed weight against PDF-derived minimums. The qualitative ledger classifies content, not type scale. A 14px-vs-24px regression is invisible to the current QA loop by construction.
+The v11/v12 sims verified identity, paint-readiness, geometry alignment, and content — but nothing asserted rendered px size / computed weight against PDF-derived minimums. The qualitative ledger classified content, not type scale. A 14px-vs-24px regression was invisible to that QA loop by construction. #233 shipped the DP-6 helpers and v13 launcher (see DP-6); the observation sim is still unrun.
 
 ### C4 — Four genuine renderer gaps (small slice)
 
@@ -55,7 +55,7 @@ Grounded targets (PDF pages 4/13, ×2 scale). All values are plan floors; ceilin
 | `legend` / `series_labels` | (16, 24) | 16 (hold) | 400 (hold) |
 | `axis_titles` / `annotations` | (13, 24) | 16 | 600 for axis titles |
 
-Chart.js options must emit `font.weight` for ticks and painted values (both painters: Chart.js config + SVG `font-weight`); the SVG painter currently sets no weight on tick `<text>`. Acceptance: computed style / SVG attribute probes per chart slide.
+Chart.js options must emit `font.weight` for ticks and painted values (both painters: Chart.js config + SVG `font-weight`); the SVG painter currently sets no weight on tick `<text>`. Acceptance: computed-style probes per chart slide (presentation attributes alone are not evidence).
 
 ### DP-2 Chart furniture parity (C1; per-slide mapping)
 
