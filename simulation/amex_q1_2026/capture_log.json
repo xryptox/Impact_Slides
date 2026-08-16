@@ -1,0 +1,697 @@
+{
+  "console_errors": [],
+  "capture_errors": [],
+  "html_uri": "file:///C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-produce-th-692089/simulation/amex_q1_2026/passes/pass_01/renderer_v3_out/presentation.html",
+  "design_ledgers": [
+    {
+      "slide_number": 1,
+      "layout": "opening_cover",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 2,
+      "layout": "narrative",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 3,
+      "layout": "period_comparison",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 4,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "Leap Year Approx. (1%)",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".support-table",
+          "expected_text": "G&S",
+          "count": 2,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 5,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".support-table",
+          "expected_text": "Gen-Z",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 6,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "+ ~6 percentage points",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 18,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 18,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 7,
+      "layout": "comparison_cards",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 8,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".metric-strip",
+          "expected_text": "3,400+",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 9,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".support-table",
+          "expected_text": "U.S. SME",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 10,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".support-table",
+          "expected_text": "Intl Consumer",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 11,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-chart-type=\"stacked_bar\"]",
+          "expected_text": "International Card Services",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 13,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "tick_count": 20,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 20,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 15,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".outlined-support",
+          "expected_text": "Reserve Rate for Total Balances",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 11,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 16,
+      "layout": "data_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-measurement-id][data-role=\"cagr\"]",
+          "expected_text": "17%",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 28,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 28,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".boxed-label",
+          "expected_text": "11%",
+          "count": 5,
+          "ok": true
+        },
+        {
+          "selector": "[data-hero-type=\"driver_card\"]",
+          "expected_text": "Billed Business",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 9,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 9,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 19,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "Leap Year Approx. (1%)",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".support-table",
+          "expected_text": "$17.0",
+          "count": 2,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 11,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 20,
+      "layout": "period_comparison",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-chart-type=\"combo\"] [data-semantic-table]",
+          "expected_text": "Common Shares Outstanding",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".outlined-support",
+          "expected_text": "ROE",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 16,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 16,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 22,
+      "layout": "metric_overview",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 23,
+      "layout": "section_divider",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 24,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".category-group",
+          "expected_text": "Commercial Services",
+          "count": 3,
+          "ok": true
+        },
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "$486B Total Network Volumes",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".boxed-label",
+          "expected_text": "37%",
+          "count": 6,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 11,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 25,
+      "layout": "data_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 26,
+      "layout": "data_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "tick_count": 36,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 36,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 28,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "92% FDIC",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "tick_count": 16,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 16,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 29,
+      "layout": "narrative",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 30,
+      "layout": "narrative",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 31,
+      "layout": "annex_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 33,
+      "layout": "annex_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 34,
+      "layout": "annex_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 35,
+      "layout": "annex_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 36,
+      "layout": "annex_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 37,
+      "layout": "annex_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 38,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 39,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 40,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 41,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 42,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 43,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 44,
+      "layout": "closing_cover",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    }
+  ]
+}

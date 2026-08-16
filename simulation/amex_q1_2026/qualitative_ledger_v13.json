@@ -1,0 +1,985 @@
+{
+  "baseline": "v13",
+  "renderer_version": "3.0.0",
+  "repository_commit": "a76b65f27b678a72f789f459bf2b646831534c26",
+  "run_meta_status": "clean",
+  "slide_count": 44,
+  "class_counts": {
+    "accepted v3 design divergence": 9,
+    "faithful reproduction": 28,
+    "corpus/extraction residual": 1,
+    "candidate renderer defect or capability gap": 6
+  },
+  "rows": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "pdf_index": 0,
+      "physical_page": 1,
+      "sbs": "side_by_side/slide_01.png",
+      "pdf_path": "pdf_pages/slide_01.png",
+      "html_path": "html_slides/slide_01.png",
+      "class": "accepted v3 design divergence",
+      "observation": "PDF full-bleed navy/cyan brand cover with Centurion seal. v3 minimal white title (title + Q1'26 + April 23, 2026). Brand-seal omission is standing R3 wontfix; cover recipe intentional.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "narrative",
+      "pdf_index": 1,
+      "physical_page": 2,
+      "sbs": "side_by_side/slide_02.png",
+      "pdf_path": "pdf_pages/slide_02.png",
+      "html_path": "html_slides/slide_02.png",
+      "class": "faithful reproduction",
+      "observation": "Seven Business Highlights bullets match PDF substance and bold emphasis. Packing tighter/smaller type than PDF; footnote collapses to notes affordance. Content-complete.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "period_comparison",
+      "pdf_index": 2,
+      "physical_page": 3,
+      "sbs": "side_by_side/slide_03.png",
+      "pdf_path": "pdf_pages/slide_03.png",
+      "html_path": "html_slides/slide_03.png",
+      "class": "accepted v3 design divergence",
+      "observation": "All five KPI rows/values match. PDF uses large period pills; v3 compact right-hand matrix \u2014 schema-v1 period_comparison recipe, not a value error.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "single_chart",
+      "pdf_index": 3,
+      "physical_page": 4,
+      "sbs": "side_by_side/slide_04.png",
+      "pdf_path": "pdf_pages/slide_04.png",
+      "html_path": "html_slides/slide_04.png",
+      "class": "faithful reproduction",
+      "observation": "Dual FX-adj + Reported lines with endpoint labels 9%/10%. Leap Year Approx. (1%) annotation and bottom G&S/T&E support table both present (v12 residual resolved). Minor axis tick density vs PDF only. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+            "count": 1,
+            "ok": true
+          },
+          {
+            "selector": ".support-table",
+            "expected_text": "G&S",
+            "count": 2,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "single_chart",
+      "pdf_index": 4,
+      "physical_page": 5,
+      "sbs": "side_by_side/slide_05.png",
+      "pdf_path": "pdf_pages/slide_05.png",
+      "html_path": "html_slides/slide_05.png",
+      "class": "faithful reproduction",
+      "observation": "UCS billings line 7\u219210% paints. Generation-mix support table (Gen-Z\u2026) present (v12 residual resolved). Side G&S/T&E callout styling differs slightly from PDF but content present via support. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": ".support-table",
+            "expected_text": "Gen-Z",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "dual_chart",
+      "pdf_index": 5,
+      "physical_page": 6,
+      "sbs": "side_by_side/slide_06.png",
+      "pdf_path": "pdf_pages/slide_06.png",
+      "html_path": "html_slides/slide_06.png",
+      "class": "faithful reproduction",
+      "observation": "Both panes paint with titles. '+ ~6 percentage points' annotation present (v12 residual resolved). PDF 'Refresh' chip under spend bars still absent \u2014 minor chrome gap, not content loss. Retention y-window readable. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 18,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": "[data-annotation-id]",
+            "expected_text": "+ ~6 percentage points",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 7,
+      "layout_type": "comparison_cards",
+      "pdf_index": 6,
+      "physical_page": 7,
+      "sbs": "side_by_side/slide_07.png",
+      "pdf_path": "pdf_pages/slide_07.png",
+      "html_path": "html_slides/slide_07.png",
+      "class": "accepted v3 design divergence",
+      "observation": "v13 paints circular dual-metric cards with 10x/2x multipliers (v12 was plain text columns). Values 50/5, 20/10, 21/11 present. Left/right premium-vs-benchmark orientation and card scale still differ from PDF art; no longer a missing-capability blank.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 8,
+      "layout_type": "single_chart",
+      "pdf_index": 7,
+      "physical_page": 8,
+      "sbs": "side_by_side/slide_08.png",
+      "pdf_path": "pdf_pages/slide_08.png",
+      "html_path": "html_slides/slide_08.png",
+      "class": "faithful reproduction",
+      "observation": "Dual lodging lines (FHR+THC 40\u219250%, UCS 5%) paint. Metric strip 3,400+ / 300+ / $600 / $550 present (v12 residual resolved). PDF vertical 10x callout between lines still absent \u2014 accepted chrome difference. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": ".metric-strip",
+            "expected_text": "3,400+",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 9,
+      "layout_type": "single_chart",
+      "pdf_index": 8,
+      "physical_page": 9,
+      "sbs": "side_by_side/slide_09.png",
+      "pdf_path": "pdf_pages/slide_09.png",
+      "html_path": "html_slides/slide_09.png",
+      "class": "faithful reproduction",
+      "observation": "Commercial FX-adj line paints. Support table with U.S. SME present (v12 residual resolved). **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": ".support-table",
+            "expected_text": "U.S. SME",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 10,
+      "layout_type": "single_chart",
+      "pdf_index": 9,
+      "physical_page": 10,
+      "sbs": "side_by_side/slide_10.png",
+      "pdf_path": "pdf_pages/slide_10.png",
+      "html_path": "html_slides/slide_10.png",
+      "class": "faithful reproduction",
+      "observation": "ICS dual line paints with markers. Support table Intl Consumer present (v12 residual resolved). **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": ".support-table",
+            "expected_text": "Intl Consumer",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 11,
+      "layout_type": "single_chart",
+      "pdf_index": 10,
+      "physical_page": 11,
+      "sbs": "side_by_side/slide_11.png",
+      "pdf_path": "pdf_pages/slide_11.png",
+      "html_path": "html_slides/slide_11.png",
+      "class": "faithful reproduction",
+      "observation": "Series 9/9/10/9/10 on fixed 0\u201315% domain \u2014 v12 false-V domain collapse resolved. Leap Year box present on PDF only; line geometry now matches PDF frame. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 12,
+      "layout_type": "chart_hero_dual",
+      "pdf_index": 11,
+      "physical_page": 12,
+      "sbs": "side_by_side/slide_12.png",
+      "pdf_path": "pdf_pages/slide_12.png",
+      "html_path": "html_slides/slide_12.png",
+      "class": "faithful reproduction",
+      "observation": "Three-band stacked NCA bars (UCS/Commercial/ICS totaling ~3.x) paint with segment legend (v12 single-series residual resolved). Hero 66%/73% shares present. Hero copy shorter than PDF long sentences \u2014 accepted v3 hero recipe. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": "[data-chart-type=\"stacked_bar\"]",
+            "expected_text": "International Card Services",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 13,
+      "layout_type": "single_chart",
+      "pdf_index": 12,
+      "physical_page": 13,
+      "sbs": "side_by_side/slide_13.png",
+      "pdf_path": "pdf_pages/slide_13.png",
+      "html_path": "html_slides/slide_13.png",
+      "class": "faithful reproduction",
+      "observation": "Grouped Total Balances vs Billed Business bars and labels match PDF structure/values through Q1'26. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 14,
+      "layout_type": "dual_chart",
+      "pdf_index": 13,
+      "physical_page": 14,
+      "sbs": "side_by_side/slide_14.png",
+      "pdf_path": "pdf_pages/slide_14.png",
+      "html_path": "html_slides/slide_14.png",
+      "class": "faithful reproduction",
+      "observation": "30+ DPD ~1.3% and Net Write-off panes paint with correct labels; dual-card chrome is v3 recipe. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 20,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 15,
+      "layout_type": "single_chart",
+      "pdf_index": 14,
+      "physical_page": 15,
+      "sbs": "side_by_side/slide_15.png",
+      "pdf_path": "pdf_pages/slide_15.png",
+      "html_path": "html_slides/slide_15.png",
+      "class": "corpus/extraction residual",
+      "observation": "Stacked write-offs + reserve build/release geometry paints; Reserve Rate outlined row present (v12 furniture residual resolved). Remaining: mid-quarter reserve-rate cells show 2.8% for Q2\u2013Q4 vs PDF 2.9%/2.9%/2.9%/2.9%/2.8%; series color recipe inverted vs PDF (write-offs dark vs light). **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": ".outlined-support",
+            "expected_text": "Reserve Rate for Total Balances",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 16,
+      "layout_type": "data_table",
+      "pdf_index": 15,
+      "physical_page": 16,
+      "sbs": "side_by_side/slide_16.png",
+      "pdf_path": "pdf_pages/slide_16.png",
+      "html_path": "html_slides/slide_16.png",
+      "class": "accepted v3 design divergence",
+      "observation": "All revenue line items and YoY/FX columns match. PDF pill columns vs v3 dense data grid is table recipe difference.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 17,
+      "layout_type": "dual_chart",
+      "pdf_index": 16,
+      "physical_page": 17,
+      "sbs": "side_by_side/slide_17.png",
+      "pdf_path": "pdf_pages/slide_17.png",
+      "html_path": "html_slides/slide_17.png",
+      "class": "faithful reproduction",
+      "observation": "Both panes paint. Left Net Card Fees bars correctly labeled $0.9\u2026$2.8 (v12 pct_0 mislabel resolved). 17% CAGR measurement chrome present. Right FX YoY line matches. Qualification disclosure collapsed to notes affordance. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 28,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": "[data-measurement-id][data-role=\"cagr\"]",
+            "expected_text": "17%",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 18,
+      "layout_type": "chart_hero_dual",
+      "pdf_index": 17,
+      "physical_page": 18,
+      "sbs": "side_by_side/slide_18.png",
+      "pdf_path": "pdf_pages/slide_18.png",
+      "html_path": "html_slides/slide_18.png",
+      "class": "faithful reproduction",
+      "observation": "NII bars $4.2\u2026$4.7 with under-bar YoY boxed labels 11\u201312%. Driver card rows Billed Business 8% / NII 13% / Volume 7% / Margin 5% present (v12 residual resolved). Driver chrome is list not green-arrow table \u2014 accepted recipe. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 9,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": ".boxed-label",
+            "expected_text": "11%",
+            "count": 5,
+            "ok": true
+          },
+          {
+            "selector": "[data-hero-type=\"driver_card\"]",
+            "expected_text": "Billed Business",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 19,
+      "layout_type": "single_chart",
+      "pdf_index": 18,
+      "physical_page": 19,
+      "sbs": "side_by_side/slide_19.png",
+      "pdf_path": "pdf_pages/slide_19.png",
+      "html_path": "html_slides/slide_19.png",
+      "class": "faithful reproduction",
+      "observation": "Dual revenue line paints. Leap Year annotation and $B support row $17.0\u2026$18.9 present (v12 residual resolved). **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+            "count": 1,
+            "ok": true
+          },
+          {
+            "selector": ".support-table",
+            "expected_text": "$17.0",
+            "count": 2,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 20,
+      "layout_type": "period_comparison",
+      "pdf_index": 19,
+      "physical_page": 20,
+      "sbs": "side_by_side/slide_20.png",
+      "pdf_path": "pdf_pages/slide_20.png",
+      "html_path": "html_slides/slide_20.png",
+      "class": "accepted v3 design divergence",
+      "observation": "Expense values match incl. VCE. Nested indent flattened vs PDF hierarchy \u2014 recipe difference with matching numbers.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 21,
+      "layout_type": "chart_hero_dual",
+      "pdf_index": 20,
+      "physical_page": 21,
+      "sbs": "side_by_side/slide_21.png",
+      "pdf_path": "pdf_pages/slide_21.png",
+      "html_path": "html_slides/slide_21.png",
+      "class": "faithful reproduction",
+      "observation": "Capital stacked combo with Common Shares Outstanding line 702\u2192682 and ROE row 35/34/36/36/34/35% present (v12 residual resolved). Right Capital Summary KPIs match. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 16,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": "[data-chart-type=\"combo\"] [data-semantic-table]",
+            "expected_text": "Common Shares Outstanding",
+            "count": 1,
+            "ok": true
+          },
+          {
+            "selector": ".outlined-support",
+            "expected_text": "ROE",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 22,
+      "layout_type": "metric_overview",
+      "pdf_index": 21,
+      "physical_page": 22,
+      "sbs": "side_by_side/slide_22.png",
+      "pdf_path": "pdf_pages/slide_22.png",
+      "html_path": "html_slides/slide_22.png",
+      "class": "accepted v3 design divergence",
+      "observation": "Guidance figures present; sparse list vs centered PDF card is metric_overview recipe.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 23,
+      "layout_type": "section_divider",
+      "pdf_index": 22,
+      "physical_page": 23,
+      "sbs": "side_by_side/slide_23.png",
+      "pdf_path": "pdf_pages/slide_23.png",
+      "html_path": "html_slides/slide_23.png",
+      "class": "accepted v3 design divergence",
+      "observation": "Appendix title; white plate vs navy brand divider \u2014 intentional v3 section_divider.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 24,
+      "layout_type": "single_chart",
+      "pdf_index": 23,
+      "physical_page": 24,
+      "sbs": "side_by_side/slide_24.png",
+      "pdf_path": "pdf_pages/slide_24.png",
+      "html_path": "html_slides/slide_24.png",
+      "class": "faithful reproduction",
+      "observation": "Six growth bars with category-group braces (UCS/Commercial/ICS), $486B Total Network Volumes annotation, and on-bar %-of-total boxed labels present (v12 residual resolved). **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": ".category-group",
+            "expected_text": "Commercial Services",
+            "count": 3,
+            "ok": true
+          },
+          {
+            "selector": "[data-annotation-id]",
+            "expected_text": "$486B Total Network Volumes",
+            "count": 1,
+            "ok": true
+          },
+          {
+            "selector": ".boxed-label",
+            "expected_text": "37%",
+            "count": 6,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 25,
+      "layout_type": "data_table",
+      "pdf_index": 24,
+      "physical_page": 25,
+      "sbs": "side_by_side/slide_25.png",
+      "pdf_path": "pdf_pages/slide_25.png",
+      "html_path": "html_slides/slide_25.png",
+      "class": "faithful reproduction",
+      "observation": "FX currency rows and YoY match PDF.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 26,
+      "layout_type": "data_table",
+      "pdf_index": 25,
+      "physical_page": 26,
+      "sbs": "side_by_side/slide_26.png",
+      "pdf_path": "pdf_pages/slide_26.png",
+      "html_path": "html_slides/slide_26.png",
+      "class": "faithful reproduction",
+      "observation": "T&E matrix orientation and values match PDF.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 27,
+      "layout_type": "dual_chart",
+      "pdf_index": 26,
+      "physical_page": 27,
+      "sbs": "side_by_side/slide_27.png",
+      "pdf_path": "pdf_pages/slide_27.png",
+      "html_path": "html_slides/slide_27.png",
+      "class": "faithful reproduction",
+      "observation": "Unemployment+GDP scenario fans paint-ready and track PDF. **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 36,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 28,
+      "layout_type": "dual_chart",
+      "pdf_index": 27,
+      "physical_page": 28,
+      "sbs": "side_by_side/slide_28.png",
+      "pdf_path": "pdf_pages/slide_28.png",
+      "html_path": "html_slides/slide_28.png",
+      "class": "faithful reproduction",
+      "observation": "Funding/deposit stacks paint with on-stack % and $ totals. 92% FDIC annotation present (v12 residual resolved). **design-parity verified**.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": 16,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "furniture": [
+          {
+            "selector": "[data-annotation-id]",
+            "expected_text": "92% FDIC",
+            "count": 1,
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "slide_number": 29,
+      "layout_type": "narrative",
+      "pdf_index": 28,
+      "physical_page": 29,
+      "sbs": "side_by_side/slide_29.png",
+      "pdf_path": "pdf_pages/slide_29.png",
+      "html_path": "html_slides/slide_29.png",
+      "class": "faithful reproduction",
+      "observation": "Variance commentary matches PDF substance.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 30,
+      "layout_type": "narrative",
+      "pdf_index": 29,
+      "physical_page": 30,
+      "sbs": "side_by_side/slide_30.png",
+      "pdf_path": "pdf_pages/slide_30.png",
+      "html_path": "html_slides/slide_30.png",
+      "class": "faithful reproduction",
+      "observation": "Continuation commentary matches PDF substance.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 31,
+      "layout_type": "annex_table",
+      "pdf_index": 30,
+      "physical_page": 31,
+      "sbs": "side_by_side/slide_31.png",
+      "pdf_path": "pdf_pages/slide_31.png",
+      "html_path": "html_slides/slide_31.png",
+      "class": "accepted v3 design divergence",
+      "observation": "Annex1 values present; nested groups flattened to metric names vs PDF grouping chrome.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 32,
+      "layout_type": "grouped_annex_table",
+      "pdf_index": 31,
+      "physical_page": 32,
+      "sbs": "side_by_side/slide_32.png",
+      "pdf_path": "pdf_pages/slide_32.png",
+      "html_path": "html_slides/slide_32.png",
+      "class": "faithful reproduction",
+      "observation": "Two peer groups with correct numbers. Column headers fully readable (Q1'26 Reported / FX-Adj.*) \u2014 v12 header-clip residual resolved.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 33,
+      "layout_type": "annex_table",
+      "pdf_index": 32,
+      "physical_page": 33,
+      "sbs": "side_by_side/slide_33.png",
+      "pdf_path": "pdf_pages/slide_33.png",
+      "html_path": "html_slides/slide_33.png",
+      "class": "faithful reproduction",
+      "observation": "Annex2 balances grid matches.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 34,
+      "layout_type": "annex_table",
+      "pdf_index": 33,
+      "physical_page": 34,
+      "sbs": "side_by_side/slide_34.png",
+      "pdf_path": "pdf_pages/slide_34.png",
+      "html_path": "html_slides/slide_34.png",
+      "class": "faithful reproduction",
+      "observation": "Annex3 revenue grid populated.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 35,
+      "layout_type": "annex_table",
+      "pdf_index": 34,
+      "physical_page": 35,
+      "sbs": "side_by_side/slide_35.png",
+      "pdf_path": "pdf_pages/slide_35.png",
+      "html_path": "html_slides/slide_35.png",
+      "class": "faithful reproduction",
+      "observation": "Annex4 NCF grid populated.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 36,
+      "layout_type": "annex_table",
+      "pdf_index": 35,
+      "physical_page": 36,
+      "sbs": "side_by_side/slide_36.png",
+      "pdf_path": "pdf_pages/slide_36.png",
+      "html_path": "html_slides/slide_36.png",
+      "class": "faithful reproduction",
+      "observation": "Annex5 NII grid populated.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 37,
+      "layout_type": "annex_table",
+      "pdf_index": 36,
+      "physical_page": 37,
+      "sbs": "side_by_side/slide_37.png",
+      "pdf_path": "pdf_pages/slide_37.png",
+      "html_path": "html_slides/slide_37.png",
+      "class": "faithful reproduction",
+      "observation": "Annex6 RNIE grid populated.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 38,
+      "layout_type": "legal_notice",
+      "pdf_index": 37,
+      "physical_page": 38,
+      "sbs": "side_by_side/slide_38.png",
+      "pdf_path": "pdf_pages/slide_38.png",
+      "html_path": "html_slides/slide_38.png",
+      "class": "candidate renderer defect or capability gap",
+      "observation": "Full cautionary text present as dense continuous bullets; PDF multi-paragraph hierarchy/spacing largely collapsed. Same legal_notice packing class as v12 (R-D preserved).",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 39,
+      "layout_type": "legal_notice",
+      "pdf_index": 38,
+      "physical_page": 39,
+      "sbs": "side_by_side/slide_39.png",
+      "pdf_path": "pdf_pages/slide_39.png",
+      "html_path": "html_slides/slide_39.png",
+      "class": "candidate renderer defect or capability gap",
+      "observation": "Continuation of legal packing class (dense wall vs PDF hierarchy).",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 40,
+      "layout_type": "legal_notice",
+      "pdf_index": 39,
+      "physical_page": 40,
+      "sbs": "side_by_side/slide_40.png",
+      "pdf_path": "pdf_pages/slide_40.png",
+      "html_path": "html_slides/slide_40.png",
+      "class": "candidate renderer defect or capability gap",
+      "observation": "Same legal_notice packing class.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 41,
+      "layout_type": "legal_notice",
+      "pdf_index": 40,
+      "physical_page": 41,
+      "sbs": "side_by_side/slide_41.png",
+      "pdf_path": "pdf_pages/slide_41.png",
+      "html_path": "html_slides/slide_41.png",
+      "class": "candidate renderer defect or capability gap",
+      "observation": "Same legal_notice packing class.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 42,
+      "layout_type": "legal_notice",
+      "pdf_index": 41,
+      "physical_page": 42,
+      "sbs": "side_by_side/slide_42.png",
+      "pdf_path": "pdf_pages/slide_42.png",
+      "html_path": "html_slides/slide_42.png",
+      "class": "candidate renderer defect or capability gap",
+      "observation": "Same legal_notice packing class.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 43,
+      "layout_type": "legal_notice",
+      "pdf_index": 42,
+      "physical_page": 43,
+      "sbs": "side_by_side/slide_43.png",
+      "pdf_path": "pdf_pages/slide_43.png",
+      "html_path": "html_slides/slide_43.png",
+      "class": "candidate renderer defect or capability gap",
+      "observation": "Same legal_notice packing class.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    },
+    {
+      "slide_number": 44,
+      "layout_type": "closing_cover",
+      "pdf_index": 43,
+      "physical_page": 44,
+      "sbs": "side_by_side/slide_44.png",
+      "pdf_path": "pdf_pages/slide_44.png",
+      "html_path": "html_slides/slide_44.png",
+      "class": "accepted v3 design divergence",
+      "observation": "PDF navy wordmark cover vs v3 minimal white lockup \u2014 accepted cover recipe.",
+      "design_ledger_ok": true,
+      "design_ledger": {
+        "ok": true,
+        "tick_count": null,
+        "min_font_size_px": null,
+        "min_font_weight": null,
+        "furniture": []
+      }
+    }
+  ]
+}
