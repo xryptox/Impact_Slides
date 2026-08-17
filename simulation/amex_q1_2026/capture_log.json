@@ -1,0 +1,1431 @@
+{
+  "console_errors": [],
+  "capture_errors": [
+    {
+      "slide_number": 4,
+      "layout_type": "single_chart",
+      "pdf_index": 3,
+      "physical_page": 4,
+      "error": "design_ledger_not_ok",
+      "design_ledger": {
+        "slide_number": 4,
+        "layout": "single_chart",
+        "ok": false,
+        "furniture": [
+          {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+            "count": 1,
+            "ok": true
+          },
+          {
+            "selector": ".support-table",
+            "expected_text": "G&S",
+            "count": 2,
+            "ok": true
+          }
+        ],
+        "errors": [
+          "support_chrome: 0 visible support header cells on slide 4"
+        ],
+        "extensions": {
+          "support_chrome": {
+            "ok": false,
+            "error": "0 visible support header cells on slide 4"
+          }
+        },
+        "support_chrome": {
+          "ok": false,
+          "error": "0 visible support header cells on slide 4"
+        },
+        "tick_count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "ticks": {
+          "count": 10,
+          "min_font_size_px": 20.0,
+          "min_font_weight": 600
+        }
+      }
+    },
+    {
+      "slide_number": 19,
+      "layout_type": "single_chart",
+      "pdf_index": 18,
+      "physical_page": 19,
+      "error": "design_ledger_not_ok",
+      "design_ledger": {
+        "slide_number": 19,
+        "layout": "single_chart",
+        "ok": false,
+        "furniture": [
+          {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+            "count": 1,
+            "ok": true
+          },
+          {
+            "selector": ".support-table",
+            "expected_text": "$17.0",
+            "count": 2,
+            "ok": true
+          }
+        ],
+        "errors": [
+          "support_chrome: 0 visible support header cells on slide 19"
+        ],
+        "extensions": {
+          "support_chrome": {
+            "ok": false,
+            "error": "0 visible support header cells on slide 19"
+          }
+        },
+        "support_chrome": {
+          "ok": false,
+          "error": "0 visible support header cells on slide 19"
+        },
+        "tick_count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600,
+        "ticks": {
+          "count": 11,
+          "min_font_size_px": 20.0,
+          "min_font_weight": 600
+        }
+      }
+    }
+  ],
+  "html_uri": "file:///C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-produce-th-5dc5f6/simulation/amex_q1_2026/passes/pass_01/renderer_v3_out/presentation.html",
+  "design_ledgers": [
+    {
+      "slide_number": 1,
+      "layout": "opening_cover",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 2,
+      "layout": "narrative",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 3,
+      "layout": "period_comparison",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.44952270754989876,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1728.5,
+              "stub_width_px": 777,
+              "share": 0.44952270754989876
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.44952270754989876,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1728.5,
+            "stub_width_px": 777,
+            "share": 0.44952270754989876
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 4,
+      "layout": "single_chart",
+      "ok": false,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "Leap Year Approx. (1%)",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".support-table",
+          "expected_text": "G&S",
+          "count": 2,
+          "ok": true
+        }
+      ],
+      "errors": [
+        "support_chrome: 0 visible support header cells on slide 4"
+      ],
+      "extensions": {
+        "support_chrome": {
+          "ok": false,
+          "error": "0 visible support header cells on slide 4"
+        }
+      },
+      "support_chrome": {
+        "ok": false,
+        "error": "0 visible support header cells on slide 4"
+      },
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 5,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".support-table",
+          "expected_text": "Gen-Z",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 6,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "+ ~6 percentage points",
+          "count": 2,
+          "ok": true
+        },
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "Refresh",
+          "count": 2,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 18,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 18,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 7,
+      "layout": "comparison_cards",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 8,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".metric-strip",
+          "expected_text": "3,400+",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "10x",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {
+        "metric_floor": {
+          "ok": true,
+          "min_font_size_px": 44.0,
+          "value_count": 4,
+          "values": [
+            {
+              "text": "3,400+",
+              "font_size_px": 44.0
+            },
+            {
+              "text": "300+",
+              "font_size_px": 44.0
+            },
+            {
+              "text": "$600",
+              "font_size_px": 44.0
+            },
+            {
+              "text": "$550",
+              "font_size_px": 44.0
+            }
+          ]
+        }
+      },
+      "metric_floor": {
+        "ok": true,
+        "min_font_size_px": 44.0,
+        "value_count": 4,
+        "values": [
+          {
+            "text": "3,400+",
+            "font_size_px": 44.0
+          },
+          {
+            "text": "300+",
+            "font_size_px": 44.0
+          },
+          {
+            "text": "$600",
+            "font_size_px": 44.0
+          },
+          {
+            "text": "$550",
+            "font_size_px": 44.0
+          }
+        ]
+      },
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 9,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".support-table",
+          "expected_text": "U.S. SME",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 10,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".support-table",
+          "expected_text": "Intl Consumer",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 11,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 12,
+      "layout": "chart_hero_dual",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-chart-type=\"stacked_bar\"]",
+          "expected_text": "International Card Services",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {
+        "metric_floor": {
+          "ok": true,
+          "min_font_size_px": 44.0,
+          "value_count": 2,
+          "values": [
+            {
+              "text": "66%",
+              "font_size_px": 44.0
+            },
+            {
+              "text": "73%",
+              "font_size_px": 44.0
+            }
+          ]
+        }
+      },
+      "metric_floor": {
+        "ok": true,
+        "min_font_size_px": 44.0,
+        "value_count": 2,
+        "values": [
+          {
+            "text": "66%",
+            "font_size_px": 44.0
+          },
+          {
+            "text": "73%",
+            "font_size_px": 44.0
+          }
+        ]
+      },
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 13,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 10,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 10,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 14,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 20,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 20,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 15,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".outlined-support",
+          "expected_text": "Reserve Rate for Total Balances",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 11,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 16,
+      "layout": "data_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.4493927125506073,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1729,
+              "stub_width_px": 777,
+              "share": 0.4493927125506073
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.4493927125506073,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1729,
+            "stub_width_px": 777,
+            "share": 0.4493927125506073
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 17,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-measurement-id][data-role=\"cagr\"]",
+          "expected_text": "17%",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 28,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 28,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 18,
+      "layout": "chart_hero_dual",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".boxed-label",
+          "expected_text": "11%",
+          "count": 5,
+          "ok": true
+        },
+        {
+          "selector": "[data-hero-type=\"driver_card\"]",
+          "expected_text": "Billed Business",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 9,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 9,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 19,
+      "layout": "single_chart",
+      "ok": false,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "Leap Year Approx. (1%)",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".support-table",
+          "expected_text": "$17.0",
+          "count": 2,
+          "ok": true
+        }
+      ],
+      "errors": [
+        "support_chrome: 0 visible support header cells on slide 19"
+      ],
+      "extensions": {
+        "support_chrome": {
+          "ok": false,
+          "error": "0 visible support header cells on slide 19"
+        }
+      },
+      "support_chrome": {
+        "ok": false,
+        "error": "0 visible support header cells on slide 19"
+      },
+      "tick_count": 11,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 20,
+      "layout": "period_comparison",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 21,
+      "layout": "chart_hero_dual",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-chart-type=\"combo\"] [data-semantic-table]",
+          "expected_text": "Common Shares Outstanding",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".outlined-support",
+          "expected_text": "ROE",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 16,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 16,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 22,
+      "layout": "metric_overview",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 23,
+      "layout": "section_divider",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 24,
+      "layout": "single_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": ".category-group",
+          "expected_text": "Commercial Services",
+          "count": 3,
+          "ok": true
+        },
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "$486B Total Network Volumes",
+          "count": 1,
+          "ok": true
+        },
+        {
+          "selector": ".boxed-label",
+          "expected_text": "37%",
+          "count": 6,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {
+        "palette": {
+          "ok": true,
+          "colors": [
+            "#00175A"
+          ],
+          "has_sky_blue": false,
+          "require_sky_blue": false,
+          "series": [
+            {
+              "canvas": 0,
+              "dataset": 0,
+              "label": "YoY growth",
+              "colors": [
+                "#00175A",
+                "#00175A"
+              ]
+            }
+          ]
+        }
+      },
+      "palette": {
+        "ok": true,
+        "colors": [
+          "#00175A"
+        ],
+        "has_sky_blue": false,
+        "require_sky_blue": false,
+        "series": [
+          {
+            "canvas": 0,
+            "dataset": 0,
+            "label": "YoY growth",
+            "colors": [
+              "#00175A",
+              "#00175A"
+            ]
+          }
+        ]
+      },
+      "tick_count": 11,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 25,
+      "layout": "data_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 26,
+      "layout": "data_table",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 27,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {},
+      "tick_count": 36,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 36,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 28,
+      "layout": "dual_chart",
+      "ok": true,
+      "furniture": [
+        {
+          "selector": "[data-annotation-id]",
+          "expected_text": "92% FDIC",
+          "count": 1,
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "extensions": {
+        "palette": {
+          "ok": true,
+          "colors": [
+            "#00175A",
+            "#006FCF",
+            "#63666A",
+            "#80C8FF"
+          ],
+          "has_sky_blue": true,
+          "require_sky_blue": true,
+          "series": [
+            {
+              "canvas": 0,
+              "dataset": 0,
+              "label": "Deposits",
+              "colors": [
+                "#00175A",
+                "#00175A"
+              ]
+            },
+            {
+              "canvas": 0,
+              "dataset": 1,
+              "label": "Unsecured Funding**",
+              "colors": [
+                "#006FCF",
+                "#006FCF"
+              ]
+            },
+            {
+              "canvas": 0,
+              "dataset": 2,
+              "label": "Short-term Funding / Card ABS*",
+              "colors": [
+                "#80C8FF",
+                "#80C8FF"
+              ]
+            },
+            {
+              "canvas": 1,
+              "dataset": 0,
+              "label": "Savings and Direct CDs",
+              "colors": [
+                "#00175A",
+                "#00175A"
+              ]
+            },
+            {
+              "canvas": 1,
+              "dataset": 1,
+              "label": "Third Party CDs",
+              "colors": [
+                "#006FCF",
+                "#006FCF"
+              ]
+            },
+            {
+              "canvas": 1,
+              "dataset": 2,
+              "label": "Third Party Sweep",
+              "colors": [
+                "#80C8FF",
+                "#80C8FF"
+              ]
+            },
+            {
+              "canvas": 1,
+              "dataset": 3,
+              "label": "Checking",
+              "colors": [
+                "#63666A",
+                "#63666A"
+              ]
+            }
+          ]
+        },
+        "bar_occupancy": {
+          "ok": true,
+          "charts": [
+            {
+              "canvas": 0,
+              "n_cat": 2,
+              "category_pitch": 342,
+              "bar_width": 188.10000000000002,
+              "ratio": 0.55,
+              "bar_count": 6
+            },
+            {
+              "canvas": 1,
+              "n_cat": 2,
+              "category_pitch": 342,
+              "bar_width": 188.10000000000002,
+              "ratio": 0.55,
+              "bar_count": 8
+            }
+          ],
+          "min_ratio": 0.5,
+          "min_observed_ratio": null
+        }
+      },
+      "palette": {
+        "ok": true,
+        "colors": [
+          "#00175A",
+          "#006FCF",
+          "#63666A",
+          "#80C8FF"
+        ],
+        "has_sky_blue": true,
+        "require_sky_blue": true,
+        "series": [
+          {
+            "canvas": 0,
+            "dataset": 0,
+            "label": "Deposits",
+            "colors": [
+              "#00175A",
+              "#00175A"
+            ]
+          },
+          {
+            "canvas": 0,
+            "dataset": 1,
+            "label": "Unsecured Funding**",
+            "colors": [
+              "#006FCF",
+              "#006FCF"
+            ]
+          },
+          {
+            "canvas": 0,
+            "dataset": 2,
+            "label": "Short-term Funding / Card ABS*",
+            "colors": [
+              "#80C8FF",
+              "#80C8FF"
+            ]
+          },
+          {
+            "canvas": 1,
+            "dataset": 0,
+            "label": "Savings and Direct CDs",
+            "colors": [
+              "#00175A",
+              "#00175A"
+            ]
+          },
+          {
+            "canvas": 1,
+            "dataset": 1,
+            "label": "Third Party CDs",
+            "colors": [
+              "#006FCF",
+              "#006FCF"
+            ]
+          },
+          {
+            "canvas": 1,
+            "dataset": 2,
+            "label": "Third Party Sweep",
+            "colors": [
+              "#80C8FF",
+              "#80C8FF"
+            ]
+          },
+          {
+            "canvas": 1,
+            "dataset": 3,
+            "label": "Checking",
+            "colors": [
+              "#63666A",
+              "#63666A"
+            ]
+          }
+        ]
+      },
+      "bar_occupancy": {
+        "ok": true,
+        "charts": [
+          {
+            "canvas": 0,
+            "n_cat": 2,
+            "category_pitch": 342,
+            "bar_width": 188.10000000000002,
+            "ratio": 0.55,
+            "bar_count": 6
+          },
+          {
+            "canvas": 1,
+            "n_cat": 2,
+            "category_pitch": 342,
+            "bar_width": 188.10000000000002,
+            "ratio": 0.55,
+            "bar_count": 8
+          }
+        ],
+        "min_ratio": 0.5,
+        "min_observed_ratio": null
+      },
+      "tick_count": 16,
+      "min_font_size_px": 20.0,
+      "min_font_weight": 600,
+      "ticks": {
+        "count": 16,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      }
+    },
+    {
+      "slide_number": 29,
+      "layout": "narrative",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 30,
+      "layout": "narrative",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 31,
+      "layout": "annex_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.4493927125506073,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1729,
+              "stub_width_px": 777,
+              "share": 0.4493927125506073
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.4493927125506073,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1729,
+            "stub_width_px": 777,
+            "share": 0.4493927125506073
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 32,
+      "layout": "grouped_annex_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.4490035169988277,
+          "max_share": 0.45,
+          "table_count": 2,
+          "tables": [
+            {
+              "table_width_px": 853,
+              "stub_width_px": 383,
+              "share": 0.4490035169988277
+            },
+            {
+              "table_width_px": 853,
+              "stub_width_px": 383,
+              "share": 0.4490035169988277
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.4490035169988277,
+        "max_share": 0.45,
+        "table_count": 2,
+        "tables": [
+          {
+            "table_width_px": 853,
+            "stub_width_px": 383,
+            "share": 0.4490035169988277
+          },
+          {
+            "table_width_px": 853,
+            "stub_width_px": 383,
+            "share": 0.4490035169988277
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 33,
+      "layout": "annex_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.4493927125506073,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1729,
+              "stub_width_px": 777,
+              "share": 0.4493927125506073
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.4493927125506073,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1729,
+            "stub_width_px": 777,
+            "share": 0.4493927125506073
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 34,
+      "layout": "annex_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.4493927125506073,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1729,
+              "stub_width_px": 777,
+              "share": 0.4493927125506073
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.4493927125506073,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1729,
+            "stub_width_px": 777,
+            "share": 0.4493927125506073
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 35,
+      "layout": "annex_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.3435511856564488,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1729,
+              "stub_width_px": 594,
+              "share": 0.3435511856564488
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.3435511856564488,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1729,
+            "stub_width_px": 594,
+            "share": 0.3435511856564488
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 36,
+      "layout": "annex_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.4493927125506073,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1729,
+              "stub_width_px": 777,
+              "share": 0.4493927125506073
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.4493927125506073,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1729,
+            "stub_width_px": 777,
+            "share": 0.4493927125506073
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 37,
+      "layout": "annex_table",
+      "ok": true,
+      "furniture": [],
+      "errors": [],
+      "extensions": {
+        "stub_ratio": {
+          "ok": true,
+          "max_stub_share": 0.4493927125506073,
+          "max_share": 0.45,
+          "table_count": 1,
+          "tables": [
+            {
+              "table_width_px": 1729,
+              "stub_width_px": 777,
+              "share": 0.4493927125506073
+            }
+          ]
+        }
+      },
+      "stub_ratio": {
+        "ok": true,
+        "max_stub_share": 0.4493927125506073,
+        "max_share": 0.45,
+        "table_count": 1,
+        "tables": [
+          {
+            "table_width_px": 1729,
+            "stub_width_px": 777,
+            "share": 0.4493927125506073
+          }
+        ]
+      },
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "ticks": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 38,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 39,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 40,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 41,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 42,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 43,
+      "layout": "legal_notice",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    },
+    {
+      "slide_number": 44,
+      "layout": "closing_cover",
+      "ok": true,
+      "ticks": null,
+      "furniture": [],
+      "tick_count": null,
+      "min_font_size_px": null,
+      "min_font_weight": null,
+      "non_chart": true
+    }
+  ]
+}
