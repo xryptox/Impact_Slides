@@ -1,7 +1,8 @@
-"""#229 — restore s17/s18 $B formats, CAGR rule, YoY boxes, driver rows.
+"""#229/#258 — s17/s18 $B furniture plus s17 dated pane headings.
 
 Pins the live D314 corpus (not renderer defaults):
 - s17 Net Card Fees uses usd_1; labels read $0.9…$2.8; CAGR rule paints; Qualification disclosure
+- s17 pane headings are the dated PDF strings; slide subtitle paints once; pane_title hides 1-series legends
 - s18 NII uses usd_1; labels read $4.2…; five boxed YoY labels; PDF driver rows
 - renderer does not invent the furniture
 - strict render of the canonical corpus stays clean
@@ -45,6 +46,21 @@ S18_ROWS = [
     ("volume", "Volume", "7", "Total Balances"),
     ("margin", "Margin", "5", "Net Interest Income / Average Total Balances"),
 ]
+S17_TITLE = "Net Card Fees"
+S17_LEFT = "Net Card Fees (Q1: 2019-2026)"
+S17_RIGHT = "Net Card Fees YoY% (Q1'24-Q1'26)"
+S17_SUB = (
+    "$ in billions - % Increase/(decrease) vs. Prior year & CAGR (FX-adjusted)"
+)
+SIBLING_DUAL = {
+    6: (
+        "Spend Growth is Accelerating",
+        "Retention Rates Remain High and Very Stable",
+    ),
+    14: ("30+ Days Past Due", "Net Write-Off Rates"),
+    27: ("U.S. Unemployment Rate %", "U.S. GDP Growth* %"),
+    28: ("Funding Mix", "Deposit Programs"),
+}
 
 
 def _load() -> dict:
@@ -72,7 +88,11 @@ def test_corpus_payloads_carry_s17_s18_furniture() -> None:
     handoff = _load()
 
     s17 = _slide(handoff, 17)
+    assert s17["title"] == S17_TITLE
+    assert s17["content"]["subtitle"] == S17_SUB
     ncf = s17["payload"]["charts"][0]
+    assert ncf["heading"] == S17_LEFT
+    assert ncf["display"]["series_identity"] == "pane_title"
     assert ncf["value_axes"]["primary"]["format_id"] == "usd_1"
     cats = [c["category_id"] for c in ncf["chart_data"]["categories"]]
     assert cats == S17_CATS
@@ -86,8 +106,16 @@ def test_corpus_payloads_carry_s17_s18_furniture() -> None:
     assert meas[0]["value"] == "17"
     assert meas[0]["format_id"] == "pct_0"
     fx = s17["payload"]["charts"][1]
+    assert fx["heading"] == S17_RIGHT
+    assert fx["display"]["series_identity"] == "pane_title"
     assert fx["value_axes"]["primary"]["format_id"] == "pct_0"
     assert "measurements" not in fx
+    for sn, (left, right) in SIBLING_DUAL.items():
+        sib = _slide(handoff, sn)
+        assert sib["payload"]["charts"][0]["heading"] == left
+        assert sib["payload"]["charts"][1]["heading"] == right
+        assert sib["payload"]["charts"][0]["display"]["series_identity"] != "pane_title"
+        assert sib["payload"]["charts"][1]["display"]["series_identity"] != "pane_title"
     disc = s17["disclosure"]["sections"][0]
     assert disc["surface_id"] == "s17-disc"
     assert disc["title"] == "Qualification"
@@ -134,6 +162,18 @@ def test_strict_render_shows_s17_s18_furniture(tmp_path: Path) -> None:
     html = (out / "presentation.html").read_text(encoding="utf-8")
 
     s17 = unescape(_section(html, 17)).replace("<wbr>", "")
+    assert f"<h1" in s17 and S17_TITLE in s17
+    assert s17.count(S17_TITLE) >= 1
+    assert f'class="subtitle"' in s17 and S17_SUB in s17
+    assert s17.count(S17_SUB) == 1
+    bands = re.findall(
+        r'class="band-title chart-pane-title"[^>]*>\s*<span>([^<]*)</span>',
+        s17,
+    )
+    assert bands == [S17_LEFT, S17_RIGHT]
+    assert "chart-legend" not in s17
+    assert "legend-item" not in s17
+    assert 'data-placement="endpoint"' not in s17
     for token in S17_LABELS:
         assert token in s17
     assert 'data-measurement-id="' in s17
@@ -158,6 +198,34 @@ def test_strict_render_shows_s17_s18_furniture(tmp_path: Path) -> None:
         assert f"{value}%" in s18
         if detail:
             assert detail in s18
+
+
+def test_mutation_reverting_s17_headings_restores_one_series_legends(
+    tmp_path: Path,
+) -> None:
+    """Renderer does not invent dated pane titles or hide 1-series legends."""
+    handoff = _load()
+    s17 = _slide(handoff, 17)
+    s17.pop("content", None)
+    left, right = s17["payload"]["charts"]
+    left["heading"] = S17_TITLE
+    left["display"]["series_identity"] = "auto"
+    right["heading"] = "FX-adjusted YoY"
+    right["display"]["series_identity"] = "auto"
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    html = unescape(_section((out / "presentation.html").read_text(encoding="utf-8"), 17))
+    bands = re.findall(
+        r'class="band-title chart-pane-title"[^>]*>\s*<span>([^<]*)</span>',
+        html,
+    )
+    assert bands == [S17_TITLE, "FX-adjusted YoY"]
+    assert S17_SUB not in html
+    assert html.count("chart-legend") == 1
+    assert ">Net Card Fees</span>" in html
+    assert 'data-placement="endpoint">FX-adjusted YoY</text>' in html
 
 
 def test_mutation_dropping_s17_cagr_omits_rule(tmp_path: Path) -> None:
