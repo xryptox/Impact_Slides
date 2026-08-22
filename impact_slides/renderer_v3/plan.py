@@ -108,6 +108,10 @@ ANNEX_TABLE_CEIL: Final = 24
 METRIC_STRIP_FLOOR: Final = 14  # D265 support labels
 METRIC_STRIP_CEIL: Final = 24
 METRIC_STRIP_VALUE_PX: Final = 44  # DP-1 calibration; painted floor >= 40 (#248)
+# Hero / metric_overview KPI type (s12/s18/s21/s22). Strip stays 44.
+HERO_HEADING_PX: Final = 32
+HERO_BODY_PX: Final = 22
+HERO_VALUE_PX: Final = 72
 METRIC_STRIP_GAP: Final = 16
 METRIC_STRIP_PAD_Y: Final = 16
 METRIC_STRIP_PAD_X: Final = 16
@@ -2017,9 +2021,9 @@ def _collect_composite_body(
                 slot_order=11,
                 design_stage_region=region,
                 role_sizes={
-                    "heading": 22,
-                    "body": 16,
-                    "value": METRIC_STRIP_VALUE_PX,
+                    "heading": HERO_HEADING_PX,
+                    "body": HERO_BODY_PX,
+                    "value": HERO_VALUE_PX,
                 },
                 _table_spec={
                     "kind": "hero_card",
@@ -2113,9 +2117,9 @@ _text_items=hero_items or [(" ", False)],
             slot_order=10,
             design_stage_region=region,
             role_sizes={
-                "heading": 22,
+                "heading": HERO_HEADING_PX,
                 "body": BODY_FLOOR,
-                "value": METRIC_STRIP_VALUE_PX,
+                "value": HERO_VALUE_PX,
             },
             _text_items=items,
                         _table_spec={
@@ -2170,9 +2174,9 @@ def _hero_fit_height(sp: SurfacePlan) -> int:
     subtitle margin 12, ul gap 12, li gap 4, fixed KPI value row (D153)."""
     assert sp._table_spec is not None
     spec = sp._table_spec
-    heading_px = sp.role_sizes.get("heading", 22)
-    body_px = sp.role_sizes.get("body", 16)
-    value_px = sp.role_sizes.get("value", METRIC_STRIP_VALUE_PX)
+    heading_px = sp.role_sizes.get("heading", HERO_HEADING_PX)
+    body_px = sp.role_sizes.get("body", HERO_BODY_PX)
+    value_px = sp.role_sizes.get("value", HERO_VALUE_PX)
     inner_w = max(40, sp._box_w - 32)
     h = 34
     if spec.get("heading"):
@@ -2207,8 +2211,8 @@ def _metric_overview_fit_height(sp: SurfacePlan, size: int) -> int:
     columns with 16px gaps, li column gap 4, fixed KPI value row (D189/D190)."""
     assert sp._table_spec is not None
     spec = sp._table_spec
-    heading_px = sp.role_sizes.get("heading", 22)
-    value_px = sp.role_sizes.get("value", METRIC_STRIP_VALUE_PX)
+    heading_px = sp.role_sizes.get("heading", HERO_HEADING_PX)
+    value_px = sp.role_sizes.get("value", HERO_VALUE_PX)
     w = sp._box_w
     h = (
         len(_wrap_label_lines(spec.get("heading") or "", heading_px, w))
@@ -5072,12 +5076,12 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
         sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
     elif sp.role == "metric_overview":
         sp.role_sizes["body"] = size
-        sp.role_sizes.setdefault("heading", 22)
-        sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
+        sp.role_sizes.setdefault("heading", HERO_HEADING_PX)
+        sp.role_sizes.setdefault("value", HERO_VALUE_PX)
     elif sp.role == "hero_card":
-        sp.role_sizes.setdefault("heading", 22)
-        sp.role_sizes.setdefault("body", 16)
-        sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
+        sp.role_sizes.setdefault("heading", HERO_HEADING_PX)
+        sp.role_sizes.setdefault("body", HERO_BODY_PX)
+        sp.role_sizes.setdefault("value", HERO_VALUE_PX)
     elif sp.role == "outlined_support":
         sp.role_sizes["table"] = size
         sp.role_sizes["label"] = size

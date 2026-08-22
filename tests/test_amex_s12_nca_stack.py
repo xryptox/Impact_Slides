@@ -16,7 +16,13 @@ from pathlib import Path
 
 from impact_slides.renderer_v3 import render_deck, validate_handoff
 from impact_slides.renderer_v3.charts import _chartjs_bar_config
-from impact_slides.renderer_v3.plan import plan_deck
+from impact_slides.renderer_v3.plan import (
+    HERO_BODY_PX,
+    HERO_HEADING_PX,
+    HERO_VALUE_PX,
+    METRIC_STRIP_VALUE_PX,
+    plan_deck,
+)
 
 FIXTURE = (
     Path(__file__).resolve().parent
@@ -101,6 +107,13 @@ def test_strict_render_s12_dataset_count_is_three(tmp_path: Path) -> None:
     datasets = _s12_datasets(_load())
     assert len(datasets) == 3
     assert all(ds.get("stack") == "stack" for ds in datasets)
+
+    deck = validate_handoff(_load(), strict=True).deck
+    hero = plan_deck(deck, strict=True).by_surface_id()["s12-hero"]
+    assert hero.role_sizes["heading"] == HERO_HEADING_PX == 32
+    assert hero.role_sizes["body"] == HERO_BODY_PX == 22
+    assert hero.role_sizes["value"] == HERO_VALUE_PX == 72
+    assert HERO_VALUE_PX > METRIC_STRIP_VALUE_PX
 
 
 def test_mutation_collapsing_s12_stack_drops_dataset_count(tmp_path: Path) -> None:
