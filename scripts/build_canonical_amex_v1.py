@@ -9,7 +9,8 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows;
 #258: s17 dated pane headings + slide subtitle + pane_title identity;
 #230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals;
-#248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%).
+#248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%;
+#260: s12/s15/s21 display.stack_segments show).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
 from __future__ import annotations
@@ -323,7 +324,7 @@ def _s21_combo(labs: list, bar_series: list, shares: list, totals: list) -> dict
                 },
             },
         },
-        "display": {"series_identity": "legend"},
+        "display": {"series_identity": "legend", "stack_segments": "show"},
         "auxiliary_series": [
             {
                 "auxiliary_id": "s21-cap-totals",
@@ -1196,6 +1197,7 @@ def build() -> dict:
             totals=["3.4", "3.1", "3.2", "2.9", "3.1"],
         )
     chart12["subtitle"] = "in millions"
+    chart12["display"]["stack_segments"] = "show"
     slides.append(
         ordinary(
             12,
@@ -1355,6 +1357,7 @@ def build() -> dict:
             fmt="usd_0",
             totals=["1150", "1405", "1287", "1414", "1251"],
         )
+    chart15["display"]["stack_segments"] = "show"
     sec15 = s15["visual_spec"].get("secondary_visual") or {}
     support15 = outlined_from_v2(
         "s15-reserve", sec15["steps_or_data"], fmt="pct_1"

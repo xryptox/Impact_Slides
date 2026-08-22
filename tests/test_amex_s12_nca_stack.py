@@ -1,10 +1,11 @@
-"""#228 — restore s12 three-band NCA stack (UCS / Commercial / ICS).
+"""#228/#260 — restore s12 three-band NCA stack (UCS / Commercial / ICS).
 
 Pins the live D314 corpus (not renderer defaults):
 - s12 left chart is stacked_bar with 3 series totaling ~3.x
+- display.stack_segments == show paints Q1'25 1.5 / 0.8 / 1.1 plus totals
 - pane headings stay Proprietary New Cards / New Accounts
 - Chart.js dataset count = 3
-- renderer does not invent the third band
+- renderer does not invent the third band or segment labels
 - strict render of the canonical corpus stays clean
 """
 
@@ -86,6 +87,8 @@ def test_corpus_payload_is_three_band_nca_stack() -> None:
     for i, expected in enumerate(TOTALS):
         total = sum(float(s["values"][i]) for s in series)
         assert abs(total - expected) < 1e-9
+    assert chart["display"]["series_identity"] == "legend"
+    assert chart["display"]["stack_segments"] == "show"
 
 
 def test_strict_render_s12_dataset_count_is_three(tmp_path: Path) -> None:
@@ -107,6 +110,10 @@ def test_strict_render_s12_dataset_count_is_three(tmp_path: Path) -> None:
     datasets = _s12_datasets(_load())
     assert len(datasets) == 3
     assert all(ds.get("stack") == "stack" for ds in datasets)
+    segs = re.findall(r'data-kind="segment">([^<]*)</text>', s12)
+    assert segs[:3] == ["1.5", "0.8", "1.1"]
+    tots = re.findall(r'data-kind="stack_total">([^<]*)</text>', s12)
+    assert tots[:5] == ["3.4", "3.1", "3.2", "2.9", "3.1"]
 
     deck = validate_handoff(_load(), strict=True).deck
     hero = plan_deck(deck, strict=True).by_surface_id()["s12-hero"]
@@ -123,6 +130,7 @@ def test_mutation_collapsing_s12_stack_drops_dataset_count(tmp_path: Path) -> No
     chart["chart_type"] = "grouped_bar"
     chart["chart_data"]["series"] = [chart["chart_data"]["series"][0]]
     chart.pop("auxiliary_series", None)
+    chart.get("display", {}).pop("stack_segments", None)
     src = tmp_path / "h.json"
     src.write_text(json.dumps(handoff), encoding="utf-8")
     out = tmp_path / "out"
@@ -131,3 +139,19 @@ def test_mutation_collapsing_s12_stack_drops_dataset_count(tmp_path: Path) -> No
     assert "Commercial Services" not in s12
     assert "International Card Services" not in s12
     assert len(_s12_datasets(handoff)) == 1
+
+
+def test_mutation_dropping_s12_stack_segments_omits_segment_labels(
+    tmp_path: Path,
+) -> None:
+    """Renderer does not invent on-stack segment labels; corpus must opt in."""
+    handoff = _load()
+    _slide(handoff, 12)["payload"]["chart"]["display"].pop("stack_segments", None)
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    s12 = _section((out / "presentation.html").read_text(encoding="utf-8"), 12)
+    assert 'data-kind="segment"' not in s12
+    tots = re.findall(r'data-kind="stack_total">([^<]*)</text>', s12)
+    assert tots[:5] == ["3.4", "3.1", "3.2", "2.9", "3.1"]
