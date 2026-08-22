@@ -1285,7 +1285,8 @@
                   "category_id": "q3-25"
                 }
               }
-            ]
+            ],
+            "subtitle": "% Increase/(decrease) vs. Prior year"
           },
           {
             "type": "chart",
@@ -1330,7 +1331,8 @@
               ]
             },
             "category_axis": {
-              "visible": true
+              "visible": true,
+              "title": "Anniversary Month"
             },
             "value_axes": {
               "primary": {
@@ -1350,7 +1352,8 @@
                 },
                 "leading_break": {
                   "to": "90"
-                }
+                },
+                "title": "Account Retention Rate for Card Members in Renewal Anniversary Month"
               }
             },
             "display": {

@@ -10,6 +10,7 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #258: s17 dated pane headings + slide subtitle + pane_title identity;
 #230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals;
 #248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%;
+#259: s6 left pane subtitle + right-pane Anniversary Month / retention axis titles;
 #260: s12/s15/s21 display.stack_segments show;
 #255: s4/s19 series swap + s19 fixed 0–15; PDF ticks; s8 FHR step; s5/s9/s10/s11 Leap Year + s5/s9/s10 G&S/T&E facts; s38 preamble).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
@@ -944,6 +945,23 @@ def build() -> dict:
         domain=("0", "12"),
     )
     spend6["annotations"] = spend_elbow_ann() + [refresh_chip_ann()]
+    spend6["subtitle"] = "% Increase/(decrease) vs. Prior year"
+    ret6 = hbar(
+        "s6-ret",
+        ["January", "February", "March"],
+        [
+            ("2025", [94, 95, 95], "primary_blue"),
+            ("2026", [96, 97, 97], "navy"),
+        ],
+        heading="Retention Rates Remain High and Very Stable",
+        fmt="pct_0",
+        leading_break="90",
+        domain=("90", "100"),
+    )
+    ret6["category_axis"]["title"] = "Anniversary Month"
+    ret6["value_axes"]["primary"]["title"] = (
+        "Account Retention Rate for Card Members in Renewal Anniversary Month"
+    )
     slides.append(
         ordinary(
             6,
@@ -953,18 +971,7 @@ def build() -> dict:
             {
                 "charts": [
                     spend6,
-                    hbar(
-                        "s6-ret",
-                        ["January", "February", "March"],
-                        [
-                            ("2025", [94, 95, 95], "primary_blue"),
-                            ("2026", [96, 97, 97], "navy"),
-                        ],
-                        heading="Retention Rates Remain High and Very Stable",
-                        fmt="pct_0",
-                        leading_break="90",
-                        domain=("90", "100"),
-                    ),
+                    ret6,
                 ]
             },
             disclosure=disclosure_from_text(
