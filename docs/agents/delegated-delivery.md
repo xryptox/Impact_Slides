@@ -21,7 +21,7 @@ Expected roles:
 - `general-purpose` subagent in `~/.pi/agent/agents/general-purpose.md` — read-only Grok Latest worker for ad-hoc reviews; no longer required by the implement flow since 2026-08-15 (no-mistakes is the sole verification gate)
 - `merger` — cheap-model, approval-gated merge of one exact PR head; `bash` only with all skills/extensions disabled
 
-The current `dev` alias and general-purpose Standards/Spec subagent use `supergrok/grok-4.5` with high thinking. `review` remains the independent Kimi model and `cheap` remains reserved for merging. Terra is not used by the active delegated-delivery pipeline.
+The current `dev` alias and general-purpose Standards/Spec subagent use `supergrok/grok-4.6` with high thinking. `review` remains the independent Kimi model and `cheap` remains reserved for merging. Terra is not used by the active delegated-delivery pipeline.
 
 ## Why Herdr wraps implementation
 
