@@ -20,7 +20,8 @@ Plus DP-6 design-ledger probes (#233):
 Plus DP-6 extensions (#249):
 12. stub column share above 45% of table width
 13. support header cells missing band background or hairline borders
-    (incl. fully transparent computed fills reported as rgba(0,0,0,0))
+    (incl. fully transparent computed fills reported as rgba(0,0,0,0));
+    hide_header slides pass on hairline body cells and fail without them
 14. forbidden #0A7D55 among non-semantic series colors / missing authored sky_blue
 15. metric-strip value font-size below 40px
 16. bar occupancy (bar width / category pitch) below 0.5
@@ -205,18 +206,44 @@ _FIXTURE_HTML = f"""<!DOCTYPE html>
       background:#1B3A6B;color:#fff;border:1px solid #1B3A6B;box-sizing:border-box">G&S</div>
     <div class="support-cat-stub head" style="position:absolute;left:0;top:0;width:36px;height:24px;
       background:#1B3A6B;color:#fff;border:1px solid #1B3A6B;box-sizing:border-box">%</div>
+    <div class="support-cat-cell" style="position:absolute;left:40px;top:24px;width:80px;height:24px;
+      background:#ffffff;color:#000;border:1px solid #1B3A6B;box-sizing:border-box">7%</div>
   </div>
 </section>
 <section class="slide" data-slide-number="53" data-layout="chrome_plain">
   <div class="support-table category-aligned" style="position:relative;height:60px;width:400px">
     <div class="support-cat-cell head" style="position:absolute;left:40px;top:0;width:80px;height:24px;
       background:#ffffff;color:#000;border:0;box-sizing:border-box">G&S</div>
+    <div class="support-cat-cell" style="position:absolute;left:40px;top:24px;width:80px;height:24px;
+      background:#ffffff;color:#000;border:1px solid #1B3A6B;box-sizing:border-box">7%</div>
   </div>
 </section>
 <section class="slide" data-slide-number="61" data-layout="chrome_transparent">
   <div class="support-table category-aligned" style="position:relative;height:60px;width:400px">
     <div class="support-cat-cell head" style="position:absolute;left:40px;top:0;width:80px;height:24px;
       background:transparent;color:#000;border:1px solid #1B3A6B;box-sizing:border-box">G&S</div>
+    <div class="support-cat-cell" style="position:absolute;left:40px;top:24px;width:80px;height:24px;
+      background:#ffffff;color:#000;border:1px solid #1B3A6B;box-sizing:border-box">7%</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="62" data-layout="chrome_hide_header">
+  <div class="support-table category-aligned" style="position:relative;height:40px;width:400px">
+    <p class="support-cat-stub" style="position:absolute;left:0;top:0;width:36px;height:24px;margin:0;
+      background:#ffffff;color:#000;border:1px solid #1B3A6B;box-sizing:border-box">G&S</p>
+    <div class="support-cat-cell" style="position:absolute;left:40px;top:0;width:80px;height:24px;
+      background:#ffffff;color:#000;border:1px solid #1B3A6B;box-sizing:border-box">7%</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="63" data-layout="chrome_hide_no_hairline">
+  <div class="support-table category-aligned" style="position:relative;height:40px;width:400px">
+    <div class="support-cat-cell" style="position:absolute;left:40px;top:0;width:80px;height:24px;
+      background:#ffffff;color:#000;border:0;box-sizing:border-box">7%</div>
+  </div>
+</section>
+<section class="slide" data-slide-number="64" data-layout="chrome_no_body">
+  <div class="support-table category-aligned" style="position:relative;height:40px;width:400px">
+    <div class="support-cat-cell head" style="position:absolute;left:40px;top:0;width:80px;height:24px;
+      background:#1B3A6B;color:#fff;border:1px solid #1B3A6B;box-sizing:border-box">G&S</div>
   </div>
 </section>
 <section class="slide" data-slide-number="54" data-layout="palette_ok">
@@ -675,8 +702,11 @@ def test_measured_stub_ratio_rejects_wide_stub(page):
 def test_measured_support_chrome_happy(page):
     row = measured_support_chrome(page, 52, "chrome_ok")
     assert row["head_count"] >= 1
+    assert row["body_count"] >= 1
     assert row["ok"] is True
     assert row["heads"][0]["border_top_px"] >= 1.0
+    assert row["bodies"][0]["border_top_px"] >= 1.0
+    assert row["hide_header"] is False
 
 
 def test_measured_support_chrome_rejects_plain_header(page):
@@ -689,6 +719,28 @@ def test_measured_support_chrome_rejects_transparent_band(page):
     """Mutation 13b: transparent fill must not pass as a painted band."""
     with pytest.raises(ProbeError, match=r"band background"):
         measured_support_chrome(page, 61, "chrome_transparent")
+
+
+def test_measured_support_chrome_accepts_hide_header_hairline_body(page):
+    """#256: omitting .head on a hide_header slide must pass."""
+    row = measured_support_chrome(page, 62, "chrome_hide_header")
+    assert row["ok"] is True
+    assert row["hide_header"] is True
+    assert row["head_count"] == 0
+    assert row["body_count"] >= 1
+    assert row["bodies"][0]["border_top_px"] >= 1.0
+
+
+def test_measured_support_chrome_rejects_hide_header_without_hairline(page):
+    """#256: stripping hairline CSS from body cells must fail."""
+    with pytest.raises(ProbeError, match=r"hairline|border"):
+        measured_support_chrome(page, 63, "chrome_hide_no_hairline")
+
+
+def test_measured_support_chrome_rejects_missing_body_frame(page):
+    """#256: a missing body frame still fails even when .head paints."""
+    with pytest.raises(ProbeError, match=r"body|0 visible"):
+        measured_support_chrome(page, 64, "chrome_no_body")
 
 
 def test_measured_series_palette_happy(page):

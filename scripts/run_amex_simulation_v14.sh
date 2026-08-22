@@ -161,7 +161,8 @@ helpers from simulation_probe.py; zero matches / ProbeError = failure):
 - measured_stub_ratio on DESIGN_LEDGER_STUB_RATIO_SLIDES (s3/s16/s31-37;
   stub share <= 0.45) — validates #246 stub-slack cap
 - measured_support_chrome on DESIGN_LEDGER_SUPPORT_CHROME_SLIDES (s4/s19;
-  computed band background + hairline borders) — validates #247 chrome
+  hide_header + hairline body cells; missing body frame fails; painted
+  .head still asserts navy band + hairlines) — validates #247/#256 chrome
 - measured_series_palette on DESIGN_LEDGER_PALETTE_SLIDES (s24/s28; no
   #0A7D55 series fill; require_sky_blue per map) — validates #248 palette
 - measured_metric_value_styles on DESIGN_LEDGER_METRIC_FLOOR_SLIDES (s8/s12;
@@ -205,8 +206,8 @@ current render resolves it, preserves it, or replaces it with a different
 divergence, citing the v14 SBS and design-ledger evidence. Explicitly cover:
 - the #246 surfaces: stub share on s3/s16/s31-37 support tables and bar
   occupancy on s28;
-- the #247 surfaces: computed navy band + hairline chrome on the s4/s19
-  category-aligned support tables;
+- the #247/#256 surfaces: hide_header + hairline body chrome on the s4/s19
+  category-aligned support tables (no required navy period .head band);
 - the #248 surfaces: sky-blue series activation and green-cycle removal on
   s24/s28, the s8/s12 KPI metric floor, and line/point label contrast on
   white;

@@ -133,6 +133,8 @@ SKY_BLUE_HEX = "#80C8FF"
 DESIGN_LEDGER_STUB_RATIO_SLIDES: tuple[int, ...] = (
     3, 16, 31, 32, 33, 34, 35, 36, 37,
 )
+# s4/s19: D167 hide_header + hairline body cells. Missing body frame fails;
+# navy .head band is only required when a visual header row is painted.
 DESIGN_LEDGER_SUPPORT_CHROME_SLIDES: tuple[int, ...] = (4, 19)
 # s28 authors sky_blue stacks; s24 is a single navy series (no sky required).
 DESIGN_LEDGER_PALETTE_SLIDES: dict[int, dict[str, bool]] = {
@@ -911,10 +913,13 @@ def measured_support_chrome(
     slide_number: int,
     expected_layout: str,
 ) -> dict[str, Any]:
-    """Assert visible category-aligned support headers carry band + hairlines.
+    """Assert category-aligned support chrome that actually ships.
 
-    Targets ``.support-table.category-aligned .support-cat-cell.head`` (and
-    matching stubs). Zero visible headers fail. Computed style is authoritative.
+    Visible body cells (``.support-cat-cell`` without ``.head``) must exist
+    and carry a ≥1px hairline. s4/s19 hide the visual header (D167:
+    chart-owned categories) and pass on that body frame alone. When a
+    visual header row *is* painted (``.head``), keep the navy-band +
+    hairline assertion from #250. A missing body frame fails either way.
     """
     identity = activate_slide(page, slide_number, expected_layout)
     sn = identity["slide_number"]
@@ -930,16 +935,6 @@ def measured_support_chrome(
             const r = el.getBoundingClientRect();
             return r.width > 1 && r.height > 1;
           };
-          const heads = [...slide.querySelectorAll(
-            '.support-table.category-aligned .support-cat-cell.head,'
-            + ' .support-table.category-aligned .support-cat-stub.head'
-          )].filter(vis);
-          if (!heads.length) {
-            return {
-              ok: false,
-              err: '0 visible support header cells on slide ' + sn,
-            };
-          }
           const pack = (el) => {
             const s = getComputedStyle(el);
             return {
@@ -950,56 +945,87 @@ def measured_support_chrome(
               borderLeft: s.borderLeftWidth,
             };
           };
-          return {ok: true, heads: heads.map(pack)};
+          const heads = [...slide.querySelectorAll(
+            '.support-table.category-aligned .support-cat-cell.head,'
+            + ' .support-table.category-aligned .support-cat-stub.head'
+          )].filter(vis);
+          const bodies = [...slide.querySelectorAll(
+            '.support-table.category-aligned .support-cat-cell'
+          )].filter((el) => vis(el) && !el.classList.contains('head'));
+          if (!bodies.length) {
+            return {
+              ok: false,
+              err: '0 visible support body cells on slide ' + sn,
+            };
+          }
+          return {ok: true, heads: heads.map(pack), bodies: bodies.map(pack)};
         }""",
         {"sn": sn},
     )
     if not result or not result.get("ok"):
         err = (result or {}).get("err") or "measured_support_chrome failed"
         raise ProbeError(err)
-    heads: list[dict[str, Any]] = []
-    for raw in result["heads"]:
-        bg = _normalize_hex_color(raw.get("bg"))
-        if bg is None:
-            raise ProbeError(
-                f"support header missing band background on slide {sn}: "
-                f"bg={raw.get('bg')!r}"
-            )
-        if bg == "#FFFFFF":
-            raise ProbeError(
-                f"support header missing band background on slide {sn}: "
-                f"bg={raw.get('bg')!r}"
-            )
+
+    def _border_px(v: str) -> float:
+        try:
+            return float(v.replace("px", "").strip() or 0)
+        except ValueError:
+            return 0.0
+
+    def _pack_borders(raw: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
         borders = [
             str(raw.get("borderTop") or ""),
             str(raw.get("borderRight") or ""),
             str(raw.get("borderBottom") or ""),
             str(raw.get("borderLeft") or ""),
         ]
+        packed = {
+            "background": _normalize_hex_color(raw.get("bg")),
+            "border_top_px": _border_px(borders[0]),
+            "border_right_px": _border_px(borders[1]),
+            "border_bottom_px": _border_px(borders[2]),
+            "border_left_px": _border_px(borders[3]),
+        }
+        return borders, packed
 
-        def _border_px(v: str) -> float:
-            try:
-                return float(v.replace("px", "").strip() or 0)
-            except ValueError:
-                return 0.0
+    bodies: list[dict[str, Any]] = []
+    for raw in result["bodies"]:
+        borders, packed = _pack_borders(raw)
+        if not any(packed[k] >= 1.0 for k in (
+            "border_top_px", "border_right_px",
+            "border_bottom_px", "border_left_px",
+        )):
+            raise ProbeError(
+                f"support body missing hairline border on slide {sn}: "
+                f"borders={borders!r}"
+            )
+        bodies.append(packed)
 
-        if not any(_border_px(b) >= 1.0 for b in borders):
+    heads: list[dict[str, Any]] = []
+    for raw in result["heads"]:
+        bg = _normalize_hex_color(raw.get("bg"))
+        if bg is None or bg == "#FFFFFF":
+            raise ProbeError(
+                f"support header missing band background on slide {sn}: "
+                f"bg={raw.get('bg')!r}"
+            )
+        borders, packed = _pack_borders(raw)
+        packed["background"] = bg
+        if not any(packed[k] >= 1.0 for k in (
+            "border_top_px", "border_right_px",
+            "border_bottom_px", "border_left_px",
+        )):
             raise ProbeError(
                 f"support header missing hairline border on slide {sn}: "
                 f"borders={borders!r}"
             )
-        heads.append(
-            {
-                "background": bg,
-                "border_top_px": _border_px(borders[0]),
-                "border_right_px": _border_px(borders[1]),
-                "border_bottom_px": _border_px(borders[2]),
-                "border_left_px": _border_px(borders[3]),
-            }
-        )
+        heads.append(packed)
     out = dict(identity)
     out["heads"] = heads
     out["head_count"] = len(heads)
+    out["bodies"] = bodies
+    out["body_count"] = len(bodies)
+    out["hide_header"] = len(heads) == 0
     out["ok"] = True
     return out
 

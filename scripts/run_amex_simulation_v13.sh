@@ -149,7 +149,8 @@ helpers from simulation_probe.py; zero matches / ProbeError = failure):
 - measured_stub_ratio on DESIGN_LEDGER_STUB_RATIO_SLIDES (s3/s16/s31-37;
   stub share <= 0.45)
 - measured_support_chrome on DESIGN_LEDGER_SUPPORT_CHROME_SLIDES (s4/s19;
-  computed band background + hairline borders)
+  hide_header + hairline body cells; missing body frame fails; painted
+  .head still asserts navy band + hairlines)
 - measured_series_palette on DESIGN_LEDGER_PALETTE_SLIDES (s24/s28; no
   #0A7D55 series fill; require_sky_blue per map)
 - measured_metric_value_styles on DESIGN_LEDGER_METRIC_FLOOR_SLIDES (s8/s12;
