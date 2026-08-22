@@ -1,6 +1,6 @@
 # SPEC: renderer_v3 PDF Design & Data Parity (Amex Q1'26)
 
-**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233); #249 extends the DP-6 design-ledger probes (stub ratio, support chrome, series palette, metric-value floor, bar occupancy). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. The v13 observation sim itself is still unrun.
+**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233); #249 extends the DP-6 design-ledger probes (stub ratio, support chrome, series palette, metric-value floor, bar occupancy). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. #257 repeats the part-1 legal title on every part and raises fixed legal type to 56/21. The v13 observation sim itself is still unrun.
 **Scope:** renderer_v3 (schema-v1, 3.0.0) + canonical D314 corpus, full 44-page Amex Q1'26 deck.
 **Extends, does not replace:** `SPEC_renderer_v3_full_deck_density_and_chart_fidelity.md` (still the binding v3 contract). Brand-seal art stays R3-wontfix.
 
@@ -84,7 +84,7 @@ Percent series with low variance must not auto-collapse: pin `domain.kind=fixed`
 
 - `comparison_cards`: add the circular dual-metric card recipe (or document an accepted divergence with numbers complete).
 - `grouped_annex_table`: header cells must fit full text (no `Q…` ellipsis) — measure `scrollWidth ≤ clientWidth` on both groups.
-- `legal_notice`: preserve payload list hierarchy as painted `<ul>` structure, not a flattened stream. Unmarked-only payloads paint one `<ul>` per paragraph so logical groups keep `--space-sm` spacing (#247 R-D).
+- `legal_notice`: preserve payload list hierarchy as painted `<ul>` structure, not a flattened stream. Unmarked-only payloads paint one `<ul>` per paragraph so logical groups keep `--space-sm` spacing (#247 R-D). Every part of a `notice_id` paints the part-1 authored title (continuations still forbid `title`); never `— continued`. Fixed type is 56/21px — the largest pair that strict-renders Amex s38–43 (#257 R-D remainder).
 
 ### DP-5 Brand art exclusion
 
