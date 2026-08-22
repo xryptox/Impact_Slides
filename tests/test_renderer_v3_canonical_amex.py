@@ -96,6 +96,38 @@ def test_sections_evidence_and_no_operational_notes(handoff: dict) -> None:
         assert s.get("evidence_ids"), s["slide_number"]
 
 
+S38_PREAMBLE = (
+    "This presentation includes forward-looking statements within the meaning of "
+    "the Private Securities Litigation Reform Act of 1995, which are subject to "
+    "risks and uncertainties. The forward-looking statements, which address "
+    "American Express Company's current expectations regarding business and "
+    "financial performance, including management's guidance for 2026, among "
+    "other matters, contain words such as \"believe,\" \"expect,\" \"anticipate,\" "
+    "\"intend,\" \"plan,\" \"aim,\" \"will,\" \"may,\" \"should,\" \"could,\" \"would,\" "
+    "\"likely,\" \"continue\" and similar expressions. Readers are cautioned not "
+    "to place undue reliance on these forward-looking statements, which speak "
+    "only as of the date on which they are made. The company undertakes no "
+    "obligation to update or revise any forward-looking statements. Factors "
+    "that could cause actual results to differ materially from these "
+    "forward-looking statements, include, but are not limited to, the following:"
+)
+
+
+def test_slide38_starts_with_pdf_preamble_then_two_risk_lists(handoff: dict) -> None:
+    s38 = next(s for s in handoff["slides"] if s["slide_number"] == 38)
+    paras = s38["payload"]["paragraphs"]
+    assert len(paras) == 3
+    assert paras[0] == S38_PREAMBLE
+    assert paras[0].startswith("This presentation includes forward-looking")
+    assert not paras[0].lstrip().startswith(("- ", "* ", "• "))
+    assert paras[1].startswith("- the company's ability to achieve its 2026 earnings")
+    assert paras[2].startswith("- the company's ability to achieve its 2026 revenue")
+    s39 = next(s for s in handoff["slides"] if s["slide_number"] == 39)
+    assert all(
+        not p.lstrip().startswith(("- ", "* ", "• ")) for p in s39["payload"]["paragraphs"]
+    )
+
+
 def test_slide6_source_claim_and_slide21_capital_summary(handoff: dict) -> None:
     s6 = next(s for s in handoff["slides"] if s["slide_number"] == 6)
     blob = json.dumps(s6)
@@ -145,7 +177,11 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path, handoff: dict) -> N
     assert s32_vis.count("Q1'26 Reported") >= 2
     assert s32_vis.count("FX-Adj.*") >= 2
     assert "Q\u2026" not in s32_vis and "F\u2026" not in s32_vis
-    from impact_slides.renderer_v3.plan import LEGAL_BODY_PX, LEGAL_TITLE_PX
+    from impact_slides.renderer_v3.plan import (
+        LEGAL_BODY_PX,
+        LEGAL_TITLE_PX,
+        _legal_body_blocks,
+    )
 
     by_n = {s["slide_number"]: s for s in json.loads(FIXTURE.read_text(encoding="utf-8"))["slides"]}
     part1_title = by_n[38]["payload"]["title"]
@@ -158,10 +194,16 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path, handoff: dict) -> N
         assert unescape(heading).replace("<wbr>", "").endswith(part1_title)
         body = chunk.split('legal-body">', 1)[1].split("</div>", 1)[0]
         paras = by_n[n]["payload"]["paragraphs"]
-        assert body.count("<ul") == len(paras)
-        assert body.count("<li") == len(paras)
+        blocks = _legal_body_blocks(paras)
+        assert body.count("<ul") == sum(1 for kind, _ in blocks if kind == "ul")
+        assert body.count("<li") == sum(
+            len(items) for kind, items in blocks if kind == "ul"
+        )
         assert f"font-size:{LEGAL_BODY_PX}px" in body
-        assert "<p" not in body
+        if any(kind == "p" for kind, _ in blocks):
+            assert "<p" in body
+        else:
+            assert "<p" not in body
 
     # SVG-only via public CLI flag path used by publication options.
     from impact_slides.renderer_v3.cli import main as cli_main
@@ -316,8 +358,7 @@ def test_slide11_pins_fixed_percent_domain_and_stays_near_flat(handoff: dict) ->
     assert domain["kind"] == "fixed"
     assert domain["min"] == "0"
     assert domain["max"] == "15"
-    assert domain["ticks"][0] == "0"
-    assert domain["ticks"][-1] == "15"
+    assert domain["ticks"] == ["0", "5", "10", "15"]
     assert s11["payload"]["chart"]["chart_data"]["series"][0]["values"] == [
         "9",
         "9",

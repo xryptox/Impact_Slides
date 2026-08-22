@@ -818,9 +818,9 @@
                 "values": [
                   "6",
                   "7",
-                  "8",
-                  "8",
-                  "9"
+                  "9",
+                  "9",
+                  "10"
                 ],
                 "color": "neutral",
                 "style": {
@@ -834,9 +834,9 @@
                 "values": [
                   "6",
                   "7",
-                  "9",
-                  "9",
-                  "10"
+                  "8",
+                  "8",
+                  "9"
                 ],
                 "color": "navy",
                 "style": {
@@ -859,9 +859,8 @@
                 "max": "15",
                 "ticks": [
                   "0",
-                  "3.75",
-                  "7.5",
-                  "11.25",
+                  "5",
+                  "10",
                   "15"
                 ]
               }
@@ -1047,9 +1046,8 @@
                 "max": "15",
                 "ticks": [
                   "0",
-                  "3.75",
-                  "7.5",
-                  "11.25",
+                  "5",
+                  "10",
                   "15"
                 ]
               }
@@ -1058,7 +1056,35 @@
           "display": {
             "ordinary_values": "show",
             "series_identity": "auto"
-          }
+          },
+          "annotations": [
+            {
+              "annotation_id": "leap-year",
+              "role": "explanation",
+              "text": "Leap Year Approx. (1%)",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ],
+          "context_labels": [
+            {
+              "context_id": "gs-yoy",
+              "label": "G&S",
+              "value": {
+                "type": "text",
+                "text": "9% YoY"
+              }
+            },
+            {
+              "context_id": "te-yoy",
+              "label": "T&E",
+              "value": {
+                "type": "text",
+                "text": "11% YoY"
+              }
+            }
+          ]
         },
         "support": {
           "support_type": "support_table",
@@ -1502,9 +1528,9 @@
                 "name": "FHR+THC",
                 "values": [
                   "40",
-                  "42",
-                  "45",
-                  "48",
+                  "40",
+                  "40",
+                  "50",
                   "50"
                 ],
                 "color": "primary_blue"
@@ -1682,9 +1708,8 @@
                 "max": "15",
                 "ticks": [
                   "0",
-                  "3.75",
-                  "7.5",
-                  "11.25",
+                  "5",
+                  "10",
                   "15"
                 ]
               }
@@ -1693,7 +1718,35 @@
           "display": {
             "ordinary_values": "show",
             "series_identity": "auto"
-          }
+          },
+          "annotations": [
+            {
+              "annotation_id": "leap-year",
+              "role": "explanation",
+              "text": "Leap Year Approx. (1%)",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ],
+          "context_labels": [
+            {
+              "context_id": "gs-yoy",
+              "label": "G&S",
+              "value": {
+                "type": "text",
+                "text": "3% YoY"
+              }
+            },
+            {
+              "context_id": "te-yoy",
+              "label": "T&E",
+              "value": {
+                "type": "text",
+                "text": "6% YoY"
+              }
+            }
+          ]
         },
         "support": {
           "support_type": "support_table",
@@ -1852,9 +1905,10 @@
                 "max": "25",
                 "ticks": [
                   "0",
-                  "6.25",
-                  "12.5",
-                  "18.75",
+                  "5",
+                  "10",
+                  "15",
+                  "20",
                   "25"
                 ]
               }
@@ -1863,7 +1917,35 @@
           "display": {
             "ordinary_values": "show",
             "series_identity": "auto"
-          }
+          },
+          "annotations": [
+            {
+              "annotation_id": "leap-year",
+              "role": "explanation",
+              "text": "Leap Year Approx. (1%)",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ],
+          "context_labels": [
+            {
+              "context_id": "gs-yoy",
+              "label": "G&S",
+              "value": {
+                "type": "text",
+                "text": "14% YoY"
+              }
+            },
+            {
+              "context_id": "te-yoy",
+              "label": "T&E",
+              "value": {
+                "type": "text",
+                "text": "10% YoY"
+              }
+            }
+          ]
         },
         "support": {
           "support_type": "support_table",
@@ -2002,9 +2084,8 @@
                 "max": "15",
                 "ticks": [
                   "0",
-                  "3.75",
-                  "7.5",
-                  "11.25",
+                  "5",
+                  "10",
                   "15"
                 ]
               }
@@ -2013,7 +2094,17 @@
           "display": {
             "ordinary_values": "show",
             "series_identity": "auto"
-          }
+          },
+          "annotations": [
+            {
+              "annotation_id": "leap-year",
+              "role": "explanation",
+              "text": "Leap Year Approx. (1%)",
+              "anchor": {
+                "type": "chart"
+              }
+            }
+          ]
         }
       },
       "evidence_ids": [
@@ -3165,11 +3256,11 @@
                 "series_id": "fx-adjusted",
                 "name": "FX-adjusted",
                 "values": [
-                  "7",
+                  "8",
                   "9",
                   "11",
-                  "10",
-                  "11"
+                  "9",
+                  "10"
                 ],
                 "color": "navy",
                 "style": {
@@ -3181,11 +3272,11 @@
                 "series_id": "reported",
                 "name": "Reported",
                 "values": [
-                  "8",
+                  "7",
                   "9",
                   "11",
-                  "9",
-                  "10"
+                  "10",
+                  "11"
                 ],
                 "color": "neutral",
                 "style": {
@@ -3203,8 +3294,15 @@
               "visible": true,
               "format_id": "pct_0",
               "domain": {
-                "kind": "generated",
-                "target_ticks": 5
+                "kind": "fixed",
+                "min": "0",
+                "max": "15",
+                "ticks": [
+                  "0",
+                  "5",
+                  "10",
+                  "15"
+                ]
               }
             }
           },
@@ -7051,8 +7149,9 @@
         "part": 1,
         "total_parts": 6,
         "paragraphs": [
-          "the company's ability to achieve its 2026 earnings per common share (EPS) guidance and grow EPS in the future, which will depend in part on revenue growth, credit performance, credit reserve and expense levels and the effective tax rate remaining consistent with current expectations and the company's ability to continue investing in growth initiatives (such as its brand, value propositions, coverage, marketing, technology, partnerships and talent), controlling operating expenses, effectively managing risk and executing its share repurchase program, any of which could be impacted by, among other things, the factors identified in the subsequent paragraphs as well as the following: macroeconomic and geopolitical conditions, including a slowdown in U.S. or global economic growth, changes to consumer and business confidence, higher rates of unemployment and wide-scale layoffs, impacts of the Middle East conflict and other international hostilities and deteriorations in global trade, the effects of announced or future tariffs, changes in interest rates, inflation, supply chain issues, energy costs, market volatility, government shutdowns and fiscal and monetary policies; the effects of technology changes and the adoption of artificial intelligence (AI); the impact of any future contingencies, including, but not limited to, legal costs and settlements, the imposition of fines or monetary penalties, increases in Card Member remediation, investment gains or losses, restructurings, impairments and changes in reserves; issues impacting brand perceptions and the company's reputation; changes in the competitive environment and an inability to realize benefits from new and extended sponsorships; impacts related to acquisitions, cobrand relationships and other partners; and the impact of regulation and litigation, which could affect the profitability of the company's business activities, limit the company's ability to pursue business opportunities, require changes to business practices or alter the company's relationships with Card Members, partners and merchants;",
-          "the company's ability to achieve its 2026 revenue growth guidance and grow revenues net of interest expense in the future, which could be impacted by, among other things, the factors identified above and in the subsequent paragraphs, as well as the following: spending volumes not being consistent with expectations, including spending by U.S. consumer and small & mid-sized business Card Members and airline and other travel & entertainment spending volumes, such as due to uncertain business and economic conditions, as well as geopolitical conditions; an inability to address competitive pressures, attract and retain customers, invest in and enhance the company's Membership Model of premium products, differentiated services and partnerships, successfully refresh and introduce card products, grow spending and lending with customers across age cohorts (including Millennial and Gen-Z customers) and commercial segments and implement strategies and business initiatives, including within the premium consumer space, commercial payments and the global network; the impacts of portfolio sales; the effects of regulatory initiatives, including pricing regulation, such as pricing for card acceptance and potential credit card interest rate caps, and network regulation; merchant coverage growing less than expected or the reduction of merchant acceptance or perceptions of coverage; increased surcharging, steering, suppression or other differential acceptance practices with respect to the company's products; merchant discount rates changing from the company's expectations; and changes in foreign currency exchange rates;"
+          "This presentation includes forward-looking statements within the meaning of the Private Securities Litigation Reform Act of 1995, which are subject to risks and uncertainties. The forward-looking statements, which address American Express Company's current expectations regarding business and financial performance, including management's guidance for 2026, among other matters, contain words such as \"believe,\" \"expect,\" \"anticipate,\" \"intend,\" \"plan,\" \"aim,\" \"will,\" \"may,\" \"should,\" \"could,\" \"would,\" \"likely,\" \"continue\" and similar expressions. Readers are cautioned not to place undue reliance on these forward-looking statements, which speak only as of the date on which they are made. The company undertakes no obligation to update or revise any forward-looking statements. Factors that could cause actual results to differ materially from these forward-looking statements, include, but are not limited to, the following:",
+          "- the company's ability to achieve its 2026 earnings per common share (EPS) guidance and grow EPS in the future, which will depend in part on revenue growth, credit performance, credit reserve and expense levels and the effective tax rate remaining consistent with current expectations and the company's ability to continue investing in growth initiatives (such as its brand, value propositions, coverage, marketing, technology, partnerships and talent), controlling operating expenses, effectively managing risk and executing its share repurchase program, any of which could be impacted by, among other things, the factors identified in the subsequent paragraphs as well as the following: macroeconomic and geopolitical conditions, including a slowdown in U.S. or global economic growth, changes to consumer and business confidence, higher rates of unemployment and wide-scale layoffs, impacts of the Middle East conflict and other international hostilities and deteriorations in global trade, the effects of announced or future tariffs, changes in interest rates, inflation, supply chain issues, energy costs, market volatility, government shutdowns and fiscal and monetary policies; the effects of technology changes and the adoption of artificial intelligence (AI); the impact of any future contingencies, including, but not limited to, legal costs and settlements, the imposition of fines or monetary penalties, increases in Card Member remediation, investment gains or losses, restructurings, impairments and changes in reserves; issues impacting brand perceptions and the company's reputation; changes in the competitive environment and an inability to realize benefits from new and extended sponsorships; impacts related to acquisitions, cobrand relationships and other partners; and the impact of regulation and litigation, which could affect the profitability of the company's business activities, limit the company's ability to pursue business opportunities, require changes to business practices or alter the company's relationships with Card Members, partners and merchants;",
+          "- the company's ability to achieve its 2026 revenue growth guidance and grow revenues net of interest expense in the future, which could be impacted by, among other things, the factors identified above and in the subsequent paragraphs, as well as the following: spending volumes not being consistent with expectations, including spending by U.S. consumer and small & mid-sized business Card Members and airline and other travel & entertainment spending volumes, such as due to uncertain business and economic conditions, as well as geopolitical conditions; an inability to address competitive pressures, attract and retain customers, invest in and enhance the company's Membership Model of premium products, differentiated services and partnerships, successfully refresh and introduce card products, grow spending and lending with customers across age cohorts (including Millennial and Gen-Z customers) and commercial segments and implement strategies and business initiatives, including within the premium consumer space, commercial payments and the global network; the impacts of portfolio sales; the effects of regulatory initiatives, including pricing regulation, such as pricing for card acceptance and potential credit card interest rate caps, and network regulation; merchant coverage growing less than expected or the reduction of merchant acceptance or perceptions of coverage; increased surcharging, steering, suppression or other differential acceptance practices with respect to the company's products; merchant discount rates changing from the company's expectations; and changes in foreign currency exchange rates;"
         ],
         "title": "Cautionary Note Regarding Forward-Looking Statements"
       },

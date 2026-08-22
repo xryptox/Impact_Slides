@@ -529,7 +529,7 @@ def test_paint_ready_happy_includes_identity(page):
 
 def test_design_ledger_furniture_covers_dp2_slides():
     assert set(DESIGN_LEDGER_FURNITURE) == {
-        4, 5, 6, 8, 9, 10, 12, 15, 17, 18, 19, 21, 24, 28,
+        4, 5, 6, 8, 9, 10, 11, 12, 15, 17, 18, 19, 21, 24, 28,
     }
     for specs in DESIGN_LEDGER_FURNITURE.values():
         assert specs

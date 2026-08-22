@@ -31,6 +31,8 @@ REFRESH = "Refresh"
 TENX = "10x"
 CATS = ["q1-25", "q2-25", "q3-25", "q4-25", "q1-26"]
 S8_VALUES = ("3,400+", "300+", "$600", "$550")
+S8_FHR = ["40", "40", "40", "50", "50"]
+S8_LODGING = ["5", "5", "5", "5", "5"]
 S15_RATES = ["2.9", "2.9", "2.9", "2.9", "2.8"]
 S15_TOTALS = ["1150", "1405", "1287", "1414", "1251"]
 S15_LABEL = "Reserve Rate for Total Balances"
@@ -77,6 +79,8 @@ def test_corpus_payloads_carry_s6_s8_s15_furniture() -> None:
     s8 = _slide(handoff, 8)
     chart8 = s8["payload"]["chart"]
     by_name = {s["name"]: s for s in chart8["chart_data"]["series"]}
+    assert by_name["FHR+THC"]["values"] == S8_FHR
+    assert by_name["UCS Lodging"]["values"] == S8_LODGING
     assert by_name["FHR+THC"]["color"] == "primary_blue"
     assert by_name["UCS Lodging"]["color"] == "sky_blue"
     tenx = next(a for a in chart8["annotations"] if a["text"] == TENX)
@@ -131,6 +135,10 @@ def test_strict_render_shows_s6_s8_s15_furniture(tmp_path: Path) -> None:
     assert 'data-annotation-id="' in s6
 
     s8 = _section(html, 8)
+    cfg8 = json.loads(re.search(r'id="cfg-s8-lodging">(.*?)</script>', s8, re.S).group(1))
+    by8 = {d["label"]: d for d in cfg8["data"]["datasets"]}
+    assert by8["FHR+THC"]["data"] == [40, 40, 40, 50, 50]
+    assert by8["UCS Lodging"]["data"] == [5, 5, 5, 5, 5]
     assert "metric-strip" in s8
     assert 'data-metric-strip="' in s8
     for token in S8_VALUES:
