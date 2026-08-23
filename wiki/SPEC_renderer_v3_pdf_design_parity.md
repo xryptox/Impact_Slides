@@ -1,6 +1,6 @@
 # SPEC: renderer_v3 PDF Design & Data Parity (Amex Q1'26)
 
-**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233); #249 extends the DP-6 design-ledger probes (stub ratio, support chrome, series palette, metric-value floor, bar occupancy). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. #257 repeats the part-1 legal title on every part and raises fixed legal type to 56/21. The v13 observation sim itself is still unrun.
+**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233); #249 extends the DP-6 design-ledger probes (stub ratio, support chrome, series palette, metric-value floor, bar occupancy). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. #256 formally accepts D167 hide_header + hairline body on s4/s19 (no duplicate navy period band). #257 repeats the part-1 legal title on every part and raises fixed legal type to 56/21. The v13 observation sim itself is still unrun.
 **Scope:** renderer_v3 (schema-v1, 3.0.0) + canonical D314 corpus, full 44-page Amex Q1'26 deck.
 **Extends, does not replace:** `SPEC_renderer_v3_full_deck_density_and_chart_fidelity.md` (still the binding v3 contract). Brand-seal art stays R3-wontfix.
 
@@ -69,7 +69,7 @@ Every PDF furniture element must map to an existing schema-v1 construct — new 
 |---------------|---------------------|
 | side callout boxes (Leap Year, elbow, FDIC) | `annotations` / `context_labels` (+ `coverage_callout` for stacks) |
 | bottom support tables / outlined rows | `support.support_table` / `support.outlined_support` |
-| category-aligned support chrome (#247) | visible `.support-cat-cell` / `.support-cat-stub` carry navy header band + hairline borders; sr-only semantic twin and frozen category centers stay byte-identical |
+| category-aligned support chrome (#247/#256) | visible body `.support-cat-cell` / `.support-cat-stub` carry hairline borders. When the chart already owns categories (D167 `hide_header`, s4/s19), no `.head` / navy period band is required or treated as a chrome defect. When a visual header row is painted (hidden-axis / independent header), `.head` still asserts navy band + hairlines. Decorative navy band without category labels is parked. sr-only semantic twin and frozen category centers stay byte-identical |
 | side KPI stacks | `support.metric_strip` |
 | under-bar YoY boxes | boxed-label `auxiliary_series` |
 | braces / group labels (s24) | `category_groups` |
@@ -95,9 +95,9 @@ s1/s23/s44 seal/full-bleed covers remain R3-wontfix; recipe chrome is accepted d
 
 Every future sim adds a **design ledger** beside the content ledger: per chart slide, measured-px assertions (tick px ≥ floor, computed `font-weight`, furniture DOM presence per DP-2 map) recorded in the manifest. Helpers in `scripts/simulation_probe.py` (unique `data-slide-number` + `data-layout`; zero matches / `ProbeError` = failure):
 - `#233`: `measured_tick_styles`, `furniture_presence`, `DESIGN_LEDGER_FURNITURE`
-- `#249` extensions (slide maps + floors live next to the helpers): `measured_stub_ratio` (`DESIGN_LEDGER_STUB_RATIO_SLIDES` s3/s16/s31–37, stub ≤45%), `measured_support_chrome` (s4/s19 band+hairline), `measured_series_palette` (s24/s28; no non-semantic `#0A7D55`; sky_blue where authored), `measured_metric_value_styles` (s8/s12 ≥40px), `measured_bar_occupancy` (s28 ≥0.5)
+- `#249`/`#256` extensions (slide maps + floors live next to the helpers): `measured_stub_ratio` (`DESIGN_LEDGER_STUB_RATIO_SLIDES` s3/s16/s31–37, stub ≤45%), `measured_support_chrome` (s4/s19 accept hide_header + hairline body cells; a missing body frame still fails; painted `.head` still asserts navy band + hairlines), `measured_series_palette` (s24/s28; no non-semantic `#0A7D55`; sky_blue where authored), `measured_metric_value_styles` (s8/s12 ≥40px), `measured_bar_occupancy` (s28 ≥0.5)
 
-Launcher: `scripts/run_amex_simulation_v13.sh` (prompt wires the #249 rows into the design-ledger manifest). Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
+Launcher: `scripts/run_amex_simulation_v13.sh` (prompt wires the #249/#256 rows into the design-ledger manifest). Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
 
 ### DP-7 Table stub-slack cap & sparse bar occupancy (#246)
 
@@ -129,7 +129,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 
 1. Unit tests per change batch in `tests/` (renderer roles/weights; corpus fixture contracts like the existing `test_amex_*_handoff_contract.py` pattern).
 2. `python -m impact_slides.renderer_v3` strict render of the updated corpus: exit 0 clean.
-3. Observation sim (v13, `scripts/run_amex_simulation_v13.sh`; user-triggered, not part of #233/#249): full 44-page SBS re-run **with the DP-6 design ledger** (including #249 extension probes); classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
+3. Observation sim (v13, `scripts/run_amex_simulation_v13.sh`; user-triggered, not part of #233/#249/#256): full 44-page SBS re-run **with the DP-6 design ledger** (including the DP-6 extension probes); classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
 4. Definition of done: 44/44 slides classified faithful reproduction or accepted v3 design divergence **with the design ledger green**; R-A…R-D closed or explicitly re-accepted.
 
 ## 6. Out of scope

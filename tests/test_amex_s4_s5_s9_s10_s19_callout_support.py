@@ -1,8 +1,9 @@
-"""#226/#255 — Leap-Year callouts, ticks, series identity, side facts.
+"""#226/#255/#256 — Leap-Year callouts, ticks, series identity, side facts.
 
 Pins the live D314 corpus (not renderer defaults):
 - s4/s19: explanation annotation + category-aligned support_table
 - s4/s19 painted series match the PDF identity (names/styles kept, values swapped)
+- s4/s19 D167 hide_header + hairline body (no required .head; #256)
 - s5/s9/s10: independent support_table (s10 series values stay unswapped)
 - s5/s9/s10/s11: Leap Year annotation; s5/s9/s10 G&S/T&E context_labels
 - s4/s5/s9/s11/s19 ticks 0/5/10/15; s10 ticks 0/5/10/15/20/25; s19 domain fixed 0-15
@@ -14,7 +15,10 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
+
+import pytest
 
 from impact_slides.renderer_v3 import render_deck, validate_handoff
 from impact_slides.renderer_v3.plan import plan_deck
@@ -237,6 +241,8 @@ def test_strict_render_shows_callout_text_and_support_rows(tmp_path: Path) -> No
     assert "support-table" in s4
     assert "G&amp;S" in s4 and "T&amp;E" in s4
     assert "7%" in s4 and "9%" in s4
+    assert "support-cat-cell" in s4
+    assert "support-cat-cell head" not in s4
     cfg4 = json.loads(re.search(r'id="cfg-s4-bb">(.*?)</script>', s4, re.S).group(1))
     by4 = {d["label"]: d for d in cfg4["data"]["datasets"]}
     assert by4["Reported"]["data"] == [6, 7, 9, 9, 10]
@@ -279,6 +285,8 @@ def test_strict_render_shows_callout_text_and_support_rows(tmp_path: Path) -> No
     assert LEAP in s19
     assert "support-table" in s19
     assert "$17.0" in s19 and "$18.9" in s19
+    assert "support-cat-cell" in s19
+    assert "support-cat-cell head" not in s19
     cfg19 = json.loads(re.search(r'id="cfg-s19-rev">(.*?)</script>', s19, re.S).group(1))
     by19 = {d["label"]: d for d in cfg19["data"]["datasets"]}
     assert by19["FX-adjusted"]["data"] == [8, 9, 11, 9, 10]
@@ -296,6 +304,45 @@ def test_strict_render_shows_callout_text_and_support_rows(tmp_path: Path) -> No
     assert by_sid["s10-ics"].chart_paint["domain"]["ticks"] == TICKS_0_25
     assert by_sid["s19-rev"].chart_paint["domain"]["kind"] == "fixed"
     assert float(by_sid["s19-rev"].chart_paint["domain"]["max"]) == 15.0
+
+
+def test_design_ledger_support_chrome_accepts_s4_s19_hide_header(
+    tmp_path: Path,
+) -> None:
+    """#256: v14 support-chrome probe is green on canonical hide_header body cells."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    repo = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(repo / "scripts"))
+    from simulation_probe import measured_support_chrome
+
+    out = tmp_path / "out"
+    render_deck(FIXTURE, out, strict=True)
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        try:
+            for n in (4, 19):
+                row = measured_support_chrome(page, n, "single_chart")
+                assert row["ok"] is True
+                assert row["hide_header"] is True
+                assert row["head_count"] == 0
+                assert row["body_count"] >= 1
+                assert any(
+                    cell[k] >= 1.0
+                    for cell in row["bodies"]
+                    for k in (
+                        "border_top_px",
+                        "border_right_px",
+                        "border_bottom_px",
+                        "border_left_px",
+                    )
+                )
+        finally:
+            browser.close()
 
 
 def test_mutation_dropping_s4_annotation_omits_callout_from_dom(tmp_path: Path) -> None:
