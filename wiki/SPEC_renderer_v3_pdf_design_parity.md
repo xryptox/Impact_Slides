@@ -19,7 +19,7 @@ The regression has **four independent causes**. Only C4 is renderer defect; the 
 
 ### C1 — Corpus backfill never happened (14 slides; largest slice)
 
-The D314 canonical corpus was built from corrected fixtures + worksheet *before* the v2 mutation-pass authoring matured, and v12 rendered it strictly with no mutation pass. Furniture that v2 carried on slides 4–6, 8–10, 12, 15, 17–19, 21, 24, 28 was never ported into the v1 payloads — even though schema-v1 **already owns every needed construct** (`support_table`, `outlined_support`, `metric_strip`, `context_labels`, `annotations`, `measurements`, boxed-label / authored-stack-total `auxiliary_series`, `coverage_callout`, `category_groups`). Lost: Leap-Year callouts + bottom support tables (s4/5/9/10/19), side KPI stacks (s8), 3-band NCA stack (s12), reserve-rate outlined row (s15), `$B` format + CAGR rule (s17), YoY boxes + driver rows (s18), shares line + correct ROE row (s21), braces + `$486B` + %-of-total boxes (s24), FDIC callout + stack totals (s28). Plus two outright extraction errors: s17/s18 `format_id: pct_0` on `$B` series; s21 ROE row constant 35%.
+The D314 canonical corpus was built from corrected fixtures + worksheet *before* the v2 mutation-pass authoring matured, and v12 rendered it strictly with no mutation pass. Furniture that v2 carried on slides 4–6, 8–10, 12, 15, 17–19, 21, 24, 28 was never ported into the v1 payloads — even though schema-v1 **already owns every needed construct** (`support_table`, `outlined_support`, `metric_strip`, `context_labels`, `annotations`, `measurements`, boxed-label / authored-stack-total `auxiliary_series`, `coverage_callout`, `category_groups`). Lost: Leap-Year callouts + bottom support tables (s4/5/9/10/19), side KPI stacks (s8), 3-band NCA stack (s12), reserve-rate outlined row (s15), `$B` format + CAGR rule (s17), YoY boxes + driver rows (s18), shares line + correct ROE row (s21), `placement: above` groups + `$486B` + outlined %-of-total (s24), FDIC callout + stack totals (s28). Plus two outright extraction errors: s17/s18 `format_id: pct_0` on `$B` series; s21 ROE row constant 35%.
 
 ### C2 — Typography calibration collapsed to floors (every chart slide)
 
@@ -72,7 +72,7 @@ Every PDF furniture element must map to an existing schema-v1 construct — new 
 | category-aligned support chrome (#247/#256) | visible body `.support-cat-cell` / `.support-cat-stub` carry hairline borders. When the chart already owns categories (D167 `hide_header`, s4/s19), no `.head` / navy period band is required or treated as a chrome defect. When a visual header row is painted (hidden-axis / independent header), `.head` still asserts navy band + hairlines. Decorative navy band without category labels is parked. sr-only semantic twin and frozen category centers stay byte-identical |
 | side KPI stacks | `support.metric_strip` |
 | under-bar YoY boxes | boxed-label `auxiliary_series` |
-| braces / group labels (s24) | `category_groups` |
+| braces / group labels (s24) | `category_groups` with `placement: above` + outlined share row |
 | line overlay on bars (s21 shares) | combo `mark_type: line` series |
 | on-stack segment dollars / values (s12 / s15 / s21 / s28) | `display.stack_segments: "show"` (#260; s28 already authored) |
 | CAGR rules | `measurements` |
@@ -122,7 +122,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 | 12 | shipped #228 / #260 | 3-band NCA stack + `stack_segments: show` | `tests/test_amex_s12_nca_stack.py` |
 | 15 | shipped #227 / #260 | reserve-rate row + authored totals + `stack_segments: show` | `tests/test_amex_s6_s8_s15_furniture.py` |
 | 21 | shipped #230 / #260 | combo line + `outlined_support` values + `stack_segments: show` | `tests/test_amex_s21_s24_s28_furniture.py` |
-| 24 | shipped #230 | `category_groups` + `$486B` annotation + boxed %-of-total | `tests/test_amex_s21_s24_s28_furniture.py` |
+| 24 | shipped #230/#254 | `category_groups` `placement: above` + `$486B` annotation + outlined %-of-total | `tests/test_amex_s21_s24_s28_furniture.py` |
 | 28 | shipped #230 | `annotations` + authored $ totals + on-stack % | `tests/test_amex_s21_s24_s28_furniture.py` |
 
 ## 5. Acceptance & verification

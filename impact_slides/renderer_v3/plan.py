@@ -2432,7 +2432,8 @@ def _outlined_support_plan(
     cats = list(chart_spec.get("categories") or [])
     centers = []
     values = []
-    texts: list[tuple[str, bool]] = [(table.stub_header.label, True)]
+    label = table.stub_header.short_label or table.stub_header.label
+    texts: list[tuple[str, bool]] = [(label, True)]
     for col in table.columns:
         fv = format_semantic_value(row.cells[col.column_id], deck.number_formats)
         values.append(
@@ -2455,7 +2456,6 @@ def _outlined_support_plan(
     view_w = int(g.get("view_w") or CONTENT_W)
     # Chart plot is left-aligned inside the content column at its view width.
     chart_offset_x = 0
-    label = table.stub_header.label
     # Content-sized boxes centered on frozen category centers (D166).
     box_w = OUTLINED_BOX_MIN
     for v in values:
@@ -2474,6 +2474,7 @@ def _outlined_support_plan(
             "kind": "outlined_support",
             "paint_as": "outlined_support",
             "label": label,
+            "label_full": table.stub_header.label,
             "label_lane_w": lane_w,
             "values": values,
             "centers": centers,

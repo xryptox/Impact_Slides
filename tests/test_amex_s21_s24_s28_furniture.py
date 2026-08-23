@@ -1,9 +1,9 @@
-"""#230/#260 — restore s21 shares line + ROE, s24 braces + $486B, s28 FDIC.
+"""#230/#254/#260 — s21 shares line + ROE, s24 above groups + outlined shares, s28 FDIC.
 
 Pins the live D314 corpus (not renderer defaults):
 - s21 stacked combo: Common Shares Outstanding 702→682 + ROE 35/34/36/36/34/35
   plus display.stack_segments == show
-- s24 six growth bars, group braces, $486B callout, %-of-total boxes
+- s24 six growth bars, two above groups, $486B callout, outlined %-of-total
 - s28 FDIC callout + on-stack % and $ totals (already stack_segments show)
 - renderer does not invent the furniture
 - strict render of the canonical corpus stays clean
@@ -45,16 +45,27 @@ S24_CATS = [
 ]
 S24_GROWTH = ["10", "4", "4", "13", "12", "9"]
 S24_SHARE = ["37", "22", "5", "15", "8", "12"]
+S24_SHORT = {
+    "u-s-consumer-services": "U.S. Consumer",
+    "u-s-large-global-corp": "U.S. Large & Global",
+    "int-l-sme-large-corp": "Int'l SME & Large",
+}
 S24_GROUPS = [
-    ("us-consumer-services", "U.S. Consumer Services", ["u-s-consumer-services"]),
-    ("commercial-services", "Commercial Services", ["u-s-sme", "u-s-large-global-corp"]),
+    (
+        "commercial-services",
+        "Commercial Services",
+        ["u-s-sme", "u-s-large-global-corp"],
+        "above",
+    ),
     (
         "international-card-services",
         "International Card Services",
         ["int-l-consumer", "int-l-sme-large-corp"],
+        "above",
     ),
 ]
 S24_CALLOUT = "$486B Total Network Volumes"
+S24_SHARE_STUB = "% of Total Network Volumes"
 S24_AGGREGATES = ("Commercial Services (total)", "International Card Services")
 
 S28_FUND_TOTALS = ["210", "219"]
@@ -126,15 +137,31 @@ def test_corpus_payloads_carry_s21_s24_s28_furniture() -> None:
     for agg in S24_AGGREGATES:
         assert agg not in labels
     groups = g["category_groups"]
-    assert [(x["group_id"], x["label"], x["category_ids"]) for x in groups] == list(
-        S24_GROUPS
-    )
+    assert [
+        (x["group_id"], x["label"], x["category_ids"], x.get("placement"))
+        for x in groups
+    ] == list(S24_GROUPS)
+    assert all(x["group_id"] != "us-consumer-services" for x in groups)
+    shorts = {
+        c["category_id"]: c.get("short_label")
+        for c in g["chart_data"]["categories"]
+        if c.get("short_label")
+    }
+    assert shorts == S24_SHORT
     anns = g["annotations"]
     assert any(a["text"] == S24_CALLOUT for a in anns)
-    boxed = [a for a in g["auxiliary_series"] if a["role"] == "boxed_label"]
-    assert len(boxed) == 1
-    assert boxed[0]["values"] == S24_SHARE
-    assert boxed[0]["format_id"] == "pct_0"
+    assert not any(
+        a.get("role") == "boxed_label" for a in (g.get("auxiliary_series") or [])
+    )
+    support = s24["payload"]["support"]
+    assert support["support_type"] == "outlined_support"
+    assert support["table"]["stub_header"]["label"] == S24_SHARE_STUB
+    assert support["table"]["stub_header"].get("short_label") == "% of Total"
+    cols = [c["column_id"] for c in support["table"]["columns"]]
+    assert cols == S24_CATS
+    row = support["table"]["rows"][0]
+    assert [row["cells"][cid]["value"] for cid in cols] == S24_SHARE
+    assert all(row["cells"][cid]["format_id"] == "pct_0" for cid in cols)
 
     s28 = _slide(handoff, 28)
     fund, dep = s28["payload"]["charts"]
@@ -213,13 +240,30 @@ def test_strict_render_shows_s21_s24_s28_furniture(tmp_path: Path) -> None:
     assert tots[:6] == ["$1.6", "$1.3", "$2.0", "$2.9", "$1.5", "$2.3"]
 
     s24 = unescape(_section(html, 24)).replace("<wbr>", "")
-    assert "category-group" in s24
+    assert 'data-group-id="commercial-services"' in s24
+    assert 'data-group-id="international-card-services"' in s24
+    assert "us-consumer-services" not in s24
     assert 'data-annotation-id="' in s24
     assert S24_CALLOUT in s24
     for token in ("37%", "22%", "5%", "15%", "8%", "12%"):
         assert token in s24
     assert "Commercial Services (total)" not in s24
-    assert "boxed-label" in s24
+    assert "boxed-label" not in s24
+    assert 'data-outlined-support="s24-share"' in s24
+    assert S24_SHARE_STUB in s24
+    assert "% of Total" in s24
+    for short in S24_SHORT.values():
+        assert short in s24
+    deck = validate_handoff(_load(), strict=True).deck
+    planned = plan_deck(deck, strict=True).by_surface_id()
+    s24_cp = planned["s24-growth"].chart_paint
+    plot_top = s24_cp["geometry"]["pad_t"]
+    assert s24_cp["category_groups"]
+    assert all(grp["y1"] < plot_top for grp in s24_cp["category_groups"])
+    share = planned["s24-share"]
+    spec = share._table_spec or {}
+    assert spec.get("label") == "% of Total"
+    assert spec.get("label_full") == S24_SHARE_STUB
 
     s28 = unescape(_section(html, 28)).replace("<wbr>", "")
     assert 'data-annotation-id="' in s28
@@ -282,6 +326,7 @@ def test_mutation_dropping_s24_braces_and_boxes_omits_furniture(tmp_path: Path) 
     s24["payload"]["chart"].pop("category_groups", None)
     s24["payload"]["chart"].pop("annotations", None)
     s24["payload"]["chart"].pop("auxiliary_series", None)
+    s24["payload"].pop("support", None)
     src = tmp_path / "h.json"
     src.write_text(json.dumps(handoff), encoding="utf-8")
     out = tmp_path / "out"
@@ -291,6 +336,21 @@ def test_mutation_dropping_s24_braces_and_boxes_omits_furniture(tmp_path: Path) 
     assert 'data-annotation-id="' not in html
     assert "chart-annotation" not in html
     assert "boxed-label" not in html
+    assert "outlined-support" not in html
+
+
+def test_mutation_stripping_s24_placement_drops_above_plot_groups() -> None:
+    """#254: above-plot chrome is authored placement, not a renderer default."""
+    handoff = _load()
+    for grp in _slide(handoff, 24)["payload"]["chart"]["category_groups"]:
+        grp.pop("placement", None)
+    deck = validate_handoff(handoff, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["s24-growth"].chart_paint
+    plot_top = cp["geometry"]["pad_t"]
+    plot_bot = plot_top + cp["geometry"]["plot_h"]
+    assert cp["category_groups"]
+    assert all(grp["y1"] > plot_bot for grp in cp["category_groups"])
+    assert not any(grp["y1"] < plot_top for grp in cp["category_groups"])
 
 
 def test_mutation_dropping_s28_fdic_and_totals_omits_furniture(tmp_path: Path) -> None:

@@ -8,7 +8,7 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15;
 #229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows;
 #258: s17 dated pane headings + slide subtitle + pane_title identity;
-#230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals;
+#230/#254: s21 stacked combo shares line 702→682 + exact ROE row; s24 above groups + $486B + outlined %-of-total; s28 FDIC callout + stack totals;
 #248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%;
 #259: s6 left pane subtitle + right-pane Anniversary Month / retention axis titles;
 #260: s12/s15/s21 display.stack_segments show;
@@ -1830,7 +1830,7 @@ def build() -> dict:
         }
     )
 
-    # 24 six growth bars, group braces, $486B callout, %-of-total boxes
+    # 24 six growth bars, above group chrome, $486B callout, outlined %-of-total
     s24 = json.loads((FIX / "amex_s24_v10_broken.json").read_text(encoding="utf-8"))[
         "slides"
     ][0]
@@ -1842,6 +1842,11 @@ def build() -> dict:
         "Int'l SME & Large Corp.",
         "Processed Volumes",
     ]
+    shorts24 = {
+        "U.S. Consumer Services": "U.S. Consumer",
+        "U.S. Large & Global Corp.": "U.S. Large & Global",
+        "Int'l SME & Large Corp.": "Int'l SME & Large",
+    }
     vals24 = ["10", "4", "4", "13", "12", "9"]
     share24 = ["37", "22", "5", "15", "8", "12"]
     chart24 = grouped_bar(
@@ -1850,22 +1855,23 @@ def build() -> dict:
         [("YoY growth", vals24, "navy")],
         fmt="pct_0",
     )
+    for cat in chart24["chart_data"]["categories"]:
+        short = shorts24.get(cat["label"])
+        if short:
+            cat["short_label"] = short
     cat_ids24 = [c["category_id"] for c in chart24["chart_data"]["categories"]]
     chart24["category_groups"] = [
-        {
-            "group_id": "us-consumer-services",
-            "label": "U.S. Consumer Services",
-            "category_ids": [cat_ids24[0]],
-        },
         {
             "group_id": "commercial-services",
             "label": "Commercial Services",
             "category_ids": cat_ids24[1:3],
+            "placement": "above",
         },
         {
             "group_id": "international-card-services",
             "label": "International Card Services",
             "category_ids": cat_ids24[3:5],
+            "placement": "above",
         },
     ]
     chart24["annotations"] = [
@@ -1876,23 +1882,22 @@ def build() -> dict:
             "anchor": {"type": "chart"},
         }
     ]
-    chart24["auxiliary_series"] = [
-        {
-            "auxiliary_id": "s24-share",
-            "role": "boxed_label",
-            "label": "% of Total Network Volumes",
-            "format_id": "pct_0",
-            "target_series_id": chart24["chart_data"]["series"][0]["series_id"],
-            "values": share24,
-        }
-    ]
+    share_support = outlined_from_v2(
+        "s24-share",
+        [["", *labs24], ["% of Total Network Volumes", *share24]],
+        fmt="pct_0",
+    )
+    share_support["table"]["stub_header"]["short_label"] = "% of Total"
     slides.append(
         ordinary(
             24,
             "single_chart",
             s24["title"],
             "appendix",
-            {"chart": chart24},
+            {
+                "chart": chart24,
+                "support": share_support,
+            },
             subtitle=s24["content"].get("subtitle") or None,
             disclosure=disclosure_from_text(
                 "s24-disc",

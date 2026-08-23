@@ -326,17 +326,17 @@ def _freeze_grouped_bar_chart(
     break_to = float(Decimal(leading)) if leading is not None else None
 
     # Groups need extra category-axis chrome clearance.
-    group_pad = 28 if chart.category_groups else 0
+    group_pad_t, group_pad_b = _category_group_pads(chart)
     if horizontal:
         pad_l = max(PAD_L, 120)  # category labels on left
         pad_r = max(PAD_R, 96)  # exterior value labels
-        pad_t = PAD_T
-        pad_b = PAD_B + group_pad
+        pad_t = PAD_T + group_pad_t
+        pad_b = PAD_B + group_pad_b
     else:
         pad_l = PAD_L
         pad_r = max(PAD_R // 2, 48)
-        pad_t = max(PAD_T, 40)  # outside value headroom
-        pad_b = PAD_B + group_pad
+        pad_t = max(PAD_T, 40) + group_pad_t  # outside value headroom
+        pad_b = PAD_B + group_pad_b
 
     # D47 absolute plot floor; only surplus above may feed support.
     plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - pad_l - pad_r))
@@ -632,13 +632,13 @@ def _freeze_stacked_bar_chart(
     show_segments = _stack_segments_show(chart)
     show_totals = _stack_totals_show(chart)
 
-    group_pad = 28 if chart.category_groups else 0
+    group_pad_t, group_pad_b = _category_group_pads(chart)
     cov = chart.coverage_callout
     cov_pad = 36 if cov is not None else 0
     pad_l = PAD_L
     pad_r = max(PAD_R // 2, 48)
-    pad_t = max(PAD_T, 48) + cov_pad  # totals + coverage headroom
-    pad_b = PAD_B + group_pad + 16  # negative totals footroom
+    pad_t = max(PAD_T, 48) + cov_pad + group_pad_t  # totals + coverage headroom
+    pad_b = PAD_B + group_pad_b + 16  # negative totals footroom
 
     plot_w = max(200, min(PLOT_W, box_w - pad_l - pad_r))
     plot_h = max(160, min(PLOT_H, box_h - pad_t - pad_b - 40))
@@ -1361,13 +1361,13 @@ def freeze_combo_chart(
     show_segments = _stack_segments_show(chart) if stacked else False
     show_totals = _stack_totals_show(chart) if stacked else False
 
-    group_pad = 28 if chart.category_groups else 0
+    group_pad_t, group_pad_b = _category_group_pads(chart)
     pad_l = PAD_L
     pad_r = PAD_R if secondary is not None else max(PAD_R // 2, 48)
     if secondary is not None:
         pad_r = max(pad_r, PAD_L)  # room for secondary tick labels
-    pad_t = max(PAD_T, 48 if stacked else 40)
-    pad_b = PAD_B + group_pad + (16 if stacked else 0)
+    pad_t = max(PAD_T, 48 if stacked else 40) + group_pad_t
+    pad_b = PAD_B + group_pad_b + (16 if stacked else 0)
 
     plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - pad_l - pad_r))
     plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - pad_t - pad_b - 40))
@@ -2233,7 +2233,7 @@ def _paint_combo_svg(
             for cat in plan["categories"]:
                 parts.append(
                     f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
-                    f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                    f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(_cat_tick(cat))}</text>'
                 )
         if plan["value_axis"]["visible"]:
             span = (d_max - d_min) or 1.0
@@ -2291,11 +2291,12 @@ def _paint_combo_svg(
             )
         for grp in plan.get("category_groups") or []:
             x1, y1, x2, y2 = grp["x1"], grp["y1"], grp["x2"], grp["y2"]
+            label_y = (y1 - 8) if grp.get("placement") == "above" else (y2 + 14)
             parts.append(
                 f'<g class="category-group" data-group-id="{_e(grp["group_id"])}">'
                 f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
                 f'stroke="{_e(border)}" stroke-width="1.5"/>'
-                f'<text x="{(x1 + x2) / 2:.1f}" y="{y2 + 14:.1f}" text-anchor="middle" '
+                f'<text x="{(x1 + x2) / 2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
                 f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
                 f"</g>"
             )
@@ -2480,7 +2481,7 @@ def _paint_line_svg(
                 parts.append(
                     f'<text x="{cat["x"]:.1f}" y="{pt + ph + 22}" text-anchor="middle" '
                     f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(resolve_color("navy", role="text_on_light"))}">'
-                    f'{_e(cat["label"])}</text>'
+                    f'{_e(_cat_tick(cat))}</text>'
                 )
         if plan["value_axis"]["visible"]:
             y_min = float(plan["domain"]["min"])
@@ -2669,12 +2670,12 @@ def _paint_bar_svg(
                 if horizontal:
                     parts.append(
                         f'<text x="{cat["x"]:.1f}" y="{cat["y"] + 4:.1f}" text-anchor="end" '
-                        f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                        f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(_cat_tick(cat))}</text>'
                     )
                 else:
                     parts.append(
                         f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
-                        f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                        f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(_cat_tick(cat))}</text>'
                     )
         if plan["value_axis"]["visible"]:
             vis_min = float(Decimal(leading)) if leading is not None else d_min
@@ -2729,11 +2730,12 @@ def _paint_bar_svg(
         # Category group brackets (D155/D237).
         for grp in plan.get("category_groups") or []:
             x1, y1, x2, y2 = grp["x1"], grp["y1"], grp["x2"], grp["y2"]
+            label_y = (y1 - 8) if grp.get("placement") == "above" else (y2 + 14)
             parts.append(
                 f'<g class="category-group" data-group-id="{_e(grp["group_id"])}">'
                 f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
                 f'stroke="{_e(border)}" stroke-width="1.5"/>'
-                f'<text x="{(x1 + x2) / 2:.1f}" y="{y2 + 14:.1f}" text-anchor="middle" '
+                f'<text x="{(x1 + x2) / 2:.1f}" y="{label_y:.1f}" text-anchor="middle" '
                 f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(grp["label"])}</text>'
                 f"</g>"
             )
@@ -2935,7 +2937,7 @@ def _paint_waterfall_svg(
             for cat in plan["categories"]:
                 parts.append(
                     f'<text x="{cat["x"]:.1f}" y="{cat["y"]:.1f}" text-anchor="middle" '
-                    f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(cat["label"])}</text>'
+                    f'font-size="{cat_px}" font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(ink)}">{_e(_cat_tick(cat))}</text>'
                 )
         if plan["value_axis"]["visible"]:
             span = (d_max - d_min) or 1.0
@@ -3064,6 +3066,10 @@ def chart_boot_script() -> str:
 # ---------------------------------------------------------------------------
 # Internals
 # ---------------------------------------------------------------------------
+
+
+def _cat_tick(cat: Mapping[str, Any]) -> str:
+    return str(cat.get("short_label") or cat["label"])
 
 
 def _e(text: Any) -> str:
@@ -4766,6 +4772,15 @@ def _freeze_boxed_labels(
     return {"placements": placements, "labels": labels, "facts": facts}
 
 
+def _category_group_pads(chart: Any) -> tuple[int, int]:
+    groups = getattr(chart, "category_groups", None) or []
+    if not groups:
+        return 0, 0
+    above = any(getattr(g, "placement", None) == "above" for g in groups)
+    below = any(getattr(g, "placement", None) != "above" for g in groups)
+    return (28 if above else 0, 28 if below else 0)
+
+
 def _freeze_category_groups(
     chart: BarChartVisual,
     cats: list[Any],
@@ -4787,16 +4802,18 @@ def _freeze_category_groups(
         first, last = idxs[0], idxs[-1]
         s0 = geom["slots"][first]
         s1 = geom["slots"][last]
+        above = getattr(g, "placement", None) == "above"
         if horizontal:
             y1 = s0["origins"][0]
             y2 = s1["origins"][-1] + geom["thickness"]
-            x = pad_l + plot_w + 8
+            x = (pad_l - 8) if above else (pad_l + plot_w + 8)
             out.append(
                 {
                     "group_id": g.group_id,
                     "label": g.label,
                     "short_label": g.short_label,
                     "category_ids": list(g.category_ids),
+                    "placement": "above" if above else "below",
                     "x1": x,
                     "y1": y1,
                     "x2": x,
@@ -4806,13 +4823,14 @@ def _freeze_category_groups(
         else:
             x1 = s0["origins"][0]
             x2 = s1["origins"][-1] + geom["thickness"]
-            y = pad_t + plot_h + 36
+            y = (pad_t - 16) if above else (pad_t + plot_h + 36)
             out.append(
                 {
                     "group_id": g.group_id,
                     "label": g.label,
                     "short_label": g.short_label,
                     "category_ids": list(g.category_ids),
+                    "placement": "above" if above else "below",
                     "x1": x1,
                     "y1": y,
                     "x2": x2,

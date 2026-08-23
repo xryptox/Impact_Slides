@@ -385,6 +385,22 @@
           ],
           "default": null,
           "title": "Short Label"
+        },
+        "placement": {
+          "anyOf": [
+            {
+              "enum": [
+                "above",
+                "below"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Placement"
         }
       },
       "required": [
