@@ -97,7 +97,7 @@ Every future sim adds a **design ledger** beside the content ledger: per chart s
 - `#233`: `measured_tick_styles`, `furniture_presence`, `DESIGN_LEDGER_FURNITURE`
 - `#249`/`#256` extensions (slide maps + floors live next to the helpers): `measured_stub_ratio` (`DESIGN_LEDGER_STUB_RATIO_SLIDES` s3/s16/s31–37, stub ≤45%), `measured_support_chrome` (s4/s19 accept hide_header + hairline body cells; a missing body frame still fails; painted `.head` still asserts navy band + hairlines), `measured_series_palette` (s24/s28; no non-semantic `#0A7D55`; sky_blue where authored), `measured_metric_value_styles` (s8/s12 ≥40px), `measured_bar_occupancy` (s28 ≥0.5)
 
-Launcher: `scripts/run_amex_simulation_v13.sh` (prompt wires the #249 rows into the design-ledger manifest). Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
+Launcher: `scripts/run_amex_simulation_v13.sh` (prompt wires the #249/#256 rows into the design-ledger manifest). Geometry/px measurement is evidence, not image scoring — MAE/similarity/pixel-diff remain forbidden. The v13 sim report (`wiki/baseline_v13_GAP_ANALYSIS.md`) is produced by that launcher, not this ticket.
 
 ### DP-7 Table stub-slack cap & sparse bar occupancy (#246)
 
@@ -129,7 +129,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 
 1. Unit tests per change batch in `tests/` (renderer roles/weights; corpus fixture contracts like the existing `test_amex_*_handoff_contract.py` pattern).
 2. `python -m impact_slides.renderer_v3` strict render of the updated corpus: exit 0 clean.
-3. Observation sim (v13, `scripts/run_amex_simulation_v13.sh`; user-triggered, not part of #233/#249): full 44-page SBS re-run **with the DP-6 design ledger** (including #249 extension probes); classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
+3. Observation sim (v13, `scripts/run_amex_simulation_v13.sh`; user-triggered, not part of #233/#249/#256): full 44-page SBS re-run **with the DP-6 design ledger** (including the DP-6 extension probes); classification adds `design-parity verified` per slide; the same no-image-scoring rule applies.
 4. Definition of done: 44/44 slides classified faithful reproduction or accepted v3 design divergence **with the design ledger green**; R-A…R-D closed or explicitly re-accepted.
 
 ## 6. Out of scope

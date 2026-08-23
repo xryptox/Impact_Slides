@@ -144,7 +144,7 @@ For every entry in DESIGN_LEDGER_FURNITURE call furniture_presence with that
 selector and expected_text. Zero matches or missing text are failures, never
 a green row.
 
-Also run the #249 DP-6 extension probes (import the DESIGN_LEDGER_* maps and
+Also run the #249/#256 DP-6 extension probes (import the DESIGN_LEDGER_* maps and
 helpers from simulation_probe.py; zero matches / ProbeError = failure):
 - measured_stub_ratio on DESIGN_LEDGER_STUB_RATIO_SLIDES (s3/s16/s31-37;
   stub share <= 0.45)
@@ -160,7 +160,7 @@ helpers from simulation_probe.py; zero matches / ProbeError = failure):
 
 Record one design-ledger object per slide in comparison_manifest.json:
   slide_number, layout, tick_count, min_font_size_px, min_font_weight,
-  furniture rows (selector, expected_text, count, ok), #249 extension rows
+  furniture rows (selector, expected_text, count, ok), #249/#256 extension rows
   present for the slides above (stub_ratio / support_chrome / palette /
   metric_floor / bar_occupancy), and overall ok.
 Non-chart slides without an extension target record design_ledger:
