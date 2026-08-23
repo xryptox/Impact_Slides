@@ -3575,8 +3575,8 @@ exact non-empty plain paragraphs. Part 1 requires exact title; later parts forbi
 it. A sequence shares ID/total/section, is adjacent and exactly covers 1..total
 without recurrence, gaps or duplicates; every part has one registered root
 section. Root title/content omit. Part-1 title is sole authored heading; later
-parts receive deterministic visible `— continued` and accessible part-of-total
-wording without duplicating authored content. Paragraph wording/Unicode/internal
+parts forbid authored title and paint that same part-1 title plus accessible
+part-of-total wording — never visible `— continued` (#257 / DP-4). Paragraph wording/Unicode/internal
 whitespace/boundaries/order are exact with safe escaping only; no D224, emphasis,
 markup/links/bullets/style. Typography is fixed, with no D218, adaptation or
 automatic pagination/redistribution. Takeaway/disclosure/source footer and other
@@ -4680,7 +4680,7 @@ outrank the archived v10 handoff.
 | 35 | `annex_table` | Complete Net Card Fees GAAP/FX/YoY/CAGR matrix, `$ in billions`, explicit missing. |
 | 36 | `annex_table` | Complete Net Interest Income GAAP/FX/YoY/CAGR matrix, `$ in billions`, explicit missing. |
 | 37 | `annex_table` | Complete Revenues Net of Interest Expense GAAP/FX/YoY matrix, `$ in billions`; no invented CAGR. |
-| 38–43 | `legal_notice` | One contiguous `forward-looking-statements` six-part notice; exact source paragraphs/page boundaries, title only on part 1, renderer-owned continuation wording. |
+| 38–43 | `legal_notice` | One contiguous `forward-looking-statements` six-part notice; exact source paragraphs/page boundaries, title authored only on part 1, every part paints that title (never `— continued`). |
 | 44 | `closing_cover` | Exact title `American Express`; no synthetic subtitle/period/date or authored brand controls. |
 
 The migration candidate must match this worksheet, preserve every source fact and
