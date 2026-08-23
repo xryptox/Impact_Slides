@@ -93,7 +93,8 @@ def test_corpus_payloads_carry_s6_s8_s15_furniture() -> None:
         blob = json.dumps(_slide(handoff, n))
         assert S6_CAT_TITLE not in blob
         assert S6_VAL_TITLE not in blob
-        assert S6_LEFT_SUB not in blob
+        # s17 slide subtitle includes this phrase inside a longer string (#258).
+        assert json.dumps(S6_LEFT_SUB) not in blob
 
     s8 = _slide(handoff, 8)
     chart8 = s8["payload"]["chart"]
