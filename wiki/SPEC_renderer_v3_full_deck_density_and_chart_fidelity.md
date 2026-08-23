@@ -1668,13 +1668,15 @@ composition requires a named semantic contract in a future schema version.
 ### D155 — Category groups are semantic hierarchy, not bracket instructions
 
 Schema v1 replaces legacy `bar_groups` with `category_groups`. Each group has
-stable `group_id`, non-empty label, optional `short_label`, and one or more
-contiguous `category_id` references. Single-category groups are valid; categories
-may remain deliberately ungrouped. First delivery permits one non-overlapping,
-non-nested level. Groups express hierarchy only and never create aggregate bars,
-values, series, or subtotals. The renderer owns bracket/header chrome and
-includes hierarchy in D106 accessibility and semantic tables. Indexes,
-coordinates, and bracket-style controls are invalid. Invalid references,
+stable `group_id`, non-empty label, optional `short_label`, optional `placement`
+(`above`|`below`; omit=`below`), and one or more contiguous `category_id`
+references. Single-category groups are valid; categories may remain deliberately
+ungrouped. First delivery permits one non-overlapping, non-nested level. Groups
+express hierarchy only and never create aggregate bars, values, series, or
+subtotals. The renderer owns line+label chrome (under-plot when omitted/`below`;
+over-plot when `above`; mixed placements pad both sides) and includes hierarchy
+in D106 accessibility and semantic tables. Indexes, coordinates, braces, and
+other bracket-style controls are invalid. Invalid references,
 overlap, or noncontiguity strict-fail; non-strict preserves chart data, omits
 only malformed group chrome, and records unresolved hierarchy visibly in the
 semantic table plus diagnostics. Legacy groups migrate only when associations
@@ -2905,15 +2907,17 @@ otherwise human resolution is required.
 ### D237 — Category groups reference contiguous category IDs
 
 Optional `category_groups` contains authored groups with chart-unique D115 ID,
-exact label, ordered non-empty D228 category IDs, and optional exact short label;
-stable identity is surface/group. References must exist, be contiguous, and
-follow chart order; groups themselves follow first-category order, cannot
-overlap/nest, may leave categories ungrouped, and may contain one category.
-First delivery permits groups only on bar-bearing grouped/stacked/horizontal/
-combo charts. Groups express hierarchy only and never aggregate/reorder/change
-domains or replace category labels. Renderer owns bracket/header chrome and
-accessibility; short text is visual-only under fit and D106 retains full group
-membership. Style/coordinates/index spans/depth/aggregates/children are invalid.
+exact label, ordered non-empty D228 category IDs, optional exact short label, and
+optional `placement` (`above`|`below`; omit=`below`); stable identity is
+surface/group. References must exist, be contiguous, and follow chart order;
+groups themselves follow first-category order, cannot overlap/nest, may leave
+categories ungrouped, and may contain one category. First delivery permits groups
+only on bar-bearing grouped/stacked/horizontal/combo charts. Groups express
+hierarchy only and never aggregate/reorder/change domains or replace category
+labels. Renderer owns line+label chrome (under-plot omit/`below`; over-plot
+`above`; mixed pads both sides) and accessibility; short text is visual-only
+under fit and D106 retains full group membership.
+Style/coordinates/index spans/depth/aggregates/children are invalid.
 Strict rejects reference/order/overlap/nesting/family errors. Non-strict keeps
 chart data, removes each malformed group and all groups participating in a
 conflict (no first-wins), and preserves unresolved hierarchy in D106 with
@@ -4173,16 +4177,18 @@ target/format/alignment.
 ### D300 — `category_groups` add one hierarchy level only
 
 Category groups are 1–6 authored-order groups with chart-local unique D115 ID,
-exact label, optional short label and 1–12 ordered duplicate-free D291 category
-IDs. Membership is at most one group; ungrouped categories remain valid. Members
-must exist, follow chart order and form one contiguous nonoverlapping span; group
-order follows first member and meaningful singleton groups are allowed. Empty/
-nested/overlap/repeat/noncontiguous groups are invalid. Allowed on grouped/
-stacked/horizontal/combo only; combo applies across shared axis. Groups never
-aggregate/subtotal/create series/axes/legends/facts, reorder/filter, or alter
-pitch/values/domains/formats. Renderer owns vertical bracket/header or horizontal
-equivalent while preserving individual category ownership; no authored visual
-controls. Labels share category tick plan, may wrap two lines or use short label
+exact label, optional short label, optional `placement` above|below (omit=`below`),
+and 1–12 ordered duplicate-free D291 category IDs. Membership is at most one
+group; ungrouped categories remain valid. Members must exist, follow chart order
+and form one contiguous nonoverlapping span; group order follows first member and
+meaningful singleton groups are allowed. Empty/nested/overlap/repeat/
+noncontiguous groups are invalid. Allowed on grouped/stacked/horizontal/combo
+only; combo applies across shared axis. Groups never aggregate/subtotal/create
+series/axes/legends/facts, reorder/filter, or alter pitch/values/domains/formats.
+Renderer owns the existing line+label chrome (under-plot omit/`below`; over-plot
+`above`; mixed pads both sides) while preserving individual category ownership;
+no other authored visual controls (no braces, dashed boxes, coordinates, fills).
+Labels share category tick plan, may wrap two lines or use short label
 only after full fails, with gutter/whitespace adjustment, never invented/
 ellipsized/partially suppressed or shortened for larger type. D69 plans groups
 before geometry. Identical sibling IDs+memberships synchronize centers/spans/type;
@@ -4667,7 +4673,7 @@ outrank the archived v10 handoff.
 | 21 | `chart_hero_dual` | Left stacked-bar/secondary-line combo `Capital Return & Common Shares Outstanding`, authored stack totals, ROE outlined support; right driver card heading `Capital Summary` with 58%, 74%, 10.5%, and 10–11% facts; regulatory notes in disclosure. `Capital Summary` is new neutral structural wording required by D170—not source-derived—and becomes explicitly authored only through final approval of this candidate. |
 | 22 | `metric_overview` | `Full-Year 2026 Guidance`: revenue-growth 9–10% and EPS $17.30–$17.90 ranges plus exact qualification detail; no inferred midpoint/status/tone. |
 | 23 | `section_divider` | Payload only references `appendix`; visible wording derives from registry. |
-| 24 | `single_chart` | Six customer-type growth bars, three explicit category groups, boxed-label `% of Total Network Volumes` series (not `outlined_support`; long stub overflows the role floor), and `$486B Total Network Volumes` annotation. |
+| 24 | `single_chart` | Six customer-type growth bars, two `placement: above` category groups, outlined `% of Total Network Volumes` share row, and `$486B Total Network Volumes` annotation. |
 | 25 | `data_table` | Currency exposure table with share and signed YoY currency change; unavailable value is missing; both FX notes disclosed. |
 | 26 | `data_table` | Correct source orientation: columns Restaurants/Lodging/Airlines/Other/Total T&E; rows YoY Growth and % of Total Billed Business. |
 | 27 | `dual_chart` | Unemployment and GDP line panes, three stable scenario identities each, Q1'25–Q1'28, percent-1 including negatives, exact scenario/SAAR disclosure. |

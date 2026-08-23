@@ -1176,6 +1176,7 @@ def _paint_outlined_support(
     px = sp.role_sizes.get("table") or sp.role_sizes.get("label")
     attrs = _plan_attrs(sp, events_by_surface)
     label = paint["label"]
+    label_full = paint.get("label_full") or label
     lane_w = int(paint["label_lane_w"])
     centers = list(paint["centers"])
     values = list(paint["values"])
@@ -1195,9 +1196,14 @@ def _paint_outlined_support(
         f'data-outlined-support="{_escape(support.table.surface_id)}" '
         f'style="{geom}">'
     ]
+    hidden = (
+        f'<span class="sr-only">{_escape(label_full)}</span>'
+        if label_full != label
+        else ""
+    )
     out.append(
         f'<p class="outlined-support-label" style="width:{lane_w}px">'
-        f"{_soft_break_html(label)}</p>"
+        f"{_soft_break_html(label)}{hidden}</p>"
     )
     for i, val in enumerate(values):
         cx = float(centers[i]["x"]) + offset

@@ -3961,7 +3961,8 @@
             "categories": [
               {
                 "category_id": "u-s-consumer-services",
-                "label": "U.S. Consumer Services"
+                "label": "U.S. Consumer Services",
+                "short_label": "U.S. Consumer"
               },
               {
                 "category_id": "u-s-sme",
@@ -3969,7 +3970,8 @@
               },
               {
                 "category_id": "u-s-large-global-corp",
-                "label": "U.S. Large & Global Corp."
+                "label": "U.S. Large & Global Corp.",
+                "short_label": "U.S. Large & Global"
               },
               {
                 "category_id": "int-l-consumer",
@@ -3977,7 +3979,8 @@
               },
               {
                 "category_id": "int-l-sme-large-corp",
-                "label": "Int'l SME & Large Corp."
+                "label": "Int'l SME & Large Corp.",
+                "short_label": "Int'l SME & Large"
               },
               {
                 "category_id": "processed-volumes",
@@ -4019,19 +4022,13 @@
           },
           "category_groups": [
             {
-              "group_id": "us-consumer-services",
-              "label": "U.S. Consumer Services",
-              "category_ids": [
-                "u-s-consumer-services"
-              ]
-            },
-            {
               "group_id": "commercial-services",
               "label": "Commercial Services",
               "category_ids": [
                 "u-s-sme",
                 "u-s-large-global-corp"
-              ]
+              ],
+              "placement": "above"
             },
             {
               "group_id": "international-card-services",
@@ -4039,7 +4036,8 @@
               "category_ids": [
                 "int-l-consumer",
                 "int-l-sme-large-corp"
-              ]
+              ],
+              "placement": "above"
             }
           ],
           "annotations": [
@@ -4051,24 +4049,81 @@
                 "type": "chart"
               }
             }
-          ],
-          "auxiliary_series": [
-            {
-              "auxiliary_id": "s24-share",
-              "role": "boxed_label",
-              "label": "% of Total Network Volumes",
-              "format_id": "pct_0",
-              "target_series_id": "yoy-growth",
-              "values": [
-                "37",
-                "22",
-                "5",
-                "15",
-                "8",
-                "12"
-              ]
-            }
           ]
+        },
+        "support": {
+          "support_type": "outlined_support",
+          "table": {
+            "surface_id": "s24-share",
+            "stub_header": {
+              "label": "% of Total Network Volumes",
+              "short_label": "% of Total"
+            },
+            "columns": [
+              {
+                "column_id": "u-s-consumer-services",
+                "label": "U.S. Consumer Services"
+              },
+              {
+                "column_id": "u-s-sme",
+                "label": "U.S. SME"
+              },
+              {
+                "column_id": "u-s-large-global-corp",
+                "label": "U.S. Large & Global Corp."
+              },
+              {
+                "column_id": "int-l-consumer",
+                "label": "Int'l Consumer"
+              },
+              {
+                "column_id": "int-l-sme-large-corp",
+                "label": "Int'l SME & Large Corp."
+              },
+              {
+                "column_id": "processed-volumes",
+                "label": "Processed Volumes"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "of-total-network-volumes",
+                "label": "% of Total Network Volumes",
+                "cells": {
+                  "u-s-consumer-services": {
+                    "type": "number",
+                    "value": "37",
+                    "format_id": "pct_0"
+                  },
+                  "u-s-sme": {
+                    "type": "number",
+                    "value": "22",
+                    "format_id": "pct_0"
+                  },
+                  "u-s-large-global-corp": {
+                    "type": "number",
+                    "value": "5",
+                    "format_id": "pct_0"
+                  },
+                  "int-l-consumer": {
+                    "type": "number",
+                    "value": "15",
+                    "format_id": "pct_0"
+                  },
+                  "int-l-sme-large-corp": {
+                    "type": "number",
+                    "value": "8",
+                    "format_id": "pct_0"
+                  },
+                  "processed-volumes": {
+                    "type": "number",
+                    "value": "12",
+                    "format_id": "pct_0"
+                  }
+                }
+              }
+            ]
+          }
         }
       },
       "evidence_ids": [

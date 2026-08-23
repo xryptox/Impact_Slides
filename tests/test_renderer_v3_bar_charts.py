@@ -220,6 +220,35 @@ def test_line_fixed_domain_break_with_tick_at_to_validates():
     assert validate_handoff(raw, strict=True).ok
 
 
+def test_placement_above_freezes_group_y_over_plot():
+    """#254: placement above sits in pad_t; omitted groups stay below."""
+    raw = _g()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["category_groups"][0]["placement"] = "above"
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["seg-growth"].chart_paint
+    g = cp["geometry"]
+    plot_top = g["pad_t"]
+    plot_bot = g["pad_t"] + g["plot_h"]
+    by_id = {grp["group_id"]: grp for grp in cp["category_groups"]}
+    assert by_id["core"]["y1"] < plot_top
+    assert by_id["core"]["y2"] < plot_top
+    assert by_id["other"]["y1"] > plot_bot
+    assert by_id["other"]["y2"] > plot_bot
+    assert "placement" not in vis["category_groups"][1]
+    svg = paint_chart_svg(cp)
+    core = re.search(
+        r'data-group-id="core"[^>]*>.*?<line[^>]*y1="([0-9.]+)"',
+        svg,
+    )
+    other = re.search(
+        r'data-group-id="other"[^>]*>.*?<line[^>]*y1="([0-9.]+)"',
+        svg,
+    )
+    assert core and float(core.group(1)) < plot_top
+    assert other and float(other.group(1)) > plot_bot
+
+
 def test_strict_rejects_overlapping_category_groups():
     raw = _g()
     vis = _chart_slide(raw)["payload"]["chart"]

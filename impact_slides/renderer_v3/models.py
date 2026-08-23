@@ -1358,6 +1358,7 @@ class CategoryGroup(ClosedModel):
     label: NonEmptyStr
     category_ids: list[SemanticId] = Field(min_length=1)
     short_label: Optional[NonEmptyStr] = None
+    placement: Optional[Literal["above", "below"]] = None
 
 
 class BoxedLabelAuxiliary(ClosedModel):

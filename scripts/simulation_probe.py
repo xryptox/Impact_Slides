@@ -591,7 +591,7 @@ DESIGN_LEDGER_FURNITURE: dict[int, tuple[dict[str, str], ...]] = {
             "selector": "[data-annotation-id]",
             "expected_text": "$486B Total Network Volumes",
         },
-        {"selector": ".boxed-label", "expected_text": "37%"},
+        {"selector": ".outlined-support", "expected_text": "% of Total Network Volumes"},
     ),
     28: (
         {"selector": "[data-annotation-id]", "expected_text": "92% FDIC"},
