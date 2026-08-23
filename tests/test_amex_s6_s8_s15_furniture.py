@@ -1,7 +1,8 @@
-"""#227/#248/#260 — s6/s8/s15 furniture plus palette, KPI floor, Refresh, 10x.
+"""#227/#248/#259/#260 — s6/s8/s15 furniture plus palette, KPI floor, Refresh, 10x, s6 titles.
 
 Pins the live D314 corpus (not renderer defaults):
-- s6 left chart: PDF elbow + Q3'25 Refresh chip
+- s6 left chart: PDF elbow + Q3'25 Refresh chip + prior-year pane subtitle
+- s6 right chart: Anniversary Month + retention-rate axis titles
 - s8: metric_strip 3,400+ / 300+ / $600 / $550 at >=40px; FHR+THC=primary_blue; 10x callout
 - s15: reserve-rate Q2–Q4 = 2.9%; write-offs=primary_blue; reserve=sky_blue;
   authored totals plus display.stack_segments == show
@@ -28,6 +29,11 @@ FIXTURE = (
 
 ELBOW = "+ ~6 percentage points"
 REFRESH = "Refresh"
+S6_LEFT_SUB = "% Increase/(decrease) vs. Prior year"
+S6_CAT_TITLE = "Anniversary Month"
+S6_VAL_TITLE = (
+    "Account Retention Rate for Card Members in Renewal Anniversary Month"
+)
 TENX = "10x"
 CATS = ["q1-25", "q2-25", "q3-25", "q4-25", "q1-26"]
 S8_VALUES = ("3,400+", "300+", "$600", "$550")
@@ -74,7 +80,21 @@ def test_corpus_payloads_carry_s6_s8_s15_furniture() -> None:
     refresh = next(a for a in anns if a["text"] == REFRESH)
     assert refresh["role"] == "event"
     assert refresh["anchor"] == {"type": "category", "category_id": "q3-25"}
-    assert "annotations" not in s6["payload"]["charts"][1]
+    assert left["subtitle"] == S6_LEFT_SUB
+    right = s6["payload"]["charts"][1]
+    assert "annotations" not in right
+    assert right["heading"] == "Retention Rates Remain High and Very Stable"
+    assert right["category_axis"]["title"] == S6_CAT_TITLE
+    assert right["value_axes"]["primary"]["title"] == S6_VAL_TITLE
+    assert right["value_axes"]["primary"]["leading_break"] == {"to": "90"}
+    assert right["value_axes"]["primary"]["domain"]["min"] == "90"
+    assert right["value_axes"]["primary"]["domain"]["max"] == "100"
+    for n in (14, 17, 27, 28):
+        blob = json.dumps(_slide(handoff, n))
+        assert S6_CAT_TITLE not in blob
+        assert S6_VAL_TITLE not in blob
+        # s17 slide subtitle includes this phrase inside a longer string (#258).
+        assert json.dumps(S6_LEFT_SUB) not in blob
 
     s8 = _slide(handoff, 8)
     chart8 = s8["payload"]["chart"]
@@ -133,6 +153,14 @@ def test_strict_render_shows_s6_s8_s15_furniture(tmp_path: Path) -> None:
     assert ELBOW in s6
     assert REFRESH in s6
     assert 'data-annotation-id="' in s6
+    assert S6_LEFT_SUB in s6
+    assert 'chart-pane-subtitle' in s6
+    assert S6_VAL_TITLE in s6
+    assert re.search(
+        r'transform="rotate\(-90 18 [0-9.]+\)"[^>]*>'
+        + re.escape(S6_CAT_TITLE),
+        s6,
+    )
 
     s8 = _section(html, 8)
     cfg8 = json.loads(re.search(r'id="cfg-s8-lodging">(.*?)</script>', s8, re.S).group(1))
@@ -276,3 +304,23 @@ def test_mutation_dropping_s15_stack_segments_omits_segment_labels(
     assert 'data-kind="segment"' not in s15
     tots = re.findall(r'data-kind="stack_total">([^<]*)</text>', s15)
     assert tots[:5] == ["$1,150", "$1,405", "$1,287", "$1,414", "$1,251"]
+
+
+def test_mutation_dropping_s6_axis_title_omits_anniversary_month(
+    tmp_path: Path,
+) -> None:
+    """Renderer does not invent Anniversary Month; corpus must carry it."""
+    handoff = _load()
+    _slide(handoff, 6)["payload"]["charts"][1]["category_axis"].pop("title", None)
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    s6 = _section((out / "presentation.html").read_text(encoding="utf-8"), 6)
+    assert not re.search(
+        r'transform="rotate\(-90 18 [0-9.]+\)"[^>]*>'
+        + re.escape(S6_CAT_TITLE),
+        s6,
+    )
+    assert S6_VAL_TITLE in s6
+    assert S6_LEFT_SUB in s6
