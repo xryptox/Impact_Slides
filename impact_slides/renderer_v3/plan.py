@@ -56,8 +56,8 @@ COVER_TITLE_PX: Final = 72
 COVER_META_PX: Final = 22
 DIVIDER_TITLE_PX: Final = 56
 DIVIDER_META_PX: Final = 22
-LEGAL_TITLE_PX: Final = 28
-LEGAL_BODY_PX: Final = 16
+LEGAL_TITLE_PX: Final = 56
+LEGAL_BODY_PX: Final = 21
 TAKEAWAY_LABEL_PX: Final = 14
 DISCLOSURE_PX: Final = 14
 SOURCE_FOOTER_PX: Final = 14
@@ -620,9 +620,8 @@ def _collect_surfaces(
         if lt == "legal_notice":
             region += 1
             p = slide.payload
-            # Fixed legal typography (D182/D226/D271): part 1 title; later — continued.
-            heading = p.title if p.part == 1 else "— continued"
-            assert heading is not None
+            # Fixed legal typography (D182/D226/D271): every part paints the part-1 title.
+            heading = _legal_notice_title(slide, deck.slides)
             legal_items: list[tuple[str, str]] = [(heading, "title")]
             for para in p.paragraphs:
                 legal_items.append((para, "body"))
@@ -4021,6 +4020,25 @@ def _legal_list_item(text: str) -> tuple[int, str] | None:
         if stripped.startswith(marker):
             return indent // 2, stripped[len(marker) :]
     return None
+
+
+def _legal_notice_title(slide: Any, slides: Any) -> str:
+    """Part-1 authored title for every part of the same notice_id (#257)."""
+    payload = slide.payload
+    if payload.title:
+        return payload.title
+    nid = payload.notice_id
+    for other in slides:
+        other_p = getattr(other, "payload", None)
+        if (
+            getattr(other, "layout_type", None) == "legal_notice"
+            and other_p is not None
+            and other_p.notice_id == nid
+            and other_p.part == 1
+            and other_p.title
+        ):
+            return other_p.title
+    raise AssertionError(f"legal_notice {nid!r} missing part-1 title")
 
 
 def _legal_body_blocks(

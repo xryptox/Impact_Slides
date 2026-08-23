@@ -145,13 +145,22 @@ def test_strict_render_chartjs_and_svg_clean(tmp_path: Path, handoff: dict) -> N
     assert s32_vis.count("Q1'26 Reported") >= 2
     assert s32_vis.count("FX-Adj.*") >= 2
     assert "Q\u2026" not in s32_vis and "F\u2026" not in s32_vis
+    from impact_slides.renderer_v3.plan import LEGAL_BODY_PX, LEGAL_TITLE_PX
+
     by_n = {s["slide_number"]: s for s in json.loads(FIXTURE.read_text(encoding="utf-8"))["slides"]}
+    part1_title = by_n[38]["payload"]["title"]
+    assert part1_title == "Cautionary Note Regarding Forward-Looking Statements"
+    assert "\u2014 continued" not in html and "— continued" not in html
     for n in range(38, 44):
         chunk = html.split(f'id="slide-{n}"', 1)[1].split("<section", 1)[0]
+        heading = chunk.split("<h1", 1)[1].split("</h1>", 1)[0]
+        assert f"font-size:{LEGAL_TITLE_PX}px" in heading
+        assert unescape(heading).replace("<wbr>", "").endswith(part1_title)
         body = chunk.split('legal-body">', 1)[1].split("</div>", 1)[0]
         paras = by_n[n]["payload"]["paragraphs"]
         assert body.count("<ul") == len(paras)
         assert body.count("<li") == len(paras)
+        assert f"font-size:{LEGAL_BODY_PX}px" in body
         assert "<p" not in body
 
     # SVG-only via public CLI flag path used by publication options.

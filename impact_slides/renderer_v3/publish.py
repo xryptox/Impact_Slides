@@ -19,7 +19,7 @@ from .diagnostics import (
     sort_events,
 )
 from .models import Deck
-from .plan import DeckPlan, _legal_body_blocks
+from .plan import DeckPlan, _legal_body_blocks, _legal_notice_title
 from .schema_export import schema_path
 from .theme import THEME_ID, generate_theme_css
 
@@ -123,7 +123,7 @@ def build_presentation_html(
             ".section-divider h1{font-size:var(--text-title);margin:0}",
             ".section-divider .divider-rule{height:4px;width:120px;background:var(--color-band);margin:var(--space-md) 0 0}",
             ".legal-notice{height:100%;overflow:visible}",
-            ".legal-notice h1,.legal-notice .legal-continued{margin:0 0 var(--space-md);font-weight:var(--font-weight-title)}",
+            ".legal-notice h1{margin:0 0 var(--space-md);font-weight:var(--font-weight-title)}",
             ".legal-notice .legal-body p{margin:0 0 var(--space-sm);white-space:pre-wrap}",
             ".legal-notice .legal-body ul{margin:0 0 var(--space-sm);padding:0}",
             ".legal-notice .legal-body ul ul{margin:0}",
@@ -391,6 +391,7 @@ def build_presentation_html(
                 events_by_surface,
                 deck.evidence_registry,
                 sections=deck.sections,
+                slides=deck.slides,
                 svg_only=svg_only,
                 number_formats=deck.number_formats,
             )
@@ -662,6 +663,7 @@ def _paint_slide_body(
     events_by_surface: dict[str, list[DiagnosticEvent]] | None = None,
     evidence_registry: dict[str, Any] | None = None,
     sections: list[Any] | None = None,
+    slides: list[Any] | None = None,
     *,
     svg_only: bool = False,
     number_formats: dict[str, Any] | None = None,
@@ -669,6 +671,7 @@ def _paint_slide_body(
     events_by_surface = events_by_surface or {}
     evidence_registry = evidence_registry or {}
     sections = sections or []
+    slides = slides or []
     lt = slide.layout_type
     out: list[str] = []
     sn = slide.slide_number
@@ -734,17 +737,10 @@ def _paint_slide_body(
             f'data-notice-id="{_escape(p.notice_id)}" data-part="{p.part}" '
             f'data-total-parts="{p.total_parts}">'
         )
-        if p.part == 1:
-            out.append(
-                f"<h1{_style_font(title_px)}>{_soft_break_html(p.title or '')}</h1>"
-            )
-        else:
-            # Renderer-owned continuation; no authored (cont.) title (D226/D271).
-            out.append(
-                f'<p class="legal-continued"{_style_font(title_px)} '
-                f'aria-label="Part {p.part} of {p.total_parts}, continued">'
-                f"{_soft_break_html('— continued')}</p>"
-            )
+        heading = _legal_notice_title(slide, slides)
+        out.append(
+            f"<h1{_style_font(title_px)}>{_soft_break_html(heading)}</h1>"
+        )
         out.append('<div class="legal-body">')
         out.extend(_paint_legal_body(p.paragraphs, body_px))
         out.append("</div>")

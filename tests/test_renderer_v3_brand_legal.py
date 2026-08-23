@@ -9,7 +9,6 @@ Covers D178–D182, D215, D223, D225–D226, D268–D271, D287:
 from __future__ import annotations
 
 import json
-import math
 import re
 from copy import deepcopy
 from html.parser import HTMLParser
@@ -22,7 +21,12 @@ from impact_slides.renderer_v3.models import (
     LegalNoticeSlide,
     SectionDividerSlide,
 )
-from impact_slides.renderer_v3.plan import LEGAL_BODY_PX, LIST_INDENT_EM, plan_deck
+from impact_slides.renderer_v3.plan import (
+    LEGAL_BODY_PX,
+    LEGAL_TITLE_PX,
+    LIST_INDENT_EM,
+    plan_deck,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/brand_divider_legal.json"
@@ -41,7 +45,7 @@ _BRAND_SELECTOR_RULES = [
     ".cover .subtitle,.cover .period,.cover .date",
     ".section-divider .divider-meta",
     ".section-divider .divider-rule",
-    ".legal-notice h1,.legal-notice .legal-continued",
+    ".legal-notice h1",
     ".legal-notice .legal-body p",
     ".legal-notice .legal-body li",
     ".legal-notice .legal-part",
@@ -137,7 +141,8 @@ def test_plan_emits_divider_and_legal_surfaces():
     assert "slide-2-divider" in by
     assert by["slide-2-divider"].role_sizes["title"] == 56
     assert "slide-5-legal" in by
-    assert by["slide-5-legal"].role_sizes["body"] == 16
+    assert by["slide-5-legal"].role_sizes["title"] == LEGAL_TITLE_PX
+    assert by["slide-5-legal"].role_sizes["body"] == LEGAL_BODY_PX
     assert "slide-6-legal" in by
     assert "slide-7-cover" in by
 
@@ -167,7 +172,8 @@ def test_publish_paints_registry_label_and_legal_continuation(tmp_path: Path):
     assert "Legal" in html
     assert "Section 2" in html
     assert "Important disclosures" in html
-    assert "— continued" in html
+    assert html.count("Important disclosures") >= 2
+    assert "\u2014 continued" not in html and "— continued" not in html
     assert "This material is for informational purposes only" in html
     assert "Recipients may not redistribute without prior written consent." in html
     assert 'data-notice-id="disclaimer"' in html
@@ -181,6 +187,21 @@ def test_publish_paints_registry_label_and_legal_continuation(tmp_path: Path):
     assert "— continued" in notes
     assert "Overview" in notes  # divider notes heading uses registry label
     assert "Read the full notice aloud if asked." in notes
+
+
+def test_legal_type_scale_is_largest_strict_pair():
+    """#257: one fixed pair, largest that still strict-fits all six Amex parts."""
+    assert (LEGAL_TITLE_PX, LEGAL_BODY_PX) == (56, 21)
+    from impact_slides.renderer_v3 import plan as plan_mod
+
+    amex = ROOT / "tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json"
+    deck = validate_handoff(json.loads(amex.read_text(encoding="utf-8")), strict=True).deck
+    plan_mod.LEGAL_BODY_PX = LEGAL_BODY_PX + 1
+    try:
+        with pytest.raises(RendererValidationError):
+            plan_deck(deck, strict=True)
+    finally:
+        plan_mod.LEGAL_BODY_PX = LEGAL_BODY_PX
 
 
 # ---------------------------------------------------------------------------
@@ -384,7 +405,6 @@ def test_legal_notice_skipped_nest_wraps_lists(tmp_path: Path):
 )
 def test_legal_wrapper_li_indent_matches_planned_em(paragraphs, tmp_path: Path):
     """#238: wrapper <li>s resolve 1.25em at LEGAL_BODY_PX, not --text-body."""
-    assert math.ceil(LEGAL_BODY_PX * LIST_INDENT_EM) == 20
     raw = _brand()
     raw["slides"][4]["payload"]["paragraphs"] = paragraphs
     path = tmp_path / "handoff.json"
