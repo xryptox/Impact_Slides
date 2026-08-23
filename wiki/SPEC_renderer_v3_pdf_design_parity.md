@@ -112,8 +112,9 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 
 | slide | missing payload | construct | acceptance probe |
 |------:|-----------------|-----------|------------------|
-| 4, 5, 9, 10, 11, 19 | Leap-Year callout; bottom support table; s4/s19 series identity; PDF ticks | `annotations` + `support_table` + authored ticks | DOM: callout text + support rows; Chart.js series/ticks |
+| 4, 5, 9, 10, 19 | Leap-Year callout; bottom support table; s4/s19 series identity; PDF ticks | `annotations` + `support_table` + authored ticks | DOM: callout text + support rows; Chart.js series/ticks |
 | 5, 9, 10 | generation / segment supports + G&S/T&E side facts | `support_table` + `context_labels` | DOM: KPI values + YoY facts present |
+| 11 | Leap-Year callout + PDF ticks (no support table / no side pair) | `annotations` + authored ticks | DOM: callout text; Chart.js ticks |
 | 8 | FHR+THC Q3-flat then Q4 step | authored series values | Chart.js FHR data 40/40/40/50/50 |
 | 38 | PDF legal preamble then two risk bullets | first unmarked paragraph + marked lists | DOM: `<p>` then two `<ul>`s |
 | 17 | shipped #229/#258 | see D314 worksheet; dated pane headings + subtitle | `tests/test_amex_s17_s18_furniture.py` |
