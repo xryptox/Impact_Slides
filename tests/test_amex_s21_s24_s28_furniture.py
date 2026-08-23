@@ -1,9 +1,10 @@
-"""#230 — restore s21 shares line + ROE, s24 braces + $486B, s28 FDIC.
+"""#230/#260 — restore s21 shares line + ROE, s24 braces + $486B, s28 FDIC.
 
 Pins the live D314 corpus (not renderer defaults):
 - s21 stacked combo: Common Shares Outstanding 702→682 + ROE 35/34/36/36/34/35
+  plus display.stack_segments == show
 - s24 six growth bars, group braces, $486B callout, %-of-total boxes
-- s28 FDIC callout + on-stack % and $ totals
+- s28 FDIC callout + on-stack % and $ totals (already stack_segments show)
 - renderer does not invent the furniture
 - strict render of the canonical corpus stays clean
 """
@@ -105,6 +106,8 @@ def test_corpus_payloads_carry_s21_s24_s28_furniture() -> None:
     aux = chart["auxiliary_series"][0]
     assert aux["role"] == "authored_stack_total"
     assert aux["values"] == S21_TOTALS
+    assert chart["display"]["series_identity"] == "legend"
+    assert chart["display"]["stack_segments"] == "show"
     roe = s21["payload"]["support"]
     assert roe["support_type"] == "outlined_support"
     assert roe["table"]["stub_header"]["label"] == "ROE"
@@ -204,6 +207,10 @@ def test_strict_render_shows_s21_s24_s28_furniture(tmp_path: Path) -> None:
     assert len(line_ds) == 1
     assert line_ds[0]["data"] == [702.0, 701.0, 696.0, 689.0, 686.0, 682.0]
     assert line_ds[0]["yAxisID"] == "y1"
+    segs = re.findall(r'data-placement="segment">([^<]*)</text>', s21)
+    assert "$0.5" in segs and "$1.1" in segs
+    tots = re.findall(r'data-placement="stack-total">([^<]*)</text>', s21)
+    assert tots[:6] == ["$1.6", "$1.3", "$2.0", "$2.9", "$1.5", "$2.3"]
 
     s24 = unescape(_section(html, 24)).replace("<wbr>", "")
     assert "category-group" in s24
@@ -250,6 +257,22 @@ def test_mutation_dropping_s21_line_and_roe_omits_furniture(tmp_path: Path) -> N
     assert 'data-chart-type="combo"' not in s21
     assert "34%" not in s21
     assert "36%" not in s21
+
+
+def test_mutation_dropping_s21_stack_segments_omits_segment_labels(
+    tmp_path: Path,
+) -> None:
+    """Renderer does not invent s21 segment dollars; corpus must opt in."""
+    handoff = _load()
+    _slide(handoff, 21)["payload"]["chart"]["display"].pop("stack_segments", None)
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    s21 = unescape(_section((out / "presentation.html").read_text(encoding="utf-8"), 21))
+    assert 'data-placement="segment"' not in s21
+    tots = re.findall(r'data-placement="stack-total">([^<]*)</text>', s21)
+    assert tots[:6] == ["$1.6", "$1.3", "$2.0", "$2.9", "$1.5", "$2.3"]
 
 
 def test_mutation_dropping_s24_braces_and_boxes_omits_furniture(tmp_path: Path) -> None:

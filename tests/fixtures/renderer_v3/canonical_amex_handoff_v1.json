@@ -2123,7 +2123,8 @@
             }
           },
           "display": {
-            "series_identity": "legend"
+            "series_identity": "legend",
+            "stack_segments": "show"
           },
           "heading": "Proprietary New Cards Acquired",
           "auxiliary_series": [
@@ -2510,7 +2511,8 @@
             }
           },
           "display": {
-            "series_identity": "legend"
+            "series_identity": "legend",
+            "stack_segments": "show"
           },
           "auxiliary_series": [
             {
@@ -3621,7 +3623,8 @@
             }
           },
           "display": {
-            "series_identity": "legend"
+            "series_identity": "legend",
+            "stack_segments": "show"
           },
           "auxiliary_series": [
             {

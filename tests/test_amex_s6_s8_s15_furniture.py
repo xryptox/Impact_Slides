@@ -1,9 +1,10 @@
-"""#227/#248 — s6/s8/s15 furniture plus palette, KPI floor, Refresh, 10x.
+"""#227/#248/#260 — s6/s8/s15 furniture plus palette, KPI floor, Refresh, 10x.
 
 Pins the live D314 corpus (not renderer defaults):
 - s6 left chart: PDF elbow + Q3'25 Refresh chip
 - s8: metric_strip 3,400+ / 300+ / $600 / $550 at >=40px; FHR+THC=primary_blue; 10x callout
-- s15: reserve-rate Q2–Q4 = 2.9%; write-offs=sky_blue; reserve=primary_blue
+- s15: reserve-rate Q2–Q4 = 2.9%; write-offs=primary_blue; reserve=sky_blue;
+  authored totals plus display.stack_segments == show
 - DOM on those sections shows the furniture; renderer does not invent it
 - strict render of the canonical corpus stays clean
 """
@@ -110,6 +111,8 @@ def test_corpus_payloads_carry_s6_s8_s15_furniture() -> None:
     s15_series = {s["name"]: s for s in s15["payload"]["chart"]["chart_data"]["series"]}
     assert s15_series["Write-offs"]["color"] == "primary_blue"
     assert s15_series["Reserve Build/(Release)"]["color"] == "sky_blue"
+    assert s15["payload"]["chart"]["display"]["series_identity"] == "legend"
+    assert s15["payload"]["chart"]["display"]["stack_segments"] == "show"
 
 
 def test_strict_render_shows_s6_s8_s15_furniture(tmp_path: Path) -> None:
@@ -151,6 +154,10 @@ def test_strict_render_shows_s6_s8_s15_furniture(tmp_path: Path) -> None:
     assert s15_vis.count("2.9%") >= 4
     assert "$1,150" in s15 and "$1,251" in s15
     assert SKY in s15.lower()
+    segs = re.findall(r'data-kind="segment">([^<]*)</text>', s15)
+    assert "$1,223" in segs and "$222" in segs
+    tots = re.findall(r'data-kind="stack_total">([^<]*)</text>', s15)
+    assert tots[:5] == ["$1,150", "$1,405", "$1,287", "$1,414", "$1,251"]
 
     result = validate_handoff(_load(), strict=True)
     plan = plan_deck(result.deck, strict=True)
@@ -245,3 +252,19 @@ def test_mutation_dropping_s15_support_omits_reserve_row(tmp_path: Path) -> None
     s15 = _section((out / "presentation.html").read_text(encoding="utf-8"), 15)
     assert "outlined-support" not in s15
     assert S15_LABEL not in s15
+
+
+def test_mutation_dropping_s15_stack_segments_omits_segment_labels(
+    tmp_path: Path,
+) -> None:
+    """Renderer does not invent s15 segment dollars; corpus must opt in."""
+    handoff = _load()
+    _slide(handoff, 15)["payload"]["chart"]["display"].pop("stack_segments", None)
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    s15 = _section((out / "presentation.html").read_text(encoding="utf-8"), 15)
+    assert 'data-kind="segment"' not in s15
+    tots = re.findall(r'data-kind="stack_total">([^<]*)</text>', s15)
+    assert tots[:5] == ["$1,150", "$1,405", "$1,287", "$1,414", "$1,251"]

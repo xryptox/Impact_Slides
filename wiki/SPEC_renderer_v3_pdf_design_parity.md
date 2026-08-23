@@ -74,6 +74,7 @@ Every PDF furniture element must map to an existing schema-v1 construct — new 
 | under-bar YoY boxes | boxed-label `auxiliary_series` |
 | braces / group labels (s24) | `category_groups` |
 | line overlay on bars (s21 shares) | combo `mark_type: line` series |
+| on-stack segment dollars / values (s12 / s15 / s21 / s28) | `display.stack_segments: "show"` (#260; s28 already authored) |
 | CAGR rules | `measurements` |
 
 ### DP-3 Domain policy (R-A)
@@ -115,7 +116,9 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 | 5, 9, 10 | generation / segment supports | `support_table` | DOM: KPI values present |
 | 17 | shipped #229/#258 | see D314 worksheet; dated pane headings + subtitle | `tests/test_amex_s17_s18_furniture.py` |
 | 18 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
-| 21 | shipped #230 | combo line + `outlined_support` values | `tests/test_amex_s21_s24_s28_furniture.py` |
+| 12 | shipped #228 / #260 | 3-band NCA stack + `stack_segments: show` | `tests/test_amex_s12_nca_stack.py` |
+| 15 | shipped #227 / #260 | reserve-rate row + authored totals + `stack_segments: show` | `tests/test_amex_s6_s8_s15_furniture.py` |
+| 21 | shipped #230 / #260 | combo line + `outlined_support` values + `stack_segments: show` | `tests/test_amex_s21_s24_s28_furniture.py` |
 | 24 | shipped #230 | `category_groups` + `$486B` annotation + boxed %-of-total | `tests/test_amex_s21_s24_s28_furniture.py` |
 | 28 | shipped #230 | `annotations` + authored $ totals + on-stack % | `tests/test_amex_s21_s24_s28_furniture.py` |
 
