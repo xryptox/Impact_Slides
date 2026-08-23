@@ -2863,9 +2863,9 @@
             },
             "display": {
               "ordinary_values": "show",
-              "series_identity": "auto"
+              "series_identity": "pane_title"
             },
-            "heading": "Net Card Fees",
+            "heading": "Net Card Fees (Q1: 2019-2026)",
             "measurements": [
               {
                 "measurement_id": "s17-ncf-cagr",
@@ -2956,15 +2956,18 @@
             },
             "display": {
               "ordinary_values": "show",
-              "series_identity": "auto"
+              "series_identity": "pane_title"
             },
-            "heading": "FX-adjusted YoY"
+            "heading": "Net Card Fees YoY% (Q1'24-Q1'26)"
           }
         ]
       },
       "evidence_ids": [
         "amex-q1-2026-p17"
       ],
+      "content": {
+        "subtitle": "$ in billions - % Increase/(decrease) vs. Prior year & CAGR (FX-adjusted)"
+      },
       "disclosure": {
         "sections": [
           {

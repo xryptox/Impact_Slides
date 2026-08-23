@@ -113,7 +113,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 |------:|-----------------|-----------|------------------|
 | 4, 5, 9, 10, 19 | Leap-Year callout; bottom support table | `annotations` + `support_table` | DOM: callout text + support rows |
 | 5, 9, 10 | generation / segment supports | `support_table` | DOM: KPI values present |
-| 17 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
+| 17 | shipped #229/#258 | see D314 worksheet; dated pane headings + subtitle | `tests/test_amex_s17_s18_furniture.py` |
 | 18 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
 | 21 | shipped #230 | combo line + `outlined_support` values | `tests/test_amex_s21_s24_s28_furniture.py` |
 | 24 | shipped #230 | `category_groups` + `$486B` annotation + boxed %-of-total | `tests/test_amex_s21_s24_s28_furniture.py` |

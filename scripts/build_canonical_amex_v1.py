@@ -7,6 +7,7 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15;
 #229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows;
+#258: s17 dated pane headings + slide subtitle + pane_title identity;
 #230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals;
 #248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
@@ -1408,7 +1409,7 @@ def build() -> dict:
             "s17-ncf",
             labs17,
             [("Net Card Fees", vals17, "navy")],
-            heading="Net Card Fees",
+            heading="Net Card Fees (Q1: 2019-2026)",
             fmt="usd_1",
         )
     else:
@@ -1420,7 +1421,7 @@ def build() -> dict:
                 "s17-ncf",
                 labs17,
                 [("Net Card Fees", vals17, "navy")],
-                heading="Net Card Fees",
+                heading="Net Card Fees (Q1: 2019-2026)",
                 fmt="usd_1",
             )
         else:
@@ -1428,7 +1429,7 @@ def build() -> dict:
                 "s17-ncf",
                 cats,
                 [("Net Card Fees", [10, 11, 12, 13, 14], "navy")],
-                heading="Net Card Fees",
+                heading="Net Card Fees (Q1: 2019-2026)",
                 fmt="usd_1",
             )
     cats17 = [c["category_id"] for c in pane_a["chart_data"]["categories"]]
@@ -1451,7 +1452,7 @@ def build() -> dict:
                 "s17-fx",
                 [r["label"] for r in st],
                 [("FX-adjusted YoY", [r.get("value") for r in st], "navy")],
-                heading="FX-adjusted YoY",
+                heading="Net Card Fees YoY% (Q1'24-Q1'26)",
                 fmt="pct_0",
             )
         else:
@@ -1459,7 +1460,7 @@ def build() -> dict:
                 "s17-fx",
                 cats[-3:],
                 [("FX-adjusted YoY", [12, 14, 15], "navy")],
-                heading="FX-adjusted YoY",
+                heading="Net Card Fees YoY% (Q1'24-Q1'26)",
                 fmt="pct_0",
             )
     else:
@@ -1467,9 +1468,11 @@ def build() -> dict:
             "s17-fx",
             ["Q1'24", "Q1'25", "Q1'26"],
             [("FX-adjusted YoY", [12, 14, 15], "navy")],
-            heading="FX-adjusted YoY",
+            heading="Net Card Fees YoY% (Q1'24-Q1'26)",
             fmt="pct_0",
         )
+    pane_a["display"]["series_identity"] = "pane_title"
+    pane_b["display"]["series_identity"] = "pane_title"
     slides.append(
         ordinary(
             17,
@@ -1477,6 +1480,10 @@ def build() -> dict:
             s17["title"],
             "earnings",
             {"charts": [pane_a, pane_b]},
+            subtitle=(
+                "$ in billions - % Increase/(decrease) vs. Prior year "
+                "& CAGR (FX-adjusted)"
+            ),
             disclosure=disclosure_from_text(
                 "s17-disc",
                 "Qualification",
