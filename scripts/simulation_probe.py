@@ -494,7 +494,15 @@ DESIGN_LEDGER_FURNITURE: dict[int, tuple[dict[str, str], ...]] = {
         },
         {"selector": ".support-table", "expected_text": "G&S"},
     ),
-    5: ({"selector": ".support-table", "expected_text": "Gen-Z"},),
+    5: (
+        {"selector": ".support-table", "expected_text": "Gen-Z"},
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+        },
+        {"selector": "[data-context-id=\"gs-yoy\"]", "expected_text": "9% YoY"},
+        {"selector": "[data-context-id=\"te-yoy\"]", "expected_text": "11% YoY"},
+    ),
     6: (
         {
             "selector": "[data-annotation-id]",
@@ -512,8 +520,30 @@ DESIGN_LEDGER_FURNITURE: dict[int, tuple[dict[str, str], ...]] = {
             "expected_text": "10x",
         },
     ),
-    9: ({"selector": ".support-table", "expected_text": "U.S. SME"},),
-    10: ({"selector": ".support-table", "expected_text": "Intl Consumer"},),
+    9: (
+        {"selector": ".support-table", "expected_text": "U.S. SME"},
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+        },
+        {"selector": "[data-context-id=\"gs-yoy\"]", "expected_text": "3% YoY"},
+        {"selector": "[data-context-id=\"te-yoy\"]", "expected_text": "6% YoY"},
+    ),
+    10: (
+        {"selector": ".support-table", "expected_text": "Intl Consumer"},
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+        },
+        {"selector": "[data-context-id=\"gs-yoy\"]", "expected_text": "14% YoY"},
+        {"selector": "[data-context-id=\"te-yoy\"]", "expected_text": "10% YoY"},
+    ),
+    11: (
+        {
+            "selector": "[data-annotation-id]",
+            "expected_text": "Leap Year Approx. (1%)",
+        },
+    ),
     12: (
         {
             "selector": '[data-chart-type="stacked_bar"]',

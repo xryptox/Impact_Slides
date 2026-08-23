@@ -10,7 +10,8 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #258: s17 dated pane headings + slide subtitle + pane_title identity;
 #230: s21 stacked combo shares line 702→682 + exact ROE row; s24 braces + $486B + %-of-total boxes; s28 FDIC callout + stack totals;
 #248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%;
-#260: s12/s15/s21 display.stack_segments show).
+#260: s12/s15/s21 display.stack_segments show;
+#255: s4/s19 series swap + s19 fixed 0–15; PDF ticks; s8 FHR step; s5/s9/s10/s11 Leap Year + s5/s9/s10 G&S/T&E facts; s38 preamble).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
 from __future__ import annotations
@@ -205,6 +206,25 @@ def matrix_table(
     }
 
 
+TICKS_0_15 = ["0", "5", "10", "15"]
+TICKS_0_25 = ["0", "5", "10", "15", "20", "25"]
+S38_PREAMBLE = (
+    "This presentation includes forward-looking statements within the meaning of "
+    "the Private Securities Litigation Reform Act of 1995, which are subject to "
+    "risks and uncertainties. The forward-looking statements, which address "
+    "American Express Company's current expectations regarding business and "
+    "financial performance, including management's guidance for 2026, among "
+    "other matters, contain words such as \"believe,\" \"expect,\" \"anticipate,\" "
+    "\"intend,\" \"plan,\" \"aim,\" \"will,\" \"may,\" \"should,\" \"could,\" \"would,\" "
+    "\"likely,\" \"continue\" and similar expressions. Readers are cautioned not "
+    "to place undue reliance on these forward-looking statements, which speak "
+    "only as of the date on which they are made. The company undertakes no "
+    "obligation to update or revise any forward-looking statements. Factors "
+    "that could cause actual results to differ materially from these "
+    "forward-looking statements, include, but are not limited to, the following:"
+)
+
+
 def leap_year_ann() -> list[dict]:
     return [
         {
@@ -238,6 +258,21 @@ def refresh_chip_ann() -> dict:
         "text": "Refresh",
         "anchor": {"type": "category", "category_id": "q3-25"},
     }
+
+
+def yoy_context(gs: str, te: str) -> list[dict]:
+    return [
+        {
+            "context_id": "gs-yoy",
+            "label": "G&S",
+            "value": {"type": "text", "text": gs},
+        },
+        {
+            "context_id": "te-yoy",
+            "label": "T&E",
+            "value": {"type": "text", "text": te},
+        },
+    ]
 
 
 def tenx_callout_ann() -> dict:
@@ -451,6 +486,7 @@ def line_chart(
     fmt: str = "pct_0",
     domain: tuple[str, str] | None = None,
     styles: list[str] | None = None,
+    ticks: list[str] | None = None,
 ) -> dict:
     used: set[str] = set()
     cats = []
@@ -475,12 +511,23 @@ def line_chart(
             }
         )
     if domain:
-        lo, hi = float(domain[0]), float(domain[1])
-        # 5 inclusive ticks spanning fixed domain
-        step = (hi - lo) / 4
-        ticks = [str(int(lo + step * i) if step == int(step) and lo == int(lo) else round(lo + step * i, 4)) for i in range(5)]
-        # normalize ints
-        ticks = [str(int(float(t))) if float(t) == int(float(t)) else t for t in ticks]
+        if ticks is None:
+            lo, hi = float(domain[0]), float(domain[1])
+            # 5 inclusive ticks spanning fixed domain
+            step = (hi - lo) / 4
+            ticks = [
+                str(
+                    int(lo + step * i)
+                    if step == int(step) and lo == int(lo)
+                    else round(lo + step * i, 4)
+                )
+                for i in range(5)
+            ]
+            ticks = [
+                str(int(float(t))) if float(t) == int(float(t)) else t for t in ticks
+            ]
+        else:
+            ticks = [str(t) for t in ticks]
         dom = {"kind": "fixed", "min": domain[0], "max": domain[1], "ticks": ticks}
     else:
         dom = {"kind": "generated", "target_ticks": 5}
@@ -831,12 +878,13 @@ def build() -> dict:
         "s4-bb",
         cats,
         [
-            ("Reported", [6, 7, 8, 8, 9], "neutral"),
-            ("FX-adjusted", [6, 7, 9, 9, 10], "navy"),
+            ("Reported", [6, 7, 9, 9, 10], "neutral"),
+            ("FX-adjusted", [6, 7, 8, 8, 9], "navy"),
         ],
         fmt="pct_0",
         domain=("0", "15"),
         styles=["dashed", "solid"],
+        ticks=TICKS_0_15,
     )
     chart4["annotations"] = leap_year_ann()
     slides.append(
@@ -857,7 +905,17 @@ def build() -> dict:
         )
     )
 
-    # 5 UCS line + independent generation mix table
+    # 5 UCS line + independent generation mix table + Leap Year / G&S T&E facts
+    chart5 = line_chart(
+        "s5-ucs",
+        cats,
+        [("UCS Billings", [7, 7, 9, 9, 10], "navy")],
+        fmt="pct_0",
+        domain=("0", "15"),
+        ticks=TICKS_0_15,
+    )
+    chart5["annotations"] = leap_year_ann()
+    chart5["context_labels"] = yoy_context("9% YoY", "11% YoY")
     slides.append(
         ordinary(
             5,
@@ -865,13 +923,7 @@ def build() -> dict:
             "U.S. Consumer Services Billed Business",
             "earnings",
             {
-                "chart": line_chart(
-                    "s5-ucs",
-                    cats,
-                    [("UCS Billings", [7, 7, 9, 9, 10], "navy")],
-                    fmt="pct_0",
-                    domain=("0", "15"),
-                ),
+                "chart": chart5,
                 "support": support_from_v2(
                     "s5-support",
                     slides_in[5]["visual_spec"]["secondary_visual"]["steps_or_data"],
@@ -1008,7 +1060,7 @@ def build() -> dict:
         "s8-lodging",
         cats,
         [
-            ("FHR+THC", [40, 42, 45, 48, 50], "primary_blue"),
+            ("FHR+THC", [40, 40, 40, 50, 50], "primary_blue"),
             ("UCS Lodging", [5, 5, 5, 5, 5], "sky_blue"),
         ],
         fmt="pct_0",
@@ -1067,7 +1119,17 @@ def build() -> dict:
         )
     )
 
-    # 9 commercial + independent segment table
+    # 9 commercial + independent segment table + Leap Year / G&S T&E facts
+    chart9 = line_chart(
+        "s9-comm",
+        cats,
+        [("Commercial FX-adj", [2, 2, 4, 3, 4], "navy")],
+        fmt="pct_0",
+        domain=("0", "15"),
+        ticks=TICKS_0_15,
+    )
+    chart9["annotations"] = leap_year_ann()
+    chart9["context_labels"] = yoy_context("3% YoY", "6% YoY")
     slides.append(
         ordinary(
             9,
@@ -1075,13 +1137,7 @@ def build() -> dict:
             "Commercial Services Billed Business",
             "earnings",
             {
-                "chart": line_chart(
-                    "s9-comm",
-                    cats,
-                    [("Commercial FX-adj", [2, 2, 4, 3, 4], "navy")],
-                    fmt="pct_0",
-                    domain=("0", "15"),
-                ),
+                "chart": chart9,
                 "support": support_from_v2(
                     "s9-support",
                     slides_in[9]["visual_spec"]["secondary_visual"]["steps_or_data"],
@@ -1093,6 +1149,20 @@ def build() -> dict:
     )
 
     # 10 ICS + independent segment table (no duplicate Reported annotation)
+    chart10 = line_chart(
+        "s10-ics",
+        cats,
+        [
+            ("FX-adjusted", [13, 12, 13, 12, 13], "navy"),
+            ("Reported", [9, 15, 14, 17, 20], "neutral"),
+        ],
+        fmt="pct_0",
+        domain=("0", "25"),
+        styles=["solid", "dashed"],
+        ticks=TICKS_0_25,
+    )
+    chart10["annotations"] = leap_year_ann()
+    chart10["context_labels"] = yoy_context("14% YoY", "10% YoY")
     slides.append(
         ordinary(
             10,
@@ -1100,17 +1170,7 @@ def build() -> dict:
             "International Card Services Billed Business",
             "earnings",
             {
-                "chart": line_chart(
-                    "s10-ics",
-                    cats,
-                    [
-                        ("FX-adjusted", [13, 12, 13, 12, 13], "navy"),
-                        ("Reported", [9, 15, 14, 17, 20], "neutral"),
-                    ],
-                    fmt="pct_0",
-                    domain=("0", "25"),
-                    styles=["solid", "dashed"],
-                ),
+                "chart": chart10,
                 "support": support_from_v2(
                     "s10-support",
                     slides_in[10]["visual_spec"]["secondary_visual"]["steps_or_data"],
@@ -1126,6 +1186,15 @@ def build() -> dict:
     steps11 = s11["visual_spec"]["primary_visual"]["steps_or_data"]
     vals11 = [r.get("value") for r in steps11]
     labs11 = [r["label"] for r in steps11]
+    chart11 = line_chart(
+        "s11-txn",
+        labs11,
+        [("Transaction Growth", vals11, "navy")],
+        fmt="pct_0",
+        domain=("0", "15"),
+        ticks=TICKS_0_15,
+    )
+    chart11["annotations"] = leap_year_ann()
     slides.append(
         ordinary(
             11,
@@ -1133,13 +1202,7 @@ def build() -> dict:
             s11["title"],
             "earnings",
             {
-                "chart": line_chart(
-                    "s11-txn",
-                    labs11,
-                    [("Transaction Growth", vals11, "navy")],
-                    fmt="pct_0",
-                    domain=("0", "15"),
-                )
+                "chart": chart11
             },
             subtitle=s11["content"].get("subtitle") or None,
             disclosure=disclosure_from_text(
@@ -1527,22 +1590,26 @@ def build() -> dict:
             "s19-rev",
             [r["label"] for r in st19],
             [
-                ("FX-adjusted", [r.get("value") for r in st19], "navy"),
-                ("Reported", [r.get("series_2", r.get("value")) for r in st19], "neutral"),
+                ("FX-adjusted", [r.get("series_2", r.get("value")) for r in st19], "navy"),
+                ("Reported", [r.get("value") for r in st19], "neutral"),
             ],
             fmt="pct_0",
+            domain=("0", "15"),
             styles=["solid", "dashed"],
+            ticks=TICKS_0_15,
         )
     else:
         chart19 = line_chart(
             "s19-rev",
             cats,
             [
-                ("FX-adjusted", [10, 11, 11, 12, 11], "navy"),
-                ("Reported", [10, 11, 12, 12, 11], "neutral"),
+                ("FX-adjusted", [8, 9, 11, 9, 10], "navy"),
+                ("Reported", [7, 9, 11, 10, 11], "neutral"),
             ],
             fmt="pct_0",
+            domain=("0", "15"),
             styles=["solid", "dashed"],
+            ticks=TICKS_0_15,
         )
     chart19["annotations"] = leap_year_ann()
     slides.append(
@@ -2097,6 +2164,8 @@ def build() -> dict:
                 chunks = [p.strip() for p in re.split(r"\n\n+", body) if p.strip()]
                 paras.extend(chunks or [body])
         paras.extend([b for b in bullets if isinstance(b, str)])
+        if n == 38:
+            paras = [S38_PREAMBLE] + [f"- {p}" if not p.lstrip().startswith(("- ", "* ", "• ")) else p for p in paras]
         # legal max 6 paragraphs
         paras = paras[:6]
         if not paras:
