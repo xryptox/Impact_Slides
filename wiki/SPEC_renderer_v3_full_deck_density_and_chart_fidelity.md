@@ -4659,7 +4659,7 @@ outrank the archived v10 handoff.
 | 14 | `dual_chart` | Grouped-bar panes `30+ Days Past Due` and `Net Write-Off Rates`; percent-1 preserves 1.3% and 2.0%; correct pane ownership. |
 | 15 | `single_chart` | Signed stacked Total Provision with usd_0 authored stack totals and category-aligned outlined Reserve Rate support (`stub_header` = row label); no duplicate key-stat total. |
 | 16 | `data_table` | Five revenue rows with Q1'26/Q1'25/reported YoY/FX-adjusted YoY and typed USD/percent cells. |
-| 17 | `dual_chart` | Net Card Fees grouped bars Q1'19–Q1'26 usd_1 (`$0.9…$2.8`) with authored 17% CAGR measurement; FX-adjusted YoY line Q1'24–Q1'26; qualification disclosure. |
+| 17 | `dual_chart` | Title `Net Card Fees` with slide subtitle `$ in billions - % Increase/(decrease) vs. Prior year & CAGR (FX-adjusted)`; dated pane headings `Net Card Fees (Q1: 2019-2026)` / `Net Card Fees YoY% (Q1'24-Q1'26)` with `pane_title` identity; grouped bars Q1'19–Q1'26 usd_1 (`$0.9…$2.8`) with authored 17% CAGR measurement; qualification disclosure. |
 | 18 | `chart_hero_dual` | NII grouped bars usd_1 (`$4.2…`) with YoY boxed labels; `NII: Volume & Margin Drivers` driver card with all four source rows and CAGR subtitle. |
 | 19 | `single_chart` | Reported/FX-adjusted revenue line, category-aligned USD support row, leap-year explanation, no duplicate identity chrome. |
 | 20 | `period_comparison` | Seven expense rows Q1'26/Q1'25/variance plus 44.7% VCE metric strip; exact commentary reference in disclosure. |
