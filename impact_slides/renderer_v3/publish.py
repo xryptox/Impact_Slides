@@ -176,6 +176,7 @@ def build_presentation_html(
 ".metric-stack,.driver-card,.metric-overview-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}",
 ".metric-stack li,.driver-card li,.metric-overview-list li{display:flex;flex-direction:column;gap:4px}",
 ".metric-value,.driver-value{font-weight:700}",
+            ".metric-label,.driver-label,.metric-detail,.driver-detail{display:block;white-space:normal;max-width:100%}",
 ".metric-overview h2{margin:0 0 16px}",
 ".metric-overview-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}",
 ".metric-overview-detail{margin-top:16px}",

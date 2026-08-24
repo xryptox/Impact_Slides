@@ -48,7 +48,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 - `pytest -q tests/test_amex_s28_handoff_contract.py tests/test_multi_panel_pane_headings.py` (#158 slide-28 pane titles)
 - `pytest -q tests/test_amex_s4_s5_s9_s10_s19_callout_support.py` (#226/#255 live-corpus callouts + support tables + series/ticks/side facts)
 - `pytest -q tests/test_amex_s6_s8_s15_furniture.py` (#227/#248/#255/#259/#260 s6 elbow + Refresh + prior-year subtitle + Anniversary Month / retention titles; s8 KPI strip + 10x + FHR step; s15 reserve-rate 2.9% + stack segment dollars)
-- `pytest -q tests/test_amex_s12_nca_stack.py` (#228/#260 s12 three-band NCA stack + stack segment labels)
+- `pytest -q tests/test_amex_s12_nca_stack.py` (#228/#260/#273 s12 three-band NCA stack + stack segment labels; hero/`metric_overview` body 27 + wrapping KPI labels)
 - `pytest -q tests/test_amex_s17_s18_furniture.py` (#229/#258 s17 $B + CAGR + qualification + dated pane headings; s18 $ NII + YoY boxes + driver rows)
 - `pytest -q tests/test_amex_s21_s24_s28_furniture.py` (#230/#248/#254/#260 s21 shares line + ROE + stack segment dollars; s24 above groups + $486B + outlined shares; s28 FDIC + navy/blue/sky/gray stacks)
 - `python scripts/renderer_3_release.py --verify`
