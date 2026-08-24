@@ -2,7 +2,7 @@
 
 Status: **FINAL — user-approved in full; implementation tickets may now be prepared.**
 
-Inventory (no requirement change): renderer-owned DP-7 geometry overrides live in `SPEC_renderer_v3_pdf_design_parity.md` (#246 stub-slack cap + sparse bar occupancy).
+Inventory (no requirement change): renderer-owned DP-7 geometry overrides live in `SPEC_renderer_v3_pdf_design_parity.md` (#246 stub-slack cap + sparse bar occupancy). DP-1 #273 freezes hero / `metric_overview` KPI labels at heading 32 / body 27 / value 72 with wrapping blocks; that pin supersedes D189/D262–D264 adaptive 22–28px body type.
 
 Evidence baseline: user-reviewed v11 44-slide PDF↔HTML comparisons from
 `origin/gnhf/objective-produce-th-5765a4` at `42f620c`.
@@ -2168,7 +2168,7 @@ are unambiguous.
 D152-style metrics and at most one detail surface beneath it. The metric surface
 has stable ID, required heading, equal-rank bounded D66–D67 chrome, and metrics
 with stable IDs, D143/D188 values, labels, and optional detail. Display numbers
-stay fixed; labels/details adapt at 22–28px and wrap to two lines without loss.
+stay fixed; labels/details freeze at DP-1 `HERO_BODY_PX` 27 and wrap without loss.
 The optional detail has its own heading and 1–4 D181 paragraph/bullet blocks.
 Generic supporting points, colon parsing, synthesized “Breakdown,” source strings
 inside cards, and duplicate key-stat/bullet sources disappear. Charts are
@@ -3397,14 +3397,14 @@ human selection.
 
 ### D262 — `metric_overview` has one metric group and optional narrative detail
 
-Required payload `metrics` has deck-unique surface ID, exact heading, 2–6 ordered
-items, and optional D218 mode/sync/body size. Items require unique metric ID,
+Required payload `metrics` has deck-unique surface ID, exact heading, and 2–6 ordered
+items. KPI label/detail type is the fixed DP-1 `HERO_BODY_PX` 27 pair (not D218-adaptive). Items require unique metric ID,
 plain label, D213 value, optional plain detail and optional change. Change requires
 direction up/down/flat and exact comparison basis, with optional numeric/range
 D213 value and positive/negative/neutral tone. Direction and tone are independent
 and both accessibly expressed; renderer never derives direction, tone, midpoint,
 amount, basis or guidance status. Values keep fixed display type; labels/details/
-basis and detail prose adapt 22–28px without loss. Metrics are one equal-rank
+basis freeze at DP-1 `HERO_BODY_PX` 27 without loss; optional narrative detail prose still adapts 22–28px. Metrics are one equal-rank
 D66–D67 square panel group with 1px borders and no decorative/guidance chrome.
 Optional `detail` has distinct deck-unique ID, exact heading, 1–4 D225 blocks and
 optional mode/sync/body typography, paints below in authored order, and cannot
@@ -3421,13 +3421,12 @@ change semantics.
 ### D263 — `metric_stack` hero has one closed prominent-metric shape
 
 Required hero fields are deck-unique surface ID, literal metric_stack type,
-exact heading, and 1–3 ordered metrics; optional subtitle and D218 mode/sync/body
-size apply. Metrics require unique ID, plain label, D213 value and optional plain
+exact heading, and 1–3 ordered metrics; optional subtitle applies. KPI label/detail type is the fixed DP-1 `HERO_BODY_PX` 27 pair (not D218-adaptive). Metrics require unique ID, plain label, D213 value and optional plain
 detail. Number/range uses D214; missing remains visible. Order is immutable.
 Heading/subtitle share D40/D46 navy band; beneath it one vertical equal-rank
 D66–D67 bounded square panel uses solid token/1px border without nested borders.
-Display values keep fixed prominent type; labels/details adapt 22–28px under one
-role plan, and body override pins only those roles. Text/ranges remain complete.
+Display values keep fixed prominent type; labels/details freeze at DP-1 `HERO_BODY_PX` 27 under one
+fixed role plan. Text/ranges remain complete.
 Direction/tone/trends/deltas/basis/icons/gauges/badges/colors/sparklines/per-item
 style are invalid and directional metrics belong to D262. No inference from
 chart/key stats/prose/peers. Strict rejects malformed or unfit metrics.
@@ -3439,7 +3438,7 @@ requires an explicit unambiguous 1–3 prominent-metric source.
 ### D264 — `driver_card` hero is one ordered fact-row list
 
 Required hero fields are deck-unique ID, literal driver_card type, exact heading,
-and 1–6 ordered rows; optional subtitle and D218 mode/sync/body size apply. Rows
+and 1–6 ordered rows; optional subtitle applies. KPI label/detail type is the fixed DP-1 `HERO_BODY_PX` 27 pair (not D218-adaptive). Rows
 require unique ID, plain label and D213 value, with optional plain detail,
 up/down/flat direction and positive/negative/neutral/accent tone. Direction and
 tone are independent and never inferred from sign/wording/color/each other.
@@ -3447,8 +3446,8 @@ Number/range uses D214; missing is visible/accessibly missing; order is immutabl
 Heading/subtitle use the shared navy band. Rows form one vertical D66–D67 square
 bounded panel with 1px outer border and semantic separators, not nested cards.
 Renderer shape/wording conveys direction and semantic color plus wording conveys
-tone, never color alone. Values keep fixed type; labels/details adapt 22–28px,
-body override pins only those, and may wrap two lines. Residual text overflow
+tone, never color alone. Values keep fixed type; labels/details freeze at DP-1 `HERO_BODY_PX` 27
+and may wrap. Residual text overflow
 strict-fails or non-strict ellipsizes only its label/detail while retaining full
 accessible text and row/field diagnosis. Values are never shortened/suppressed/
 reformatted outside D214. Malformed rows strict-fail or drop individually
