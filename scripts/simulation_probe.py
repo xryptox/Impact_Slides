@@ -133,9 +133,9 @@ SKY_BLUE_HEX = "#80C8FF"
 DESIGN_LEDGER_STUB_RATIO_SLIDES: tuple[int, ...] = (
     3, 16, 31, 32, 33, 34, 35, 36, 37,
 )
-# s4/s19: D167 hide_header + hairline body cells. Missing body frame fails;
-# navy .head band is only required when a visual header row is painted.
-DESIGN_LEDGER_SUPPORT_CHROME_SLIDES: tuple[int, ...] = (4, 19)
+# Non-Amex hide_header fixtures still use measured_support_chrome.
+# Amex s4/s19 are independent navy-header tables (#269); keep this empty.
+DESIGN_LEDGER_SUPPORT_CHROME_SLIDES: tuple[int, ...] = ()
 # s28 authors sky_blue stacks; s24 is a single navy series (no sky required).
 DESIGN_LEDGER_PALETTE_SLIDES: dict[int, dict[str, bool]] = {
     24: {"require_sky_blue": False},
@@ -916,10 +916,12 @@ def measured_support_chrome(
     """Assert category-aligned support chrome that actually ships.
 
     Visible body cells (``.support-cat-cell`` without ``.head``) must exist
-    and carry a ≥1px hairline. s4/s19 hide the visual header (D167:
-    chart-owned categories) and pass on that body frame alone. When a
+    and carry a ≥1px hairline. Category-aligned hide_header (D167:
+    chart-owned categories) passes on that body frame alone. When a
     visual header row *is* painted (``.head``), keep the navy-band +
     hairline assertion from #250. A missing body frame fails either way.
+    Amex s4/s19 are independent navy-header tables and are not in
+    ``DESIGN_LEDGER_SUPPORT_CHROME_SLIDES`` (#269).
     """
     identity = activate_slide(page, slide_number, expected_layout)
     sn = identity["slide_number"]
