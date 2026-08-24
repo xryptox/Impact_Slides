@@ -2246,7 +2246,7 @@
           "metrics": [
             {
               "metric_id": "share-66",
-              "label": "Proprietary new cards share",
+              "label": "Global Consumer New Accounts Acquired from Millennial / Gen-Z",
               "value": {
                 "type": "number",
                 "value": "66",
@@ -2255,7 +2255,7 @@
             },
             {
               "metric_id": "share-73",
-              "label": "Proprietary new accounts share",
+              "label": "Global New Accounts Acquired on Fee-Paying Products*",
               "value": {
                 "type": "number",
                 "value": "73",
