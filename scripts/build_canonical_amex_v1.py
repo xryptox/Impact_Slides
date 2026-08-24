@@ -4,7 +4,7 @@
 Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 (#226/#269: s4/s19 leap-year annotations + independent navy-header support; s5/s9/s10 independent support;
 #227: s6 +6pp elbow annotation; s8 lodging metric_strip; s15 reserve-rate outlined row + stack totals;
-#228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
+#228/#268: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x + PDF hero KPI sentences;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15;
 #229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows;
 #271: s18 folds Volume/Margin detail into one driver label (` - `) and drops those detail fields;
@@ -1285,7 +1285,10 @@ def build() -> dict:
                     "metrics": [
                         {
                             "metric_id": "share-66",
-                            "label": "Proprietary new cards share",
+                            "label": (
+                                "Global Consumer New Accounts Acquired from "
+                                "Millennial / Gen-Z"
+                            ),
                             "value": {
                                 "type": "number",
                                 "value": "66",
@@ -1294,7 +1297,10 @@ def build() -> dict:
                         },
                         {
                             "metric_id": "share-73",
-                            "label": "Proprietary new accounts share",
+                            "label": (
+                                "Global New Accounts Acquired on Fee-Paying "
+                                "Products*"
+                            ),
                             "value": {
                                 "type": "number",
                                 "value": "73",
