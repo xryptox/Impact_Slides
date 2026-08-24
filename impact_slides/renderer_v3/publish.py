@@ -188,7 +188,7 @@ def build_presentation_html(
             "table.support-table{width:100%;border-collapse:collapse;background:transparent;margin:0 0 var(--space-sm)}",
             "table.support-table th,table.support-table td{padding:6px 10px;border-bottom:var(--border-width-hairline) solid var(--color-rule);vertical-align:middle}",
             "table.support-table th.band-table-header{background:var(--color-navy);color:var(--color-white);font-weight:var(--font-weight-emphasis)}",
-            "table.support-table th.stub,table.support-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis);background:transparent}",
+            "table.support-table tbody th.stub,table.support-table tbody td.stub{text-align:left;font-weight:var(--font-weight-emphasis);background:transparent}",
             "table.support-table td.num{font-variant-numeric:tabular-nums lining-nums;text-align:right}",
             ".support-table.category-aligned{width:100%;margin:0 0 var(--space-sm);background:transparent}",
             ".support-table.category-aligned .support-cat-cell,.support-table.category-aligned .support-cat-stub{box-sizing:border-box;border:var(--border-width-hairline) solid var(--color-rule)}",
