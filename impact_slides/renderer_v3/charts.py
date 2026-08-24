@@ -3707,14 +3707,35 @@ def _place_stack_labels(
             continue
         # Authored implies show; computed follows policy.
         text = t["visible"]
+        x = t["x"]
+        y = t["y"]
+        tw = max(20.0, len(text) * total_px * 0.55)
+        th = float(total_px)
+        away = -1.0 if t.get("side") != "negative" else 1.0
+        occupied = [
+            _fact_box(
+                float(p["x"]),
+                float(p["y"]),
+                max(20.0, len(str(p["text"])) * segment_px * 0.55),
+                float(segment_px),
+            )
+            for p in placements
+            if p.get("kind") == "segment"
+            and p.get("category_id") == t["category_id"]
+            and p.get("class") != "suppressed"
+        ]
+        box = _fact_box(x, y, tw, th)
+        while occupied and _overlaps(box, occupied):
+            y += away
+            box = _fact_box(x, y, tw, th)
         placements.append(
             {
                 "series_id": None,
                 "category_id": t["category_id"],
                 "kind": "stack_total",
                 "class": f"total_{t['side']}",
-                "x": t["x"],
-                "y": t["y"],
+                "x": x,
+                "y": y,
                 "text": text,
                 "color": navy,
                 "priority": "total",

@@ -13,6 +13,7 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%;
 #259: s6 left pane subtitle + right-pane Anniversary Month / retention axis titles;
 #260: s12/s15/s21 display.stack_segments show;
+#272: s15 reserve navy (write-offs stay primary_blue);
 #255: s4/s19 series swap + s19 fixed 0–15; PDF ticks; s8 FHR step; s5/s9/s10/s11 Leap Year + s5/s9/s10 G&S/T&E facts; s38 preamble).
 Does not rewrite artifacts/renderer_3_release/3.0.0/.
 """
@@ -1403,7 +1404,7 @@ def build() -> dict:
         header = steps15[0]
         labs15 = [r[0] for r in steps15[1:]]
         series15 = []
-        s15_colors = {"Write-offs": "primary_blue", "Reserve Build/(Release)": "sky_blue"}
+        s15_colors = {"Write-offs": "primary_blue", "Reserve Build/(Release)": "navy"}
         for ci, name in enumerate(header[1:]):
             series15.append(
                 (
