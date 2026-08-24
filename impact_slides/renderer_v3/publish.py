@@ -927,7 +927,7 @@ def _paint_slide_body(
 
 
 def _paint_legal_body(paragraphs: list[str], body_px: int | None) -> list[str]:
-    """Paint legal paragraphs; marked or unmarked bullets become <ul> hierarchy."""
+    """Paint legal paragraphs; unmarked-only bodies are <p>, marked lines stay <ul>."""
     out: list[str] = []
     style = _style_font(body_px)
     for kind, payload in _legal_body_blocks(paragraphs):

@@ -1,6 +1,6 @@
 # SPEC: renderer_v3 PDF Design & Data Parity (Amex Q1'26)
 
-**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233); #249 extends the DP-6 design-ledger probes (stub ratio, support chrome, series palette, metric-value floor, bar occupancy). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. #256 accepted D167 hide_header + hairline body on remaining category-aligned fixtures. #269 retargets Amex s4/s19 to independent navy-header tables (D167 hide_header stays for other category-aligned charts). #257 repeats the part-1 legal title on every part and raises fixed legal type to 56/21. The v13 observation sim itself is still unrun.
+**Status:** proposed — DP-1..DP-5 shipped in #224–#232; DP-6 helpers + `scripts/run_amex_simulation_v13.sh` are in-repo (#233); #249 extends the DP-6 design-ledger probes (stub ratio, support chrome, series palette, metric-value floor, bar occupancy). DP-7 stub-slack cap + sparse bar occupancy shipped in #246. #256 accepted D167 hide_header + hairline body on remaining category-aligned fixtures. #269 retargets Amex s4/s19 to independent navy-header tables (D167 hide_header stays for other category-aligned charts). #257 repeats the part-1 legal title on every part and raises fixed legal type to 56/21. #270 paints unmarked legal continuations as paragraphs (marked stay lists). The v13 observation sim itself is still unrun.
 **Scope:** renderer_v3 (schema-v1, 3.0.0) + canonical D314 corpus, full 44-page Amex Q1'26 deck.
 **Extends, does not replace:** `SPEC_renderer_v3_full_deck_density_and_chart_fidelity.md` (still the binding v3 contract). Brand-seal art stays R3-wontfix.
 
@@ -85,7 +85,7 @@ Percent series with low variance must not auto-collapse: pin `domain.kind=fixed`
 
 - `comparison_cards`: add the circular dual-metric card recipe (or document an accepted divergence with numbers complete).
 - `grouped_annex_table`: header cells must fit full text (no `Q…` ellipsis) — measure `scrollWidth ≤ clientWidth` on both groups.
-- `legal_notice`: preserve payload list hierarchy as painted `<ul>` structure, not a flattened stream. Unmarked-only payloads paint one `<ul>` per paragraph so logical groups keep `--space-sm` spacing (#247 R-D). Every part of a `notice_id` paints the part-1 authored title (continuations still forbid `title`); never `— continued`. Fixed type is 56/21px — the largest pair that strict-renders Amex s38–43 (#257 R-D remainder).
+- `legal_notice`: preserve payload list hierarchy as painted structure, not a flattened stream. Unmarked legal = paragraphs; marked = lists (#270 R-D). Unmarked-only payloads paint one `<p>` per paragraph so logical groups keep `--space-sm` (12px) spacing; each top-level marked paragraph is its own `<ul>` (s38 = preamble `<p>` + two risk lists); nested marked lines stay inside the current list. Every part of a `notice_id` paints the part-1 authored title (continuations still forbid `title`); never `— continued`. Fixed type is 56/21px — the largest pair that strict-renders Amex s38–43 (#257).
 
 ### DP-5 Brand art exclusion
 
@@ -117,6 +117,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 | 11 | Leap-Year callout + PDF ticks (no support table / no side pair) | `annotations` + authored ticks | DOM: callout text; Chart.js ticks |
 | 8 | FHR+THC Q3-flat then Q4 step | authored series values | Chart.js FHR data 40/40/40/50/50 |
 | 38 | PDF legal preamble then two risk bullets | first unmarked paragraph + marked lists | DOM: `<p>` then two `<ul>`s |
+| 39–43 | PDF continuation paragraphs under repeating title | unmarked-only legal body | DOM: one `<p>` per paragraph, zero `<ul>`, ≥12px gaps |
 | 17 | shipped #229/#258 | see D314 worksheet; dated pane headings + subtitle | `tests/test_amex_s17_s18_furniture.py` |
 | 18 | shipped #229/#271 | see D314 worksheet; Volume/Margin folded into one driver label | `tests/test_amex_s17_s18_furniture.py` |
 | 12 | shipped #228 / #260 / #268 / #273 | 3-band NCA stack + `stack_segments: show` + PDF hero KPI sentences + hero body 27 / wrap | `tests/test_amex_s12_nca_stack.py` |
