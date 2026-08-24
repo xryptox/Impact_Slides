@@ -7,6 +7,7 @@ Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
 #228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15;
 #229: s17 usd_1 + CAGR measurements + Qualification disclosure; s18 usd_1 + boxed YoY labels + PDF driver-card rows;
+#271: s18 folds Volume/Margin detail into one driver label (` - `) and drops those detail fields;
 #258: s17 dated pane headings + slide subtitle + pane_title identity;
 #230/#254: s21 stacked combo shares line 702→682 + exact ROE row; s24 above groups + $486B + outlined %-of-total; s28 FDIC callout + stack totals;
 #248: sky_blue cycle + authored s8/s15/s28 colors; s6 Refresh; s8 10x; s15 Q2–Q4 2.9%;
@@ -377,12 +378,12 @@ def _s18_driver() -> dict:
     rows = [
         ("billed", "Billed Business", "8", None),
         ("nii", "Net Interest Income", "13", None),
-        ("volume", "Volume", "7", "Total Balances"),
+        ("volume", "Volume - Total Balances", "7", None),
         (
             "margin",
-            "Margin",
+            "Margin - Net Interest Income / Average Total Balances",
             "5",
-            "Net Interest Income / Average Total Balances",
+            None,
         ),
     ]
     out_rows = []
