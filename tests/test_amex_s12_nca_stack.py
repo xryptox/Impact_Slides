@@ -22,6 +22,7 @@ from impact_slides.renderer_v3.plan import (
     HERO_HEADING_PX,
     HERO_VALUE_PX,
     METRIC_STRIP_VALUE_PX,
+    _wrap_label_lines,
     plan_deck,
 )
 
@@ -116,11 +117,34 @@ def test_strict_render_s12_dataset_count_is_three(tmp_path: Path) -> None:
     assert tots[:5] == ["3.4", "3.1", "3.2", "2.9", "3.1"]
 
     deck = validate_handoff(_load(), strict=True).deck
-    hero = plan_deck(deck, strict=True).by_surface_id()["s12-hero"]
+    by = plan_deck(deck, strict=True).by_surface_id()
+    hero = by["s12-hero"]
     assert hero.role_sizes["heading"] == HERO_HEADING_PX == 32
-    assert hero.role_sizes["body"] == HERO_BODY_PX == 22
+    assert hero.role_sizes["body"] == HERO_BODY_PX == 27
     assert hero.role_sizes["value"] == HERO_VALUE_PX == 72
+    assert by["s18-driver"].role_sizes["body"] == HERO_BODY_PX == 27
+    assert by["s18-driver"].role_sizes["value"] == HERO_VALUE_PX == 72
+    assert by["s21-summary"].role_sizes["body"] == HERO_BODY_PX == 27
+    assert by["s21-summary"].role_sizes["value"] == HERO_VALUE_PX == 72
+    assert by["s22-guide"].role_sizes["body"] == HERO_BODY_PX == 27
+    assert by["s22-guide"].role_sizes["value"] == HERO_VALUE_PX == 72
+    assert METRIC_STRIP_VALUE_PX == 44
     assert HERO_VALUE_PX > METRIC_STRIP_VALUE_PX
+    html_b = html.encode("utf-8")
+    wrap = (
+        b".metric-label,.driver-label,.metric-detail,.driver-detail"
+        b"{display:block;white-space:normal;max-width:100%}"
+    )
+    assert html_b.count(wrap) == 1
+    assert html_b.count(b"white-space:nowrap") == html_b.count(
+        b"white-space:nowrap;border:0"
+    )
+    inner_w = max(40, hero._box_w - 32)
+    long_label = (
+        "This long proprietary new-cards sentence must wrap inside the "
+        "hero card instead of crowding the 72px number."
+    )
+    assert len(_wrap_label_lines(long_label, HERO_BODY_PX, inner_w)) >= 2
 
 
 def test_mutation_collapsing_s12_stack_drops_dataset_count(tmp_path: Path) -> None:

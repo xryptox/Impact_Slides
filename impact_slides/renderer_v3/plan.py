@@ -110,7 +110,7 @@ METRIC_STRIP_CEIL: Final = 24
 METRIC_STRIP_VALUE_PX: Final = 44  # DP-1 calibration; painted floor >= 40 (#248)
 # Hero / metric_overview KPI type (s12/s18/s21/s22). Strip stays 44.
 HERO_HEADING_PX: Final = 32
-HERO_BODY_PX: Final = 22
+HERO_BODY_PX: Final = 27  # #273: 28 overflows s18; largest strict-clean step
 HERO_VALUE_PX: Final = 72
 METRIC_STRIP_GAP: Final = 16
 METRIC_STRIP_PAD_Y: Final = 16
@@ -2117,7 +2117,7 @@ _text_items=hero_items or [(" ", False)],
             design_stage_region=region,
             role_sizes={
                 "heading": HERO_HEADING_PX,
-                "body": BODY_FLOOR,
+                "body": HERO_BODY_PX,
                 "value": HERO_VALUE_PX,
             },
             _text_items=items,
@@ -2129,10 +2129,10 @@ _text_items=hero_items or [(" ", False)],
 _box_w=CONTENT_W,
             _box_h=320,
             _fit_role="body",
-            _mode="adaptive",
+            _mode="fixed",
             _margin_boxes=0,
-            _default_size=BODY_FLOOR,
-            _maximum_size=BODY_CEIL,
+            _default_size=HERO_BODY_PX,
+            _maximum_size=HERO_BODY_PX,
             _chrome_h=24,
         )
     )
