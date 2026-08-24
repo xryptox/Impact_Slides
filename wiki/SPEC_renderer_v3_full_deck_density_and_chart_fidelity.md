@@ -1849,8 +1849,7 @@ A support table declares `alignment: category` or `independent`. Category
 alignment requires table columns to match every owning-chart category ID and
 order exactly, uses the frozen category centers in Chart.js/SVG, and omits a
 repeated visual header when the chart already visibly owns those categories
-while preserving semantic associations. DP-2/#256 records that s4/s19 contract
-as hide_header + hairline body cells (no required navy period `.head` band). Independent tables use ordinary D141
+while preserving semantic associations. Independent tables use ordinary D141
 layout and may have unrelated columns. Support tables contain 1–4 rows, use one
 D44 14–24px fitted size, and cannot own heading/subtitle chrome. D10/D47 govern
 allocation. Alignment is never inferred from labels, counts, or position.
