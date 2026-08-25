@@ -382,6 +382,55 @@ def test_freeze_assigns_stack_theme_colors():
     assert len(set(colors)) == 3
 
 
+def test_stack_total_nudges_off_outside_segment_crown():
+    raw = _s()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["chart_data"]["series"] = [
+        {"series_id": "base", "name": "Base", "values": ["80", "80", "80", "80"]},
+        {"series_id": "top", "name": "Top", "values": ["2", "2", "2", "2"]},
+    ]
+    vis["auxiliary_series"][0]["values"] = ["82", "82", "82", "82"]
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["dep-mix"].chart_paint
+    seg_px = cp["role_sizes"]["segment_labels"]
+    tot_px = cp["role_sizes"]["stack_totals"]
+    for cat in ("q1", "q2", "q3", "q4"):
+        segs = [
+            p
+            for p in cp["placements"]
+            if p.get("kind") == "segment"
+            and p.get("category_id") == cat
+            and p.get("class") != "suppressed"
+        ]
+        tots = [
+            p
+            for p in cp["placements"]
+            if p.get("kind") == "stack_total" and p.get("category_id") == cat
+        ]
+        assert segs and tots
+        assert any(p["text"] == "$2" for p in segs)
+        assert any(p["text"] == "$82" for p in tots)
+        for tot in tots:
+            for seg in segs:
+                tw = max(20.0, len(tot["text"]) * tot_px * 0.55)
+                sw = max(20.0, len(seg["text"]) * seg_px * 0.55)
+                tb = (
+                    tot["x"] - tw / 2,
+                    tot["y"] - tot_px / 2,
+                    tot["x"] + tw / 2,
+                    tot["y"] + tot_px / 2,
+                )
+                sb = (
+                    seg["x"] - sw / 2,
+                    seg["y"] - seg_px / 2,
+                    seg["x"] + sw / 2,
+                    seg["y"] + seg_px / 2,
+                )
+                assert not (
+                    tb[0] < sb[2] and tb[2] > sb[0] and tb[1] < sb[3] and tb[3] > sb[1]
+                )
+
+
 # ---------------------------------------------------------------------------
 # Publication / dual painters
 # ---------------------------------------------------------------------------

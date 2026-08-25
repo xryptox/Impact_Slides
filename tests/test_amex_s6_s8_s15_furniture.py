@@ -1,11 +1,11 @@
-"""#227/#248/#259/#260 — s6/s8/s15 furniture plus palette, KPI floor, Refresh, 10x, s6 titles.
+"""#227/#248/#259/#260/#272 — s6/s8/s15 furniture plus palette, KPI floor, Refresh, 10x, s6 titles.
 
 Pins the live D314 corpus (not renderer defaults):
 - s6 left chart: PDF elbow + Q3'25 Refresh chip + prior-year pane subtitle
 - s6 right chart: Anniversary Month + retention-rate axis titles
 - s8: metric_strip 3,400+ / 300+ / $600 / $550 at >=40px; FHR+THC=primary_blue; 10x callout
-- s15: reserve-rate Q2–Q4 = 2.9%; write-offs=primary_blue; reserve=sky_blue;
-  authored totals plus display.stack_segments == show
+- s15: reserve-rate Q2–Q4 = 2.9%; write-offs=primary_blue; reserve=navy;
+  authored totals plus display.stack_segments == show; sky hex absent from s15 paint
 - DOM on those sections shows the furniture; renderer does not invent it
 - strict render of the canonical corpus stays clean
 """
@@ -19,6 +19,7 @@ from pathlib import Path
 
 from impact_slides.renderer_v3 import render_deck, validate_handoff
 from impact_slides.renderer_v3.plan import METRIC_STRIP_VALUE_PX, plan_deck
+from impact_slides.renderer_v3.theme import resolve_color
 
 FIXTURE = (
     Path(__file__).resolve().parent
@@ -134,7 +135,7 @@ def test_corpus_payloads_carry_s6_s8_s15_furniture() -> None:
     assert aux[0]["values"] == S15_TOTALS
     s15_series = {s["name"]: s for s in s15["payload"]["chart"]["chart_data"]["series"]}
     assert s15_series["Write-offs"]["color"] == "primary_blue"
-    assert s15_series["Reserve Build/(Release)"]["color"] == "sky_blue"
+    assert s15_series["Reserve Build/(Release)"]["color"] == "navy"
     assert s15["payload"]["chart"]["display"]["series_identity"] == "legend"
     assert s15["payload"]["chart"]["display"]["stack_segments"] == "show"
 
@@ -189,7 +190,17 @@ def test_strict_render_shows_s6_s8_s15_furniture(tmp_path: Path) -> None:
     assert S15_LABEL in s15_vis
     assert s15_vis.count("2.9%") >= 4
     assert "$1,150" in s15 and "$1,251" in s15
-    assert SKY in s15.lower()
+    assert SKY not in s15.lower()
+    cfg15 = json.loads(
+        re.search(r'id="cfg-s15-prov">(.*?)</script>', s15, re.S).group(1)
+    )
+    by15 = {d["label"]: d for d in cfg15["data"]["datasets"]}
+    assert by15["Write-offs"]["backgroundColor"].lower() == resolve_color(
+        "primary_blue", role="fill"
+    ).lower()
+    assert by15["Reserve Build/(Release)"]["backgroundColor"].lower() == resolve_color(
+        "navy", role="fill"
+    ).lower()
     segs = re.findall(r'data-kind="segment">([^<]*)</text>', s15)
     assert "$1,223" in segs and "$222" in segs
     tots = re.findall(r'data-kind="stack_total">([^<]*)</text>', s15)
@@ -200,6 +211,44 @@ def test_strict_render_shows_s6_s8_s15_furniture(tmp_path: Path) -> None:
     strip = next(s for s in plan.surfaces if s.surface_id == "s8-kpis")
     assert strip.role_sizes["value"] >= 40
     chart = next(s for s in plan.surfaces if s.surface_id == "s15-prov")
+    places = chart.chart_paint["placements"]
+    seg_px = chart.chart_paint["role_sizes"]["segment_labels"]
+    tot_px = chart.chart_paint["role_sizes"]["stack_totals"]
+    for cat in ("q2-25", "q3-25", "q4-25"):
+        tops = [
+            p
+            for p in places
+            if p.get("kind") == "segment"
+            and p.get("category_id") == cat
+            and p.get("class") != "suppressed"
+            and p.get("text") in {"$222", "$125", "$141"}
+        ]
+        totals = [
+            p
+            for p in places
+            if p.get("kind") == "stack_total" and p.get("category_id") == cat
+        ]
+        assert tops and totals
+        for tot in totals:
+            for top in tops:
+                assert tot["y"] != top["y"]
+                tw = max(20.0, len(tot["text"]) * tot_px * 0.55)
+                sw = max(20.0, len(top["text"]) * seg_px * 0.55)
+                tb = (
+                    tot["x"] - tw / 2,
+                    tot["y"] - tot_px / 2,
+                    tot["x"] + tw / 2,
+                    tot["y"] + tot_px / 2,
+                )
+                sb = (
+                    top["x"] - sw / 2,
+                    top["y"] - seg_px / 2,
+                    top["x"] + sw / 2,
+                    top["y"] + seg_px / 2,
+                )
+                assert not (
+                    tb[0] < sb[2] and tb[2] > sb[0] and tb[1] < sb[3] and tb[3] > sb[1]
+                )
     cat_x = [c["x"] for c in chart.chart_paint["categories"]]
     lefts = [
         float(x)
