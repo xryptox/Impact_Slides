@@ -883,7 +883,7 @@
         },
         "support": {
           "support_type": "support_table",
-          "alignment": "category",
+          "alignment": "independent",
           "table": {
             "surface_id": "s4-support",
             "stub_header": {
@@ -3324,7 +3324,7 @@
         },
         "support": {
           "support_type": "support_table",
-          "alignment": "category",
+          "alignment": "independent",
           "table": {
             "surface_id": "s19-support",
             "stub_header": {

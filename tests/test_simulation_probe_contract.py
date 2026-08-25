@@ -677,7 +677,7 @@ def test_design_ledger_s21_shares_line_not_heading(page):
 def test_design_ledger_extension_slide_maps():
     """#249 maps pin the V1–V3 fidelity slides the sim must probe."""
     assert DESIGN_LEDGER_STUB_RATIO_SLIDES == (3, 16, 31, 32, 33, 34, 35, 36, 37)
-    assert DESIGN_LEDGER_SUPPORT_CHROME_SLIDES == (4, 19)
+    assert DESIGN_LEDGER_SUPPORT_CHROME_SLIDES == ()
     assert DESIGN_LEDGER_PALETTE_SLIDES[24]["require_sky_blue"] is False
     assert DESIGN_LEDGER_PALETTE_SLIDES[28]["require_sky_blue"] is True
     assert DESIGN_LEDGER_METRIC_FLOOR_SLIDES == (8, 12)

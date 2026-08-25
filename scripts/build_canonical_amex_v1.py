@@ -2,7 +2,7 @@
 """Build the D314 canonical Amex schema-v1 handoff from fixtures + D314 worksheet.
 
 Writes tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json
-(#226: s4/s19 leap-year annotations + category support; s5/s9/s10 independent support;
+(#226/#269: s4/s19 leap-year annotations + independent navy-header support; s5/s9/s10 independent support;
 #227: s6 +6pp elbow annotation; s8 lodging metric_strip; s15 reserve-rate outlined row + stack totals;
 #228: s12 three-band NCA stacked_bar UCS/Commercial/ICS totaling ~3.x;
 #225: s11 Transaction Growth pins domain.kind=fixed 0–15;
@@ -900,7 +900,7 @@ def build() -> dict:
                 "support": support_from_v2(
                     "s4-support",
                     slides_in[4]["visual_spec"]["secondary_visual"]["steps_or_data"],
-                    alignment="category",
+                    alignment="independent",
                 ),
             },
             subtitle=slides_in[4]["content"].get("subtitle"),
@@ -1590,7 +1590,7 @@ def build() -> dict:
         )
     )
 
-    # 19 revenue line + leap-year + category-aligned USD support
+    # 19 revenue line + leap-year + independent navy-header USD support
     s19 = slides_in[19]
     st19 = s19["visual_spec"]["primary_visual"]["steps_or_data"]
     if st19 and isinstance(st19[0], dict):
@@ -1631,7 +1631,7 @@ def build() -> dict:
                 "support": support_from_v2(
                     "s19-support",
                     s19["visual_spec"]["secondary_visual"]["steps_or_data"],
-                    alignment="category",
+                    alignment="independent",
                     fmt="usd_1",
                 ),
             },
