@@ -1,8 +1,9 @@
-"""Renderer v3 brand, section divider, and legal compositions (#191/#232/#238).
+"""Renderer v3 brand, section divider, and legal compositions (#191/#232/#238/#270).
 
 Covers D178–D182, D215, D223, D225–D226, D268–D271, D287:
 - cover/divider placement + renderer-owned chrome
 - legal multipart sequence + exact paragraphs
+- unmarked-only legal bodies paint as <p> blocks; marked lines stay <ul>
 - invalid placement / fit → complete fallback without moving content
 - legal wrapper-<li> indent matches plan on skipped/leading nests
 """
@@ -333,6 +334,7 @@ def test_legal_notice_paints_payload_list_hierarchy(tmp_path: Path):
     assert "ability to grow revenue" in s5.replace("<wbr>", "")
     assert s5.count("<li") == 2
     assert "<p" in s5 and "Intro sentence stays a paragraph." in s5.replace("<wbr>", "")
+    assert s5.count("<ul") == 2
     assert "<ul" in s6 and s6.count("<ul") == 2
     assert "net card fees" in s6.replace("<wbr>", "")
     assert "including premium cards" in s6.replace("<wbr>", "")
@@ -348,11 +350,11 @@ def test_legal_plan_margin_boxes_match_painted_blocks():
     unmarked = ["grow EPS", "grow revenue"]
     mixed = ["Intro.", "- grow EPS", "- grow revenue", "Close."]
     assert _legal_body_blocks(unmarked) == [
-        ("ul", [(0, "grow EPS")]),
-        ("ul", [(0, "grow revenue")]),
+        ("p", "grow EPS"),
+        ("p", "grow revenue"),
     ]
     kinds = [kind for kind, _ in _legal_body_blocks(mixed)]
-    assert kinds == ["p", "ul", "p"]
+    assert kinds == ["p", "ul", "ul", "p"]
 
     deck = validate_handoff(_brand(), strict=True).deck
     plan = plan_deck(deck, strict=True)
@@ -390,17 +392,12 @@ def test_legal_notice_skipped_nest_wraps_lists(tmp_path: Path):
         ["- parent", "  - grandchild"],  # adjacent 0→1 (regression)
         ["    - grandchild"],  # skipped 0→2 (4 spaces)
         ["- parent", "    - grandchild"],  # skipped 0→2 after a parent
-        [  # Amex s38–43 unmarked flat (regression)
-            "the company's ability to grow EPS",
-            "the company's ability to grow revenue",
-        ],
     ],
     ids=[
         "leading-nest",
         "adjacent-0-1",
         "skipped-0-2",
         "parent-then-skip",
-        "flat-unmarked",
     ],
 )
 def test_legal_wrapper_li_indent_matches_planned_em(paragraphs, tmp_path: Path):
@@ -438,13 +435,16 @@ def test_legal_list_items_keep_only_authored_newlines(tmp_path: Path):
     s5 = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
     body = s5.split('legal-body">', 1)[1].split("</div>", 1)[0].strip()
     assert body.startswith("<ul")
-    assert ">\n" not in body
-    assert "\n<" not in body
+    # Sibling <ul>s may sit on their own lines; each painted list stays compact.
+    for block in re.split(r"(?<=</ul>)\s*(?=<ul)", body):
+        assert block.startswith("<ul")
+        assert ">\n" not in block
+        assert "\n<" not in block
     assert "grow\nrevenue" in body.replace("<wbr>", "")
 
 
-def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
-    """Amex s38–43 unmarked bullets stay lists, one group per payload paragraph."""
+def test_unmarked_legal_paragraphs_paint_as_blocks(tmp_path: Path):
+    """#270: unmarked-only legal bodies are paragraphs, never fake lists."""
     raw = _brand()
     raw["slides"][4]["payload"]["paragraphs"] = [
         "the company's ability to grow EPS",
@@ -457,11 +457,11 @@ def test_unmarked_legal_paragraphs_still_emit_list(tmp_path: Path):
     html = (out / "presentation.html").read_text(encoding="utf-8")
     s5 = html.split('id="slide-5"', 1)[1].split("<section", 1)[0]
     body = s5.split('legal-body">', 1)[1].split("</div>", 1)[0]
-    assert body.count("<ul") == 2
-    assert body.count("<li") == 2
-    assert "<p" not in body
-    # Mutation trap: flattening the two paragraphs into one <ul> must fail.
-    assert "</ul><ul" in body.replace("\n", "")
+    assert body.count("<p") == 2
+    assert "<ul" not in body
+    assert "<li" not in body
+    # Mutation trap: flattening two unmarked paragraphs into one block must fail.
+    assert "</p><p" in body.replace("\n", "")
 
 
 # ---------------------------------------------------------------------------

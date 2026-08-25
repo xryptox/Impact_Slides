@@ -1492,9 +1492,6 @@ def _required_height(
 def _cover_fits(sp: SurfacePlan) -> bool:
     """Measure each fixed element and its renderer-owned chrome."""
     need_h = sp._chrome_h
-    body_texts = [t for t, rk in sp._cover_items if rk == "body"]
-    legal_blocks = _legal_body_blocks(body_texts) if body_texts else []
-    unmarked_list = bool(legal_blocks) and all(kind == "ul" for kind, _ in legal_blocks)
     for text_c, role_key in sp._cover_items:
         px = sp.role_sizes[role_key]
         strong = role_key == "title"
@@ -1504,8 +1501,6 @@ def _cover_fits(sp: SurfacePlan) -> bool:
             if parsed is not None:
                 level, text_c = parsed
                 box_w = max(1, sp._box_w - math.ceil(px * LIST_INDENT_EM * (level + 1)))
-            elif unmarked_list:
-                box_w = max(1, sp._box_w - math.ceil(px * LIST_INDENT_EM))
         hard_lines = text_c.split("\n") if sp._preserve_newlines else [text_c]
         for hard_line in hard_lines:
             lines, wo = _wrap_lines([(hard_line, strong)], px, box_w)
@@ -4048,7 +4043,7 @@ def _legal_body_blocks(
     """Painted legal block boxes: ('p', text) or ('ul', [(level, text), ...])."""
     marked = [(_legal_list_item(para), para) for para in paragraphs]
     if not any(item[0] is not None for item in marked):
-        return [("ul", [(0, para)]) for para in paragraphs]
+        return [("p", para) for para in paragraphs]
     blocks: list[tuple[str, str | list[tuple[int, str]]]] = []
     current: list[tuple[int, str]] | None = None
     for parsed, para in marked:
@@ -4056,7 +4051,8 @@ def _legal_body_blocks(
             current = None
             blocks.append(("p", para))
             continue
-        if current is None:
+        level, _text = parsed
+        if current is None or level == 0:
             current = []
             blocks.append(("ul", current))
         current.append(parsed)

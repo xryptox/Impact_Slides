@@ -128,6 +128,190 @@ def test_slide38_starts_with_pdf_preamble_then_two_risk_lists(handoff: dict) -> 
     )
 
 
+def _legal_only_handoff(handoff: dict) -> dict:
+    legal = [s for s in handoff["slides"] if s["slide_number"] in range(38, 44)]
+    eids = {eid for s in legal for eid in (s.get("evidence_ids") or [])}
+    return {
+        "meta": handoff["meta"],
+        "sections": [s for s in handoff["sections"] if s["section_id"] == "legal"],
+        "number_formats": {},
+        "evidence_registry": {
+            k: v for k, v in handoff["evidence_registry"].items() if k in eids
+        },
+        "slides": legal,
+    }
+
+
+def test_legal_continuations_paint_as_paragraphs(tmp_path: Path, handoff: dict) -> None:
+    """#270 R-D: unmarked legal parts are <p> blocks; s38 stays preamble + two lists."""
+    from html import unescape
+    from html.parser import HTMLParser
+
+    out = tmp_path / "legal"
+    path = tmp_path / "legal.json"
+    path.write_text(json.dumps(_legal_only_handoff(handoff)), encoding="utf-8")
+    result = render_deck(path, out, strict=True)
+    assert result["ok"] is True
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert meta["status"] == "clean"
+    assert meta["severity_counts"].get("error", 0) == 0
+    assert meta["severity_counts"].get("warning", 0) == 0
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert "\u2014 continued" not in html and "— continued" not in html
+    by_n = {s["slide_number"]: s for s in handoff["slides"]}
+
+    class _BodyTags(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.tags: list[str] = []
+            self._first_text_parent: str | None = None
+            self._stack: list[str] = []
+
+        def handle_starttag(self, tag, attrs):
+            self._stack.append(tag)
+            if tag in {"p", "ul", "li"}:
+                self.tags.append(tag)
+
+        def handle_endtag(self, tag):
+            if self._stack and self._stack[-1] == tag:
+                self._stack.pop()
+
+        def handle_data(self, data):
+            if self._first_text_parent is None and data.strip():
+                self._first_text_parent = next(
+                    (t for t in reversed(self._stack) if t in {"p", "li"}), ""
+                )
+
+    for n in range(38, 44):
+        chunk = html.split(f'id="slide-{n}"', 1)[1].split("<section", 1)[0]
+        body = chunk.split('legal-body">', 1)[1].split("</div>", 1)[0]
+        parsed = _BodyTags()
+        parsed.feed(body)
+        paras = by_n[n]["payload"]["paragraphs"]
+        marked = [
+            p.lstrip().startswith(("- ", "* ", "• ", "•")) for p in paras
+        ]
+        if n == 38:
+            assert parsed.tags.count("p") == 1
+            assert parsed.tags.count("ul") == 2
+            assert marked == [False, True, True]
+        else:
+            assert not any(marked)
+            assert parsed.tags.count("p") == len(paras)
+            assert "ul" not in parsed.tags
+            assert "li" not in parsed.tags
+            assert parsed._first_text_parent == "p"
+            compact = unescape(body).replace("<wbr>", "").replace("\n", "")
+            assert compact.count("</p><p") == len(paras) - 1
+
+
+def test_mutation_s39_first_paragraph_as_list_item_fails(
+    tmp_path: Path, handoff: dict
+) -> None:
+    """#270: painting s39's first unmarked paragraph as <li> must fail."""
+    from html.parser import HTMLParser
+
+    out = tmp_path / "legal"
+    path = tmp_path / "legal.json"
+    path.write_text(json.dumps(_legal_only_handoff(handoff)), encoding="utf-8")
+    assert render_deck(path, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    body = (
+        html.split('id="slide-39"', 1)[1]
+        .split("<section", 1)[0]
+        .split('legal-body">', 1)[1]
+        .split("</div>", 1)[0]
+    )
+    s39 = next(s for s in handoff["slides"] if s["slide_number"] == 39)
+    needle = s39["payload"]["paragraphs"][0][:40]
+
+    class _FirstParent(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.stack: list[str] = []
+            self.parent: str | None = None
+
+        def handle_starttag(self, tag, attrs):
+            self.stack.append(tag)
+
+        def handle_endtag(self, tag):
+            if self.stack and self.stack[-1] == tag:
+                self.stack.pop()
+
+        def handle_data(self, data):
+            if self.parent is None and needle in data.replace("\u00ad", ""):
+                self.parent = next(
+                    (t for t in reversed(self.stack) if t in {"p", "li"}), ""
+                )
+
+    parsed = _FirstParent()
+    parsed.feed(body.replace("<wbr>", ""))
+    assert parsed.parent == "p"
+    assert parsed.parent != "li"
+
+
+def test_legal_block_gap_and_type_computed_style(tmp_path: Path, handoff: dict) -> None:
+    """#270: s38–43 computed type 56/21 and ≥12px inter-block gap, no unmarked markers."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from impact_slides.renderer_v3.plan import LEGAL_BODY_PX, LEGAL_TITLE_PX
+
+    out = tmp_path / "legal"
+    path = tmp_path / "legal.json"
+    path.write_text(json.dumps(_legal_only_handoff(handoff)), encoding="utf-8")
+    assert render_deck(path, out, strict=True)["ok"] is True
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        try:
+            measured = page.evaluate(
+                """() => {
+                  const out = [];
+                  for (const n of [38, 39, 40, 41, 42, 43]) {
+                    const slide = document.querySelector(
+                      `[data-slide-number="${n}"]`
+                    );
+                    const h1 = slide.querySelector('.legal-notice h1');
+                    const blocks = [...slide.querySelectorAll(
+                      '.legal-body > p, .legal-body > ul'
+                    )];
+                    const gaps = [];
+                    for (let i = 0; i < blocks.length - 1; i++) {
+                      const a = blocks[i].getBoundingClientRect();
+                      const b = blocks[i + 1].getBoundingClientRect();
+                      gaps.push(b.top - a.bottom);
+                    }
+                    out.push({
+                      n,
+                      title_px: parseFloat(getComputedStyle(h1).fontSize),
+                      body_px: blocks.length
+                        ? parseFloat(getComputedStyle(
+                            blocks[0].matches('ul')
+                              ? blocks[0].querySelector('li')
+                              : blocks[0]
+                          ).fontSize)
+                        : 0,
+                      gaps,
+                      lis: slide.querySelectorAll('.legal-body li').length,
+                      uls: slide.querySelectorAll('.legal-body ul').length,
+                    });
+                  }
+                  return out;
+                }"""
+            )
+        finally:
+            browser.close()
+    for row in measured:
+        assert row["title_px"] == LEGAL_TITLE_PX, row
+        assert row["body_px"] == LEGAL_BODY_PX, row
+        assert row["gaps"] and all(g >= 12 for g in row["gaps"]), row
+        if row["n"] != 38:
+            assert row["uls"] == 0 and row["lis"] == 0, row
+
+
 def test_slide6_source_claim_and_slide21_capital_summary(handoff: dict) -> None:
     s6 = next(s for s in handoff["slides"] if s["slide_number"] == 6)
     blob = json.dumps(s6)
