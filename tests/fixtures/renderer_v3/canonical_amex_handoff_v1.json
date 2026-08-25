@@ -3192,27 +3192,25 @@
             },
             {
               "row_id": "volume",
-              "label": "Volume",
+              "label": "Volume - Total Balances",
               "value": {
                 "type": "number",
                 "value": "7",
                 "format_id": "pct_0"
               },
               "direction": "up",
-              "tone": "positive",
-              "detail": "Total Balances"
+              "tone": "positive"
             },
             {
               "row_id": "margin",
-              "label": "Margin",
+              "label": "Margin - Net Interest Income / Average Total Balances",
               "value": {
                 "type": "number",
                 "value": "5",
                 "format_id": "pct_0"
               },
               "direction": "up",
-              "tone": "positive",
-              "detail": "Net Interest Income / Average Total Balances"
+              "tone": "positive"
             }
           ]
         }

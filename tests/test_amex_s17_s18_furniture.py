@@ -1,9 +1,10 @@
-"""#229/#258 — s17/s18 $B furniture plus s17 dated pane headings.
+"""#229/#258/#271 — s17/s18 $B furniture plus s17 dated pane headings.
 
 Pins the live D314 corpus (not renderer defaults):
 - s17 Net Card Fees uses usd_1; labels read $0.9…$2.8; CAGR rule paints; Qualification disclosure
 - s17 pane headings are the dated PDF strings; slide subtitle paints once; pane_title hides 1-series legends
 - s18 NII uses usd_1; labels read $4.2…; five boxed YoY labels; PDF driver rows
+- s18 Volume/Margin fold detail into the label with ` - ` and drop `detail`
 - renderer does not invent the furniture
 - strict render of the canonical corpus stays clean
 """
@@ -43,8 +44,8 @@ S18_YOY = ["11", "12", "12", "12", "12"]
 S18_ROWS = [
     ("billed", "Billed Business", "8", None),
     ("nii", "Net Interest Income", "13", None),
-    ("volume", "Volume", "7", "Total Balances"),
-    ("margin", "Margin", "5", "Net Interest Income / Average Total Balances"),
+    ("volume", "Volume - Total Balances", "7", None),
+    ("margin", "Margin - Net Interest Income / Average Total Balances", "5", None),
 ]
 S17_TITLE = "Net Card Fees"
 S17_LEFT = "Net Card Fees (Q1: 2019-2026)"
@@ -198,6 +199,7 @@ def test_strict_render_shows_s17_s18_furniture(tmp_path: Path) -> None:
         assert f"{value}%" in s18
         if detail:
             assert detail in s18
+    assert "driver-detail" not in s18
 
 
 def test_mutation_reverting_s17_headings_restores_one_series_legends(
@@ -267,3 +269,30 @@ def test_mutation_dropping_s18_boxes_and_rows_omits_furniture(tmp_path: Path) ->
     assert "boxed-label" not in html
     assert "Billed Business" not in html
     assert "Loan growth" in html
+
+
+def test_mutation_splitting_s18_volume_margin_restores_detail_lines(
+    tmp_path: Path,
+) -> None:
+    """Renderer does not fold Volume/Margin; corpus must carry the one-line labels."""
+    handoff = _load()
+    rows = _slide(handoff, 18)["payload"]["hero"]["rows"]
+    for row in rows:
+        if row["row_id"] == "volume":
+            row["label"] = "Volume"
+            row["detail"] = "Total Balances"
+        elif row["row_id"] == "margin":
+            row["label"] = "Margin"
+            row["detail"] = "Net Interest Income / Average Total Balances"
+    src = tmp_path / "h.json"
+    src.write_text(json.dumps(handoff), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(src, out, strict=True)
+    html = unescape(
+        _section((out / "presentation.html").read_text(encoding="utf-8"), 18)
+    )
+    assert "Volume - Total Balances" not in html
+    assert "Margin - Net Interest Income / Average Total Balances" not in html
+    assert 'class="driver-detail"' in html
+    assert "Total Balances" in html
+    assert "Net Interest Income / Average Total Balances" in html

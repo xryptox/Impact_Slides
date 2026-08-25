@@ -118,7 +118,7 @@ Owner: corpus authoring (build_canonical_amex_v1 inputs); schema already support
 | 8 | FHR+THC Q3-flat then Q4 step | authored series values | Chart.js FHR data 40/40/40/50/50 |
 | 38 | PDF legal preamble then two risk bullets | first unmarked paragraph + marked lists | DOM: `<p>` then two `<ul>`s |
 | 17 | shipped #229/#258 | see D314 worksheet; dated pane headings + subtitle | `tests/test_amex_s17_s18_furniture.py` |
-| 18 | shipped #229 | see D314 worksheet | `tests/test_amex_s17_s18_furniture.py` |
+| 18 | shipped #229/#271 | see D314 worksheet; Volume/Margin folded into one driver label | `tests/test_amex_s17_s18_furniture.py` |
 | 12 | shipped #228 / #260 | 3-band NCA stack + `stack_segments: show` | `tests/test_amex_s12_nca_stack.py` |
 | 15 | shipped #227 / #260 | reserve-rate row + authored totals + `stack_segments: show` | `tests/test_amex_s6_s8_s15_furniture.py` |
 | 21 | shipped #230 / #260 | combo line + `outlined_support` values + `stack_segments: show` | `tests/test_amex_s21_s24_s28_furniture.py` |
