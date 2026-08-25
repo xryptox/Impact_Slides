@@ -70,6 +70,7 @@ Every PDF furniture element must map to an existing schema-v1 construct — new 
 | side callout boxes (Leap Year, elbow, FDIC) | `annotations` / `context_labels` (+ `coverage_callout` for stacks) |
 | bottom support tables / outlined rows | `support.support_table` / `support.outlined_support` |
 | category-aligned support chrome (#247/#256/#269) | visible body `.support-cat-cell` / `.support-cat-stub` carry hairline borders. Amex s4/s19 are independent navy-header `support_table`s (stub + Q1'25…Q1'26). D167 `hide_header` remains for other category-aligned charts: no `.head` / navy period band is required or treated as a chrome defect when the chart already owns categories. When a visual header row is painted (hidden-axis / independent header), `.head` still asserts navy band + hairlines. Decorative navy band without category labels is parked. sr-only semantic twin and frozen category centers stay byte-identical |
+| independent support-table stub header (#274) | independent `table.support-table` thead `th.stub` (`Q1'26` on s5/s9/s10; s4/s19 after #269) keeps the navy band + band ink of sibling `thead th` / `th.band-table-header`. Only `tbody th.stub` / `td.stub` stay transparent. Remaining category-aligned hide_header fixtures stay on the #256/#269 rule above |
 | side KPI stacks | `support.metric_strip` |
 | under-bar YoY boxes | boxed-label `auxiliary_series` |
 | braces / group labels (s24) | `category_groups` with `placement: above` + outlined share row |

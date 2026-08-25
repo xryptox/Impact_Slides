@@ -5,6 +5,7 @@ Pins the live D314 corpus (not renderer defaults):
 - s4/s19 painted series match the PDF identity (names/styles kept, values swapped)
 - s4/s19 paint a navy `band-table-header` stub + Q1'25…Q1'26 (no category-aligned hide_header)
 - s5/s9/s10: independent support_table (s10 series values stay unswapped)
+- s9/s10 independent thead stub (Q1'26) keeps navy band + band ink; body stubs stay transparent (#274)
 - s5/s9/s10/s11: Leap Year annotation; s5/s9/s10 G&S/T&E context_labels
 - s4/s5/s9/s11/s19 ticks 0/5/10/15; s10 ticks 0/5/10/15/20/25; s19 domain fixed 0-15
 - DOM on those sections shows the callout text / support rows / side facts
@@ -16,6 +17,8 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+
+import pytest
 
 from impact_slides.renderer_v3 import render_deck, validate_handoff
 from impact_slides.renderer_v3.plan import plan_deck
@@ -303,6 +306,124 @@ def test_strict_render_shows_callout_text_and_support_rows(tmp_path: Path) -> No
     assert by_sid["s10-ics"].chart_paint["domain"]["ticks"] == TICKS_0_25
     assert by_sid["s19-rev"].chart_paint["domain"]["kind"] == "fixed"
     assert float(by_sid["s19-rev"].chart_paint["domain"]["max"]) == 15.0
+
+
+_UNSCOPED_STUB_CLEAR = (
+    b"table.support-table th.stub,table.support-table td.stub{"
+    b"text-align:left;font-weight:var(--font-weight-emphasis);"
+    b"background:transparent}"
+)
+_TBODY_STUB_CLEAR = (
+    b"table.support-table tbody th.stub,table.support-table tbody td.stub{"
+    b"text-align:left;font-weight:var(--font-weight-emphasis);"
+    b"background:transparent}"
+)
+
+
+def _rgb(hex_color: str) -> str:
+    h = hex_color.lstrip("#")
+    return f"rgb({int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)})"
+
+
+def test_independent_support_thead_stub_keeps_navy_band_on_s9_s10(
+    tmp_path: Path,
+) -> None:
+    """#274: s9/s10 thead Q1'26 stub matches sibling header navy + band ink."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from impact_slides.renderer_v3.theme import resolve_color
+
+    out = tmp_path / "out"
+    result = render_deck(FIXTURE, out, strict=True)
+    assert result["ok"] is True
+    assert result["status"] == "clean"
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert meta["severity_counts"].get("error", 0) == 0
+    assert meta["severity_counts"].get("warning", 0) == 0
+
+    html_bytes = (out / "presentation.html").read_bytes()
+    assert html_bytes.count(_TBODY_STUB_CLEAR) == 1
+    assert html_bytes.count(_UNSCOPED_STUB_CLEAR) == 0
+
+    navy_rgb = _rgb(resolve_color("navy", role="band"))
+    ink_rgb = _rgb(resolve_color("white", role="text_on_dark"))
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        try:
+            for n in (9, 10):
+                styles = page.evaluate(
+                    """({sn}) => {
+                      const slide = document.querySelector(
+                        'section.slide[data-slide-number="' + sn + '"]'
+                      );
+                      const table = slide.querySelector(
+                        'table.support-table:not(.sr-only)'
+                      );
+                      const pack = (el) => {
+                        const s = getComputedStyle(el);
+                        return {bg: s.backgroundColor, color: s.color};
+                      };
+                      const stub = table.querySelector('thead th.stub');
+                      const other = table.querySelector('thead th:not(.stub)');
+                      const body = table.querySelector('tbody th.stub');
+                      return {
+                        stubText: stub ? stub.textContent.trim() : '',
+                        stub: stub ? pack(stub) : null,
+                        other: other ? pack(other) : null,
+                        body: body ? pack(body) : null,
+                      };
+                    }""",
+                    {"sn": n},
+                )
+                assert styles["stubText"] == "Q1'26"
+                assert styles["stub"]["bg"] == navy_rgb
+                assert styles["stub"]["color"] == ink_rgb
+                assert styles["other"]["bg"] == navy_rgb
+                assert styles["other"]["color"] == ink_rgb
+                assert styles["body"]["bg"] != navy_rgb
+        finally:
+            browser.close()
+
+
+def test_mutation_unscoped_th_stub_rule_clears_thead_band(tmp_path: Path) -> None:
+    """#274: a th.stub rule that again clears thead background must fail."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from impact_slides.renderer_v3.theme import resolve_color
+
+    out = tmp_path / "out"
+    render_deck(FIXTURE, out, strict=True)
+    html_path = out / "presentation.html"
+    html_bytes = html_path.read_bytes()
+    assert _TBODY_STUB_CLEAR in html_bytes
+    mutated = html_bytes.replace(_TBODY_STUB_CLEAR, _UNSCOPED_STUB_CLEAR, 1)
+    assert mutated != html_bytes
+    html_path.write_bytes(mutated)
+
+    navy_rgb = _rgb(resolve_color("navy", role="band"))
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.resolve().as_uri(), wait_until="networkidle")
+        try:
+            bg = page.evaluate(
+                """() => {
+                  const table = document.querySelector(
+                    'section.slide[data-slide-number="9"] '
+                    + 'table.support-table:not(.sr-only)'
+                  );
+                  return getComputedStyle(table.querySelector('thead th.stub'))
+                    .backgroundColor;
+                }"""
+            )
+        finally:
+            browser.close()
+    assert bg != navy_rgb
 
 
 def test_mutation_dropping_s4_annotation_omits_callout_from_dom(tmp_path: Path) -> None:
