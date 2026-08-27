@@ -1,0 +1,72 @@
+Annex 5
+($ in millions, except percentages and where indicated)
+Consolidated Net Interest Yield on Average Card Member Loans
+* Primarily represents interest expense attributable to funding Card Member receivables and maintaining our corporate liquidity pool.
+** Primarily represents interest income attributable to Other loans, interest-bearing deposits and our Travelers Cheque and other stored-value investment portfolio.
+*** Adjusted net interest income and net interest yield on average Card Member loans are non-GAAP measures. We believe adjusted net interest income is useful to investors because it 
+represents the interest expense and interest income attributable to our Card Member loan portfolio and is a component of net interest yield on average Card Member loans, which provides a 
+measure of profitability of our Card Member loan portfolio. Net interest yield on average Card Member loans reflects adjusted net interest income divided by average Card Member loans, 
+computed on an annualized basis. Net interest income divided by average Card Member loans, computed on an annualized basis, a GAAP measure, includes elements of total interest 
+income and total interest expense that are not attributable to the Card Member loan portfolio, and thus is not representative of net interest yield on average Card Member loans. 
+Q3’19
+Q4’19
+Q3’20
+Q4’20
+Q3’21
+Q4’21
+Net interest income
+$2,203
+$2,284
+$1,874
+$1,897
+$1,994
+$2,107
+Exclude:
+Interest expense not attributable to our Card Member loan 
+portfolio*
+$461
+$421
+$296
+$254
+$172
+$135
+Interest income not attributable to our Card Member  loan 
+portfolio**
+($308)
+($271)
+($137)
+($111)
+($92)
+($98)
+Adjusted net interest income***
+$2,356
+$2,434
+$2,033
+$2,040
+$2,074
+$2,145
+Average Card Member loans (billions)
+$83.3
+$85.2
+$69.9
+$71.2
+$76.4
+$82.9
+Net interest income divided by average Card Member loans
+10.6%
+10.7%
+10.7%
+10.7%
+10.4%
+10.2%
+Net interest yield on average Card Member loans***
+11.2%
+11.3%
+11.6%
+11.4%
+10.8%
+10.3%
+2020
+2019
+2021
+42

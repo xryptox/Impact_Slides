@@ -1,0 +1,960 @@
+{
+  "renderer_version": "3.0.0",
+  "handoff_schema_version": 1,
+  "theme_id": "boardroom_amex",
+  "evidence_registry": [
+    {
+      "evidence_id": "amex-q4-2021-p01",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 0,
+        "kind": "pdf_page",
+        "page": 1,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p02",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 1,
+        "kind": "pdf_page",
+        "page": 2,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p03",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 2,
+        "kind": "pdf_page",
+        "page": 3,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p04",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 3,
+        "kind": "pdf_page",
+        "page": 4,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p05",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 4,
+        "kind": "pdf_page",
+        "page": 5,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p06",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 5,
+        "kind": "pdf_page",
+        "page": 6,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p07",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 6,
+        "kind": "pdf_page",
+        "page": 7,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p08",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 7,
+        "kind": "pdf_page",
+        "page": 8,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p09",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 8,
+        "kind": "pdf_page",
+        "page": 9,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p10",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 9,
+        "kind": "pdf_page",
+        "page": 10,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p11",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 10,
+        "kind": "pdf_page",
+        "page": 11,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p12",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 11,
+        "kind": "pdf_page",
+        "page": 12,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p13",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 12,
+        "kind": "pdf_page",
+        "page": 13,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p14",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 13,
+        "kind": "pdf_page",
+        "page": 14,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p15",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 14,
+        "kind": "pdf_page",
+        "page": 15,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p16",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 15,
+        "kind": "pdf_page",
+        "page": 16,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p17",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 16,
+        "kind": "pdf_page",
+        "page": 17,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p18",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 17,
+        "kind": "pdf_page",
+        "page": 18,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p19",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 18,
+        "kind": "pdf_page",
+        "page": 19,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p20",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 19,
+        "kind": "pdf_page",
+        "page": 20,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p21",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 20,
+        "kind": "pdf_page",
+        "page": 21,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p22",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 21,
+        "kind": "pdf_page",
+        "page": 22,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p23",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 22,
+        "kind": "pdf_page",
+        "page": 23,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p24",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 23,
+        "kind": "pdf_page",
+        "page": 24,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p25",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 24,
+        "kind": "pdf_page",
+        "page": 25,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p26",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 25,
+        "kind": "pdf_page",
+        "page": 26,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p27",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 26,
+        "kind": "pdf_page",
+        "page": 27,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p28",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 27,
+        "kind": "pdf_page",
+        "page": 28,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p29",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 28,
+        "kind": "pdf_page",
+        "page": 29,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p30",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 29,
+        "kind": "pdf_page",
+        "page": 30,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p31",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 30,
+        "kind": "pdf_page",
+        "page": 31,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p32",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 31,
+        "kind": "pdf_page",
+        "page": 32,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p33",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 32,
+        "kind": "pdf_page",
+        "page": 33,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p34",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 33,
+        "kind": "pdf_page",
+        "page": 34,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p35",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 34,
+        "kind": "pdf_page",
+        "page": 35,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p36",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 35,
+        "kind": "pdf_page",
+        "page": 36,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p37",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 36,
+        "kind": "pdf_page",
+        "page": 37,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p38",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 37,
+        "kind": "pdf_page",
+        "page": 38,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p39",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 38,
+        "kind": "pdf_page",
+        "page": 39,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p40",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 39,
+        "kind": "pdf_page",
+        "page": 40,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p41",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 40,
+        "kind": "pdf_page",
+        "page": 41,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p42",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 41,
+        "kind": "pdf_page",
+        "page": 42,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p43",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 42,
+        "kind": "pdf_page",
+        "page": 43,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p44",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 43,
+        "kind": "pdf_page",
+        "page": 44,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p45",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 44,
+        "kind": "pdf_page",
+        "page": 45,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p46",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 45,
+        "kind": "pdf_page",
+        "page": 46,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p47",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 46,
+        "kind": "pdf_page",
+        "page": 47,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p48",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 47,
+        "kind": "pdf_page",
+        "page": 48,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p49",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 48,
+        "kind": "pdf_page",
+        "page": 49,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p50",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 49,
+        "kind": "pdf_page",
+        "page": 50,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p51",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 50,
+        "kind": "pdf_page",
+        "page": 51,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p52",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 51,
+        "kind": "pdf_page",
+        "page": 52,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    },
+    {
+      "evidence_id": "amex-q4-2021-p53",
+      "source_name": "American Express Q4 2021 Earnings Presentation",
+      "locator": {
+        "index": 52,
+        "kind": "pdf_page",
+        "page": 53,
+        "sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21"
+      }
+    }
+  ],
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "evidence_ids": [
+        "amex-q4-2021-p01"
+      ]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p02"
+      ]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p03"
+      ]
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p04"
+      ]
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p05"
+      ]
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "dual_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p06"
+      ]
+    },
+    {
+      "slide_number": 7,
+      "layout_type": "dual_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p07"
+      ]
+    },
+    {
+      "slide_number": 8,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p08"
+      ]
+    },
+    {
+      "slide_number": 9,
+      "layout_type": "dual_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p09"
+      ]
+    },
+    {
+      "slide_number": 10,
+      "layout_type": "dual_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p10"
+      ]
+    },
+    {
+      "slide_number": 11,
+      "layout_type": "dual_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p11"
+      ]
+    },
+    {
+      "slide_number": 12,
+      "layout_type": "chart_hero_dual",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p12"
+      ]
+    },
+    {
+      "slide_number": 13,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p13"
+      ]
+    },
+    {
+      "slide_number": 14,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p14"
+      ]
+    },
+    {
+      "slide_number": 15,
+      "layout_type": "single_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p15"
+      ]
+    },
+    {
+      "slide_number": 16,
+      "layout_type": "single_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p16"
+      ]
+    },
+    {
+      "slide_number": 17,
+      "layout_type": "single_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p17"
+      ]
+    },
+    {
+      "slide_number": 18,
+      "layout_type": "single_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p18"
+      ]
+    },
+    {
+      "slide_number": 19,
+      "layout_type": "data_table",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p19"
+      ]
+    },
+    {
+      "slide_number": 20,
+      "layout_type": "dual_chart",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p20"
+      ]
+    },
+    {
+      "slide_number": 21,
+      "layout_type": "chart_hero_dual",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p21"
+      ]
+    },
+    {
+      "slide_number": 22,
+      "layout_type": "metric_overview",
+      "section_id": "earnings",
+      "evidence_ids": [
+        "amex-q4-2021-p22"
+      ]
+    },
+    {
+      "slide_number": 23,
+      "layout_type": "section_divider",
+      "evidence_ids": [
+        "amex-q4-2021-p23"
+      ]
+    },
+    {
+      "slide_number": 24,
+      "layout_type": "data_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p24"
+      ]
+    },
+    {
+      "slide_number": 25,
+      "layout_type": "grouped_annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p25"
+      ]
+    },
+    {
+      "slide_number": 26,
+      "layout_type": "data_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p26"
+      ]
+    },
+    {
+      "slide_number": 27,
+      "layout_type": "dual_chart",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p27"
+      ]
+    },
+    {
+      "slide_number": 28,
+      "layout_type": "single_chart",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p28"
+      ]
+    },
+    {
+      "slide_number": 29,
+      "layout_type": "single_chart",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p29"
+      ]
+    },
+    {
+      "slide_number": 30,
+      "layout_type": "narrative",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p30"
+      ]
+    },
+    {
+      "slide_number": 31,
+      "layout_type": "single_chart",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p31"
+      ]
+    },
+    {
+      "slide_number": 32,
+      "layout_type": "data_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p32"
+      ]
+    },
+    {
+      "slide_number": 33,
+      "layout_type": "narrative",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p33"
+      ]
+    },
+    {
+      "slide_number": 34,
+      "layout_type": "narrative",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p34"
+      ]
+    },
+    {
+      "slide_number": 35,
+      "layout_type": "hierarchy",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p35"
+      ]
+    },
+    {
+      "slide_number": 36,
+      "layout_type": "narrative",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p36"
+      ]
+    },
+    {
+      "slide_number": 37,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p37"
+      ]
+    },
+    {
+      "slide_number": 38,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p38"
+      ]
+    },
+    {
+      "slide_number": 39,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p39"
+      ]
+    },
+    {
+      "slide_number": 40,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p40"
+      ]
+    },
+    {
+      "slide_number": 41,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p41"
+      ]
+    },
+    {
+      "slide_number": 42,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p42"
+      ]
+    },
+    {
+      "slide_number": 43,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p43"
+      ]
+    },
+    {
+      "slide_number": 44,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p44"
+      ]
+    },
+    {
+      "slide_number": 45,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p45"
+      ]
+    },
+    {
+      "slide_number": 46,
+      "layout_type": "annex_table",
+      "section_id": "appendix",
+      "evidence_ids": [
+        "amex-q4-2021-p46"
+      ]
+    },
+    {
+      "slide_number": 47,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "evidence_ids": [
+        "amex-q4-2021-p47"
+      ]
+    },
+    {
+      "slide_number": 48,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "evidence_ids": [
+        "amex-q4-2021-p48"
+      ]
+    },
+    {
+      "slide_number": 49,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "evidence_ids": [
+        "amex-q4-2021-p49"
+      ]
+    },
+    {
+      "slide_number": 50,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "evidence_ids": [
+        "amex-q4-2021-p50"
+      ]
+    },
+    {
+      "slide_number": 51,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "evidence_ids": [
+        "amex-q4-2021-p51"
+      ]
+    },
+    {
+      "slide_number": 52,
+      "layout_type": "legal_notice",
+      "section_id": "legal",
+      "evidence_ids": [
+        "amex-q4-2021-p52"
+      ]
+    },
+    {
+      "slide_number": 53,
+      "layout_type": "closing_cover",
+      "evidence_ids": [
+        "amex-q4-2021-p53"
+      ]
+    }
+  ]
+}

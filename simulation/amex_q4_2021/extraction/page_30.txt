@@ -1,0 +1,63 @@
+30
+Credit Reserve Build Macroeconomic Assumptions
+US Unemployment Rate %
+US GDP Growth* %
+Note: Forecast assumptions are from an independent third party and represent the range of forecasts from the macroeconomic scenarios used during the quarter without applying a weight to 
+those scenarios above. * Real GDP QoQ % Change Seasonally Adjusted to Annualized Rates (SAAR).
+(10%)
+(5%)
+0%
+5%
+10%
+15%
+20%
+25%
+30%
+35%
+40%
+Q3'20
+Q4'20
+Q1'21
+Q2'21
+Q3'21
+Q4'21
+Q1'22
+Q2'22
+Q3'22
+Q4'22
+Q1'23
+Q2'23
+Q3'23
+Q4'23
+Q3 Baseline Scenario
+Q3 Downside Scenario
+Q4 Baseline Scenario
+Q4 Downside Scenario
+0%
+2%
+4%
+6%
+8%
+10%
+12%
+14%
+16%
+18%
+Q3'20
+Q4'20
+Q1'21
+Q2'21
+Q3'21
+Q4'21
+Q1'22
+Q2'22
+Q3'22
+Q4'22
+Q1'23
+Q2'23
+Q3'23
+Q4'23
+Q3 Baseline Scenario
+Q3 Downside Scenario
+Q4 Baseline Scenario
+Q4 Downside Scenario

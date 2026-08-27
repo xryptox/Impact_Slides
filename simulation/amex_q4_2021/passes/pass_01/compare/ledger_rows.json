@@ -1,0 +1,320 @@
+{
+  "1": {
+    "class": "accepted v3 design divergence",
+    "recipe": "opening_cover",
+    "observation": "Boardroom opening_cover carries the title and January 25, 2022 date. PDF is navy/cyan brand chrome plus Centurion seal. Seal/brand cover is excluded (CONTEXT.md); not a capture failure.",
+    "title": "American Express Earnings Conference Call Q4'21"
+  },
+  "2": {
+    "class": "accepted v3 design divergence",
+    "recipe": "data_table",
+    "observation": "Six-row Q4/FY grid matches PDF figures. Boardroom data_table vs Amex pill columns is accepted chrome. Gray Notable Impacts side callout has no mixed grid+callout recipe and was folded into disclosure (Type B secondary).",
+    "title": "Summary Financial Performance"
+  },
+  "3": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "data_table",
+    "observation": "PDF is an 8-quarter line (Billed Business / Processed / Total) plus a 3-row summary table. single_chart line + support_table can hold that composition. Quarterly plot points were not glyph-readable and were omitted; only the readable table was authored.",
+    "title": "Total Network Volumes Growth"
+  },
+  "4": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "data_table",
+    "observation": "PDF is FY stacked G&S/T&E bars + 8-quarter growth line + Q4 table (3 panes). dual_chart is exactly two charts and has no support_table. Least-lossy legal stand-in is data_table of the readable Q4/FY figures. Missing recipe: 3-pane chart+chart+table.",
+    "title": "Billed Business (G&S vs T&E)"
+  },
+  "5": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "data_table",
+    "observation": "PDF is Online/Offline/Total G&S line plus Q4 table. single_chart line + support_table is legal. Quarterly points were not glyph-readable; table-only authored.",
+    "title": "Goods & Services Billed Business (Online vs Offline)"
+  },
+  "6": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "dual_chart",
+    "observation": "PDF is stacked mix bars with dollar totals and vs-2019 callouts plus an 8-quarter 4-series line, each with an under-plot table. dual_chart has no per-pane support_table and no geometric vs-2019 callouts. Authored stacked_bar mix + grouped_bar of the Q4 cohort table. Missing recipe: dual chart + two support tables; unread line is a Type A secondary.",
+    "title": "Global Consumer Billed Business"
+  },
+  "7": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "dual_chart",
+    "observation": "Same 2-chart + 2-table ceiling as s6 (Commercial G&S/T&E stack + SME vs L&G line). Authored stacked_bar + grouped_bar Q4 snapshot. Missing recipe: dual chart with under-plot tables.",
+    "title": "Global Commercial Billed Business"
+  },
+  "8": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "data_table",
+    "observation": "PDF is T&E-by-customer 8-quarter line plus Q4 table. single_chart line + support_table is legal. Line points unread; table authored.",
+    "title": "Billed Business T&E Growth"
+  },
+  "9": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "dual_chart",
+    "observation": "PDF is two 8-quarter lines plus two Q4 tables. dual_chart can take the two lines but not the tables. Authored two grouped_bar Q4 snapshots. Missing recipe: dual chart + support tables; unread lines are Type A secondary.",
+    "title": "Billed Business Growth by Region"
+  },
+  "10": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "dual_chart",
+    "observation": "PDF is two Q3-Q4 grouped-bar panes with in-bar YoY boxes and year groups. dual_chart grouped_bar is the right recipe; boxed-label auxiliary_series and category_groups exist. Handoff authored dollar bars only (YoY boxes and year separators omitted).",
+    "title": "Worldwide Total Loans and Card Member Receivables"
+  },
+  "11": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "dual_chart",
+    "observation": "PDF is two bar panes with 30+ DPD strips plus a GCP write-off strip. dual_chart grouped_bar can hold the two main panes; 3+ canvas for the GCP strip is Type B secondary. Handoff used line marks and swapped loan write-off bars (2.5% to 0.6%) onto the receivables 30+ series \u2014 a re-author would restore the two bar panes.",
+    "title": "Card Member Credit Metrics"
+  },
+  "12": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "chart_hero_dual",
+    "observation": "PDF is signed stacked write-off/reserve bars with total labels plus an FY Better/(Worse) table. combo with bar_mode stacked + line, and hero for the FY table, is legal. Handoff used grouped combo, so negatives sit side-by-side instead of stacked. Hero KPIs match $2,127 / $4,022 / $6,149.",
+    "title": "Total Provision"
+  },
+  "13": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "data_table",
+    "observation": "PDF is a reserve walk (beginning, builds, releases, endings) with percent boxes. waterfall (and stacked_bar) exist. Handoff authored a 4-row ending snapshot table and dropped the $1.5 / $5.8 / ($2.2) flow columns.",
+    "title": "Total Reserves"
+  },
+  "14": {
+    "class": "accepted v3 design divergence",
+    "recipe": "data_table",
+    "observation": "Six metrics x Q4/FY/% vs-2019 match the PDF grid. Boardroom table vs pill columns is accepted chrome.",
+    "title": "Revenue Performance"
+  },
+  "15": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "single_chart",
+    "observation": "PDF is Q3-Q4 bars with in-bar YoY boxes, average-rate boxes, and an FY inset. combo + boxed-label auxiliary + support_table/metric_strip are legal. Handoff plotted $B bars + rate as a line and omitted YoY boxes and the FY $25.7 inset.",
+    "title": "Discount Revenue"
+  },
+  "16": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "single_chart",
+    "observation": "PDF is 12 quarterly NCF bars with in-bar YoY and an FY inset ($5.2, 10%, 28%). combo bar+YoY line is a fair stand-in for the boxes; support_table would hold the FY inset and was not authored.",
+    "title": "Net Card Fees"
+  },
+  "17": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "single_chart",
+    "observation": "Same Q3-Q4 bar + YoY-box + yield-box pattern as s15. combo plots $B + yield line; in-bar YoY and FY $7.8 inset were not authored (boxed labels / support_table / metric_strip).",
+    "title": "Net Interest Income"
+  },
+  "18": {
+    "class": "accepted v3 design divergence",
+    "recipe": "single_chart",
+    "observation": "Two-series line (YoY and vs-2019) matches the PDF path and labeled points. Boardroom chrome vs PDF inset FY'21 $42.4 box is accepted; support_table could hold the inset (Type A secondary).",
+    "title": "Total Revenue Net of Interest Expense"
+  },
+  "19": {
+    "class": "accepted v3 design divergence",
+    "recipe": "data_table",
+    "observation": "Expense grid including Variable CM Engagement and Effective Tax Rate matches. Boardroom table vs pill columns is accepted chrome.",
+    "title": "Expense Performance"
+  },
+  "20": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "dual_chart",
+    "observation": "dual_chart grouped_bar is the right two-pane recipe (Marketing $B, Proprietary NCA). NCA bars match 1.4 to 2.7. Marketing Value Injection hatch split was not extracted as a second series; stacked_bar would hold it if the hatch amounts were readable.",
+    "title": "Marketing Investments and New Cards Acquired"
+  },
+  "21": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "chart_hero_dual",
+    "observation": "PDF is CET1 bars + Capital Return bars + dividend strip (3 surfaces). chart_hero_dual is one chart + hero KPIs, so CET1 becomes 10.5% text. dual_chart would drop the dividend row. Missing recipe: two charts + metric strip. Capital Return $6.0/$2.3/$9.0 match.",
+    "title": "Capital"
+  },
+  "22": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "metric_overview",
+    "observation": "PDF is three equal cards (2022 Guidance / 2023 Expectations / 2024+ Aspiration) plus two qualifier bars. feature_cards (2-6) is the closer legal recipe. metric_overview flattened 2022-2024 into one KPI row and mixed years.",
+    "title": "The Growth Plan"
+  },
+  "23": {
+    "class": "accepted v3 design divergence",
+    "recipe": "section_divider",
+    "observation": "Boardroom section_divider Appendix vs navy brand divider with Centurion seal. Label matches. Brand chrome excluded.",
+    "title": "Appendix"
+  },
+  "24": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "data_table",
+    "observation": "PDF is signed vs-2019 bars with percent share boxes, brace-grouped YoY tables, and a consumer/commercial legend. No recipe composes waterfall/bars + share chips + two grouped tables. data_table holds readable shares/YoY; several vs-2019 bar labels were not fully attributed (Type A secondary).",
+    "title": "Q4'21 Network Volumes Growth by Customer Type"
+  },
+  "25": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "grouped_annex_table",
+    "observation": "PDF is an 8-quarter Online/Offline/G&S line plus two Q4 tables. grouped_annex_table holds the two tables. single_chart cannot also carry two annex matrices. Missing recipe: chart + grouped_annex. Unread line is Type A secondary.",
+    "title": "Global Consumer G&S Growth"
+  },
+  "26": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "data_table",
+    "observation": "PDF is T&E-by-industry 8-quarter line plus Q4 table. single_chart line + support_table is legal. Points unread; table authored (Restaurants/Lodging/Airlines/Other/Total match).",
+    "title": "Travel & Entertainment Billed Business"
+  },
+  "27": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "dual_chart",
+    "observation": "PDF is two mix donuts (Loan 68/12/20; Receivables 28/14/24/34). Closed chart set has no pie/donut. stacked_bar dual_chart is the least-lossy legal stand-in; mix percent match, radial geometry does not.",
+    "title": "Worldwide Total Loans and Card Member Receivables Mix"
+  },
+  "28": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "single_chart",
+    "observation": "stacked_bar holds Delinquent / FRP / CPR stacks including Apr'20 $8.5 CPR. metric_strip would hold the below-plot Total Loans / CM Receivables boxes and was not authored.",
+    "title": "Delinquent and Financial Relief Program Balances"
+  },
+  "29": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "single_chart",
+    "observation": "PDF is GCP write-off bars plus a Q2'21 bankruptcy side table. grouped_bar + support_table is legal. Handoff used a line and put the side table only in disclosure.",
+    "title": "Global Corporate Payments Card Member Credit Metrics"
+  },
+  "30": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "narrative",
+    "observation": "PDF is two 4-series macro line charts (unemployment, GDP). dual_chart line is legal. Quarterly scenario points were not glyph-readable; authored narrative with an explicit extraction residual. No invented series.",
+    "title": "Credit Reserve Build Macroeconomic Assumptions"
+  },
+  "31": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "single_chart",
+    "observation": "stacked_bar of Unsecured Term / Card ABS / Deposits / Short-term is the right recipe and mix percent match. Authored stack totals $126/$138/$132 follow extraction reading order; PDF visual is $138/$132/$126 on Q4'19/Q4'20/Q4'21. Re-author the auxiliary totals.",
+    "title": "Funding Mix"
+  },
+  "32": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "data_table",
+    "observation": "PDF is two 4-quarter Reported vs FX-Adj lines plus a 6-currency table. dual_chart can take the lines but not the table. Unread plot points (Type A secondary). Currency table authored. Missing recipe: dual chart + support table.",
+    "title": "FX Impact on Network Volumes and Revenue Growth"
+  },
+  "33": {
+    "class": "faithful reproduction",
+    "recipe": "narrative",
+    "observation": "Variance commentary bullets match the PDF (Discount Revenue 35%, NCF 10%, OFC 32%, Other 218%, Interest Income 5%, Interest Expense (25%), Provisions 148%). Boardroom narrative chrome only.",
+    "title": "Additional Commentary \u2013 Variance Analysis"
+  },
+  "34": {
+    "class": "faithful reproduction",
+    "recipe": "narrative",
+    "observation": "Continuation bullets match (Marketing+BD 46%, Rewards 32% with 96% URR, Services 127%, Operating 7%).",
+    "title": "Additional Commentary \u2013 Variance Analysis"
+  },
+  "35": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "hierarchy",
+    "observation": "PDF is a freeform ESG strategy board (mission band, stakeholders, governance, three pillars with objective lists, committee stack). hierarchy 5-node tree and layered_architecture 4x4 cannot hold the board. Authored a 5-node part_of tree; objective bullets and committee layers dropped. Missing recipe: freeform strategy / org board.",
+    "title": "Environmental, Social and Governance (ESG) Strategy"
+  },
+  "36": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "narrative",
+    "observation": "narrative can hold the full nested DE&I / Financial Confidence / Climate bullets. Handoff condensed to three summary bullets (Type A authoring miss), not a recipe ceiling.",
+    "title": "2021 ESG Highlights"
+  },
+  "37": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "annex_table",
+    "observation": "PDF Annex 1 is an 18-period reported/FX matrix. annex_table cannot present that IR history at 1920x1080 (fit/column ceiling). Authored a 4-column Q4/FY vs-2019 subset. Missing recipe: wide multi-year annex matrix.",
+    "title": "Annex 1 Network Volumes \u2013 Reported & FX-Adjusted"
+  },
+  "38": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "annex_table",
+    "observation": "Annex 1 (2 of 2) is the same wide matrix for L&G / Int'l SME / SME. 4-column subset only. Same Type B ceiling as s37.",
+    "title": "Annex 1 Network Volumes \u2013 Reported & FX-Adjusted"
+  },
+  "39": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "annex_table",
+    "observation": "Annex 2 PDF is 12 period columns of GAAP/FX discount revenue. Schema allows up to the table column budget; handoff authored only Q3'21/Q4'21/FY'21. Re-author a wider annex_table before calling this a fit ceiling.",
+    "title": "Annex 2 Discount Revenue \u2013 Reported & FX-Adjusted"
+  },
+  "40": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "annex_table",
+    "observation": "Annex 3 PDF is a 19-period NCF history. Same wide-matrix ceiling as Annex 1. Authored Q4'21/FY'21 only.",
+    "title": "Annex 3 Net Card Fees \u2013 Reported & FX-Adjusted"
+  },
+  "41": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "annex_table",
+    "observation": "Annex 4 PDF is 12 period columns. Authored Q3'21/Q4'21/FY'21 only; wider annex_table not yet tried.",
+    "title": "Annex 4 Net Interest Income \u2013 Reported & FX-Adjusted"
+  },
+  "42": {
+    "class": "faithful reproduction",
+    "recipe": "annex_table",
+    "observation": "Six Q3/Q4 2019-2021 columns for NII / exclusions / yield match the PDF walk ($2,203 to $2,107; yield 11.2% to 10.3%). Boardroom annex chrome only.",
+    "title": "Annex 5 Consolidated Net Interest Yield on Average Card Member Loans"
+  },
+  "43": {
+    "class": "candidate renderer defect or capability gap (Type B)",
+    "recipe": "annex_table",
+    "observation": "Annex 6 (1 of 2) is a 19-period revenue history. Authored Q4'21/FY'21 only. Wide-matrix ceiling.",
+    "title": "Annex 6 Revenues Net of Interest Expense"
+  },
+  "44": {
+    "class": "corpus/extraction residual (Type A)",
+    "recipe": "annex_table",
+    "observation": "Annex 6 (2 of 2) is 10 period columns (2019 + 2021). Authored the five 2021 columns and dropped the 2019 block; 10 columns are within budget.",
+    "title": "Annex 6 Revenues Net of Interest Expense"
+  },
+  "45": {
+    "class": "faithful reproduction",
+    "recipe": "annex_table",
+    "observation": "TDR / delinquent FRP / non-delinquent FRP across Dec'19-Dec'21 match ($0.8 to $1.3 / $0.1 / $0.7 to $1.3).",
+    "title": "Annex 7 Troubled Debt Restructurings (TDR) Balance"
+  },
+  "46": {
+    "class": "faithful reproduction",
+    "recipe": "annex_table",
+    "observation": "GCP Q2'21 write-off reconciliation matches: ($24), $37, $13, $11,087, (0.9%), 0.5%.",
+    "title": "Annex 8 GCP Card Member Receivables Net Write-Off rates"
+  },
+  "47": {
+    "class": "accepted v3 design divergence",
+    "recipe": "legal_notice",
+    "observation": "Forward-looking part 1 of 6. Legal body is present; Boardroom legal_notice vs PDF dense wrapping is accepted chrome.",
+    "title": "Forward Looking Statements"
+  },
+  "48": {
+    "class": "accepted v3 design divergence",
+    "recipe": "legal_notice",
+    "observation": "Forward-looking continuation; Boardroom legal chrome.",
+    "title": "Forward Looking Statements"
+  },
+  "49": {
+    "class": "accepted v3 design divergence",
+    "recipe": "legal_notice",
+    "observation": "Forward-looking continuation; Boardroom legal chrome.",
+    "title": "Forward Looking Statements"
+  },
+  "50": {
+    "class": "accepted v3 design divergence",
+    "recipe": "legal_notice",
+    "observation": "Forward-looking continuation; Boardroom legal chrome.",
+    "title": "Forward Looking Statements"
+  },
+  "51": {
+    "class": "accepted v3 design divergence",
+    "recipe": "legal_notice",
+    "observation": "Forward-looking continuation; Boardroom legal chrome.",
+    "title": "Forward Looking Statements"
+  },
+  "52": {
+    "class": "accepted v3 design divergence",
+    "recipe": "legal_notice",
+    "observation": "Forward-looking part 6 of 6 plus 10-K/10-Q pointer; Boardroom legal chrome.",
+    "title": "Forward Looking Statements"
+  },
+  "53": {
+    "class": "accepted v3 design divergence",
+    "recipe": "closing_cover",
+    "observation": "Boardroom closing_cover American Express vs PDF navy wordmark. Brand cover excluded; blank/logo page still emitted.",
+    "title": "closing cover"
+  }
+}

@@ -1,0 +1,1470 @@
+{
+  "source_pdf": "C:/Users/Ag1Le/Downloads/Q4-2021-Earnings-Presentation.pdf",
+  "source_sha256": "8e113208a6df838861fc06cdbfb82514f01f43c42a21e02005801f8fdf545e21",
+  "pdf_pages": 53,
+  "html_path": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/renderer_v3_out/presentation.html",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "deviceScaleFactor": 1
+  },
+  "console": [],
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "pdf_index": 0,
+      "physical_page": 1,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_01.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_01.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_01.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Boardroom opening_cover carries the title and January 25, 2022 date. PDF is navy/cyan brand chrome plus Centurion seal. Seal/brand cover is excluded (CONTEXT.md); not a capture failure.",
+      "recipe": "opening_cover"
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "data_table",
+      "pdf_index": 1,
+      "physical_page": 2,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_02.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_02.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_02.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Six-row Q4/FY grid matches PDF figures. Boardroom data_table vs Amex pill columns is accepted chrome. Gray Notable Impacts side callout has no mixed grid+callout recipe and was folded into disclosure (Type B secondary).",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "data_table",
+      "pdf_index": 2,
+      "physical_page": 3,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_03.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_03.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_03.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is an 8-quarter line (Billed Business / Processed / Total) plus a 3-row summary table. single_chart line + support_table can hold that composition. Quarterly plot points were not glyph-readable and were omitted; only the readable table was authored.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "data_table",
+      "pdf_index": 3,
+      "physical_page": 4,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_04.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_04.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_04.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is FY stacked G&S/T&E bars + 8-quarter growth line + Q4 table (3 panes). dual_chart is exactly two charts and has no support_table. Least-lossy legal stand-in is data_table of the readable Q4/FY figures. Missing recipe: 3-pane chart+chart+table.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "data_table",
+      "pdf_index": 4,
+      "physical_page": 5,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_05.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_05.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_05.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is Online/Offline/Total G&S line plus Q4 table. single_chart line + support_table is legal. Quarterly points were not glyph-readable; table-only authored.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "dual_chart",
+      "pdf_index": 5,
+      "physical_page": 6,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_06.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_06.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_06.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 2,
+      "ticks": {
+        "tick_count": 17,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is stacked mix bars with dollar totals and vs-2019 callouts plus an 8-quarter 4-series line, each with an under-plot table. dual_chart has no per-pane support_table and no geometric vs-2019 callouts. Authored stacked_bar mix + grouped_bar of the Q4 cohort table. Missing recipe: dual chart + two support tables; unread line is a Type A secondary.",
+      "recipe": "dual_chart"
+    },
+    {
+      "slide_number": 7,
+      "layout_type": "dual_chart",
+      "pdf_index": 6,
+      "physical_page": 7,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_07.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_07.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_07.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 2,
+      "ticks": {
+        "tick_count": 17,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "Same 2-chart + 2-table ceiling as s6 (Commercial G&S/T&E stack + SME vs L&G line). Authored stacked_bar + grouped_bar Q4 snapshot. Missing recipe: dual chart with under-plot tables.",
+      "recipe": "dual_chart"
+    },
+    {
+      "slide_number": 8,
+      "layout_type": "data_table",
+      "pdf_index": 7,
+      "physical_page": 8,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_08.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_08.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_08.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is T&E-by-customer 8-quarter line plus Q4 table. single_chart line + support_table is legal. Line points unread; table authored.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 9,
+      "layout_type": "dual_chart",
+      "pdf_index": 8,
+      "physical_page": 9,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_09.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_09.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_09.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 2,
+      "ticks": {
+        "tick_count": 21,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is two 8-quarter lines plus two Q4 tables. dual_chart can take the two lines but not the tables. Authored two grouped_bar Q4 snapshots. Missing recipe: dual chart + support tables; unread lines are Type A secondary.",
+      "recipe": "dual_chart"
+    },
+    {
+      "slide_number": 10,
+      "layout_type": "dual_chart",
+      "pdf_index": 9,
+      "physical_page": 10,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_10.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_10.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_10.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 2,
+      "ticks": {
+        "tick_count": 17,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is two Q3-Q4 grouped-bar panes with in-bar YoY boxes and year groups. dual_chart grouped_bar is the right recipe; boxed-label auxiliary_series and category_groups exist. Handoff authored dollar bars only (YoY boxes and year separators omitted).",
+      "recipe": "dual_chart"
+    },
+    {
+      "slide_number": 11,
+      "layout_type": "dual_chart",
+      "pdf_index": 10,
+      "physical_page": 11,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_11.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_11.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_11.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 2,
+      "ticks": {
+        "tick_count": 24,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is two bar panes with 30+ DPD strips plus a GCP write-off strip. dual_chart grouped_bar can hold the two main panes; 3+ canvas for the GCP strip is Type B secondary. Handoff used line marks and swapped loan write-off bars (2.5% to 0.6%) onto the receivables 30+ series \u2014 a re-author would restore the two bar panes.",
+      "recipe": "dual_chart"
+    },
+    {
+      "slide_number": 12,
+      "layout_type": "chart_hero_dual",
+      "pdf_index": 11,
+      "physical_page": 12,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_12.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_12.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_12.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 14,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is signed stacked write-off/reserve bars with total labels plus an FY Better/(Worse) table. combo with bar_mode stacked + line, and hero for the FY table, is legal. Handoff used grouped combo, so negatives sit side-by-side instead of stacked. Hero KPIs match $2,127 / $4,022 / $6,149.",
+      "recipe": "chart_hero_dual"
+    },
+    {
+      "slide_number": 13,
+      "layout_type": "data_table",
+      "pdf_index": 12,
+      "physical_page": 13,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_13.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_13.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_13.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is a reserve walk (beginning, builds, releases, endings) with percent boxes. waterfall (and stacked_bar) exist. Handoff authored a 4-row ending snapshot table and dropped the $1.5 / $5.8 / ($2.2) flow columns.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 14,
+      "layout_type": "data_table",
+      "pdf_index": 13,
+      "physical_page": 14,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_14.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_14.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_14.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Six metrics x Q4/FY/% vs-2019 match the PDF grid. Boardroom table vs pill columns is accepted chrome.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 15,
+      "layout_type": "single_chart",
+      "pdf_index": 14,
+      "physical_page": 15,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_15.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_15.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_15.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 18,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is Q3-Q4 bars with in-bar YoY boxes, average-rate boxes, and an FY inset. combo + boxed-label auxiliary + support_table/metric_strip are legal. Handoff plotted $B bars + rate as a line and omitted YoY boxes and the FY $25.7 inset.",
+      "recipe": "single_chart"
+    },
+    {
+      "slide_number": 16,
+      "layout_type": "single_chart",
+      "pdf_index": 15,
+      "physical_page": 16,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_16.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_16.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_16.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 23,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is 12 quarterly NCF bars with in-bar YoY and an FY inset ($5.2, 10%, 28%). combo bar+YoY line is a fair stand-in for the boxes; support_table would hold the FY inset and was not authored.",
+      "recipe": "single_chart"
+    },
+    {
+      "slide_number": 17,
+      "layout_type": "single_chart",
+      "pdf_index": 16,
+      "physical_page": 17,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_17.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_17.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_17.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 18,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "Same Q3-Q4 bar + YoY-box + yield-box pattern as s15. combo plots $B + yield line; in-bar YoY and FY $7.8 inset were not authored (boxed labels / support_table / metric_strip).",
+      "recipe": "single_chart"
+    },
+    {
+      "slide_number": 18,
+      "layout_type": "single_chart",
+      "pdf_index": 17,
+      "physical_page": 18,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_18.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_18.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_18.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 17,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "accepted v3 design divergence",
+      "observation": "Two-series line (YoY and vs-2019) matches the PDF path and labeled points. Boardroom chrome vs PDF inset FY'21 $42.4 box is accepted; support_table could hold the inset (Type A secondary).",
+      "recipe": "single_chart"
+    },
+    {
+      "slide_number": 19,
+      "layout_type": "data_table",
+      "pdf_index": 18,
+      "physical_page": 19,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_19.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_19.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_19.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Expense grid including Variable CM Engagement and Effective Tax Rate matches. Boardroom table vs pill columns is accepted chrome.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 20,
+      "layout_type": "dual_chart",
+      "pdf_index": 19,
+      "physical_page": 20,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_20.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_20.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_20.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 2,
+      "ticks": {
+        "tick_count": 21,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "dual_chart grouped_bar is the right two-pane recipe (Marketing $B, Proprietary NCA). NCA bars match 1.4 to 2.7. Marketing Value Injection hatch split was not extracted as a second series; stacked_bar would hold it if the hatch amounts were readable.",
+      "recipe": "dual_chart"
+    },
+    {
+      "slide_number": 21,
+      "layout_type": "chart_hero_dual",
+      "pdf_index": 20,
+      "physical_page": 21,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_21.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_21.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_21.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 9,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is CET1 bars + Capital Return bars + dividend strip (3 surfaces). chart_hero_dual is one chart + hero KPIs, so CET1 becomes 10.5% text. dual_chart would drop the dividend row. Missing recipe: two charts + metric strip. Capital Return $6.0/$2.3/$9.0 match.",
+      "recipe": "chart_hero_dual"
+    },
+    {
+      "slide_number": 22,
+      "layout_type": "metric_overview",
+      "pdf_index": 21,
+      "physical_page": 22,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_22.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_22.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_22.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is three equal cards (2022 Guidance / 2023 Expectations / 2024+ Aspiration) plus two qualifier bars. feature_cards (2-6) is the closer legal recipe. metric_overview flattened 2022-2024 into one KPI row and mixed years.",
+      "recipe": "metric_overview"
+    },
+    {
+      "slide_number": 23,
+      "layout_type": "section_divider",
+      "pdf_index": 22,
+      "physical_page": 23,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_23.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_23.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_23.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Boardroom section_divider Appendix vs navy brand divider with Centurion seal. Label matches. Brand chrome excluded.",
+      "recipe": "section_divider"
+    },
+    {
+      "slide_number": 24,
+      "layout_type": "data_table",
+      "pdf_index": 23,
+      "physical_page": 24,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_24.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_24.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_24.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is signed vs-2019 bars with percent share boxes, brace-grouped YoY tables, and a consumer/commercial legend. No recipe composes waterfall/bars + share chips + two grouped tables. data_table holds readable shares/YoY; several vs-2019 bar labels were not fully attributed (Type A secondary).",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 25,
+      "layout_type": "grouped_annex_table",
+      "pdf_index": 24,
+      "physical_page": 25,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_25.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_25.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_25.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is an 8-quarter Online/Offline/G&S line plus two Q4 tables. grouped_annex_table holds the two tables. single_chart cannot also carry two annex matrices. Missing recipe: chart + grouped_annex. Unread line is Type A secondary.",
+      "recipe": "grouped_annex_table"
+    },
+    {
+      "slide_number": 26,
+      "layout_type": "data_table",
+      "pdf_index": 25,
+      "physical_page": 26,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_26.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_26.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_26.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is T&E-by-industry 8-quarter line plus Q4 table. single_chart line + support_table is legal. Points unread; table authored (Restaurants/Lodging/Airlines/Other/Total match).",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 27,
+      "layout_type": "dual_chart",
+      "pdf_index": 26,
+      "physical_page": 27,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_27.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_27.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_27.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 2,
+      "ticks": {
+        "tick_count": 14,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is two mix donuts (Loan 68/12/20; Receivables 28/14/24/34). Closed chart set has no pie/donut. stacked_bar dual_chart is the least-lossy legal stand-in; mix percent match, radial geometry does not.",
+      "recipe": "dual_chart"
+    },
+    {
+      "slide_number": 28,
+      "layout_type": "single_chart",
+      "pdf_index": 27,
+      "physical_page": 28,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_28.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_28.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_28.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 11,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "stacked_bar holds Delinquent / FRP / CPR stacks including Apr'20 $8.5 CPR. metric_strip would hold the below-plot Total Loans / CM Receivables boxes and was not authored.",
+      "recipe": "single_chart"
+    },
+    {
+      "slide_number": 29,
+      "layout_type": "single_chart",
+      "pdf_index": 28,
+      "physical_page": 29,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_29.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_29.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_29.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 12,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is GCP write-off bars plus a Q2'21 bankruptcy side table. grouped_bar + support_table is legal. Handoff used a line and put the side table only in disclosure.",
+      "recipe": "single_chart"
+    },
+    {
+      "slide_number": 30,
+      "layout_type": "narrative",
+      "pdf_index": 29,
+      "physical_page": 30,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_30.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_30.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_30.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "PDF is two 4-series macro line charts (unemployment, GDP). dual_chart line is legal. Quarterly scenario points were not glyph-readable; authored narrative with an explicit extraction residual. No invented series.",
+      "recipe": "narrative"
+    },
+    {
+      "slide_number": 31,
+      "layout_type": "single_chart",
+      "pdf_index": 30,
+      "physical_page": 31,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_31.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_31.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_31.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 1,
+      "ticks": {
+        "tick_count": 9,
+        "min_font_size_px": 20.0,
+        "min_font_weight": 600
+      },
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "stacked_bar of Unsecured Term / Card ABS / Deposits / Short-term is the right recipe and mix percent match. Authored stack totals $126/$138/$132 follow extraction reading order; PDF visual is $138/$132/$126 on Q4'19/Q4'20/Q4'21. Re-author the auxiliary totals.",
+      "recipe": "single_chart"
+    },
+    {
+      "slide_number": 32,
+      "layout_type": "data_table",
+      "pdf_index": 31,
+      "physical_page": 32,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_32.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_32.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_32.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is two 4-quarter Reported vs FX-Adj lines plus a 6-currency table. dual_chart can take the lines but not the table. Unread plot points (Type A secondary). Currency table authored. Missing recipe: dual chart + support table.",
+      "recipe": "data_table"
+    },
+    {
+      "slide_number": 33,
+      "layout_type": "narrative",
+      "pdf_index": 32,
+      "physical_page": 33,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_33.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_33.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_33.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "faithful reproduction",
+      "observation": "Variance commentary bullets match the PDF (Discount Revenue 35%, NCF 10%, OFC 32%, Other 218%, Interest Income 5%, Interest Expense (25%), Provisions 148%). Boardroom narrative chrome only.",
+      "recipe": "narrative"
+    },
+    {
+      "slide_number": 34,
+      "layout_type": "narrative",
+      "pdf_index": 33,
+      "physical_page": 34,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_34.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_34.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_34.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "faithful reproduction",
+      "observation": "Continuation bullets match (Marketing+BD 46%, Rewards 32% with 96% URR, Services 127%, Operating 7%).",
+      "recipe": "narrative"
+    },
+    {
+      "slide_number": 35,
+      "layout_type": "hierarchy",
+      "pdf_index": 34,
+      "physical_page": 35,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_35.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_35.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_35.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF is a freeform ESG strategy board (mission band, stakeholders, governance, three pillars with objective lists, committee stack). hierarchy 5-node tree and layered_architecture 4x4 cannot hold the board. Authored a 5-node part_of tree; objective bullets and committee layers dropped. Missing recipe: freeform strategy / org board.",
+      "recipe": "hierarchy"
+    },
+    {
+      "slide_number": 36,
+      "layout_type": "narrative",
+      "pdf_index": 35,
+      "physical_page": 36,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_36.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_36.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_36.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "narrative can hold the full nested DE&I / Financial Confidence / Climate bullets. Handoff condensed to three summary bullets (Type A authoring miss), not a recipe ceiling.",
+      "recipe": "narrative"
+    },
+    {
+      "slide_number": 37,
+      "layout_type": "annex_table",
+      "pdf_index": 36,
+      "physical_page": 37,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_37.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_37.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_37.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "PDF Annex 1 is an 18-period reported/FX matrix. annex_table cannot present that IR history at 1920x1080 (fit/column ceiling). Authored a 4-column Q4/FY vs-2019 subset. Missing recipe: wide multi-year annex matrix.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 38,
+      "layout_type": "annex_table",
+      "pdf_index": 37,
+      "physical_page": 38,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_38.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_38.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_38.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "Annex 1 (2 of 2) is the same wide matrix for L&G / Int'l SME / SME. 4-column subset only. Same Type B ceiling as s37.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 39,
+      "layout_type": "annex_table",
+      "pdf_index": 38,
+      "physical_page": 39,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_39.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_39.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_39.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "Annex 2 PDF is 12 period columns of GAAP/FX discount revenue. Schema allows up to the table column budget; handoff authored only Q3'21/Q4'21/FY'21. Re-author a wider annex_table before calling this a fit ceiling.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 40,
+      "layout_type": "annex_table",
+      "pdf_index": 39,
+      "physical_page": 40,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_40.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_40.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_40.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "Annex 3 PDF is a 19-period NCF history. Same wide-matrix ceiling as Annex 1. Authored Q4'21/FY'21 only.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 41,
+      "layout_type": "annex_table",
+      "pdf_index": 40,
+      "physical_page": 41,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_41.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_41.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_41.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "Annex 4 PDF is 12 period columns. Authored Q3'21/Q4'21/FY'21 only; wider annex_table not yet tried.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 42,
+      "layout_type": "annex_table",
+      "pdf_index": 41,
+      "physical_page": 42,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_42.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_42.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_42.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "faithful reproduction",
+      "observation": "Six Q3/Q4 2019-2021 columns for NII / exclusions / yield match the PDF walk ($2,203 to $2,107; yield 11.2% to 10.3%). Boardroom annex chrome only.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 43,
+      "layout_type": "annex_table",
+      "pdf_index": 42,
+      "physical_page": 43,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_43.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_43.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_43.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "candidate renderer defect or capability gap (Type B)",
+      "observation": "Annex 6 (1 of 2) is a 19-period revenue history. Authored Q4'21/FY'21 only. Wide-matrix ceiling.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 44,
+      "layout_type": "annex_table",
+      "pdf_index": 43,
+      "physical_page": 44,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_44.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_44.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_44.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "corpus/extraction residual (Type A)",
+      "observation": "Annex 6 (2 of 2) is 10 period columns (2019 + 2021). Authored the five 2021 columns and dropped the 2019 block; 10 columns are within budget.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 45,
+      "layout_type": "annex_table",
+      "pdf_index": 44,
+      "physical_page": 45,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_45.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_45.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_45.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "faithful reproduction",
+      "observation": "TDR / delinquent FRP / non-delinquent FRP across Dec'19-Dec'21 match ($0.8 to $1.3 / $0.1 / $0.7 to $1.3).",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 46,
+      "layout_type": "annex_table",
+      "pdf_index": 45,
+      "physical_page": 46,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_46.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_46.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_46.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "faithful reproduction",
+      "observation": "GCP Q2'21 write-off reconciliation matches: ($24), $37, $13, $11,087, (0.9%), 0.5%.",
+      "recipe": "annex_table"
+    },
+    {
+      "slide_number": 47,
+      "layout_type": "legal_notice",
+      "pdf_index": 46,
+      "physical_page": 47,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_47.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_47.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_47.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Forward-looking part 1 of 6. Legal body is present; Boardroom legal_notice vs PDF dense wrapping is accepted chrome.",
+      "recipe": "legal_notice"
+    },
+    {
+      "slide_number": 48,
+      "layout_type": "legal_notice",
+      "pdf_index": 47,
+      "physical_page": 48,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_48.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_48.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_48.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Forward-looking continuation; Boardroom legal chrome.",
+      "recipe": "legal_notice"
+    },
+    {
+      "slide_number": 49,
+      "layout_type": "legal_notice",
+      "pdf_index": 48,
+      "physical_page": 49,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_49.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_49.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_49.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Forward-looking continuation; Boardroom legal chrome.",
+      "recipe": "legal_notice"
+    },
+    {
+      "slide_number": 50,
+      "layout_type": "legal_notice",
+      "pdf_index": 49,
+      "physical_page": 50,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_50.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_50.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_50.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Forward-looking continuation; Boardroom legal chrome.",
+      "recipe": "legal_notice"
+    },
+    {
+      "slide_number": 51,
+      "layout_type": "legal_notice",
+      "pdf_index": 50,
+      "physical_page": 51,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_51.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_51.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_51.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Forward-looking continuation; Boardroom legal chrome.",
+      "recipe": "legal_notice"
+    },
+    {
+      "slide_number": 52,
+      "layout_type": "legal_notice",
+      "pdf_index": 51,
+      "physical_page": 52,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_52.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_52.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_52.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Forward-looking part 6 of 6 plus 10-K/10-Q pointer; Boardroom legal chrome.",
+      "recipe": "legal_notice"
+    },
+    {
+      "slide_number": 53,
+      "layout_type": "closing_cover",
+      "pdf_index": 52,
+      "physical_page": 53,
+      "pdf_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/pdf/slide_53.png",
+      "html_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/html/slide_53.png",
+      "sbs_png": "C:/Users/Ag1Le/Documents/Impact_Slides-gnhf-worktrees/objective-given-the-d60385/simulation/amex_q4_2021/passes/pass_01/compare/sbs/slide_53.png",
+      "pdf_size": [
+        1920,
+        1080
+      ],
+      "html_size": [
+        1920,
+        1080
+      ],
+      "sbs_size": [
+        3840,
+        1080
+      ],
+      "chart_count": 0,
+      "ticks": null,
+      "classification": "accepted v3 design divergence",
+      "observation": "Boardroom closing_cover American Express vs PDF navy wordmark. Brand cover excluded; blank/logo page still emitted.",
+      "recipe": "closing_cover"
+    }
+  ],
+  "classification_vocab": [
+    "faithful reproduction",
+    "accepted v3 design divergence",
+    "candidate renderer defect or capability gap (Type B)",
+    "corpus/extraction residual (Type A)",
+    "source/PDF artifact",
+    "capture failure"
+  ],
+  "classification_counts": {
+    "accepted v3 design divergence": 13,
+    "corpus/extraction residual (Type A)": 21,
+    "candidate renderer defect or capability gap (Type B)": 14,
+    "faithful reproduction": 5
+  }
+}

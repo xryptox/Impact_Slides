@@ -1,0 +1,63 @@
+{
+  "renderer_version": "3.0.0",
+  "status": "clean",
+  "ok": true,
+  "strict": true,
+  "slide_count": 53,
+  "repository_commit": "9c2acd1683ccc8fe047213f01f0726596d62c909",
+  "branch": "gnhf/objective-given-the-d60385",
+  "handoff_path": "simulation/amex_q4_2021/handoff_v1.json",
+  "handoff_slides": 53,
+  "html_slides": 53,
+  "html_numbers_1_53": true,
+  "layout_match": true,
+  "severity_counts": {
+    "info": 57,
+    "warning": 0,
+    "error": 0
+  },
+  "artifacts": {
+    "presentation.html": {
+      "bytes": 846870,
+      "sha256": "0ba4f04b1e2f3d055b2c5b5ac548c9daa27180e6d6405957934cee21d35c368f"
+    },
+    "slide_notes.md": {
+      "bytes": 3361,
+      "sha256": "1e7f90090b726e5bf9cbbc081b9b557b5f7a04219b535fb087fac259a8984b41"
+    },
+    "evidence_manifest.json": {
+      "bytes": 25031,
+      "sha256": "bf031e4bd453268afd42b3f5f5e48d5956dc69137ba48faee76b65e4960811d4"
+    },
+    "run_meta.json": {
+      "bytes": 213345,
+      "sha256": "36ec307a2050ab88853f3619f426c11dccef9d093053a442a8656587013f5349"
+    },
+    "handoff_schema_v1.json": {
+      "bytes": 214229,
+      "sha256": "cee2cb3c654562d841396554cff245650f5123205c01db5e4289dcd560e682b5"
+    }
+  },
+  "run_meta_artifacts": [
+    {
+      "name": "presentation.html",
+      "bytes": 846870,
+      "sha256": "0ba4f04b1e2f3d055b2c5b5ac548c9daa27180e6d6405957934cee21d35c368f"
+    },
+    {
+      "name": "slide_notes.md",
+      "bytes": 3361,
+      "sha256": "1e7f90090b726e5bf9cbbc081b9b557b5f7a04219b535fb087fac259a8984b41"
+    },
+    {
+      "name": "evidence_manifest.json",
+      "bytes": 25031,
+      "sha256": "bf031e4bd453268afd42b3f5f5e48d5956dc69137ba48faee76b65e4960811d4"
+    },
+    {
+      "name": "handoff_schema_v1.json",
+      "bytes": 214229,
+      "sha256": "cee2cb3c654562d841396554cff245650f5123205c01db5e4289dcd560e682b5"
+    }
+  ]
+}

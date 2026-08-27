@@ -1,0 +1,50 @@
+Total Reserves
+Balance Sheet Credit Reserves*
+Reserves as a % 
+of Total loans
+Reserves as a % 
+of CM Receivables
+Card Member
+Receivables
+Total 
+Loans
+4.6%
+0.2%
+$4.2
+$1.4
+$5.6
+($2.0)
+$3.6
+($0.2)
+$3.4
+$0.1
+$0.1
+$0.3
+($0.3)
+$0.0
+$0.1
+$4.3
+$1.5
+$5.8
+($2.2)
+$3.6
+($0.2)
+$3.4
+Q1'20
+Beginning
+Reserves
+Q4'20 Ending
+Reserves
+Q3'21 Ending
+Reserves
+Q4'21 Ending
+Reserves
+7.3%
+0.6%
+4.5%
+0.1%
+13
+($ in billions)
+* Q1’20 – Q4’21 Balance Sheet credit reserve builds differ from P&L credit reserve builds due to other receivables and FX impacts. Reserve subtotals may not foot due to rounding.
+3.7%
+0.1%
