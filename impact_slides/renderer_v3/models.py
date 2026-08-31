@@ -2667,9 +2667,10 @@ ChartVisual = Annotated[
 
 
 class DualChartPayload(ClosedModel):
-    """Exactly two ordered equal-width charts (D149/D253)."""
+    """Exactly two ordered equal-width charts plus optional shared support (D149/D253)."""
 
     charts: list[ChartVisual] = Field(min_length=2, max_length=2)
+    support: Optional["ChartSupportVisual"] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -2688,6 +2689,20 @@ class DualChartPayload(ClosedModel):
                 raise ValueError("dual_chart charts must be axis charts (D149)")
             if not getattr(p, "heading", None):
                 raise ValueError("dual_chart charts require a non-empty heading (D170/D253)")
+        support = self.support
+        if support is None:
+            return self
+        st = getattr(support, "support_type", None)
+        if st == "outlined_support":
+            raise ValueError(
+                "outlined_support is invalid on dual_chart shared support"
+            )
+        if st == "support_table" and getattr(support, "alignment", None) != "independent":
+            raise ValueError(
+                "dual_chart shared support_table must be alignment: independent"
+            )
+        for chart in self.charts:
+            _check_support_vs_chart(support, chart)
         return self
 
 
@@ -2843,6 +2858,7 @@ ChartSupportVisual = Annotated[
     Union[SupportTableVisual, OutlinedSupportVisual, MetricStripSupport],
     Field(discriminator="support_type"),
 ]
+DualChartPayload.model_rebuild()
 
 
 def _check_support_vs_chart(support: Any, chart: Any) -> None:

@@ -151,7 +151,7 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "source_footer",
             }
             payload_allowed = {
-                "dual_chart": {"charts"},
+                "dual_chart": {"charts", "support"},
                 "chart_hero_dual": {"chart", "hero", "support"},
                 "metric_overview": {"surface_id", "heading", "metrics", "detail"},
             }[layout]
@@ -408,7 +408,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     "stakeholder_map": {"focal", "stakeholders"},
                     "quadrant_matrix": {"x_axis", "y_axis", "items"},
                     "single_chart": {"chart", "support"},
-                    "dual_chart": {"charts"},
+                    "dual_chart": {"charts", "support"},
                     "chart_hero_dual": {"chart", "hero", "support"},
                     "metric_overview": {"surface_id", "heading", "metrics", "detail"},
             }
@@ -422,7 +422,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     slide_number=_slide_number(slide),
                     layout_type=layout,
                 )
-                if layout in {"single_chart", "chart_hero_dual"}:
+                if layout in {"single_chart", "dual_chart", "chart_hero_dual"}:
                     support = payload.get("support")
                     if isinstance(support, dict):
                         _drop_unknown_object(
@@ -833,7 +833,7 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             }:
                 # D60 fixed type — no authored typography on these payloads.
                 pass
-            elif layout == "single_chart":
+            elif layout in {"single_chart", "dual_chart"}:
                 support = payload.get("support")
                 if isinstance(support, dict):
                     st = support.get("support_type")

@@ -1963,6 +1963,41 @@ def _collect_composite_body(
                     box_w=pane_w,
                 )
             )
+        support = getattr(payload, "support", None)
+        if support is not None:
+            if getattr(support, "support_type", None) == "metric_strip":
+                plans.append(
+                    _metric_strip_plan(
+                        support,
+                        deck,
+                        sn=sn,
+                        slide_index=slide_index,
+                        lt=lt,
+                        region=region,
+                        slot_order=12,
+                        box_w=CONTENT_W,
+                    )
+                )
+            else:
+                plans.append(
+                    _table_surface_plan(
+                        table=support.table,
+                        deck=deck,
+                        sn=sn,
+                        slide_index=slide_index,
+                        lt=lt,
+                        region=region,
+                        slot_order=12,
+                        box_w=CONTENT_W,
+                        role="support_table",
+                        extra_spec={
+                            "kind": "support_table",
+                            "alignment": "independent",
+                            "hide_header": False,
+                            "paint_as": "support_table",
+                        },
+                    )
+                )
         return len(plans), plans
 
     if lt == "chart_hero_dual":

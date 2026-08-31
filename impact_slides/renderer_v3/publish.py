@@ -508,6 +508,11 @@ def _paint_dual_chart(
         )
         out.append("</div>")
     out.append("</div>")
+    support = getattr(slide.payload, "support", None)
+    if support is not None:
+        out.extend(
+            _paint_chart_support(support, plans_by_id, events_by_surface)
+        )
     return out
 
 

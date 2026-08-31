@@ -860,3 +860,233 @@ def test_hero_rejects_category_support_on_horizontal_bar():
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
 
+
+def _dual_raw(support: dict | None = None) -> dict:
+    raw = _raw()
+    chart = deepcopy(raw["slides"][1]["payload"]["chart"])
+    peer = deepcopy(chart)
+    peer["surface_id"] = "vol-peer"
+    peer["heading"] = "Peer billed"
+    payload: dict = {"charts": [chart, peer]}
+    if support is not None:
+        payload["support"] = deepcopy(support)
+    raw["slides"][1]["layout_type"] = "dual_chart"
+    raw["slides"][1]["payload"] = payload
+    return raw
+
+
+def _indep_support_table() -> dict:
+    return {
+        "support_type": "support_table",
+        "alignment": "independent",
+        "table": {
+            "surface_id": "dual-support",
+            "stub_header": {"label": "KPI"},
+            "columns": [
+                {"column_id": "a", "label": "A"},
+                {"column_id": "b", "label": "B"},
+            ],
+            "rows": [
+                {
+                    "row_id": "r1",
+                    "label": "Row",
+                    "cells": {
+                        "a": {"type": "text", "text": "one"},
+                        "b": {"type": "text", "text": "two"},
+                    },
+                }
+            ],
+        },
+    }
+
+
+def test_dual_omitted_support_validates():
+    result = validate_handoff(_dual_raw(), strict=True)
+    assert result.ok
+    assert result.deck.slides[1].payload.support is None
+
+
+def test_dual_independent_support_table_validates():
+    result = validate_handoff(_dual_raw(_indep_support_table()), strict=True)
+    assert result.ok
+    support = result.deck.slides[1].payload.support
+    assert isinstance(support, SupportTableVisual)
+    assert support.alignment == "independent"
+
+
+def test_dual_metric_strip_validates():
+    support = _metric_strip()
+    support["surface_id"] = "dual-metrics"
+    result = validate_handoff(_dual_raw(support), strict=True)
+    assert result.ok
+    strip = result.deck.slides[1].payload.support
+    assert isinstance(strip, MetricStripSupport)
+    assert strip.surface_id == "dual-metrics"
+
+
+def test_dual_rejects_category_aligned_shared_table():
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_dual_raw(_cat_support_table()), strict=True)
+
+
+def test_dual_rejects_outlined_shared_support():
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_dual_raw(_outlined_support()), strict=True)
+
+
+def test_dual_rejects_support_id_collision_with_chart():
+    support = _indep_support_table()
+    support["table"]["surface_id"] = "vol-trend"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_dual_raw(support), strict=True)
+    strip = _metric_strip()
+    strip["surface_id"] = "vol-peer"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_dual_raw(strip), strict=True)
+
+
+def test_dual_rejects_heatmap_and_panes():
+    heat = json.loads(
+        (ROOT / "tests/fixtures/renderer_v3/minimal_heatmap.json").read_text(
+            encoding="utf-8"
+        )
+    )["slides"][1]["payload"]["chart"]
+    raw = _dual_raw()
+    raw["slides"][1]["payload"]["charts"][0] = heat
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+    raw = _dual_raw()
+    raw["slides"][1]["payload"]["panes"] = raw["slides"][1]["payload"]["charts"]
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_dual_mutation_drop_support_still_renders_two_charts(tmp_path: Path):
+    raw = _dual_raw(_indep_support_table())
+    assert validate_handoff(raw, strict=True).ok
+    del raw["slides"][1]["payload"]["support"]
+    result = validate_handoff(raw, strict=True)
+    assert result.ok
+    assert result.deck.slides[1].payload.support is None
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert 'data-chart-surface="vol-trend"' in html
+    assert 'data-chart-surface="vol-peer"' in html
+    assert 'data-table-surface="dual-support"' not in html
+
+
+def test_dual_mutation_category_alignment_fails_typed_validation():
+    raw = _dual_raw(_indep_support_table())
+    raw["slides"][1]["payload"]["support"]["alignment"] = "category"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_dual_support_plans_preserve_plot_floor():
+    result = validate_handoff(_dual_raw(_indep_support_table()), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    charts = [s for s in plan.surfaces if s.surface_id in {"vol-trend", "vol-peer"}]
+    support = next(s for s in plan.surfaces if s.surface_id == "dual-support")
+    assert len(charts) == 2
+    heights = {s.chart_paint["geometry"]["plot_h"] for s in charts}
+    assert len(heights) == 1
+    for s in charts:
+        g = s.chart_paint["geometry"]
+        assert g["plot_w"] >= 320
+        assert g["plot_h"] >= 240
+    assert support.role == "support_table"
+    assert support.table_paint.get("alignment") == "independent"
+
+
+def test_paint_dual_shared_support_under_both_panes(tmp_path: Path):
+    raw = _dual_raw(_indep_support_table())
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert html.count('class="dual-chart-pane"') == 2
+    assert html.count('data-table-surface="dual-support"') == 1
+    last_pane = html.rfind('class="dual-chart-pane"')
+    support_at = html.find('data-table-surface="dual-support"')
+    assert last_pane != -1 and support_at != -1
+    assert support_at > last_pane
+    for sid in ("vol-trend", "vol-peer"):
+        assert f'data-chart-surface="{sid}"' in html
+        assert f'id="{sid}-semantic-table"' in html
+        assert f'id="cjs-{sid}"' in html or "chartjs-canvas" in html
+    assert "<noscript>" in html
+    assert "<svg" in html
+    assert "support-table" in html
+    assert "one" in html and "two" in html
+
+
+def test_paint_dual_metric_strip_under_both_panes(tmp_path: Path):
+    support = _metric_strip()
+    support["surface_id"] = "dual-metrics"
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(_dual_raw(support)), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert html.count('data-metric-strip="dual-metrics"') == 1
+    last_pane = html.rfind('class="dual-chart-pane"')
+    strip_at = html.find('data-metric-strip="dual-metrics"')
+    assert last_pane != -1 and strip_at != -1
+    assert strip_at > last_pane
+
+
+def test_nonstrict_drops_unknown_dual_support_fields():
+    raw = _dual_raw(_indep_support_table())
+    raw["slides"][1]["payload"]["support"]["legacy_note"] = "drop-me"
+    result = validate_handoff(raw, strict=False)
+    assert result.ok
+    dumped = result.deck.model_dump(mode="json", exclude_none=True)
+    support = dumped["slides"][1]["payload"]["support"]
+    assert "legacy_note" not in support
+    paths = {e.path for e in result.events if e.code == "repair.field_dropped"}
+    assert "/slides/1/payload/support/legacy_note" in paths
+
+
+def test_playwright_dual_support_sits_under_both_panes(tmp_path: Path):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(_dual_raw(_indep_support_table())), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        geom = page.evaluate(
+            """() => {
+              const row = document.querySelector('.dual-chart');
+              const support = document.querySelector(
+                '[data-table-surface="dual-support"]'
+              );
+              const panes = [...document.querySelectorAll('.dual-chart-pane')];
+              const r = (el) => {
+                const b = el.getBoundingClientRect();
+                return {left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width};
+              };
+              return {
+                row: r(row),
+                support: r(support),
+                panes: panes.map(r),
+                insidePane: panes.some((p) => p.contains(support)),
+              };
+            }"""
+        )
+        browser.close()
+    assert len(geom["panes"]) == 2
+    assert geom["insidePane"] is False
+    assert geom["support"]["top"] >= geom["row"]["bottom"] - 1
+    assert abs(geom["support"]["left"] - geom["row"]["left"]) <= 2
+    assert abs(geom["support"]["width"] - geom["row"]["width"]) <= 2
+
