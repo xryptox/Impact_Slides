@@ -1051,6 +1051,71 @@ def test_nonstrict_drops_unknown_dual_support_fields():
     assert "/slides/1/payload/support/legacy_note" in paths
 
 
+def test_dual_support_surface_ids_are_deck_unique():
+    raw = _dual_raw(_indep_support_table())
+    extra = deepcopy(raw["slides"][1])
+    extra["slide_number"] = 4
+    extra["payload"]["charts"][0]["surface_id"] = "vol-trend-b"
+    extra["payload"]["charts"][1]["surface_id"] = "vol-peer-b"
+    extra["payload"]["charts"][0]["heading"] = "Other billed"
+    extra["payload"]["charts"][1]["heading"] = "Other peer"
+    raw["slides"].insert(2, extra)
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+    strip = _metric_strip()
+    strip["surface_id"] = "dual-metrics"
+    raw = _dual_raw(strip)
+    extra = deepcopy(raw["slides"][1])
+    extra["slide_number"] = 4
+    extra["payload"]["charts"][0]["surface_id"] = "vol-trend-b"
+    extra["payload"]["charts"][1]["surface_id"] = "vol-peer-b"
+    extra["payload"]["charts"][0]["heading"] = "Other billed"
+    extra["payload"]["charts"][1]["heading"] = "Other peer"
+    raw["slides"].insert(2, extra)
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_dual_support_table_format_ids_are_accounted():
+    raw = _dual_raw(_indep_support_table())
+    raw["number_formats"]["usd_1"] = {
+        "unit": "usd",
+        "value_decimals": 1,
+        "negative_style": "minus",
+    }
+    raw["slides"][1]["payload"]["support"]["table"]["rows"][0]["cells"]["a"] = {
+        "type": "number",
+        "value": "1.0",
+        "format_id": "usd_1",
+    }
+    assert validate_handoff(raw, strict=True).ok
+    raw["slides"][1]["payload"]["support"]["table"]["rows"][0]["cells"]["a"][
+        "format_id"
+    ] = "nope"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_nonstrict_repairs_dual_support_table_cells():
+    raw = _dual_raw(_indep_support_table())
+    table = raw["slides"][1]["payload"]["support"]["table"]
+    table["rows"][0]["cells"]["a"] = {"type": "number"}
+    table["rows"][0]["cells"]["ghost"] = {"type": "text", "text": "x"}
+    del table["rows"][0]["cells"]["b"]
+    with pytest.raises(RendererValidationError):
+        validate_handoff(deepcopy(raw), strict=True)
+    result = validate_handoff(raw, strict=False)
+    assert result.ok
+    cells = result.deck.slides[1].payload.support.table.rows[0].cells
+    assert set(cells) == {"a", "b"}
+    assert cells["a"].type == "missing"
+    assert cells["b"].type == "missing"
+    assert {e.code for e in result.events} >= {
+        "repair.value_to_missing",
+        "repair.field_dropped",
+    }
+
+
 def test_playwright_dual_support_sits_under_both_panes(tmp_path: Path):
     pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright

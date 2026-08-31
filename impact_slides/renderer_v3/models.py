@@ -3701,7 +3701,7 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
             else:
                 ids.append(support.table.surface_id)
         return ids
-    if lt == "chart_hero_dual":
+    if lt in ("dual_chart", "chart_hero_dual"):
         ids: list[str] = []
         support = getattr(payload, "support", None)
         if support is not None:
@@ -3713,7 +3713,8 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
             table = getattr(support, "table", None)
             if table is not None and table.surface_id not in ids:
                 ids.append(table.surface_id)
-        ids.append(payload.hero.surface_id)
+        if lt == "chart_hero_dual":
+            ids.append(payload.hero.surface_id)
         return ids
     if lt == "metric_overview":
         ids = [payload.surface_id]
@@ -3773,7 +3774,7 @@ def _slide_tables(slide: Any) -> list[TableData]:
         if support is not None and not isinstance(support, MetricStripSupport):
             tables.append(support.table)
         return tables
-    if lt == "chart_hero_dual":
+    if lt in ("dual_chart", "chart_hero_dual"):
         support = getattr(payload, "support", None)
         if support is not None and not isinstance(support, MetricStripSupport):
             return [support.table]

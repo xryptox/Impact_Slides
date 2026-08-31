@@ -622,7 +622,7 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 located.append(
                     (f"/slides/{i}/payload/support/table", support["table"])
                 )
-        elif layout == "chart_hero_dual":
+        elif layout in {"dual_chart", "chart_hero_dual"}:
             support = payload.get("support")
             if isinstance(support, dict) and isinstance(support.get("table"), dict):
                 located.append(
