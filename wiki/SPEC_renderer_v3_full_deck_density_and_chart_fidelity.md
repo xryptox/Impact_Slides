@@ -1590,7 +1590,10 @@ Schema v1 `dual_chart` contains exactly two ordered chart visuals in `charts`
 the fixed stage with only D33's renderer-owned divider. Equivalent typography,
 title-band height, plot tops, and exterior gutters synchronize under D3, D46,
 and D82; data, axes, identities, annotations, and D106 semantic tables remain
-pane-local. Cards, support tables, and metric surfaces are invalid. Authored
+pane-local. Cards, outlined support, category-aligned tables, heroes, and
+per-pane support are invalid. Optional shared `payload.support`
+(`support_table` with `alignment: independent`, or `metric_strip`) may sit
+once under both panes. Authored
 widths, ratios, coordinates, and pane CSS are invalid. Strict mode rejects a
 malformed pane; non-strict replaces only that pane with D102's semantic-table
 fallback. Legacy primary/secondary visuals migrate only when both are
@@ -3220,9 +3223,11 @@ identity, annotations, measurements, or context. Each chart owns one D247 table
 and independent diagnostics; failure cannot mutate its peer. Non-strict replaces
 only a failed chart beneath retained title chrome where possible. If equal-width
 floors cannot fit, strict fails and non-strict renders both complete surfaces
-sequentially with diagnostics, never dropping or undersizing one. Supports,
-metrics/heroes, pane takeaways, nested/additional charts/chrome are invalid.
-Common root fields follow D212/D251. Legacy dual/hero/multi-panel migrates only
+sequentially with diagnostics, never dropping or undersizing one. Heroes,
+pane takeaways, nested/additional charts/chrome, outlined support, and
+category-aligned tables are invalid. Optional shared `payload.support` is
+independent `support_table` or `metric_strip` only, painted once under both
+panes. Common root fields follow D212/D251. Legacy dual/hero/multi-panel migrates only
 for exactly two unambiguous charts in preserved order.
 
 ### D254 — `chart_hero_dual` has explicit chart, hero, and support slots
@@ -4578,7 +4583,7 @@ unresolved migration decision and never falls through to a guessed target.
 | `data_table`, `table` | `data_table` | One complete typed ordinary table. |
 | `data_table_with_insight` | `data_table` plus optional takeaway | Complete table and one unambiguous slide-level insight. |
 | `decision_tree` | `decision_tree` | Explicit root, decisions, labeled branches, targets, and outcomes. |
-| `dual_chart` | `dual_chart` | Exactly two ordered charts with no hero/support semantics. |
+| `dual_chart` | `dual_chart` | Exactly two ordered charts; optional shared independent support_table or metric_strip under both panes. |
 | `ecosystem_map` | `stakeholder_map` | One focal entity and only explicitly labeled/directed focal spokes. |
 | `evidence_cards` | `evidence_review` | Exact findings and explicit evidence mappings. |
 | `full_process_flow`, `horizontal_process` | `process_flow` | Genuinely linear ordered steps; orientation carries no semantics. |
