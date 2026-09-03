@@ -2662,7 +2662,7 @@
     },
     "DualChartPayload": {
       "additionalProperties": false,
-      "description": "Exactly two ordered equal-width charts (D149/D253).",
+      "description": "Exactly two ordered equal-width charts plus optional shared support (D149/D253).",
       "properties": {
         "charts": {
           "items": {
@@ -2706,6 +2706,36 @@
           "minItems": 2,
           "title": "Charts",
           "type": "array"
+        },
+        "support": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "metric_strip": "#/$defs/MetricStripSupport",
+                  "outlined_support": "#/$defs/OutlinedSupportVisual",
+                  "support_table": "#/$defs/SupportTableVisual"
+                },
+                "propertyName": "support_type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/SupportTableVisual"
+                },
+                {
+                  "$ref": "#/$defs/OutlinedSupportVisual"
+                },
+                {
+                  "$ref": "#/$defs/MetricStripSupport"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Support"
         }
       },
       "required": [

@@ -74,7 +74,7 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     _det("table", "data_table", "One complete typed ordinary table."),
     _det("data_table_with_insight", "data_table", "Complete table and one unambiguous slide-level insight."),
     _det("decision_tree", "decision_tree", "Explicit root, decisions, labeled branches, targets, outcomes."),
-    _det("dual_chart", "dual_chart", "Exactly two ordered charts with no hero/support semantics."),
+    _det("dual_chart", "dual_chart", "Exactly two ordered charts; optional shared independent support_table or metric_strip under both panes."),
     _det("ecosystem_map", "stakeholder_map", "One focal entity and only explicitly labeled/directed focal spokes."),
     _det("evidence_cards", "evidence_review", "Exact findings and explicit evidence mappings."),
     _det("full_process_flow", "process_flow", "Genuinely linear ordered steps."),
