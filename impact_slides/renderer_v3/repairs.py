@@ -434,6 +434,32 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                             slide_number=_slide_number(slide),
                             layout_type=layout,
                         )
+                if layout == "dual_chart":
+                    charts = payload.get("charts")
+                    if isinstance(charts, list):
+                        for j, item in enumerate(charts):
+                            if not isinstance(item, dict) or "chart" not in item:
+                                continue
+                            _drop_unknown_object(
+                                item,
+                                allowed={"chart", "support"},
+                                path=f"/slides/{i}/payload/charts/{j}",
+                                events=events,
+                                role="dual_chart_pane",
+                                slide_number=_slide_number(slide),
+                                layout_type=layout,
+                            )
+                            pane_support = item.get("support")
+                            if isinstance(pane_support, dict):
+                                _drop_unknown_object(
+                                    pane_support,
+                                    allowed=_chart_support_allowed(pane_support),
+                                    path=f"/slides/{i}/payload/charts/{j}/support",
+                                    events=events,
+                                    role="chart_support",
+                                    slide_number=_slide_number(slide),
+                                    layout_type=layout,
+                                )
     return out
 
 
@@ -628,6 +654,22 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 located.append(
                     (f"/slides/{i}/payload/support/table", support["table"])
                 )
+            if layout == "dual_chart":
+                charts = payload.get("charts")
+                if isinstance(charts, list):
+                    for j, item in enumerate(charts):
+                        if not isinstance(item, dict):
+                            continue
+                        pane_support = item.get("support") if "chart" in item else None
+                        if isinstance(pane_support, dict) and isinstance(
+                            pane_support.get("table"), dict
+                        ):
+                            located.append(
+                                (
+                                    f"/slides/{i}/payload/charts/{j}/support/table",
+                                    pane_support["table"],
+                                )
+                            )
         elif layout == "grouped_annex_table":
             peers = payload.get("tables")
             if isinstance(peers, list):
@@ -834,13 +876,26 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                 # D60 fixed type — no authored typography on these payloads.
                 pass
             elif layout in {"single_chart", "dual_chart"}:
-                support = payload.get("support")
-                if isinstance(support, dict):
+                supports: list[tuple[str, dict[str, Any]]] = []
+                shared = payload.get("support")
+                if isinstance(shared, dict):
+                    supports.append(("support", shared))
+                if layout == "dual_chart":
+                    charts = payload.get("charts")
+                    if isinstance(charts, list):
+                        for j, item in enumerate(charts):
+                            if isinstance(item, dict) and "chart" in item:
+                                pane_support = item.get("support")
+                                if isinstance(pane_support, dict):
+                                    supports.append(
+                                        (f"charts/{j}/support", pane_support)
+                                    )
+                for owner, support in supports:
                     st = support.get("support_type")
                     if st == "metric_strip":
                         surfaces_spec.append(
                             (
-                                "support",
+                                owner,
                                 "body_font_size",
                                 "subtitle_font_size|table_font_size",
                                 14,
@@ -854,7 +909,7 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                             floor = 22 if st == "outlined_support" else 14
                             surfaces_spec.append(
                                 (
-                                    "support/table",
+                                    f"{owner}/table",
                                     "table_font_size",
                                     "body_font_size|subtitle_font_size",
                                     floor,
@@ -1738,8 +1793,16 @@ def repair_required_composition_headings(
             charts = payload.get("charts")
             if not isinstance(charts, list):
                 continue
-            for j, chart in enumerate(charts):
-                if isinstance(chart, dict) and not chart.get("heading"):
+            for j, item in enumerate(charts):
+                if not isinstance(item, dict):
+                    continue
+                if "chart" in item and isinstance(item.get("chart"), dict):
+                    chart = item["chart"]
+                    path = f"/slides/{i}/payload/charts/{j}/chart/heading"
+                else:
+                    chart = item
+                    path = f"/slides/{i}/payload/charts/{j}/heading"
+                if not chart.get("heading"):
                     chart["heading"] = f"Untitled chart {j + 1}"
                     events.append(
                         event(
@@ -1747,7 +1810,7 @@ def repair_required_composition_headings(
                             severity="warning",
                             phase="repair",
                             role="heading",
-                            path=f"/slides/{i}/payload/charts/{j}/heading",
+                            path=path,
                             action="default_display",
                             result="canonicalized",
                             slide_number=sn,

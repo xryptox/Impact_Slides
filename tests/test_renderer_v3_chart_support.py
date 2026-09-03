@@ -6,6 +6,7 @@ Seams under test:
 - outlined label lane + centers ≤2px of chart categories (D166/D267)
 - metric strip complete content (D165/D265)
 - D10/D47 allocation preserves 320×240 plot floor
+- dual_chart per-pane `{chart, support?}` envelope plus shared-vs-per-pane mutex
 """
 from __future__ import annotations
 
@@ -875,6 +876,59 @@ def _dual_raw(support: dict | None = None) -> dict:
     return raw
 
 
+def _dual_pane_raw(left_support: dict | None = None, right_support: dict | None = None) -> dict:
+    raw = _dual_raw()
+    charts = raw["slides"][1]["payload"]["charts"]
+    raw["slides"][1]["payload"]["charts"] = [
+        {"chart": charts[0], **({"support": deepcopy(left_support)} if left_support else {})},
+        {"chart": charts[1], **({"support": deepcopy(right_support)} if right_support else {})},
+    ]
+    return raw
+
+
+def _pane_indep_table(surface_id: str, *, extra_rows: int = 0) -> dict:
+    rows = [
+        {
+            "row_id": "r1",
+            "label": "Row",
+            "cells": {
+                "a": {"type": "text", "text": f"{surface_id}-one"},
+                "b": {"type": "text", "text": f"{surface_id}-two"},
+            },
+        }
+    ]
+    for i in range(extra_rows):
+        rows.append(
+            {
+                "row_id": f"r{i + 2}",
+                "label": f"Extra {i + 2}",
+                "cells": {
+                    "a": {"type": "text", "text": f"{surface_id}-x{i}"},
+                    "b": {"type": "text", "text": f"{surface_id}-y{i}"},
+                },
+            }
+        )
+    return {
+        "support_type": "support_table",
+        "alignment": "independent",
+        "table": {
+            "surface_id": surface_id,
+            "stub_header": {"label": "KPI"},
+            "columns": [
+                {"column_id": "a", "label": "A"},
+                {"column_id": "b", "label": "B"},
+            ],
+            "rows": rows,
+        },
+    }
+
+
+def _pane_cat_table(surface_id: str) -> dict:
+    table = _cat_support_table()
+    table["table"]["surface_id"] = surface_id
+    return table
+
+
 def _indep_support_table() -> dict:
     return {
         "support_type": "support_table",
@@ -1154,4 +1208,155 @@ def test_playwright_dual_support_sits_under_both_panes(tmp_path: Path):
     assert geom["support"]["top"] >= geom["row"]["bottom"] - 1
     assert abs(geom["support"]["left"] - geom["row"]["left"]) <= 2
     assert abs(geom["support"]["width"] - geom["row"]["width"]) <= 2
+
+
+def test_dual_per_pane_omitted_and_left_only_validates():
+    none = validate_handoff(_dual_pane_raw(), strict=True)
+    assert none.ok
+    panes = none.deck.slides[1].payload.charts
+    assert panes[0].support is None and panes[1].support is None
+    left = validate_handoff(
+        _dual_pane_raw(_pane_indep_table("left-support")), strict=True
+    )
+    assert left.ok
+    panes = left.deck.slides[1].payload.charts
+    assert isinstance(panes[0].support, SupportTableVisual)
+    assert panes[1].support is None
+
+
+def test_dual_per_pane_independent_tables_validates():
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support"),
+        _pane_indep_table("right-support"),
+    )
+    result = validate_handoff(raw, strict=True)
+    assert result.ok
+    panes = result.deck.slides[1].payload.charts
+    assert panes[0].support.table.surface_id == "left-support"
+    assert panes[1].support.table.surface_id == "right-support"
+
+
+def test_dual_per_pane_category_tables_match_that_pane():
+    raw = _dual_pane_raw(_pane_cat_table("left-cat"), _pane_cat_table("right-cat"))
+    result = validate_handoff(raw, strict=True)
+    assert result.ok
+    for pane in result.deck.slides[1].payload.charts:
+        cols = [c.column_id for c in pane.support.table.columns]
+        cats = [c.category_id for c in pane.chart.chart_data.categories]
+        assert cols == cats
+
+
+def test_dual_rejects_shared_and_per_pane_support_mix():
+    raw = _dual_pane_raw(_pane_indep_table("left-support"))
+    raw["slides"][1]["payload"]["support"] = _indep_support_table()
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_dual_rejects_per_pane_category_mismatch():
+    bad = _pane_cat_table("left-cat")
+    bad["table"]["columns"][0]["column_id"] = "qx"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_dual_pane_raw(bad), strict=True)
+
+
+def test_dual_rejects_category_support_on_horizontal_bar_pane():
+    raw = json.loads(
+        (ROOT / "tests/fixtures/renderer_v3/minimal_horizontal_bar.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    hbar = deepcopy(raw["slides"][1]["payload"]["chart"])
+    dual = _dual_pane_raw(_pane_cat_table("left-cat"))
+    dual["slides"][1]["payload"]["charts"][0]["chart"] = hbar
+    with pytest.raises(RendererValidationError):
+        validate_handoff(dual, strict=True)
+
+
+def test_dual_rejects_heatmap_pane_and_support_id_collision():
+    heat = json.loads(
+        (ROOT / "tests/fixtures/renderer_v3/minimal_heatmap.json").read_text(
+            encoding="utf-8"
+        )
+    )["slides"][1]["payload"]["chart"]
+    raw = _dual_pane_raw()
+    raw["slides"][1]["payload"]["charts"][0]["chart"] = heat
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+    collide = _pane_indep_table("vol-trend")
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_dual_pane_raw(collide), strict=True)
+    panes_alias = _dual_pane_raw()
+    panes_alias["slides"][1]["payload"]["panes"] = panes_alias["slides"][1]["payload"][
+        "charts"
+    ]
+    with pytest.raises(RendererValidationError):
+        validate_handoff(panes_alias, strict=True)
+    both = _pane_indep_table("shared-sid")
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_dual_pane_raw(both, deepcopy(both)), strict=True)
+
+
+def test_dual_unequal_pane_rows_keep_shared_plot_height():
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support", extra_rows=2),
+        _pane_indep_table("right-support"),
+    )
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    charts = [s for s in plan.surfaces if s.surface_id in {"vol-trend", "vol-peer"}]
+    heights = {s.chart_paint["geometry"]["plot_h"] for s in charts}
+    assert len(charts) == 2
+    assert len(heights) == 1
+    for s in charts:
+        g = s.chart_paint["geometry"]
+        assert g["plot_w"] >= 320
+        assert g["plot_h"] >= 240
+    left = next(s for s in plan.surfaces if s.surface_id == "left-support")
+    right = next(s for s in plan.surfaces if s.surface_id == "right-support")
+    assert left._box_h > right._box_h
+
+
+def test_dual_drop_one_pane_support_still_paints_both_charts(tmp_path: Path):
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support"),
+        _pane_indep_table("right-support"),
+    )
+    del raw["slides"][1]["payload"]["charts"][1]["support"]
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert html.count('class="dual-chart-pane"') == 2
+    assert 'data-chart-surface="vol-trend"' in html
+    assert 'data-chart-surface="vol-peer"' in html
+    assert 'data-table-surface="left-support"' in html
+    assert 'data-table-surface="right-support"' not in html
+
+
+def test_paint_dual_per_pane_support_inside_each_pane(tmp_path: Path):
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support"),
+        _pane_indep_table("right-support"),
+    )
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert html.count('class="dual-chart-pane"') == 2
+    panes = html.split('class="dual-chart-pane"')[1:]
+    assert len(panes) == 2
+    assert 'data-chart-surface="vol-trend"' in panes[0]
+    assert 'data-table-surface="left-support"' in panes[0]
+    assert panes[0].find('data-chart-surface="vol-trend"') < panes[0].find(
+        'data-table-surface="left-support"'
+    )
+    assert 'data-chart-surface="vol-peer"' in panes[1]
+    assert 'data-table-surface="right-support"' in panes[1]
+    assert panes[1].find('data-chart-surface="vol-peer"') < panes[1].find(
+        'data-table-surface="right-support"'
+    )
+    assert 'data-table-surface="left-support"' not in panes[1]
 

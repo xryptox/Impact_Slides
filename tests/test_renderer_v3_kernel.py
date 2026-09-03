@@ -433,7 +433,7 @@ def test_dual_and_hero_require_headings():
     with pytest.raises(RendererValidationError):
         validate_handoff(raw, strict=True)
     repaired = validate_handoff(raw, strict=False)
-    assert repaired.deck.slides[1].payload.charts[0].heading == "Untitled chart 1"
+    assert repaired.deck.slides[1].payload.charts[0].chart.heading == "Untitled chart 1"
 
     hero_raw = json.loads(
         (ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json").read_text(
