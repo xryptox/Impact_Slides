@@ -11,7 +11,7 @@
   "commit": "00d4b1fca670936d97d01596e6d2bdf5536f6132",
   "inputs": {
     "handoff_sha256": "d1350359119b090f45659d319329155e3e958dc1d04b38ba6411a7281df04e4a",
-    "schema_sha256": "1d56b65feb51cea03a1ab097910cf31059ac85fdacac4310c5cfee56d645a012",
+    "schema_sha256": "2fccde9c335a1a25e4370a91c9097847768e92277b5b52ecba42a177f7529b57",
     "pdf_sha256": "a87c11625c84e0dabb02d523f6a2d2508b892f18ee242ef197a9b40157bd3faf"
   },
   "modes": [
@@ -63,8 +63,8 @@
     },
     {
       "path": "chartjs/render/handoff_schema_v1.json",
-      "sha256": "1d56b65feb51cea03a1ab097910cf31059ac85fdacac4310c5cfee56d645a012",
-      "bytes": 220773,
+      "sha256": "2fccde9c335a1a25e4370a91c9097847768e92277b5b52ecba42a177f7529b57",
+      "bytes": 220795,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },
@@ -441,7 +441,7 @@
     },
     {
       "path": "contracts/determinism.json",
-      "sha256": "d9c05404374ee7a7c44c7ee2b9b4dabd136fed06647d5c66852191ae682c993c",
+      "sha256": "b51fb49e7aaf891057264035e26d0613a4d9fe27ad240c0009161a204778de7a",
       "bytes": 955,
       "media_type": "application/json",
       "purpose": "required gate contract"
@@ -483,8 +483,8 @@
     },
     {
       "path": "inputs/handoff_schema_v1.json",
-      "sha256": "1d56b65feb51cea03a1ab097910cf31059ac85fdacac4310c5cfee56d645a012",
-      "bytes": 220773,
+      "sha256": "2fccde9c335a1a25e4370a91c9097847768e92277b5b52ecba42a177f7529b57",
+      "bytes": 220795,
       "media_type": "application/json",
       "purpose": "canonical input"
     },
@@ -532,8 +532,8 @@
     },
     {
       "path": "svg/render/handoff_schema_v1.json",
-      "sha256": "1d56b65feb51cea03a1ab097910cf31059ac85fdacac4310c5cfee56d645a012",
-      "bytes": 220773,
+      "sha256": "2fccde9c335a1a25e4370a91c9097847768e92277b5b52ecba42a177f7529b57",
+      "bytes": 220795,
       "media_type": "application/json",
       "purpose": "D250 artifact"
     },
