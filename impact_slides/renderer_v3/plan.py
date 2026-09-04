@@ -1040,7 +1040,10 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     # Side-by-side compositions share one vertical band; count max once (D149/D150).
     dual_groups: dict[int, list[int]] = {}
     for i, sp in enumerate(surfaces):
-        if sp.layout_type == "dual_chart" and sp.role in _AXIS_CHART_ROLES:
+        if (
+            (sp.layout_type == "dual_chart" and sp.role in _AXIS_CHART_ROLES)
+            or sp.role == "grouped_annex_table"
+        ):
             dual_groups.setdefault(sp.slide_number, []).append(i)
     dual_secondary: set[int] = set()
     saved_chrome: dict[int, int] = {}

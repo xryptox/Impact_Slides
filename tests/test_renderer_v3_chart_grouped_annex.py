@@ -170,6 +170,38 @@ def test_mutation_drop_one_peer_still_paints(tmp_path: Path):
     assert "$10.0" in chunk or "10.0" in chunk
 
 
+def test_two_peers_share_one_band_under_chart_floor(monkeypatch):
+    import impact_slides.renderer_v3.plan as plan_mod
+
+    loose = plan_deck(validate_handoff(_handoff(), strict=True).deck, strict=True)
+    peers = [s for s in loose.surfaces if s.role == "grouped_annex_table"]
+    assert len(peers) == 2
+    peer_band = max(p._box_h + p._chrome_h for p in peers)
+    title = next(s for s in loose.surfaces if s.role == "title")
+    chart = next(s for s in loose.surfaces if s.surface_id == "cga-chart")
+    other = sum(
+        s._box_h + s._chrome_h
+        for s in loose.surfaces
+        if s.slide_number == chart.slide_number
+        and s.role not in {"title", "line_chart", "grouped_annex_table"}
+        and s.role not in plan_mod._AXIS_CHART_ROLES
+    )
+    body_h = (
+        plan_mod.DESIGN_STAGE_H
+        - plan_mod.PAD_TOP
+        - plan_mod.PAD_BOTTOM
+        - title._box_h
+    )
+    chart_need = body_h - chart._chrome_h - peer_band - other - 8
+    assert chart_need + chart._chrome_h + other + 2 * peer_band > body_h
+    monkeypatch.setattr(plan_mod, "CHART_VIEW_FLOOR_H", chart_need)
+    monkeypatch.setattr(plan_mod, "CHART_VIEW_MIN_H", chart_need)
+    plan = plan_deck(validate_handoff(_handoff(), strict=True).deck, strict=True)
+    chart = next(s for s in plan.surfaces if s.surface_id == "cga-chart")
+    assert chart.chart_paint["geometry"]["plot_h"] >= 240
+    assert len([s for s in plan.surfaces if s.role == "grouped_annex_table"]) == 2
+
+
 def test_mutation_starve_plot_floor_strict_overflow_no_data_loss(tmp_path: Path, monkeypatch):
     import impact_slides.renderer_v3.plan as plan_mod
 
