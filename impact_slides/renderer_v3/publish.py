@@ -146,6 +146,9 @@ def build_presentation_html(
             "table.data-table th.align-center,table.data-table td.align-center,table.support-table th.align-center,table.support-table td.align-center{text-align:center}",
             "table.data-table td.num,table.data-table th.num,table.support-table td.num,table.support-table th.num{font-variant-numeric:tabular-nums lining-nums}",
             "table.data-table th.stub,table.data-table td.stub,table.support-table th.stub,table.support-table td.stub{text-align:left;font-weight:var(--font-weight-emphasis)}",
+            # Compact annex IR density (#288): 4+4 x-pad; default 8+8 rule above stays.
+            "table.data-table.annex-compact th,table.data-table.annex-compact td{padding:6px 4px}",
+            "table.data-table.annex-compact td.num{white-space:nowrap}",
             # Period comparison bounded columns (D186/D260).
             "table.period-comparison{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 var(--space-sm)}",
             "table.period-comparison th,table.period-comparison td{padding:6px 8px;border:var(--border-width-hairline) solid var(--color-panel-border);vertical-align:middle;background:var(--color-panel)}",
@@ -1290,6 +1293,8 @@ def _paint_table_surface(
     leaf_hids = [f"{table.surface_id}-h-{cid}" for cid in col_ids]
     group_hids: dict[str, str] = {}
 
+    if paint.get("density") == "compact":
+        extra_table_class = f"{extra_table_class} annex-compact".strip()
     extra = f" {extra_table_class}" if extra_table_class else ""
     out.append(
         f'<table class="{table_class}{overflow_cls}{extra}" {attrs}{style} '

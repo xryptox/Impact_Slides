@@ -163,9 +163,11 @@ def test_strict_render_s12_dataset_count_is_three(tmp_path: Path) -> None:
         b"{display:block;white-space:normal;max-width:100%}"
     )
     assert html_b.count(wrap) == 1
+    compact_nowrap = b"table.data-table.annex-compact td.num{white-space:nowrap}"
+    assert html_b.count(compact_nowrap) == 1
     assert html_b.count(b"white-space:nowrap") == html_b.count(
         b"white-space:nowrap;border:0"
-    )
+    ) + html_b.count(compact_nowrap)
     inner_w = max(40, hero._box_w - 32)
     long_label = (
         "This long proprietary new-cards sentence must wrap inside the "

@@ -552,9 +552,10 @@ class DataTablePayload(ClosedModel):
 
 
 class AnnexTablePayload(ClosedModel):
-    """Dense full-width annex table (D184/D258)."""
+    """Dense full-width annex table (D184/D258). Optional compact IR density (#288)."""
 
     table: TableData
+    density: Optional[Literal["compact"]] = None
 
 
 class GroupedAnnexPeer(ClosedModel):
