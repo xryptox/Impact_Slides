@@ -962,15 +962,19 @@ def verify_release(root: Path) -> VerifyResult:
         if missing_r:
             fail(None, f"{mode} render missing: {sorted(missing_r)}")
 
-    schema = _schema_bytes() if SCHEMA_SRC.is_file() else b""
-    for rel in (
-        "inputs/handoff_schema_v1.json",
-        "chartjs/render/handoff_schema_v1.json",
-        "svg/render/handoff_schema_v1.json",
-    ):
-        path = root / rel
-        if path.is_file() and path.read_bytes() != schema:
-            fail("schema_drift", f"schema bytes differ at {rel}")
+    copies = [
+        root / rel
+        for rel in (
+            "inputs/handoff_schema_v1.json",
+            "chartjs/render/handoff_schema_v1.json",
+            "svg/render/handoff_schema_v1.json",
+        )
+        if (root / rel).is_file()
+    ]
+    if len(copies) != 3:
+        fail("schema_drift", "missing frozen schema copy")
+    elif len({p.read_bytes() for p in copies}) != 1:
+        fail("schema_drift", "frozen schema copies differ")
     val_path = root / "contracts" / "validation.json"
     if val_path.is_file():
         val = json.loads(val_path.read_text(encoding="utf-8"))
