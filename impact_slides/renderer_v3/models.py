@@ -3837,7 +3837,7 @@ class MetricOverviewSlide(_SlideBase):
 # Kernel compositions: covers + divider + narrative + legal + data_table (#191)
 # plus annex/comparison tables (#180), single_chart axis charts
 # (line #182; grouped/horizontal bars #183; stacked_bar #184; combo #185;
-# waterfall #186; heatmap #187), linear/grouping compositions (#192),
+# waterfall #186; heatmap #187; pie/donut #287), linear/grouping compositions (#192),
 # relationship/decision compositions (#193), dual/hero/metric compositions
 # (#196), and cards/reviews/quotations/state transitions (#194/#219).
 # Other D210 layout_type values are recognized at the envelope and rejected
