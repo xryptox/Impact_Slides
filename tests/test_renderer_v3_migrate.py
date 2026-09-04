@@ -735,6 +735,31 @@ def test_reused_out_dir_replaces_stale_handoff_artifacts(tmp_path: Path):
     assert {p.name for p in out.iterdir()} == {"handoff_v1.json", "migration_report.json"}
 
 
+def test_chart_grouped_annex_has_inventory_line_without_v2_mapping(tmp_path: Path):
+    """#286: kernel-native layout has no v2 mapping; D313 inventory stays 57."""
+    assert "chart_grouped_annex" not in LEGACY_INVENTORY
+    assert INVENTORY_SIZE == 57
+    src = _write(
+        tmp_path,
+        "in.json",
+        _legacy_envelope(
+            [
+                {
+                    "slide_number": 1,
+                    "layout_type": "chart_grouped_annex",
+                    "title": "Chart annex",
+                    "speaker_notes": "Kernel-native; no v2 mapping.",
+                }
+            ]
+        ),
+    )
+    result = migrate_handoff(src, out_dir=tmp_path / "out", check=True)
+    d = result.slide_dispositions[0]
+    assert d.status == "unresolved"
+    assert d.legacy_input == "chart_grouped_annex"
+    assert d.target is None
+
+
 def test_no_hidden_production_path():
     """Importing render/validate must not pull in the migrate module (D119)."""
     code = (

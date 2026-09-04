@@ -648,6 +648,173 @@
       "title": "ChartDisplay",
       "type": "object"
     },
+    "ChartGroupedAnnexPayload": {
+      "additionalProperties": false,
+      "description": "One axis chart plus 1–2 headed annex peers (#286).",
+      "properties": {
+        "chart": {
+          "discriminator": {
+            "mapping": {
+              "combo": "#/$defs/ComboChartVisual",
+              "grouped_bar": "#/$defs/GroupedBarChartVisual",
+              "heatmap": "#/$defs/HeatmapVisual",
+              "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
+              "line": "#/$defs/LineChartVisual",
+              "stacked_bar": "#/$defs/StackedBarChartVisual",
+              "waterfall": "#/$defs/WaterfallChartVisual"
+            },
+            "propertyName": "chart_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/LineChartVisual"
+            },
+            {
+              "$ref": "#/$defs/GroupedBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/HorizontalBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/StackedBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/ComboChartVisual"
+            },
+            {
+              "$ref": "#/$defs/WaterfallChartVisual"
+            },
+            {
+              "$ref": "#/$defs/HeatmapVisual"
+            }
+          ],
+          "title": "Chart"
+        },
+        "tables": {
+          "items": {
+            "$ref": "#/$defs/GroupedAnnexPeer"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Tables",
+          "type": "array"
+        }
+      },
+      "required": [
+        "chart",
+        "tables"
+      ],
+      "title": "ChartGroupedAnnexPayload",
+      "type": "object"
+    },
+    "ChartGroupedAnnexSlide": {
+      "additionalProperties": false,
+      "description": "Axis chart + 1–2 headed annex peers; no takeaway (#286).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "chart_grouped_annex",
+          "default": "chart_grouped_annex",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ChartGroupedAnnexPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "ChartGroupedAnnexSlide",
+      "type": "object"
+    },
     "ChartHeroDualPayload": {
       "additionalProperties": false,
       "description": "One left chart + right hero + optional left support (D150/D153/D254).",
@@ -3676,7 +3843,7 @@
     },
     "GroupedAnnexPeer": {
       "additionalProperties": false,
-      "description": "One headed peer matrix inside grouped_annex_table (D185/D259).",
+      "description": "One headed peer matrix inside grouped_annex_table / chart_grouped_annex (D185/D259).",
       "properties": {
         "heading": {
           "minLength": 1,
@@ -8908,6 +9075,7 @@
         "discriminator": {
           "mapping": {
             "annex_table": "#/$defs/AnnexTableSlide",
+            "chart_grouped_annex": "#/$defs/ChartGroupedAnnexSlide",
             "chart_hero_dual": "#/$defs/ChartHeroDualSlide",
             "closing_cover": "#/$defs/ClosingCoverSlide",
             "comparison_cards": "#/$defs/ComparisonCardsSlide",
@@ -8963,6 +9131,9 @@
           },
           {
             "$ref": "#/$defs/GroupedAnnexTableSlide"
+          },
+          {
+            "$ref": "#/$defs/ChartGroupedAnnexSlide"
           },
           {
             "$ref": "#/$defs/PeriodComparisonSlide"

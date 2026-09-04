@@ -658,7 +658,7 @@ def _collect_surfaces(
             continue
 
         if (
-            lt not in ("narrative", "single_chart")
+            lt not in ("narrative", "single_chart", "chart_grouped_annex")
             and lt not in KERNEL_TABLE_LAYOUTS
             and lt not in KERNEL_LINEAR_LAYOUTS
             and lt not in KERNEL_CARD_LAYOUTS
@@ -801,6 +801,13 @@ _text_items=items,
                 adaptive_surfaces.append(out[-1])
         elif lt == "grouped_annex_table":
             body_slots, body_plans = _collect_grouped_annex_body(
+                slide, deck, sn, slide_index, lt, region
+            )
+            for bp in body_plans:
+                out.append(bp)
+                adaptive_surfaces.append(bp)
+        elif lt == "chart_grouped_annex":
+            body_slots, body_plans = _collect_chart_grouped_annex_body(
                 slide, deck, sn, slide_index, lt, region
             )
             for bp in body_plans:
@@ -1033,7 +1040,10 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     # Side-by-side compositions share one vertical band; count max once (D149/D150).
     dual_groups: dict[int, list[int]] = {}
     for i, sp in enumerate(surfaces):
-        if sp.layout_type == "dual_chart" and sp.role in _AXIS_CHART_ROLES:
+        if (
+            (sp.layout_type == "dual_chart" and sp.role in _AXIS_CHART_ROLES)
+            or sp.role == "grouped_annex_table"
+        ):
             dual_groups.setdefault(sp.slide_number, []).append(i)
     dual_secondary: set[int] = set()
     saved_chrome: dict[int, int] = {}
@@ -1854,7 +1864,7 @@ def _table_floor_ceil(lt: str, *, role: str | None = None) -> tuple[int, int]:
         return SUPPORT_TABLE_FLOOR, SUPPORT_TABLE_CEIL
     if role == "outlined_support":
         return OUTLINED_SUPPORT_FLOOR, OUTLINED_SUPPORT_CEIL
-    if lt in ("annex_table", "grouped_annex_table"):
+    if lt in ("annex_table", "grouped_annex_table", "chart_grouped_annex"):
         return ANNEX_TABLE_FLOOR, ANNEX_TABLE_CEIL
     return TABLE_FLOOR, TABLE_CEIL
 
@@ -2831,6 +2841,34 @@ def _collect_grouped_annex_body(
         if sp._mode == "adaptive" and sp._explicit_size is None:
             sp._sync_group = sp._sync_group or f"slide-{sn}-grouped-annex"
         plans.append(sp)
+    return len(plans), plans
+
+
+def _collect_chart_grouped_annex_body(
+    slide: Any,
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+) -> tuple[int, list[SurfacePlan]]:
+    """Chart in the body band, annex peers below; one freeze (#286)."""
+    chart_plan = _axis_chart_surface_plan(
+        slide.payload.chart,
+        deck=deck,
+        sn=sn,
+        slide_index=slide_index,
+        lt=lt,
+        region=region,
+        slot_order=10,
+        box_w=CONTENT_W,
+    )
+    _, peer_plans = _collect_grouped_annex_body(
+        slide, deck, sn, slide_index, lt, region
+    )
+    for i, sp in enumerate(peer_plans):
+        sp.slot_order = 11 + i
+    plans = [chart_plan, *peer_plans]
     return len(plans), plans
 
 

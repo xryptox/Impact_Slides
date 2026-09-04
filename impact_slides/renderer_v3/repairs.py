@@ -131,6 +131,15 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
                 "grouped_annex_table": {"tables"},
                 "period_comparison": {"table", "metric_strip"},
             }.get(layout, {"table"})
+        elif layout == "chart_grouped_annex":
+            allowed = common | {
+                "section_id",
+                "title",
+                "content",
+                "disclosure",
+                "source_footer",
+            }
+            payload_allowed = {"chart", "tables"}
         elif layout == "single_chart":
             allowed = common | {
                 "section_id",
@@ -284,6 +293,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "data_table",
                 "annex_table",
                 "grouped_annex_table",
+                "chart_grouped_annex",
                 "period_comparison",
                 "comparison_cards",
                 "single_chart",
@@ -313,7 +323,11 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     "disclosure",
                     "source_footer",
                 }
-                if layout not in {"annex_table", "grouped_annex_table"}:
+                if layout not in {
+                    "annex_table",
+                    "grouped_annex_table",
+                    "chart_grouped_annex",
+                }:
                     allowed.add("takeaway")
                 protected = frozenset()
             else:
@@ -390,6 +404,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 "data_table": {"table"},
                 "annex_table": {"table"},
                 "grouped_annex_table": {"tables"},
+                "chart_grouped_annex": {"chart", "tables"},
                 "period_comparison": {"table", "metric_strip"},
                 "comparison_cards": {"table"},
                 "process_flow": {"steps"},
@@ -670,7 +685,7 @@ def repair_table_data(raw: Any, events: list[DiagnosticEvent]) -> Any:
                                     pane_support["table"],
                                 )
                             )
-        elif layout == "grouped_annex_table":
+        elif layout in {"grouped_annex_table", "chart_grouped_annex"}:
             peers = payload.get("tables")
             if isinstance(peers, list):
                 for j, peer in enumerate(peers):
@@ -792,6 +807,7 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
             "data_table",
             "annex_table",
             "grouped_annex_table",
+            "chart_grouped_annex",
             "period_comparison",
             "comparison_cards",
             "single_chart",
@@ -919,7 +935,7 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                             )
             else:
                 tables = [payload.get("table")]
-                if layout == "grouped_annex_table" and isinstance(
+                if layout in {"grouped_annex_table", "chart_grouped_annex"} and isinstance(
                     payload.get("tables"), list
                 ):
                     tables = [
@@ -931,12 +947,20 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                     if isinstance(table, dict):
                         owner = (
                             "table"
-                            if layout != "grouped_annex_table"
+                            if layout not in {
+                                "grouped_annex_table",
+                                "chart_grouped_annex",
+                            }
                             else f"tables/{j}/table"
                         )
                         floor = (
                             12
-                            if layout in {"annex_table", "grouped_annex_table"}
+                            if layout
+                            in {
+                                "annex_table",
+                                "grouped_annex_table",
+                                "chart_grouped_annex",
+                            }
                             else 20
                         )
                         surfaces_spec.append(
@@ -1029,6 +1053,7 @@ def repair_disclosure_sections(raw: Any, events: list[DiagnosticEvent]) -> Any:
             "data_table",
             "annex_table",
             "grouped_annex_table",
+            "chart_grouped_annex",
             "period_comparison",
             "comparison_cards",
             "single_chart",
@@ -1818,7 +1843,7 @@ def repair_required_composition_headings(
                             expected="non-empty dual_chart heading",
                         )
                     )
-        elif layout == "chart_hero_dual":
+        elif layout in {"chart_hero_dual", "chart_grouped_annex"}:
             chart = payload.get("chart")
             if isinstance(chart, dict) and not chart.get("heading"):
                 chart["heading"] = "Untitled chart 1"
@@ -1833,9 +1858,11 @@ def repair_required_composition_headings(
                         result="canonicalized",
                         slide_number=sn,
                         layout_type=layout,
-                        expected="non-empty chart_hero_dual chart heading",
+                        expected=f"non-empty {layout} chart heading",
                     )
                 )
+            if layout != "chart_hero_dual":
+                continue
             hero = payload.get("hero")
             if isinstance(hero, dict) and not hero.get("heading"):
                 hero["heading"] = "Untitled summary"
