@@ -558,7 +558,7 @@ class AnnexTablePayload(ClosedModel):
 
 
 class GroupedAnnexPeer(ClosedModel):
-    """One headed peer matrix inside grouped_annex_table (D185/D259)."""
+    """One headed peer matrix inside grouped_annex_table / chart_grouped_annex (D185/D259)."""
 
     heading: NonEmptyStr
     short_heading: Optional[NonEmptyStr] = None
