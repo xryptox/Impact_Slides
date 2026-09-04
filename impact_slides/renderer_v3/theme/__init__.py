@@ -182,6 +182,8 @@ def default_series_keys(family: str) -> tuple[str, ...]:
         "grouped_bar",
         "horizontal_bar",
         "combo",
+        "pie",
+        "donut",
     ):
         return _BAR_SERIES_KEYS
     raise ValueError(f"unknown chart family for series cycle: {family!r}")

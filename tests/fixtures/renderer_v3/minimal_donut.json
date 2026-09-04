@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "mix",
+      "label": "Mix"
+    }
+  ],
+  "number_formats": {
+    "pct_0": {
+      "unit": "percent",
+      "value_decimals": 0,
+      "negative_style": "minus"
+    }
+  },
+  "evidence_registry": {
+    "src-board-pack": {
+      "source_name": "Board pack Q4"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {
+        "title": "Impact Review"
+      },
+      "evidence_ids": [
+        "src-board-pack"
+      ]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "mix",
+      "title": "Loan mix",
+      "payload": {
+        "chart": {
+          "type": "chart",
+          "surface_id": "loan-mix",
+          "chart_type": "donut",
+          "heading": "Loan mix",
+          "slices": [
+            {
+              "slice_id": "card",
+              "label": "Card",
+              "value": {
+                "type": "number",
+                "value": "68",
+                "format_id": "pct_0"
+              }
+            },
+            {
+              "slice_id": "consumer",
+              "label": "Consumer",
+              "value": {
+                "type": "number",
+                "value": "12",
+                "format_id": "pct_0"
+              }
+            },
+            {
+              "slice_id": "other",
+              "label": "Other",
+              "value": {
+                "type": "number",
+                "value": "20",
+                "format_id": "pct_0"
+              }
+            }
+          ]
+        }
+      },
+      "takeaway": {
+        "text": "Card remains the majority of the mix."
+      },
+      "evidence_ids": [
+        "src-board-pack"
+      ],
+      "source_footer": [
+        "src-board-pack"
+      ]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {
+        "title": "Discussion"
+      }
+    }
+  ]
+}

@@ -371,6 +371,8 @@ def build_presentation_html(
         "stacked_bar",
         "combo",
         "waterfall",
+        "pie",
+        "donut",
     }
     has_chart = any(
         getattr(c, "chart_type", None) in _axis_types
@@ -3332,18 +3334,30 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
     """Pre-publication readiness facts only (D109/D312); no browser measurement."""
     rows: list[dict[str, Any]] = []
     for slide in deck.slides:
-        is_chart = slide.layout_type in ("single_chart", "chart_grouped_annex")
+        is_chart = slide.layout_type in (
+            "single_chart",
+            "dual_chart",
+            "chart_hero_dual",
+            "chart_grouped_annex",
+        )
         painters: list[str] = []
         if is_chart:
-            ctype = getattr(slide.payload.chart, "chart_type", None)
-            if ctype in (
-            "line",
-            "grouped_bar",
-            "horizontal_bar",
-            "stacked_bar",
-            "combo",
-            "waterfall",
-        ):
+            from .models import _axis_charts_on_slide
+
+            ctypes = [
+                getattr(c, "chart_type", None) for c in _axis_charts_on_slide(slide)
+            ]
+            axisish = {
+                "line",
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "combo",
+                "waterfall",
+                "pie",
+                "donut",
+            }
+            if any(ct in axisish for ct in ctypes):
                 painters = ["chartjs", "svg"]
             # heatmap: native HTML only — no canvas/SVG painters (D246/D248).
         rows.append(
