@@ -1246,6 +1246,21 @@ def test_dual_per_pane_category_tables_match_that_pane():
         assert cols == cats
 
 
+def test_nonstrict_discards_per_pane_support_typography_at_payload_path():
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support"),
+        _pane_indep_table("right-support"),
+    )
+    raw["slides"][1]["payload"]["charts"][0]["support"]["table"]["typography"] = {
+        "body_font_size": 99
+    }
+    result = validate_handoff(raw, strict=False)
+    assert result.ok
+    assert result.deck.slides[1].payload.charts[0].support.table.typography is None
+    paths = {e.path for e in result.events if e.code == "repair.policy_defaulted"}
+    assert "/slides/1/payload/charts/0/support/table/typography" in paths
+
+
 def test_dual_rejects_shared_and_per_pane_support_mix():
     raw = _dual_pane_raw(_pane_indep_table("left-support"))
     raw["slides"][1]["payload"]["support"] = _indep_support_table()
@@ -1315,6 +1330,19 @@ def test_dual_unequal_pane_rows_keep_shared_plot_height():
     left = next(s for s in plan.surfaces if s.surface_id == "left-support")
     right = next(s for s in plan.surfaces if s.surface_id == "right-support")
     assert left._box_h > right._box_h
+    tall_only = plan_deck(
+        validate_handoff(
+            _dual_pane_raw(_pane_indep_table("left-support", extra_rows=2)),
+            strict=True,
+        ).deck,
+        strict=True,
+    )
+    tall_h = next(
+        s.chart_paint["geometry"]["plot_h"]
+        for s in tall_only.surfaces
+        if s.surface_id == "vol-trend"
+    )
+    assert next(iter(heights)) == tall_h
 
 
 def test_dual_drop_one_pane_support_still_paints_both_charts(tmp_path: Path):

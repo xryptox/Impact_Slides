@@ -1135,7 +1135,12 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
 
     groups: dict[tuple[str, str], list[int]] = {}
     for i, sp in enumerate(surfaces):
-        if sp._mode != "adaptive" or sp._explicit_size is not None or not sp._fit_role:
+        if (
+            i in dual_secondary
+            or sp._mode != "adaptive"
+            or sp._explicit_size is not None
+            or not sp._fit_role
+        ):
             continue
         key = sp._sync_group or (
             f"slide:{sp.slide_number}:body" if sp.role == "narrative_block" else sp.surface_id

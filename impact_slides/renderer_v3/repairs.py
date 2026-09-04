@@ -993,7 +993,7 @@ def discard_inapplicable_typography(raw: Any, events: list[DiagnosticEvent]) -> 
                 path = (
                     f"/slides/{i}/payload/{owner}/typography"
                     if owner in {"table", "metric_strip", "support", "support/table"}
-                    or owner.startswith("tables/")
+                    or owner.startswith(("tables/", "charts/"))
                     else f"/slides/{i}/{owner}/typography"
                 )
                 events.append(
