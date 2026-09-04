@@ -2112,6 +2112,8 @@ def freeze_pie_donut(
     total = sum(amounts, Decimal(0))
     role_sizes = _role_sizes(chart)
     label_px = role_sizes["ordinary_values"]
+    navy = resolve_color("navy", role="text_on_light")
+    white = resolve_color("white", role="text_on_dark")
     slices: list[dict[str, Any]] = []
     start = -math.pi / 2.0
     for i, sl in enumerate(chart.slices):
@@ -2121,7 +2123,7 @@ def freeze_pie_donut(
         sweep = frac * 2.0 * math.pi
         mid = start + sweep / 2.0
         color = colors[i]
-        ink = _label_ink_on_white(color)
+        ink = white if contrast_ratio(white, color) >= 4.5 else navy
         # Direct labels sit in the outer half of the ring (or pie radius).
         label_r = inner_r + (radius - inner_r) * 0.62 if radius > inner_r else radius * 0.62
         slices.append(
@@ -2213,7 +2215,12 @@ def freeze_chart(
     """Dispatch freeze by chart_type (D238)."""
     if isinstance(chart, (PieChartVisual, DonutChartVisual)):
         plan = freeze_pie_donut(chart, formats, box_w=box_w, box_h=box_h)
-    elif isinstance(chart, LineChartVisual):
+        slice_cats = [
+            {"category_id": sl["slice_id"], "x": sl["lx"], "y": sl["ly"]}
+            for sl in plan["slices"]
+        ]
+        return _attach_chart_facts(plan, chart, formats, categories=slice_cats)
+    if isinstance(chart, LineChartVisual):
         plan = freeze_line_chart(chart, formats, box_w=box_w, box_h=box_h)
     elif isinstance(chart, ComboChartVisual):
         plan = freeze_combo_chart(chart, formats, box_w=box_w, box_h=box_h)

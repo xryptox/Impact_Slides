@@ -18,7 +18,8 @@ from impact_slides.renderer_v3 import RendererValidationError, render_deck, vali
 from impact_slides.renderer_v3.charts import freeze_chart
 from impact_slides.renderer_v3.models import DonutChartVisual, PieChartVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
-from impact_slides.renderer_v3.schema_export import check_schema
+from impact_slides.renderer_v3.schema_export import check_schema, generate_schema
+from impact_slides.renderer_v3.theme import contrast_ratio
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/minimal_donut.json"
@@ -292,6 +293,8 @@ def test_freeze_donut_cutout_and_pie_zero():
     pie = freeze_chart(pie_deck.slides[1].payload.chart, pie_deck.number_formats)
     assert pie["chart_type"] == "pie"
     assert pie["cutout"] == 0
+    for sl in frozen["slices"]:
+        assert contrast_ratio(sl["ink"], sl["color"]) >= 4.5
 
 
 def test_mutation_donut_to_pie_still_renders(tmp_path: Path):
@@ -333,7 +336,6 @@ def test_html_dual_stays_two_panes(tmp_path: Path):
     render_deck(handoff, out, strict=True)
     html = (out / "presentation.html").read_text(encoding="utf-8")
     assert html.count('class="dual-chart-pane"') == 2
-    assert "cartesian" not in html.lower() or True
     assert "category_axis" not in html
     meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
     ready = next(r for r in meta["static_readiness"] if r["slide_number"] == 2)
@@ -352,13 +354,39 @@ def test_plan_preserves_plot_floor_on_dual():
         assert g["plot_h"] >= 240
 
 
+def test_category_annotation_anchors_on_slice():
+    raw = _raw()
+    _chart(raw)["annotations"] = [
+        {
+            "annotation_id": "card-note",
+            "role": "event",
+            "text": "Card-led",
+            "anchor": {"type": "category", "category_id": "card"},
+        }
+    ]
+    result = validate_handoff(raw, strict=True)
+    chart = result.deck.slides[1].payload.chart
+    plan = freeze_chart(chart, result.deck.number_formats)
+    assert plan["categories"] == []
+    card = next(s for s in plan["slices"] if s["slice_id"] == "card")
+    ann = next(a for a in plan["annotations"] if a["annotation_id"] == "card-note")
+    assert ann["anchor_x"] == pytest.approx(card["lx"])
+    g = plan["geometry"]
+    assert ann["anchor_x"] != pytest.approx(g["pad_l"] + g["plot_w"] / 2)
+
+
 def test_schema_export_includes_pie_donut():
     check_schema()
-    from impact_slides.renderer_v3.schema_export import generate_schema
-
-    blob = json.dumps(generate_schema())
-    assert "pie" in blob and "donut" in blob
-    assert "PieChartVisual" in blob or "DonutChartVisual" in blob
+    schema = generate_schema()
+    mapping = schema["$defs"]["SingleChartPayload"]["properties"]["chart"][
+        "discriminator"
+    ]["mapping"]
+    assert mapping["pie"] == "#/$defs/PieChartVisual"
+    assert mapping["donut"] == "#/$defs/DonutChartVisual"
+    for name in ("PieChartVisual", "DonutChartVisual"):
+        slices = schema["$defs"][name]["properties"]["slices"]
+        assert slices["minItems"] == 2
+        assert slices["maxItems"] == 8
 
 
 def test_playwright_dual_donuts_equal_panes(tmp_path: Path):
