@@ -1590,10 +1590,12 @@ Schema v1 `dual_chart` contains exactly two ordered chart visuals in `charts`
 the fixed stage with only D33's renderer-owned divider. Equivalent typography,
 title-band height, plot tops, and exterior gutters synchronize under D3, D46,
 and D82; data, axes, identities, annotations, and D106 semantic tables remain
-pane-local. Cards, outlined support, category-aligned tables, heroes, and
-per-pane support are invalid. Optional shared `payload.support`
+pane-local. Each pane may be a bare chart or `{chart, support?}` with D252
+support bound to that pane. Optional shared `payload.support`
 (`support_table` with `alignment: independent`, or `metric_strip`) may sit
-once under both panes. Authored
+once under both panes. A slide may use shared or per-pane support, never both;
+omit all support stays valid. Cards, heroes, and mixing shared with per-pane
+support are invalid. Authored
 widths, ratios, coordinates, and pane CSS are invalid. Strict mode rejects a
 malformed pane; non-strict replaces only that pane with D102's semantic-table
 fallback. Legacy primary/secondary visuals migrate only when both are
@@ -3211,23 +3213,30 @@ one unambiguous chart and at most one unambiguous support.
 
 ### D253 — `dual_chart` contains exactly two ordered charts
 
-Payload `charts` is an exact two-item array of complete D227 chart surfaces;
+Payload `charts` is an exact two-item array of complete D227 chart surfaces
+(bare charts wrap as `{chart}` for compatibility);
 order is left/right, reading/accessibility order, and positional fallback order.
 Each requires distinct deck-unique surface ID and non-empty heading; subtitle
-requires that heading. Panes are equal-width with no authored ratio/side/
+requires that heading. Each pane may carry optional D252 `support` bound to
+that pane. Panes are equal-width with no authored ratio/side/
 responsive geometry/CSS. Renderer supplies only one straight divider,
 synchronized title-band height, plot tops, equivalent-role fitting and largest
 exterior gutters; category pitch synchronizes only for exact matching D228 IDs
 and order. Synchronization never changes data, domains/ticks, formatting,
-identity, annotations, measurements, or context. Each chart owns one D247 table
+identity, annotations, measurements, or context. Unequal per-pane tables keep
+one shared plot floor; extra support height stays in that pane and must not
+grow the sibling plot. Overflow that cannot fit is `plan.unresolved_overflow`
+rather than desyncing plot heights or dropping rows. D10/D47 320x240 plot
+floor still holds per pane. Each chart owns one D247 table
 and independent diagnostics; failure cannot mutate its peer. Non-strict replaces
 only a failed chart beneath retained title chrome where possible. If equal-width
 floors cannot fit, strict fails and non-strict renders both complete surfaces
 sequentially with diagnostics, never dropping or undersizing one. Heroes,
-pane takeaways, nested/additional charts/chrome, outlined support, and
-category-aligned tables are invalid. Optional shared `payload.support` is
-independent `support_table` or `metric_strip` only, painted once under both
-panes. Common root fields follow D212/D251. Legacy dual/hero/multi-panel migrates only
+pane takeaways, nested/additional charts/chrome, and a third pane are invalid.
+Optional shared `payload.support` is independent `support_table` or
+`metric_strip` only, painted once under both panes; shared and per-pane support
+are mutually exclusive. Unique surface IDs cover both charts and both supports.
+Common root fields follow D212/D251. Legacy dual/hero/multi-panel migrates only
 for exactly two unambiguous charts in preserved order.
 
 ### D254 — `chart_hero_dual` has explicit chart, hero, and support slots
@@ -4583,7 +4592,7 @@ unresolved migration decision and never falls through to a guessed target.
 | `data_table`, `table` | `data_table` | One complete typed ordinary table. |
 | `data_table_with_insight` | `data_table` plus optional takeaway | Complete table and one unambiguous slide-level insight. |
 | `decision_tree` | `decision_tree` | Explicit root, decisions, labeled branches, targets, and outcomes. |
-| `dual_chart` | `dual_chart` | Exactly two ordered charts; optional shared independent support_table or metric_strip under both panes. |
+| `dual_chart` | `dual_chart` | Exactly two ordered charts; optional shared independent support_table or metric_strip, or per-pane ChartSupportVisual, never both. |
 | `ecosystem_map` | `stakeholder_map` | One focal entity and only explicitly labeled/directed focal spokes. |
 | `evidence_cards` | `evidence_review` | Exact findings and explicit evidence mappings. |
 | `full_process_flow`, `horizontal_process` | `process_flow` | Genuinely linear ordered steps; orientation carries no semantics. |

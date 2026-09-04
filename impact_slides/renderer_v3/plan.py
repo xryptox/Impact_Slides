@@ -1052,6 +1052,30 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             dual_secondary.add(j)
             floors[j] = 0
             surfaces[j]._chrome_h = 0
+    dual_pane_support_restore: dict[int, tuple[int, int]] = {}
+    for sn, chart_idxs in dual_groups.items():
+        if len(chart_idxs) < 2:
+            continue
+        chart_ids = {surfaces[i].surface_id for i in chart_idxs}
+        pane_supps = [
+            i
+            for i, sp in enumerate(surfaces)
+            if sp.slide_number == sn
+            and sp.role in {"metric_strip", "support_table", "outlined_support"}
+            and (sp._table_spec or {}).get("chart_surface_id") in chart_ids
+        ]
+        if len(pane_supps) < 2:
+            continue
+        taller = max(
+            pane_supps, key=lambda i: floors[i] + surfaces[i]._chrome_h
+        )
+        for i in pane_supps:
+            if i == taller:
+                continue
+            dual_pane_support_restore[i] = (floors[i], surfaces[i]._chrome_h)
+            dual_secondary.add(i)
+            floors[i] = 0
+            surfaces[i]._chrome_h = 0
     # chart_hero_dual: left (chart + support) stacks; hero is the other column.
     hero_slides: dict[int, dict[str, int]] = {}
     for i, sp in enumerate(surfaces):
@@ -1111,7 +1135,12 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
 
     groups: dict[tuple[str, str], list[int]] = {}
     for i, sp in enumerate(surfaces):
-        if sp._mode != "adaptive" or sp._explicit_size is not None or not sp._fit_role:
+        if (
+            i in dual_secondary
+            or sp._mode != "adaptive"
+            or sp._explicit_size is not None
+            or not sp._fit_role
+        ):
             continue
         key = sp._sync_group or (
             f"slide:{sp.slide_number}:body" if sp.role == "narrative_block" else sp.surface_id
@@ -1152,6 +1181,10 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             floors[j] = body_floor
             if j in saved_chrome:
                 surfaces[j]._chrome_h = saved_chrome[j]
+    for i, (fl, ch) in dual_pane_support_restore.items():
+        allocations[i] = fl
+        floors[i] = fl
+        surfaces[i]._chrome_h = ch
     for hero_i, (hero_floor, hero_chrome) in hero_restore.items():
         sn = surfaces[hero_i].slide_number
         stacked = sum(
@@ -1869,6 +1902,74 @@ def _table_surface_plan(
     )
 
 
+def _chart_support_surface_plan(
+    *,
+    support: Any,
+    chart: Any,
+    chart_spec: dict[str, Any],
+    deck: Deck,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    slot_order: int,
+    box_w: int,
+) -> SurfacePlan:
+    """Plan one typed chart-support surface at a given width."""
+    from .models import HeatmapVisual, MetricStripSupport, OutlinedSupportVisual
+
+    if isinstance(support, MetricStripSupport):
+        plan = _metric_strip_plan(
+            support,
+            deck,
+            sn=sn,
+            slide_index=slide_index,
+            lt=lt,
+            region=region,
+            slot_order=slot_order,
+            box_w=box_w,
+        )
+        spec = dict(plan._table_spec or {})
+        spec["chart_surface_id"] = chart.surface_id
+        plan._table_spec = spec
+        return plan
+    if isinstance(support, OutlinedSupportVisual):
+        return _outlined_support_plan(
+            support=support,
+            chart=chart,
+            chart_spec=chart_spec,
+            deck=deck,
+            sn=sn,
+            slide_index=slide_index,
+            lt=lt,
+            region=region,
+            slot_order=slot_order,
+        )
+    alignment = getattr(support, "alignment", "independent")
+    hide_header = False
+    if alignment == "category" and not isinstance(chart, HeatmapVisual):
+        hide_header = bool(getattr(chart.category_axis, "visible", False))
+    extra = {
+        "kind": "support_table",
+        "alignment": alignment,
+        "hide_header": hide_header,
+        "paint_as": "support_table",
+        "chart_surface_id": chart.surface_id,
+    }
+    return _table_surface_plan(
+        table=support.table,
+        deck=deck,
+        sn=sn,
+        slide_index=slide_index,
+        lt=lt,
+        region=region,
+        slot_order=slot_order,
+        box_w=box_w,
+        role="support_table",
+        extra_spec=extra,
+    )
+
+
 def _axis_chart_surface_plan(
     chart: Any,
     *,
@@ -1950,7 +2051,8 @@ def _collect_composite_body(
         # D149: equal panes with renderer-owned gutter.
         gutter = 24
         pane_w = (CONTENT_W - gutter) // 2
-        for i, chart in enumerate(payload.charts):
+        for i, pane in enumerate(payload.charts):
+            chart = pane.chart
             plans.append(
                 _axis_chart_surface_plan(
                     chart,
@@ -1963,6 +2065,21 @@ def _collect_composite_body(
                     box_w=pane_w,
                 )
             )
+            if pane.support is not None:
+                plans.append(
+                    _chart_support_surface_plan(
+                        support=pane.support,
+                        chart=chart,
+                        chart_spec=plans[-1]._chart_spec or {},
+                        deck=deck,
+                        sn=sn,
+                        slide_index=slide_index,
+                        lt=lt,
+                        region=region,
+                        slot_order=12 + i,
+                        box_w=pane_w,
+                    )
+                )
         support = getattr(payload, "support", None)
         if support is not None:
             if getattr(support, "support_type", None) == "metric_strip":
@@ -1974,7 +2091,7 @@ def _collect_composite_body(
                         slide_index=slide_index,
                         lt=lt,
                         region=region,
-                        slot_order=12,
+                        slot_order=14,
                         box_w=CONTENT_W,
                     )
                 )
@@ -1987,7 +2104,7 @@ def _collect_composite_body(
                         slide_index=slide_index,
                         lt=lt,
                         region=region,
-                        slot_order=12,
+                        slot_order=14,
                         box_w=CONTENT_W,
                         role="support_table",
                         extra_spec={
@@ -2527,7 +2644,7 @@ def _outlined_support_plan(
         design_stage_region=region,
         role_sizes={"table": OUTLINED_SUPPORT_FLOOR},
         _text_items=texts,
-        _box_w=CONTENT_W,
+        _box_w=int(chart_spec.get("geometry", {}).get("view_w") or CONTENT_W),
         _fit_role="table",
         _typo=table.typography,
         _mode=(

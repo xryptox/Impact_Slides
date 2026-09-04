@@ -166,7 +166,7 @@ def build_presentation_html(
             # Metric strip (D165/D265).
             ".metric-strip{display:flex;flex-direction:row;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
 ".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
-".dual-chart-pane{flex:1 1 0;min-width:0}",
+".dual-chart-pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column}",
 ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
 ".chart-hero-left{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
 ".chart-hero-right{flex:1 1 0;min-width:0}",
@@ -318,7 +318,7 @@ def build_presentation_html(
     # axis charts: line + grouped/horizontal/stacked bars + waterfall (D5/D6/D63/D106/D247/D304)
             # dual / hero / metric boards (D149–D153/D189)
             ".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
-            ".dual-chart-pane{flex:1 1 0;min-width:0}",
+            ".dual-chart-pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column}",
             ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
             ".chart-hero-left{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
             ".chart-hero-right{flex:1 1 0;min-width:0}",
@@ -499,13 +499,18 @@ def _paint_dual_chart(
 ) -> list[str]:
     """Equal synchronized dual panes (D149)."""
     out = ['<div class="dual-chart">']
-    for chart in slide.payload.charts:
+    for pane in slide.payload.charts:
+        chart = pane.chart
         out.append('<div class="dual-chart-pane">')
         out.extend(
             _paint_one_chart_surface(
                 chart, plans_by_id, events_by_surface, svg_only=svg_only
             )
         )
+        if pane.support is not None:
+            out.extend(
+                _paint_chart_support(pane.support, plans_by_id, events_by_surface)
+            )
         out.append("</div>")
     out.append("</div>")
     support = getattr(slide.payload, "support", None)

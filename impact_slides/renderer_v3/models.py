@@ -2666,43 +2666,83 @@ ChartVisual = Annotated[
 # ---------------------------------------------------------------------------
 
 
-class DualChartPayload(ClosedModel):
-    """Exactly two ordered equal-width charts plus optional shared support (D149/D253)."""
+class DualChartPane(ClosedModel):
+    """One dual_chart pane: axis chart plus optional typed support."""
 
-    charts: list[ChartVisual] = Field(min_length=2, max_length=2)
+    chart: ChartVisual
+    support: Optional["ChartSupportVisual"] = None
+
+
+class DualChartPayload(ClosedModel):
+    """Exactly two ordered equal-width charts plus optional shared or per-pane support (D149/D253)."""
+
+    charts: list[DualChartPane] = Field(min_length=2, max_length=2)
     support: Optional["ChartSupportVisual"] = None
 
     @model_validator(mode="before")
     @classmethod
     def _forbid_legacy_pane_key(cls, data: Any) -> Any:
-        if isinstance(data, dict) and "panes" in data:
+        if not isinstance(data, dict):
+            return data
+        if "panes" in data:
             raise ValueError("panes is invalid; use payload.charts")
+        charts = data.get("charts")
+        if isinstance(charts, list):
+            wrapped: list[Any] = []
+            for item in charts:
+                if isinstance(item, DualChartPane):
+                    wrapped.append(item)
+                elif isinstance(item, dict) and "chart" in item:
+                    wrapped.append(item)
+                else:
+                    wrapped.append({"chart": item})
+            data = dict(data)
+            data["charts"] = wrapped
         return data
 
     @model_validator(mode="after")
     def _two_charts(self) -> DualChartPayload:
-        ids = [p.surface_id for p in self.charts]
-        if len(ids) != len(set(ids)):
-            raise ValueError("dual_chart chart surface_id values must be unique")
-        for p in self.charts:
-            if getattr(p, "chart_type", None) == "heatmap":
+        ids: list[str] = []
+        pane_supports: list[Any] = []
+        for pane in self.charts:
+            chart = pane.chart
+            ids.append(chart.surface_id)
+            if getattr(chart, "chart_type", None) == "heatmap":
                 raise ValueError("dual_chart charts must be axis charts (D149)")
-            if not getattr(p, "heading", None):
+            if not getattr(chart, "heading", None):
                 raise ValueError("dual_chart charts require a non-empty heading (D170/D253)")
+            if pane.support is not None:
+                pane_supports.append(pane.support)
+                sid = getattr(pane.support, "surface_id", None)
+                if sid is None and getattr(pane.support, "table", None) is not None:
+                    sid = pane.support.table.surface_id
+                if sid is not None:
+                    ids.append(sid)
+                _check_support_vs_chart(pane.support, chart)
+        if self.support is not None and pane_supports:
+            raise ValueError(
+                "dual_chart cannot mix payload.support and per-pane support"
+            )
         support = self.support
-        if support is None:
-            return self
-        st = getattr(support, "support_type", None)
-        if st == "outlined_support":
-            raise ValueError(
-                "outlined_support is invalid on dual_chart shared support"
-            )
-        if st == "support_table" and getattr(support, "alignment", None) != "independent":
-            raise ValueError(
-                "dual_chart shared support_table must be alignment: independent"
-            )
-        for chart in self.charts:
-            _check_support_vs_chart(support, chart)
+        if support is not None:
+            st = getattr(support, "support_type", None)
+            if st == "outlined_support":
+                raise ValueError(
+                    "outlined_support is invalid on dual_chart shared support"
+                )
+            if st == "support_table" and getattr(support, "alignment", None) != "independent":
+                raise ValueError(
+                    "dual_chart shared support_table must be alignment: independent"
+                )
+            sid = getattr(support, "surface_id", None)
+            if sid is None and getattr(support, "table", None) is not None:
+                sid = support.table.surface_id
+            if sid is not None:
+                ids.append(sid)
+            for pane in self.charts:
+                _check_support_vs_chart(support, pane.chart)
+        if len(ids) != len(set(ids)):
+            raise ValueError("dual_chart surface_id values must be unique")
         return self
 
 
@@ -2858,6 +2898,7 @@ ChartSupportVisual = Annotated[
     Union[SupportTableVisual, OutlinedSupportVisual, MetricStripSupport],
     Field(discriminator="support_type"),
 ]
+DualChartPane.model_rebuild()
 DualChartPayload.model_rebuild()
 
 
@@ -3664,7 +3705,7 @@ def _axis_charts_on_slide(slide: Any) -> list[Any]:
     if lt == "single_chart":
         return [payload.chart]
     if lt == "dual_chart":
-        return list(payload.charts)
+        return [pane.chart for pane in payload.charts]
     if lt == "chart_hero_dual":
         return [payload.chart]
     return []
@@ -3703,8 +3744,15 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
         return ids
     if lt in ("dual_chart", "chart_hero_dual"):
         ids: list[str] = []
-        support = getattr(payload, "support", None)
-        if support is not None:
+        supports: list[Any] = []
+        shared = getattr(payload, "support", None)
+        if shared is not None:
+            supports.append(shared)
+        if lt == "dual_chart":
+            for pane in payload.charts:
+                if pane.support is not None:
+                    supports.append(pane.support)
+        for support in supports:
             sid = getattr(support, "surface_id", None)
             if sid is None and getattr(support, "table", None) is not None:
                 sid = support.table.surface_id
@@ -3731,13 +3779,17 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
         for row in table.rows:
             values.extend(row.cells.values())
     payload = getattr(slide, "payload", None)
+    lt = getattr(slide, "layout_type", None)
     strip = getattr(payload, "metric_strip", None) if payload is not None else None
     if strip is not None:
         values.extend(m.value for m in strip.metrics)
     support = getattr(payload, "support", None) if payload is not None else None
     if isinstance(support, MetricStripSupport):
         values.extend(m.value for m in support.metrics)
-    lt = getattr(slide, "layout_type", None)
+    if lt == "dual_chart" and payload is not None:
+        for pane in payload.charts:
+            if isinstance(pane.support, MetricStripSupport):
+                values.extend(m.value for m in pane.support.metrics)
     if lt == "chart_hero_dual" and payload is not None:
         hero = payload.hero
         if getattr(hero, "hero_type", None) == "metric_stack":
@@ -3775,10 +3827,18 @@ def _slide_tables(slide: Any) -> list[TableData]:
             tables.append(support.table)
         return tables
     if lt in ("dual_chart", "chart_hero_dual"):
+        tables: list[TableData] = []
         support = getattr(payload, "support", None)
         if support is not None and not isinstance(support, MetricStripSupport):
-            return [support.table]
-        return []
+            tables.append(support.table)
+        if lt == "dual_chart":
+            for pane in payload.charts:
+                pane_support = pane.support
+                if pane_support is not None and not isinstance(
+                    pane_support, MetricStripSupport
+                ):
+                    tables.append(pane_support.table)
+        return tables
     return []
 
 

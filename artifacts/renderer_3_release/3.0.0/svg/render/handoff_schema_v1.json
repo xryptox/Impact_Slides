@@ -2660,47 +2660,92 @@
       "title": "DriverCardVisual",
       "type": "object"
     },
+    "DualChartPane": {
+      "additionalProperties": false,
+      "description": "One dual_chart pane: axis chart plus optional typed support.",
+      "properties": {
+        "chart": {
+          "discriminator": {
+            "mapping": {
+              "combo": "#/$defs/ComboChartVisual",
+              "grouped_bar": "#/$defs/GroupedBarChartVisual",
+              "heatmap": "#/$defs/HeatmapVisual",
+              "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
+              "line": "#/$defs/LineChartVisual",
+              "stacked_bar": "#/$defs/StackedBarChartVisual",
+              "waterfall": "#/$defs/WaterfallChartVisual"
+            },
+            "propertyName": "chart_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/LineChartVisual"
+            },
+            {
+              "$ref": "#/$defs/GroupedBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/HorizontalBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/StackedBarChartVisual"
+            },
+            {
+              "$ref": "#/$defs/ComboChartVisual"
+            },
+            {
+              "$ref": "#/$defs/WaterfallChartVisual"
+            },
+            {
+              "$ref": "#/$defs/HeatmapVisual"
+            }
+          ],
+          "title": "Chart"
+        },
+        "support": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "metric_strip": "#/$defs/MetricStripSupport",
+                  "outlined_support": "#/$defs/OutlinedSupportVisual",
+                  "support_table": "#/$defs/SupportTableVisual"
+                },
+                "propertyName": "support_type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/SupportTableVisual"
+                },
+                {
+                  "$ref": "#/$defs/OutlinedSupportVisual"
+                },
+                {
+                  "$ref": "#/$defs/MetricStripSupport"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Support"
+        }
+      },
+      "required": [
+        "chart"
+      ],
+      "title": "DualChartPane",
+      "type": "object"
+    },
     "DualChartPayload": {
       "additionalProperties": false,
-      "description": "Exactly two ordered equal-width charts plus optional shared support (D149/D253).",
+      "description": "Exactly two ordered equal-width charts plus optional shared or per-pane support (D149/D253).",
       "properties": {
         "charts": {
           "items": {
-            "discriminator": {
-              "mapping": {
-                "combo": "#/$defs/ComboChartVisual",
-                "grouped_bar": "#/$defs/GroupedBarChartVisual",
-                "heatmap": "#/$defs/HeatmapVisual",
-                "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
-                "line": "#/$defs/LineChartVisual",
-                "stacked_bar": "#/$defs/StackedBarChartVisual",
-                "waterfall": "#/$defs/WaterfallChartVisual"
-              },
-              "propertyName": "chart_type"
-            },
-            "oneOf": [
-              {
-                "$ref": "#/$defs/LineChartVisual"
-              },
-              {
-                "$ref": "#/$defs/GroupedBarChartVisual"
-              },
-              {
-                "$ref": "#/$defs/HorizontalBarChartVisual"
-              },
-              {
-                "$ref": "#/$defs/StackedBarChartVisual"
-              },
-              {
-                "$ref": "#/$defs/ComboChartVisual"
-              },
-              {
-                "$ref": "#/$defs/WaterfallChartVisual"
-              },
-              {
-                "$ref": "#/$defs/HeatmapVisual"
-              }
-            ]
+            "$ref": "#/$defs/DualChartPane"
           },
           "maxItems": 2,
           "minItems": 2,
