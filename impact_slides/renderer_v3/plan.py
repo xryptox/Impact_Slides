@@ -161,6 +161,7 @@ TABLE_CELL_PAD_X: Final = 16
 TABLE_CELL_PAD_Y: Final = 12
 TABLE_RULE_Y: Final = 1
 TABLE_STUB_MAX_SHARE: Final = 0.45  # leftover slack is not dumped into the stub (#246)
+ANNEX_COMPACT_CELL_PAD_X: Final = 8  # 4+4; CSS padding:6px 4px on .annex-compact (#288)
 
 LINE_HEIGHT: Final = 1.4
 # Must match publish.py / boardroom_amex theme box model.
@@ -2714,6 +2715,9 @@ def _collect_single_table_body(
             )
         )
         slot += 1
+    extra_spec: dict[str, Any] = {"variant": lt}
+    if lt == "annex_table":
+        extra_spec["density"] = getattr(slide.payload, "density", None) or "default"
     plans.append(
         _table_surface_plan(
             table=table,
@@ -2725,7 +2729,7 @@ def _collect_single_table_body(
             slot_order=slot,
             box_w=CONTENT_W,
             role=role,
-            extra_spec={"variant": lt},
+            extra_spec=extra_spec,
         )
     )
     return len(plans), plans
@@ -4315,6 +4319,11 @@ def _table_fit_detail(
     n_value_cols = n_cols
     # Stub + value columns.
     total_cols = n_value_cols + 1
+    pad_x = (
+        ANNEX_COMPACT_CELL_PAD_X
+        if spec.get("density") == "compact"
+        else TABLE_CELL_PAD_X
+    )
 
     headers = list(spec["header_full"])
     row_labels = list(spec["row_labels_full"])
@@ -4327,7 +4336,7 @@ def _table_fit_detail(
     value_mins = [0.0] * n_value_cols
     for r in range(spec["n_rows"]):
         for c in range(n_value_cols):
-            w = _text_width(spec["cells_vis"][r][c], px) + TABLE_CELL_PAD_X
+            w = _text_width(spec["cells_vis"][r][c], px) + pad_x
             if w > value_mins[c]:
                 value_mins[c] = w
     def try_widths(h_labels: list[str], r_labels: list[str], g_labels: list[str] | None):
@@ -4337,16 +4346,16 @@ def _table_fit_detail(
             _min_wrap_width(
                 h_labels[0], px, TABLE_MAX_LABEL_LINES, strong=True
             )
-            + TABLE_CELL_PAD_X
+            + pad_x
         )
         for lab in r_labels:
             tw = _min_wrap_width(lab, px, TABLE_MAX_LABEL_LINES, strong=True)
-            mins[0] = max(mins[0], tw + TABLE_CELL_PAD_X)
+            mins[0] = max(mins[0], tw + pad_x)
         for c in range(n_value_cols):
             tw = _min_wrap_width(
                 h_labels[c + 1], px, TABLE_MAX_LABEL_LINES, strong=True
             )
-            mins[c + 1] = max(tw + TABLE_CELL_PAD_X, value_mins[c])
+            mins[c + 1] = max(tw + pad_x, value_mins[c])
         # Group labels need span width.
         if g_labels is not None and groups is not None:
             # Map leaf index → width slot; groups only cover value cols possibly including gaps.
@@ -4354,7 +4363,7 @@ def _table_fit_detail(
             for g, glab in zip(groups, g_labels):
                 slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
                 span_min = sum(mins[s] for s in slots)
-                need = _text_width(glab, px, strong=True) + TABLE_CELL_PAD_X
+                need = _text_width(glab, px, strong=True) + pad_x
                 if need > span_min and slots:
                     # Grow last slot in span.
                     mins[slots[-1]] += need - span_min
@@ -4375,7 +4384,7 @@ def _table_fit_detail(
         changed = False
         new_headers = []
         for c, h in enumerate(h_labels):
-            cell_w = widths[c] - TABLE_CELL_PAD_X
+            cell_w = widths[c] - pad_x
             lines = _wrap_label_lines(h, px, max(1, cell_w), strong=True)
             if len(lines) > TABLE_MAX_LABEL_LINES or any(
                 _text_width(ln, px, strong=True) > cell_w for ln in lines
@@ -4387,7 +4396,7 @@ def _table_fit_detail(
             else:
                 new_headers.append(h)
         new_rows = []
-        cell_w0 = widths[0] - TABLE_CELL_PAD_X
+        cell_w0 = widths[0] - pad_x
         for lab in r_labels:
             lines = _wrap_label_lines(lab, px, max(1, cell_w0), strong=True)
             if len(lines) > TABLE_MAX_LABEL_LINES or any(
@@ -4405,7 +4414,7 @@ def _table_fit_detail(
             new_g = []
             for g, glab in zip(groups, g_labels):
                 slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
-                span_w = sum(widths[s] for s in slots) - TABLE_CELL_PAD_X
+                span_w = sum(widths[s] for s in slots) - pad_x
                 g2 = _ellipsis_to_width(glab, px, max(1, span_w), strong=True)
                 if g2 != glab:
                     changed = True
@@ -4421,7 +4430,7 @@ def _table_fit_detail(
         geometry_ok = True
         header_lines = 0
         for c, h in enumerate(h_labels):
-            cell_w = max(1, widths[c] - TABLE_CELL_PAD_X)
+            cell_w = max(1, widths[c] - pad_x)
             lines = _wrap_label_lines(h, px, cell_w, strong=True)
             if len(lines) > TABLE_MAX_LABEL_LINES:
                 geometry_ok = False
@@ -4434,7 +4443,7 @@ def _table_fit_detail(
             leaf_to_slot = {cid: i + 1 for i, cid in enumerate(spec["col_ids"])}
             for g, glab in zip(groups, g_labels):
                 slots = [leaf_to_slot[cid] for cid in g["column_ids"]]
-                span_w = max(1, sum(widths[s] for s in slots) - TABLE_CELL_PAD_X)
+                span_w = max(1, sum(widths[s] for s in slots) - pad_x)
                 lines = _wrap_label_lines(glab, px, span_w, strong=True)
                 if len(lines) > TABLE_MAX_LABEL_LINES:
                     geometry_ok = False
@@ -4445,7 +4454,7 @@ def _table_fit_detail(
 
         body_lines_total = 0
         for r, lab in enumerate(r_labels):
-            cell_w = max(1, widths[0] - TABLE_CELL_PAD_X)
+            cell_w = max(1, widths[0] - pad_x)
             lines = _wrap_label_lines(lab, px, cell_w, strong=True)
             if len(lines) > TABLE_MAX_LABEL_LINES:
                 geometry_ok = False
@@ -4455,7 +4464,7 @@ def _table_fit_detail(
             if len(lines) > 1 and "plan.text_wrapped" not in local_codes:
                 local_codes.append("plan.text_wrapped")
             for c in range(n_value_cols):
-                if _text_width(spec["cells_vis"][r][c], px) > widths[c + 1] - TABLE_CELL_PAD_X:
+                if _text_width(spec["cells_vis"][r][c], px) > widths[c + 1] - pad_x:
                     geometry_ok = False
 
         scale_h = 0

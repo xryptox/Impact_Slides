@@ -6,10 +6,23 @@
   "$defs": {
     "AnnexTablePayload": {
       "additionalProperties": false,
-      "description": "Dense full-width annex table (D184/D258).",
+      "description": "Dense full-width annex table (D184/D258). Optional compact IR density (#288).",
       "properties": {
         "table": {
           "$ref": "#/$defs/TableData"
+        },
+        "density": {
+          "anyOf": [
+            {
+              "const": "compact",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Density"
         }
       },
       "required": [

@@ -128,6 +128,7 @@ def _envelope_has_unknown_fields(raw: dict[str, Any]) -> bool:
             if layout not in {"annex_table", "grouped_annex_table"}:
                 allowed.add("takeaway")
             payload_allowed = {
+                "annex_table": {"table", "density"},
                 "grouped_annex_table": {"tables"},
                 "period_comparison": {"table", "metric_strip"},
             }.get(layout, {"table"})
@@ -402,7 +403,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                 )
             payload_fields = {
                 "data_table": {"table"},
-                "annex_table": {"table"},
+                "annex_table": {"table", "density"},
                 "grouped_annex_table": {"tables"},
                 "chart_grouped_annex": {"chart", "tables"},
                 "period_comparison": {"table", "metric_strip"},

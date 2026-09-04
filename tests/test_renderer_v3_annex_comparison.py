@@ -5,6 +5,7 @@ Seams under test:
 - D255 table reuse + D256 groups where allowed
 - plan floors (12px annex, 20px period/cards) + metric strip exterior lane
 - paint identity: navy headers, roles, peer cards, disclosure, fallbacks
+- annex_table optional compact density (#288): 18-col IR matrix fits; 19-col overflows
 """
 from __future__ import annotations
 
@@ -714,3 +715,207 @@ def test_mutation_token_mins_still_clip_fx_adj():
     two_line = _min_wrap_width(label, 24, 2, strong=True)
     assert two_line > token
     assert two_line + TABLE_CELL_PAD_X > token + TABLE_CELL_PAD_X
+
+
+# ---------------------------------------------------------------------------
+# annex_table compact density (#288)
+# ---------------------------------------------------------------------------
+
+_COMPACT_VALUE = "12345678901"  # paints as $12,345,678,901
+_DEFAULT_ANNEX_PAD = b"table.data-table th,table.data-table td,table.support-table th,table.support-table td{padding:6px 8px;"
+_COMPACT_ANNEX_PAD = b"table.data-table.annex-compact th,table.data-table.annex-compact td{padding:6px 4px}"
+
+
+def _period_matrix(*, n_cols: int, density: str | None, surface_id: str) -> dict:
+    """IR-style annex: short stub, Qn'YY headers, fat unwrapped USD values."""
+    raw = _raw()
+    raw["number_formats"]["usd_0"] = {
+        "unit": "usd",
+        "value_decimals": 0,
+        "negative_style": "parentheses",
+    }
+    columns = []
+    cells = {}
+    for i in range(n_cols):
+        year = 17 + (i // 4)
+        q = (i % 4) + 1
+        cid = f"p{i:02d}"
+        columns.append({"column_id": cid, "label": f"Q{q}'{year}"})
+        cells[cid] = {"type": "number", "value": _COMPACT_VALUE, "format_id": "usd_0"}
+    payload: dict = {
+        "table": {
+            "surface_id": surface_id,
+            "stub_header": {"label": "Metric"},
+            "columns": columns,
+            "rows": [{"row_id": "rev", "label": "Metric", "cells": cells}],
+        }
+    }
+    if density is not None:
+        payload["density"] = density
+    slide = next(s for s in raw["slides"] if s["layout_type"] == "annex_table")
+    slide["payload"] = payload
+    slide["title"] = f"{n_cols}-period annex"
+    return raw
+
+
+def test_omit_density_keeps_default_annex_path():
+    result = validate_handoff(_raw(), strict=True)
+    annex = next(s for s in result.deck.slides if s.layout_type == "annex_table")
+    assert getattr(annex.payload, "density", None) in (None, "default")
+    plan = plan_deck(result.deck, strict=True)
+    sp = next(s for s in plan.surfaces if s.role == "annex_table")
+    assert sp.role_sizes["table"] >= 12
+    assert not sp._overflow
+
+
+def test_compact_18_col_period_matrix_strict_accepts(tmp_path: Path):
+    raw = _period_matrix(n_cols=18, density="compact", surface_id="annex-18")
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    sp = next(s for s in plan.surfaces if s.surface_id == "annex-18")
+    assert not sp._overflow
+    assert sp.role_sizes["table"] >= 12
+    assert len(sp.table_paint["col_ids"]) == 18
+    assert sp.table_paint["ellipsized"] is False
+    assert all(
+        "$12,345,678,901" in row for row in sp.table_paint["cells_vis"]
+    )
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    painted = render_deck(handoff, out, strict=True)
+    assert painted["ok"] is True
+    html = (out / "presentation.html").read_bytes()
+    assert html.count(_DEFAULT_ANNEX_PAD) == 1
+    assert html.count(_COMPACT_ANNEX_PAD) == 1
+    assert b'class="data-table annex-compact"' in html
+    assert b'data-table-surface="annex-18"' in html
+    assert html.count(b"$12,345,678,901") == 18
+
+
+def test_compact_19_col_period_matrix_strict_overflow_no_data_loss(tmp_path: Path):
+    raw = _period_matrix(n_cols=19, density="compact", surface_id="annex-19")
+    result = validate_handoff(raw, strict=True)
+    with pytest.raises(RendererValidationError) as ei:
+        plan_deck(result.deck, strict=True)
+    assert any(e.code == "plan.unresolved_overflow" for e in ei.value.events)
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    painted = render_deck(handoff, out, strict=False)
+    assert painted["ok"] is False
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert html.count("$12,345,678,901") == 19
+    assert 'data-table-surface="annex-19"' in html
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert any(
+        event["code"] == "plan.unresolved_overflow"
+        and event["surface_id"] == "annex-19"
+        for event in meta["events"]
+    )
+
+
+def test_strip_density_from_compact_fixture_uses_default_annex():
+    compact = _period_matrix(n_cols=18, density="compact", surface_id="annex-18")
+    stripped = deepcopy(compact)
+    stripped["slides"][1]["payload"].pop("density")
+    compact_deck = validate_handoff(compact, strict=True).deck
+    stripped_deck = validate_handoff(stripped, strict=True).deck
+    compact_sp = next(
+        s for s in plan_deck(compact_deck, strict=True).surfaces if s.surface_id == "annex-18"
+    )
+    with pytest.raises(RendererValidationError) as ei:
+        plan_deck(stripped_deck, strict=True)
+    assert any(e.code == "plan.unresolved_overflow" for e in ei.value.events)
+    assert not compact_sp._overflow
+    default = validate_handoff(_raw(), strict=True).deck
+    default_sp = next(s for s in plan_deck(default, strict=True).surfaces if s.role == "annex_table")
+    assert default_sp.role_sizes["table"] >= 12
+    assert not default_sp._overflow
+
+
+def test_d314_annex_without_density_keeps_default_css(tmp_path: Path):
+    corpus = ROOT / "tests/fixtures/renderer_v3/canonical_amex_handoff_v1.json"
+    out = tmp_path / "out"
+    assert render_deck(corpus, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_bytes()
+    assert html.count(_DEFAULT_ANNEX_PAD) == 1
+    assert b'class="data-table annex-compact"' not in html
+    assert b'data-layout="annex_table"' in html
+
+
+def test_grouped_annex_ignores_compact_even_if_authored():
+    raw = _raw()
+    grouped = next(s for s in raw["slides"] if s["layout_type"] == "grouped_annex_table")
+    grouped["payload"]["density"] = "compact"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_playwright_compact_18_col_no_scroll_unwrapped_values(tmp_path: Path):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    raw = _period_matrix(n_cols=18, density="compact", surface_id="annex-18")
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        measured = page.evaluate(
+            """() => {
+              const slide = document.querySelector('[data-layout="annex_table"]');
+              const table = slide.querySelector('table[data-table-surface="annex-18"]');
+              const sbox = slide.getBoundingClientRect();
+              const tbox = table.getBoundingClientRect();
+              const values = [...table.querySelectorAll('tbody td')].map(td => {
+                const cs = getComputedStyle(td);
+                return {
+                  text: td.innerText.trim(),
+                  whiteSpace: cs.whiteSpace,
+                  overflow: cs.overflow,
+                  textOverflow: cs.textOverflow,
+                  scrollWidth: td.scrollWidth,
+                  clientWidth: td.clientWidth,
+                };
+              });
+              return {
+                slideW: sbox.width,
+                slideH: sbox.height,
+                tableW: tbox.width,
+                tableH: tbox.height,
+                tableLeft: tbox.left - sbox.left,
+                tableTop: tbox.top - sbox.top,
+                slideScrollW: slide.scrollWidth,
+                slideScrollH: slide.scrollHeight,
+                slideClientW: slide.clientWidth,
+                slideClientH: slide.clientHeight,
+                tableOverflowX: getComputedStyle(table).overflowX,
+                tableOverflowY: getComputedStyle(table).overflowY,
+                values,
+              };
+            }"""
+        )
+        browser.close()
+    assert measured["slideW"] == 1920
+    assert measured["slideH"] == 1080
+    assert measured["tableW"] <= 1920
+    assert measured["tableH"] <= 1080
+    assert measured["tableLeft"] >= 0
+    assert measured["tableTop"] >= 0
+    assert measured["tableLeft"] + measured["tableW"] <= 1920 + 1
+    assert measured["tableTop"] + measured["tableH"] <= 1080 + 1
+    assert measured["slideScrollW"] <= measured["slideClientW"]
+    assert measured["slideScrollH"] <= measured["slideClientH"]
+    assert measured["tableOverflowX"] not in ("scroll", "auto")
+    assert measured["tableOverflowY"] not in ("scroll", "auto")
+    assert len(measured["values"]) == 18
+    for cell in measured["values"]:
+        assert cell["text"] == "$12,345,678,901"
+        assert cell["textOverflow"] != "ellipsis"
+        assert cell["whiteSpace"] == "nowrap"
+        assert cell["scrollWidth"] <= cell["clientWidth"]
