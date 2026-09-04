@@ -768,6 +768,7 @@ def _paint_slide_body(
         "data_table",
         "annex_table",
         "grouped_annex_table",
+        "chart_grouped_annex",
         "period_comparison",
         "comparison_cards",
         "single_chart",
@@ -837,6 +838,12 @@ def _paint_slide_body(
             out.extend(_paint_narrative_blocks(slide, plans_by_id, events_by_surface))
         elif lt == "grouped_annex_table":
             out.extend(_paint_grouped_annex(slide, plans_by_id, events_by_surface))
+        elif lt == "chart_grouped_annex":
+            out.extend(
+                _paint_chart_grouped_annex(
+                    slide, plans_by_id, events_by_surface, svg_only=svg_only
+                )
+            )
         elif lt == "comparison_cards":
             out.extend(_paint_comparison_cards(slide, plans_by_id, events_by_surface))
         elif lt == "period_comparison":
@@ -1526,6 +1533,21 @@ def _paint_grouped_annex(
         )
         out.append("</div>")
     out.append("</div>")
+    return out
+
+
+def _paint_chart_grouped_annex(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+    *,
+    svg_only: bool = False,
+) -> list[str]:
+    """Chart first, then the existing grouped-annex peer row (#286)."""
+    out = _paint_one_chart_surface(
+        slide.payload.chart, plans_by_id, events_by_surface, svg_only=svg_only
+    )
+    out.extend(_paint_grouped_annex(slide, plans_by_id, events_by_surface))
     return out
 
 
@@ -3232,6 +3254,7 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
             "data_table",
             "annex_table",
             "grouped_annex_table",
+            "chart_grouped_annex",
             "period_comparison",
             "comparison_cards",
             "single_chart",
@@ -3252,6 +3275,11 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                     for b in slide.payload.blocks
                 )
             elif slide.layout_type == "grouped_annex_table":
+                surface_ids.extend(
+                    peer.table.surface_id for peer in slide.payload.tables
+                )
+            elif slide.layout_type == "chart_grouped_annex":
+                surface_ids.append(slide.payload.chart.surface_id)
                 surface_ids.extend(
                     peer.table.surface_id for peer in slide.payload.tables
                 )
@@ -3304,7 +3332,7 @@ def build_static_readiness(deck: Deck) -> list[dict[str, Any]]:
     """Pre-publication readiness facts only (D109/D312); no browser measurement."""
     rows: list[dict[str, Any]] = []
     for slide in deck.slides:
-        is_chart = slide.layout_type == "single_chart"
+        is_chart = slide.layout_type in ("single_chart", "chart_grouped_annex")
         painters: list[str] = []
         if is_chart:
             ctype = getattr(slide.payload.chart, "chart_type", None)

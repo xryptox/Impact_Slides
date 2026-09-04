@@ -45,6 +45,7 @@ LAYOUT_TYPES = (
     "data_table",
     "annex_table",
     "grouped_annex_table",
+    "chart_grouped_annex",
     "period_comparison",
     "comparison_cards",
     "metric_overview",
@@ -76,6 +77,7 @@ LayoutTypeName = Literal[
     "data_table",
     "annex_table",
     "grouped_annex_table",
+    "chart_grouped_annex",
     "period_comparison",
     "comparison_cards",
     "metric_overview",
@@ -108,6 +110,7 @@ KERNEL_LAYOUTS = frozenset(
         "data_table",
         "annex_table",
         "grouped_annex_table",
+        "chart_grouped_annex",
         "period_comparison",
         "comparison_cards",
         "single_chart",
@@ -566,6 +569,48 @@ class GroupedAnnexTablePayload(ClosedModel):
     """One or two ordered peer annex surfaces (D185/D259)."""
 
     tables: list[GroupedAnnexPeer] = Field(min_length=1, max_length=2)
+
+
+class ChartGroupedAnnexPayload(ClosedModel):
+    """One axis chart plus 1–2 headed annex peers (#286)."""
+
+    chart: "ChartVisual"
+    tables: list[GroupedAnnexPeer] = Field(min_length=1, max_length=2)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_leftover_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for key in (
+                "support",
+                "panes",
+                "primary_visual",
+                "support_visual",
+                "secondary_visual",
+            ):
+                if key in data:
+                    raise ValueError(
+                        f"{key} is invalid; use payload.chart and payload.tables"
+                    )
+        return data
+
+    @model_validator(mode="after")
+    def _axis_chart_and_ids(self) -> ChartGroupedAnnexPayload:
+        chart = self.chart
+        if getattr(chart, "chart_type", None) == "heatmap":
+            raise ValueError(
+                "chart_grouped_annex chart must be an axis chart (heatmap invalid)"
+            )
+        if not getattr(chart, "heading", None):
+            raise ValueError(
+                "chart_grouped_annex chart requires a non-empty heading (D170)"
+            )
+        ids = [chart.surface_id]
+        for peer in self.tables:
+            ids.append(peer.table.surface_id)
+        if len(ids) != len(set(ids)):
+            raise ValueError("chart_grouped_annex surface_id values must be unique")
+        return self
 
 
 class MetricItem(ClosedModel):
@@ -2900,6 +2945,7 @@ ChartSupportVisual = Annotated[
 ]
 DualChartPane.model_rebuild()
 DualChartPayload.model_rebuild()
+ChartGroupedAnnexPayload.model_rebuild()
 
 
 def _check_support_vs_chart(support: Any, chart: Any) -> None:
@@ -3231,6 +3277,31 @@ class GroupedAnnexTableSlide(_SlideBase):
 
     @model_validator(mode="after")
     def _footer_subset(self) -> GroupedAnnexTableSlide:
+        return _ordinary_footer_subset(self)
+
+
+class ChartGroupedAnnexSlide(_SlideBase):
+    """Axis chart + 1–2 headed annex peers; no takeaway (#286)."""
+
+    layout_type: Literal["chart_grouped_annex"] = "chart_grouped_annex"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: ChartGroupedAnnexPayload
+    content: Optional[SubtitleContent] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_takeaway(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "takeaway" in data:
+            raise ValueError("chart_grouped_annex forbids takeaway")
+        return data
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> ChartGroupedAnnexSlide:
         return _ordinary_footer_subset(self)
 
 
@@ -3672,6 +3743,7 @@ Slide = Annotated[
         DataTableSlide,
         AnnexTableSlide,
         GroupedAnnexTableSlide,
+        ChartGroupedAnnexSlide,
         PeriodComparisonSlide,
         ComparisonCardsSlide,
         ProcessFlowSlide,
@@ -3708,6 +3780,8 @@ def _axis_charts_on_slide(slide: Any) -> list[Any]:
         return [pane.chart for pane in payload.charts]
     if lt == "chart_hero_dual":
         return [payload.chart]
+    if lt == "chart_grouped_annex":
+        return [payload.chart]
     return []
 
 
@@ -3727,6 +3801,8 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
             ids.append(strip.surface_id)
         return ids
     if lt == "grouped_annex_table":
+        return [peer.table.surface_id for peer in payload.tables]
+    if lt == "chart_grouped_annex":
         return [peer.table.surface_id for peer in payload.tables]
     if lt == "single_chart":
         ids: list[str] = []
@@ -3816,6 +3892,8 @@ def _slide_tables(slide: Any) -> list[TableData]:
     ):
         return [payload.table]
     if lt == "grouped_annex_table":
+        return [peer.table for peer in payload.tables]
+    if lt == "chart_grouped_annex":
         return [peer.table for peer in payload.tables]
     if lt == "single_chart":
         tables: list[TableData] = []

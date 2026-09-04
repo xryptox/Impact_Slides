@@ -504,8 +504,8 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                         expected=(
                             "kernel implements opening_cover, section_divider, "
                             "closing_cover, narrative, legal_notice, data_table, "
-                            "annex_table, grouped_annex_table, period_comparison, "
-                            "comparison_cards, process_flow, timeline, "
+                            "annex_table, grouped_annex_table, chart_grouped_annex, "
+                            "period_comparison, comparison_cards, process_flow, timeline, "
                             "layered_architecture, data_pipeline, decision_tree, "
                             "feedback_loop, hierarchy, stakeholder_map, "
                             "quadrant_matrix, single_chart; "
