@@ -1752,6 +1752,9 @@ def _chart_category_ids(chart: Any) -> list[str]:
     table = getattr(chart, "table_data", None)
     if table is not None:
         return [c.column_id for c in table.columns]
+    slices = getattr(chart, "slices", None)
+    if slices is not None:
+        return [s.slice_id for s in slices]
     return []
 
 
@@ -1860,8 +1863,8 @@ def _validate_measurements(chart: Any) -> None:
     measures = getattr(chart, "measurements", None)
     if not measures:
         return
-    if getattr(chart, "chart_type", None) == "heatmap":
-        raise ValueError("heatmap forbids measurements (D298)")
+    if getattr(chart, "chart_type", None) in ("heatmap", "pie", "donut"):
+        raise ValueError(f"{chart.chart_type} forbids measurements (D298)")
     cat_ids = _chart_category_ids(chart)
     cat_pos = {cid: i for i, cid in enumerate(cat_ids)}
     ser_ids = _chart_series_ids(chart)
@@ -1989,6 +1992,111 @@ def _bar_domain_includes_zero(chart: Any) -> None:
     hi = Decimal(domain.max) if domain.max is not None else None
     if lo is not None and hi is not None and (lo > 0 or hi < 0):
         raise ValueError("bar generated domain bounds must include zero")
+
+
+class ChartSlice(ClosedModel):
+    """One pie/donut mix slice: id + label + semantic value."""
+
+    slice_id: SemanticId
+    label: NonEmptyStr
+    value: SemanticValue
+    short_label: Optional[NonEmptyStr] = None
+
+
+def _pie_donut_invariants(chart: Any) -> None:
+    if chart.subtitle is not None and chart.heading is None:
+        raise ValueError("subtitle requires heading")
+    ids = [s.slice_id for s in chart.slices]
+    if len(ids) != len(set(ids)):
+        raise ValueError("slice_id values must be unique within the chart")
+    for sl in chart.slices:
+        kind = getattr(sl.value, "type", None)
+        if kind != "number":
+            raise ValueError("pie/donut slices require a finite number value")
+        if Decimal(sl.value.value) < 0:
+            raise ValueError("pie/donut slice values must be >= 0")
+    _validate_chart_facts(chart, allow_data_point=False)
+
+
+_PIE_DONUT_FORBIDDEN = (
+    "chart_data",
+    "category_axis",
+    "value_axes",
+    "waterfall_data",
+    "table_data",
+    "display",
+    "category_groups",
+    "auxiliary_series",
+    "coverage",
+    "coverage_callout",
+    "measurements",
+)
+
+
+class PieChartVisual(ClosedModel):
+    """Radial mix chart with cutout 0."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["pie"] = "pie"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    slices: list[ChartSlice] = Field(min_length=2, max_length=8)
+    typography: Optional[ChartTypography] = None
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_cartesian_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for key in _PIE_DONUT_FORBIDDEN:
+            if key in data:
+                raise ValueError(f"pie forbids field {key!r}")
+        return data
+
+    @model_validator(mode="after")
+    def _pie_invariants(self) -> PieChartVisual:
+        _pie_donut_invariants(self)
+        return self
+
+
+class DonutChartVisual(ClosedModel):
+    """Radial mix chart with a theme hole."""
+
+    type: Literal["chart"] = "chart"
+    surface_id: SemanticId
+    chart_type: Literal["donut"] = "donut"
+    heading: Optional[NonEmptyStr] = None
+    subtitle: Optional[NonEmptyStr] = None
+    slices: list[ChartSlice] = Field(min_length=2, max_length=8)
+    typography: Optional[ChartTypography] = None
+    context_labels: Optional[list[ContextLabel]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+    annotations: Optional[list[ChartAnnotation]] = Field(
+        default=None, min_length=1, max_length=8
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_cartesian_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for key in _PIE_DONUT_FORBIDDEN:
+            if key in data:
+                raise ValueError(f"donut forbids field {key!r}")
+        return data
+
+    @model_validator(mode="after")
+    def _donut_invariants(self) -> DonutChartVisual:
+        _pie_donut_invariants(self)
+        return self
 
 
 class LineChartVisual(ClosedModel):
@@ -2701,6 +2809,8 @@ ChartVisual = Annotated[
         ComboChartVisual,
         WaterfallChartVisual,
         HeatmapVisual,
+        PieChartVisual,
+        DonutChartVisual,
     ],
     Field(discriminator="chart_type"),
 ]
@@ -3036,7 +3146,7 @@ class ChartHeroDualPayload(ClosedModel):
         if len(ids) != len(set(ids)):
             raise ValueError("chart_hero_dual surface_id values must be unique")
         if getattr(self.chart, "chart_type", None) == "heatmap":
-            raise ValueError("chart_hero_dual chart must be an axis chart")
+            raise ValueError("chart_hero_dual chart must be an axis chart (heatmap invalid)")
         if not getattr(self.chart, "heading", None):
             raise ValueError("chart_hero_dual chart requires a non-empty heading (D170/D254)")
         if not getattr(self.hero, "heading", None):
@@ -3878,6 +3988,8 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
     for chart in _axis_charts_on_slide(slide):
         for lab in getattr(chart, "context_labels", None) or []:
             values.append(lab.value)
+        for sl in getattr(chart, "slices", None) or []:
+            values.append(sl.value)
     return values
 
 

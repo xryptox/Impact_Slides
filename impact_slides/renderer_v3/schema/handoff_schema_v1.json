@@ -656,10 +656,12 @@
           "discriminator": {
             "mapping": {
               "combo": "#/$defs/ComboChartVisual",
+              "donut": "#/$defs/DonutChartVisual",
               "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
               "line": "#/$defs/LineChartVisual",
+              "pie": "#/$defs/PieChartVisual",
               "stacked_bar": "#/$defs/StackedBarChartVisual",
               "waterfall": "#/$defs/WaterfallChartVisual"
             },
@@ -686,6 +688,12 @@
             },
             {
               "$ref": "#/$defs/HeatmapVisual"
+            },
+            {
+              "$ref": "#/$defs/PieChartVisual"
+            },
+            {
+              "$ref": "#/$defs/DonutChartVisual"
             }
           ],
           "title": "Chart"
@@ -823,10 +831,12 @@
           "discriminator": {
             "mapping": {
               "combo": "#/$defs/ComboChartVisual",
+              "donut": "#/$defs/DonutChartVisual",
               "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
               "line": "#/$defs/LineChartVisual",
+              "pie": "#/$defs/PieChartVisual",
               "stacked_bar": "#/$defs/StackedBarChartVisual",
               "waterfall": "#/$defs/WaterfallChartVisual"
             },
@@ -853,6 +863,12 @@
             },
             {
               "$ref": "#/$defs/HeatmapVisual"
+            },
+            {
+              "$ref": "#/$defs/PieChartVisual"
+            },
+            {
+              "$ref": "#/$defs/DonutChartVisual"
             }
           ],
           "title": "Chart"
@@ -1183,6 +1199,68 @@
         "marker"
       ],
       "title": "ChartSeriesStyle",
+      "type": "object"
+    },
+    "ChartSlice": {
+      "additionalProperties": false,
+      "description": "One pie/donut mix slice: id + label + semantic value.",
+      "properties": {
+        "slice_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Slice Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "discriminator": {
+            "mapping": {
+              "missing": "#/$defs/MissingValue",
+              "number": "#/$defs/NumberValue",
+              "range": "#/$defs/RangeValue",
+              "text": "#/$defs/TextValue"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumberValue"
+            },
+            {
+              "$ref": "#/$defs/RangeValue"
+            },
+            {
+              "$ref": "#/$defs/TextValue"
+            },
+            {
+              "$ref": "#/$defs/MissingValue"
+            }
+          ],
+          "title": "Value"
+        },
+        "short_label": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short Label"
+        }
+      },
+      "required": [
+        "slice_id",
+        "label",
+        "value"
+      ],
+      "title": "ChartSlice",
       "type": "object"
     },
     "ChartTypography": {
@@ -2679,6 +2757,115 @@
       "title": "DisclosureSection",
       "type": "object"
     },
+    "DonutChartVisual": {
+      "additionalProperties": false,
+      "description": "Radial mix chart with a theme hole.",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "donut",
+          "default": "donut",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "slices": {
+          "items": {
+            "$ref": "#/$defs/ChartSlice"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Slices",
+          "type": "array"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        }
+      },
+      "required": [
+        "surface_id",
+        "slices"
+      ],
+      "title": "DonutChartVisual",
+      "type": "object"
+    },
     "DriverCardRow": {
       "additionalProperties": false,
       "description": "One typed driver-card fact row (D151).",
@@ -2835,10 +3022,12 @@
           "discriminator": {
             "mapping": {
               "combo": "#/$defs/ComboChartVisual",
+              "donut": "#/$defs/DonutChartVisual",
               "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
               "line": "#/$defs/LineChartVisual",
+              "pie": "#/$defs/PieChartVisual",
               "stacked_bar": "#/$defs/StackedBarChartVisual",
               "waterfall": "#/$defs/WaterfallChartVisual"
             },
@@ -2865,6 +3054,12 @@
             },
             {
               "$ref": "#/$defs/HeatmapVisual"
+            },
+            {
+              "$ref": "#/$defs/PieChartVisual"
+            },
+            {
+              "$ref": "#/$defs/DonutChartVisual"
             }
           ],
           "title": "Chart"
@@ -6112,6 +6307,115 @@
       "title": "PeriodComparisonSlide",
       "type": "object"
     },
+    "PieChartVisual": {
+      "additionalProperties": false,
+      "description": "Radial mix chart with cutout 0.",
+      "properties": {
+        "type": {
+          "const": "chart",
+          "default": "chart",
+          "title": "Type",
+          "type": "string"
+        },
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chart_type": {
+          "const": "pie",
+          "default": "pie",
+          "title": "Chart Type",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtitle"
+        },
+        "slices": {
+          "items": {
+            "$ref": "#/$defs/ChartSlice"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Slices",
+          "type": "array"
+        },
+        "typography": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartTypography"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "context_labels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ContextLabel"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Labels"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChartAnnotation"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annotations"
+        }
+      },
+      "required": [
+        "surface_id",
+        "slices"
+      ],
+      "title": "PieChartVisual",
+      "type": "object"
+    },
     "PipelineComponent": {
       "additionalProperties": false,
       "description": "One component inside a data_pipeline stage (D197/D277).",
@@ -7380,10 +7684,12 @@
           "discriminator": {
             "mapping": {
               "combo": "#/$defs/ComboChartVisual",
+              "donut": "#/$defs/DonutChartVisual",
               "grouped_bar": "#/$defs/GroupedBarChartVisual",
               "heatmap": "#/$defs/HeatmapVisual",
               "horizontal_bar": "#/$defs/HorizontalBarChartVisual",
               "line": "#/$defs/LineChartVisual",
+              "pie": "#/$defs/PieChartVisual",
               "stacked_bar": "#/$defs/StackedBarChartVisual",
               "waterfall": "#/$defs/WaterfallChartVisual"
             },
@@ -7410,6 +7716,12 @@
             },
             {
               "$ref": "#/$defs/HeatmapVisual"
+            },
+            {
+              "$ref": "#/$defs/PieChartVisual"
+            },
+            {
+              "$ref": "#/$defs/DonutChartVisual"
             }
           ],
           "title": "Chart"

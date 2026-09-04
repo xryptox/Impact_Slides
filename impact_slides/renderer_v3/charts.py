@@ -1,7 +1,7 @@
-"""Chart freeze + painters: axis charts (line/bars/waterfall/stacked) + native heatmap.
+"""Chart freeze + painters: axis charts (line/bars/waterfall/stacked/pie/donut) + native heatmap.
 
 Covers D239/D240/D242–D243/D245/D247/D248/D302/D304/D307, shared D71–D73/D160
-geometry, D163/D246–D248/D308 semantic heatmaps, and collision-owned
+geometry, D163/D246–D248/D308 semantic heatmaps, pie/donut radial mix, and collision-owned
 context/annotation/measurement chrome (D232–D234/D296–D298).
 """
 from __future__ import annotations
@@ -25,6 +25,7 @@ from .models import (
     ComboChartVisual,
     ContextLabel,
     DataPointAnchor,
+    DonutChartVisual,
     GroupedBarChartVisual,
     HeatmapVisual,
     HorizontalBarChartVisual,
@@ -33,6 +34,7 @@ from .models import (
     MissingValue,
     NumberFormat,
     NumberValue,
+    PieChartVisual,
     StackedBarChartVisual,
     WaterfallChartVisual,
 )
@@ -52,7 +54,12 @@ AxisChartVisual = Union[
     StackedBarChartVisual,
     ComboChartVisual,
     WaterfallChartVisual,
+    PieChartVisual,
+    DonutChartVisual,
 ]
+PieDonutVisual = Union[PieChartVisual, DonutChartVisual]
+# Theme hole for donut; pie cutout is 0.
+DONUT_CUTOUT = 0.55
 BarChartVisual = Union[
     GroupedBarChartVisual, HorizontalBarChartVisual, StackedBarChartVisual
 ]
@@ -2085,6 +2092,117 @@ def _resolve_combo_domain(
     }
 
 
+def freeze_pie_donut(
+    chart: PieDonutVisual,
+    formats: Mapping[str, NumberFormat],
+    *,
+    box_w: int = PLOT_W + PAD_L + PAD_R,
+    box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+) -> dict[str, Any]:
+    """Frozen radial mix plan: Chart.js doughnut + SVG wedges + D247 table."""
+    plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - PAD_L - PAD_R))
+    plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
+    cx = PAD_L + plot_w / 2.0
+    cy = PAD_T + plot_h / 2.0
+    radius = min(plot_w, plot_h) / 2.0 - 8.0
+    cutout = 0.0 if chart.chart_type == "pie" else DONUT_CUTOUT
+    inner_r = radius * cutout
+    colors = resolve_series_colors("bar", count=len(chart.slices))
+    amounts = [Decimal(s.value.value) for s in chart.slices]
+    total = sum(amounts, Decimal(0))
+    role_sizes = _role_sizes(chart)
+    label_px = role_sizes["ordinary_values"]
+    slices: list[dict[str, Any]] = []
+    start = -math.pi / 2.0
+    for i, sl in enumerate(chart.slices):
+        fv = format_semantic_value(sl.value, formats)
+        amount = amounts[i]
+        frac = float(amount / total) if total > 0 else 1.0 / len(chart.slices)
+        sweep = frac * 2.0 * math.pi
+        mid = start + sweep / 2.0
+        color = colors[i]
+        ink = _label_ink_on_white(color)
+        # Direct labels sit in the outer half of the ring (or pie radius).
+        label_r = inner_r + (radius - inner_r) * 0.62 if radius > inner_r else radius * 0.62
+        slices.append(
+            {
+                "slice_id": sl.slice_id,
+                "label": sl.label,
+                "short_label": sl.short_label,
+                "value": sl.value.value,
+                "numeric": float(amount),
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+                "color": color,
+                "ink": ink,
+                "start": start,
+                "sweep": sweep,
+                "mid": mid,
+                "lx": cx + math.cos(mid) * label_r,
+                "ly": cy + math.sin(mid) * label_r,
+            }
+        )
+        start += sweep
+    table = {
+        "columns": [{"label": "Value"}],
+        "rows": [
+            {
+                "label": sl["label"],
+                "cells": [
+                    {"visible": sl["visible"], "accessible": sl["accessible"]}
+                ],
+            }
+            for sl in slices
+        ],
+        "facts": [f"{sl['label']}: {sl['visible']}" for sl in slices],
+        "visible": False,
+    }
+    return {
+        "surface_id": chart.surface_id,
+        "chart_type": chart.chart_type,
+        "heading": chart.heading,
+        "subtitle": chart.subtitle,
+        "cutout": cutout,
+        "slices": slices,
+        "categories": [],
+        "series": [
+            {"series_id": sl["slice_id"], "name": sl["label"], "color": sl["color"]}
+            for sl in slices
+        ],
+        "points": [],
+        "placements": [
+            {
+                "class": "slice",
+                "x": sl["lx"],
+                "y": sl["ly"],
+                "text": sl["visible"],
+                "color": sl["ink"],
+            }
+            for sl in slices
+        ],
+        "identity_strategy": None,
+        "role_sizes": role_sizes,
+        "geometry": {
+            "pad_l": PAD_L,
+            "pad_r": PAD_R,
+            "pad_t": PAD_T,
+            "pad_b": PAD_B,
+            "plot_w": plot_w,
+            "plot_h": plot_h,
+            "cx": cx,
+            "cy": cy,
+            "radius": radius,
+            "inner_r": inner_r,
+            "view_w": PAD_L + plot_w + PAD_R,
+            "view_h": PAD_T + plot_h + PAD_B,
+        },
+        "semantic_table": table,
+        "category_axis": {"visible": False, "title": None},
+        "value_axis": {"visible": False, "title": None},
+        "gridlines": False,
+    }
+
+
 def freeze_chart(
     chart: AxisChartVisual,
     formats: Mapping[str, NumberFormat],
@@ -2093,7 +2211,9 @@ def freeze_chart(
     box_h: int = PLOT_H + PAD_T + PAD_B + 80,
 ) -> dict[str, Any]:
     """Dispatch freeze by chart_type (D238)."""
-    if isinstance(chart, LineChartVisual):
+    if isinstance(chart, (PieChartVisual, DonutChartVisual)):
+        plan = freeze_pie_donut(chart, formats, box_w=box_w, box_h=box_h)
+    elif isinstance(chart, LineChartVisual):
         plan = freeze_line_chart(chart, formats, box_w=box_w, box_h=box_h)
     elif isinstance(chart, ComboChartVisual):
         plan = freeze_combo_chart(chart, formats, box_w=box_w, box_h=box_h)
@@ -2182,6 +2302,8 @@ def paint_chart_svg(
     Chart.js path overlays chrome SVG on the canvas for placement parity.
     """
     ctype = plan.get("chart_type", "line")
+    if ctype in ("pie", "donut"):
+        return _paint_pie_donut_svg(plan, marks=marks, chrome=chrome)
     if ctype == "waterfall":
         return _paint_waterfall_svg(plan, marks=marks, chrome=chrome)
     if ctype == "combo":
@@ -2189,6 +2311,60 @@ def paint_chart_svg(
     if ctype in ("grouped_bar", "horizontal_bar", "stacked_bar"):
         return _paint_bar_svg(plan, marks=marks, chrome=chrome)
     return _paint_line_svg(plan, marks=marks, chrome=chrome)
+
+
+def _paint_pie_donut_svg(
+    plan: dict[str, Any],
+    *,
+    marks: bool = True,
+    chrome: bool = True,
+) -> str:
+    g = plan["geometry"]
+    vw, vh = g["view_w"], g["view_h"]
+    cx, cy = g["cx"], g["cy"]
+    radius, inner_r = g["radius"], g["inner_r"]
+    parts = [
+        f'<svg class="chart-svg" viewBox="0 0 {vw} {vh}" width="{vw}" height="{vh}" '
+        f'role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'
+        f'<rect class="chart-plot-bg" x="0" y="0" width="{vw}" height="{vh}" fill="none"/>'
+    ]
+    if marks:
+        for sl in plan.get("slices") or []:
+            a0, a1 = sl["start"], sl["start"] + sl["sweep"]
+            if inner_r > 0:
+                d = (
+                    f'M {cx + math.cos(a0) * radius:.1f} {cy + math.sin(a0) * radius:.1f} '
+                    f'A {radius:.1f} {radius:.1f} 0 {1 if sl["sweep"] > math.pi else 0} 1 '
+                    f'{cx + math.cos(a1) * radius:.1f} {cy + math.sin(a1) * radius:.1f} '
+                    f'L {cx + math.cos(a1) * inner_r:.1f} {cy + math.sin(a1) * inner_r:.1f} '
+                    f'A {inner_r:.1f} {inner_r:.1f} 0 {1 if sl["sweep"] > math.pi else 0} 0 '
+                    f'{cx + math.cos(a0) * inner_r:.1f} {cy + math.sin(a0) * inner_r:.1f} Z'
+                )
+            else:
+                d = (
+                    f'M {cx:.1f} {cy:.1f} '
+                    f'L {cx + math.cos(a0) * radius:.1f} {cy + math.sin(a0) * radius:.1f} '
+                    f'A {radius:.1f} {radius:.1f} 0 {1 if sl["sweep"] > math.pi else 0} 1 '
+                    f'{cx + math.cos(a1) * radius:.1f} {cy + math.sin(a1) * radius:.1f} Z'
+                )
+            parts.append(
+                f'<path class="pie-slice" data-slice="{_e(sl["slice_id"])}" '
+                f'd="{d}" fill="{_e(sl["color"])}"/>'
+            )
+    if chrome:
+        px = plan["role_sizes"]["ordinary_values"]
+        for sl in plan.get("slices") or []:
+            parts.append(
+                f'<text class="slice-label" data-slice="{_e(sl["slice_id"])}" '
+                f'x="{sl["lx"]:.1f}" y="{sl["ly"]:.1f}" text-anchor="middle" '
+                f'dominant-baseline="middle" font-size="{px}" '
+                f'font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(sl["ink"])}">'
+                f'{_e(sl["label"])} {_e(sl["visible"])}</text>'
+            )
+        ink_fact = resolve_color("navy", role="text_on_light")
+        _paint_fact_chrome_svg(plan, parts, ink_fact)
+    parts.append("</svg>")
+    return "".join(parts)
 
 
 def _paint_combo_svg(
@@ -5106,7 +5282,13 @@ def _legend_html(plan: dict[str, Any]) -> str:
     for s in series_list:
         mark = s.get("mark_type")
         if mark == "bar" or (
-            plan.get("chart_type") in ("grouped_bar", "horizontal_bar", "stacked_bar")
+            plan.get("chart_type") in (
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "pie",
+                "donut",
+            )
         ):
             swatch = (
                 f'<svg width="28" height="12" aria-hidden="true">'
@@ -5282,7 +5464,9 @@ def _semantic_table(
 def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     """Settled Chart.js config — animation off, no gridlines (D63/D108)."""
     ctype = plan.get("chart_type", "line")
-    if ctype == "waterfall":
+    if ctype in ("pie", "donut"):
+        cfg = _chartjs_pie_donut_config(plan)
+    elif ctype == "waterfall":
         cfg = _chartjs_waterfall_config(plan)
     elif ctype == "combo":
         cfg = _chartjs_combo_config(plan)
@@ -5299,6 +5483,50 @@ def _chartjs_config(plan: dict[str, Any]) -> dict[str, Any]:
     )
     cfg.setdefault("v3", {})["painted_values"] = {"font": _label_font(painted)}
     return cfg
+
+
+def _chartjs_pie_donut_config(plan: dict[str, Any]) -> dict[str, Any]:
+    slices = plan.get("slices") or []
+    g = plan["geometry"]
+    cutout = plan.get("cutout") or 0
+    cutout_pct = f"{int(round(float(cutout) * 100))}%"
+    return {
+        "type": "doughnut",
+        "data": {
+            "labels": [s["label"] for s in slices],
+            "datasets": [
+                {
+                    "data": [s["numeric"] for s in slices],
+                    "backgroundColor": [s["color"] for s in slices],
+                    "borderWidth": 0,
+                }
+            ],
+        },
+        "options": {
+            "animation": False,
+            "responsive": False,
+            "maintainAspectRatio": False,
+            "plugins": {
+                "legend": {"display": False},
+                "tooltip": {"enabled": True},
+            },
+            "cutout": cutout_pct if cutout else 0,
+            "layout": {
+                "padding": {
+                    "left": g["pad_l"],
+                    "right": g["pad_r"],
+                    "top": g["pad_t"],
+                    "bottom": g["pad_b"],
+                }
+            },
+        },
+        "v3": {
+            "surface_id": plan["surface_id"],
+            "chart_type": plan["chart_type"],
+            "cutout": cutout,
+            "identity_strategy": plan["identity_strategy"],
+        },
+    }
 
 
 def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:

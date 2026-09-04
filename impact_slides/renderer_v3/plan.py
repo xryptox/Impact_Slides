@@ -78,6 +78,8 @@ _AXIS_CHART_ROLES: Final = frozenset(
         "stacked_bar_chart",
         "combo_chart",
         "waterfall_chart",
+        "pie_chart",
+        "donut_chart",
     }
 )
 SUPPORT_TABLE_FLOOR: Final = 14  # D44/D167 chart support tables
@@ -2007,6 +2009,8 @@ def _axis_chart_surface_plan(
         "horizontal_bar": "horizontal_bar_chart",
         "stacked_bar": "stacked_bar_chart",
         "combo": "combo_chart",
+        "pie": "pie_chart",
+        "donut": "donut_chart",
     }.get(chart.chart_type, f"{chart.chart_type}_chart")
     return SurfacePlan(
         surface_id=chart.surface_id,
@@ -2472,6 +2476,8 @@ def _collect_single_chart_body(
             "stacked_bar": "stacked_bar_chart",
             "combo": "combo_chart",
             "waterfall": "waterfall_chart",
+            "pie": "pie_chart",
+            "donut": "donut_chart",
         }.get(chart.chart_type, f"{chart.chart_type}_chart")
         plans.append(
             SurfacePlan(
@@ -4061,6 +4067,10 @@ def _chart_text_items(chart_spec: dict[str, Any]) -> list[tuple[str, bool]]:
     for p in chart_spec.get("points") or []:
         if p.get("visible"):
             items.append((p["visible"], False))
+    for sl in chart_spec.get("slices") or []:
+        items.append((sl["label"], False))
+        if sl.get("visible"):
+            items.append((sl["visible"], False))
     return items
 
 
