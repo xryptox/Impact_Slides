@@ -572,11 +572,40 @@ class GroupedAnnexTablePayload(ClosedModel):
     tables: list[GroupedAnnexPeer] = Field(min_length=1, max_length=2)
 
 
+class ShareChip(ClosedModel):
+    """One outlined percent-share fact (#294). Not HTML and not an in-bar label."""
+
+    share_id: SemanticId
+    label: NonEmptyStr
+    value: NumberValue
+
+    @model_validator(mode="after")
+    def _plain_label(self) -> ShareChip:
+        if "<" in self.label or ">" in self.label:
+            raise ValueError("share chip label must be plain text, not HTML")
+        return self
+
+
+class ShareChips(ClosedModel):
+    """Optional outlined share-chip row on chart_grouped_annex (#294)."""
+
+    surface_id: SemanticId
+    chips: list[ShareChip] = Field(min_length=1, max_length=8)
+
+    @model_validator(mode="after")
+    def _unique_share_ids(self) -> ShareChips:
+        ids = [c.share_id for c in self.chips]
+        if len(ids) != len(set(ids)):
+            raise ValueError("share_id values must be unique within share_chips")
+        return self
+
+
 class ChartGroupedAnnexPayload(ClosedModel):
-    """One axis chart plus 1–2 headed annex peers (#286)."""
+    """One axis chart plus 1–2 headed annex peers and optional share chips (#286/#294)."""
 
     chart: "ChartVisual"
     tables: list[GroupedAnnexPeer] = Field(min_length=1, max_length=2)
+    share_chips: Optional[ShareChips] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -591,16 +620,19 @@ class ChartGroupedAnnexPayload(ClosedModel):
             ):
                 if key in data:
                     raise ValueError(
-                        f"{key} is invalid; use payload.chart and payload.tables"
+                        f"{key} is invalid; use payload.chart, payload.tables, "
+                        "and optional payload.share_chips"
                     )
         return data
 
     @model_validator(mode="after")
     def _axis_chart_and_ids(self) -> ChartGroupedAnnexPayload:
         chart = self.chart
-        if getattr(chart, "chart_type", None) == "heatmap":
+        ctype = getattr(chart, "chart_type", None)
+        if ctype in {"heatmap", "pie", "donut"}:
             raise ValueError(
-                "chart_grouped_annex chart must be an axis chart (heatmap invalid)"
+                "chart_grouped_annex chart must be an axis chart "
+                "(heatmap/pie/donut invalid)"
             )
         if not getattr(chart, "heading", None):
             raise ValueError(
@@ -609,6 +641,9 @@ class ChartGroupedAnnexPayload(ClosedModel):
         ids = [chart.surface_id]
         for peer in self.tables:
             ids.append(peer.table.surface_id)
+        chips = self.share_chips
+        if chips is not None:
+            ids.append(chips.surface_id)
         if len(ids) != len(set(ids)):
             raise ValueError("chart_grouped_annex surface_id values must be unique")
         return self
@@ -3914,7 +3949,11 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
     if lt == "grouped_annex_table":
         return [peer.table.surface_id for peer in payload.tables]
     if lt == "chart_grouped_annex":
-        return [peer.table.surface_id for peer in payload.tables]
+        ids = [peer.table.surface_id for peer in payload.tables]
+        chips = getattr(payload, "share_chips", None)
+        if chips is not None:
+            ids.append(chips.surface_id)
+        return ids
     if lt == "single_chart":
         ids: list[str] = []
         chart = payload.chart
@@ -3970,6 +4009,10 @@ def _slide_semantic_values(slide: Any) -> list[Any]:
     strip = getattr(payload, "metric_strip", None) if payload is not None else None
     if strip is not None:
         values.extend(m.value for m in strip.metrics)
+    if lt == "chart_grouped_annex" and payload is not None:
+        chips = getattr(payload, "share_chips", None)
+        if chips is not None:
+            values.extend(c.value for c in chips.chips)
     support = getattr(payload, "support", None) if payload is not None else None
     if isinstance(support, MetricStripSupport):
         values.extend(m.value for m in support.metrics)
@@ -4007,7 +4050,8 @@ def _slide_tables(slide: Any) -> list[TableData]:
     if lt == "grouped_annex_table":
         return [peer.table for peer in payload.tables]
     if lt == "chart_grouped_annex":
-        return [peer.table for peer in payload.tables]
+        tables = [peer.table for peer in payload.tables]
+        return tables
     if lt == "single_chart":
         tables: list[TableData] = []
         table = getattr(payload.chart, "table_data", None)
@@ -4167,6 +4211,27 @@ class Deck(ClosedModel):
         unused_fmt = [k for k in self.number_formats if k not in referenced_formats]
         if unused_fmt:
             raise ValueError(f"unused number_formats: {unused_fmt}")
+
+        for slide in self.slides:
+            if getattr(slide, "layout_type", None) != "chart_grouped_annex":
+                continue
+            chips = getattr(slide.payload, "share_chips", None)
+            if chips is None:
+                continue
+            for chip in chips.chips:
+                fmt = self.number_formats[chip.value.format_id]
+                if fmt.unit != "percent":
+                    raise ValueError("share chip format_id must use percent unit")
+                scale = (
+                    Decimal(fmt.value_scale)
+                    if fmt.value_scale is not None
+                    else Decimal(1)
+                )
+                display = Decimal(chip.value.value) * scale
+                if display < 0 or display > 100:
+                    raise ValueError(
+                        "share chip must resolve to 0–100 after scale"
+                    )
 
         # Cover placement (D223/D268)
         openings = [

@@ -663,7 +663,7 @@
     },
     "ChartGroupedAnnexPayload": {
       "additionalProperties": false,
-      "description": "One axis chart plus 1–2 headed annex peers (#286).",
+      "description": "One axis chart plus 1–2 headed annex peers and optional share chips (#286/#294).",
       "properties": {
         "chart": {
           "discriminator": {
@@ -719,6 +719,17 @@
           "minItems": 1,
           "title": "Tables",
           "type": "array"
+        },
+        "share_chips": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ShareChips"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -7687,6 +7698,58 @@
         "label"
       ],
       "title": "SectionEntry",
+      "type": "object"
+    },
+    "ShareChip": {
+      "additionalProperties": false,
+      "description": "One outlined percent-share fact (#294). Not HTML and not an in-bar label.",
+      "properties": {
+        "share_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Share Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/NumberValue"
+        }
+      },
+      "required": [
+        "share_id",
+        "label",
+        "value"
+      ],
+      "title": "ShareChip",
+      "type": "object"
+    },
+    "ShareChips": {
+      "additionalProperties": false,
+      "description": "Optional outlined share-chip row on chart_grouped_annex (#294).",
+      "properties": {
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "chips": {
+          "items": {
+            "$ref": "#/$defs/ShareChip"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Chips",
+          "type": "array"
+        }
+      },
+      "required": [
+        "surface_id",
+        "chips"
+      ],
+      "title": "ShareChips",
       "type": "object"
     },
     "SingleChartPayload": {

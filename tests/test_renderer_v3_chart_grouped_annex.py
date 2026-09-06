@@ -1,16 +1,19 @@
-"""Renderer v3 chart_grouped_annex: axis chart + 1–2 headed annex peers (#286).
+"""Renderer v3 chart_grouped_annex: axis chart + share chips + 1–2 headed annex peers (#286/#294).
 
 Seams under test:
-- closed layout payload {chart, tables} (no support / panes leftovers)
-- axis ChartVisual only (heatmap invalid); chart + peer headings required
+- closed layout payload {chart, tables, share_chips?} (no support / panes leftovers)
+- axis ChartVisual only (heatmap/pie/donut invalid); chart + peer headings required
 - unique surface_ids; D255 table repair locates peer tables
-- plan: chart in the body band, peers below, D10/D47 320×240 plot floor
-- paint: one chart surface then .grouped-annex with 1–2 peers
-- mutation: drop a peer still paints; starve plot floor → strict overflow
+- share chips: typed percent 0–100 after scale, unique share_id, not HTML
+- plan: chart in the body band, optional chips, peers below, D10/D47 320×240 plot floor
+- paint: one chart surface, optional .share-chips, then .grouped-annex
+- mutation: drop chips or a peer still paints the rest; starve plot floor → strict overflow
+- fit/paint: frozen chip role_sizes match painted pad/font
 """
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -24,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LINE = ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json"
 BAR = ROOT / "tests/fixtures/renderer_v3/minimal_grouped_bar.json"
 HEAT = ROOT / "tests/fixtures/renderer_v3/minimal_heatmap.json"
+DONUT = ROOT / "tests/fixtures/renderer_v3/minimal_donut.json"
 ANNEX = ROOT / "tests/fixtures/renderer_v3/annex_and_comparison_tables.json"
 
 
@@ -46,7 +50,40 @@ def _chart_from(path: Path) -> dict:
     return chart
 
 
-def _handoff(*, chart: dict | None = None, tables: list[dict] | None = None) -> dict:
+def _shares() -> dict:
+    return {
+        "surface_id": "cga-shares",
+        "chips": [
+            {
+                "share_id": "us-cons",
+                "label": "US Consumer",
+                "value": {"type": "number", "value": "35.0", "format_id": "pct_1"},
+            },
+            {
+                "share_id": "us-sme",
+                "label": "US SME",
+                "value": {"type": "number", "value": "27.0", "format_id": "pct_1"},
+            },
+            {
+                "share_id": "intl-sme",
+                "label": "Intl SME",
+                "value": {"type": "number", "value": "5.0", "format_id": "pct_1"},
+            },
+            {
+                "share_id": "large-global",
+                "label": "Large & Global",
+                "value": {"type": "number", "value": "6.0", "format_id": "pct_1"},
+            },
+        ],
+    }
+
+
+def _handoff(
+    *,
+    chart: dict | None = None,
+    tables: list[dict] | None = None,
+    share_chips: dict | None = None,
+) -> dict:
     raw = json.loads(LINE.read_text(encoding="utf-8"))
     raw["number_formats"]["usd_1"] = {
         "unit": "usd",
@@ -55,10 +92,13 @@ def _handoff(*, chart: dict | None = None, tables: list[dict] | None = None) -> 
     }
     raw["slides"][1]["layout_type"] = "chart_grouped_annex"
     raw["slides"][1]["title"] = "Chart with annex peers"
-    raw["slides"][1]["payload"] = {
+    payload: dict = {
         "chart": chart if chart is not None else _chart_from(LINE),
         "tables": tables if tables is not None else _peers(2),
     }
+    if share_chips is not None:
+        payload["share_chips"] = share_chips
+    raw["slides"][1]["payload"] = payload
     raw["slides"][1].pop("takeaway", None)
     return raw
 
@@ -123,6 +163,30 @@ def test_strict_rejects_heatmap_chart():
                for e in ei.value.events) or True
     with pytest.raises(RendererValidationError):
         validate_handoff(_handoff(chart=_chart_from(HEAT)), strict=True)
+
+
+def test_strict_rejects_pie_and_donut_chart():
+    donut = _chart_from(DONUT)
+    pie = deepcopy(donut)
+    pie["chart_type"] = "pie"
+    pie["surface_id"] = "cga-chart"
+    donut["surface_id"] = "cga-chart"
+    raw_pie = _handoff(chart=pie)
+    raw_donut = _handoff(chart=donut)
+    raw_pie["number_formats"]["pct_0"] = {
+        "unit": "percent",
+        "value_decimals": 0,
+        "negative_style": "minus",
+    }
+    raw_donut["number_formats"]["pct_0"] = {
+        "unit": "percent",
+        "value_decimals": 0,
+        "negative_style": "minus",
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw_pie, strict=True)
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw_donut, strict=True)
 
 
 def test_strict_rejects_missing_chart_heading():
@@ -253,6 +317,55 @@ def test_nonstrict_repairs_locate_peer_tables():
     assert not hasattr(result.deck.slides[1].payload, "unexpected")
 
 
+def test_playwright_geometry_chips_between_chart_and_peers(tmp_path: Path):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    chart = _chart_from(BAR)
+    chart.pop("auxiliary_series", None)  # chips, not in-bar boxed labels
+    chart.pop("category_groups", None)  # braces are the two headed tables
+    raw = _handoff(chart=chart, tables=_peers(2), share_chips=_shares())
+    raw["number_formats"].pop("usd_0", None)
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        geom = page.evaluate(
+            """() => {
+              const slide = document.querySelector(
+                '[data-layout="chart_grouped_annex"]'
+              );
+              const plot = slide.querySelector('.chart-plot');
+              const chips = slide.querySelector('.share-chips');
+              const annex = slide.querySelector('.grouped-annex');
+              const r = (el) => {
+                const b = el.getBoundingClientRect();
+                return { top: b.top, bottom: b.bottom, width: b.width, height: b.height };
+              };
+              return {
+                plot: r(plot),
+                chips: r(chips),
+                annex: r(annex),
+                chipCount: slide.querySelectorAll('[data-share-id]').length,
+                scrollWidth: document.documentElement.scrollWidth,
+                clientWidth: document.documentElement.clientWidth,
+              };
+            }"""
+        )
+        browser.close()
+    assert geom["plot"]["width"] >= 320
+    assert geom["plot"]["height"] >= 240
+    assert geom["chipCount"] == 4
+    assert geom["chips"]["top"] >= geom["plot"]["bottom"] - 1
+    assert geom["annex"]["top"] >= geom["chips"]["bottom"] - 1
+    assert geom["scrollWidth"] <= geom["clientWidth"] + 1
+
+
 def test_playwright_geometry_peers_under_chart(tmp_path: Path):
     pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright
@@ -308,3 +421,143 @@ def test_playwright_geometry_peers_under_chart(tmp_path: Path):
         if not cell["text"]:
             continue
         assert cell["scrollWidth"] <= cell["clientWidth"]
+
+
+def test_strict_accepts_chart_share_chips_two_tables():
+    result = validate_handoff(_handoff(share_chips=_shares()), strict=True)
+    assert result.ok
+    payload = result.deck.slides[1].payload
+    assert payload.chart.chart_type == "line"
+    assert len(payload.share_chips.chips) == 4
+    assert len(payload.tables) == 2
+    plan = plan_deck(result.deck, strict=True)
+    chart = next(s for s in plan.surfaces if s.surface_id == "cga-chart")
+    chips = next(s for s in plan.surfaces if s.surface_id == "cga-shares")
+    g = chart.chart_paint["geometry"]
+    assert g["plot_w"] >= 320 and g["plot_h"] >= 240
+    assert chips.role == "share_chips"
+    assert chips.role_sizes["label"] >= 14
+    assert chips.role_sizes["value"] >= 14
+
+
+def test_strict_rejects_share_chip_non_percent_and_out_of_range():
+    shares = _shares()
+    shares["chips"][0]["value"] = {
+        "type": "number",
+        "value": "35.0",
+        "format_id": "usd_1",
+    }
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_handoff(share_chips=shares), strict=True)
+    shares = _shares()
+    shares["chips"][0]["value"]["value"] = "135.0"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_handoff(share_chips=shares), strict=True)
+    shares = _shares()
+    shares["chips"][1]["share_id"] = shares["chips"][0]["share_id"]
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_handoff(share_chips=shares), strict=True)
+
+
+def test_strict_rejects_share_chip_html_and_surface_collision():
+    shares = _shares()
+    shares["chips"][0]["label"] = "US <b>Consumer</b>"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_handoff(share_chips=shares), strict=True)
+    shares = _shares()
+    shares["surface_id"] = "cga-chart"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_handoff(share_chips=shares), strict=True)
+
+
+def test_mutation_drop_share_chips_still_paints(tmp_path: Path):
+    raw = _handoff(share_chips=_shares())
+    raw["slides"][1]["payload"].pop("share_chips")
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    start = html.index('data-layout="chart_grouped_annex"')
+    chunk = html[start : html.find("</section>", start)]
+    assert chunk.count('class="chart-body"') == 1
+    assert chunk.count("grouped-annex-peer") == 2
+    assert "share-chips" not in chunk
+    assert "10.0" in chunk or "$10.0" in chunk
+
+
+def test_mutation_drop_one_table_keeps_chart_and_chips(tmp_path: Path):
+    raw = _handoff(share_chips=_shares())
+    raw["slides"][1]["payload"]["tables"] = raw["slides"][1]["payload"]["tables"][:1]
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    start = html.index('data-layout="chart_grouped_annex"')
+    chunk = html[start : html.find("</section>", start)]
+    assert chunk.count('class="chart-body"') == 1
+    assert chunk.count("data-share-id=") == 4
+    assert chunk.count("grouped-annex-peer") == 1
+    assert "US Consumer" in chunk
+    assert "35" in chunk
+
+
+def test_html_chart_then_chips_then_annex(tmp_path: Path):
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(_handoff(share_chips=_shares())), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    start = html.index('data-layout="chart_grouped_annex"')
+    chunk = html[start : html.find("</section>", start)]
+    chart_at = chunk.index('data-chart-surface="cga-chart"')
+    chips_at = chunk.index('class="share-chips')
+    annex_at = chunk.index('class="grouped-annex')
+    assert chart_at < chips_at < annex_at
+    assert chunk.count("data-share-id=") == 4
+    assert chunk.count("grouped-annex-peer") == 2
+    assert "dual-chart-pane" not in chunk
+    assert chunk.count('class="chart-body"') == 1
+    assert "outlined-support-box" not in chunk
+
+
+def test_share_chip_fit_paint_css_parity(tmp_path: Path):
+    raw = _handoff(share_chips=_shares())
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    chips = next(s for s in plan.surfaces if s.surface_id == "cga-shares")
+    label_px = chips.role_sizes["label"]
+    value_px = chips.role_sizes["value"]
+    start = html.index('data-layout="chart_grouped_annex"')
+    chunk = html[start : html.find("</section>", start)]
+    chip_html = chunk[chunk.index("share-chips") : chunk.index("grouped-annex")]
+    assert f"font-size:{label_px}px" in chip_html
+    assert f"font-size:{value_px}px" in chip_html
+    css = html[: html.index("</style>")]
+    pad = re.search(rb"\.share-chip\{[^}]*padding:(\d+)px (\d+)px", css.encode("utf-8"))
+    assert pad is not None
+    pad_y = int(pad.group(1))
+    pad_x = int(pad.group(2))
+    from impact_slides.renderer_v3.plan import SHARE_CHIP_PAD_X, SHARE_CHIP_PAD_Y
+
+    assert pad_y == SHARE_CHIP_PAD_Y
+    assert pad_x == SHARE_CHIP_PAD_X
+    gap = re.search(rb"\.share-chips\{[^}]*gap:(\d+)px", css.encode("utf-8"))
+    assert gap is not None
+    from impact_slides.renderer_v3.plan import SHARE_CHIP_GAP
+
+    assert int(gap.group(1)) == SHARE_CHIP_GAP
+
+
+def test_nonstrict_allowlists_share_chips_key():
+    raw = _handoff(share_chips=_shares())
+    raw["slides"][1]["payload"]["unexpected"] = True
+    result = validate_handoff(raw, strict=False)
+    assert result.repaired is True
+    assert result.deck.slides[1].payload.share_chips is not None
+    assert not hasattr(result.deck.slides[1].payload, "unexpected")

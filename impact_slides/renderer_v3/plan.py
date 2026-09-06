@@ -117,6 +117,13 @@ HERO_VALUE_PX: Final = 72
 METRIC_STRIP_GAP: Final = 16
 METRIC_STRIP_PAD_Y: Final = 16
 METRIC_STRIP_PAD_X: Final = 16
+SHARE_CHIP_FLOOR: Final = 14
+SHARE_CHIP_CEIL: Final = 14  # outlined facts; growing starves the D47 plot
+SHARE_CHIP_GAP: Final = 12
+SHARE_CHIP_PAD_Y: Final = 8
+SHARE_CHIP_PAD_X: Final = 12
+SHARE_CHIP_BORDER: Final = 1  # hairline top+bottom / left+right
+SHARE_CHIP_LABEL_MB: Final = 4  # .share-chip-label margin-bottom
 GROUPED_ANNEX_GAP: Final = 24  # divider gutter between peers
 GROUPED_ANNEX_HEADING_PX: Final = 18
 COMPARISON_CARD_GAP: Final = 16
@@ -1023,6 +1030,17 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                     else 0
                 )
                 h = max(h, lab * _line_box(size) + _line_box(value_px) + det * _line_box(size))
+            return h
+        if sp._table_spec is not None and sp._table_spec.get("kind") == "share_chips":
+            chips = sp._table_spec["chips"]
+            h = 0
+            for chip in chips:
+                lab = max(1, len(_wrap_label_lines(chip["label"], size, sp._box_w)))
+                val = max(1, len(_wrap_label_lines(chip["visible"], size, sp._box_w)))
+                h = max(
+                    h,
+                    lab * _line_box(size) + SHARE_CHIP_LABEL_MB + val * _line_box(size),
+                )
             return h
         kind = (sp._table_spec or {}).get("kind")
         if kind == "hero_card":
@@ -2854,6 +2872,57 @@ def _collect_grouped_annex_body(
     return len(plans), plans
 
 
+def _share_chips_plan(
+    chips: Any,
+    deck: Deck,
+    *,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    slot_order: int,
+    box_w: int = CONTENT_W,
+) -> SurfacePlan:
+    from .format import format_semantic_value
+
+    items = []
+    texts: list[tuple[str, bool]] = []
+    for chip in chips.chips:
+        fv = format_semantic_value(chip.value, deck.number_formats)
+        items.append(
+            {
+                "share_id": chip.share_id,
+                "label": chip.label,
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+            }
+        )
+        texts.append((chip.label, False))
+        texts.append((fv.visible, True))
+    n = max(1, len(items))
+    cell_w = (box_w - SHARE_CHIP_GAP * (n - 1)) // n
+    inner_w = cell_w - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER
+    return SurfacePlan(
+        surface_id=chips.surface_id,
+        role="share_chips",
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=slot_order,
+        design_stage_region=region,
+        role_sizes={"label": SHARE_CHIP_FLOOR, "value": SHARE_CHIP_FLOOR},
+        _text_items=texts,
+        _box_w=max(1, inner_w),
+        _fit_role="label",
+        _mode="adaptive",
+        _margin_boxes=0,
+        _chrome_h=2 * SHARE_CHIP_PAD_Y + 2 * SHARE_CHIP_BORDER + BLOCK_MARGIN_Y,
+        _default_size=SHARE_CHIP_FLOOR,
+        _maximum_size=SHARE_CHIP_CEIL,
+        _table_spec={"kind": "share_chips", "chips": items, "n": n},
+    )
+
+
 def _collect_chart_grouped_annex_body(
     slide: Any,
     deck: Deck,
@@ -2862,7 +2931,7 @@ def _collect_chart_grouped_annex_body(
     lt: str,
     region: int,
 ) -> tuple[int, list[SurfacePlan]]:
-    """Chart in the body band, annex peers below; one freeze (#286)."""
+    """Chart in the body band, optional share chips, annex peers below (#286/#294)."""
     chart_plan = _axis_chart_surface_plan(
         slide.payload.chart,
         deck=deck,
@@ -2873,12 +2942,28 @@ def _collect_chart_grouped_annex_body(
         slot_order=10,
         box_w=CONTENT_W,
     )
+    plans = [chart_plan]
+    slot = 11
+    chips = getattr(slide.payload, "share_chips", None)
+    if chips is not None:
+        plans.append(
+            _share_chips_plan(
+                chips,
+                deck,
+                sn=sn,
+                slide_index=slide_index,
+                lt=lt,
+                region=region,
+                slot_order=slot,
+            )
+        )
+        slot += 1
     _, peer_plans = _collect_grouped_annex_body(
         slide, deck, sn, slide_index, lt, region
     )
     for i, sp in enumerate(peer_plans):
-        sp.slot_order = 11 + i
-    plans = [chart_plan, *peer_plans]
+        sp.slot_order = slot + i
+    plans.extend(peer_plans)
     return len(plans), plans
 
 
@@ -4627,6 +4712,8 @@ def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
         return ok, "plan.text_wrapped" in codes
     if spec is not None and spec.get("kind") == "metric_strip":
         return _metric_strip_fit_detail(sp, size)
+    if spec is not None and spec.get("kind") == "share_chips":
+        return _share_chips_fit_detail(sp, size)
     if spec is not None and spec.get("kind") == "outlined_support":
         return _outlined_support_fit_detail(sp, size)
     if spec is not None and spec.get("kind") == "hero_card":
@@ -4814,6 +4901,35 @@ def _metric_strip_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
             _text_width(m["visible"], value_px, strong=True) > cell_w for m in metrics
         )
     return fits, wrapped
+
+
+def _share_chips_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
+    """Outlined percent chips: one label + value per chip, CSS pad/gap owned."""
+    assert sp._table_spec is not None
+    chips = sp._table_spec["chips"]
+    cell_w = sp._box_w
+    wrapped = False
+    total_h = 2 * SHARE_CHIP_PAD_Y
+    for chip in chips:
+        lab_lines = _wrap_label_lines(chip["label"], size, cell_w)
+        val_lines = _wrap_label_lines(chip["visible"], size, cell_w)
+        if len(lab_lines) > 2 or len(val_lines) > 1:
+            return False, True
+        if len(lab_lines) > 1:
+            wrapped = True
+        total_h = max(
+            total_h,
+            2 * SHARE_CHIP_PAD_Y
+            + len(lab_lines) * _line_box(size)
+            + SHARE_CHIP_LABEL_MB
+            + len(val_lines) * _line_box(size),
+        )
+        if _text_width(chip["visible"], size, strong=True) > cell_w:
+            return False, wrapped
+    if sp._box_h <= 0:
+        return True, wrapped
+    text_h = total_h - 2 * SHARE_CHIP_PAD_Y
+    return text_h <= sp._box_h, wrapped
 
 
 def _linear_lines(
@@ -5298,6 +5414,9 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
         sp.role_sizes["label"] = size
         sp.role_sizes["detail"] = size
         sp.role_sizes.setdefault("value", METRIC_STRIP_VALUE_PX)
+    elif sp.role == "share_chips":
+        sp.role_sizes["label"] = size
+        sp.role_sizes["value"] = size
     elif sp.role == "metric_overview":
         sp.role_sizes["body"] = size
         sp.role_sizes.setdefault("heading", HERO_HEADING_PX)
