@@ -168,6 +168,10 @@ def build_presentation_html(
             ".grouped-annex-divider{position:absolute;inset:0 auto 0 50%;width:1px;background:var(--color-rule)}",
             # Metric strip (D165/D265).
             ".metric-strip{display:flex;flex-direction:row;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".share-chips{display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;width:100%;margin:0 0 var(--space-sm)}",
+            ".share-chip{flex:1 1 0;min-width:0;padding:8px 12px;border:var(--border-width-hairline) solid var(--color-navy);box-sizing:border-box;background:transparent}",
+            ".share-chip .share-chip-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis)}",
+            ".share-chip .share-chip-value{margin:0;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis)}",
 ".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
 ".dual-chart-pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column}",
 ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
@@ -1543,6 +1547,46 @@ def _paint_grouped_annex(
     return out
 
 
+def _paint_share_chips(
+    chips: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    sp = plans_by_id.get(chips.surface_id)
+    if sp is None or not getattr(sp, "table_paint", None):
+        raise RuntimeError(
+            f"missing frozen share_chips plan for {chips.surface_id!r}"
+        )
+    paint = sp.table_paint
+    items = paint.get("chips") or []
+    label_px = sp.role_sizes.get("label")
+    value_px = sp.role_sizes.get("value")
+    out = [
+        f'<div class="share-chips" {_plan_attrs(sp, events_by_surface)} '
+        f'data-share-chips="{_escape(chips.surface_id)}">'
+    ]
+    for item in items:
+        aria = (
+            f' aria-label="{_escape(item["accessible"])}"'
+            if item["accessible"] != item["visible"]
+            else ""
+        )
+        out.append(
+            f'<div class="share-chip" data-share-id="{_escape(item["share_id"])}">'
+        )
+        out.append(
+            f'<p class="share-chip-label"{_style_font(label_px)}>'
+            f"{_soft_break_html(item['label'])}</p>"
+        )
+        out.append(
+            f'<p class="share-chip-value"{_style_font(value_px)}{aria}>'
+            f"{_escape(item['visible'])}</p>"
+        )
+        out.append("</div>")
+    out.append("</div>")
+    return out
+
+
 def _paint_chart_grouped_annex(
     slide: Any,
     plans_by_id: dict[str, Any],
@@ -1550,10 +1594,13 @@ def _paint_chart_grouped_annex(
     *,
     svg_only: bool = False,
 ) -> list[str]:
-    """Chart first, then the existing grouped-annex peer row (#286)."""
+    """Chart, optional share chips, then grouped-annex peer row (#286/#294)."""
     out = _paint_one_chart_surface(
         slide.payload.chart, plans_by_id, events_by_surface, svg_only=svg_only
     )
+    chips = getattr(slide.payload, "share_chips", None)
+    if chips is not None:
+        out.extend(_paint_share_chips(chips, plans_by_id, events_by_surface))
     out.extend(_paint_grouped_annex(slide, plans_by_id, events_by_surface))
     return out
 
@@ -3287,6 +3334,9 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                 )
             elif slide.layout_type == "chart_grouped_annex":
                 surface_ids.append(slide.payload.chart.surface_id)
+                chips = getattr(slide.payload, "share_chips", None)
+                if chips is not None:
+                    surface_ids.append(chips.surface_id)
                 surface_ids.extend(
                     peer.table.surface_id for peer in slide.payload.tables
                 )
