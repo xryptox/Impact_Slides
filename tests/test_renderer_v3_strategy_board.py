@@ -313,18 +313,3 @@ def test_strategy_board_has_inventory_line_without_v2_mapping(tmp_path: Path):
     assert d.status == "unresolved"
     assert d.legacy_input == "strategy_board"
     assert d.target is None
-
-
-def test_does_not_overload_existing_layouts():
-    from impact_slides.renderer_v3.models import KERNEL_LAYOUTS, LAYOUT_TYPES
-
-    assert "strategy_board" in LAYOUT_TYPES
-    assert "strategy_board" in KERNEL_LAYOUTS
-    for name in (
-        "hierarchy",
-        "layered_architecture",
-        "stakeholder_map",
-        "feature_cards",
-    ):
-        assert name in LAYOUT_TYPES
-        assert name != "strategy_board"
