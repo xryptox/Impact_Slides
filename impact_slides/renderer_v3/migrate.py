@@ -81,6 +81,7 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     _det("horizontal_process", "process_flow", "Genuinely linear ordered steps."),
     _det("grouped_annex_table", "grouped_annex_table", "One or two explicitly headed complete annex matrices."),
     # chart_grouped_annex is kernel-native (#286); no v2 mapping — D313 stays 57.
+    # strategy_board is kernel-native (#295); no v2 mapping — D313 stays 57.
     _det("grouped_bar_chart", "single_chart", "Explicit vertical non-stacked data, format, and identity.", chart_family="grouped_bar"),
     _det("heatmap", "single_chart", "Rectangular identities, numeric/missing cells, one format, explicit scale.", chart_family="heatmap"),
     _det("hierarchy_tree", "hierarchy", "Explicit root, uniform relation, links, and sibling order."),

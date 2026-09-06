@@ -66,6 +66,7 @@ LAYOUT_TYPES = (
     "risk_opportunity_review",
     "recommendation_case",
     "state_transition",
+    "strategy_board",
 )
 LayoutTypeName = Literal[
     "opening_cover",
@@ -98,6 +99,7 @@ LayoutTypeName = Literal[
     "risk_opportunity_review",
     "recommendation_case",
     "state_transition",
+    "strategy_board",
 ]
 
 KERNEL_LAYOUTS = frozenset(
@@ -132,6 +134,7 @@ KERNEL_LAYOUTS = frozenset(
     "risk_opportunity_review",
     "recommendation_case",
     "state_transition",
+    "strategy_board",
 }
 )
 
@@ -153,6 +156,7 @@ KERNEL_CARD_LAYOUTS = frozenset(
         "risk_opportunity_review",
         "recommendation_case",
         "state_transition",
+        "strategy_board",
     }
 )
 
@@ -1137,6 +1141,85 @@ class StateTransitionPayload(ClosedModel):
                 raise ValueError(
                     "step_id values must be unique within transition_steps"
                 )
+        return self
+
+
+class StrategyBand(ClosedModel):
+    """Mission or context band on a strategy_board (#295)."""
+
+    band_id: SemanticId
+    heading: NonEmptyStr
+    detail: Optional[NonEmptyStr] = None
+
+
+class StrategyItem(ClosedModel):
+    """One authored detail item on a pillar or footer stack (#295)."""
+
+    item_id: SemanticId
+    text: NonEmptyStr
+
+
+class StrategyPillar(ClosedModel):
+    """Equal-rank pillar with heading and 1–6 detail items (#295)."""
+
+    pillar_id: SemanticId
+    heading: NonEmptyStr
+    items: list[StrategyItem] = Field(min_length=1, max_length=6)
+
+    @model_validator(mode="after")
+    def _unique_item_ids(self) -> StrategyPillar:
+        ids = [it.item_id for it in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("item_id values must be unique within a pillar")
+        return self
+
+
+class StrategyFooter(ClosedModel):
+    """Optional footer/committee stack (1–6 items) (#295)."""
+
+    stack_id: SemanticId
+    items: list[StrategyItem] = Field(min_length=1, max_length=6)
+
+    @model_validator(mode="after")
+    def _unique_item_ids(self) -> StrategyFooter:
+        ids = [it.item_id for it in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("item_id values must be unique within footer")
+        return self
+
+
+class StrategyBoardPayload(ClosedModel):
+    """Authored strategy / org board: mission, optional bands, pillars, footer (#295)."""
+
+    mission: StrategyBand
+    bands: Optional[list[StrategyBand]] = Field(default=None, min_length=1, max_length=2)
+    pillars: list[StrategyPillar] = Field(min_length=2, max_length=4)
+    footer: Optional[StrategyFooter] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _forbid_leftover_hierarchy_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for key in ("nodes", "relationship", "root_id", "children"):
+                if key in data:
+                    raise ValueError(
+                        f"{key} is invalid on strategy_board; author mission/bands/pillars/footer"
+                    )
+        return data
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> StrategyBoardPayload:
+        ids: list[str] = [self.mission.band_id]
+        if self.bands:
+            ids.extend(b.band_id for b in self.bands)
+        ids.extend(p.pillar_id for p in self.pillars)
+        for p in self.pillars:
+            ids.extend(it.item_id for it in p.items)
+        if self.footer is not None:
+            ids.append(self.footer.stack_id)
+            ids.extend(it.item_id for it in self.footer.items)
+        if len(ids) != len(set(ids)):
+            raise ValueError("semantic ids must be unique within strategy_board")
         return self
 
 
@@ -3819,6 +3902,25 @@ class StateTransitionSlide(_SlideBase):
         return _ordinary_footer_subset(self)
 
 
+class StrategyBoardSlide(_SlideBase):
+    """Freeform strategy / org board: bands + equal-rank pillars (#295)."""
+
+    layout_type: Literal["strategy_board"] = "strategy_board"
+    section_id: SemanticId
+    title: NonEmptyStr
+    payload: StrategyBoardPayload
+    content: Optional[SubtitleContent] = None
+    takeaway: Optional[Takeaway] = None
+    disclosure: Optional[Disclosure] = None
+    source_footer: Optional[list[SemanticId]] = Field(
+        default=None, min_length=1, max_length=4
+    )
+
+    @model_validator(mode="after")
+    def _footer_subset(self) -> StrategyBoardSlide:
+        return _ordinary_footer_subset(self)
+
+
 class DualChartSlide(_SlideBase):
     layout_type: Literal["dual_chart"] = "dual_chart"
     section_id: SemanticId
@@ -3911,6 +4013,7 @@ Slide = Annotated[
         RiskOpportunityReviewSlide,
         RecommendationCaseSlide,
         StateTransitionSlide,
+        StrategyBoardSlide,
     ],
     Field(discriminator="layout_type"),
 ]

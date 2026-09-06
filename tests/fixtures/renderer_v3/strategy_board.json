@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "esg",
+      "label": "ESG"
+    }
+  ],
+  "number_formats": {},
+  "evidence_registry": {
+    "src-esg": {
+      "source_name": "ESG strategy brief"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "strategy_board",
+      "section_id": "esg",
+      "title": "ESG strategy",
+      "payload": {
+        "mission": {
+          "band_id": "mission",
+          "heading": "Build a more sustainable, equitable company."
+        },
+        "pillars": [
+          {
+            "pillar_id": "dei",
+            "heading": "Diversity, Equity and Inclusion",
+            "items": [
+              {
+                "item_id": "dei-1",
+                "text": "Expand diverse representation."
+              }
+            ]
+          },
+          {
+            "pillar_id": "climate",
+            "heading": "Climate",
+            "items": [
+              {
+                "item_id": "cli-1",
+                "text": "Cut operational emissions."
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": ["src-esg"],
+      "speaker_notes": "Minimal board: mission plus two pillars."
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "strategy_board",
+      "section_id": "esg",
+      "title": "Environmental, Social and Governance Strategy",
+      "content": {
+        "subtitle": "Authored bands and equal-rank pillars"
+      },
+      "payload": {
+        "mission": {
+          "band_id": "esg-mission",
+          "heading": "Be the world's most respected service brand.",
+          "detail": "Serve customers, colleagues, and communities."
+        },
+        "bands": [
+          {
+            "band_id": "stakeholders",
+            "heading": "Stakeholders",
+            "detail": "Colleagues, customers, communities, and shareholders."
+          },
+          {
+            "band_id": "governance",
+            "heading": "Sound governance",
+            "detail": "Board oversight with independent committee review."
+          }
+        ],
+        "pillars": [
+          {
+            "pillar_id": "dei-full",
+            "heading": "DE&I",
+            "items": [
+              {"item_id": "dei-a", "text": "Hire and promote diverse talent."},
+              {"item_id": "dei-b", "text": "Close representation gaps."}
+            ]
+          },
+          {
+            "pillar_id": "confidence",
+            "heading": "Financial Confidence",
+            "items": [
+              {"item_id": "fc-a", "text": "Expand small-business tools."},
+              {"item_id": "fc-b", "text": "Teach financial literacy."}
+            ]
+          },
+          {
+            "pillar_id": "climate-full",
+            "heading": "Climate",
+            "items": [
+              {"item_id": "cli-a", "text": "Net-zero operations path."},
+              {"item_id": "cli-b", "text": "Finance the transition."}
+            ]
+          }
+        ],
+        "footer": {
+          "stack_id": "committees",
+          "items": [
+            {"item_id": "c-nom", "text": "Nominating and Governance"},
+            {"item_id": "c-comp", "text": "Compensation and Benefits"},
+            {"item_id": "c-audit", "text": "Audit and Risk"}
+          ]
+        }
+      },
+      "takeaway": {
+        "text": "Packing is renderer-owned; grouping stays authored."
+      },
+      "evidence_ids": ["src-esg"],
+      "source_footer": ["src-esg"],
+      "speaker_notes": "Full board: mission, two bands, three pillars, committee stack."
+    }
+  ]
+}
