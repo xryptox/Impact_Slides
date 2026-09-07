@@ -1122,7 +1122,7 @@ def build():
     # 8 T&E by customer type — PDF visual: 5-series vs-2019 line (US Consumer / Total SME /
     # Total T&E / Intl Consumer / L&G) plus Q4 YoY/% of Total table. Line max is 4 series;
     # Q4'21 % of Q4'19 callouts (108/83/82/78/36) are not vs-2019 glyphs and interiors are
-    # unlabeled, so the line cannot be authored. Table matches the page (not extraction order).
+    # unlabeled, so the line cannot be authored (#297 leftover). Table matches the page.
     slides.append(
         ordinary(
             8,
