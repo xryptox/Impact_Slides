@@ -160,6 +160,13 @@ def build_presentation_html(
             ".table-scale{font-size:var(--text-xs);margin:0 0 var(--space-sm);color:var(--color-navy)}",
             ".table-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
             ".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+            # Optional data_table side callout (#303). Pads/gap match plan.SIDE_CALLOUT_* / GROUPED_ANNEX_GAP.
+            ".data-table-with-callout{display:flex;flex-direction:row;gap:24px;width:100%;align-items:flex-start}",
+            ".data-table-pane{flex:1 1 0;min-width:0}",
+            ".side-callout{flex:0 0 320px;width:320px;box-sizing:border-box;padding:16px;background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);margin:0 0 var(--space-sm)}",
+            ".side-callout .side-callout-heading{margin:0 0 8px;font-weight:var(--font-weight-emphasis)}",
+            ".side-callout ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}",
+            ".side-callout li{margin:0;padding:0}",
             # Grouped annex peers (D185/D259).
             ".grouped-annex{display:flex;position:relative;flex-direction:row;gap:24px;width:100%;margin:0 0 var(--space-sm)}",
             ".grouped-annex.sequential{flex-direction:column;gap:var(--space-md)}",
@@ -899,11 +906,8 @@ def _paint_slide_body(
         else:
             # data_table + annex_table share the canonical table painter.
             out.extend(
-                _paint_table_surface(
-                    slide.payload.table,
-                    plans_by_id,
-                    events_by_surface,
-                    table_class="data-table",
+                _paint_data_table_or_annex(
+                    slide, plans_by_id, events_by_surface
                 )
             )
         takeaway = getattr(slide, "takeaway", None)
@@ -1258,6 +1262,62 @@ def _paint_outlined_support(
             f"{_escape(val['visible'])}</div>"
         )
     out.append("</div>")
+    return out
+
+
+def _paint_data_table_or_annex(
+    slide: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    table_html = _paint_table_surface(
+        slide.payload.table,
+        plans_by_id,
+        events_by_surface,
+        table_class="data-table",
+    )
+    callout = getattr(slide.payload, "side_callout", None)
+    if callout is None or slide.layout_type != "data_table":
+        return table_html
+    out = ['<div class="data-table-with-callout">']
+    out.append('<div class="data-table-pane">')
+    out.extend(table_html)
+    out.append("</div>")
+    out.extend(_paint_side_callout(callout, plans_by_id, events_by_surface))
+    out.append("</div>")
+    return out
+
+
+def _paint_side_callout(
+    callout: Any,
+    plans_by_id: dict[str, Any],
+    events_by_surface: dict[str, list[DiagnosticEvent]],
+) -> list[str]:
+    sp = plans_by_id.get(callout.surface_id)
+    if sp is None or not getattr(sp, "table_paint", None):
+        raise RuntimeError(
+            f"missing frozen side_callout plan for {callout.surface_id!r}"
+        )
+    paint = sp.table_paint
+    heading_px = sp.role_sizes.get("heading")
+    body_px = sp.role_sizes.get("body")
+    overflow_cls = " table-overflow" if sp._overflow else ""
+    out = [
+        f'<aside class="side-callout{overflow_cls}" '
+        f'{_plan_attrs(sp, events_by_surface)} '
+        f'data-side-callout="{_escape(callout.surface_id)}" role="note">'
+    ]
+    out.append(
+        f'<p class="side-callout-heading"{_style_font(heading_px)}>' 
+        f"{_soft_break_html(paint['heading'])}</p>"
+    )
+    out.append("<ul>")
+    for item in paint.get("items") or []:
+        out.append(
+            f'<li class="side-callout-item"{_style_font(body_px)}>' 
+            f"{_soft_break_html(item)}</li>"
+        )
+    out.append("</ul></aside>")
     return out
 
 
@@ -3488,6 +3548,9 @@ def build_slide_summaries(deck: Deck, deck_plan: DeckPlan | None = None) -> list
                 if strip is not None:
                     surface_ids.append(strip.surface_id)
                 surface_ids.append(slide.payload.table.surface_id)
+                callout = getattr(slide.payload, "side_callout", None)
+                if callout is not None:
+                    surface_ids.append(callout.surface_id)
             takeaway = getattr(slide, "takeaway", None)
             if takeaway is not None:
                 surface_ids.append(f"slide-{slide.slide_number}-takeaway")

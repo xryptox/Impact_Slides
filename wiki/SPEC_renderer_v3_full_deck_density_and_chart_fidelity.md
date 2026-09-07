@@ -1692,8 +1692,8 @@ are unambiguous.
 
 ### D156 — The FDIC treatment becomes a typed `coverage_callout`
 
-Schema v1 replaces generic `side_callout` with at most one
-`coverage_callout`, valid only on a stacked-bar chart. It has stable chart-unique
+Schema v1 replaces generic chart `side_callout` with at most one
+`coverage_callout`, valid only on a stacked-bar chart (not `data_table.side_callout`, #303). It has stable chart-unique
 `callout_id`, one D143/D144 numeric value, required label, and optional period
 label. It is one chart-level coverage fact, not a category, series, legend,
 annotation, or generic callout. The renderer owns D50's fixed prominent chrome,
@@ -2082,7 +2082,10 @@ Migration requires exact extraction plus human-confirmed part boundaries.
 
 ### D183 — Ordinary tables use one `data_table` composition
 
-`data_table` contains exactly one full-width D141 table surface. The slide root
+`data_table` contains exactly one D141 table surface. Omit extra payload fields
+and the table is full-width. Optional `payload.side_callout` (#303) is a unique-surface
+plain-text heading plus 1–6 items in a side band beside the grid — not a second
+table and not `chart_grouped_annex`. The slide root
 owns its required title and optional subtitle; table chrome cannot duplicate
 them. D8 supplies uniform navy headers, D24–D25 fitting, and D44 one common
 adaptive 20–24px size. D144–D145 scale disclosure renders once per table. Body
@@ -3305,10 +3308,12 @@ group level over leaves while permitting two rendered header rows.
 
 ### D257 — `data_table` payload contains exactly one ordinary table
 
-Payload contains only one D255 table; explicit D256 groups are allowed. Root
-title is its only visible heading and root content subtitle its only subtitle;
+Payload contains only one D255 table; explicit D256 groups are allowed. Optional
+`side_callout` (#303) may sit beside the grid; omit keeps the table full-width.
+Root title is its only visible heading and root content subtitle its only subtitle;
 table caption/title-band labels are invalid. D220 takeaway, D222 disclosure,
-evidence/source footer and notes remain allowed and planned. Table is full-width.
+evidence/source footer and notes remain allowed and planned. Table is full-width
+when the band is omitted.
 Headers use square navy/white semantic separators; transparent body cells use
 semantic separators without stripes/colors/cards/per-cell styling. One common
 20–24px adaptive D44 size covers every header, label, value and scale disclosure.

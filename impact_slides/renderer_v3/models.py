@@ -549,10 +549,39 @@ class TableData(ClosedModel):
             raise ValueError("column_groups must be ordered by first leaf column")
 
 
+class SideCallout(ClosedModel):
+    """Optional Notable Impacts band beside data_table (#303)."""
+
+    surface_id: SemanticId
+    heading: NonEmptyStr
+    items: list[NonEmptyStr] = Field(min_length=1, max_length=6)
+
+    @model_validator(mode="after")
+    def _plain_text(self) -> SideCallout:
+        if "<" in self.heading or ">" in self.heading:
+            raise ValueError("side_callout heading must be plain text, not HTML")
+        for item in self.items:
+            if "<" in item or ">" in item:
+                raise ValueError("side_callout items must be plain text, not HTML")
+        return self
+
+
 class DataTablePayload(ClosedModel):
-    """Ordinary full-width table composition payload (D183/D257)."""
+    """Ordinary table composition payload (D183/D257); optional side band (#303)."""
 
     table: TableData
+    side_callout: Optional[SideCallout] = None
+
+    @model_validator(mode="after")
+    def _unique_callout_surface(self) -> DataTablePayload:
+        if (
+            self.side_callout is not None
+            and self.side_callout.surface_id == self.table.surface_id
+        ):
+            raise ValueError(
+                "side_callout.surface_id must differ from table.surface_id"
+            )
+        return self
 
 
 class AnnexTablePayload(ClosedModel):
@@ -4145,6 +4174,9 @@ def _slide_table_surface_ids(slide: Any) -> list[str]:
         strip = getattr(payload, "metric_strip", None)
         if strip is not None:
             ids.append(strip.surface_id)
+        callout = getattr(payload, "side_callout", None)
+        if callout is not None:
+            ids.append(callout.surface_id)
         return ids
     if lt == "grouped_annex_table":
         return [peer.table.surface_id for peer in payload.tables]
