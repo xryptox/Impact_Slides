@@ -123,6 +123,70 @@ def test_strict_rejects_q4_s05_one_point_line_shape():
     assert validate_handoff(raw, strict=True).ok
 
 
+def test_strict_rejects_q4_s08_five_series_line_shape():
+    """Q4 2021 s08 leftover (#297): 5 T&E series, unlabeled vs-2019 interiors."""
+    raw = _raw()
+    vis = raw["slides"][1]["payload"]["chart"]
+    vis["chart_data"]["categories"] = [
+        {"category_id": cid, "label": lab}
+        for cid, lab in (
+            ("q1-20", "Q1'20"),
+            ("q2-20", "Q2'20"),
+            ("q3-20", "Q3'20"),
+            ("q4-20", "Q4'20"),
+            ("q1-21", "Q1'21"),
+            ("q2-21", "Q2'21"),
+            ("q3-21", "Q3'21"),
+            ("q4-21", "Q4'21"),
+        )
+    ]
+    # Page-8 % of Q4'19 callouts are not vs-2019 plot glyphs.
+    vis["chart_data"]["series"] = [
+        {"series_id": "us-cons", "name": "US Consumer", "values": [None] * 7 + ["108"]},
+        {"series_id": "sme", "name": "Total SME", "values": [None] * 7 + ["83"]},
+        {"series_id": "total-te", "name": "Total T&E", "values": [None] * 7 + ["82"]},
+        {"series_id": "intl-cons", "name": "Intl Consumer", "values": [None] * 7 + ["78"]},
+        {"series_id": "lg", "name": "Large & Global Corporate", "values": [None] * 7 + ["36"]},
+    ]
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    contracts = " ".join(
+        (e.expected.contract if e.expected else "") for e in ei.value.events
+    )
+    assert "line charts require 1" in contracts
+    assert "4 series" in contracts
+
+    # Dropping the 5th series still fails: one finite is not a vs-2019 pair.
+    vis["chart_data"]["series"] = vis["chart_data"]["series"][:4]
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    contracts = " ".join(
+        (e.expected.contract if e.expected else "") for e in ei.value.events
+    )
+    assert "requires at least two finite values" in contracts
+
+    # Second finite on 4 series is legal; s08 must not invent that point.
+    for series in vis["chart_data"]["series"]:
+        series["values"][6] = "1"
+    assert validate_handoff(raw, strict=True).ok
+
+    # Five series with two finites still illegal — do not raise the ceiling.
+    vis["chart_data"]["series"].append(
+        {
+            "series_id": "lg",
+            "name": "Large & Global Corporate",
+            "values": [None] * 6 + ["1", "36"],
+        }
+    )
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    contracts = " ".join(
+        (e.expected.contract if e.expected else "") for e in ei.value.events
+    )
+    assert "line charts require 1" in contracts
+    assert "4 series" in contracts
+
+
 def test_strict_rejects_duplicate_series_names():
     raw = _raw()
     raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][1]["name"] = "US"
