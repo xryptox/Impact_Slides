@@ -8525,6 +8525,292 @@
       "title": "StateTransitionSlide",
       "type": "object"
     },
+    "StrategyBand": {
+      "additionalProperties": false,
+      "description": "Mission or context band on a strategy_board (#295).",
+      "properties": {
+        "band_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Band Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        }
+      },
+      "required": [
+        "band_id",
+        "heading"
+      ],
+      "title": "StrategyBand",
+      "type": "object"
+    },
+    "StrategyBoardPayload": {
+      "additionalProperties": false,
+      "description": "Authored strategy / org board: mission, optional bands, pillars, footer (#295).",
+      "properties": {
+        "mission": {
+          "$ref": "#/$defs/StrategyBand"
+        },
+        "bands": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/StrategyBand"
+              },
+              "maxItems": 2,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bands"
+        },
+        "pillars": {
+          "items": {
+            "$ref": "#/$defs/StrategyPillar"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Pillars",
+          "type": "array"
+        },
+        "footer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StrategyFooter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "mission",
+        "pillars"
+      ],
+      "title": "StrategyBoardPayload",
+      "type": "object"
+    },
+    "StrategyBoardSlide": {
+      "additionalProperties": false,
+      "description": "Freeform strategy / org board: bands + equal-rank pillars (#295).",
+      "properties": {
+        "slide_number": {
+          "exclusiveMinimum": 0,
+          "title": "Slide Number",
+          "type": "integer"
+        },
+        "layout_type": {
+          "const": "strategy_board",
+          "default": "strategy_board",
+          "title": "Layout Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StrategyBoardPayload"
+        },
+        "speaker_notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Notes"
+        },
+        "evidence_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ids"
+        },
+        "section_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubtitleContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "takeaway": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Takeaway"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_footer": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Footer"
+        }
+      },
+      "required": [
+        "slide_number",
+        "payload",
+        "section_id",
+        "title"
+      ],
+      "title": "StrategyBoardSlide",
+      "type": "object"
+    },
+    "StrategyFooter": {
+      "additionalProperties": false,
+      "description": "Optional footer/committee stack (1–6 items) (#295).",
+      "properties": {
+        "stack_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Stack Id",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/StrategyItem"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "stack_id",
+        "items"
+      ],
+      "title": "StrategyFooter",
+      "type": "object"
+    },
+    "StrategyItem": {
+      "additionalProperties": false,
+      "description": "One authored detail item on a pillar or footer stack (#295).",
+      "properties": {
+        "item_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_id",
+        "text"
+      ],
+      "title": "StrategyItem",
+      "type": "object"
+    },
+    "StrategyPillar": {
+      "additionalProperties": false,
+      "description": "Equal-rank pillar with heading and 1–6 detail items (#295).",
+      "properties": {
+        "pillar_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Pillar Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/StrategyItem"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "pillar_id",
+        "heading",
+        "items"
+      ],
+      "title": "StrategyPillar",
+      "type": "object"
+    },
     "SubtitleContent": {
       "additionalProperties": false,
       "properties": {
@@ -9491,6 +9777,7 @@
             "single_chart": "#/$defs/SingleChartSlide",
             "stakeholder_map": "#/$defs/StakeholderMapSlide",
             "state_transition": "#/$defs/StateTransitionSlide",
+            "strategy_board": "#/$defs/StrategyBoardSlide",
             "timeline": "#/$defs/TimelineSlide"
           },
           "propertyName": "layout_type"
@@ -9585,6 +9872,9 @@
           },
           {
             "$ref": "#/$defs/StateTransitionSlide"
+          },
+          {
+            "$ref": "#/$defs/StrategyBoardSlide"
           }
         ]
       },

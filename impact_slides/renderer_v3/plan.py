@@ -3479,6 +3479,71 @@ def _collect_card_body(
         )
         return 1, [sp]
 
+    if lt == "strategy_board":
+        def _band(band):
+            text_items.append((band.heading, True))
+            if band.detail:
+                text_items.append((band.detail, False))
+            return {
+                "id": band.band_id,
+                "heading": band.heading,
+                "detail": band.detail,
+            }
+
+        pillars = []
+        for p in payload.pillars:
+            items = [it.text for it in p.items]
+            text_items.append((p.heading, True))
+            for it in p.items:
+                text_items.append((it.text, False))
+            pillars.append(
+                {
+                    "id": p.pillar_id,
+                    "heading": p.heading,
+                    "items": items,
+                    "item_ids": [it.item_id for it in p.items],
+                }
+            )
+        footer = None
+        if payload.footer is not None:
+            footer_items = [it.text for it in payload.footer.items]
+            for it in payload.footer.items:
+                text_items.append((it.text, False))
+            footer = {
+                "id": payload.footer.stack_id,
+                "items": footer_items,
+                "item_ids": [it.item_id for it in payload.footer.items],
+            }
+        spec = {
+            "kind": "strategy_board",
+            "mission": _band(payload.mission),
+            "bands": [_band(b) for b in (payload.bands or [])],
+            "pillars": pillars,
+            "footer": footer,
+        }
+        sp = SurfacePlan(
+            surface_id=f"slide-{sn}-strategy-board",
+            role="strategy_board",
+            slide_number=sn,
+            slide_index=slide_index,
+            layout_type=lt,
+            slot_order=10,
+            design_stage_region=region,
+            role_sizes={
+                "heading": CARD_FIXED_HEADING_PX,
+                "body": CARD_FIXED_BODY_PX,
+            },
+            _text_items=text_items,
+            _box_w=CONTENT_W,
+            _fit_role=None,
+            _mode="fixed",
+            _margin_boxes=0,
+            _default_size=CARD_FIXED_BODY_PX,
+            _maximum_size=CARD_FIXED_BODY_PX,
+            _card_spec=spec,
+        )
+        return 1, [sp]
+
     # state_transition
     def _state(state):
         blocks = []
@@ -3750,6 +3815,62 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
         else:
             h += CARD_PAD + b_y + _line_box(body_px) + CARD_PAD
         total = h + BLOCK_MARGIN_Y
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
+
+    if kind == "strategy_board":
+        heading_px = sp.role_sizes.get("heading", CARD_FIXED_HEADING_PX)
+        body_px = sp.role_sizes.get("body", CARD_FIXED_BODY_PX)
+
+        def band_h(band: dict[str, Any], inner_w: int) -> int:
+            h = CARD_PAD + b_y
+            ls = lines(band["heading"], heading_px, inner_w, strong=True, max_lines=3)
+            h += len(ls) * _line_box(heading_px)
+            if band.get("detail"):
+                h += CARD_INNER_GAP
+                ls = lines(band["detail"], body_px, inner_w, max_lines=4)
+                h += len(ls) * _line_box(body_px)
+            h += CARD_PAD
+            return h
+
+        mission_inner = panel_inner(box_w)
+        total = band_h(spec["mission"], mission_inner)
+        bands = spec.get("bands") or []
+        if bands:
+            n_b = len(bands)
+            col_w = max(40, (box_w - CARD_GAP * (n_b - 1)) // n_b)
+            b_inner = panel_inner(col_w)
+            total += CARD_GAP + max(band_h(b, b_inner) for b in bands)
+        pillars = spec["pillars"]
+        n_p = len(pillars)
+        p_col = max(40, (box_w - CARD_GAP * (n_p - 1)) // n_p)
+        p_inner = panel_inner(p_col)
+        li_w = max(40, p_inner - math.ceil(body_px * LIST_INDENT_EM))
+
+        def pillar_h(pillar: dict[str, Any]) -> int:
+            h = CARD_PAD + b_y
+            ls = lines(pillar["heading"], heading_px, p_inner, strong=True, max_lines=3)
+            h += len(ls) * _line_box(heading_px) + CARD_INNER_GAP
+            for item in pillar["items"]:
+                ls = lines(item, body_px, li_w, max_lines=3)
+                h += len(ls) * _line_box(body_px)
+            h += CARD_MARGIN  # one ul margin-bottom
+            h += CARD_PAD
+            return h
+
+        total += CARD_GAP + max(pillar_h(p) for p in pillars)
+        footer = spec.get("footer")
+        if footer:
+            f_inner = panel_inner(box_w)
+            f_li = max(40, f_inner - math.ceil(body_px * LIST_INDENT_EM))
+            fh = CARD_PAD + b_y
+            for item in footer["items"]:
+                ls = lines(item, body_px, f_li, max_lines=3)
+                fh += len(ls) * _line_box(body_px)
+            fh += CARD_MARGIN + CARD_PAD
+            total += CARD_GAP + fh
+        total += BLOCK_MARGIN_Y
         if not ok:
             return False, 10**9
         return total <= box_h, total
@@ -5546,6 +5667,7 @@ def _apply_composition_fallback(sp: SurfacePlan) -> None:
             "risk_opportunity_review": "accessible_sequential_sections",
             "recommendation_case": "accessible_sequential_recommendation",
             "state_transition": "accessible_sequential_states",
+            "strategy_board": "accessible_sequential_sections",
         }
         sp.fallback = fallback_by_role[sp.role]
         sp._card_spec["paint_as"] = "fallback_list"

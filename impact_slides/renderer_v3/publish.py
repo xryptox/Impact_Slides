@@ -301,6 +301,17 @@ def build_presentation_html(
             ".card-comp-fallback{margin:0 0 var(--space-sm)}",
             ".card-comp-fallback ol,.card-comp-fallback ul{margin:0 0 var(--space-sm);padding-left:1.25em}",
             ".card-comp-overflow{outline:var(--border-width-hairline) dashed var(--color-warning)}",
+            ".strategy-board{display:flex;flex-direction:column;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
+            ".strategy-mission{padding:16px;box-sizing:border-box}",
+            ".strategy-mission h3,.strategy-band h3{margin:0;font-size:inherit;font-weight:var(--font-weight-emphasis)}",
+            ".strategy-pillar h3{margin:0 0 8px;font-size:inherit;font-weight:var(--font-weight-emphasis)}",
+            ".strategy-mission .strategy-detail,.strategy-band .strategy-detail{margin:8px 0 0}",
+            ".strategy-bands{display:flex;gap:16px;width:100%;align-items:stretch}",
+            ".strategy-band{flex:1 1 0;min-width:0;padding:16px;box-sizing:border-box}",
+            ".strategy-pillars{display:flex;gap:16px;width:100%;align-items:stretch}",
+            ".strategy-pillar{flex:1 1 0;min-width:0;padding:16px;box-sizing:border-box}",
+            ".strategy-pillar ul,.strategy-footer ul{margin:0 0 4px;padding-left:0}",
+            ".strategy-footer{padding:16px;box-sizing:border-box}",
                     # Relationship + decision compositions (D194–D200/D274–D280).
             ".decision-tree,.hierarchy-tree{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm)}",
             ".rel-band{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center}",
@@ -794,6 +805,7 @@ def _paint_slide_body(
 "risk_opportunity_review",
 "recommendation_case",
 "state_transition",
+"strategy_board",
 "decision_tree",
         "feedback_loop",
         "hierarchy",
@@ -871,6 +883,7 @@ def _paint_slide_body(
             "risk_opportunity_review",
             "recommendation_case",
             "state_transition",
+            "strategy_board",
         ):
             out.extend(_paint_card_composition(slide, plans_by_id, events_by_surface))
         elif lt in (
@@ -2085,6 +2098,7 @@ def _paint_card_composition(
         "risk_opportunity_review": f"slide-{sn}-risk-opportunity-review",
         "recommendation_case": f"slide-{sn}-recommendation-case",
         "state_transition": f"slide-{sn}-state-transition",
+        "strategy_board": f"slide-{sn}-strategy-board",
     }
     sp = plans_by_id.get(surface_ids[lt])
     if sp is None or not getattr(sp, "_card_spec", None):
@@ -2269,6 +2283,75 @@ def _paint_card_composition(
                     )
                 out.append("</article>")
             out.append("</div>")
+        out.append("</div>")
+        return out
+
+    if lt == "strategy_board":
+        heading_px = sp.role_sizes.get("heading")
+        body_px = sp.role_sizes.get("body")
+        out = [f'<div class="strategy-board{overflow_cls}" {plan_attrs}>']
+        mission = spec["mission"]
+        out.append(
+            f'<section class="strategy-mission card-panel" '
+            f'data-band-id="{_escape(mission["id"])}">'
+        )
+        out.append(
+            f'<h3{_style_font(heading_px)}>{_soft_break_html(mission["heading"])}</h3>'
+        )
+        if mission.get("detail"):
+            out.append(
+                f'<p class="strategy-detail"{_style_font(body_px)}>' 
+                f'{_soft_break_html(mission["detail"])}</p>'
+            )
+        out.append("</section>")
+        bands = spec.get("bands") or []
+        if bands:
+            out.append('<div class="strategy-bands">')
+            for b in bands:
+                out.append(
+                    f'<section class="strategy-band card-panel" '
+                    f'data-band-id="{_escape(b["id"])}">'
+                )
+                out.append(
+                    f'<h3{_style_font(heading_px)}>{_soft_break_html(b["heading"])}</h3>'
+                )
+                if b.get("detail"):
+                    out.append(
+                        f'<p class="strategy-detail"{_style_font(body_px)}>' 
+                        f'{_soft_break_html(b["detail"])}</p>'
+                    )
+                out.append("</section>")
+            out.append("</div>")
+        out.append('<div class="strategy-pillars">')
+        for p in spec["pillars"]:
+            out.append(
+                f'<section class="strategy-pillar card-panel" '
+                f'data-pillar-id="{_escape(p["id"])}">'
+            )
+            out.append(
+                f'<h3{_style_font(heading_px)}>{_soft_break_html(p["heading"])}</h3>'
+            )
+            out.append("<ul>")
+            for iid, text in zip(p.get("item_ids") or [], p["items"]):
+                out.append(
+                    f'<li data-item-id="{_escape(iid)}"{_style_font(body_px)}>' 
+                    f'{_soft_break_html(text)}</li>'
+                )
+            out.append("</ul></section>")
+        out.append("</div>")
+        footer = spec.get("footer")
+        if footer:
+            out.append(
+                f'<section class="strategy-footer card-panel" '
+                f'data-stack-id="{_escape(footer["id"])}">'
+            )
+            out.append("<ul>")
+            for iid, text in zip(footer.get("item_ids") or [], footer["items"]):
+                out.append(
+                    f'<li data-item-id="{_escape(iid)}"{_style_font(body_px)}>' 
+                    f'{_soft_break_html(text)}</li>'
+                )
+            out.append("</ul></section>")
         out.append("</div>")
         return out
 
@@ -2461,6 +2544,49 @@ def _paint_card_fallback(
                     )
                 out.append("</li>")
             out.append("</ol>")
+    elif lt == "strategy_board":
+        mission = spec["mission"]
+        out.append(
+            f'<section data-band-id="{_escape(mission["id"])}">'
+            f'<h2{_style_font(heading_px)}>{_soft_break_html(mission["heading"])}</h2>'
+        )
+        if mission.get("detail"):
+            out.append(
+                f'<p{_style_font(body_px)}>{_soft_break_html(mission["detail"])}</p>'
+            )
+        out.append("</section>")
+        for b in spec.get("bands") or []:
+            out.append(
+                f'<section data-band-id="{_escape(b["id"])}">'
+                f'<h2{_style_font(heading_px)}>{_soft_break_html(b["heading"])}</h2>'
+            )
+            if b.get("detail"):
+                out.append(
+                    f'<p{_style_font(body_px)}>{_soft_break_html(b["detail"])}</p>'
+                )
+            out.append("</section>")
+        for p in spec["pillars"]:
+            out.append(
+                f'<section data-pillar-id="{_escape(p["id"])}">'
+                f'<h2{_style_font(heading_px)}>{_soft_break_html(p["heading"])}</h2><ul>'
+            )
+            for iid, text in zip(p.get("item_ids") or [], p["items"]):
+                out.append(
+                    f'<li data-item-id="{_escape(iid)}"{_style_font(body_px)}>' 
+                    f'{_soft_break_html(text)}</li>'
+                )
+            out.append("</ul></section>")
+        footer = spec.get("footer")
+        if footer:
+            out.append(
+                f'<section data-stack-id="{_escape(footer["id"])}"><ul>'
+            )
+            for iid, text in zip(footer.get("item_ids") or [], footer["items"]):
+                out.append(
+                    f'<li data-item-id="{_escape(iid)}"{_style_font(body_px)}>' 
+                    f'{_soft_break_html(text)}</li>'
+                )
+            out.append("</ul></section>")
     else:  # state_transition
         for role, key in (("Before", "before"), ("After", "after")):
             state = spec[key]

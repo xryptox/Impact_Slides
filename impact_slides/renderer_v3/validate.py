@@ -508,7 +508,7 @@ def _precheck(raw: dict[str, Any]) -> list[DiagnosticEvent]:
                             "period_comparison, comparison_cards, process_flow, timeline, "
                             "layered_architecture, data_pipeline, decision_tree, "
                             "feedback_loop, hierarchy, stakeholder_map, "
-                            "quadrant_matrix, single_chart; "
+                            "quadrant_matrix, single_chart, strategy_board; "
                             "other D210 compositions arrive in later tickets"
                         ),
                     )
