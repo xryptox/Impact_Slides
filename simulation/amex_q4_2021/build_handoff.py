@@ -2561,7 +2561,7 @@ def build():
     # 26 T&E by industry — PDF visual: 8-quarter vs-2019 5-series line plus Q4 table.
     # Only Q4'21 vs '19 (10/-24/-43/-14/-18) are labeled. Line requires at least two
     # finite values per series, so a Q4-only endpoint line is illegal; interiors unread.
-    # Total T&E is a 5th series (line max 4) even if interiors were readable.
+    # Total T&E is a 5th series (line max 4) even if interiors were readable (#299 leftover).
     slides.append(
         ordinary(
             26,
