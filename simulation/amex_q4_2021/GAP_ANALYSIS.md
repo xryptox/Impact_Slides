@@ -215,7 +215,6 @@ Also used: per-pane `support_table` on s06/s07/s09; shared `metric_strip` on s21
 ### PDF patterns with no recipe
 
 - Brand full-bleed cover / divider / closing wordmark (Centurion seal) — accepted Boardroom chrome.
-- Geometric vs-2019 callouts on mix stacks (s6, s7).
 - Freeform callouts, hatch fills, brace groups, share chips (s2, s20, s24).
 - Freeform ESG strategy board (s35).
 
@@ -240,6 +239,6 @@ Relative to `simulation/amex_q4_2021/`:
 - `passes/pass_01/compare/html/slide_01.png` … `slide_53.png`
 - `passes/pass_01/compare/sbs/slide_01.png` … `slide_53.png`
 
-Wiki copy (docs commit only): `wiki/baseline_q4_2021_RECIPE_COVERAGE.md` — byte-identical to this file.
+Tracked report: `wiki/baseline_q4_2021_RECIPE_COVERAGE.md`.
 
 Do not embed PNGs in this report.
