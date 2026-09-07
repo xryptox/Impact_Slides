@@ -6289,7 +6289,7 @@
               {
                 "runs": [
                   {
-                    "text": "Lines omitted: Q3'20-Q4'23 quarterly glyphs unlabeled on both panes. dual_chart line requires at least two finite values per series; axis ticks (Unemployment 0-18%, GDP (10%)-40%) are not series values."
+                    "text": "Lines omitted: no labeled endpoints (#300 leftover). Q3'20-Q4'23 quarterly glyphs unlabeled on both panes. dual_chart line requires at least two finite values per series; axis ticks (Unemployment 0-18%, GDP (10%)-40%) are not series values. Do not invent series."
                   }
                 ]
               }

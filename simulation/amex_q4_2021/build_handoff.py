@@ -2821,9 +2821,9 @@ def build():
 
     # 30 macro assumptions — PDF visual: two 4-series lines (US Unemployment Rate %,
     # US GDP Growth* %) Q3'20-Q4'23 (Q3/Q4 Baseline and Downside). No labeled
-    # endpoints; axis ticks only. dual_chart line is legal but each series needs
-    # at least two finite values; interiors unlabeled, so the charts cannot be
-    # authored. Keep narrative; do not invent series values.
+    # endpoints (#300 leftover); axis ticks only. dual_chart line is legal but each
+    # series needs at least two finite values; interiors unlabeled, so the charts
+    # cannot be authored. Keep narrative; do not invent series values.
     slides.append(
         ordinary(
             30,
@@ -2842,7 +2842,7 @@ def build():
                         [
                             "Forecast assumptions are from an independent third party and represent the range of forecasts from the macroeconomic scenarios used during the quarter without applying a weight to those scenarios above.",
                             "* Real GDP QoQ % Change Seasonally Adjusted to Annualized Rates (SAAR).",
-                            "Lines omitted: Q3'20-Q4'23 quarterly glyphs unlabeled on both panes. dual_chart line requires at least two finite values per series; axis ticks (Unemployment 0-18%, GDP (10%)-40%) are not series values.",
+                            "Lines omitted: no labeled endpoints (#300 leftover). Q3'20-Q4'23 quarterly glyphs unlabeled on both panes. dual_chart line requires at least two finite values per series; axis ticks (Unemployment 0-18%, GDP (10%)-40%) are not series values. Do not invent series.",
                         ],
                     ),
                 ]
