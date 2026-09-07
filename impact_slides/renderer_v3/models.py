@@ -1630,6 +1630,25 @@ class ChartAnnotation(ClosedModel):
         return self
 
 
+class GeometricCallout(ClosedModel):
+    """Axis-chart geometric overlay: elbow / chevron / band (#302)."""
+
+    callout_id: SemanticId
+    kind: Literal["elbow_arrow", "chevron", "band"]
+    text: NonEmptyStr
+    anchor: AnnotationAnchor
+
+    @model_validator(mode="after")
+    def _kind_owns_anchor(self) -> GeometricCallout:
+        if self.anchor.type == "chart":
+            raise ValueError("geometric callouts forbid chart-wide anchors")
+        if self.kind == "chevron" and self.anchor.type != "category":
+            raise ValueError("chevron requires a category anchor")
+        if self.kind in ("elbow_arrow", "band") and self.anchor.type != "category_range":
+            raise ValueError(f"{self.kind} requires a category_range anchor")
+        return self
+
+
 class ChartMeasurement(ClosedModel):
     """Authored finite-endpoint quantitative fact (D148/D234/D298)."""
 
@@ -2033,11 +2052,69 @@ def _validate_measurements(chart: Any) -> None:
         keys.add(key)
 
 
+def _validate_geometric_callouts(chart: Any) -> None:
+    callouts = getattr(chart, "geometric_callouts", None)
+    if not callouts:
+        return
+    if getattr(chart, "chart_type", None) in ("heatmap", "pie", "donut"):
+        raise ValueError(f"{chart.chart_type} forbids geometric_callouts")
+    cat_ids = _chart_category_ids(chart)
+    cat_pos = {cid: i for i, cid in enumerate(cat_ids)}
+    ser_ids = _chart_series_ids(chart)
+    seen: set[str] = set()
+    for c in callouts:
+        if c.callout_id in seen:
+            raise ValueError("callout_id values must be unique within the chart")
+        seen.add(c.callout_id)
+        anchor = c.anchor
+        if anchor.type == "category":
+            if anchor.category_id not in cat_pos:
+                raise ValueError(
+                    f"geometric callout {c.callout_id!r} references unknown "
+                    f"category_id {anchor.category_id!r}"
+                )
+            continue
+        if anchor.type == "category_range":
+            if anchor.from_category_id not in cat_pos:
+                raise ValueError(
+                    f"geometric callout {c.callout_id!r} references unknown "
+                    f"from_category_id {anchor.from_category_id!r}"
+                )
+            if anchor.to_category_id not in cat_pos:
+                raise ValueError(
+                    f"geometric callout {c.callout_id!r} references unknown "
+                    f"to_category_id {anchor.to_category_id!r}"
+                )
+            if cat_pos[anchor.from_category_id] >= cat_pos[anchor.to_category_id]:
+                raise ValueError(
+                    f"geometric callout {c.callout_id!r} category_range must be "
+                    "forward authored order"
+                )
+            continue
+        if anchor.type == "data_point":
+            if anchor.series_id not in ser_ids:
+                raise ValueError(
+                    f"geometric callout {c.callout_id!r} references unknown "
+                    f"series_id {anchor.series_id!r}"
+                )
+            if anchor.category_id not in cat_pos:
+                raise ValueError(
+                    f"geometric callout {c.callout_id!r} references unknown "
+                    f"category_id {anchor.category_id!r}"
+                )
+            if not _finite_point_exists(chart, anchor.series_id, anchor.category_id):
+                raise ValueError(
+                    f"geometric callout {c.callout_id!r} data_point requires a "
+                    "finite plotted value"
+                )
+
+
 def _validate_chart_facts(chart: Any, *, allow_data_point: bool = True) -> None:
     """Shared context/annotation/measurement checks (D232–D234/D296–D298)."""
     _validate_context_labels(chart)
     _validate_annotations(chart, allow_data_point=allow_data_point)
     _validate_measurements(chart)
+    _validate_geometric_callouts(chart)
 
 
 def _validate_stacked_display(chart: Any) -> None:
@@ -2149,6 +2226,7 @@ _PIE_DONUT_FORBIDDEN = (
     "coverage",
     "coverage_callout",
     "measurements",
+    "geometric_callouts",
 )
 
 
@@ -2240,6 +2318,9 @@ class LineChartVisual(ClosedModel):
     measurements: Optional[list[ChartMeasurement]] = Field(
         default=None, min_length=1, max_length=4
     )
+    geometric_callouts: Optional[list[GeometricCallout]] = Field(
+        default=None, min_length=1, max_length=8
+    )
 
     @model_validator(mode="after")
     def _line_invariants(self) -> LineChartVisual:
@@ -2321,6 +2402,7 @@ class HeatmapVisual(ClosedModel):
             "auxiliary_series",
             "coverage",
             "coverage_callout",
+            "geometric_callouts",
         )
         for key in forbidden:
             if key in data:
@@ -2410,6 +2492,9 @@ class GroupedBarChartVisual(ClosedModel):
     measurements: Optional[list[ChartMeasurement]] = Field(
         default=None, min_length=1, max_length=4
     )
+    geometric_callouts: Optional[list[GeometricCallout]] = Field(
+        default=None, min_length=1, max_length=8
+    )
 
     @model_validator(mode="after")
     def _grouped_invariants(self) -> GroupedBarChartVisual:
@@ -2469,6 +2554,9 @@ class HorizontalBarChartVisual(ClosedModel):
     )
     measurements: Optional[list[ChartMeasurement]] = Field(
         default=None, min_length=1, max_length=4
+    )
+    geometric_callouts: Optional[list[GeometricCallout]] = Field(
+        default=None, min_length=1, max_length=8
     )
 
     @model_validator(mode="after")
@@ -2565,6 +2653,9 @@ class WaterfallChartVisual(ClosedModel):
     measurements: Optional[list[ChartMeasurement]] = Field(
         default=None, min_length=1, max_length=4
     )
+    geometric_callouts: Optional[list[GeometricCallout]] = Field(
+        default=None, min_length=1, max_length=8
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -2656,6 +2747,9 @@ class StackedBarChartVisual(ClosedModel):
     )
     measurements: Optional[list[ChartMeasurement]] = Field(
         default=None, min_length=1, max_length=4
+    )
+    geometric_callouts: Optional[list[GeometricCallout]] = Field(
+        default=None, min_length=1, max_length=8
     )
 
     @model_validator(mode="after")
@@ -2784,6 +2878,9 @@ class ComboChartVisual(ClosedModel):
     )
     measurements: Optional[list[ChartMeasurement]] = Field(
         default=None, min_length=1, max_length=4
+    )
+    geometric_callouts: Optional[list[GeometricCallout]] = Field(
+        default=None, min_length=1, max_length=8
     )
 
     @model_validator(mode="before")

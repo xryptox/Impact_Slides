@@ -1831,6 +1831,23 @@
           ],
           "default": null,
           "title": "Measurements"
+        },
+        "geometric_callouts": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/GeometricCallout"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometric Callouts"
         }
       },
       "required": [
@@ -4060,6 +4077,65 @@
       "title": "GeneratedHeatmapScale",
       "type": "object"
     },
+    "GeometricCallout": {
+      "additionalProperties": false,
+      "description": "Axis-chart geometric overlay: elbow / chevron / band (#302).",
+      "properties": {
+        "callout_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Callout Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "elbow_arrow",
+            "chevron",
+            "band"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "anchor": {
+          "discriminator": {
+            "mapping": {
+              "category": "#/$defs/CategoryAnchor",
+              "category_range": "#/$defs/CategoryRangeAnchor",
+              "chart": "#/$defs/ChartAnchor",
+              "data_point": "#/$defs/DataPointAnchor"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ChartAnchor"
+            },
+            {
+              "$ref": "#/$defs/CategoryAnchor"
+            },
+            {
+              "$ref": "#/$defs/DataPointAnchor"
+            },
+            {
+              "$ref": "#/$defs/CategoryRangeAnchor"
+            }
+          ],
+          "title": "Anchor"
+        }
+      },
+      "required": [
+        "callout_id",
+        "kind",
+        "text",
+        "anchor"
+      ],
+      "title": "GeometricCallout",
+      "type": "object"
+    },
     "GroupedAnnexPeer": {
       "additionalProperties": false,
       "description": "One headed peer matrix inside grouped_annex_table / chart_grouped_annex (D185/D259).",
@@ -4382,6 +4458,23 @@
           ],
           "default": null,
           "title": "Measurements"
+        },
+        "geometric_callouts": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/GeometricCallout"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometric Callouts"
         }
       },
       "required": [
@@ -4872,6 +4965,23 @@
           ],
           "default": null,
           "title": "Measurements"
+        },
+        "geometric_callouts": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/GeometricCallout"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometric Callouts"
         }
       },
       "required": [
@@ -5278,6 +5388,23 @@
           ],
           "default": null,
           "title": "Measurements"
+        },
+        "geometric_callouts": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/GeometricCallout"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometric Callouts"
         }
       },
       "required": [
@@ -8130,6 +8257,23 @@
           ],
           "default": null,
           "title": "Measurements"
+        },
+        "geometric_callouts": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/GeometricCallout"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometric Callouts"
         }
       },
       "required": [
@@ -9628,6 +9772,23 @@
           ],
           "default": null,
           "title": "Measurements"
+        },
+        "geometric_callouts": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/GeometricCallout"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometric Callouts"
         }
       },
       "required": [

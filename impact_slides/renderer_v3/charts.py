@@ -2,7 +2,7 @@
 
 Covers D239/D240/D242–D243/D245/D247/D248/D302/D304/D307, shared D71–D73/D160
 geometry, D163/D246–D248/D308 semantic heatmaps, pie/donut radial mix, and collision-owned
-context/annotation/measurement chrome (D232–D234/D296–D298).
+context/annotation/measurement chrome (D232–D234/D296–D298) plus geometric vs-2019 callouts (#302).
 """
 from __future__ import annotations
 
@@ -4571,9 +4571,24 @@ def _attach_chart_facts(
     plan["context_labels"] = ctx["placements"]
     plan["annotations"] = anns["placements"]
     plan["measurements"] = meas["placements"]
+    geo = _freeze_geometric_callouts(
+        chart,
+        categories=cats,
+        pad_l=pad_l,
+        pad_t=pad_t,
+        plot_w=plot_w,
+        plot_h=plot_h,
+        occupied=occupied,
+        role_sizes=role_sizes,
+        placements=list(plan.get("placements") or []),
+        bars=list(plan.get("bars") or []),
+    )
+    plan["geometric_callouts"] = geo["placements"]
+    plan["geometric_callout_overflow"] = geo["overflow"]
     diags = list(ctx.get("diagnostics") or [])
     diags.extend(anns.get("diagnostics") or [])
     diags.extend(meas.get("diagnostics") or [])
+    diags.extend(geo.get("diagnostics") or [])
     plan["fact_chrome"] = {
         "context_suppressed": ctx["suppressed"],
         "context_px": ctx["px"],
@@ -4590,11 +4605,16 @@ def _attach_chart_facts(
         facts.extend(ctx["facts"])
         facts.extend(anns["facts"])
         facts.extend(meas["facts"])
+        facts.extend(geo["facts"])
         table["facts"] = facts
         plan["semantic_table"] = table
     plan.setdefault("extra_facts", [])
     plan["extra_facts"] = (
-        list(plan["extra_facts"]) + ctx["facts"] + anns["facts"] + meas["facts"]
+        list(plan["extra_facts"])
+        + ctx["facts"]
+        + anns["facts"]
+        + meas["facts"]
+        + geo["facts"]
     )
     return plan
 
@@ -4668,6 +4688,152 @@ def _paint_fact_chrome_svg(plan: dict[str, Any], parts: list[str], ink: str) -> 
             f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-size="{px}" '
             f'font-variant-numeric="tabular-nums" fill="{_e(ink)}">'
             f'{_e(place["text"])}</text>'
+            f"</g>"
+        )
+    _paint_geometric_callouts_svg(plan, parts, ink)
+
+
+def _freeze_geometric_callouts(
+    chart: Any,
+    *,
+    categories: list[dict[str, Any]],
+    pad_l: float,
+    pad_t: float,
+    plot_w: float,
+    plot_h: float,
+    occupied: list[tuple[float, float, float, float]],
+    role_sizes: Mapping[str, int],
+    placements: list[dict[str, Any]],
+    bars: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Category-anchored elbow/chevron/band overlay; collision is overflow (#302)."""
+    callouts = list(getattr(chart, "geometric_callouts", None) or [])
+    px = int(role_sizes.get("annotations", 13))
+    cat_xy = _category_centers(categories)
+    facts: list[str] = []
+    frozen: list[dict[str, Any]] = []
+    overflow = False
+    # Ordinary values / stack totals occupy the plot; collide rather than overlap.
+    live = list(occupied)
+    for p in placements:
+        if p.get("class") == "suppressed":
+            continue
+        if p.get("x") is None or p.get("y") is None:
+            continue
+        kind = p.get("kind")
+        if kind not in ("segment", "stack_total", "ordinary"):
+            continue
+        tw = max(20.0, len(str(p.get("text") or "")) * px * 0.55)
+        th = float(px)
+        live.append(_fact_box(float(p["x"]), float(p["y"]), tw, th))
+    for c in callouts:
+        facts.append(f"Callout {c.kind}: {c.text}")
+        anchor = c.anchor
+        if c.kind == "chevron":
+            cat = cat_xy.get(anchor.category_id)
+            if not cat:
+                overflow = True
+                continue
+            x = float(cat["x"])
+            y = pad_t + plot_h + 10
+            w = max(48.0, len(c.text) * px * 0.5)
+            h = px * 1.6 + 10
+            box = _fact_box(x, y, w, h)
+            place = {
+                "kind": "chevron",
+                "callout_id": c.callout_id,
+                "text": c.text,
+                "category_id": anchor.category_id,
+                "x": x,
+                "y": y,
+                "px": px,
+                "x0": x,
+                "x1": x,
+            }
+        else:
+            a = cat_xy.get(anchor.from_category_id)
+            b = cat_xy.get(anchor.to_category_id)
+            if not a or not b:
+                overflow = True
+                continue
+            x0, x1 = float(a["x"]), float(b["x"])
+            if x1 < x0:
+                x0, x1 = x1, x0
+            mx = (x0 + x1) / 2
+            tops = [
+                float(bar["y"])
+                for bar in bars
+                if bar.get("finite")
+                and not bar.get("missing")
+                and bar.get("category_id") in (anchor.from_category_id, anchor.to_category_id)
+                and bar.get("sign", 1) >= 0
+            ]
+            y = (min(tops) - 18) if tops else (pad_t + 16)
+            w = max(x1 - x0, 48.0)
+            h = px * 1.6 + 16
+            box = _fact_box(mx, y, w, h)
+            place = {
+                "kind": c.kind,
+                "callout_id": c.callout_id,
+                "text": c.text,
+                "from_category_id": anchor.from_category_id,
+                "to_category_id": anchor.to_category_id,
+                "x": mx,
+                "y": y,
+                "px": px,
+                "x0": x0,
+                "x1": x1,
+            }
+        if _overlaps(box, live):
+            overflow = True
+            continue
+        frozen.append(place)
+        live.append(box)
+        occupied.append(box)
+    return {
+        "placements": frozen,
+        "facts": facts,
+        "overflow": overflow,
+        "diagnostics": [],
+    }
+
+
+def _paint_geometric_callouts_svg(
+    plan: dict[str, Any], parts: list[str], ink: str
+) -> None:
+    for place in plan.get("geometric_callouts") or []:
+        px = int(place.get("px") or plan.get("role_sizes", {}).get("annotations", 13))
+        cid = _e(place["callout_id"])
+        kind = _e(place["kind"])
+        text = _e(place["text"])
+        if place["kind"] == "chevron":
+            x, y = float(place["x"]), float(place["y"])
+            tip = (
+                f"{x:.1f},{y - 8:.1f} {x - 6:.1f},{y:.1f} {x + 6:.1f},{y:.1f}"
+            )
+            parts.append(
+                f'<g class="geometric-callout" data-callout-id="{cid}" '
+                f'data-kind="{kind}" aria-hidden="true">'
+                f'<polygon points="{tip}" fill="{_e(ink)}"/>'
+                f'<text x="{x:.1f}" y="{y + px:.1f}" text-anchor="middle" '
+                f'font-size="{px}" fill="{_e(ink)}">{text}</text>'
+                f"</g>"
+            )
+            continue
+        x0, x1 = float(place["x0"]), float(place["x1"])
+        y = float(place["y"])
+        mx = float(place["x"])
+        parts.append(
+            f'<g class="geometric-callout" data-callout-id="{cid}" '
+            f'data-kind="{kind}" aria-hidden="true">'
+            f'<line x1="{x0:.1f}" y1="{y:.1f}" x2="{x1:.1f}" y2="{y:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+            f'<line x1="{x0:.1f}" y1="{y:.1f}" x2="{x0:.1f}" y2="{y + 10:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+            f'<line x1="{x1:.1f}" y1="{y:.1f}" x2="{x1:.1f}" y2="{y + 10:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+            f'<text x="{mx:.1f}" y="{y - 4:.1f}" text-anchor="middle" '
+            f'font-size="{px}" fill="{_e(ink)}">{text}</text>'
             f"</g>"
         )
 
