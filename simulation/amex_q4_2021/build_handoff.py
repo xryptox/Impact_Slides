@@ -895,6 +895,7 @@ def build():
 
     # 6 Global Consumer — stacked mix + age-cohort grouped bar, each with under-plot table.
     # Geometric vs-2019 callouts on the stack have no recipe; omit them.
+    # Age-cohort 8-quarter vs-2019 interiors unlabeled (#301 leftover).
     s06_mix_cats = [
         ("q1-21", "Q1'21"),
         ("q2-21", "Q2'21"),
@@ -1000,7 +1001,7 @@ def build():
                     [
                         "Note: All growth rates reflect FX-adjusted rates. See Annex 1 for reported billings growth rates.",
                         "Q4'21 vs '19 Total Consumer 17%, G&S 26%, T&E (2%). Geometric vs-2019 callouts on the mix stack have no recipe and are omitted.",
-                        "Age-cohort 8-quarter line interiors unlabeled; authored Q4'21 vs '19 endpoints as a grouped bar plus the under-plot table.",
+                        "Age-cohort 8-quarter interiors unlabeled (#301 leftover). Page-6 glyphs: axis ticks (50)/(30)/(10)/10/30/50, quarter labels, series names, Q4 table vs-'19 50/17/(0). No second labeled plot point. Line requires two finite values per series; authored Q4'21 vs '19 endpoints as a grouped bar plus the under-plot table.",
                     ],
                 )
             },
@@ -1008,6 +1009,7 @@ def build():
     )
 
     # 7 Global Commercial — stacked mix + SME vs L&G snapshot, each with under-plot table.
+    # SME 8-quarter vs-2019 interiors unlabeled (#301 leftover).
     s07_mix_cats = [
         ("q1-21", "Q1'21"),
         ("q2-21", "Q2'21"),
@@ -1112,7 +1114,7 @@ def build():
                     "Notes",
                     [
                         "Note: SME refers to small and mid-sized businesses with less than $300MM in annual revenues. All growth rates reflect FX-adjusted rates. See Annex 1 for reported billings growth rates.",
-                        "Geometric vs-2019 callouts on the mix stack have no recipe and are omitted. SME 8-quarter line interiors unlabeled; authored Q4'21 vs '19 endpoints as a grouped bar plus the under-plot table.",
+                        "Geometric vs-2019 callouts on the mix stack have no recipe and are omitted. SME 8-quarter interiors unlabeled (#301 leftover). Page-7 glyphs: axis ticks (80)/(60)/(40)/(20)/0/20/40, quarter labels, series names, Q4 table vs-'19 25/17/(33). No second labeled plot point. Line requires two finite values per series; authored Q4'21 vs '19 endpoints as a grouped bar plus the under-plot table.",
                     ],
                 )
             },
@@ -1201,7 +1203,7 @@ def build():
         )
     )
 
-    # 9 dual region Q4 snapshots + per-pane tables. 8-quarter line interiors unlabeled.
+    # 9 dual region Q4 snapshots + per-pane tables. 8-quarter interiors unlabeled (#301 leftover).
     s09_us_cats = [("us", "US"), ("intl", "International"), ("total", "Total")]
     s09_gs_cats = [
         ("us-gs", "US G&S"),
@@ -1332,7 +1334,7 @@ def build():
                     "Notes",
                     [
                         "Note: All growth rates reflect FX-adjusted rates. See Annex 1 for reported billings growth rates. % of total may not foot due to rounding.",
-                        "8-quarter line interiors unlabeled; each series would have one finite Q4'21 value, which line rejects. Authored grouped bars of the labeled Q4 points plus per-pane tables.",
+                        "8-quarter interiors unlabeled (#301 leftover). Page-9 glyphs: axis ticks (100)/(80)/(60)/(40)/(20)/0/20, quarter labels, series names, Q4 tables vs-'19 16/(1)/12 and 26/19/24/(10)/(36)/(18). No second labeled plot point. Line requires two finite values per series; authored grouped bars of the labeled Q4 points plus per-pane tables.",
                     ],
                 )
             },
@@ -2444,7 +2446,7 @@ def build():
     )
 
     # 25 Global Consumer G&S — 8-quarter Online/Offline/G&S line + two Q4 annex peers.
-    # Line interiors unlabeled; Q4'21 endpoints 42/26/10 are one finite value per series.
+    # Interiors unlabeled (#301 leftover); Q4'21 endpoints 42/26/10 are one finite value per series.
     # Grouped bar of those labeled Q4 points plus the two Q4 tables.
     s25_cats = [("online", "Online"), ("gs", "G&S"), ("offline", "Offline")]
     slides.append(
@@ -2551,7 +2553,7 @@ def build():
                     [
                         "Note: All growth rates reflect FX-adjusted rates. See Annex 1 for reported billings growth rates.",
                         "* Holiday spend reflects Q4'21 Consumer retail spending at department stores/big box, shops and supermarkets/consumables.",
-                        "8-quarter Online/Offline/G&S interiors unlabeled; line requires two finite values per series. Authored grouped bar of Q4'21 vs '19 endpoints 42/26/10 plus the two Q4 tables.",
+                        "8-quarter Online/Offline/G&S interiors unlabeled (#301 leftover). Page-25 glyphs: axis ticks (40)/(30)/(20)/(10)/0/10/20/30/40/50, quarter labels, series names, Q4 tables vs-'19 42/10/26 and Holiday 55/9/29. No second labeled plot point. Line requires two finite values per series; authored grouped bar of Q4'21 vs '19 endpoints 42/26/10 plus the two Q4 tables.",
                     ],
                 )
             },
@@ -2889,7 +2891,8 @@ def build():
         )
     )
 
-    # 32 FX — two FX lines unlabeled; grouped bars of labeled currency points + shared table.
+    # 32 FX — Q1'21-Q4'21 Reported vs FX-Adj interiors unlabeled (#301 leftover);
+    # grouped bars of labeled currency points + shared table.
     s32_fx_cats = [
         ("eur", "Euro EUR"),
         ("gbp", "UK GBP"),
@@ -2980,7 +2983,7 @@ def build():
                     [
                         "Note: Network Volumes is based on where the issuer is located and includes both proprietary and non-proprietary cards. See Slide 2 for an explanation of FX-adjusted information.",
                         "* Represents percentage change in foreign currency exchange rates at 2021 and 2020 December month-end, respectively, per Bloomberg.",
-                        "Q1'21-Q4'21 Reported vs FX-Adj line interiors unlabeled; line requires two finite values per series. Authored grouped bars of the labeled 6-currency points plus the shared independent currency table.",
+                        "Q1'21-Q4'21 Reported vs FX-Adj interiors unlabeled (#301 leftover). Page-32 glyphs: axis ticks (15%)/50%, quarter labels, Reported/FX Adj. series names, 6-currency table 4/5/5/3/2/1 and 7/1/11/6/(1)/3. No labeled plot endpoints. Line requires two finite values per series; axis ticks are not observations. Authored grouped bars of the labeled 6-currency points plus the shared independent currency table.",
                     ],
                 )
             },
