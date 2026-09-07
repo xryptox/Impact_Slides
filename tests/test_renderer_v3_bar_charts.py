@@ -6,6 +6,7 @@ Seams under test:
 - horizontal leading break positive-side contract (D157/D243)
 - category groups + boxed labels (D155/D237/D235)
 - Chart.js/SVG geometry parity within 2px (D160)
+- Q4 s20 unlabeled Value Injection hatch leftover reject (#298)
 """
 from __future__ import annotations
 
@@ -668,4 +669,52 @@ def test_single_series_grouped_valid():
     del vis["auxiliary_series"]
     del raw["number_formats"]["usd_0"]
     vis["display"] = {"series_identity": "pane_title", "ordinary_values": "show"}
+    assert validate_handoff(raw, strict=True).ok
+
+
+def test_strict_rejects_q4_s20_unlabeled_hatch_split():
+    """Q4 2021 s20 leftover (#298): Value Injection hatch has no dollar glyphs."""
+    raw = _g()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["chart_data"]["categories"] = [
+        {"category_id": cid, "label": lab}
+        for cid, lab in (
+            ("q3-20", "Q3'20"),
+            ("q4-20", "Q4'20"),
+            ("q1-21", "Q1'21"),
+            ("q2-21", "Q2'21"),
+            ("q3-21", "Q3'21"),
+            ("q4-21", "Q4'21"),
+        )
+    ]
+    vis["chart_data"]["series"] = [
+        {
+            "series_id": "mkt",
+            "name": "Marketing $B",
+            "values": ["1.1", "1.0", "1.0", "1.3", "1.4", "1.6"],
+        }
+    ]
+    del vis["category_groups"]
+    del vis["auxiliary_series"]
+    del raw["number_formats"]["usd_0"]
+    vis["display"] = {"series_identity": "pane_title", "ordinary_values": "show"}
+    # Page-20 glyphs: Marketing totals $1.1/$1.0/$1.0/$1.3/$1.4/$1.6, NCA 1.4–2.7,
+    # Value Injection legend, FY'21 Marketing $5.3. No hatch-split dollars.
+    assert validate_handoff(raw, strict=True).ok
+
+    # All-null hatch series is illegal — do not invent unlabeled split dollars.
+    vis["chart_data"]["series"].append(
+        {
+            "series_id": "inj",
+            "name": "Value Injection",
+            "values": [None] * 6,
+        }
+    )
+    vis["display"] = {"ordinary_values": "show", "series_identity": "legend"}
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    assert any("requires at least one finite value" in c for c in _contracts(ei))
+
+    # Guessed hatch dollars would validate; s20 must not invent them.
+    vis["chart_data"]["series"][1]["values"] = ["0.1"] * 6
     assert validate_handoff(raw, strict=True).ok

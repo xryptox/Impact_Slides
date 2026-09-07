@@ -2189,7 +2189,10 @@ def build():
         )
     )
 
-    # 20 Marketing + NCA
+    # 20 Marketing + NCA — PDF visual: dual grouped_bar plus unlabeled Value Injection
+    # hatch on Marketing and a FY'21 $5.3 inset. Page-20 glyphs have no hatch-split
+    # dollars, so Marketing stays one total series (#298 leftover). Hatch fill recipe
+    # is out of scope. FY $5.3 inset is optional on shared dual support.
     mkt_cats = [
         ("q3-20", "Q3'20"),
         ("q4-20", "Q4'20"),
@@ -2228,7 +2231,7 @@ def build():
                     "s20-disc",
                     "Notes",
                     [
-                        "FY'21 Marketing $5.3B. Value Injection hatch has no numeric labels on the PDF; hatch dollars were not glyph-readable, so Marketing stays one total series ($1.1 / $1.0 / $1.0 / $1.3 / $1.4 / $1.6). dual_chart has no support slot for the FY inset.",
+                        "FY'21 Marketing $5.3B. Value Injection hatch has no numeric labels on the PDF (#298 leftover); hatch dollars were not glyph-readable, so Marketing stays one total series ($1.1 / $1.0 / $1.0 / $1.3 / $1.4 / $1.6). Do not invent hatch split dollars. FY $5.3 inset is optional on shared dual support.",
                     ],
                 )
             },

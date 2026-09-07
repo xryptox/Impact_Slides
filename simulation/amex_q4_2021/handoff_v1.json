@@ -4920,7 +4920,7 @@
             "items": [
               {
                 "kind": "paragraph",
-                "text": "FY'21 Marketing $5.3B. Value Injection hatch has no numeric labels on the PDF; hatch dollars were not glyph-readable, so Marketing stays one total series ($1.1 / $1.0 / $1.0 / $1.3 / $1.4 / $1.6). dual_chart has no support slot for the FY inset."
+                "text": "FY'21 Marketing $5.3B. Value Injection hatch has no numeric labels on the PDF (#298 leftover); hatch dollars were not glyph-readable, so Marketing stays one total series ($1.1 / $1.0 / $1.0 / $1.3 / $1.4 / $1.6). Do not invent hatch split dollars. FY $5.3 inset is optional on shared dual support."
               }
             ]
           }
