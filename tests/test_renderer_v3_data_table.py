@@ -912,6 +912,8 @@ def test_side_callout_fit_paint_css_parity(tmp_path: Path):
     # Byte-critical: selector is a class, not a compound descendant.
     assert css.encode("utf-8").count(b".data-table-with-callout{") == 1
     assert css.encode("utf-8").count(b".side-callout{") == 1
+    assert css.encode("utf-8").count(b".side-callout .side-callout-heading{") == 1
+    assert b".side-callout.side-callout-heading{" not in css.encode("utf-8")
 
 
 def test_nonstrict_allowlists_side_callout_key():
