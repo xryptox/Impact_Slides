@@ -69,7 +69,7 @@ Counts: faithful 5; accepted Boardroom chrome 41; Type A 5; Type B 2; source/PDF
 | Slide | Title | Layout | SBS | Class | Observation |
 |------:|-------|--------|-----|-------|-------------|
 | 1 | American Express Earnings Conference Call Q4'21 | `opening_cover` | `passes/pass_01/compare/sbs/slide_01.png` | accepted v3 design divergence | Boardroom opening_cover carries the title and January 25, 2022 date. PDF is navy/cyan brand chrome plus Centurion seal. Seal/brand cover is excluded (CONTEXT.md); not a capture failure. |
-| 2 | Summary Financial Performance | `data_table` | `passes/pass_01/compare/sbs/slide_02.png` | accepted v3 design divergence | Six-row Q4/FY grid matches PDF figures. Boardroom data_table vs Amex pill columns is accepted chrome. Gray Notable Impacts side callout has no mixed grid+callout recipe and was folded into disclosure (Type B secondary). |
+| 2 | Summary Financial Performance | `data_table` | `passes/pass_01/compare/sbs/slide_02.png` | accepted v3 design divergence | Six-row Q4/FY grid matches PDF figures. Boardroom data_table vs Amex pill columns is accepted chrome. Gray Notable Impacts side callout was folded into disclosure (`data_table.side_callout` shipped #303; Q4 s02 re-author is follow-up). |
 | 3 | Total Network Volumes Growth | `single_chart` | `passes/pass_01/compare/sbs/slide_03.png` | accepted v3 design divergence | single_chart line + support_table holds labeled Q3'21/Q4'21 vs-2019 endpoints (Billed 4/12, TNV 4/11, Processed 3/3) plus the Q3/Q4/FY table. Q1'20-Q2'21 interiors unlabeled (nulls). Boardroom chrome vs Amex full path. |
 | 4 | Billed Business (G&S vs T&E) | `dual_chart` | `passes/pass_01/compare/sbs/slide_04.png` | accepted v3 design divergence | dual_chart + shared independent support_table: FY stacked G&S/T&E mix $1,071 / $871 / $1,090 and mix 70/30, 85/15, 81/19; grouped_bar of labeled Q4 vs-'19 endpoints 24/(18)/12. Shared Q4 table G&S 24/19, T&E (18)/132, Total 12/33. Q1'20-Q3'21 line interiors unlabeled so the growth pane is not a line (Type A secondary). Boardroom chrome vs Amex 8-quarter path. |
 | 5 | Goods & Services Billed Business (Online vs Offline) | `data_table` | `passes/pass_01/compare/sbs/slide_05.png` | corpus/extraction residual (Type A) | PDF is Online/Offline/Total G&S 8-quarter vs-2019 line plus Q4 table. Only Q4'21 vs '19 endpoints 31/24/12 are labeled. Line requires at least two finite values per series, so a Q4-only line is illegal; interiors unlabeled. Table authored; line leftover named. |
@@ -153,7 +153,7 @@ s24, s35 — 2 slides.
 | 24 | waterfall/bars + share chips + brace-grouped tables | data_table stand-in | renderer recipe | No mixed composition exists |
 | 35 | freeform strategy / org board | 5-node hierarchy drop | renderer recipe | hierarchy max depth/shape cannot paint the PDF board |
 
-s02 Notable Impacts callout is a Type B secondary on an otherwise accepted table.
+s02 Notable Impacts callout remains folded into disclosure (`side_callout` shipped #303; Q4 re-author out of scope).
 
 ### 4. Source/PDF artifact or capture failure
 
