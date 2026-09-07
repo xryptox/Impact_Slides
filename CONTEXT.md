@@ -157,8 +157,8 @@ An IR chart recipe of grouped *horizontal* bars in a discontinuous high-window a
 _Avoid_: broken-axis chart (that's the `y_axis_break` field, a general mechanism), vertical retention bars
 
 **Geometric Callout**:
-Drawable annotation chrome (elbow arrows, measure rules, chevrons, bands) attached to chart geometry — distinct from the text-only `chart_config.annotation` box. Part of the chart painter layer, not slide chrome.
-_Avoid_: annotation (reserved for the text callout field), caption, footnote
+Drawable overlay chrome attached to chart geometry. Schema-v1 field is `geometric_callouts` with closed kinds `elbow_arrow` / `chevron` / `band` (#302). Distinct from semantic `annotations`, quantitative `measurements`, stacked-only `coverage_callout`, and the v2 text-only `chart_config.annotation` box. v2 also had `measure_rule`; v3 does not. Part of the chart painter layer, not slide chrome.
+_Avoid_: annotation (reserved for the text annotation field), caption, footnote
 
 ## Rules
 

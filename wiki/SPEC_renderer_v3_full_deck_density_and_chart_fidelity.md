@@ -1572,13 +1572,16 @@ Pixel-positioned legacy annotations require human anchor selection in migration.
 
 ### D148 — Range measurements are typed facts, not drawing instructions
 
-Schema v1 replaces `elbow_arrow`, `band`, and `measure_rule` with typed
-`measurements`. Each has stable `measurement_id`, role `change` or `cagr`, a
+Schema v1 keeps quantitative range facts as typed `measurements` rather than
+v2 `measure_rule` drawing instructions. Authored elbow/chevron/band overlays
+are a separate closed `geometric_callouts` field (#302), not measurements and
+not D147 annotations. Each measurement has stable `measurement_id`, role `change` or `cagr`, a
 `series_id`, inclusive `from_category_id` and `to_category_id`, explicit
 canonical decimal `value`, `format_id`, and `approximate`. The renderer never
 recomputes the value from rounded endpoints; sign supplies change direction and
-approximation is visible and accessible. The renderer owns rule/elbow chrome,
-placement, collisions, and leaders. Event markers use D147 annotations.
+approximation is visible and accessible. The renderer owns measurement-rule chrome,
+placement, collisions, and leaders. Event markers use D147 annotations;
+elbow/chevron/band overlays use `geometric_callouts` (#302).
 Indexes, visual style names, coordinates, and duplicate display strings are
 invalid. Measurements appear in D106's semantic table. Legacy callouts migrate
 only when role, series, range, value, and format are unambiguous.

@@ -2,7 +2,7 @@
 
 Covers D239/D240/D242–D243/D245/D247/D248/D302/D304/D307, shared D71–D73/D160
 geometry, D163/D246–D248/D308 semantic heatmaps, pie/donut radial mix, and collision-owned
-context/annotation/measurement chrome (D232–D234/D296–D298).
+context/annotation/measurement chrome (D232–D234/D296–D298) plus geometric vs-2019 callouts (#302).
 """
 from __future__ import annotations
 
@@ -4571,9 +4571,25 @@ def _attach_chart_facts(
     plan["context_labels"] = ctx["placements"]
     plan["annotations"] = anns["placements"]
     plan["measurements"] = meas["placements"]
+    geo = _freeze_geometric_callouts(
+        chart,
+        categories=cats,
+        pad_l=pad_l,
+        pad_t=pad_t,
+        plot_w=plot_w,
+        plot_h=plot_h,
+        occupied=occupied,
+        role_sizes=role_sizes,
+        placements=list(plan.get("placements") or []),
+        bars=list(plan.get("bars") or []),
+        horizontal=horizontal,
+    )
+    plan["geometric_callouts"] = geo["placements"]
+    plan["geometric_callout_overflow"] = geo["overflow"]
     diags = list(ctx.get("diagnostics") or [])
     diags.extend(anns.get("diagnostics") or [])
     diags.extend(meas.get("diagnostics") or [])
+    diags.extend(geo.get("diagnostics") or [])
     plan["fact_chrome"] = {
         "context_suppressed": ctx["suppressed"],
         "context_px": ctx["px"],
@@ -4590,11 +4606,16 @@ def _attach_chart_facts(
         facts.extend(ctx["facts"])
         facts.extend(anns["facts"])
         facts.extend(meas["facts"])
+        facts.extend(geo["facts"])
         table["facts"] = facts
         plan["semantic_table"] = table
     plan.setdefault("extra_facts", [])
     plan["extra_facts"] = (
-        list(plan["extra_facts"]) + ctx["facts"] + anns["facts"] + meas["facts"]
+        list(plan["extra_facts"])
+        + ctx["facts"]
+        + anns["facts"]
+        + meas["facts"]
+        + geo["facts"]
     )
     return plan
 
@@ -4668,6 +4689,246 @@ def _paint_fact_chrome_svg(plan: dict[str, Any], parts: list[str], ink: str) -> 
             f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-size="{px}" '
             f'font-variant-numeric="tabular-nums" fill="{_e(ink)}">'
             f'{_e(place["text"])}</text>'
+            f"</g>"
+        )
+    _paint_geometric_callouts_svg(plan, parts, ink)
+
+
+_GEO_LABEL_PX = {
+    "value": "ordinary_values",
+    "segment": "segment_labels",
+    "stack_total": "stack_totals",
+    "structural": "structural_values",
+}
+_TICK_BASELINE = 22
+
+
+def _freeze_geometric_callouts(
+    chart: Any,
+    *,
+    categories: list[dict[str, Any]],
+    pad_l: float,
+    pad_t: float,
+    plot_w: float,
+    plot_h: float,
+    occupied: list[tuple[float, float, float, float]],
+    role_sizes: Mapping[str, int],
+    placements: list[dict[str, Any]],
+    bars: list[dict[str, Any]],
+    horizontal: bool = False,
+) -> dict[str, Any]:
+    """Category-anchored elbow/chevron/band overlay; collision is overflow (#302)."""
+    callouts = list(getattr(chart, "geometric_callouts", None) or [])
+    px = int(role_sizes.get("annotations", 13))
+    tick_px = int(role_sizes.get("category_ticks", 20))
+    cat_xy = _category_centers(categories)
+    facts: list[str] = []
+    frozen: list[dict[str, Any]] = []
+    overflow = False
+    live = list(occupied)
+    for p in placements:
+        if p.get("class") == "suppressed":
+            continue
+        if p.get("x") is None or p.get("y") is None:
+            continue
+        kind = p.get("kind")
+        role = _GEO_LABEL_PX.get(kind)
+        if role is None:
+            continue
+        label_px = int(role_sizes.get(role, px) or px)
+        tw = max(20.0, len(str(p.get("text") or "")) * label_px * 0.55)
+        live.append(_fact_box(float(p["x"]), float(p["y"]), tw, float(label_px)))
+    for cat in categories:
+        label = str(cat.get("short_label") or cat.get("label") or "")
+        tw = max(20.0, len(label) * tick_px * 0.55)
+        if horizontal:
+            if cat.get("x") is None or cat.get("y") is None:
+                continue
+            live.append(
+                _fact_box(float(cat["x"]), float(cat["y"]), tw, float(tick_px))
+            )
+        elif cat.get("x") is not None:
+            live.append(
+                _fact_box(
+                    float(cat["x"]), pad_t + plot_h + _TICK_BASELINE, tw, float(tick_px)
+                )
+            )
+    for c in callouts:
+        facts.append(f"Callout {c.kind}: {c.text}")
+        anchor = c.anchor
+        if c.kind == "chevron":
+            cat = cat_xy.get(anchor.category_id)
+            if not cat:
+                overflow = True
+                continue
+            if horizontal:
+                x = pad_l + plot_w + 10
+                y = float(cat["y"])
+            else:
+                x = float(cat["x"])
+                y = pad_t + plot_h + _TICK_BASELINE + tick_px + 8
+            w = max(48.0, len(c.text) * px * 0.5)
+            h = px * 1.6 + 10
+            box = _fact_box(x, y, w, h)
+            place = {
+                "kind": "chevron",
+                "callout_id": c.callout_id,
+                "text": c.text,
+                "category_id": anchor.category_id,
+                "x": x,
+                "y": y,
+                "px": px,
+                "x0": x,
+                "x1": x,
+                "y0": y,
+                "y1": y,
+                "horizontal": horizontal,
+            }
+        else:
+            a = cat_xy.get(anchor.from_category_id)
+            b = cat_xy.get(anchor.to_category_id)
+            if not a or not b:
+                overflow = True
+                continue
+            ids = (anchor.from_category_id, anchor.to_category_id)
+            if horizontal:
+                y0, y1 = float(a["y"]), float(b["y"])
+                if y1 < y0:
+                    y0, y1 = y1, y0
+                my = (y0 + y1) / 2
+                ends = [
+                    float(bar.get("end_x", bar["x"]))
+                    for bar in bars
+                    if bar.get("finite")
+                    and not bar.get("missing")
+                    and bar.get("category_id") in ids
+                ]
+                x = (max(ends) + 18) if ends else (pad_l + plot_w - 16)
+                w = px * 1.6 + 16
+                h = max(y1 - y0, 48.0)
+                box = _fact_box(x, my, w, h)
+                place = {
+                    "kind": c.kind,
+                    "callout_id": c.callout_id,
+                    "text": c.text,
+                    "from_category_id": anchor.from_category_id,
+                    "to_category_id": anchor.to_category_id,
+                    "x": x,
+                    "y": my,
+                    "px": px,
+                    "x0": x,
+                    "x1": x,
+                    "y0": y0,
+                    "y1": y1,
+                    "horizontal": True,
+                }
+            else:
+                x0, x1 = float(a["x"]), float(b["x"])
+                if x1 < x0:
+                    x0, x1 = x1, x0
+                mx = (x0 + x1) / 2
+                tops = [
+                    float(bar["y"])
+                    for bar in bars
+                    if bar.get("finite")
+                    and not bar.get("missing")
+                    and bar.get("category_id") in ids
+                    and bar.get("sign", 1) >= 0
+                ]
+                y = (min(tops) - 18) if tops else (pad_t + 16)
+                w = max(x1 - x0, 48.0)
+                h = px * 1.6 + 16
+                box = _fact_box(mx, y, w, h)
+                place = {
+                    "kind": c.kind,
+                    "callout_id": c.callout_id,
+                    "text": c.text,
+                    "from_category_id": anchor.from_category_id,
+                    "to_category_id": anchor.to_category_id,
+                    "x": mx,
+                    "y": y,
+                    "px": px,
+                    "x0": x0,
+                    "x1": x1,
+                    "y0": y,
+                    "y1": y,
+                    "horizontal": False,
+                }
+        if _overlaps(box, live):
+            overflow = True
+            continue
+        frozen.append(place)
+        live.append(box)
+        occupied.append(box)
+    return {
+        "placements": frozen,
+        "facts": facts,
+        "overflow": overflow,
+        "diagnostics": [],
+    }
+
+
+def _paint_geometric_callouts_svg(
+    plan: dict[str, Any], parts: list[str], ink: str
+) -> None:
+    for place in plan.get("geometric_callouts") or []:
+        px = int(place.get("px") or plan.get("role_sizes", {}).get("annotations", 13))
+        cid = _e(place["callout_id"])
+        kind = _e(place["kind"])
+        text = _e(place["text"])
+        if place["kind"] == "chevron":
+            x, y = float(place["x"]), float(place["y"])
+            if place.get("horizontal"):
+                tip = (
+                    f"{x - 8:.1f},{y:.1f} {x:.1f},{y - 6:.1f} {x:.1f},{y + 6:.1f}"
+                )
+                tx, ty, anchor = x + px, y + 4, "start"
+            else:
+                tip = (
+                    f"{x:.1f},{y - 8:.1f} {x - 6:.1f},{y:.1f} {x + 6:.1f},{y:.1f}"
+                )
+                tx, ty, anchor = x, y + px, "middle"
+            parts.append(
+                f'<g class="geometric-callout" data-callout-id="{cid}" '
+                f'data-kind="{kind}" aria-hidden="true">'
+                f'<polygon points="{tip}" fill="{_e(ink)}"/>'
+                f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="{anchor}" '
+                f'font-size="{px}" fill="{_e(ink)}">{text}</text>'
+                f"</g>"
+            )
+            continue
+        if place.get("horizontal"):
+            y0, y1 = float(place["y0"]), float(place["y1"])
+            x = float(place["x"])
+            my = float(place["y"])
+            parts.append(
+                f'<g class="geometric-callout" data-callout-id="{cid}" '
+                f'data-kind="{kind}" aria-hidden="true">'
+                f'<line x1="{x:.1f}" y1="{y0:.1f}" x2="{x:.1f}" y2="{y1:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+                f'<line x1="{x:.1f}" y1="{y0:.1f}" x2="{x - 10:.1f}" y2="{y0:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+                f'<line x1="{x:.1f}" y1="{y1:.1f}" x2="{x - 10:.1f}" y2="{y1:.1f}" '
+                f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+                f'<text x="{x + 4:.1f}" y="{my:.1f}" text-anchor="start" '
+                f'font-size="{px}" fill="{_e(ink)}">{text}</text>'
+                f"</g>"
+            )
+            continue
+        x0, x1 = float(place["x0"]), float(place["x1"])
+        y = float(place["y"])
+        mx = float(place["x"])
+        parts.append(
+            f'<g class="geometric-callout" data-callout-id="{cid}" '
+            f'data-kind="{kind}" aria-hidden="true">'
+            f'<line x1="{x0:.1f}" y1="{y:.1f}" x2="{x1:.1f}" y2="{y:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+            f'<line x1="{x0:.1f}" y1="{y:.1f}" x2="{x0:.1f}" y2="{y + 10:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+            f'<line x1="{x1:.1f}" y1="{y:.1f}" x2="{x1:.1f}" y2="{y + 10:.1f}" '
+            f'stroke="{_e(ink)}" stroke-width="1.5"/>'
+            f'<text x="{mx:.1f}" y="{y - 4:.1f}" text-anchor="middle" '
+            f'font-size="{px}" fill="{_e(ink)}">{text}</text>'
             f"</g>"
         )
 

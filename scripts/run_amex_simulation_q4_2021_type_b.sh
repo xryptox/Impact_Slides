@@ -148,8 +148,8 @@ s06, s07, s09 — dual_chart + PER-PANE support (#284).
   Do NOT set payload.support (shared and per-pane are mutually exclusive).
   Per-pane support_table may be category or independent; columns must match
   THAT pane's category_id order. outlined_support and metric_strip also
-  legal per pane. Geometric vs-2019 callouts still have no recipe — omit
-  them; tables + charts are enough to leave Type B.
+  legal per pane. Geometric vs-2019 callouts exist (#302); Q4 s06/s07
+  re-author is follow-up — omit them; tables + charts are enough to leave Type B.
   s06/s07 PDF: stacked mix + time series, each with an under-plot table.
   s09 PDF: two 8-quarter lines + two Q4 tables. Prefer line if each series
   has >=2 finite values (line validator rejects one-point series); else

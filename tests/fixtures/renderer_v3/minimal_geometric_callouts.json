@@ -1,0 +1,147 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "funding",
+      "label": "Funding"
+    }
+  ],
+  "number_formats": {
+    "usd_0": {
+      "unit": "usd",
+      "value_decimals": 0,
+      "negative_style": "minus"
+    }
+  },
+  "evidence_registry": {
+    "src-board-pack": {
+      "source_name": "Board pack Q4"
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": {
+        "title": "Impact Review"
+      },
+      "evidence_ids": [
+        "src-board-pack"
+      ]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "funding",
+      "title": "Deposit mix",
+      "payload": {
+        "chart": {
+          "type": "chart",
+          "surface_id": "dep-mix",
+          "chart_type": "stacked_bar",
+          "heading": "Deposit composition",
+          "chart_data": {
+            "categories": [
+              {
+                "category_id": "q1",
+                "label": "Q1"
+              },
+              {
+                "category_id": "q2",
+                "label": "Q2"
+              },
+              {
+                "category_id": "q3",
+                "label": "Q3"
+              },
+              {
+                "category_id": "q4",
+                "label": "Q4"
+              }
+            ],
+            "series": [
+              {
+                "series_id": "retail",
+                "name": "Retail",
+                "values": [
+                  "40",
+                  "45",
+                  "50",
+                  "55"
+                ]
+              },
+              {
+                "series_id": "wholesale",
+                "name": "Wholesale",
+                "values": [
+                  "30",
+                  "25",
+                  "20",
+                  "15"
+                ]
+              }
+            ]
+          },
+          "category_axis": {
+            "visible": true,
+            "title": "Quarter"
+          },
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "usd_0",
+              "domain": {
+                "kind": "generated",
+                "target_ticks": 5
+              }
+            }
+          },
+          "display": {
+            "stack_segments": "hide",
+            "stack_totals": "hide",
+            "series_identity": "legend"
+          },
+          "geometric_callouts": [
+            {
+              "callout_id": "vs-2019",
+              "kind": "elbow_arrow",
+              "text": "+6pp vs 2019",
+              "anchor": {
+                "type": "category_range",
+                "from_category_id": "q1",
+                "to_category_id": "q2"
+              }
+            },
+            {
+              "callout_id": "refresh",
+              "kind": "chevron",
+              "text": "Refresh",
+              "anchor": {
+                "type": "category",
+                "category_id": "q3"
+              }
+            }
+          ]
+        }
+      },
+      "takeaway": {
+        "text": "Geometric vs-2019 elbow and Refresh chevron."
+      },
+      "evidence_ids": [
+        "src-board-pack"
+      ],
+      "source_footer": [
+        "src-board-pack"
+      ]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": {
+        "title": "Discussion"
+      }
+    }
+  ]
+}
