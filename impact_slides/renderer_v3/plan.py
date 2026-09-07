@@ -126,6 +126,13 @@ SHARE_CHIP_BORDER: Final = 1  # hairline top+bottom / left+right
 SHARE_CHIP_LABEL_MB: Final = 4  # .share-chip-label margin-bottom
 GROUPED_ANNEX_GAP: Final = 24  # divider gutter between peers
 GROUPED_ANNEX_HEADING_PX: Final = 18
+SIDE_CALLOUT_W: Final = 320  # outer band; table keeps leftover (#303)
+SIDE_CALLOUT_PAD: Final = 16
+SIDE_CALLOUT_BORDER: Final = 1
+SIDE_CALLOUT_HEADING_PX: Final = 16
+SIDE_CALLOUT_BODY_PX: Final = 14
+SIDE_CALLOUT_HEADING_MB: Final = 8  # .side-callout-heading margin-bottom
+SIDE_CALLOUT_ITEM_GAP: Final = 8  # ul gap between items
 COMPARISON_CARD_GAP: Final = 16
 COMPARISON_CARD_PAD: Final = 16
 COMPARISON_CARD_HEADING_FLOOR: Final = 22
@@ -1042,6 +1049,8 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                     lab * _line_box(size) + SHARE_CHIP_LABEL_MB + val * _line_box(size),
                 )
             return h
+        if sp._table_spec is not None and sp._table_spec.get("kind") == "side_callout":
+            return _side_callout_text_height(sp)
         kind = (sp._table_spec or {}).get("kind")
         if kind == "hero_card":
             return _hero_fit_height(sp)
@@ -1064,6 +1073,10 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         if (
             (sp.layout_type == "dual_chart" and sp.role in _AXIS_CHART_ROLES)
             or sp.role == "grouped_annex_table"
+            or (
+                sp.layout_type == "data_table"
+                and sp.role in {"data_table", "side_callout"}
+            )
         ):
             dual_groups.setdefault(sp.slide_number, []).append(i)
     dual_secondary: set[int] = set()
@@ -1345,6 +1358,11 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
             return
         if (sp._table_spec or {}).get("kind") == "hero_card":
             if _hero_fit_height(sp) > sp._box_h:
+                sp._overflow = True
+            return
+        if (sp._table_spec or {}).get("kind") == "side_callout":
+            ok, _ = _side_callout_fit_detail(sp)
+            if not ok:
                 sp._overflow = True
             return
         px = next(iter(sp.role_sizes.values()))
@@ -2740,6 +2758,10 @@ def _collect_single_table_body(
     extra_spec: dict[str, Any] = {"variant": lt}
     if lt == "annex_table":
         extra_spec["density"] = getattr(slide.payload, "density", None) or "default"
+    callout = getattr(slide.payload, "side_callout", None)
+    table_w = CONTENT_W
+    if callout is not None and lt == "data_table":
+        table_w = CONTENT_W - GROUPED_ANNEX_GAP - SIDE_CALLOUT_W
     plans.append(
         _table_surface_plan(
             table=table,
@@ -2749,12 +2771,63 @@ def _collect_single_table_body(
             lt=lt,
             region=region,
             slot_order=slot,
-            box_w=CONTENT_W,
+            box_w=table_w,
             role=role,
             extra_spec=extra_spec,
         )
     )
+    if callout is not None and lt == "data_table":
+        plans.append(
+            _side_callout_plan(
+                callout,
+                sn=sn,
+                slide_index=slide_index,
+                lt=lt,
+                region=region,
+                slot_order=slot + 1,
+            )
+        )
     return len(plans), plans
+
+
+def _side_callout_plan(
+    callout: Any,
+    *,
+    sn: int,
+    slide_index: int,
+    lt: str,
+    region: int,
+    slot_order: int,
+) -> SurfacePlan:
+    items = list(callout.items)
+    texts = [(callout.heading, True)] + [(item, False) for item in items]
+    inner_w = SIDE_CALLOUT_W - 2 * SIDE_CALLOUT_PAD - 2 * SIDE_CALLOUT_BORDER
+    return SurfacePlan(
+        surface_id=callout.surface_id,
+        role="side_callout",
+        slide_number=sn,
+        slide_index=slide_index,
+        layout_type=lt,
+        slot_order=slot_order,
+        design_stage_region=region,
+        role_sizes={
+            "heading": SIDE_CALLOUT_HEADING_PX,
+            "body": SIDE_CALLOUT_BODY_PX,
+        },
+        _text_items=texts,
+        _box_w=max(1, inner_w),
+        _fit_role=None,
+        _mode="fixed",
+        _margin_boxes=0,
+        _chrome_h=0,  # pad/border/margin live in fit height (side-by-side with table)
+        _default_size=SIDE_CALLOUT_BODY_PX,
+        _maximum_size=SIDE_CALLOUT_BODY_PX,
+        _table_spec={
+            "kind": "side_callout",
+            "heading": callout.heading,
+            "items": items,
+        },
+    )
 
 
 def _metric_strip_plan(
@@ -4814,7 +4887,7 @@ def _table_fit_detail(
 def _is_rectangular_table_spec(spec: dict[str, Any] | None) -> bool:
     if not spec or "col_ids" not in spec:
         return False
-    return spec.get("kind") not in {"metric_strip", "outlined_support"}
+    return spec.get("kind") not in {"metric_strip", "outlined_support", "side_callout"}
 
 
 def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
@@ -4839,6 +4912,8 @@ def _surface_fits_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
         return _metric_strip_fit_detail(sp, size)
     if spec is not None and spec.get("kind") == "share_chips":
         return _share_chips_fit_detail(sp, size)
+    if spec is not None and spec.get("kind") == "side_callout":
+        return _side_callout_fit_detail(sp)
     if spec is not None and spec.get("kind") == "outlined_support":
         return _outlined_support_fit_detail(sp, size)
     if spec is not None and spec.get("kind") == "hero_card":
@@ -5055,6 +5130,49 @@ def _share_chips_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
         return True, wrapped
     text_h = total_h - 2 * SHARE_CHIP_PAD_Y
     return text_h <= sp._box_h, wrapped
+
+
+def _side_callout_text_height(sp: SurfacePlan) -> int:
+    """Full painted height: heading + items + pad/border/margin (#303)."""
+    assert sp._table_spec is not None
+    heading_px = sp.role_sizes.get("heading", SIDE_CALLOUT_HEADING_PX)
+    body_px = sp.role_sizes.get("body", SIDE_CALLOUT_BODY_PX)
+    inner_w = max(1, sp._box_w)
+    h = len(_wrap_label_lines(sp._table_spec["heading"], heading_px, inner_w, strong=True)) * _line_box(
+        heading_px
+    )
+    h += SIDE_CALLOUT_HEADING_MB
+    items = list(sp._table_spec.get("items") or [])
+    for i, item in enumerate(items):
+        if i:
+            h += SIDE_CALLOUT_ITEM_GAP
+        h += len(_wrap_label_lines(item, body_px, inner_w)) * _line_box(body_px)
+    return h + 2 * SIDE_CALLOUT_PAD + 2 * SIDE_CALLOUT_BORDER + BLOCK_MARGIN_Y
+
+
+def _side_callout_fit_detail(sp: SurfacePlan) -> tuple[bool, bool]:
+    """Items wrap; unbreakable tokens that exceed inner width overflow."""
+    assert sp._table_spec is not None
+    heading_px = sp.role_sizes.get("heading", SIDE_CALLOUT_HEADING_PX)
+    body_px = sp.role_sizes.get("body", SIDE_CALLOUT_BODY_PX)
+    inner_w = max(1, sp._box_w)
+    wrapped = False
+    h_lines = _wrap_label_lines(
+        sp._table_spec["heading"], heading_px, inner_w, strong=True
+    )
+    if any(_text_width(ln, heading_px, strong=True) > inner_w for ln in h_lines):
+        return False, True
+    if len(h_lines) > 1:
+        wrapped = True
+    for item in sp._table_spec.get("items") or []:
+        lines = _wrap_label_lines(item, body_px, inner_w)
+        if any(_text_width(ln, body_px) > inner_w for ln in lines):
+            return False, True
+        if len(lines) > 1:
+            wrapped = True
+    if sp._box_h <= 0:
+        return True, wrapped
+    return _side_callout_text_height(sp) <= sp._box_h, wrapped
 
 
 def _linear_lines(

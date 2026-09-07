@@ -2351,10 +2351,21 @@
     },
     "DataTablePayload": {
       "additionalProperties": false,
-      "description": "Ordinary full-width table composition payload (D183/D257).",
+      "description": "Ordinary table composition payload (D183/D257); optional side band (#303).",
       "properties": {
         "table": {
           "$ref": "#/$defs/TableData"
+        },
+        "side_callout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SideCallout"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -7877,6 +7888,39 @@
         "chips"
       ],
       "title": "ShareChips",
+      "type": "object"
+    },
+    "SideCallout": {
+      "additionalProperties": false,
+      "description": "Optional Notable Impacts band beside data_table (#303).",
+      "properties": {
+        "surface_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "surface_id",
+        "heading",
+        "items"
+      ],
+      "title": "SideCallout",
       "type": "object"
     },
     "SingleChartPayload": {

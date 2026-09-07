@@ -405,7 +405,7 @@ def drop_unknown_fields(raw: Any, events: list[DiagnosticEvent]) -> Any:
                     layout_type=layout,
                 )
             payload_fields = {
-                "data_table": {"table"},
+                "data_table": {"table", "side_callout"},
                 "annex_table": {"table", "density"},
                 "grouped_annex_table": {"tables"},
                 "chart_grouped_annex": {"chart", "tables", "share_chips"},

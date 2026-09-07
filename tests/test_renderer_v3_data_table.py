@@ -1,4 +1,4 @@
-"""Renderer v3 data_table + semantic values (#179).
+"""Renderer v3 data_table + semantic values (#179) + optional side callout (#303).
 
 Seams under test:
 - tagged SemanticValue + deck number_formats registry (D143/D144/D213/D214/D293)
@@ -6,11 +6,13 @@ Seams under test:
 - rectangular identity-safe table model (D141/D255/D256)
 - data_table composition paint + a11y associations (D183/D257/D104/D105)
 - one common fitted size + strict/non-strict overflow (D24/D25/D44)
+- optional payload.side_callout band (unique surface, omit = today's table, #303)
 """
 from __future__ import annotations
 
 import json
 import math
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -731,3 +733,191 @@ def test_table_sync_group_uses_grid_fit_not_prose():
         )
         assert ok
         assert "plan.synchronized" in sp.adaptation_codes
+
+
+# ---------------------------------------------------------------------------
+# Optional side callout (#303)
+# ---------------------------------------------------------------------------
+
+
+def _side_callout(
+    *,
+    surface_id: str = "notable",
+    heading: str = "Notable Impacts",
+    items: list[str] | None = None,
+) -> dict:
+    return {
+        "surface_id": surface_id,
+        "heading": heading,
+        "items": list(items)
+        if items is not None
+        else [
+            "Credit Reserve releases $2,481",
+            "Net gains on Amex Ventures equity investments $767",
+            "GBT Investment Gain $238",
+        ],
+    }
+
+
+def _with_side_callout(callout: dict | None = None) -> dict:
+    raw = _table_raw()
+    raw["slides"][1]["payload"]["side_callout"] = (
+        callout if callout is not None else _side_callout()
+    )
+    return raw
+
+
+def test_omit_side_callout_stays_full_width_table():
+    result = validate_handoff(_table_raw(), strict=True)
+    assert result.ok
+    assert result.deck.slides[1].payload.side_callout is None
+    plan = plan_deck(result.deck, strict=True)
+    tables = [s for s in plan.surfaces if s.role == "data_table"]
+    assert len(tables) == 1
+    from impact_slides.renderer_v3.plan import CONTENT_W
+
+    assert tables[0]._box_w == CONTENT_W
+    assert not any(s.role == "side_callout" for s in plan.surfaces)
+
+
+def test_side_callout_validates_and_paints_beside_grid(tmp_path: Path):
+    raw = _with_side_callout()
+    result = validate_handoff(raw, strict=True)
+    assert result.ok
+    payload = result.deck.slides[1].payload
+    assert payload.side_callout.surface_id == "notable"
+    assert payload.side_callout.heading == "Notable Impacts"
+    assert len(payload.side_callout.items) == 3
+    plan = plan_deck(result.deck, strict=True)
+    table = next(s for s in plan.surfaces if s.role == "data_table")
+    band = next(s for s in plan.surfaces if s.role == "side_callout")
+    from impact_slides.renderer_v3.plan import (
+        CONTENT_W,
+        GROUPED_ANNEX_GAP,
+        SIDE_CALLOUT_BORDER,
+        SIDE_CALLOUT_PAD,
+        SIDE_CALLOUT_W,
+    )
+
+    assert table.surface_id == "seg-perf"
+    assert band.surface_id == "notable"
+    assert table._box_w + GROUPED_ANNEX_GAP + SIDE_CALLOUT_W == CONTENT_W
+    assert band._box_w == SIDE_CALLOUT_W - 2 * SIDE_CALLOUT_PAD - 2 * SIDE_CALLOUT_BORDER
+    assert table.table_paint is not None
+    assert sum(table.table_paint["col_widths"]) == table._box_w
+    assert not table._overflow and not band._overflow
+    assert band.role_sizes["heading"] >= 16
+    assert band.role_sizes["body"] >= 14
+
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    start = html.index('data-layout="data_table"')
+    chunk = html[start : html.find("</section>", start)]
+    assert 'class="data-table-with-callout"' in chunk
+    assert 'data-table-surface="seg-perf"' in chunk
+    assert 'data-side-callout="notable"' in chunk
+    assert "Notable Impacts" in chunk
+    assert "Credit Reserve releases $2," in chunk and "481" in chunk
+    assert chunk.index("data-table-surface") < chunk.index("data-side-callout")
+    assert "side-callout-item" in chunk
+    assert chunk.count("side-callout-item") == 3
+
+
+def test_mutation_drop_side_callout_paints_today_table(tmp_path: Path):
+    raw = _with_side_callout()
+    raw["slides"][1]["payload"].pop("side_callout")
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    start = html.index('data-layout="data_table"')
+    chunk = html[start : html.find("</section>", start)]
+    assert "data-table-with-callout" not in chunk
+    assert "side-callout" not in chunk
+    assert 'data-table-surface="seg-perf"' in chunk
+    assert "$1,234.6" in chunk
+
+
+@pytest.mark.parametrize("n", [0, 7])
+def test_strict_rejects_side_callout_item_count(n: int):
+    items = ["Impact"] * n
+    with pytest.raises(RendererValidationError):
+        validate_handoff(_with_side_callout(_side_callout(items=items)), strict=True)
+
+
+def test_strict_rejects_side_callout_html_and_surface_collision():
+    with pytest.raises(RendererValidationError):
+        validate_handoff(
+            _with_side_callout(_side_callout(heading="Notable <b>Impacts</b>")),
+            strict=True,
+        )
+    with pytest.raises(RendererValidationError):
+        validate_handoff(
+            _with_side_callout(_side_callout(items=["Gain <i>on sale</i>"])),
+            strict=True,
+        )
+    with pytest.raises(RendererValidationError):
+        validate_handoff(
+            _with_side_callout(_side_callout(surface_id="seg-perf")),
+            strict=True,
+        )
+
+
+def test_side_callout_starves_table_min_overflows():
+    """Band + unbreakable IR value that still fits full-width must overflow when paired."""
+    from impact_slides.renderer_v3.plan import CONTENT_W, GROUPED_ANNEX_GAP, SIDE_CALLOUT_W
+
+    token = "X" * 130
+    raw = _with_side_callout()
+    raw["slides"][1]["payload"]["table"]["rows"][0]["cells"]["note"] = {
+        "type": "text",
+        "text": token,
+    }
+    result = validate_handoff(raw, strict=True)
+    with pytest.raises(RendererValidationError):
+        plan_deck(result.deck, strict=True)
+    raw["slides"][1]["payload"].pop("side_callout")
+    plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    assert CONTENT_W - GROUPED_ANNEX_GAP - SIDE_CALLOUT_W < CONTENT_W
+
+
+def test_side_callout_fit_paint_css_parity(tmp_path: Path):
+    raw = _with_side_callout()
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    band = next(s for s in plan.surfaces if s.role == "side_callout")
+    heading_px = band.role_sizes["heading"]
+    body_px = band.role_sizes["body"]
+    start = html.index('data-layout="data_table"')
+    chunk = html[start : html.find("</section>", start)]
+    callout_html = chunk[chunk.index("side-callout") :]
+    assert f"font-size:{heading_px}px" in callout_html
+    assert f"font-size:{body_px}px" in callout_html
+    css = html[: html.index("</style>")]
+    pad = re.search(r"\.side-callout\{[^}]*padding:(\d+)px", css)
+    gap = re.search(r"\.data-table-with-callout\{[^}]*gap:(\d+)px", css)
+    assert pad is not None and gap is not None
+    from impact_slides.renderer_v3.plan import GROUPED_ANNEX_GAP, SIDE_CALLOUT_PAD
+
+    assert int(pad.group(1)) == SIDE_CALLOUT_PAD
+    assert int(gap.group(1)) == GROUPED_ANNEX_GAP
+    # Byte-critical: selector is a class, not a compound descendant.
+    assert css.encode("utf-8").count(b".data-table-with-callout{") == 1
+    assert css.encode("utf-8").count(b".side-callout{") == 1
+
+
+def test_nonstrict_allowlists_side_callout_key():
+    raw = _with_side_callout()
+    raw["slides"][1]["payload"]["unexpected"] = True
+    result = validate_handoff(raw, strict=False)
+    assert result.repaired is True
+    assert result.deck.slides[1].payload.side_callout is not None
+    assert not hasattr(result.deck.slides[1].payload, "unexpected")
