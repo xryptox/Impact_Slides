@@ -252,6 +252,80 @@ def test_strict_rejects_q4_s26_five_series_one_point_line_shape():
     assert "4 series" in contracts
 
 
+def test_strict_rejects_q4_s30_unlabeled_scenario_lines():
+    """Q4 2021 s30 leftover (#300): dual 4-series lines, no labeled endpoints."""
+    raw = _raw()
+    cats = [
+        ("q3-20", "Q3'20"),
+        ("q4-20", "Q4'20"),
+        ("q1-21", "Q1'21"),
+        ("q2-21", "Q2'21"),
+        ("q3-21", "Q3'21"),
+        ("q4-21", "Q4'21"),
+        ("q1-22", "Q1'22"),
+        ("q2-22", "Q2'22"),
+        ("q3-22", "Q3'22"),
+        ("q4-22", "Q4'22"),
+        ("q1-23", "Q1'23"),
+        ("q2-23", "Q2'23"),
+        ("q3-23", "Q3'23"),
+        ("q4-23", "Q4'23"),
+    ]
+    series_names = (
+        ("q3-base", "Q3 Baseline"),
+        ("q3-down", "Q3 Downside"),
+        ("q4-base", "Q4 Baseline"),
+        ("q4-down", "Q4 Downside"),
+    )
+    n = len(cats)
+
+    def _pane(surface_id: str, heading: str) -> dict:
+        chart = deepcopy(raw["slides"][1]["payload"]["chart"])
+        chart["surface_id"] = surface_id
+        chart["heading"] = heading
+        chart["chart_data"]["categories"] = [
+            {"category_id": cid, "label": lab} for cid, lab in cats
+        ]
+        # Page-30 glyphs: axis ticks (Unemployment 0-18%, GDP (10%)-40%),
+        # quarter labels, series names. No labeled endpoints.
+        chart["chart_data"]["series"] = [
+            {"series_id": sid, "name": name, "values": [None] * n}
+            for sid, name in series_names
+        ]
+        return chart
+
+    raw["slides"][1]["layout_type"] = "dual_chart"
+    raw["slides"][1]["payload"] = {
+        "charts": [
+            _pane("s30-unemp", "US Unemployment Rate %"),
+            _pane("s30-gdp", "US GDP Growth* %"),
+        ]
+    }
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    contracts = " ".join(
+        (e.expected.contract if e.expected else "") for e in ei.value.events
+    )
+    assert "requires at least two finite values" in contracts
+
+    # One finite per series is still illegal; ticks are not observations.
+    for pane in raw["slides"][1]["payload"]["charts"]:
+        for series in pane["chart_data"]["series"]:
+            series["values"] = [None] * (n - 1) + ["1"]
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    contracts = " ".join(
+        (e.expected.contract if e.expected else "") for e in ei.value.events
+    )
+    assert "requires at least two finite values" in contracts
+
+    # Second finite is legal; s30 must not invent that point.
+    for pane in raw["slides"][1]["payload"]["charts"]:
+        for series in pane["chart_data"]["series"]:
+            series["values"][n - 2] = "1"
+    assert validate_handoff(raw, strict=True).ok
+
+
 def test_strict_rejects_duplicate_series_names():
     raw = _raw()
     raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][1]["name"] = "US"
