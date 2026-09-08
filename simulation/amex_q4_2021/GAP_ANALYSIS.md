@@ -13,8 +13,8 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 | Handoff schema | 1 (`meta.handoff_schema_version`) |
 | Slides | 53 (`slide_number` 1..53; evidence `amex-q4-2021-p01`..`p53`) |
 | Renderer | renderer_v3 **3.0.0**, theme `boardroom_amex` |
-| Repository commit at render | parent `510eb56` plus #321 s24 re-author |
-| Branch | `ticket-wave/031c70ad-4842-4187-9907-714f386441e1/issue-321` |
+| Repository commit at render | parent `510eb564742b10eb382767933967506f20be0adf` plus #317 s11 domain pin |
+| Branch | `ticket-wave/031c70ad-4842-4187-9907-714f386441e1/issue-317` |
 | Render | strict, exit 0, `run_meta.status=clean`, `ok=true`, warnings=0 errors=0 |
 | HTML identity | 53 unique `data-slide-number` 1..53; `data-layout` matches authored `layout_type` |
 | Capture viewport | 1920x1080, `deviceScaleFactor=1`; stacked-deck fit transforms cleared before element screenshots |
@@ -24,10 +24,10 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 
 | Artifact | Bytes | SHA-256 |
 |----------|------:|---------|
-| presentation.html | 1038687 | `b6e8e49d13a1ff682f958bf6952a0147a57beb78d0aad41fef9b233581f94af0` |
+| presentation.html | 1037882 | `103668429a4e11a89376a786c92ea449b2c8082788532e66830917a6c2ab802a` |
 | slide_notes.md | 3361 | `1e7f90090b726e5bf9cbbc081b9b557b5f7a04219b535fb087fac259a8984b41` |
 | evidence_manifest.json | 25028 | `1e0f9031d87ad8429479964732bbafd89a5bf4ce69b560559d4777e5a69f3751` |
-| run_meta.json | 252862 | `2f524350b74371a35e0b845a2dfd0d4f555138bff9848c704e6d8f775812ef2f` |
+| run_meta.json | 252862 | `b97f59d013d735175d097a1f473e51186505ad7633ca86f621cec9a133e7112c` |
 | handoff_schema_v1.json | 242133 | `fedbfa48837f7de5f53700ba7d77ebbcd124776395f42ba87dcb9e7782ca68f1` |
 
 `run_meta` info events (not errors): 53 `plan.typography_grown`, 18 `plan.text_wrapped`, 9 `plan.synchronized`, 2 `plan.label_ellipsized`, 2 `plan.short_label_used`.
