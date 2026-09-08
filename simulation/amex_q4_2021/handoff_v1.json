@@ -1616,7 +1616,7 @@
             },
             "support": {
               "support_type": "support_table",
-              "alignment": "category",
+              "alignment": "independent",
               "table": {
                 "surface_id": "s06-age-tbl",
                 "stub_header": {
@@ -1926,7 +1926,7 @@
             },
             "support": {
               "support_type": "support_table",
-              "alignment": "category",
+              "alignment": "independent",
               "table": {
                 "surface_id": "s07-sme-tbl",
                 "stub_header": {
@@ -2302,7 +2302,7 @@
             },
             "support": {
               "support_type": "support_table",
-              "alignment": "category",
+              "alignment": "independent",
               "table": {
                 "surface_id": "s09-us-tbl",
                 "stub_header": {
@@ -2459,7 +2459,7 @@
             },
             "support": {
               "support_type": "support_table",
-              "alignment": "category",
+              "alignment": "independent",
               "table": {
                 "surface_id": "s09-gs-tbl",
                 "stub_header": {
