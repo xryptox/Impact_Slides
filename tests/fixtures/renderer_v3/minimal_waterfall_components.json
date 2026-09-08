@@ -1,0 +1,124 @@
+{
+  "meta": { "handoff_schema_version": 1 },
+  "sections": [{ "section_id": "bridge", "label": "Bridge" }],
+  "number_formats": {
+    "usd_0": { "unit": "usd", "value_decimals": 0, "negative_style": "minus" }
+  },
+  "evidence_registry": {
+    "src-board-pack": { "source_name": "Board pack Q4" }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "opening_cover",
+      "payload": { "title": "Impact Review" },
+      "evidence_ids": ["src-board-pack"]
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "single_chart",
+      "section_id": "bridge",
+      "title": "Total reserves",
+      "content": { "subtitle": "Reported currency" },
+      "payload": {
+        "chart": {
+          "type": "chart",
+          "surface_id": "reserves-bridge",
+          "chart_type": "waterfall",
+          "heading": "Total reserves",
+          "subtitle": "USD millions",
+          "waterfall_data": {
+            "steps": [
+              {
+                "category_id": "open",
+                "label": "Opening",
+                "role": "total",
+                "value": "100",
+                "components": [
+                  { "series_id": "loans", "name": "Total Loans", "value": "70", "color": "primary_blue" },
+                  { "series_id": "receivables", "name": "Card Member Receivables", "value": "30", "color": "navy" }
+                ]
+              },
+              {
+                "category_id": "chg1",
+                "label": "Price",
+                "role": "change",
+                "value": "20",
+                "components": [
+                  { "series_id": "loans", "name": "Total Loans", "value": "12", "color": "primary_blue" },
+                  { "series_id": "receivables", "name": "Card Member Receivables", "value": "8", "color": "navy" }
+                ]
+              },
+              {
+                "category_id": "y1",
+                "label": "Year-1",
+                "role": "total",
+                "value": "120",
+                "components": [
+                  { "series_id": "loans", "name": "Total Loans", "value": "85", "color": "primary_blue" },
+                  { "series_id": "receivables", "name": "Card Member Receivables", "value": "35", "color": "navy" }
+                ]
+              },
+              {
+                "category_id": "chg2",
+                "label": "Volume",
+                "role": "change",
+                "value": "-30",
+                "components": [
+                  { "series_id": "loans", "name": "Total Loans", "value": "-20", "color": "primary_blue" },
+                  { "series_id": "receivables", "name": "Card Member Receivables", "value": "-10", "color": "navy" }
+                ]
+              },
+              {
+                "category_id": "y2",
+                "label": "Year-2",
+                "role": "total",
+                "value": "90",
+                "components": [
+                  { "series_id": "loans", "name": "Total Loans", "value": "60", "color": "primary_blue" },
+                  { "series_id": "receivables", "name": "Card Member Receivables", "value": "30", "color": "navy" }
+                ]
+              },
+              {
+                "category_id": "chg3",
+                "label": "FX",
+                "role": "change",
+                "value": "20",
+                "components": [
+                  { "series_id": "loans", "name": "Total Loans", "value": "12", "color": "primary_blue" },
+                  { "series_id": "receivables", "name": "Card Member Receivables", "value": "8", "color": "navy" }
+                ]
+              },
+              {
+                "category_id": "close",
+                "label": "Closing",
+                "role": "computed_total",
+                "components": [
+                  { "series_id": "loans", "name": "Total Loans", "value": "72", "color": "primary_blue" },
+                  { "series_id": "receivables", "name": "Card Member Receivables", "value": "38", "color": "navy" }
+                ]
+              }
+            ]
+          },
+          "category_axis": { "visible": true, "title": "Step" },
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "usd_0",
+              "domain": { "kind": "generated", "target_ticks": 5 },
+              "title": "USD m"
+            }
+          }
+        }
+      },
+      "takeaway": { "text": "Two-tone loans and receivables foot each net step." },
+      "evidence_ids": ["src-board-pack"],
+      "source_footer": ["src-board-pack"]
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "closing_cover",
+      "payload": { "title": "Discussion" }
+    }
+  ]
+}

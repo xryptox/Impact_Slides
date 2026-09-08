@@ -1785,8 +1785,10 @@ never implies computation; roles are never inferred from sign, label, position,
 or value. Theme-owned increase/decrease/total colors and the axis format apply;
 D52/D146 labels cannot be suppressed. A missing change makes later computed
 totals unknown until an explicit total restores level. Multiple series,
-secondary axes, stacking, and arbitrary step colors are invalid. Malformed
-waterfalls strict-fail or use D102's non-strict semantic-table pane fallback.
+secondary axes, stacked_bar / second-series stacking, and arbitrary step
+colors remain invalid. Optional 2–4 named components that foot a step net:
+`impact_slides/renderer_v3/AGENTS.md` (#319). Malformed waterfalls strict-fail
+or use D102's non-strict semantic-table pane fallback.
 
 ### D163 — Heatmaps are typed semantic tables with one color scale
 
@@ -3068,9 +3070,10 @@ Theme owns increase/decrease/total colors, bridges, and semantic zero line.
 Structural labels cannot hide/suppress/abbreviate. No legend; categories and
 roles own identity. Common contexts/annotations/measurements remain, with the
 reserved implicit series ID `waterfall` for point/measurement references.
-Auxiliaries, coverage, groups, breaks, secondary axes, stacking, ordinary
-display fields, arbitrary series/style are invalid. D106 records each role,
-authored/computed value and running level. Chart.js/SVG match levels, resets,
+Auxiliaries, coverage, groups, breaks, secondary axes, stacked_bar /
+second-series stacking, ordinary display fields, and arbitrary series/style
+remain invalid. Optional 2–4 footing components: `impact_slides/renderer_v3/AGENTS.md`
+(#319). D106 records each role, authored/computed value and running level. Chart.js/SVG match levels, resets,
 bridges, labels, and D106. Malformed/unresolved arithmetic strict-fails or uses
 complete D102 fallback without guessing, skipping, or partial painting.
 
@@ -4392,7 +4395,8 @@ fallback, never loss. D160 owns pitch/rects/levels/connectors/zero/anchors with
 painter parity within 2px. D247 includes ordered type/authored/computed/reset facts
 and accessibility distinguishes change direction/authored/computed totals.
 Custom series/colors/connectors/step labels/geometry/style/formula/painter controls
-invalid. Strict rejects sequence/IDs/text/type/value/rules/axis/format/fields/fit.
+remain invalid. Optional 2–4 footing components: `impact_slides/renderer_v3/AGENTS.md`
+(#319). Strict rejects sequence/IDs/text/type/value/rules/axis/format/fields/fit.
 Non-strict never guesses or deletes/reconnects, uses complete fallback and reports
 exact defect. Migration requires clear sequence/identity/type/value/format/reset.
 
