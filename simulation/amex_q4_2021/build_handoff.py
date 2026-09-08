@@ -1499,39 +1499,28 @@ def build():
         )
     )
 
-    # 12 Total Provision — combo write-offs + reserve + total
+    # 12 Total Provision — stacked write-offs + reserve; PDF totals, no combo line
     slides.append(
         ordinary(
             12,
             "chart_hero_dual",
             "Total Provision",
             {
-                "chart": combo(
+                "chart": sbar(
                     "s12-prov",
                     "Total Provision",
+                    Q20_21,
                     [
-                        ("q1-20", "Q1'20"),
-                        ("q2-20", "Q2'20"),
-                        ("q3-20", "Q3'20"),
-                        ("q4-20", "Q4'20"),
-                        ("q1-21", "Q1'21"),
-                        ("q2-21", "Q2'21"),
-                        ("q3-21", "Q3'21"),
-                        ("q4-21", "Q4'21"),
-                    ],
-                    [
-                        {
-                            "series_id": "write-offs",
-                            "name": "Write-offs",
-                            "mark_type": "bar",
-                            "values": ["918", "927", "781", "563", "379", "260", "202", "221"],
-                            "color": "navy",
-                        },
-                        {
-                            "series_id": "reserve",
-                            "name": "Reserve Build/(Release)*",
-                            "mark_type": "bar",
-                            "values": [
+                        ser(
+                            "write-offs",
+                            "Write-offs",
+                            ["918", "927", "781", "563", "379", "260", "202", "221"],
+                            "navy",
+                        ),
+                        ser(
+                            "reserve",
+                            "Reserve Build/(Release)*",
+                            [
                                 "1703",
                                 "628",
                                 "-116",
@@ -1541,28 +1530,22 @@ def build():
                                 "-393",
                                 "-168",
                             ],
-                            "color": "primary_blue",
-                        },
-                        {
-                            "series_id": "total",
-                            "name": "Total Provision",
-                            "mark_type": "line",
-                            "values": [
-                                "2621",
-                                "1555",
-                                "665",
-                                "-111",
-                                "-675",
-                                "-606",
-                                "-191",
-                                "53",
-                            ],
-                            "color": "sky_blue",
-                        },
+                            "primary_blue",
+                        ),
                     ],
-                    bar_mode="stacked",
-                    pfmt="usd_0",
+                    fmt="usd_0",
                     subtitle="$ in millions",
+                    totals=[
+                        "2621",
+                        "1555",
+                        "665",
+                        "-111",
+                        "-675",
+                        "-606",
+                        "-191",
+                        "53",
+                    ],
+                    tot_fmt="usd_0",
                 ),
                 "hero": {
                     "hero_type": "driver_card",
