@@ -3182,18 +3182,9 @@ def _paint_waterfall_svg(
                 f'<text x="16" y="{cy}" text-anchor="middle" font-size="{title_px}" '
                 f'transform="rotate(-90 16 {cy})" fill="{_e(ink)}">{_e(val_title)}</text>'
             )
-        # Connectors + structural labels ride the chrome overlay so settled
-        # Chart.js path retains bridges/labels (D245/D248/D307); bars stay on marks.
-        for conn in plan.get("connectors") or []:
-            parts.append(
-                f'<line class="waterfall-connector" '
-                f'data-from="{_e(conn["from_category_id"])}" '
-                f'data-to="{_e(conn["to_category_id"])}" '
-                f'x1="{conn["x1"]:.1f}" y1="{conn["y"]:.1f}" '
-                f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
-                f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
-            )
-        _paint_waterfall_labels(plan, parts, ink)
+        # Axes/ticks stay behind marks. Connectors + labels paint after bars
+        # so SVG-only/noscript in-bar segment labels are not occluded; Chart.js
+        # overlay still uses marks=False chrome SVG above the canvas (D245/D248/D307).
 
     if marks:
         for bar in plan.get("bars") or []:
@@ -3217,18 +3208,19 @@ def _paint_waterfall_svg(
                     f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
                     f'fill="{_e(bar["color"])}"/>'
                 )
+
+    if chrome or marks:
         # Full SVG (noscript) still needs connectors/labels when chrome=False.
-        if not chrome:
-            for conn in plan.get("connectors") or []:
-                parts.append(
-                    f'<line class="waterfall-connector" '
-                    f'data-from="{_e(conn["from_category_id"])}" '
-                    f'data-to="{_e(conn["to_category_id"])}" '
-                    f'x1="{conn["x1"]:.1f}" y1="{conn["y"]:.1f}" '
-                    f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
-                    f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
-                )
-            _paint_waterfall_labels(plan, parts, ink)
+        for conn in plan.get("connectors") or []:
+            parts.append(
+                f'<line class="waterfall-connector" '
+                f'data-from="{_e(conn["from_category_id"])}" '
+                f'data-to="{_e(conn["to_category_id"])}" '
+                f'x1="{conn["x1"]:.1f}" y1="{conn["y"]:.1f}" '
+                f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
+                f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
+            )
+        _paint_waterfall_labels(plan, parts, ink)
 
     if chrome:
         ink_fact = resolve_color("navy", role="text_on_light")

@@ -578,6 +578,14 @@ def test_components_paint_two_tone_segments_and_net_labels():
     assert svg.count('class="bar waterfall-segment"') == 14
     assert svg.count('data-kind="segment"') == 14
     assert svg.count("waterfall-value") == 7
+    # SVG document order is paint order: in-bar labels must sit above rects.
+    assert svg.rfind('class="bar waterfall-segment"') < svg.find(
+        'class="waterfall-segment-label"'
+    )
+    svg_only = "".join(paint_chart_html(cp, svg_only=True))
+    assert svg_only.rfind('class="bar waterfall-segment"') < svg_only.find(
+        'class="waterfall-segment-label"'
+    )
     assert "Total Loans" in svg or any(
         p.get("kind") == "segment" for p in cp["placements"]
     )
