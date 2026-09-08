@@ -79,7 +79,7 @@ Counts: faithful 5; accepted Boardroom chrome 41; Type A 5; Type B 2; source/PDF
 | 9 | Billed Business Growth by Region | `dual_chart` | `passes/pass_01/compare/sbs/slide_09.png` | accepted v3 design divergence | dual_chart per-pane support: US vs International grouped_bar of labeled Q4 vs-2019 16/(1)/12 plus category table; G&S vs T&E by region grouped_bar of labeled Q4 vs-2019 26/19/24/(10)/(36)/(18) plus category table. 8-quarter interiors unlabeled (#301 leftover). Page-9 glyphs: axis ticks (100)/(80)/(60)/(40)/(20)/0/20, quarter labels, series names, Q4 tables. No second labeled plot point. Boardroom bars vs Amex lines. |
 | 10 | Worldwide Total Loans and Card Member Receivables | `dual_chart` | `passes/pass_01/compare/sbs/slide_10.png` | accepted v3 design divergence | dual grouped_bar with boxed YoY and year groups. Dollar bars and YoY match ($88.1-$91.5 loans; $56.6-$53.6 receivables). Boardroom boxed labels vs in-bar YoY boxes. |
 | 11 | Card Member Credit Metrics | `dual_chart` | `passes/pass_01/compare/sbs/slide_11.png` | accepted v3 design divergence | dual grouped_bar restores loan write-offs 2.5% to 0.6% and receivables 2.0% to 0.3% with 30+ as a second series. PDF 30+ strips sit under the plot; GCP write-off strip has no third canvas (Type B secondary). Boardroom grouped bars vs under-plot strips. |
-| 12 | Total Provision | `chart_hero_dual` | `passes/pass_01/compare/sbs/slide_12.png` | accepted v3 design divergence | chart_hero_dual stacked combo + line paints signed write-off/reserve stacks and Total Provision; hero KPIs $2,127 / $4,022 / $6,149 match. Boardroom combo vs Amex labeled stacks. |
+| 12 | Total Provision | `chart_hero_dual` | `passes/pass_01/compare/sbs/slide_12.png` | accepted v3 design divergence | chart_hero_dual stacked_bar (Write-offs navy, Reserve Build/(Release)* primary_blue) with `stack_segments: show` and authored stack totals $2,621 … $53. No Total Provision line. Hero KPIs $2,127 / $4,022 / $6,149 unchanged. Boardroom stack labels vs Amex in-bar furniture. |
 | 13 | Total Reserves | `single_chart` | `passes/pass_01/compare/sbs/slide_13.png` | accepted v3 design divergence | single_chart waterfall + percent support_table. Walk totals $4.3 / $1.5 / $5.8 / ($2.2) / $3.6 / ($0.2) / $3.4 and reserve % boxes match. PDF two-tone loans+receivables overlay is Boardroom net waterfall. |
 | 14 | Revenue Performance | `data_table` | `passes/pass_01/compare/sbs/slide_14.png` | accepted v3 design divergence | Six metrics x Q4/FY/% vs-2019 match the PDF grid. Boardroom table vs pill columns is accepted chrome. |
 | 15 | Discount Revenue | `single_chart` | `passes/pass_01/compare/sbs/slide_15.png` | accepted v3 design divergence | combo $B bars + boxed YoY + Average Discount Rate line + FY'21 $25.7 support_table. Figures match. Boardroom boxed labels vs in-bar YoY and below-plot rate boxes. |
@@ -163,7 +163,7 @@ s02 Notable Impacts callout is a Type B secondary on an otherwise accepted table
 
 ### 4. Source/PDF artifact or capture failure
 
-None. s03 HTML/SBS recaptured this ticket at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). Other 52 halves were not regenerated (#315 changed only s03).
+None. s03 HTML/SBS recaptured #315 at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s12 HTML/SBS recaptured this ticket at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). Other 52 halves were not regenerated (#318 changed only s12).
 
 ## Recipe coverage summary
 
@@ -192,7 +192,7 @@ Chart types actually painted:
 - s09: grouped_bar + grouped_bar
 - s10: grouped_bar + grouped_bar
 - s11: grouped_bar + grouped_bar
-- s12: combo (stacked) + hero
+- s12: stacked_bar + hero
 - s13: waterfall + support_table
 - s15: combo + boxed_label + support_table
 - s16: grouped_bar + boxed_label + support_table

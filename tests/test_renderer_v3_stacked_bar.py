@@ -6,6 +6,7 @@ Seams under test:
 - authored totals + coverage callout (D235/D241/D236/D301)
 - Chart.js/SVG geometry parity within 2px (D160)
 - identity + semantic table completeness (D247)
+- Q4 2021 s12 stacked write-off/reserve labels (#318)
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ import importlib
 import json
 import re
 import sys
+from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 
@@ -33,6 +35,39 @@ from impact_slides.renderer_v3.schema_export import check_schema
 ROOT = Path(__file__).resolve().parents[1]
 STACKED = ROOT / "tests/fixtures/renderer_v3/minimal_stacked_bar.json"
 GROUPED = ROOT / "tests/fixtures/renderer_v3/minimal_grouped_bar.json"
+Q4_HANDOFF = ROOT / "simulation/amex_q4_2021/handoff_v1.json"
+
+S12_WRITE_OFFS = ["918", "927", "781", "563", "379", "260", "202", "221"]
+S12_RESERVE = ["1703", "628", "-116", "-674", "-1054", "-866", "-393", "-168"]
+S12_TOTALS = ["2621", "1555", "665", "-111", "-675", "-606", "-191", "53"]
+S12_SEG_LABELS = (
+    "$918",
+    "$927",
+    "$781",
+    "$563",
+    "$379",
+    "$260",
+    "$202",
+    "$221",
+    "$1,703",
+    "$628",
+    "($116)",
+    "($674)",
+    "($1,054)",
+    "($866)",
+    "($393)",
+    "($168)",
+)
+S12_TOTAL_LABELS = (
+    "$2,621",
+    "$1,555",
+    "$665",
+    "($111)",
+    "($675)",
+    "($606)",
+    "($191)",
+    "$53",
+)
 
 
 def _s() -> dict:
@@ -637,6 +672,82 @@ def test_stacked_painters_emit_semibold_tick_and_value_weight(tmp_path: Path):
     assert f'font-size="{val_px}" font-weight="600"' in svg
     assert f'font-size="{seg_px}" font-weight="600"' in svg
     assert f'font-size="{tot_px}" font-weight="600"' in svg
+
+
+def test_q4_s12_stacked_writeoff_reserve_labels(tmp_path: Path):
+    """Q4 2021 s12 (#318): stacked_bar, no total line, segment + stack totals."""
+    raw = json.loads(Q4_HANDOFF.read_text(encoding="utf-8"))
+    s12 = next(s for s in raw["slides"] if int(s["slide_number"]) == 12)
+    chart = s12["payload"]["chart"]
+    assert chart["chart_type"] == "stacked_bar"
+    assert "bar_mode" not in chart
+    series = chart["chart_data"]["series"]
+    assert [s["series_id"] for s in series] == ["write-offs", "reserve"]
+    assert [s["name"] for s in series] == ["Write-offs", "Reserve Build/(Release)*"]
+    assert [s.get("color") for s in series] == ["navy", "primary_blue"]
+    assert [s.get("mark_type") for s in series] == [None, None]
+    assert series[0]["values"] == S12_WRITE_OFFS
+    assert series[1]["values"] == S12_RESERVE
+    assert chart["display"]["stack_segments"] == "show"
+    assert chart["display"]["series_identity"] == "legend"
+    aux = chart.get("auxiliary_series") or []
+    authored = [a for a in aux if a.get("role") == "authored_stack_total"]
+    if authored:
+        assert authored[0]["values"] == S12_TOTALS
+    else:
+        assert chart["display"]["stack_totals"] == "show"
+    hero = s12["payload"]["hero"]
+    assert [r["value"]["value"] for r in hero["rows"]] == ["2127", "4022", "6149"]
+
+    combo = deepcopy(chart)
+    combo["chart_type"] = "combo"
+    combo["bar_mode"] = "stacked"
+    combo["chart_data"]["series"] = [
+        {**series[0], "mark_type": "bar"},
+        {**series[1], "mark_type": "bar"},
+    ]
+    combo.pop("auxiliary_series", None)
+    combo["display"] = {"ordinary_values": "show", "series_identity": "legend"}
+    mutant = deepcopy(raw)
+    next(s for s in mutant["slides"] if int(s["slide_number"]) == 12)["payload"][
+        "chart"
+    ] = combo
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(mutant, strict=True)
+    assert any("combo requires 1–4 line series" in c for c in _contracts(ei))
+
+    deck = validate_handoff(raw, strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    cp = plan.by_surface_id()["s12-prov"].chart_paint
+    assert cp["chart_type"] == "stacked_bar"
+    segs = [
+        p["text"]
+        for p in cp["placements"]
+        if p.get("kind") == "segment" and p.get("class") != "suppressed"
+    ]
+    assert Counter(segs) == Counter(S12_SEG_LABELS)
+    tots = [
+        p["text"] for p in cp["placements"] if p.get("kind") == "stack_total"
+    ]
+    assert Counter(tots) == Counter(S12_TOTAL_LABELS)
+
+    out = tmp_path / "out"
+    result = render_deck(Q4_HANDOFF, out, strict=True)
+    assert result["ok"] is True
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert meta["status"] == "clean"
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    m = re.search(r'<section\b[^>]*\bdata-slide-number="12"[^>]*>', html)
+    assert m
+    nxt = re.search(r"<section\b", html[m.end() :])
+    s12_html = html[m.start() : (m.end() + nxt.start() if nxt else len(html))]
+    assert 'data-chart-type="stacked_bar"' in s12_html
+    assert 'data-chart-type="combo"' not in s12_html
+    painted_segs = re.findall(r'data-kind="segment">([^<]*)</text>', s12_html)
+    assert Counter(painted_segs[:16]) == Counter(S12_SEG_LABELS)
+    painted_tots = re.findall(r'data-kind="stack_total">([^<]*)</text>', s12_html)
+    assert Counter(painted_tots[:8]) == Counter(S12_TOTAL_LABELS)
+    assert "$2,127" in s12_html and "$4,022" in s12_html and "$6,149" in s12_html
 
 
 def test_schema_export_check_passes():
