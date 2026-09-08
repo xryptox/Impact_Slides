@@ -13,8 +13,8 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 | Handoff schema | 1 (`meta.handoff_schema_version`) |
 | Slides | 53 (`slide_number` 1..53; evidence `amex-q4-2021-p01`..`p53`) |
 | Renderer | renderer_v3 **3.0.0**, theme `boardroom_amex` |
-| Repository commit at render | parent `f359d1fde131ccfa21def52a8bb1a95836085247` plus #293 s04 re-author |
-| Branch | `ticket-wave/e8137b9f-49ad-4a1b-ba6b-ccafc9661584/issue-293` |
+| Repository commit at render | parent `510eb56` plus #321 s24 re-author |
+| Branch | `ticket-wave/031c70ad-4842-4187-9907-714f386441e1/issue-321` |
 | Render | strict, exit 0, `run_meta.status=clean`, `ok=true`, warnings=0 errors=0 |
 | HTML identity | 53 unique `data-slide-number` 1..53; `data-layout` matches authored `layout_type` |
 | Capture viewport | 1920x1080, `deviceScaleFactor=1`; stacked-deck fit transforms cleared before element screenshots |
@@ -64,7 +64,7 @@ HTML slide N maps to PyMuPDF index N-1 and physical PDF page N. Before capture: 
 
 No MAE, similarity percentages, pixel-diff scores, or heatmaps. Classes are mutually exclusive per row.
 
-Counts: faithful 5; accepted Boardroom chrome 41; Type A 5; Type B 2; source/PDF artifact 0; capture failure 0.
+Counts: faithful 5; accepted Boardroom chrome 42; Type A 5; Type B 1; source/PDF artifact 0; capture failure 0.
 
 | Slide | Title | Layout | SBS | Class | Observation |
 |------:|-------|--------|-----|-------|-------------|
@@ -91,7 +91,7 @@ Counts: faithful 5; accepted Boardroom chrome 41; Type A 5; Type B 2; source/PDF
 | 21 | Capital | `dual_chart` | `passes/pass_01/compare/sbs/slide_21.png` | accepted v3 design divergence | dual_chart + shared metric_strip: CET1 bars 10.7/13.5/10.5, Capital Return $6.0/$2.3/$9.0, Q4 dividend $0.43 x3. PDF stack split (buybacks vs dividends) unread; authored one Capital Return series. Boardroom metric_strip vs PDF under-plot dividend row. |
 | 22 | The Growth Plan | `feature_cards` | `passes/pass_01/compare/sbs/slide_22.png` | accepted v3 design divergence | feature_cards x3 holds 2022 Guidance / 2023 Expectations / 2024+ Aspiration with PDF sentences. Qualifier bars folded into the 2024+ card. Boardroom cards vs Amex outlined tiles. |
 | 23 | Appendix | `section_divider` | `passes/pass_01/compare/sbs/slide_23.png` | accepted v3 design divergence | Boardroom section_divider Appendix vs navy brand divider with Centurion seal. Label matches. Brand chrome excluded. |
-| 24 | Q4'21 Network Volumes Growth by Customer Type | `data_table` | `passes/pass_01/compare/sbs/slide_24.png` | candidate renderer defect or capability gap (Type B) | PDF is signed vs-2019 bars with percent share boxes, brace-grouped YoY tables, and a consumer/commercial legend. No recipe composes waterfall/bars + share chips + two grouped tables. data_table holds readable shares/YoY; several vs-2019 bar labels were not fully attributed (Type A secondary). |
+| 24 | Q4'21 Network Volumes Growth by Customer Type | `chart_grouped_annex` | `passes/pass_01/compare/sbs/slide_24.png` | accepted v3 design divergence | chart_grouped_annex: grouped_bar of labeled vs-2019 bars 22/18/5/12/(33)/3 (consumer `primary_blue` / commercial `navy` / processed `neutral`) plus six share chips 35/27/12/5/6/14 and two headed peer tables (US Consumer+SME Q3/Q4 YoY 33/33 vs-'19 14/20; Int'l Consumer+SME 25/32 vs-'19 (2)/8). Attribution is PDF x-order + fill. On-bar YoY% 37/29/32/31/34/15 is not a vs-2019 glyph and is omitted, not invented. Brace geometry is peer headings. Boardroom chrome vs Amex chips-above-bars. |
 | 25 | Global Consumer G&S Growth | `chart_grouped_annex` | `passes/pass_01/compare/sbs/slide_25.png` | accepted v3 design divergence | chart_grouped_annex: grouped_bar of labeled Q4'21 vs-2019 Online/G&S/Offline 42/26/10 plus two Q4 annex peers (Global Consumer G&S and Holiday Spend). 8-quarter interiors unlabeled (#301 leftover). Page-25 glyphs: axis ticks (40)/(30)/(20)/(10)/0/10/20/30/40/50, quarter labels, series names, Q4 tables vs-'19 42/10/26 and Holiday 55/9/29. No second labeled plot point. Boardroom bars vs Amex line. |
 | 26 | Travel & Entertainment Billed Business | `data_table` | `passes/pass_01/compare/sbs/slide_26.png` | corpus/extraction residual (Type A) | PDF is T&E-by-industry 8-quarter vs-2019 line plus Q4 table. Page-26 glyphs: axis ticks (120)/(100)/(80)/(60)/(40)/(20)/0/20, quarter labels, series names (Restaurants / Lodging / Other / Airlines / Total T&E), Q4 table vs-'19 10/(24)/(43)/(14)/(18). No interior vs-2019 labels (#299). Line leftover stands (5 series exceeds line max 4; two-finite-value rule). Table authored. Do not raise the line ceiling; do not invent interiors. |
 | 27 | Worldwide Total Loans and Card Member Receivables Mix | `dual_chart` | `passes/pass_01/compare/sbs/slide_27.png` | accepted v3 design divergence | dual_chart of two donuts: Loan mix U.S. Consumer 68 / Intl. Consumer 12 / Small Business 20; Receivables U.S. Consumer 28 / Intl. Consumer 14 / Corporate Card 24 / Small Business 34. Mix percents match. Boardroom default slice cycle vs Amex navy/blue/gray. |
@@ -128,7 +128,7 @@ Only residuals with fresh SBS/probe evidence. No fix designed. No tickets.
 
 ### 1. Replicated with existing recipes (faithful + accepted Boardroom chrome)
 
-s33, s34, s42, s45, s46, s01, s02, s03, s04, s06, s07, s09, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s21, s22, s23, s25, s27, s28, s29, s31, s32, s36, s37, s38, s39, s40, s41, s43, s44, s47, s48, s49, s50, s51, s52, s53 — 46 slides.
+s33, s34, s42, s45, s46, s01, s02, s03, s04, s06, s07, s09, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s21, s22, s23, s24, s25, s27, s28, s29, s31, s32, s36, s37, s38, s39, s40, s41, s43, s44, s47, s48, s49, s50, s51, s52, s53 — 47 slides.
 
 Cover, appendix divider, closing cover, Q4/FY summary grids (s02/s14/s19), revenue growth line (s18), variance commentary (s33/s34), compact annexes (s42/s45/s46), and legal_notice parts 1–6 (s47–s52) land on existing recipes. Remaining visual difference is Boardroom chrome vs Amex brand furniture (pill columns, Centurion seal, navy full-bleed).
 
@@ -152,18 +152,17 @@ s05, s08, s20, s26, s30 — 5 slides. s03 Boardroom chrome stays accepted; axis 
 
 ### 3. Type (B) recipe/capability gaps — no adequate existing composition
 
-s24, s35 — 2 slides.
+s35 — 1 slide.
 
 | Slide | Missing recipe / schema ceiling | Impact | Ownership | Smallest next verification |
 |------:|--------------------------------|--------|-----------|----------------------------|
-| 24 | waterfall/bars + share chips + brace-grouped tables | data_table stand-in | renderer recipe | No mixed composition exists |
 | 35 | freeform strategy / org board | 5-node hierarchy drop | renderer recipe | hierarchy max depth/shape cannot paint the PDF board |
 
 s02 Notable Impacts callout remains folded into disclosure (`side_callout` shipped #303; Q4 re-author out of scope).
 
 ### 4. Source/PDF artifact or capture failure
 
-None. s03 HTML/SBS recaptured #315 at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s12 HTML/SBS recaptured this ticket at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). Other 52 halves were not regenerated (#318 changed only s12).
+None. s03 HTML/SBS recaptured (#315) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s12 HTML/SBS recaptured (#318) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). s24 HTML/SBS recaptured (#321) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, six share chips, two peers). Other halves were not regenerated.
 
 ## Recipe coverage summary
 
@@ -200,6 +199,7 @@ Chart types actually painted:
 - s18: line
 - s20: grouped_bar + grouped_bar
 - s21: grouped_bar + grouped_bar + metric_strip
+- s24: grouped_bar + share chips + two annex peers
 - s25: grouped_bar + two annex peers
 - s27: donut + donut
 - s28: stacked_bar + support_table
@@ -207,7 +207,7 @@ Chart types actually painted:
 - s31: stacked_bar
 - s32: grouped_bar + grouped_bar + independent support_table
 
-Also used: per-pane `support_table` on s06/s07/s09; shared `metric_strip` on s21; shared independent `support_table` on s04/s32; `chart_grouped_annex` on s25; donut on s27; compact `annex_table` on s37/s38/s40/s43; `support_table` on s03/s13/s15/s16/s17/s28/s29; `hero` on s12; `hierarchy` on s35; `feature_cards` on s22; `legal_notice` parts 1–6.
+Also used: per-pane `support_table` on s06/s07/s09; shared `metric_strip` on s21; shared independent `support_table` on s04/s32; `chart_grouped_annex` on s24/s25 (s24 with share chips); donut on s27; compact `annex_table` on s37/s38/s40/s43; `support_table` on s03/s13/s15/s16/s17/s28/s29; `hero` on s12; `hierarchy` on s35; `feature_cards` on s22; `legal_notice` parts 1–6.
 
 ### Closed-set recipes not used
 
@@ -216,7 +216,7 @@ Also used: per-pane `support_table` on s06/s07/s09; shared `metric_strip` on s21
 ### PDF patterns with no recipe
 
 - Brand full-bleed cover / divider / closing wordmark (Centurion seal) — accepted Boardroom chrome.
-- Freeform callouts, hatch fills, brace groups, share chips (s2, s20, s24).
+- Freeform callouts, hatch fills, brace groups (s2, s20). s24 share chips now paint; brace geometry stays peer headings.
 - Freeform ESG strategy board (s35).
 
 ## Diagnostics
