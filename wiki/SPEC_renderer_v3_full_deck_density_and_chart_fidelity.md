@@ -4395,7 +4395,8 @@ fallback, never loss. D160 owns pitch/rects/levels/connectors/zero/anchors with
 painter parity within 2px. D247 includes ordered type/authored/computed/reset facts
 and accessibility distinguishes change direction/authored/computed totals.
 Custom series/colors/connectors/step labels/geometry/style/formula/painter controls
-invalid. Strict rejects sequence/IDs/text/type/value/rules/axis/format/fields/fit.
+remain invalid. Optional 2–4 footing components: `impact_slides/renderer_v3/AGENTS.md`
+(#319). Strict rejects sequence/IDs/text/type/value/rules/axis/format/fields/fit.
 Non-strict never guesses or deletes/reconnects, uses complete fallback and reports
 exact defect. Migration requires clear sequence/identity/type/value/format/reset.
 
