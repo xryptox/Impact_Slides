@@ -460,6 +460,74 @@ def test_strict_rejects_q4_s06_s07_s09_s25_s32_one_point_line_shapes():
     assert validate_handoff(raw, strict=True).ok
 
 
+Q4_HANDOFF = ROOT / "simulation/amex_q4_2021/handoff_v1.json"
+S03_FIXED_DOMAIN = {
+    "kind": "fixed",
+    "min": "-40",
+    "max": "20",
+    "ticks": ["-40", "-30", "-20", "-10", "0", "10", "20"],
+}
+S03_TICK_LABELS = ["(40%)", "(30%)", "(20%)", "(10%)", "0%", "10%", "20%"]
+S03_SERIES = (
+    ("billed", "Billed Business", [None, None, None, None, None, None, "4", "12"]),
+    ("tnv", "Total Network Volumes", [None, None, None, None, None, None, "4", "11"]),
+    ("processed", "Processed Volumes", [None, None, None, None, None, None, "3", "3"]),
+)
+
+
+def test_q4_s03_pins_pdf_percent_domain():
+    """Q4 2021 s03 (#315): PDF axis ticks −40…20; interiors stay unlabeled."""
+    q4 = json.loads(Q4_HANDOFF.read_text(encoding="utf-8"))
+    s03 = next(s for s in q4["slides"] if s["slide_number"] == 3)
+    chart = s03["payload"]["chart"]
+    assert chart["value_axes"]["primary"]["domain"] == S03_FIXED_DOMAIN
+    assert chart["value_axes"]["primary"]["format_id"] == "pct_0"
+    authored = [(s["series_id"], s["name"], s["values"]) for s in chart["chart_data"]["series"]]
+    assert authored == list(S03_SERIES)
+    for _sid, _name, values in authored:
+        assert values[:6] == [None] * 6
+        assert len([v for v in values if v is not None]) == 2
+
+    raw = _raw()
+    raw["number_formats"] = {"pct_0": q4["number_formats"]["pct_0"]}
+    raw["slides"][1]["payload"] = deepcopy(s03["payload"])
+    result = validate_handoff(raw, strict=True)
+    assert result.ok
+    cp = plan_deck(result.deck, strict=True).by_surface_id()["s03-vol"].chart_paint
+    assert cp["domain"]["kind"] == "fixed"
+    assert cp["domain"]["min"] == "-40"
+    assert cp["domain"]["max"] == "20"
+    assert [str(t) for t in cp["domain"]["ticks"]] == S03_FIXED_DOMAIN["ticks"]
+    assert cp["tick_labels"] == S03_TICK_LABELS
+    finite = [p for p in cp["points"] if p["finite"]]
+    assert len(finite) == 6
+    g = cp["geometry"]
+    assert all(g["pad_t"] <= p["y"] <= g["pad_t"] + g["plot_h"] for p in finite)
+    # Finite Q3/Q4 points sit in the top of a -40..20 plot, not a generated 3..12 band.
+    for p in finite:
+        assert (p["y"] - g["pad_t"]) / g["plot_h"] < 0.35
+
+    generated = deepcopy(raw)
+    generated["slides"][1]["payload"]["chart"]["value_axes"]["primary"]["domain"] = {
+        "kind": "generated",
+        "target_ticks": 5,
+    }
+    gcp = plan_deck(
+        validate_handoff(generated, strict=True).deck, strict=True
+    ).by_surface_id()["s03-vol"].chart_paint
+    assert gcp["domain"]["kind"] == "generated"
+    assert "-40" not in [str(t) for t in gcp["domain"]["ticks"]]
+    assert float(gcp["domain"]["min"]) > -40.0
+
+    invented = deepcopy(raw)
+    for series in invented["slides"][1]["payload"]["chart"]["chart_data"]["series"]:
+        series["values"][1] = "-35"
+    assert validate_handoff(invented, strict=True).ok
+    live = next(s for s in q4["slides"] if s["slide_number"] == 3)
+    for series in live["payload"]["chart"]["chart_data"]["series"]:
+        assert series["values"][1] is None
+
+
 def test_strict_rejects_duplicate_series_names():
     raw = _raw()
     raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][1]["name"] = "US"
