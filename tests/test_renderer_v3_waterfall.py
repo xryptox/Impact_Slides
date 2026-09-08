@@ -6,6 +6,7 @@ Seams under test:
 - structural labels/connectors/semantic-table facts retained
 - Chart.js floating-bar / SVG geometry parity within 2px (D160/D248)
 - malformed sequence strict-fails; no role inference
+- optional 2–4 step components that foot the net (#319); omit = one-tone
 """
 from __future__ import annotations
 
@@ -32,10 +33,15 @@ from impact_slides.renderer_v3.schema_export import check_schema
 
 ROOT = Path(__file__).resolve().parents[1]
 WF = ROOT / "tests/fixtures/renderer_v3/minimal_waterfall.json"
+WF_COMP = ROOT / "tests/fixtures/renderer_v3/minimal_waterfall_components.json"
 
 
 def _w() -> dict:
     return json.loads(WF.read_text(encoding="utf-8"))
+
+
+def _wc() -> dict:
+    return json.loads(WF_COMP.read_text(encoding="utf-8"))
 
 
 def _chart_slide(raw: dict) -> dict:
@@ -473,3 +479,198 @@ def test_identity_strategy_is_roles_not_legend():
     ).paint_chart_html(cp, svg_only=True)
     joined = "".join(html_parts)
     assert "chart-legend" not in joined
+
+
+# ---------------------------------------------------------------------------
+# Optional stacked components (#319)
+# ---------------------------------------------------------------------------
+
+
+def test_omit_components_stays_one_tone():
+    result = validate_handoff(_w(), strict=True)
+    assert result.ok
+    steps = result.deck.slides[1].payload.chart.waterfall_data.steps
+    assert all(s.components is None for s in steps)
+    cp = plan_deck(result.deck, strict=True).by_surface_id()["rev-bridge"].chart_paint
+    assert all(not b.get("components") for b in cp["bars"])
+    svg = paint_chart_svg(cp)
+    assert "waterfall-segment" not in svg
+    assert svg.count("waterfall-bar") == 6
+
+
+def test_strict_accepts_seven_step_two_tone_walk():
+    result = validate_handoff(_wc(), strict=True)
+    assert result.ok
+    chart = result.deck.slides[1].payload.chart
+    assert isinstance(chart, WaterfallChartVisual)
+    steps = chart.waterfall_data.steps
+    assert len(steps) == 7
+    for step in steps:
+        comps = step.components
+        assert comps is not None and len(comps) == 2
+        assert [c.series_id for c in comps] == ["loans", "receivables"]
+
+
+def test_strict_rejects_components_that_do_not_foot():
+    raw = _wc()
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
+    steps[0]["components"][0]["value"] = "71"
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    assert any("foot" in c.lower() or "sum" in c.lower() for c in _contracts(excinfo))
+
+
+def test_strict_rejects_one_component():
+    raw = _wc()
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
+    steps[0]["components"] = [steps[0]["components"][0]]
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    joined = " ".join(_contracts(excinfo)).lower()
+    assert "2" in joined or "component" in joined
+
+
+def test_strict_rejects_duplicate_component_ids():
+    raw = _wc()
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
+    steps[0]["components"][1]["series_id"] = "loans"
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    assert any("duplicate" in c.lower() or "unique" in c.lower() for c in _contracts(excinfo))
+
+
+def test_strict_rejects_unknown_component_color():
+    raw = _wc()
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
+    steps[0]["components"][0]["color"] = "#006FCF"
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    assert any("color" in c.lower() or "palette" in c.lower() for c in _contracts(excinfo))
+
+
+def test_strict_rejects_chart_data_with_components():
+    raw = _wc()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["chart_data"] = {
+        "categories": [{"category_id": "a", "label": "A"}],
+        "series": [{"series_id": "s", "name": "S", "values": ["1"]}],
+    }
+    with pytest.raises(RendererValidationError) as excinfo:
+        validate_handoff(raw, strict=True)
+    assert any("chart_data" in c for c in _contracts(excinfo))
+
+
+def test_components_paint_two_tone_segments_and_net_labels():
+    deck = validate_handoff(_wc(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["reserves-bridge"].chart_paint
+    assert len(cp["bars"]) == 7
+    open_bar = next(b for b in cp["bars"] if b["category_id"] == "open")
+    segs = open_bar["components"]
+    assert len(segs) == 2
+    assert {s["series_id"] for s in segs} == {"loans", "receivables"}
+    assert segs[0]["color"] != segs[1]["color"]
+    assert abs(sum(float(s["numeric"]) for s in segs) - float(open_bar["numeric"])) < 1e-9
+    # Segment heights stack to the net bar height (same geometry).
+    assert abs(sum(s["height"] for s in segs) - open_bar["height"]) <= 2.0
+    svg = paint_chart_svg(cp)
+    assert svg.count('class="bar waterfall-segment"') == 14
+    assert svg.count('data-kind="segment"') == 14
+    assert svg.count("waterfall-value") == 7
+    assert "Total Loans" in svg or any(
+        p.get("kind") == "segment" for p in cp["placements"]
+    )
+    # Connectors still follow the net walk into change steps only.
+    to_ids = {c["to_category_id"] for c in cp["connectors"]}
+    assert to_ids == {"chg1", "chg2", "chg3"}
+
+
+def test_component_chartjs_stacked_within_2px(tmp_path: Path):
+    out = tmp_path / "out"
+    render_deck(WF_COMP, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    deck = validate_handoff(_wc(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["reserves-bridge"].chart_paint
+    m = re.search(
+        r'<script type="application/json" id="cfg-reserves-bridge">(.*?)</script>',
+        html,
+        re.S,
+    )
+    assert m is not None
+    cfg = json.loads(m.group(1))
+    datasets = cfg["data"]["datasets"]
+    assert len(datasets) == 2
+    assert datasets[0].get("grouped") is False
+    assert datasets[1].get("grouped") is False
+    cm = re.search(
+        r'<canvas id="cjs-reserves-bridge"[^>]*width="(\d+)" height="(\d+)"',
+        html,
+    )
+    assert cm is not None
+    canvas_w, canvas_h = int(cm.group(1)), int(cm.group(2))
+    pad = cfg["options"]["layout"]["padding"]
+    plot_x0, plot_y0 = pad["left"], pad["top"]
+    plot_w = canvas_w - pad["left"] - pad["right"]
+    plot_h = canvas_h - pad["top"] - pad["bottom"]
+    n_cat = len(cfg["data"]["labels"])
+    val_scale = cfg["options"]["scales"]["y"]
+    v_min, v_max = val_scale["min"], val_scale["max"]
+    v_span = (v_max - v_min) or 1.0
+    pitch = plot_w / n_cat
+    ds0 = datasets[0]
+    cluster = ds0["categoryPercentage"] * pitch
+    bar_w = ds0["barPercentage"] * cluster
+
+    def value_px(v: float) -> float:
+        return plot_y0 + plot_h - (v - v_min) / v_span * plot_h
+
+    checked = 0
+    for i, bar in enumerate(cp["bars"]):
+        segs = bar["components"]
+        origin = plot_x0 + i * pitch + (pitch - cluster) / 2 + (cluster - bar_w) / 2
+        for j, seg in enumerate(segs):
+            pair = datasets[j]["data"][i]
+            y0, y1 = float(pair[0]), float(pair[1])
+            top, bot = value_px(max(y0, y1)), value_px(min(y0, y1))
+            height = abs(bot - top)
+            assert abs(origin - seg["x"]) <= 2.0
+            assert abs(top - seg["y"]) <= 2.0
+            assert abs(bar_w - seg["width"]) <= 2.0
+            assert abs(height - seg["height"]) <= 2.0
+            checked += 1
+    assert checked == 14
+
+
+def test_component_names_live_in_fallback_text():
+    deck = validate_handoff(_wc(), strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["reserves-bridge"].chart_paint
+    facts = " ".join(cp["semantic_table"]["facts"])
+    assert "Total Loans" in facts
+    assert "Card Member Receivables" in facts
+    html = paint_semantic_table(cp)
+    assert "Total Loans" in html
+    assert "Card Member Receivables" in html
+    # Net bars stay in the freeze even while segments paint.
+    assert len(cp["bars"]) == 7
+    assert all(b.get("components") for b in cp["bars"])
+
+
+def test_segment_label_overflow_is_strict_fail():
+    raw = _wc()
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
+    # Sliver + remainder still foots the net; sliver cannot hold its label.
+    steps[0]["components"][0]["value"] = "99"
+    steps[0]["components"][1]["value"] = "1"
+    deck = validate_handoff(raw, strict=True).deck
+    with pytest.raises(RendererValidationError) as excinfo:
+        plan_deck(deck, strict=True)
+    assert any(e.code == "plan.unresolved_overflow" for e in excinfo.value.events)
+    plan = plan_deck(deck, strict=False)
+    sp = plan.by_surface_id()["reserves-bridge"]
+    html_parts = __import__(
+        "impact_slides.renderer_v3.charts", fromlist=["paint_chart_html"]
+    ).paint_chart_html(sp.chart_paint, svg_only=True)
+    joined = "".join(html_parts)
+    assert "Total Loans" in joined
+    assert "Card Member Receivables" in joined
+    assert joined.count("waterfall-bar") == 7
+    assert "waterfall-segment" not in joined

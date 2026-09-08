@@ -41,6 +41,7 @@ from .models import (
 from .theme import (
     chart_js_tokens,
     contrast_ratio,
+    default_series_keys,
     line_style_keys,
     marker_keys,
     resolve_color,
@@ -1111,6 +1112,7 @@ def freeze_waterfall_chart(
     thick = geom["thickness"]
 
     prev_end_level: Optional[float] = None
+    component_overflow = False
     for i, step in enumerate(resolved):
         slot = geom["slots"][i]
         x = slot["origins"][0]
@@ -1147,6 +1149,32 @@ def freeze_waterfall_chart(
             "end_y": top,
             "resets_level": step["role"] == "total",
         }
+        comps = _waterfall_component_segments(
+            step,
+            formats,
+            fmt_id=chart.value_axes.primary.format_id,
+            x=x,
+            width=thick,
+            value_to_y=value_to_y,
+        )
+        if comps:
+            bar["components"] = comps
+            for seg in comps:
+                if float(seg["height"]) + 1e-9 < lab_px:
+                    component_overflow = True
+                    continue
+                placements.append(
+                    {
+                        "kind": "segment",
+                        "class": "inside",
+                        "series_id": seg["series_id"],
+                        "category_id": step["category_id"],
+                        "text": seg["visible"],
+                        "x": cx,
+                        "y": seg["y"] + seg["height"] / 2 + lab_px * 0.35,
+                        "priority": "segment",
+                    }
+                )
         bars.append(bar)
         # Connector from previous step end level to this bar start (continuity only).
         if prev_end_level is not None and step["role"] == "change":
@@ -1274,6 +1302,7 @@ def freeze_waterfall_chart(
         "theme": chart_js_tokens(),
         "gridlines": False,
         "structural_label_px": lab_px,
+        "component_label_overflow": component_overflow,
     }
 
 
@@ -3157,29 +3186,30 @@ def _paint_waterfall_svg(
                 f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
                 f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
             )
-        lab_px = plan["role_sizes"].get(
-            "structural_values", plan.get("structural_label_px", 18)
-        )
-        for place in plan["placements"]:
-            if place.get("kind") != "structural":
-                continue
-            parts.append(
-                f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
-                f'text-anchor="middle" font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" '
-                f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
-                f'data-placement="structural" data-category="{_e(place["category_id"])}">'
-                f'{_e(place["text"])}</text>'
-            )
+        _paint_waterfall_labels(plan, parts, ink)
 
     if marks:
         for bar in plan.get("bars") or []:
-            parts.append(
-                f'<rect class="bar waterfall-bar" data-series="{_e(bar["series_id"])}" '
-                f'data-category="{_e(bar["category_id"])}" data-role="{_e(bar["role"])}" '
-                f'x="{bar["x"]:.1f}" y="{bar["y"]:.1f}" '
-                f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
-                f'fill="{_e(bar["color"])}"/>'
-            )
+            segs = bar.get("components") or []
+            if segs and not plan.get("component_label_overflow"):
+                for seg in segs:
+                    parts.append(
+                        f'<rect class="bar waterfall-segment" '
+                        f'data-series="{_e(seg["series_id"])}" '
+                        f'data-category="{_e(bar["category_id"])}" '
+                        f'data-role="{_e(bar["role"])}" '
+                        f'x="{seg["x"]:.1f}" y="{seg["y"]:.1f}" '
+                        f'width="{seg["width"]:.1f}" height="{seg["height"]:.1f}" '
+                        f'fill="{_e(seg["color"])}"/>'
+                    )
+            else:
+                parts.append(
+                    f'<rect class="bar waterfall-bar" data-series="{_e(bar["series_id"])}" '
+                    f'data-category="{_e(bar["category_id"])}" data-role="{_e(bar["role"])}" '
+                    f'x="{bar["x"]:.1f}" y="{bar["y"]:.1f}" '
+                    f'width="{bar["width"]:.1f}" height="{bar["height"]:.1f}" '
+                    f'fill="{_e(bar["color"])}"/>'
+                )
         # Full SVG (noscript) still needs connectors/labels when chrome=False.
         if not chrome:
             for conn in plan.get("connectors") or []:
@@ -3191,25 +3221,40 @@ def _paint_waterfall_svg(
                     f'x2="{conn["x2"]:.1f}" y2="{conn["y"]:.1f}" '
                     f'stroke="{_e(connector_c)}" stroke-width="1.5"/>'
                 )
-            lab_px = plan["role_sizes"].get(
-                "structural_values", plan.get("structural_label_px", 18)
-            )
-            for place in plan["placements"]:
-                if place.get("kind") != "structural":
-                    continue
-                parts.append(
-                    f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
-                    f'text-anchor="middle" font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" '
-                    f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
-                    f'data-placement="structural" data-category="{_e(place["category_id"])}">'
-                    f'{_e(place["text"])}</text>'
-                )
+            _paint_waterfall_labels(plan, parts, ink)
 
     if chrome:
         ink_fact = resolve_color("navy", role="text_on_light")
         _paint_fact_chrome_svg(plan, parts, ink_fact)
     parts.append("</svg>")
     return "".join(parts)
+
+
+def _paint_waterfall_labels(
+    plan: dict[str, Any], parts: list[str], ink: str
+) -> None:
+    lab_px = plan["role_sizes"].get(
+        "structural_values", plan.get("structural_label_px", 18)
+    )
+    skip_segments = bool(plan.get("component_label_overflow"))
+    for place in plan["placements"]:
+        kind = place.get("kind")
+        if kind == "structural":
+            parts.append(
+                f'<text class="waterfall-value" x="{place["x"]:.1f}" y="{place["y"]:.1f}" '
+                f'text-anchor="middle" font-size="{lab_px}" font-weight="{_CHART_LABEL_WEIGHT}" '
+                f'font-variant-numeric="tabular-nums" fill="{_e(ink)}" '
+                f'data-placement="structural" data-category="{_e(place["category_id"])}">'
+                f'{_e(place["text"])}</text>'
+            )
+        elif kind == "segment" and not skip_segments:
+            parts.append(
+                f'<text class="waterfall-segment-label" x="{place["x"]:.1f}" '
+                f'y="{place["y"]:.1f}" text-anchor="middle" font-size="{lab_px}" '
+                f'font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
+                f'fill="{_e(ink)}" data-kind="segment" '
+                f'data-category="{_e(place["category_id"])}">{_e(place["text"])}</text>'
+            )
 
 
 def chart_boot_script() -> str:
@@ -3338,6 +3383,58 @@ def _waterfall_role_sizes(chart: WaterfallChartVisual) -> dict[str, int]:
     return sizes
 
 
+def _waterfall_component_segments(
+    step: dict[str, Any],
+    formats: Mapping[str, NumberFormat],
+    *,
+    fmt_id: str,
+    x: float,
+    width: float,
+    value_to_y,
+) -> list[dict[str, Any]]:
+    """Stack authored components along the existing net [y0, y1] (#319)."""
+    comps = step.get("components") or []
+    if not comps:
+        return []
+    y0 = Decimal(str(step["y0"]))
+    y1 = Decimal(str(step["y1"]))
+    cursor = y0
+    out: list[dict[str, Any]] = []
+    for i, raw in enumerate(comps):
+        authored = Decimal(raw.value)
+        start = cursor
+        if i == len(comps) - 1:
+            end = y1
+        else:
+            end = cursor + authored
+            cursor = end
+        top = value_to_y(float(max(start, end)))
+        bot = value_to_y(float(min(start, end)))
+        fv = format_semantic_value(
+            NumberValue(value=raw.value, format_id=fmt_id), formats
+        )
+        color_key = raw.color or default_series_keys("waterfall")[i]
+        out.append(
+            {
+                "series_id": raw.series_id,
+                "name": raw.name,
+                "value": raw.value,
+                "numeric": float(authored),
+                "visible": fv.visible,
+                "accessible": fv.accessible,
+                "color_key": color_key,
+                "color": resolve_color(color_key, role="fill"),
+                "x": x,
+                "y": top,
+                "width": width,
+                "height": abs(bot - top),
+                "y0": float(start),
+                "y1": float(end),
+            }
+        )
+    return out
+
+
 def _resolve_waterfall_steps(
     steps: list[Any],
     formats: Mapping[str, NumberFormat],
@@ -3402,6 +3499,7 @@ def _resolve_waterfall_steps(
                 "sign": sign,
                 "visible": fv.visible,
                 "accessible": accessible,
+                "components": list(step.components or []),
             }
         )
     return out
@@ -3554,6 +3652,10 @@ def _waterfall_semantic_table(
             f"Step {step['label']}: {step['role']} value {step['visible']} "
             f"level {fact_level}"
         )
+        for comp in step.get("components") or []:
+            facts.append(
+                f"Step {step['label']} component {comp.name}: {comp.value}"
+            )
     return {
         "columns": columns,
         "rows": rows,
@@ -5805,21 +5907,41 @@ def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
     thick = g.get("thickness") or BAR_MIN_THICKNESS
     category_pct = min(1.0, max(0.1, thick / pitch))
     bar_pct = 1.0
-    data = []
-    colors = []
-    for bar in plan.get("bars") or []:
-        # Chart.js bar [start, end] on the value axis.
-        data.append([float(bar["y0"]), float(bar["y1"])])
-        colors.append(bar["color"])
-    d_min = float(Decimal(plan["domain"]["min"]))
-    d_max = float(Decimal(plan["domain"]["max"]))
-    return {
-        "type": "bar",
-        "data": {
-            "labels": labels,
-            "datasets": [
+    bars = list(plan.get("bars") or [])
+    stacked = any(b.get("components") for b in bars) and not plan.get(
+        "component_label_overflow"
+    )
+    if stacked:
+        series_ids: list[str] = []
+        series_meta: dict[str, dict[str, Any]] = {}
+        for bar in bars:
+            for seg in bar.get("components") or []:
+                sid = seg["series_id"]
+                if sid not in series_meta:
+                    series_ids.append(sid)
+                    series_meta[sid] = {
+                        "name": seg["name"],
+                        "color": seg["color"],
+                    }
+        datasets = []
+        for sid in series_ids:
+            data = []
+            colors = []
+            for bar in bars:
+                hit = next(
+                    (s for s in (bar.get("components") or []) if s["series_id"] == sid),
+                    None,
+                )
+                if hit is None:
+                    data.append(None)
+                    colors.append("transparent")
+                else:
+                    data.append([float(hit["y0"]), float(hit["y1"])])
+                    colors.append(hit["color"])
+            meta = series_meta[sid]
+            datasets.append(
                 {
-                    "label": "Waterfall",
+                    "label": meta["name"],
                     "data": data,
                     "backgroundColor": colors,
                     "borderColor": colors,
@@ -5828,8 +5950,35 @@ def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
                     "categoryPercentage": category_pct,
                     "clip": False,
                     "indexAxis": "x",
+                    "grouped": False,
                 }
-            ],
+            )
+    else:
+        data = []
+        colors = []
+        for bar in bars:
+            data.append([float(bar["y0"]), float(bar["y1"])])
+            colors.append(bar["color"])
+        datasets = [
+            {
+                "label": "Waterfall",
+                "data": data,
+                "backgroundColor": colors,
+                "borderColor": colors,
+                "borderWidth": 0,
+                "barPercentage": bar_pct,
+                "categoryPercentage": category_pct,
+                "clip": False,
+                "indexAxis": "x",
+            }
+        ]
+    d_min = float(Decimal(plan["domain"]["min"]))
+    d_max = float(Decimal(plan["domain"]["max"]))
+    return {
+        "type": "bar",
+        "data": {
+            "labels": labels,
+            "datasets": datasets,
         },
         "options": {
             "indexAxis": "x",

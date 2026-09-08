@@ -9912,6 +9912,23 @@
           ],
           "default": null,
           "title": "Short Label"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/WaterfallStepComponent"
+              },
+              "maxItems": 4,
+              "minItems": 2,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Components"
         }
       },
       "required": [
@@ -9920,6 +9937,47 @@
         "role"
       ],
       "title": "WaterfallStep",
+      "type": "object"
+    },
+    "WaterfallStepComponent": {
+      "additionalProperties": false,
+      "description": "One named component that foots a waterfall step net (#319).",
+      "properties": {
+        "series_id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Series Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Value",
+          "type": "string"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
+        }
+      },
+      "required": [
+        "series_id",
+        "name",
+        "value"
+      ],
+      "title": "WaterfallStepComponent",
       "type": "object"
     }
   },

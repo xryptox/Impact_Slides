@@ -1266,6 +1266,8 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                 sp._overflow = True
             if sp._chart_spec.get("geometric_callout_overflow"):
                 sp._overflow = True
+            if sp._chart_spec.get("component_label_overflow"):
+                sp._overflow = True
             sp._text_items = _chart_text_items(sp._chart_spec)
             sp.role_sizes.update(sp._chart_spec["role_sizes"])
             sp.display_identity_strategy = sp._chart_spec["identity_strategy"]
@@ -1331,6 +1333,8 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         if math.ceil(sp._chart_spec["geometry"]["view_h"]) > sp._box_h:
             sp._overflow = True
         if sp._chart_spec.get("geometric_callout_overflow"):
+            sp._overflow = True
+        if sp._chart_spec.get("component_label_overflow"):
             sp._overflow = True
         return
     if fit is None:

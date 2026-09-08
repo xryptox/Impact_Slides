@@ -2619,6 +2619,15 @@ class HorizontalBarChartVisual(ClosedModel):
         return self
 
 
+class WaterfallStepComponent(ClosedModel):
+    """One named component that foots a waterfall step net (#319)."""
+
+    series_id: SemanticId
+    name: NonEmptyStr
+    value: CanonicalDecimal
+    color: Optional[NonEmptyStr] = None  # palette key (D130)
+
+
 class WaterfallStep(ClosedModel):
     """One authored waterfall step (D162/D245/D307)."""
 
@@ -2627,6 +2636,9 @@ class WaterfallStep(ClosedModel):
     role: Literal["change", "total", "computed_total"]
     value: Optional[CanonicalDecimal] = None
     short_label: Optional[NonEmptyStr] = None
+    components: Optional[list[WaterfallStepComponent]] = Field(
+        default=None, min_length=2, max_length=4
+    )
 
     @model_validator(mode="after")
     def _role_value(self) -> WaterfallStep:
@@ -2639,6 +2651,12 @@ class WaterfallStep(ClosedModel):
             raise ValueError(
                 f"{self.role} requires a canonical decimal value (D245/D307)"
             )
+        if self.components is not None:
+            ids = [c.series_id for c in self.components]
+            if len(ids) != len(set(ids)):
+                raise ValueError(
+                    "waterfall component series_id values must be unique"
+                )
         return self
 
 
@@ -2658,6 +2676,25 @@ class WaterfallData(ClosedModel):
             raise ValueError(
                 "last waterfall step must be total or computed_total (D245/D307)"
             )
+        level = Decimal(0)
+        for step in self.steps:
+            if step.role == "total":
+                net = Decimal(step.value)  # type: ignore[arg-type]
+                level = net
+            elif step.role == "change":
+                net = Decimal(step.value)  # type: ignore[arg-type]
+                level = level + net
+            else:
+                net = level
+            if step.components is None:
+                continue
+            footed = sum(
+                (Decimal(c.value) for c in step.components), Decimal(0)
+            )
+            if footed != net:
+                raise ValueError(
+                    "waterfall components must sum to the step net"
+                )
         return self
 
 
@@ -4404,10 +4441,20 @@ class Deck(ClosedModel):
                             raise ValueError(f"unresolved format_id {mfid!r}")
                         referenced_formats.add(mfid)
                     # Author series colors must be known palette keys (D16/D98/D130).
-                    if not isinstance(chart, WaterfallChartVisual):
-                        from .theme import palette_keys  # local; avoid import cycle
+                    from .theme import palette_keys  # local; avoid import cycle
 
-                        keys = set(palette_keys())
+                    keys = set(palette_keys())
+                    if isinstance(chart, WaterfallChartVisual):
+                        for step in chart.waterfall_data.steps:
+                            for comp in step.components or []:
+                                if (
+                                    comp.color is not None
+                                    and comp.color not in keys
+                                ):
+                                    raise ValueError(
+                                        f"unknown series color key {comp.color!r}"
+                                    )
+                    else:
                         for s in chart.chart_data.series:
                             if s.color is not None and s.color not in keys:
                                 raise ValueError(

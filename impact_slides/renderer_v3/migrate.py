@@ -100,7 +100,7 @@ _LEGACY_ENTRIES: tuple[InventoryEntry, ...] = (
     _det("section_divider", "section_divider", "Registered section and correct immediate placement."),
     _det("stacked_bar_chart", "single_chart", "Explicit stack order/data/format/display.", chart_family="stacked_bar"),
     _det("timeline", "timeline", "Explicit milestones/time labels in authored order."),
-    _det("waterfall_chart", "single_chart", "Explicit ordered step roles, values, format, and resets.", chart_family="waterfall"),
+    _det("waterfall_chart", "single_chart", "Explicit ordered step roles, values, format, resets, and optional 2–4 footing components.", chart_family="waterfall"),
     # Human (17)
     _human("brand_cover", ("opening_cover", "closing_cover"), "One recipe served both deck boundaries."),
     _human("brand_divider", ("section_divider", "closing_cover"), "Current Amex uses both meanings."),
