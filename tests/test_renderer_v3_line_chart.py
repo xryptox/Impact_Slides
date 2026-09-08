@@ -326,6 +326,140 @@ def test_strict_rejects_q4_s30_unlabeled_scenario_lines():
     assert validate_handoff(raw, strict=True).ok
 
 
+def test_strict_rejects_q4_s06_s07_s09_s25_s32_one_point_line_shapes():
+    """Q4 2021 s06/s07/s09/s25/s32 leftover (#301): unlabeled interiors."""
+    q20_21 = [
+        ("q1-20", "Q1'20"),
+        ("q2-20", "Q2'20"),
+        ("q3-20", "Q3'20"),
+        ("q4-20", "Q4'20"),
+        ("q1-21", "Q1'21"),
+        ("q2-21", "Q2'21"),
+        ("q3-21", "Q3'21"),
+        ("q4-21", "Q4'21"),
+    ]
+    # Page glyphs: axis ticks, quarter labels, series names, Q4 tables.
+    # No second labeled plot point on any leftover pane.
+    cases = (
+        (
+            "s06-age",
+            (
+                ("millennial", "Millennials + Gen-Z", "50"),
+                ("gen-x", "Gen-X", "17"),
+                ("boomer", "Baby Boomer +", "0"),
+            ),
+        ),
+        (
+            "s07-sme",
+            (
+                ("sme-gs", "SME G&S", "25"),
+                ("sme-tot", "SME Total", "17"),
+                ("lg-tot", "L&G Total", "-33"),
+            ),
+        ),
+        (
+            "s09-us",
+            (
+                ("us", "US", "16"),
+                ("intl", "International", "-1"),
+                ("total", "Total AXP", "12"),
+            ),
+        ),
+        (
+            "s09-gs-te",
+            (
+                ("us-gs", "US G&S", "26"),
+                ("intl-gs", "Intl G&S", "19"),
+                ("us-te", "US T&E", "-10"),
+                ("intl-te", "Intl T&E", "-36"),
+            ),
+        ),
+        (
+            "s25-gs",
+            (
+                ("online", "Online", "42"),
+                ("gs", "G&S", "26"),
+                ("offline", "Offline", "10"),
+            ),
+        ),
+    )
+
+    def _contracts(exc: RendererValidationError) -> str:
+        return " ".join(
+            (e.expected.contract if e.expected else "") for e in exc.events
+        )
+
+    for _label, series_spec in cases:
+        raw = _raw()
+        vis = raw["slides"][1]["payload"]["chart"]
+        vis["chart_data"]["categories"] = [
+            {"category_id": cid, "label": lab} for cid, lab in q20_21
+        ]
+        vis["chart_data"]["series"] = [
+            {
+                "series_id": sid,
+                "name": name,
+                "values": [None] * 7 + [end],
+            }
+            for sid, name, end in series_spec
+        ]
+        with pytest.raises(RendererValidationError) as ei:
+            validate_handoff(raw, strict=True)
+        assert "requires at least two finite values" in _contracts(ei.value)
+
+        # Second finite is legal; these panes must not invent that point.
+        for series in vis["chart_data"]["series"]:
+            series["values"][6] = "1"
+        assert validate_handoff(raw, strict=True).ok
+
+    # s32: Q1'21-Q4'21 Reported vs FX-Adj; axis ticks (15%)/50% are not values.
+    raw = _raw()
+    cats = [
+        ("q1-21", "Q1'21"),
+        ("q2-21", "Q2'21"),
+        ("q3-21", "Q3'21"),
+        ("q4-21", "Q4'21"),
+    ]
+    n = len(cats)
+    series_names = (("reported", "Reported"), ("fx-adj", "FX Adj."))
+
+    def _pane(surface_id: str, heading: str) -> dict:
+        chart = deepcopy(raw["slides"][1]["payload"]["chart"])
+        chart["surface_id"] = surface_id
+        chart["heading"] = heading
+        chart["chart_data"]["categories"] = [
+            {"category_id": cid, "label": lab} for cid, lab in cats
+        ]
+        chart["chart_data"]["series"] = [
+            {"series_id": sid, "name": name, "values": [None] * n}
+            for sid, name in series_names
+        ]
+        return chart
+
+    raw["slides"][1]["layout_type"] = "dual_chart"
+    raw["slides"][1]["payload"] = {
+        "charts": [
+            _pane("s32-nv", "Network Volumes"),
+            _pane("s32-rev", "Revenue Net of Interest Expense"),
+        ]
+    }
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    assert "requires at least two finite values" in _contracts(ei.value)
+
+    for pane in raw["slides"][1]["payload"]["charts"]:
+        for series in pane["chart_data"]["series"]:
+            series["values"] = [None] * (n - 1) + ["1"]
+    with pytest.raises(RendererValidationError) as ei:
+        validate_handoff(raw, strict=True)
+    assert "requires at least two finite values" in _contracts(ei.value)
+
+    for pane in raw["slides"][1]["payload"]["charts"]:
+        for series in pane["chart_data"]["series"]:
+            series["values"][n - 2] = "1"
+    assert validate_handoff(raw, strict=True).ok
+
+
 def test_strict_rejects_duplicate_series_names():
     raw = _raw()
     raw["slides"][1]["payload"]["chart"]["chart_data"]["series"][1]["name"] = "US"
