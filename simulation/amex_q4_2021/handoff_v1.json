@@ -5149,196 +5149,272 @@
     },
     {
       "slide_number": 24,
-      "layout_type": "data_table",
+      "layout_type": "chart_grouped_annex",
       "section_id": "appendix",
       "title": "Q4'21 Network Volumes Growth by Customer Type",
       "payload": {
-        "table": {
+        "chart": {
+          "type": "chart",
           "surface_id": "s24-nv",
-          "stub_header": {
-            "label": "Customer Type"
+          "chart_type": "grouped_bar",
+          "heading": "Q4'21 vs. 2019",
+          "chart_data": {
+            "categories": [
+              {
+                "category_id": "us-cons",
+                "label": "US Consumer"
+              },
+              {
+                "category_id": "us-sme",
+                "label": "US SME"
+              },
+              {
+                "category_id": "intl-cons",
+                "label": "Int'l Consumer*"
+              },
+              {
+                "category_id": "intl-sme",
+                "label": "Int'l SME*"
+              },
+              {
+                "category_id": "lg",
+                "label": "Large & Global Corporate*"
+              },
+              {
+                "category_id": "proc",
+                "label": "Processed Volumes*"
+              }
+            ],
+            "series": [
+              {
+                "series_id": "consumer",
+                "name": "Consumer",
+                "values": [
+                  "22",
+                  null,
+                  "5",
+                  null,
+                  null,
+                  null
+                ],
+                "color": "primary_blue"
+              },
+              {
+                "series_id": "commercial",
+                "name": "Commercial",
+                "values": [
+                  null,
+                  "18",
+                  null,
+                  "12",
+                  "-33",
+                  null
+                ],
+                "color": "navy"
+              },
+              {
+                "series_id": "processed",
+                "name": "Processed",
+                "values": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  "3"
+                ],
+                "color": "neutral"
+              }
+            ]
           },
-          "columns": [
-            {
-              "column_id": "mix",
-              "label": "% of Total Network Volumes"
-            },
-            {
-              "column_id": "q3-yoy",
-              "label": "Q3 YoY%"
-            },
-            {
-              "column_id": "q4-yoy",
-              "label": "Q4 YoY%"
-            },
-            {
-              "column_id": "q3-vs19",
-              "label": "Q3 vs '19"
-            },
-            {
-              "column_id": "q4-vs19",
-              "label": "Q4 vs '19"
+          "category_axis": {
+            "visible": true
+          },
+          "value_axes": {
+            "primary": {
+              "visible": true,
+              "format_id": "pct_0",
+              "domain": {
+                "kind": "generated",
+                "target_ticks": 5
+              }
             }
-          ],
-          "rows": [
+          },
+          "display": {
+            "ordinary_values": "show",
+            "series_identity": "legend"
+          },
+          "subtitle": "% Increase/(decrease) vs. 2019 (FX-adjusted)"
+        },
+        "share_chips": {
+          "surface_id": "s24-shares",
+          "chips": [
             {
-              "row_id": "us-cons",
+              "share_id": "us-cons",
               "label": "US Consumer",
-              "cells": {
-                "mix": {
-                  "type": "number",
-                  "value": "35",
-                  "format_id": "pct_0"
-                },
-                "q3-yoy": {
-                  "type": "number",
-                  "value": "33",
-                  "format_id": "pct_0"
-                },
-                "q4-yoy": {
-                  "type": "number",
-                  "value": "33",
-                  "format_id": "pct_0"
-                },
-                "q3-vs19": {
-                  "type": "number",
-                  "value": "14",
-                  "format_id": "pct_0"
-                },
-                "q4-vs19": {
-                  "type": "number",
-                  "value": "20",
-                  "format_id": "pct_0"
-                }
+              "value": {
+                "type": "number",
+                "value": "35",
+                "format_id": "pct_0"
               }
             },
             {
-              "row_id": "intl-cons",
-              "label": "Int'l Consumer*",
-              "cells": {
-                "mix": {
-                  "type": "number",
-                  "value": "12",
-                  "format_id": "pct_0"
-                },
-                "q3-yoy": {
-                  "type": "number",
-                  "value": "25",
-                  "format_id": "pct_0"
-                },
-                "q4-yoy": {
-                  "type": "number",
-                  "value": "32",
-                  "format_id": "pct_0"
-                },
-                "q3-vs19": {
-                  "type": "number",
-                  "value": "-2",
-                  "format_id": "pct_0"
-                },
-                "q4-vs19": {
-                  "type": "number",
-                  "value": "8",
-                  "format_id": "pct_0"
-                }
-              }
-            },
-            {
-              "row_id": "us-sme",
+              "share_id": "us-sme",
               "label": "US SME",
-              "cells": {
-                "mix": {
-                  "type": "number",
-                  "value": "27",
-                  "format_id": "pct_0"
-                },
-                "q3-yoy": {
-                  "type": "missing"
-                },
-                "q4-yoy": {
-                  "type": "missing"
-                },
-                "q3-vs19": {
-                  "type": "missing"
-                },
-                "q4-vs19": {
-                  "type": "missing"
-                }
+              "value": {
+                "type": "number",
+                "value": "27",
+                "format_id": "pct_0"
               }
             },
             {
-              "row_id": "intl-sme",
+              "share_id": "intl-cons",
+              "label": "Int'l Consumer*",
+              "value": {
+                "type": "number",
+                "value": "12",
+                "format_id": "pct_0"
+              }
+            },
+            {
+              "share_id": "intl-sme",
               "label": "Int'l SME*",
-              "cells": {
-                "mix": {
-                  "type": "number",
-                  "value": "5",
-                  "format_id": "pct_0"
-                },
-                "q3-yoy": {
-                  "type": "missing"
-                },
-                "q4-yoy": {
-                  "type": "missing"
-                },
-                "q3-vs19": {
-                  "type": "missing"
-                },
-                "q4-vs19": {
-                  "type": "missing"
-                }
+              "value": {
+                "type": "number",
+                "value": "5",
+                "format_id": "pct_0"
               }
             },
             {
-              "row_id": "lg",
+              "share_id": "lg",
               "label": "Large & Global Corporate*",
-              "cells": {
-                "mix": {
-                  "type": "number",
-                  "value": "6",
-                  "format_id": "pct_0"
-                },
-                "q3-yoy": {
-                  "type": "missing"
-                },
-                "q4-yoy": {
-                  "type": "missing"
-                },
-                "q3-vs19": {
-                  "type": "missing"
-                },
-                "q4-vs19": {
-                  "type": "missing"
-                }
+              "value": {
+                "type": "number",
+                "value": "6",
+                "format_id": "pct_0"
               }
             },
             {
-              "row_id": "proc",
+              "share_id": "proc",
               "label": "Processed Volumes*",
-              "cells": {
-                "mix": {
-                  "type": "number",
-                  "value": "15",
-                  "format_id": "pct_0"
-                },
-                "q3-yoy": {
-                  "type": "missing"
-                },
-                "q4-yoy": {
-                  "type": "number",
-                  "value": "14",
-                  "format_id": "pct_0"
-                },
-                "q3-vs19": {
-                  "type": "missing"
-                },
-                "q4-vs19": {
-                  "type": "missing"
-                }
+              "value": {
+                "type": "number",
+                "value": "14",
+                "format_id": "pct_0"
               }
             }
           ]
-        }
+        },
+        "tables": [
+          {
+            "heading": "US Consumer + US SME",
+            "short_heading": "US",
+            "table": {
+              "surface_id": "s24-us",
+              "stub_header": {
+                "label": "Rate"
+              },
+              "columns": [
+                {
+                  "column_id": "q3",
+                  "label": "Q3"
+                },
+                {
+                  "column_id": "q4",
+                  "label": "Q4"
+                }
+              ],
+              "rows": [
+                {
+                  "row_id": "yoy",
+                  "label": "YoY%",
+                  "cells": {
+                    "q3": {
+                      "type": "number",
+                      "value": "33",
+                      "format_id": "pct_0"
+                    },
+                    "q4": {
+                      "type": "number",
+                      "value": "33",
+                      "format_id": "pct_0"
+                    }
+                  }
+                },
+                {
+                  "row_id": "vs19",
+                  "label": "vs. '19 %",
+                  "cells": {
+                    "q3": {
+                      "type": "number",
+                      "value": "14",
+                      "format_id": "pct_0"
+                    },
+                    "q4": {
+                      "type": "number",
+                      "value": "20",
+                      "format_id": "pct_0"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "heading": "Int'l Consumer + Int'l SME",
+            "short_heading": "Int'l",
+            "table": {
+              "surface_id": "s24-intl",
+              "stub_header": {
+                "label": "Rate"
+              },
+              "columns": [
+                {
+                  "column_id": "q3",
+                  "label": "Q3"
+                },
+                {
+                  "column_id": "q4",
+                  "label": "Q4"
+                }
+              ],
+              "rows": [
+                {
+                  "row_id": "yoy",
+                  "label": "YoY%",
+                  "cells": {
+                    "q3": {
+                      "type": "number",
+                      "value": "25",
+                      "format_id": "pct_0"
+                    },
+                    "q4": {
+                      "type": "number",
+                      "value": "32",
+                      "format_id": "pct_0"
+                    }
+                  }
+                },
+                {
+                  "row_id": "vs19",
+                  "label": "vs. '19 %",
+                  "cells": {
+                    "q3": {
+                      "type": "number",
+                      "value": "-2",
+                      "format_id": "pct_0"
+                    },
+                    "q4": {
+                      "type": "number",
+                      "value": "8",
+                      "format_id": "pct_0"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
       },
       "evidence_ids": [
         "amex-q4-2021-p24"
@@ -5351,15 +5427,11 @@
             "items": [
               {
                 "kind": "paragraph",
-                "text": "US Consumer + US SME Q3/Q4 YoY 33%/33%, vs '19 14%/20%. Int'l Consumer + Int'l SME Q3/Q4 YoY 25%/32%, vs '19 (2%)/8%."
-              },
-              {
-                "kind": "paragraph",
-                "text": "On-page vs-2019 series labels: 22%, 18%, 5%, 12%, (33%), 3% were not fully attributed to named segments in extraction."
-              },
-              {
-                "kind": "paragraph",
                 "text": "Note: Preliminary. All growth rates reflect FX-adjusted rates. * See Annex 1 for reported billings growth rates."
+              },
+              {
+                "kind": "paragraph",
+                "text": "On-bar YoY% 37/29/32/31/34/15 is category-aligned under the plot but is not a vs-2019 bar glyph and is not in the two brace tables; omitted, not invented as a second series."
               }
             ]
           }

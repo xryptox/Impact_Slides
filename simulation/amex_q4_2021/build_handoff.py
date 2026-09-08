@@ -2334,92 +2334,142 @@ def build():
         }
     )
 
-    # 24 Network volumes by customer type
+    # 24 Network volumes by customer type. PDF x-order + fill: share chips
+    # 35/27/12/5/6/14; signed vs-2019 bars 22/18/5/12/(33)/3 as consumer cyan /
+    # commercial navy / processed gray. Brace tables stand in for brace geometry.
+    # On-bar YoY% 37/29/32/31/34/15 is not a second vs-2019 series (#321).
+    s24_cats = [
+        ("us-cons", "US Consumer"),
+        ("us-sme", "US SME"),
+        ("intl-cons", "Int'l Consumer*"),
+        ("intl-sme", "Int'l SME*"),
+        ("lg", "Large & Global Corporate*"),
+        ("proc", "Processed Volumes*"),
+    ]
     slides.append(
         ordinary(
             24,
-            "data_table",
+            "chart_grouped_annex",
             "Q4'21 Network Volumes Growth by Customer Type",
             {
-                "table": table(
+                "chart": gbar(
                     "s24-nv",
-                    "Customer Type",
+                    "Q4'21 vs. 2019",
+                    s24_cats,
                     [
-                        ("mix", "% of Total Network Volumes"),
-                        ("q3-yoy", "Q3 YoY%"),
-                        ("q4-yoy", "Q4 YoY%"),
-                        ("q3-vs19", "Q3 vs '19"),
-                        ("q4-vs19", "Q4 vs '19"),
-                    ],
-                    [
-                        row(
-                            "us-cons",
-                            "US Consumer",
-                            {
-                                "mix": num("35", "pct_0"),
-                                "q3-yoy": num("33", "pct_0"),
-                                "q4-yoy": num("33", "pct_0"),
-                                "q3-vs19": num("14", "pct_0"),
-                                "q4-vs19": num("20", "pct_0"),
-                            },
+                        ser(
+                            "consumer",
+                            "Consumer",
+                            ["22", None, "5", None, None, None],
+                            "primary_blue",
                         ),
-                        row(
-                            "intl-cons",
-                            "Int'l Consumer*",
-                            {
-                                "mix": num("12", "pct_0"),
-                                "q3-yoy": num("25", "pct_0"),
-                                "q4-yoy": num("32", "pct_0"),
-                                "q3-vs19": num("-2", "pct_0"),
-                                "q4-vs19": num("8", "pct_0"),
-                            },
+                        ser(
+                            "commercial",
+                            "Commercial",
+                            [None, "18", None, "12", "-33", None],
+                            "navy",
                         ),
-                        row(
-                            "us-sme",
-                            "US SME",
-                            {
-                                "mix": num("27", "pct_0"),
-                                "q3-yoy": miss(),
-                                "q4-yoy": miss(),
-                                "q3-vs19": miss(),
-                                "q4-vs19": miss(),
-                            },
-                        ),
-                        row(
-                            "intl-sme",
-                            "Int'l SME*",
-                            {
-                                "mix": num("5", "pct_0"),
-                                "q3-yoy": miss(),
-                                "q4-yoy": miss(),
-                                "q3-vs19": miss(),
-                                "q4-vs19": miss(),
-                            },
-                        ),
-                        row(
-                            "lg",
-                            "Large & Global Corporate*",
-                            {
-                                "mix": num("6", "pct_0"),
-                                "q3-yoy": miss(),
-                                "q4-yoy": miss(),
-                                "q3-vs19": miss(),
-                                "q4-vs19": miss(),
-                            },
-                        ),
-                        row(
-                            "proc",
-                            "Processed Volumes*",
-                            {
-                                "mix": num("15", "pct_0"),
-                                "q3-yoy": miss(),
-                                "q4-yoy": num("14", "pct_0"),
-                                "q3-vs19": miss(),
-                                "q4-vs19": miss(),
-                            },
+                        ser(
+                            "processed",
+                            "Processed",
+                            [None, None, None, None, None, "3"],
+                            "neutral",
                         ),
                     ],
-                )
+                    fmt="pct_0",
+                    subtitle="% Increase/(decrease) vs. 2019 (FX-adjusted)",
+                ),
+                "share_chips": {
+                    "surface_id": "s24-shares",
+                    "chips": [
+                        {
+                            "share_id": "us-cons",
+                            "label": "US Consumer",
+                            "value": num("35", "pct_0"),
+                        },
+                        {
+                            "share_id": "us-sme",
+                            "label": "US SME",
+                            "value": num("27", "pct_0"),
+                        },
+                        {
+                            "share_id": "intl-cons",
+                            "label": "Int'l Consumer*",
+                            "value": num("12", "pct_0"),
+                        },
+                        {
+                            "share_id": "intl-sme",
+                            "label": "Int'l SME*",
+                            "value": num("5", "pct_0"),
+                        },
+                        {
+                            "share_id": "lg",
+                            "label": "Large & Global Corporate*",
+                            "value": num("6", "pct_0"),
+                        },
+                        {
+                            "share_id": "proc",
+                            "label": "Processed Volumes*",
+                            "value": num("14", "pct_0"),
+                        },
+                    ],
+                },
+                "tables": [
+                    {
+                        "heading": "US Consumer + US SME",
+                        "short_heading": "US",
+                        "table": table(
+                            "s24-us",
+                            "Rate",
+                            [("q3", "Q3"), ("q4", "Q4")],
+                            [
+                                row(
+                                    "yoy",
+                                    "YoY%",
+                                    {
+                                        "q3": num("33", "pct_0"),
+                                        "q4": num("33", "pct_0"),
+                                    },
+                                ),
+                                row(
+                                    "vs19",
+                                    "vs. '19 %",
+                                    {
+                                        "q3": num("14", "pct_0"),
+                                        "q4": num("20", "pct_0"),
+                                    },
+                                ),
+                            ],
+                        ),
+                    },
+                    {
+                        "heading": "Int'l Consumer + Int'l SME",
+                        "short_heading": "Int'l",
+                        "table": table(
+                            "s24-intl",
+                            "Rate",
+                            [("q3", "Q3"), ("q4", "Q4")],
+                            [
+                                row(
+                                    "yoy",
+                                    "YoY%",
+                                    {
+                                        "q3": num("25", "pct_0"),
+                                        "q4": num("32", "pct_0"),
+                                    },
+                                ),
+                                row(
+                                    "vs19",
+                                    "vs. '19 %",
+                                    {
+                                        "q3": num("-2", "pct_0"),
+                                        "q4": num("8", "pct_0"),
+                                    },
+                                ),
+                            ],
+                        ),
+                    },
+                ],
             },
             section="appendix",
             extra={
@@ -2427,9 +2477,8 @@ def build():
                     "s24-disc",
                     "Notes",
                     [
-                        "US Consumer + US SME Q3/Q4 YoY 33%/33%, vs '19 14%/20%. Int'l Consumer + Int'l SME Q3/Q4 YoY 25%/32%, vs '19 (2%)/8%.",
-                        "On-page vs-2019 series labels: 22%, 18%, 5%, 12%, (33%), 3% were not fully attributed to named segments in extraction.",
                         "Note: Preliminary. All growth rates reflect FX-adjusted rates. * See Annex 1 for reported billings growth rates.",
+                        "On-bar YoY% 37/29/32/31/34/15 is category-aligned under the plot but is not a vs-2019 bar glyph and is not in the two brace tables; omitted, not invented as a second series.",
                     ],
                 )
             },
