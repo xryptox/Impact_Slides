@@ -24,12 +24,14 @@ import pytest
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
 from impact_slides.renderer_v3.charts import (
     freeze_waterfall_chart,
+    paint_chart_html,
     paint_chart_svg,
     paint_semantic_table,
 )
 from impact_slides.renderer_v3.models import SingleChartSlide, WaterfallChartVisual
 from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema
+from impact_slides.renderer_v3.theme import contrast_ratio
 
 ROOT = Path(__file__).resolve().parents[1]
 WF = ROOT / "tests/fixtures/renderer_v3/minimal_waterfall.json"
@@ -674,3 +676,62 @@ def test_segment_label_overflow_is_strict_fail():
     assert "Card Member Receivables" in joined
     assert joined.count("waterfall-bar") == 7
     assert "waterfall-segment" not in joined
+
+
+def test_mixed_omit_stack_chartjs_keeps_net_bars():
+    raw = _wc()
+    steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
+    for step in steps:
+        if step["role"] == "change":
+            step.pop("components", None)
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["reserves-bridge"].chart_paint
+    omit = [b for b in cp["bars"] if not b.get("components")]
+    stacked = [b for b in cp["bars"] if b.get("components")]
+    assert omit and stacked
+    svg = paint_chart_svg(cp)
+    assert svg.count("waterfall-bar") == len(omit)
+    assert svg.count('class="bar waterfall-segment"') == sum(
+        len(b["components"]) for b in stacked
+    )
+    html = "".join(paint_chart_html(cp))
+    m = re.search(
+        r'<script type="application/json" id="cfg-reserves-bridge">(.*?)</script>',
+        html,
+        re.S,
+    )
+    assert m is not None
+    datasets = json.loads(m.group(1))["data"]["datasets"]
+    net_ds = datasets[-1]
+    assert net_ds["label"] == "Waterfall"
+    for i, bar in enumerate(cp["bars"]):
+        if bar.get("components"):
+            assert net_ds["data"][i] is None
+            continue
+        assert net_ds["data"][i] == [float(bar["y0"]), float(bar["y1"])]
+        assert net_ds["backgroundColor"][i] == bar["color"]
+        for ds in datasets[:-1]:
+            assert ds["data"][i] is None
+
+
+def test_inside_segment_labels_contrast_on_fill():
+    deck = validate_handoff(_wc(), strict=True).deck
+    cp = freeze_waterfall_chart(
+        deck.slides[1].payload.chart, deck.number_formats
+    )
+    fill_by = {
+        (seg["series_id"], bar["category_id"]): seg["color"]
+        for bar in cp["bars"]
+        for seg in bar["components"]
+    }
+    svg = paint_chart_svg(cp)
+    fills = re.findall(
+        r'<text class="waterfall-segment-label"[^>]*fill="([^"]+)"',
+        svg,
+    )
+    segs = [p for p in cp["placements"] if p.get("kind") == "segment"]
+    assert fills and len(fills) == len(segs)
+    for place, painted in zip(segs, fills):
+        fill = fill_by[(place["series_id"], place["category_id"])]
+        assert place["color"] == painted
+        assert contrast_ratio(painted, fill) >= 3.0

@@ -1159,10 +1159,16 @@ def freeze_waterfall_chart(
         )
         if comps:
             bar["components"] = comps
+            navy = resolve_color("navy", role="text_on_light")
+            white = resolve_color("white", role="text_on_dark")
             for seg in comps:
                 if float(seg["height"]) + 1e-9 < lab_px:
                     component_overflow = True
                     continue
+                fill = seg["color"]
+                seg_ink = (
+                    white if contrast_ratio(white, fill) >= 3.0 else navy
+                )
                 placements.append(
                     {
                         "kind": "segment",
@@ -1172,6 +1178,7 @@ def freeze_waterfall_chart(
                         "text": seg["visible"],
                         "x": cx,
                         "y": seg["y"] + seg["height"] / 2 + lab_px * 0.35,
+                        "color": seg_ink,
                         "priority": "segment",
                     }
                 )
@@ -3248,11 +3255,12 @@ def _paint_waterfall_labels(
                 f'{_e(place["text"])}</text>'
             )
         elif kind == "segment" and not skip_segments:
+            seg_ink = place.get("color") or ink
             parts.append(
                 f'<text class="waterfall-segment-label" x="{place["x"]:.1f}" '
                 f'y="{place["y"]:.1f}" text-anchor="middle" font-size="{lab_px}" '
                 f'font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
-                f'fill="{_e(ink)}" data-kind="segment" '
+                f'fill="{_e(seg_ink)}" data-kind="segment" '
                 f'data-category="{_e(place["category_id"])}">{_e(place["text"])}</text>'
             )
 
@@ -5942,6 +5950,30 @@ def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
             datasets.append(
                 {
                     "label": meta["name"],
+                    "data": data,
+                    "backgroundColor": colors,
+                    "borderColor": colors,
+                    "borderWidth": 0,
+                    "barPercentage": bar_pct,
+                    "categoryPercentage": category_pct,
+                    "clip": False,
+                    "indexAxis": "x",
+                    "grouped": False,
+                }
+            )
+        if any(not b.get("components") for b in bars):
+            data = []
+            colors = []
+            for bar in bars:
+                if bar.get("components"):
+                    data.append(None)
+                    colors.append("transparent")
+                else:
+                    data.append([float(bar["y0"]), float(bar["y1"])])
+                    colors.append(bar["color"])
+            datasets.append(
+                {
+                    "label": "Waterfall",
                     "data": data,
                     "backgroundColor": colors,
                     "borderColor": colors,
