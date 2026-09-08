@@ -2957,8 +2957,17 @@
                 "visible": true,
                 "format_id": "pct_1",
                 "domain": {
-                  "kind": "generated",
-                  "target_ticks": 5
+                  "kind": "fixed",
+                  "min": "0",
+                  "max": "5",
+                  "ticks": [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ]
                 }
               }
             },
@@ -3036,8 +3045,17 @@
                 "visible": true,
                 "format_id": "pct_1",
                 "domain": {
-                  "kind": "generated",
-                  "target_ticks": 5
+                  "kind": "fixed",
+                  "min": "0",
+                  "max": "5",
+                  "ticks": [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ]
                 }
               }
             },

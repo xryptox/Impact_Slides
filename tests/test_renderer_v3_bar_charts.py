@@ -7,6 +7,7 @@ Seams under test:
 - category groups + boxed labels (D155/D237/D235)
 - Chart.js/SVG geometry parity within 2px (D160)
 - Q4 s20 unlabeled Value Injection hatch leftover reject (#298)
+- Q4 s11 write-off panes pin fixed 0-5% domain (#317)
 """
 from __future__ import annotations
 
@@ -42,6 +43,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GROUPED = ROOT / "tests/fixtures/renderer_v3/minimal_grouped_bar.json"
 HBAR = ROOT / "tests/fixtures/renderer_v3/minimal_horizontal_bar.json"
 LINE = ROOT / "tests/fixtures/renderer_v3/minimal_line_chart.json"
+Q4_HANDOFF = ROOT / "simulation/amex_q4_2021/handoff_v1.json"
 
 
 def _g() -> dict:
@@ -718,3 +720,54 @@ def test_strict_rejects_q4_s20_unlabeled_hatch_split():
     # Guessed hatch dollars would validate; s20 must not invent them.
     vis["chart_data"]["series"][1]["values"] = ["0.1"] * 6
     assert validate_handoff(raw, strict=True).ok
+
+
+def test_q4_s11_writeoff_panes_pin_fixed_0_to_5_domain():
+    """Q4 2021 s11 (#317): both panes fixed 0-5%; series unchanged; DP-3 crush."""
+    raw = json.loads(Q4_HANDOFF.read_text(encoding="utf-8"))
+    s11 = next(s for s in raw["slides"] if s["slide_number"] == 11)
+    assert s11["layout_type"] == "dual_chart"
+    expected_ticks = ["0", "1", "2", "3", "4", "5"]
+    expected_series = {
+        "s11-loans": {
+            "nwo": ["2.5", "1.9", "1.4", "1.0", "0.6", "0.6"],
+            "dq": ["1.2", "1.0", "0.9", "0.6", "0.7", "0.7"],
+        },
+        "s11-rec": {
+            "nwo": ["2.0", "1.0", "0.5", "0.3", "0.2", "0.3"],
+            "dq": ["0.9", "0.6", "0.6", "0.5", "0.5", "0.6"],
+        },
+    }
+    panes = s11["payload"]["charts"]
+    assert len(panes) == 2
+    for pane in panes:
+        domain = pane["value_axes"]["primary"]["domain"]
+        assert domain["kind"] == "fixed"
+        assert domain["min"] == "0"
+        assert domain["max"] == "5"
+        assert domain["ticks"] == expected_ticks
+        got = {s["series_id"]: s["values"] for s in pane["chart_data"]["series"]}
+        assert got == expected_series[pane["surface_id"]]
+
+    deck = validate_handoff(raw, strict=True).deck
+    plan = plan_deck(deck, strict=True)
+    loans = plan.by_surface_id()["s11-loans"].chart_paint
+    rec = plan.by_surface_id()["s11-rec"].chart_paint
+    loans_bar = next(b for b in loans["bars"] if b["numeric"] == 2.5)
+    rec_bar = next(b for b in rec["bars"] if b["numeric"] == 2.0)
+    assert abs(loans_bar["height"] / loans["geometry"]["plot_h"] - 0.5) < 0.02
+    assert abs(rec_bar["height"] / rec["geometry"]["plot_h"] - 0.4) < 0.02
+
+    mutated = deepcopy(raw)
+    m11 = next(s for s in mutated["slides"] if s["slide_number"] == 11)
+    for pane in m11["payload"]["charts"]:
+        pane["value_axes"]["primary"]["domain"] = {
+            "kind": "generated",
+            "target_ticks": 5,
+        }
+    crushed = plan_deck(
+        validate_handoff(mutated, strict=True).deck, strict=True
+    ).by_surface_id()["s11-loans"].chart_paint
+    crushed_bar = next(b for b in crushed["bars"] if b["numeric"] == 2.5)
+    assert crushed_bar["height"] / crushed["geometry"]["plot_h"] < 0.25
+    assert float(crushed["domain"]["max"]) >= 15.0

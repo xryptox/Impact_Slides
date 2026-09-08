@@ -216,6 +216,7 @@ def gbar(
     groups=None,
     boxed_label=None,
     identity="legend",
+    domain=None,
 ):
     ch = {
         "type": "chart",
@@ -228,7 +229,8 @@ def gbar(
             "primary": {
                 "visible": True,
                 "format_id": fmt,
-                "domain": {"kind": "generated", "target_ticks": 5},
+                "domain": domain
+                or {"kind": "generated", "target_ticks": 5},
             }
         },
         "display": {"ordinary_values": "show", "series_identity": identity},
@@ -1423,6 +1425,13 @@ def build():
     # 11 credit metrics — PDF visual: loan NWO bars 2.5%..0.6%, rec NWO 2.0%..0.3%;
     # 30+ strips under each pane; GCP strip has no dual_chart slot (Type B secondary).
     # Extraction reading order swapped loan NWO onto rec 30+; use PDF coordinates.
+    # #317: pin both panes to 0-5% so DP-3's 15-pt generated span does not crush bars.
+    s11_domain = {
+        "kind": "fixed",
+        "min": "0",
+        "max": "5",
+        "ticks": ["0", "1", "2", "3", "4", "5"],
+    }
     slides.append(
         ordinary(
             11,
@@ -1456,6 +1465,7 @@ def build():
                             ),
                         ],
                         fmt="pct_1",
+                        domain=s11_domain,
                     ),
                     gbar(
                         "s11-rec",
@@ -1483,6 +1493,7 @@ def build():
                             ),
                         ],
                         fmt="pct_1",
+                        domain=s11_domain,
                     ),
                 ]
             },
