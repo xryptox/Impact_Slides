@@ -965,7 +965,7 @@ def build():
                             subtitle="% Increase/(decrease) vs. 2019 (FX-adjusted)",
                             identity="pane_title",
                         ),
-                        cat_support(
+                        indep_support(
                             "s06-age-tbl",
                             "Q4'21",
                             s06_age_cats,
@@ -1079,7 +1079,7 @@ def build():
                             subtitle="% Increase/(decrease) vs. 2019 (FX-adjusted)",
                             identity="pane_title",
                         ),
-                        cat_support(
+                        indep_support(
                             "s07-sme-tbl",
                             "Q4'21",
                             s07_sme_cats,
@@ -1239,7 +1239,7 @@ def build():
                             fmt="pct_0",
                             identity="pane_title",
                         ),
-                        cat_support(
+                        indep_support(
                             "s09-us-tbl",
                             "Q4'21",
                             s09_us_cats,
@@ -1290,7 +1290,7 @@ def build():
                             fmt="pct_0",
                             identity="pane_title",
                         ),
-                        cat_support(
+                        indep_support(
                             "s09-gs-tbl",
                             "Q4'21",
                             s09_gs_cats,
