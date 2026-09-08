@@ -13,8 +13,8 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 | Handoff schema | 1 (`meta.handoff_schema_version`) |
 | Slides | 53 (`slide_number` 1..53; evidence `amex-q4-2021-p01`..`p53`) |
 | Renderer | renderer_v3 **3.0.0**, theme `boardroom_amex` |
-| Repository commit at render | parent `510eb56` plus #321 s24 re-author |
-| Branch | `ticket-wave/031c70ad-4842-4187-9907-714f386441e1/issue-321` |
+| Repository commit at render | parent `510eb564742b10eb382767933967506f20be0adf` plus #317 s11 domain pin |
+| Branch | `ticket-wave/031c70ad-4842-4187-9907-714f386441e1/issue-317` |
 | Render | strict, exit 0, `run_meta.status=clean`, `ok=true`, warnings=0 errors=0 |
 | HTML identity | 53 unique `data-slide-number` 1..53; `data-layout` matches authored `layout_type` |
 | Capture viewport | 1920x1080, `deviceScaleFactor=1`; stacked-deck fit transforms cleared before element screenshots |
@@ -24,10 +24,10 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 
 | Artifact | Bytes | SHA-256 |
 |----------|------:|---------|
-| presentation.html | 1038687 | `b6e8e49d13a1ff682f958bf6952a0147a57beb78d0aad41fef9b233581f94af0` |
+| presentation.html | 1037882 | `103668429a4e11a89376a786c92ea449b2c8082788532e66830917a6c2ab802a` |
 | slide_notes.md | 3361 | `1e7f90090b726e5bf9cbbc081b9b557b5f7a04219b535fb087fac259a8984b41` |
 | evidence_manifest.json | 25028 | `1e0f9031d87ad8429479964732bbafd89a5bf4ce69b560559d4777e5a69f3751` |
-| run_meta.json | 252862 | `2f524350b74371a35e0b845a2dfd0d4f555138bff9848c704e6d8f775812ef2f` |
+| run_meta.json | 252862 | `b97f59d013d735175d097a1f473e51186505ad7633ca86f621cec9a133e7112c` |
 | handoff_schema_v1.json | 242133 | `fedbfa48837f7de5f53700ba7d77ebbcd124776395f42ba87dcb9e7782ca68f1` |
 
 `run_meta` info events (not errors): 53 `plan.typography_grown`, 18 `plan.text_wrapped`, 9 `plan.synchronized`, 2 `plan.label_ellipsized`, 2 `plan.short_label_used`.
@@ -78,7 +78,7 @@ Counts: faithful 5; accepted Boardroom chrome 42; Type A 5; Type B 1; source/PDF
 | 8 | Billed Business T&E Growth | `data_table` | `passes/pass_01/compare/sbs/slide_08.png` | corpus/extraction residual (Type A) | PDF is T&E-by-customer 5-series vs-2019 line plus Q4 table. Page-8 glyphs: axis ticks (100)/(80)/(60)/(40)/(20)/0, quarter labels, series names (US Consumer / Total SME / Total T&E / Intl Consumer / Large & Global Corporate), Q4 table, and Q4'21 % of Q4'19 callouts 108/83/82/78/36. Those callouts are not vs-2019 plot glyphs. No interior vs-2019 labels (#297). Line leftover stands (5 series exceeds line max 4; two-finite-value rule). Table authored. Do not raise the line ceiling; do not plot 108/83/82/78/36 as vs-2019. |
 | 9 | Billed Business Growth by Region | `dual_chart` | `passes/pass_01/compare/sbs/slide_09.png` | accepted v3 design divergence | dual_chart per-pane support: US vs International grouped_bar of labeled Q4 vs-2019 16/(1)/12 plus independent navy-header Q4 table; G&S vs T&E by region grouped_bar of labeled Q4 vs-2019 26/19/24/(10)/(36)/(18) plus independent navy-header 6-col Q4 table (stub `Q4'21`; vs. '19 / YoY / % of Total). 8-quarter interiors unlabeled (#301 leftover). Page-9 glyphs: axis ticks (100)/(80)/(60)/(40)/(20)/0/20, quarter labels, series names, Q4 tables. No second labeled plot point. Boardroom bars vs Amex lines. |
 | 10 | Worldwide Total Loans and Card Member Receivables | `dual_chart` | `passes/pass_01/compare/sbs/slide_10.png` | accepted v3 design divergence | dual grouped_bar with boxed YoY and year groups. Dollar bars and YoY match ($88.1-$91.5 loans; $56.6-$53.6 receivables). Boardroom boxed labels vs in-bar YoY boxes. |
-| 11 | Card Member Credit Metrics | `dual_chart` | `passes/pass_01/compare/sbs/slide_11.png` | accepted v3 design divergence | dual grouped_bar restores loan write-offs 2.5% to 0.6% and receivables 2.0% to 0.3% with 30+ as a second series. PDF 30+ strips sit under the plot; GCP write-off strip has no third canvas (Type B secondary). Boardroom grouped bars vs under-plot strips. |
+| 11 | Card Member Credit Metrics | `dual_chart` | `passes/pass_01/compare/sbs/slide_11.png` | accepted v3 design divergence | dual grouped_bar restores loan write-offs 2.5% to 0.6% and receivables 2.0% to 0.3% with 30+ as a second series. Both panes pin `domain.kind=fixed` 0–5 with ticks 0/1/2/3/4/5 (#317) so DP-3's 15-pt generated span does not crush the 2.5%/2.0% bars. PDF 30+ strips sit under the plot; GCP write-off strip has no third canvas (Type B secondary). Boardroom grouped bars vs under-plot strips. |
 | 12 | Total Provision | `chart_hero_dual` | `passes/pass_01/compare/sbs/slide_12.png` | accepted v3 design divergence | chart_hero_dual stacked_bar (Write-offs navy, Reserve Build/(Release)* primary_blue) with `stack_segments: show` and authored stack totals $2,621 … $53. No Total Provision line. Hero KPIs $2,127 / $4,022 / $6,149 unchanged. Boardroom stack labels vs Amex in-bar furniture. |
 | 13 | Total Reserves | `single_chart` | `passes/pass_01/compare/sbs/slide_13.png` | accepted v3 design divergence | single_chart waterfall + percent support_table. Walk totals $4.3 / $1.5 / $5.8 / ($2.2) / $3.6 / ($0.2) / $3.4 and reserve % boxes match. PDF two-tone loans+receivables overlay is Boardroom net waterfall. |
 | 14 | Revenue Performance | `data_table` | `passes/pass_01/compare/sbs/slide_14.png` | accepted v3 design divergence | Six metrics x Q4/FY/% vs-2019 match the PDF grid. Boardroom table vs pill columns is accepted chrome. |
@@ -162,7 +162,7 @@ s02 Notable Impacts callout is a Type B secondary on an otherwise accepted table
 
 ### 4. Source/PDF artifact or capture failure
 
-None. s03 HTML/SBS recaptured (#315) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s12 HTML/SBS recaptured (#318) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). s24 HTML/SBS recaptured (#321) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, six share chips, two peers). s06/s07/s09 HTML/SBS recaptured this ticket (#316) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, independent navy-header supports). Other halves were not regenerated.
+None. s03 HTML/SBS recaptured (#315) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s11 HTML/SBS recaptured (#317) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, y-axis 0%–5%). s12 HTML/SBS recaptured (#318) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). s24 HTML/SBS recaptured (#321) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, six share chips, two peers). s06/s07/s09 HTML/SBS recaptured this ticket (#316) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, independent navy-header supports). Other halves were not regenerated.
 
 ## Recipe coverage summary
 
