@@ -650,39 +650,47 @@ def build():
 
     # 3 Total Network Volumes Growth — PDF visual: 8-quarter vs-2019 lines; only Q3'21/Q4'21
     # vs '19 are labeled (table = line endpoints). Q1'20-Q2'21 interiors unlabeled.
+    # Axis ticks are labeled (40%)…20%; pin domain.kind=fixed (#315). Do not digitize interiors.
+    s03_chart = line(
+        "s03-vol",
+        "Total Network Volumes",
+        Q20_21,
+        [
+            ser(
+                "billed",
+                "Billed Business",
+                [None, None, None, None, None, None, "4", "12"],
+                "primary_blue",
+            ),
+            ser(
+                "tnv",
+                "Total Network Volumes",
+                [None, None, None, None, None, None, "4", "11"],
+                "navy",
+            ),
+            ser(
+                "processed",
+                "Processed Volumes",
+                [None, None, None, None, None, None, "3", "3"],
+                "neutral",
+            ),
+        ],
+        fmt="pct_0",
+        subtitle="% Increase/(decrease) vs. 2019",
+    )
+    s03_chart["value_axes"]["primary"]["domain"] = {
+        "kind": "fixed",
+        "min": "-40",
+        "max": "20",
+        "ticks": ["-40", "-30", "-20", "-10", "0", "10", "20"],
+    }
     slides.append(
         ordinary(
             3,
             "single_chart",
             "Total Network Volumes Growth",
             {
-                "chart": line(
-                    "s03-vol",
-                    "Total Network Volumes",
-                    Q20_21,
-                    [
-                        ser(
-                            "billed",
-                            "Billed Business",
-                            [None, None, None, None, None, None, "4", "12"],
-                            "primary_blue",
-                        ),
-                        ser(
-                            "tnv",
-                            "Total Network Volumes",
-                            [None, None, None, None, None, None, "4", "11"],
-                            "navy",
-                        ),
-                        ser(
-                            "processed",
-                            "Processed Volumes",
-                            [None, None, None, None, None, None, "3", "3"],
-                            "neutral",
-                        ),
-                    ],
-                    fmt="pct_0",
-                    subtitle="% Increase/(decrease) vs. 2019",
-                ),
+                "chart": s03_chart,
                 "support": {
                     "support_type": "support_table",
                     "alignment": "independent",
@@ -749,7 +757,7 @@ def build():
                     [
                         "Note: All growth rates reflect FX-adjusted rates. See Annex 1 for reported billings growth rates.",
                         "Billed business represents proprietary billed business on cards issued by AXP. Processed volumes represent GNS and alternative payment solutions facilitated by AXP.",
-                        "Line holds labeled Q3'21/Q4'21 vs '19 endpoints from the on-page grid. Q1'20-Q2'21 interiors are unlabeled.",
+                        "Line holds labeled Q3'21/Q4'21 vs '19 endpoints from the on-page grid. Axis ticks pinned to PDF (40%)..20% (#315). Q1'20-Q2'21 interiors are unlabeled.",
                     ],
                 )
             },

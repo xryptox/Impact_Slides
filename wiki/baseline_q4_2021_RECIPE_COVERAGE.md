@@ -24,11 +24,11 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 
 | Artifact | Bytes | SHA-256 |
 |----------|------:|---------|
-| presentation.html | 1035252 | `1c07c9aeb6aa71fe45c68633da752a6464cf86ac71ecf07d82a961f62526d6f6` |
+| presentation.html | 1038687 | `b6e8e49d13a1ff682f958bf6952a0147a57beb78d0aad41fef9b233581f94af0` |
 | slide_notes.md | 3361 | `1e7f90090b726e5bf9cbbc081b9b557b5f7a04219b535fb087fac259a8984b41` |
 | evidence_manifest.json | 25028 | `1e0f9031d87ad8429479964732bbafd89a5bf4ce69b560559d4777e5a69f3751` |
-| run_meta.json | 252858 | `e5ff6d3f48abe08e61da8685689f863027710bbed660f90cf37448e3a42caa09` |
-| handoff_schema_v1.json | 228609 | `4e035cfb19db1570559d3d4e38254ca73ac9534eaf67c37ee360575271a6059e` |
+| run_meta.json | 252862 | `2f524350b74371a35e0b845a2dfd0d4f555138bff9848c704e6d8f775812ef2f` |
+| handoff_schema_v1.json | 242133 | `fedbfa48837f7de5f53700ba7d77ebbcd124776395f42ba87dcb9e7782ca68f1` |
 
 `run_meta` info events (not errors): 53 `plan.typography_grown`, 18 `plan.text_wrapped`, 9 `plan.synchronized`, 2 `plan.label_ellipsized`, 2 `plan.short_label_used`.
 
@@ -70,7 +70,7 @@ Counts: faithful 5; accepted Boardroom chrome 41; Type A 5; Type B 2; source/PDF
 |------:|-------|--------|-----|-------|-------------|
 | 1 | American Express Earnings Conference Call Q4'21 | `opening_cover` | `passes/pass_01/compare/sbs/slide_01.png` | accepted v3 design divergence | Boardroom opening_cover carries the title and January 25, 2022 date. PDF is navy/cyan brand chrome plus Centurion seal. Seal/brand cover is excluded (CONTEXT.md); not a capture failure. |
 | 2 | Summary Financial Performance | `data_table` | `passes/pass_01/compare/sbs/slide_02.png` | accepted v3 design divergence | Six-row Q4/FY grid matches PDF figures. Boardroom data_table vs Amex pill columns is accepted chrome. Gray Notable Impacts side callout was folded into disclosure (`data_table.side_callout` shipped #303; Q4 s02 re-author is follow-up). |
-| 3 | Total Network Volumes Growth | `single_chart` | `passes/pass_01/compare/sbs/slide_03.png` | accepted v3 design divergence | single_chart line + support_table holds labeled Q3'21/Q4'21 vs-2019 endpoints (Billed 4/12, TNV 4/11, Processed 3/3) plus the Q3/Q4/FY table. Q1'20-Q2'21 interiors unlabeled (nulls). Boardroom chrome vs Amex full path. |
+| 3 | Total Network Volumes Growth | `single_chart` | `passes/pass_01/compare/sbs/slide_03.png` | accepted v3 design divergence | single_chart line + support_table holds labeled Q3'21/Q4'21 vs-2019 endpoints (Billed 4/12, TNV 4/11, Processed 3/3) plus the Q3/Q4/FY table. Axis ticks pinned to PDF (40%)…20% (`domain.kind=fixed`, #315). Q1'20-Q2'21 interiors unlabeled (nulls; Type A secondary). Boardroom chrome vs Amex full path. |
 | 4 | Billed Business (G&S vs T&E) | `dual_chart` | `passes/pass_01/compare/sbs/slide_04.png` | accepted v3 design divergence | dual_chart + shared independent support_table: FY stacked G&S/T&E mix $1,071 / $871 / $1,090 and mix 70/30, 85/15, 81/19; grouped_bar of labeled Q4 vs-'19 endpoints 24/(18)/12. Shared Q4 table G&S 24/19, T&E (18)/132, Total 12/33. Q1'20-Q3'21 line interiors unlabeled so the growth pane is not a line (Type A secondary). Boardroom chrome vs Amex 8-quarter path. |
 | 5 | Goods & Services Billed Business (Online vs Offline) | `data_table` | `passes/pass_01/compare/sbs/slide_05.png` | corpus/extraction residual (Type A) | PDF is Online/Offline/Total G&S 8-quarter vs-2019 line plus Q4 table. Page-5 glyphs: axis ticks (40)/(20)/0/20/40, quarter labels, series names, Q4 table vs-'19 31/12/24. No second labeled plot point (#296). Line leftover stands; table authored. Do not invent interiors. |
 | 6 | Global Consumer Billed Business | `dual_chart` | `passes/pass_01/compare/sbs/slide_06.png` | accepted v3 design divergence | dual_chart per-pane support: stacked G&S/T&E mix $119-$174 with independent Q4 YoY table, plus age-cohort grouped_bar of labeled vs-2019 endpoints 50/17/0 with category-aligned Q4 table. Geometric vs-2019 callouts omitted (`geometric_callouts` shipped #302; Q4 s06/s07 re-author is follow-up). Age-cohort 8-quarter interiors unlabeled (#301 leftover). Page-6 glyphs: axis ticks (50)/(30)/(10)/10/30/50, quarter labels, series names, Q4 table vs-'19 50/17/(0). No second labeled plot point. Boardroom chrome vs Amex callouts. |
@@ -134,10 +134,11 @@ Cover, appendix divider, closing cover, Q4/FY summary grids (s02/s14/s19), reven
 
 ### 2. Type (A) handoff misses — would likely replicate if re-authored
 
-s05, s08, s20, s26, s30 — 5 slides. s06/s07/s09/s25/s32 Boardroom chrome stays accepted; unlabeled interiors are Type A secondary leftovers (#301).
+s05, s08, s20, s26, s30 — 5 slides. s03 Boardroom chrome stays accepted; axis is fixed −40…20 (#315); unlabeled interiors are Type A secondary leftover. s06/s07/s09/s25/s32 Boardroom chrome stays accepted; unlabeled interiors are Type A secondary leftovers (#301).
 
 | Slide | Location | Impact | Ownership | Smallest next verification |
 |------:|----------|--------|-----------|----------------------------|
+| 3 | vs-2019 line interiors | Axis chrome pinned −40…20 (#315); Q1'20–Q2'21 interiors unlabeled | handoff / extraction | Axis accepted/fixed; interiors stay Type A leftover — do not digitize the unread path |
 | 5 | G&S Online/Offline line | Table only; Q4'21 endpoints 31/24/12 are one finite value per series | handoff / extraction | Accepted leftover (#296): no second labeled glyph; two-finite-value rule holds |
 | 8 | T&E-by-customer line | Table only; 5 series exceeds line max 4; interiors unlabeled | handoff / extraction | Accepted leftover (#297): 5th series required for PDF fidelity is a separate recipe ticket; 108/83/82/78/36 stay in the table |
 | 20 | Marketing Value Injection hatch | Hatch has no numeric labels; Marketing stays one total series | handoff / extraction | Accepted leftover (#298): no labeled hatch dollars; do not invent split series; hatch fill recipe is out of scope |
@@ -162,7 +163,7 @@ s02 Notable Impacts callout remains folded into disclosure (`side_callout` shipp
 
 ### 4. Source/PDF artifact or capture failure
 
-None. s04 HTML/SBS recaptured this ticket at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases). Other 52 halves were not regenerated (#293 changed only s04).
+None. s03 HTML/SBS recaptured this ticket at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). Other 52 halves were not regenerated (#315 changed only s03).
 
 ## Recipe coverage summary
 

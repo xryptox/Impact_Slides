@@ -864,8 +864,18 @@
               "visible": true,
               "format_id": "pct_0",
               "domain": {
-                "kind": "generated",
-                "target_ticks": 5
+                "kind": "fixed",
+                "min": "-40",
+                "max": "20",
+                "ticks": [
+                  "-40",
+                  "-30",
+                  "-20",
+                  "-10",
+                  "0",
+                  "10",
+                  "20"
+                ]
               }
             }
           },
@@ -1060,7 +1070,7 @@
               },
               {
                 "kind": "paragraph",
-                "text": "Line holds labeled Q3'21/Q4'21 vs '19 endpoints from the on-page grid. Q1'20-Q2'21 interiors are unlabeled."
+                "text": "Line holds labeled Q3'21/Q4'21 vs '19 endpoints from the on-page grid. Axis ticks pinned to PDF (40%)..20% (#315). Q1'20-Q2'21 interiors are unlabeled."
               }
             ]
           }
