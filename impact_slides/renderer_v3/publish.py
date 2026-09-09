@@ -1138,9 +1138,10 @@ def _paint_category_support_table(
     cells_role = list(paint.get("cells_role") or [])
     col_ids = list(paint.get("col_ids") or [])
     n_rows = int(paint.get("n_rows") or len(cells_vis))
-    row_h = max(28, (px or 14) + 12)
+    row_h = int(paint["row_h"])
+    row_gap = int(paint.get("row_gap") or 0)
     head_h = 0 if hide_header else row_h
-    total_h = head_h + n_rows * row_h + 8
+    total_h = head_h + n_rows * row_h + max(0, n_rows - 1) * row_gap + 8
     geom = f"position:relative;height:{total_h}px"
     if px is not None:
         geom = f"font-size:{px}px;{geom}"
@@ -1181,7 +1182,8 @@ def _paint_category_support_table(
         full = full_row_labels[r_i] if r_i < len(full_row_labels) else lab
         out.append(
             f'<p class="support-cat-stub" style="position:absolute;left:0;top:{y}px;'
-            f'width:{lane_w}px;margin:0;font-weight:var(--font-weight-emphasis)" '
+            f'width:{lane_w}px;height:{row_h}px;margin:0;'
+            f'font-weight:var(--font-weight-emphasis)" '
             f'title="{_escape(full)}">{_soft_break_html(lab)}</p>'
         )
         row_vis = cells_vis[r_i] if r_i < len(cells_vis) else []
@@ -1205,7 +1207,7 @@ def _paint_category_support_table(
                 f'display:flex;align-items:center;justify-content:center"{aria}>'
                 f"{_escape(visible)}</div>"
             )
-        y += row_h
+        y += row_h + (row_gap if r_i < n_rows - 1 else 0)
     out.append("</div>")
     return out
 

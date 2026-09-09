@@ -90,6 +90,7 @@ OUTLINED_BOX_MIN: Final = 48
 OUTLINED_BOX_MAX: Final = 120  # content-sized; not full category pitch
 OUTLINED_BOX_GAP: Final = 8
 OUTLINED_LABEL_LANE_MIN: Final = 40  # grows with label; capped by first-box edge
+CATEGORY_SUPPORT_ROW_GAP: Final = 8  # n_rows≥2 category boxes (#323); 1-row stays 0
 OUTLINED_PAD_Y: Final = 12
 OUTLINED_BOX_PAD_Y: Final = 16
 OUTLINED_ROW_EXTRA: Final = 12
@@ -462,6 +463,7 @@ def plan_deck(
                 sp._table_spec,
                 list(sp._table_spec["centers"]),
                 sp._box_w or CONTENT_W,
+                size=sp.role_sizes.get("table"),
             ):
                 was = sp._overflow
                 _fail_category_table_alignment(sp)
@@ -1327,7 +1329,10 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             _freeze_outlined_geometry(sp._table_spec, OUTLINED_SUPPORT_FLOOR)
         elif centers and sp._table_spec.get("kind") == "support_table":
             if not _apply_category_table_widths(
-                sp._table_spec, centers, sp._box_w or CONTENT_W
+                sp._table_spec,
+                centers,
+                sp._box_w or CONTENT_W,
+                size=sp.role_sizes.get("table"),
             ):
                 _fail_category_table_alignment(sp)
 
@@ -4766,6 +4771,7 @@ def _table_fit_detail(
                     local_codes.append("plan.text_wrapped")
 
         body_lines_total = 0
+        max_row_lines = 1
         for r, lab in enumerate(r_labels):
             cell_w = max(1, widths[0] - pad_x)
             lines = _wrap_label_lines(lab, px, cell_w, strong=True)
@@ -4773,6 +4779,7 @@ def _table_fit_detail(
                 geometry_ok = False
                 lines = lines[:TABLE_MAX_LABEL_LINES] or [lab]
             row_lines = max(len(lines), 1)
+            max_row_lines = max(max_row_lines, row_lines)
             body_lines_total += row_lines
             if len(lines) > 1 and "plan.text_wrapped" not in local_codes:
                 local_codes.append("plan.text_wrapped")
@@ -4793,14 +4800,21 @@ def _table_fit_detail(
         else:
             n_header_rows = (1 if group_lines else 0) + 1
             header_block = (group_lines + header_lines) * line_h
-        height = (
-            header_block
-            + body_lines_total * line_h
-            + (spec["n_rows"] + n_header_rows) * TABLE_CELL_PAD_Y
-            + (spec["n_rows"] + n_header_rows) * TABLE_RULE_Y
-            + scale_h
-            + BLOCK_MARGIN_Y
-        )
+        if spec.get("kind") == "support_table" and spec.get("alignment") == "category":
+            row_h = max(28, px + 12, max_row_lines * line_h)
+            cat_head = 0 if hide_header else row_h
+            n_body = spec["n_rows"]
+            gap = CATEGORY_SUPPORT_ROW_GAP if n_body >= 2 else 0
+            height = cat_head + n_body * row_h + max(0, n_body - 1) * gap + 8 + scale_h
+        else:
+            height = (
+                header_block
+                + body_lines_total * line_h
+                + (spec["n_rows"] + n_header_rows) * TABLE_CELL_PAD_Y
+                + (spec["n_rows"] + n_header_rows) * TABLE_RULE_Y
+                + scale_h
+                + BLOCK_MARGIN_Y
+            )
         fits = geometry_ok and height <= box_h and sum(widths) <= box_w
         return fits, local_codes, height
 
@@ -5009,10 +5023,25 @@ def _freeze_outlined_geometry(spec: dict[str, Any], size: int) -> None:
         spec["label"] = ""
 
 
+def _freeze_category_support_rows(spec: dict[str, Any], px: int) -> None:
+    """Seal category-aligned body row_h + n_rows≥2 gap for freeze/paint (#323)."""
+    n_rows = int(spec.get("n_rows") or 0)
+    lane_w = max(1, int(spec.get("label_lane_w") or 1))
+    line_h = _line_box(px)
+    max_lines = 1
+    for lab in list(spec.get("display_row_labels") or spec.get("row_labels_full") or []):
+        lines = _wrap_label_lines(str(lab), px, lane_w, strong=True)
+        max_lines = max(max_lines, max(len(lines), 1))
+    spec["row_h"] = max(28, int(px) + 12, max_lines * line_h)
+    spec["row_gap"] = CATEGORY_SUPPORT_ROW_GAP if n_rows >= 2 else 0
+
+
 def _apply_category_table_widths(
     spec: dict[str, Any],
     centers: list[dict[str, Any]],
     box_w: int,
+    *,
+    size: int | None = None,
 ) -> bool:
     """Freeze content-sized cell width + lane for center-positioned paint (D167/D266).
 
@@ -5066,6 +5095,9 @@ def _apply_category_table_widths(
     spec["cell_w"] = cell_w
     spec["label_lane_w"] = lane_w
     spec["category_centered"] = True
+    _freeze_category_support_rows(
+        spec, int(size) if size is not None else SUPPORT_TABLE_FLOOR
+    )
     return True
 
 
@@ -5713,6 +5745,7 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
                 sp._table_spec,
                 list(sp._table_spec["centers"]),
                 sp._box_w or CONTENT_W,
+                size=size,
             ):
                 _fail_category_table_alignment(sp)
     elif sp.role == "comparison_cards" and sp._table_spec:
