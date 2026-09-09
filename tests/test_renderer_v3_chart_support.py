@@ -7,6 +7,7 @@ Seams under test:
 - metric strip complete content (D165/D265)
 - D10/D47 allocation preserves 320×240 plot floor
 - dual_chart per-pane `{chart, support?}` envelope plus shared-vs-per-pane mutex
+- n_rows≥2 category boxes freeze/paint one row gap (#323); one-row boxes unchanged
 """
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ from impact_slides.renderer_v3.models import (
     OutlinedSupportVisual,
     SupportTableVisual,
 )
-from impact_slides.renderer_v3.plan import plan_deck
+from impact_slides.renderer_v3.plan import CATEGORY_SUPPORT_ROW_GAP, plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,6 +68,23 @@ def _cat_support_table(*, alignment: str = "category") -> dict:
             ],
         },
     }
+
+
+def _cat_support_table_two_rows(*, alignment: str = "category") -> dict:
+    support = _cat_support_table(alignment=alignment)
+    support["table"]["rows"].append(
+        {
+            "row_id": "recv",
+            "label": "Card Member Receivables",
+            "cells": {
+                "q1": {"type": "number", "value": "0.9", "format_id": "pct_1"},
+                "q2": {"type": "number", "value": "4.4", "format_id": "pct_1"},
+                "q3": {"type": "number", "value": "1.0", "format_id": "pct_1"},
+                "q4": {"type": "number", "value": "0.6", "format_id": "pct_1"},
+            },
+        }
+    )
+    return support
 
 
 def _outlined_support() -> dict:
@@ -300,6 +318,56 @@ def test_paint_support_table_complete_rows(tmp_path: Path):
     cat_x = [c["x"] for c in chart.chart_paint["categories"]]
     for painted, frozen in zip(lefts, cat_x):
         assert abs(painted - frozen) <= 2.0
+
+
+def test_two_row_category_support_freezes_row_gap():
+    """#323: n_rows≥2 category boxes get one shared row gap; one-row stays 0."""
+    two = validate_handoff(_with_support(_cat_support_table_two_rows()), strict=True)
+    two_plan = plan_deck(two.deck, strict=True)
+    two_sup = next(s for s in two_plan.surfaces if s.surface_id == "vol-support")
+    assert two_sup.table_paint["n_rows"] == 2
+    assert two_sup.table_paint["category_centered"] is True
+    assert two_sup.table_paint["row_gap"] == CATEGORY_SUPPORT_ROW_GAP
+    assert two_sup.table_paint["row_gap"] >= 8
+    assert two_sup.table_paint["row_h"] >= 28
+
+    one = validate_handoff(_with_support(_cat_support_table()), strict=True)
+    one_plan = plan_deck(one.deck, strict=True)
+    one_sup = next(s for s in one_plan.surfaces if s.surface_id == "vol-support")
+    assert one_sup.table_paint["n_rows"] == 1
+    assert one_sup.table_paint.get("row_gap", 0) == 0
+
+
+def test_paint_two_row_category_support_separates_rows(tmp_path: Path):
+    handoff = tmp_path / "h.json"
+    handoff.write_text(
+        json.dumps(_with_support(_cat_support_table_two_rows())), encoding="utf-8"
+    )
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert "support-table category-aligned" in html
+    assert 'data-category-centered="true"' in html
+    assert "Card Member Receivables" in html
+    tops = [
+        int(t)
+        for t in re.findall(
+            r'class="support-cat-cell(?: num)?"[^>]*top:(\d+)px', html
+        )
+    ]
+    assert len(tops) == 8
+    row0, row1 = set(tops[:4]), set(tops[4:])
+    assert len(row0) == 1 and len(row1) == 1
+    delta = next(iter(row1)) - next(iter(row0))
+    result = validate_handoff(_with_support(_cat_support_table_two_rows()), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    support = next(s for s in plan.surfaces if s.surface_id == "vol-support")
+    row_h = int(support.table_paint["row_h"])
+    row_gap = int(support.table_paint["row_gap"])
+    assert delta == row_h + row_gap
+    assert row_gap == CATEGORY_SUPPORT_ROW_GAP
+    # Isolated boxes: no visual navy header band (sr-only table may still use it).
+    assert re.search(r'class="support-cat-cell[^"]*\bhead\b', html) is None
 
 
 def test_category_support_visible_cells_carry_table_chrome(tmp_path: Path):
@@ -548,7 +616,7 @@ def test_outlined_keep_cat_then_width_freeze_fail_demotes_independent():
     def never_fits(sp, size):
         return False, True
 
-    def boom(spec, centers, box_w):
+    def boom(spec, centers, box_w, **kwargs):
         spec.pop("category_centered", None)
         return False
 
@@ -594,7 +662,7 @@ def test_category_width_freeze_failure_demotes_non_strict():
     result = validate_handoff(_with_support(_cat_support_table()), strict=True)
     real = plan_mod._apply_category_table_widths
 
-    def boom(spec, centers, box_w):
+    def boom(spec, centers, box_w, **kwargs):
         spec.pop("category_centered", None)
         return False
 
