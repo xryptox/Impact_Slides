@@ -4011,6 +4011,57 @@ def _bar_slot_geometry(
     }
 
 
+def _stack_text_box(
+    x: float, y: float, text: str, px: float
+) -> tuple[float, float, float, float]:
+    w = max(20.0, len(str(text)) * px * 0.55)
+    return _fact_box(float(x), float(y), w, float(px))
+
+
+def _nudge_stack_box(
+    x: float,
+    y: float,
+    text: str,
+    px: float,
+    occupied: list[tuple[float, float, float, float]],
+    away: float,
+) -> tuple[float, tuple[float, float, float, float]]:
+    """Same AABB loop as #272 totals: step `away` until the box is clear."""
+    box = _stack_text_box(x, y, text, px)
+    while occupied and _overlaps(box, occupied):
+        y += away
+        box = _stack_text_box(x, y, text, px)
+    return y, box
+
+
+def _zero_stack_cap_y(bar: dict[str, Any], bars: list[dict[str, Any]], segment_px: int) -> float:
+    """Zero-area cap sits on the finished same-column stack, not the baseline."""
+    cat = bar["category_id"]
+    pos_y = [
+        float(s["y"])
+        for s in bars
+        if s.get("category_id") == cat
+        and s.get("finite")
+        and not s.get("missing")
+        and float(s.get("height") or 0) > 0
+        and int(s.get("sign") or 0) > 0
+    ]
+    if pos_y:
+        return min(pos_y) - 4.0
+    neg_bottom = [
+        float(s["y"]) + float(s["height"])
+        for s in bars
+        if s.get("category_id") == cat
+        and s.get("finite")
+        and not s.get("missing")
+        and float(s.get("height") or 0) > 0
+        and int(s.get("sign") or 0) < 0
+    ]
+    if neg_bottom:
+        return max(neg_bottom) + float(segment_px) + 4.0
+    return float(bar.get("end_y", bar["y"])) - 4.0
+
+
 def _place_stack_labels(
     bars: list[dict[str, Any]],
     series_plans: list[dict[str, Any]],
@@ -4022,11 +4073,18 @@ def _place_stack_labels(
     total_px: int,
     plot: tuple[float, float, float, float],
 ) -> list[dict[str, Any]]:
-    """Segment + total labels for stacked bars (D79/D242/D304). Never fit-drop."""
+    """Segment + total labels for stacked bars (D79/D242/D304). Never fit-drop.
+
+    Thin/zero bands reuse the #272 AABB nudge for segment-vs-segment and
+    segment-vs-total. Zero-area values stay a cap label on the finished
+    stack (D247 still records the zero).
+    """
     placements: list[dict[str, Any]] = []
     series_by_id = {s["series_id"]: s for s in series_plans}
     navy = resolve_color("navy", role="text_on_light")
     white = resolve_color("white", role="text_on_dark")
+    occupied_by_cat: dict[str, list[tuple[float, float, float, float]]] = {}
+    deferred: list[dict[str, Any]] = []
 
     for b in bars:
         if b.get("missing") or not b.get("finite"):
@@ -4048,7 +4106,6 @@ def _place_stack_labels(
             continue
         # Prefer inside when tall enough AND white-on-fill contrast holds (D304).
         h = float(b["height"])
-        w_est = max(20.0, len(text) * segment_px * 0.55)
         fill = series_by_id[b["series_id"]]["color"]
         contrast_ok = contrast_ratio(white, fill) >= 3.0
         inside_ok = (
@@ -4056,6 +4113,7 @@ def _place_stack_labels(
         )
         cx = b["end_x"]
         if inside_ok:
+            y = b.get("mid_y", b["y"] + h / 2) + segment_px * 0.35
             placements.append(
                 {
                     "series_id": b["series_id"],
@@ -4063,45 +4121,61 @@ def _place_stack_labels(
                     "kind": "segment",
                     "class": "inside",
                     "x": cx,
-                    "y": b.get("mid_y", b["y"] + h / 2) + segment_px * 0.35,
+                    "y": y,
                     "text": text,
                     "color": white,
                     "priority": "segment",
                 }
             )
-        else:
-            # Outside + series connector; navy text (D79/D304).
-            sign = b.get("sign", 0)
-            if sign < 0:
-                y = b["y"] + h + segment_px + 4
-                cls = "outside_below"
-            elif sign > 0:
-                y = b["y"] - 4
-                cls = "outside_above"
-            else:
-                y = b.get("end_y", b["y"]) - 4
-                cls = "outside_zero"
-            # Lateral nudge if label wider than bar.
-            x = cx
-            if w_est > b["width"]:
-                x = cx + b["width"] / 2 + w_est / 2 + 6
-                cls = "leader"
-            placements.append(
-                {
-                    "series_id": b["series_id"],
-                    "category_id": b["category_id"],
-                    "kind": "segment",
-                    "class": cls,
-                    "x": x,
-                    "y": y,
-                    "text": text,
-                    "color": navy,
-                    "anchor_x": cx,
-                    "anchor_y": b.get("mid_y", b["end_y"]),
-                    "connector_color": series_by_id[b["series_id"]]["color"],
-                    "priority": "segment",
-                }
+            occupied_by_cat.setdefault(b["category_id"], []).append(
+                _stack_text_box(cx, y, text, segment_px)
             )
+        else:
+            deferred.append(b)
+
+    # Thin/zero/contrast-fail: leader/lateral/nudge in-column. Never park on
+    # another label's crown. Non-zero labels are never fit-dropped (#324).
+    for b in deferred:
+        text = b["visible"]
+        h = float(b["height"])
+        w_est = max(20.0, len(text) * segment_px * 0.55)
+        cx = b["end_x"]
+        sign = b.get("sign", 0)
+        if sign < 0:
+            y = b["y"] + h + segment_px + 4
+            cls = "outside_below"
+            away = 1.0
+        elif sign > 0:
+            y = b["y"] - 4
+            cls = "outside_above"
+            away = -1.0
+        else:
+            y = _zero_stack_cap_y(b, bars, segment_px)
+            cls = "outside_zero"
+            away = -1.0 if y <= float(b.get("end_y", b["y"])) else 1.0
+        x = cx
+        if w_est > b["width"]:
+            x = cx + b["width"] / 2 + w_est / 2 + 6
+            cls = "leader"
+        occupied = occupied_by_cat.setdefault(b["category_id"], [])
+        y, box = _nudge_stack_box(x, y, text, segment_px, occupied, away)
+        occupied.append(box)
+        placements.append(
+            {
+                "series_id": b["series_id"],
+                "category_id": b["category_id"],
+                "kind": "segment",
+                "class": cls,
+                "x": x,
+                "y": y,
+                "text": text,
+                "color": navy,
+                "anchor_x": cx,
+                "anchor_y": b.get("mid_y", b["end_y"]),
+                "connector_color": series_by_id[b["series_id"]]["color"],
+                "priority": "segment",
+            }
+        )
 
     # D241/D299/D304: finite authored total replaces computed total labels for
     # that category only. D247 still keeps computed sides in stack_totals.
@@ -4124,25 +4198,10 @@ def _place_stack_labels(
         text = t["visible"]
         x = t["x"]
         y = t["y"]
-        tw = max(20.0, len(text) * total_px * 0.55)
-        th = float(total_px)
         away = -1.0 if t.get("side") != "negative" else 1.0
-        occupied = [
-            _fact_box(
-                float(p["x"]),
-                float(p["y"]),
-                max(20.0, len(str(p["text"])) * segment_px * 0.55),
-                float(segment_px),
-            )
-            for p in placements
-            if p.get("kind") == "segment"
-            and p.get("category_id") == t["category_id"]
-            and p.get("class") != "suppressed"
-        ]
-        box = _fact_box(x, y, tw, th)
-        while occupied and _overlaps(box, occupied):
-            y += away
-            box = _fact_box(x, y, tw, th)
+        occupied = occupied_by_cat.setdefault(t["category_id"], [])
+        y, box = _nudge_stack_box(x, y, text, total_px, occupied, away)
+        occupied.append(box)
         placements.append(
             {
                 "series_id": None,

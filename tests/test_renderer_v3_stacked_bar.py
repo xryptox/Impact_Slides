@@ -7,6 +7,7 @@ Seams under test:
 - Chart.js/SVG geometry parity within 2px (D160)
 - identity + semantic table completeness (D247)
 - Q4 2021 s12 stacked write-off/reserve labels (#318)
+- thin/zero segment AABB uncollide without fit-drop (#324)
 """
 from __future__ import annotations
 
@@ -417,6 +418,45 @@ def test_freeze_assigns_stack_theme_colors():
     assert len(set(colors)) == 3
 
 
+def _stack_box(p: dict, px: int) -> tuple[float, float, float, float]:
+    w = max(20.0, len(str(p["text"])) * px * 0.55)
+    return (
+        p["x"] - w / 2,
+        p["y"] - px / 2,
+        p["x"] + w / 2,
+        p["y"] + px / 2,
+    )
+
+
+def _assert_column_labels_uncollided(cp: dict) -> None:
+    seg_px = cp["role_sizes"]["segment_labels"]
+    tot_px = cp["role_sizes"]["stack_totals"]
+    cats = {
+        p["category_id"]
+        for p in cp["placements"]
+        if p.get("kind") in {"segment", "stack_total"}
+        and p.get("class") != "suppressed"
+    }
+    for cat in cats:
+        col = [
+            p
+            for p in cp["placements"]
+            if p.get("category_id") == cat
+            and p.get("kind") in {"segment", "stack_total"}
+            and p.get("class") != "suppressed"
+        ]
+        for i, a in enumerate(col):
+            pa = _stack_box(a, tot_px if a["kind"] == "stack_total" else seg_px)
+            for b in col[i + 1 :]:
+                pb = _stack_box(b, tot_px if b["kind"] == "stack_total" else seg_px)
+                assert not (
+                    pa[0] < pb[2]
+                    and pa[2] > pb[0]
+                    and pa[1] < pb[3]
+                    and pa[3] > pb[1]
+                ), (cat, a.get("text"), a.get("class"), b.get("text"), b.get("class"))
+
+
 def test_stack_total_nudges_off_outside_segment_crown():
     raw = _s()
     vis = _chart_slide(raw)["payload"]["chart"]
@@ -427,8 +467,6 @@ def test_stack_total_nudges_off_outside_segment_crown():
     vis["auxiliary_series"][0]["values"] = ["82", "82", "82", "82"]
     deck = validate_handoff(raw, strict=True).deck
     cp = plan_deck(deck, strict=True).by_surface_id()["dep-mix"].chart_paint
-    seg_px = cp["role_sizes"]["segment_labels"]
-    tot_px = cp["role_sizes"]["stack_totals"]
     for cat in ("q1", "q2", "q3", "q4"):
         segs = [
             p
@@ -445,25 +483,66 @@ def test_stack_total_nudges_off_outside_segment_crown():
         assert segs and tots
         assert any(p["text"] == "$2" for p in segs)
         assert any(p["text"] == "$82" for p in tots)
-        for tot in tots:
-            for seg in segs:
-                tw = max(20.0, len(tot["text"]) * tot_px * 0.55)
-                sw = max(20.0, len(seg["text"]) * seg_px * 0.55)
-                tb = (
-                    tot["x"] - tw / 2,
-                    tot["y"] - tot_px / 2,
-                    tot["x"] + tw / 2,
-                    tot["y"] + tot_px / 2,
-                )
-                sb = (
-                    seg["x"] - sw / 2,
-                    seg["y"] - seg_px / 2,
-                    seg["x"] + sw / 2,
-                    seg["y"] + seg_px / 2,
-                )
-                assert not (
-                    tb[0] < sb[2] and tb[2] > sb[0] and tb[1] < sb[3] and tb[3] > sb[1]
-                )
+    _assert_column_labels_uncollided(cp)
+
+
+def test_thin_and_zero_segment_labels_do_not_share_aabb():
+    """#324: segment-vs-segment + segment-vs-total; never fit-drop non-zero."""
+    raw = _s()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["chart_data"]["series"] = [
+        {"series_id": "delinq", "name": "Delinquent", "values": ["21", "20", "10", "8"]},
+        {
+            "series_id": "frp",
+            "name": "FRP",
+            "values": ["7", "9", "30", "15"],
+        },
+        {"series_id": "cpr", "name": "CPR", "values": ["0", "85", "0", "0"]},
+    ]
+    vis["auxiliary_series"][0]["values"] = ["28", "115", "40", "23"]
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["dep-mix"].chart_paint
+    segs = [
+        p
+        for p in cp["placements"]
+        if p.get("kind") == "segment" and p.get("class") != "suppressed"
+    ]
+    texts = [p["text"] for p in segs]
+    assert "$7" in texts and "$9" in texts
+    assert texts.count("$0") == 3
+    assert any(
+        p.get("kind") == "stack_total" and p["text"] == "$115" for p in cp["placements"]
+    )
+    _assert_column_labels_uncollided(cp)
+
+
+def test_thin_percent_caps_stay_visible_and_uncollided():
+    """#324 s31 kernel: 1/2/4-pt caps stay; no shared AABB with the band below."""
+    raw = _s()
+    vis = _chart_slide(raw)["payload"]["chart"]
+    vis["value_axes"]["primary"]["format_id"] = "pct_0"
+    vis["chart_data"]["series"] = [
+        {"series_id": "unsec", "name": "Unsecured", "values": ["28", "23", "20", "20"]},
+        {"series_id": "abs", "name": "Card ABS", "values": ["14", "10", "11", "11"]},
+        {"series_id": "dep", "name": "Deposits", "values": ["53", "66", "67", "67"]},
+        {"series_id": "st", "name": "Short-term", "values": ["4", "1", "2", "2"]},
+    ]
+    vis["auxiliary_series"][0]["format_id"] = "usd_0"
+    vis["auxiliary_series"][0]["values"] = ["138", "132", "126", "126"]
+    deck = validate_handoff(raw, strict=True).deck
+    cp = plan_deck(deck, strict=True).by_surface_id()["dep-mix"].chart_paint
+    segs = [
+        p
+        for p in cp["placements"]
+        if p.get("kind") == "segment" and p.get("class") != "suppressed"
+    ]
+    texts = [p["text"] for p in segs]
+    for token in ("4%", "1%", "2%", "53%", "66%", "67%"):
+        assert token in texts
+    assert any(
+        p.get("kind") == "stack_total" and p["text"] == "$132" for p in cp["placements"]
+    )
+    _assert_column_labels_uncollided(cp)
 
 
 # ---------------------------------------------------------------------------
