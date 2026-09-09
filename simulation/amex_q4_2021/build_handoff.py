@@ -1792,39 +1792,28 @@ def build():
         )
     )
 
-    # 15 Discount Revenue combo $B + rate; PDF visual: YoY boxes 7/6/(24)/(19)/33/36
-    # (extraction listed 6/7/(19)/(24)/36/33). FY inset $25.7 / 25% / (2%).
+    # 15 Discount Revenue $B bars + in-bar YoY; Average Discount Rate as annex
+    # peer (PDF under-plot boxes 2.39/2.36/2.27/2.25/2.32/2.30). No combo line.
+    # FY inset $25.7 / 25% / (2%) is the second annex peer (#320).
     slides.append(
         ordinary(
             15,
-            "single_chart",
+            "chart_grouped_annex",
             "Discount Revenue",
             {
-                "chart": combo(
+                "chart": gbar(
                     "s15-dr",
                     "Discount Revenue* (Q3-Q4)",
                     Q3Q4,
                     [
-                        {
-                            "series_id": "rev",
-                            "name": "Discount Revenue $B",
-                            "mark_type": "bar",
-                            "values": ["6.6", "6.8", "5.0", "5.5", "6.7", "7.5"],
-                            "color": "primary_blue",
-                        },
-                        {
-                            "series_id": "rate",
-                            "name": "Average Discount Rate",
-                            "mark_type": "line",
-                            "axis_key": "secondary",
-                            "style": {"line_style": "solid", "marker": "circle"},
-                            "values": ["2.39", "2.36", "2.27", "2.25", "2.32", "2.30"],
-                            "color": "navy",
-                        },
+                        ser(
+                            "rev",
+                            "Discount Revenue $B",
+                            ["6.6", "6.8", "5.0", "5.5", "6.7", "7.5"],
+                            "primary_blue",
+                        ),
                     ],
-                    bar_mode="grouped",
-                    pfmt="usd_1",
-                    sfmt="pct_2",
+                    fmt="usd_1",
                     subtitle="$ in billions (on a reported basis) - % Increase/(decrease) vs. Prior year (FX-adjusted)",
                     groups=YEAR_Q3Q4_GROUPS,
                     boxed_label=boxed(
@@ -1834,10 +1823,48 @@ def build():
                         "rev",
                         ["7", "6", "-24", "-19", "33", "36"],
                     ),
+                    identity="pane_title",
                 ),
-                "support": fy_support(
-                    "s15-fy", "FY'21", "dr", "Discount Revenue", "25.7", "25", "-2"
-                ),
+                "tables": [
+                    {
+                        "heading": "Average Discount Rate",
+                        "short_heading": "Discount Rate",
+                        "table": table(
+                            "s15-rate",
+                            "Rate",
+                            Q3Q4,
+                            [
+                                mixed_row(
+                                    "adr",
+                                    "Average Discount Rate",
+                                    Q3Q4,
+                                    ["2.39", "2.36", "2.27", "2.25", "2.32", "2.30"],
+                                    "pct_2",
+                                ),
+                            ],
+                        ),
+                    },
+                    {
+                        "heading": "FY'21",
+                        "short_heading": "FY'21",
+                        "table": table(
+                            "s15-fy",
+                            "FY'21",
+                            [("amt", "$B"), ("yoy", "YoY"), ("vs19", "vs. '19")],
+                            [
+                                row(
+                                    "dr",
+                                    "Discount Revenue",
+                                    {
+                                        "amt": num("25.7", "usd_1"),
+                                        "yoy": num("25", "pct_0"),
+                                        "vs19": num("-2", "pct_0"),
+                                    },
+                                )
+                            ],
+                        ),
+                    },
+                ],
             },
             extra={
                 "disclosure": disc(
@@ -1938,39 +1965,28 @@ def build():
         )
     )
 
-    # 17 Net Interest Income; PDF visual: YoY boxes 13/13/(15)/(17)/6/11
-    # (extraction listed 13/13/(17)/(15)/11/6). FY inset $7.8 / (4%) / (10%).
+    # 17 Net Interest Income $B bars + in-bar YoY; WW yield as annex peer
+    # (PDF under-plot boxes 11.2/11.3/11.6/11.4/10.8/10.3). No combo line.
+    # FY inset $7.8 / (4%) / (10%) is the second annex peer (#320).
     slides.append(
         ordinary(
             17,
-            "single_chart",
+            "chart_grouped_annex",
             "Net Interest Income",
             {
-                "chart": combo(
+                "chart": gbar(
                     "s17-nii",
                     "Net Interest Income* (Q3-Q4)",
                     Q3Q4,
                     [
-                        {
-                            "series_id": "nii",
-                            "name": "Net Interest Income $B",
-                            "mark_type": "bar",
-                            "values": ["2.2", "2.3", "1.9", "1.9", "2.0", "2.1"],
-                            "color": "primary_blue",
-                        },
-                        {
-                            "series_id": "yield",
-                            "name": "WW Net Interest Yield on CM Loans**",
-                            "mark_type": "line",
-                            "axis_key": "secondary",
-                            "style": {"line_style": "solid", "marker": "circle"},
-                            "values": ["11.2", "11.3", "11.6", "11.4", "10.8", "10.3"],
-                            "color": "navy",
-                        },
+                        ser(
+                            "nii",
+                            "Net Interest Income $B",
+                            ["2.2", "2.3", "1.9", "1.9", "2.0", "2.1"],
+                            "primary_blue",
+                        ),
                     ],
-                    bar_mode="grouped",
-                    pfmt="usd_1",
-                    sfmt="pct_1",
+                    fmt="usd_1",
                     subtitle="$ in billions (on a reported basis) - % Increase/(decrease) vs. Prior year (FX-adjusted)",
                     groups=YEAR_Q3Q4_GROUPS,
                     boxed_label=boxed(
@@ -1980,10 +1996,48 @@ def build():
                         "nii",
                         ["13", "13", "-15", "-17", "6", "11"],
                     ),
+                    identity="pane_title",
                 ),
-                "support": fy_support(
-                    "s17-fy", "FY'21", "nii", "Net Interest Income", "7.8", "-4", "-10"
-                ),
+                "tables": [
+                    {
+                        "heading": "WW Net Interest Yield on CM Loans**",
+                        "short_heading": "WW Yield",
+                        "table": table(
+                            "s17-yield",
+                            "Yield",
+                            Q3Q4,
+                            [
+                                mixed_row(
+                                    "yield",
+                                    "WW Net Interest Yield on CM Loans",
+                                    Q3Q4,
+                                    ["11.2", "11.3", "11.6", "11.4", "10.8", "10.3"],
+                                    "pct_1",
+                                ),
+                            ],
+                        ),
+                    },
+                    {
+                        "heading": "FY'21",
+                        "short_heading": "FY'21",
+                        "table": table(
+                            "s17-fy",
+                            "FY'21",
+                            [("amt", "$B"), ("yoy", "YoY"), ("vs19", "vs. '19")],
+                            [
+                                row(
+                                    "nii",
+                                    "Net Interest Income",
+                                    {
+                                        "amt": num("7.8", "usd_1"),
+                                        "yoy": num("-4", "pct_0"),
+                                        "vs19": num("-10", "pct_0"),
+                                    },
+                                )
+                            ],
+                        ),
+                    },
+                ],
             },
             extra={
                 "disclosure": disc(

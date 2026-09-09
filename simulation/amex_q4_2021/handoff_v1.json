@@ -3762,15 +3762,14 @@
     },
     {
       "slide_number": 15,
-      "layout_type": "single_chart",
+      "layout_type": "chart_grouped_annex",
       "section_id": "earnings",
       "title": "Discount Revenue",
       "payload": {
         "chart": {
           "type": "chart",
           "surface_id": "s15-dr",
-          "chart_type": "combo",
-          "bar_mode": "grouped",
+          "chart_type": "grouped_bar",
           "heading": "Discount Revenue* (Q3-Q4)",
           "chart_data": {
             "categories": [
@@ -3803,7 +3802,6 @@
               {
                 "series_id": "rev",
                 "name": "Discount Revenue $B",
-                "mark_type": "bar",
                 "values": [
                   "6.6",
                   "6.8",
@@ -3813,25 +3811,6 @@
                   "7.5"
                 ],
                 "color": "primary_blue"
-              },
-              {
-                "series_id": "rate",
-                "name": "Average Discount Rate",
-                "mark_type": "line",
-                "axis_key": "secondary",
-                "style": {
-                  "line_style": "solid",
-                  "marker": "circle"
-                },
-                "values": [
-                  "2.39",
-                  "2.36",
-                  "2.27",
-                  "2.25",
-                  "2.32",
-                  "2.30"
-                ],
-                "color": "navy"
               }
             ]
           },
@@ -3846,19 +3825,11 @@
                 "kind": "generated",
                 "target_ticks": 5
               }
-            },
-            "secondary": {
-              "visible": true,
-              "format_id": "pct_2",
-              "domain": {
-                "kind": "generated",
-                "target_ticks": 5
-              }
             }
           },
           "display": {
             "ordinary_values": "show",
-            "series_identity": "legend"
+            "series_identity": "pane_title"
           },
           "subtitle": "$ in billions (on a reported basis) - % Increase/(decrease) vs. Prior year (FX-adjusted)",
           "category_groups": [
@@ -3908,53 +3879,129 @@
             }
           ]
         },
-        "support": {
-          "support_type": "support_table",
-          "alignment": "independent",
-          "table": {
-            "surface_id": "s15-fy",
-            "stub_header": {
-              "label": "FY'21"
-            },
-            "columns": [
-              {
-                "column_id": "amt",
-                "label": "$B"
+        "tables": [
+          {
+            "heading": "Average Discount Rate",
+            "short_heading": "Discount Rate",
+            "table": {
+              "surface_id": "s15-rate",
+              "stub_header": {
+                "label": "Rate"
               },
-              {
-                "column_id": "yoy",
-                "label": "YoY"
-              },
-              {
-                "column_id": "vs19",
-                "label": "vs. '19"
-              }
-            ],
-            "rows": [
-              {
-                "row_id": "dr",
-                "label": "Discount Revenue",
-                "cells": {
-                  "amt": {
-                    "type": "number",
-                    "value": "25.7",
-                    "format_id": "usd_1"
-                  },
-                  "yoy": {
-                    "type": "number",
-                    "value": "25",
-                    "format_id": "pct_0"
-                  },
-                  "vs19": {
-                    "type": "number",
-                    "value": "-2",
-                    "format_id": "pct_0"
+              "columns": [
+                {
+                  "column_id": "q3-19",
+                  "label": "Q3'19"
+                },
+                {
+                  "column_id": "q4-19",
+                  "label": "Q4'19"
+                },
+                {
+                  "column_id": "q3-20",
+                  "label": "Q3'20"
+                },
+                {
+                  "column_id": "q4-20",
+                  "label": "Q4'20"
+                },
+                {
+                  "column_id": "q3-21",
+                  "label": "Q3'21"
+                },
+                {
+                  "column_id": "q4-21",
+                  "label": "Q4'21"
+                }
+              ],
+              "rows": [
+                {
+                  "row_id": "adr",
+                  "label": "Average Discount Rate",
+                  "cells": {
+                    "q3-19": {
+                      "type": "number",
+                      "value": "2.39",
+                      "format_id": "pct_2"
+                    },
+                    "q4-19": {
+                      "type": "number",
+                      "value": "2.36",
+                      "format_id": "pct_2"
+                    },
+                    "q3-20": {
+                      "type": "number",
+                      "value": "2.27",
+                      "format_id": "pct_2"
+                    },
+                    "q4-20": {
+                      "type": "number",
+                      "value": "2.25",
+                      "format_id": "pct_2"
+                    },
+                    "q3-21": {
+                      "type": "number",
+                      "value": "2.32",
+                      "format_id": "pct_2"
+                    },
+                    "q4-21": {
+                      "type": "number",
+                      "value": "2.30",
+                      "format_id": "pct_2"
+                    }
                   }
                 }
-              }
-            ]
+              ]
+            }
+          },
+          {
+            "heading": "FY'21",
+            "short_heading": "FY'21",
+            "table": {
+              "surface_id": "s15-fy",
+              "stub_header": {
+                "label": "FY'21"
+              },
+              "columns": [
+                {
+                  "column_id": "amt",
+                  "label": "$B"
+                },
+                {
+                  "column_id": "yoy",
+                  "label": "YoY"
+                },
+                {
+                  "column_id": "vs19",
+                  "label": "vs. '19"
+                }
+              ],
+              "rows": [
+                {
+                  "row_id": "dr",
+                  "label": "Discount Revenue",
+                  "cells": {
+                    "amt": {
+                      "type": "number",
+                      "value": "25.7",
+                      "format_id": "usd_1"
+                    },
+                    "yoy": {
+                      "type": "number",
+                      "value": "25",
+                      "format_id": "pct_0"
+                    },
+                    "vs19": {
+                      "type": "number",
+                      "value": "-2",
+                      "format_id": "pct_0"
+                    }
+                  }
+                }
+              ]
+            }
           }
-        }
+        ]
       },
       "evidence_ids": [
         "amex-q4-2021-p15"
@@ -4172,15 +4219,14 @@
     },
     {
       "slide_number": 17,
-      "layout_type": "single_chart",
+      "layout_type": "chart_grouped_annex",
       "section_id": "earnings",
       "title": "Net Interest Income",
       "payload": {
         "chart": {
           "type": "chart",
           "surface_id": "s17-nii",
-          "chart_type": "combo",
-          "bar_mode": "grouped",
+          "chart_type": "grouped_bar",
           "heading": "Net Interest Income* (Q3-Q4)",
           "chart_data": {
             "categories": [
@@ -4213,7 +4259,6 @@
               {
                 "series_id": "nii",
                 "name": "Net Interest Income $B",
-                "mark_type": "bar",
                 "values": [
                   "2.2",
                   "2.3",
@@ -4223,25 +4268,6 @@
                   "2.1"
                 ],
                 "color": "primary_blue"
-              },
-              {
-                "series_id": "yield",
-                "name": "WW Net Interest Yield on CM Loans**",
-                "mark_type": "line",
-                "axis_key": "secondary",
-                "style": {
-                  "line_style": "solid",
-                  "marker": "circle"
-                },
-                "values": [
-                  "11.2",
-                  "11.3",
-                  "11.6",
-                  "11.4",
-                  "10.8",
-                  "10.3"
-                ],
-                "color": "navy"
               }
             ]
           },
@@ -4256,19 +4282,11 @@
                 "kind": "generated",
                 "target_ticks": 5
               }
-            },
-            "secondary": {
-              "visible": true,
-              "format_id": "pct_1",
-              "domain": {
-                "kind": "generated",
-                "target_ticks": 5
-              }
             }
           },
           "display": {
             "ordinary_values": "show",
-            "series_identity": "legend"
+            "series_identity": "pane_title"
           },
           "subtitle": "$ in billions (on a reported basis) - % Increase/(decrease) vs. Prior year (FX-adjusted)",
           "category_groups": [
@@ -4318,53 +4336,129 @@
             }
           ]
         },
-        "support": {
-          "support_type": "support_table",
-          "alignment": "independent",
-          "table": {
-            "surface_id": "s17-fy",
-            "stub_header": {
-              "label": "FY'21"
-            },
-            "columns": [
-              {
-                "column_id": "amt",
-                "label": "$B"
+        "tables": [
+          {
+            "heading": "WW Net Interest Yield on CM Loans**",
+            "short_heading": "WW Yield",
+            "table": {
+              "surface_id": "s17-yield",
+              "stub_header": {
+                "label": "Yield"
               },
-              {
-                "column_id": "yoy",
-                "label": "YoY"
-              },
-              {
-                "column_id": "vs19",
-                "label": "vs. '19"
-              }
-            ],
-            "rows": [
-              {
-                "row_id": "nii",
-                "label": "Net Interest Income",
-                "cells": {
-                  "amt": {
-                    "type": "number",
-                    "value": "7.8",
-                    "format_id": "usd_1"
-                  },
-                  "yoy": {
-                    "type": "number",
-                    "value": "-4",
-                    "format_id": "pct_0"
-                  },
-                  "vs19": {
-                    "type": "number",
-                    "value": "-10",
-                    "format_id": "pct_0"
+              "columns": [
+                {
+                  "column_id": "q3-19",
+                  "label": "Q3'19"
+                },
+                {
+                  "column_id": "q4-19",
+                  "label": "Q4'19"
+                },
+                {
+                  "column_id": "q3-20",
+                  "label": "Q3'20"
+                },
+                {
+                  "column_id": "q4-20",
+                  "label": "Q4'20"
+                },
+                {
+                  "column_id": "q3-21",
+                  "label": "Q3'21"
+                },
+                {
+                  "column_id": "q4-21",
+                  "label": "Q4'21"
+                }
+              ],
+              "rows": [
+                {
+                  "row_id": "yield",
+                  "label": "WW Net Interest Yield on CM Loans",
+                  "cells": {
+                    "q3-19": {
+                      "type": "number",
+                      "value": "11.2",
+                      "format_id": "pct_1"
+                    },
+                    "q4-19": {
+                      "type": "number",
+                      "value": "11.3",
+                      "format_id": "pct_1"
+                    },
+                    "q3-20": {
+                      "type": "number",
+                      "value": "11.6",
+                      "format_id": "pct_1"
+                    },
+                    "q4-20": {
+                      "type": "number",
+                      "value": "11.4",
+                      "format_id": "pct_1"
+                    },
+                    "q3-21": {
+                      "type": "number",
+                      "value": "10.8",
+                      "format_id": "pct_1"
+                    },
+                    "q4-21": {
+                      "type": "number",
+                      "value": "10.3",
+                      "format_id": "pct_1"
+                    }
                   }
                 }
-              }
-            ]
+              ]
+            }
+          },
+          {
+            "heading": "FY'21",
+            "short_heading": "FY'21",
+            "table": {
+              "surface_id": "s17-fy",
+              "stub_header": {
+                "label": "FY'21"
+              },
+              "columns": [
+                {
+                  "column_id": "amt",
+                  "label": "$B"
+                },
+                {
+                  "column_id": "yoy",
+                  "label": "YoY"
+                },
+                {
+                  "column_id": "vs19",
+                  "label": "vs. '19"
+                }
+              ],
+              "rows": [
+                {
+                  "row_id": "nii",
+                  "label": "Net Interest Income",
+                  "cells": {
+                    "amt": {
+                      "type": "number",
+                      "value": "7.8",
+                      "format_id": "usd_1"
+                    },
+                    "yoy": {
+                      "type": "number",
+                      "value": "-4",
+                      "format_id": "pct_0"
+                    },
+                    "vs19": {
+                      "type": "number",
+                      "value": "-10",
+                      "format_id": "pct_0"
+                    }
+                  }
+                }
+              ]
+            }
           }
-        }
+        ]
       },
       "evidence_ids": [
         "amex-q4-2021-p17"

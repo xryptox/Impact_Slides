@@ -9,6 +9,7 @@ Seams under test:
 - paint: one chart surface, optional .share-chips, then .grouped-annex
 - mutation: drop chips or a peer still paints the rest; starve plot floor → strict overflow
 - fit/paint: frozen chip role_sizes match painted pad/font
+- Q4 2021 s15/s17 handoff: grouped_bar + rate/yield annex + FY peer, not combo line (#320)
 """
 from __future__ import annotations
 
@@ -561,3 +562,109 @@ def test_nonstrict_allowlists_share_chips_key():
     assert result.repaired is True
     assert result.deck.slides[1].payload.share_chips is not None
     assert not hasattr(result.deck.slides[1].payload, "unexpected")
+
+
+Q4_HANDOFF = ROOT / "simulation/amex_q4_2021/handoff_v1.json"
+Q3Q4_CATS = ("q3-19", "q4-19", "q3-20", "q4-20", "q3-21", "q4-21")
+
+
+def _q4_slide(n: int) -> dict:
+    deck = json.loads(Q4_HANDOFF.read_text(encoding="utf-8"))
+    return next(s for s in deck["slides"] if s["slide_number"] == n)
+
+
+def _q4_s15_s17_contract(slide: dict, *, series_id: str, rate_heading: str, rate_fmt: str, rate_vals: tuple[str, ...], fy_amt: str, yoy: list[str]) -> None:
+    assert slide["layout_type"] == "chart_grouped_annex"
+    payload = slide["payload"]
+    assert "support" not in payload
+    chart = payload["chart"]
+    assert chart["chart_type"] == "grouped_bar"
+    assert chart["chart_type"] != "combo"
+    assert "secondary" not in chart.get("value_axes", {})
+    series = chart["chart_data"]["series"]
+    assert [s["series_id"] for s in series] == [series_id]
+    assert all(s.get("mark_type") != "line" for s in series)
+    cats = [c["category_id"] for c in chart["chart_data"]["categories"]]
+    assert cats == list(Q3Q4_CATS)
+    groups = chart["category_groups"]
+    assert [g["placement"] for g in groups] == ["above", "above", "above"]
+    boxed = chart["auxiliary_series"][0]
+    assert boxed["role"] == "boxed_label"
+    assert boxed["target_series_id"] == series_id
+    assert boxed["values"] == yoy
+    tables = payload["tables"]
+    assert len(tables) == 2
+    rate, fy = tables
+    assert rate["heading"] == rate_heading
+    rate_row = rate["table"]["rows"][0]
+    assert [rate["table"]["columns"][i]["column_id"] for i in range(6)] == list(Q3Q4_CATS)
+    assert [rate_row["cells"][cid]["value"] for cid in Q3Q4_CATS] == list(rate_vals)
+    assert all(rate_row["cells"][cid]["format_id"] == rate_fmt for cid in Q3Q4_CATS)
+    fy_row = fy["table"]["rows"][0]
+    assert fy_row["cells"]["amt"]["value"] == fy_amt
+
+
+def _q4_section(html: str, sn: int) -> str:
+    token = f'data-slide-number="{sn}"'
+    mark = html.index(token)
+    start = html.rfind("<section", 0, mark)
+    return html[start : html.find("</section>", mark)]
+
+
+def test_q4_s15_s17_rate_yield_are_annex_tables_not_combo_lines(tmp_path: Path):
+    """Q4 2021 s15/s17 (#320): rate/yield under the chart, no secondary line."""
+    s15 = _q4_slide(15)
+    _q4_s15_s17_contract(
+        s15,
+        series_id="rev",
+        rate_heading="Average Discount Rate",
+        rate_fmt="pct_2",
+        rate_vals=("2.39", "2.36", "2.27", "2.25", "2.32", "2.30"),
+        fy_amt="25.7",
+        yoy=["7", "6", "-24", "-19", "33", "36"],
+    )
+    s17 = _q4_slide(17)
+    _q4_s15_s17_contract(
+        s17,
+        series_id="nii",
+        rate_heading="WW Net Interest Yield on CM Loans**",
+        rate_fmt="pct_1",
+        rate_vals=("11.2", "11.3", "11.6", "11.4", "10.8", "10.3"),
+        fy_amt="7.8",
+        yoy=["13", "13", "-15", "-17", "6", "11"],
+    )
+    s16 = _q4_slide(16)
+    assert s16["layout_type"] == "single_chart"
+    assert s16["payload"]["chart"]["chart_type"] == "grouped_bar"
+
+    out = tmp_path / "out"
+    result = render_deck(Q4_HANDOFF, out, strict=True)
+    assert result["ok"] is True
+    assert result["status"] == "clean"
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    cases = (
+        (15, "s15-dr", "Average Discount Rate", ("2.39%", "2.36%", "2.27%", "2.25%", "2.32%", "2.30%"), "25.7"),
+        (17, "s17-nii", "WW Net Interest Yield on CM Loans**", ("11.2%", "11.3%", "11.6%", "11.4%", "10.8%", "10.3%"), "7.8"),
+    )
+    for sn, surface, heading, rate_paint, fy_amt in cases:
+        chunk = _q4_section(html, sn)
+        assert 'data-layout="chart_grouped_annex"' in chunk
+        assert f'data-chart-type="grouped_bar"' in chunk
+        assert "data-chart-type=\"combo\"" not in chunk
+        assert chunk.count("grouped-annex-peer") == 2
+        assert heading in chunk
+        for painted in rate_paint:
+            assert painted in chunk
+        assert fy_amt in chunk
+        cfg_m = re.search(
+            rf'<script type="application/json" id="cfg-{surface}">(.*?)</script>',
+            chunk,
+            re.S,
+        )
+        assert cfg_m is not None
+        cfg = json.loads(cfg_m.group(1))
+        datasets = cfg["data"]["datasets"]
+        assert len(datasets) == 1
+        assert datasets[0].get("type") in (None, "bar")
+        assert "y1" not in cfg.get("options", {}).get("scales", {})
+        assert all(ds.get("type") != "line" for ds in datasets)

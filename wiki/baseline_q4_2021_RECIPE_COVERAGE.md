@@ -82,9 +82,9 @@ Counts: faithful 5; accepted Boardroom chrome 42; Type A 5; Type B 1; source/PDF
 | 12 | Total Provision | `chart_hero_dual` | `passes/pass_01/compare/sbs/slide_12.png` | accepted v3 design divergence | chart_hero_dual stacked_bar (Write-offs navy, Reserve Build/(Release)* primary_blue) with `stack_segments: show` and authored stack totals $2,621 … $53. No Total Provision line. Hero KPIs $2,127 / $4,022 / $6,149 unchanged. Boardroom stack labels vs Amex in-bar furniture. |
 | 13 | Total Reserves | `single_chart` | `passes/pass_01/compare/sbs/slide_13.png` | accepted v3 design divergence | single_chart waterfall + percent support_table. Walk totals $4.3 / $1.5 / $5.8 / ($2.2) / $3.6 / ($0.2) / $3.4 and reserve % boxes match. PDF two-tone loans+receivables overlay is Boardroom net waterfall. |
 | 14 | Revenue Performance | `data_table` | `passes/pass_01/compare/sbs/slide_14.png` | accepted v3 design divergence | Six metrics x Q4/FY/% vs-2019 match the PDF grid. Boardroom table vs pill columns is accepted chrome. |
-| 15 | Discount Revenue | `single_chart` | `passes/pass_01/compare/sbs/slide_15.png` | accepted v3 design divergence | combo $B bars + boxed YoY + Average Discount Rate line + FY'21 $25.7 support_table. Figures match. Boardroom boxed labels vs in-bar YoY and below-plot rate boxes. |
+| 15 | Discount Revenue | `chart_grouped_annex` | `passes/pass_01/compare/sbs/slide_15.png` | accepted v3 design divergence | grouped_bar $B + boxed YoY + Average Discount Rate annex (2.39 / 2.36 / 2.27 / 2.25 / 2.32 / 2.30) + FY'21 $25.7 peer. No rate line, no secondary axis. Boardroom annex vs PDF under-plot boxes. |
 | 16 | Net Card Fees | `single_chart` | `passes/pass_01/compare/sbs/slide_16.png` | accepted v3 design divergence | grouped_bar + boxed YoY + FY'21 $5.2 / 10% / 28% support_table. Bars $0.9 to $1.3 match. Boardroom boxed labels vs in-bar YoY boxes. |
-| 17 | Net Interest Income | `single_chart` | `passes/pass_01/compare/sbs/slide_17.png` | accepted v3 design divergence | combo $B bars + boxed YoY + yield line + FY'21 $7.8 support_table. Figures match. Boardroom boxed labels vs in-bar YoY and below-plot yield boxes. |
+| 17 | Net Interest Income | `chart_grouped_annex` | `passes/pass_01/compare/sbs/slide_17.png` | accepted v3 design divergence | grouped_bar $B + boxed YoY + WW Net Interest Yield annex (11.2 / 11.3 / 11.6 / 11.4 / 10.8 / 10.3) + FY'21 $7.8 peer. No yield line, no secondary axis. Boardroom annex vs PDF under-plot boxes. |
 | 18 | Total Revenue Net of Interest Expense | `single_chart` | `passes/pass_01/compare/sbs/slide_18.png` | accepted v3 design divergence | Two-series line (YoY and vs-2019) matches the PDF path and labeled points. Boardroom chrome vs PDF inset FY'21 $42.4 box is accepted; support_table could hold the inset (Type A secondary). |
 | 19 | Expense Performance | `data_table` | `passes/pass_01/compare/sbs/slide_19.png` | accepted v3 design divergence | Expense grid including Variable CM Engagement and Effective Tax Rate matches. Boardroom table vs pill columns is accepted chrome. |
 | 20 | Marketing Investments and New Cards Acquired | `dual_chart` | `passes/pass_01/compare/sbs/slide_20.png` | corpus/extraction residual (Type A) | dual grouped_bar Marketing $1.1 to $1.6 and Proprietary NCA 1.4 to 2.7 match. Page-20 glyphs: Marketing totals $1.1/$1.0/$1.0/$1.3/$1.4/$1.6, NCA 1.4/1.7/2.1/2.4/2.6/2.7, Value Injection legend, FY'21 Marketing $5.3. Hatch has no numeric labels (#298). Hatch leftover stands; Marketing stays one total series. Do not invent hatch split dollars. Do not add a hatch fill recipe. FY $5.3 inset is optional on shared dual support and does not change Type A ownership. |
@@ -162,7 +162,7 @@ s02 Notable Impacts callout remains folded into disclosure (`side_callout` shipp
 
 ### 4. Source/PDF artifact or capture failure
 
-None. s03 HTML/SBS recaptured (#315) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s11 HTML/SBS recaptured (#317) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, y-axis 0%–5%). s12 HTML/SBS recaptured (#318) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). s24 HTML/SBS recaptured (#321) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, six share chips, two peers). s06/s07/s09 HTML/SBS recaptured this ticket (#316) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, independent navy-header supports). Other halves were not regenerated.
+None. s03 HTML/SBS recaptured (#315) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s11 HTML/SBS recaptured (#317) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, y-axis 0%–5%). s12 HTML/SBS recaptured (#318) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). s15 and s17 HTML/SBS recaptured (#320) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, two annex peers). s24 HTML/SBS recaptured (#321) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, six share chips, two peers). s06/s07/s09 HTML/SBS recaptured this ticket (#316) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, independent navy-header supports). Other halves were not regenerated.
 
 ## Recipe coverage summary
 
@@ -193,9 +193,9 @@ Chart types actually painted:
 - s11: grouped_bar + grouped_bar
 - s12: stacked_bar + hero
 - s13: waterfall + support_table
-- s15: combo + boxed_label + support_table
+- s15: grouped_bar + boxed_label + two annex peers
 - s16: grouped_bar + boxed_label + support_table
-- s17: combo + boxed_label + support_table
+- s17: grouped_bar + boxed_label + two annex peers
 - s18: line
 - s20: grouped_bar + grouped_bar
 - s21: grouped_bar + grouped_bar + metric_strip
@@ -207,7 +207,7 @@ Chart types actually painted:
 - s31: stacked_bar
 - s32: grouped_bar + grouped_bar + independent support_table
 
-Also used: per-pane independent `support_table` on s06/s07/s09; shared `metric_strip` on s21; shared independent `support_table` on s04/s32; `chart_grouped_annex` on s24/s25 (s24 with share chips); donut on s27; compact `annex_table` on s37/s38/s40/s43; `support_table` on s03/s13/s15/s16/s17/s28/s29; `hero` on s12; `hierarchy` on s35; `feature_cards` on s22; `legal_notice` parts 1–6.
+Also used: per-pane independent `support_table` on s06/s07/s09; shared `metric_strip` on s21; shared independent `support_table` on s04/s32; `chart_grouped_annex` on s15/s17/s24/s25 (s24 with share chips); donut on s27; compact `annex_table` on s37/s38/s40/s43; `support_table` on s03/s13/s16/s28/s29; `hero` on s12; `hierarchy` on s35; `feature_cards` on s22; `legal_notice` parts 1–6.
 
 ### Closed-set recipes not used
 
