@@ -2232,7 +2232,7 @@ def freeze_pie_donut(
             value_anchor = "middle"
         else:
             value_x = name_x
-            value_y = name_y + label_px
+            value_y = name_y + (label_px if sin_m >= 0 else -label_px)
             value_ink = navy
             value_anchor = name_anchor
         name_w = max(20.0, len(sl.label) * label_px * 0.55)

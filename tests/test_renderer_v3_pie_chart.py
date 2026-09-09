@@ -576,3 +576,23 @@ def test_small_wedge_keeps_ordinary_values_floor():
     assert f'font-size="{floor}"' in svg
     assert 'font-size="12"' not in svg
     assert 'font-size="10"' not in svg
+
+
+def test_small_upper_wedge_percent_stays_outside_with_name():
+    raw = _raw()
+    raw["slides"][1]["payload"]["chart"]["slices"] = [
+        _slice("intl", "Intl. Consumer", "12"),
+        _slice("us", "U.S. Consumer", "68"),
+        _slice("sb", "Small Business", "20"),
+    ]
+    result = validate_handoff(raw, strict=True)
+    frozen = freeze_chart(result.deck.slides[1].payload.chart, result.deck.number_formats)
+    intl = _slice_by_id(frozen, "intl")
+    g = frozen["geometry"]
+    assert intl["value_inside"] is False
+    val_r = ((intl["value_x"] - g["cx"]) ** 2 + (intl["value_y"] - g["cy"]) ** 2) ** 0.5
+    name_r = ((intl["name_x"] - g["cx"]) ** 2 + (intl["name_y"] - g["cy"]) ** 2) ** 0.5
+    pair = ((intl["value_x"] - intl["name_x"]) ** 2 + (intl["value_y"] - intl["name_y"]) ** 2) ** 0.5
+    assert name_r > g["radius"]
+    assert val_r > g["radius"]
+    assert pair <= frozen["role_sizes"]["ordinary_values"] * 1.5
