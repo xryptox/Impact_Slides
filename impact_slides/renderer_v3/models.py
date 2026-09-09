@@ -2226,6 +2226,7 @@ class ChartSlice(ClosedModel):
     label: NonEmptyStr
     value: SemanticValue
     short_label: Optional[NonEmptyStr] = None
+    color: Optional[NonEmptyStr] = None  # palette key (D130)
 
 
 def _pie_donut_invariants(chart: Any) -> None:
@@ -4487,9 +4488,34 @@ class Deck(ClosedModel):
                     if fid not in self.number_formats:
                         raise ValueError(f"unresolved format_id {fid!r}")
                     referenced_formats.add(fid)
+                elif isinstance(chart, (PieChartVisual, DonutChartVisual)):
+                    from .theme import palette_keys  # local; avoid import cycle
+
+                    keys = set(palette_keys())
+                    for sl in chart.slices:
+                        if sl.color is not None and sl.color not in keys:
+                            raise ValueError(
+                                f"unknown series color key {sl.color!r}"
+                            )
         unused_fmt = [k for k in self.number_formats if k not in referenced_formats]
         if unused_fmt:
             raise ValueError(f"unused number_formats: {unused_fmt}")
+
+        for slide in self.slides:
+            authored: dict[str, str] = {}
+            for chart in _axis_charts_on_slide(slide):
+                if not isinstance(chart, (PieChartVisual, DonutChartVisual)):
+                    continue
+                for sl in chart.slices:
+                    if sl.color is None:
+                        continue
+                    prev = authored.get(sl.slice_id)
+                    if prev is not None and prev != sl.color:
+                        raise ValueError(
+                            f"slice_id {sl.slice_id!r} authored with conflicting "
+                            f"colors {prev!r} and {sl.color!r} on one slide"
+                        )
+                    authored[sl.slice_id] = sl.color
 
         for slide in self.slides:
             if getattr(slide, "layout_type", None) != "chart_grouped_annex":

@@ -1256,17 +1256,26 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES:
             from .charts import freeze_chart
 
+            identity = None
+            if sp._chart_spec.get("chart_type") in ("pie", "donut"):
+                identity = {
+                    sl["slice_id"]: sl["color"]
+                    for sl in (sp._chart_spec.get("slices") or [])
+                }
             sp._chart_spec = freeze_chart(
                 sp._chart_visual,
                 sp._chart_formats,
                 box_w=sp._box_w,
                 box_h=height + 40,
+                identity_colors=identity,
             )
             if math.ceil(sp._chart_spec["geometry"]["view_h"]) > sp._box_h:
                 sp._overflow = True
             if sp._chart_spec.get("geometric_callout_overflow"):
                 sp._overflow = True
             if sp._chart_spec.get("component_label_overflow"):
+                sp._overflow = True
+            if sp._chart_spec.get("slice_label_overflow"):
                 sp._overflow = True
             sp._text_items = _chart_text_items(sp._chart_spec)
             sp.role_sizes.update(sp._chart_spec["role_sizes"])
@@ -1335,6 +1344,8 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
         if sp._chart_spec.get("geometric_callout_overflow"):
             sp._overflow = True
         if sp._chart_spec.get("component_label_overflow"):
+            sp._overflow = True
+        if sp._chart_spec.get("slice_label_overflow"):
             sp._overflow = True
         return
     if fit is None:
@@ -2037,11 +2048,14 @@ def _axis_chart_surface_plan(
     region: int,
     slot_order: int,
     box_w: int,
+    identity_colors: dict[str, str] | None = None,
 ) -> SurfacePlan:
     """Freeze one axis chart into a SurfacePlan at a given width."""
     from .charts import freeze_chart
 
-    chart_spec = freeze_chart(chart, deck.number_formats, box_w=box_w)
+    chart_spec = freeze_chart(
+        chart, deck.number_formats, box_w=box_w, identity_colors=identity_colors
+    )
     text_items = _chart_text_items(chart_spec)
     role_sizes = dict(chart_spec["role_sizes"])
     if chart.heading:
@@ -2108,8 +2122,19 @@ def _collect_composite_body(
     plans: list[SurfacePlan] = []
     if lt == "dual_chart":
         # D149: equal panes with renderer-owned gutter.
+        from .charts import pie_donut_identity_colors
+        from .models import DonutChartVisual, PieChartVisual
+
         gutter = 24
         pane_w = (CONTENT_W - gutter) // 2
+        pie_panes = [
+            pane.chart
+            for pane in payload.charts
+            if isinstance(pane.chart, (PieChartVisual, DonutChartVisual))
+        ]
+        identity = (
+            pie_donut_identity_colors(pie_panes) if len(pie_panes) >= 2 else None
+        )
         for i, pane in enumerate(payload.charts):
             chart = pane.chart
             plans.append(
@@ -2122,6 +2147,7 @@ def _collect_composite_body(
                     region=region,
                     slot_order=10 + i,
                     box_w=pane_w,
+                    identity_colors=identity,
                 )
             )
             if pane.support is not None:

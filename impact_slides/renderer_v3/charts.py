@@ -61,6 +61,9 @@ AxisChartVisual = Union[
 PieDonutVisual = Union[PieChartVisual, DonutChartVisual]
 # Theme hole for donut; pie cutout is 0.
 DONUT_CUTOUT = 0.55
+# % stays inside the ring at the ordinary_values floor when the wedge is
+# at least this share; smaller wedges sit with the outside name (#322).
+_SLICE_VALUE_INSIDE_MIN_FRAC = 0.20
 BarChartVisual = Union[
     GroupedBarChartVisual, HorizontalBarChartVisual, StackedBarChartVisual
 ]
@@ -2128,29 +2131,82 @@ def _resolve_combo_domain(
     }
 
 
+def pie_donut_identity_colors(charts: list[PieDonutVisual]) -> dict[str, str]:
+    """Same-slide pie/donut fills keyed by slice_id (#322)."""
+    authored: dict[str, str] = {}
+    for chart in charts:
+        for sl in chart.slices:
+            if sl.color is not None:
+                authored[sl.slice_id] = resolve_color(
+                    sl.color, role="series_identity"
+                )
+    out = dict(authored)
+    used = set(out.values())
+    keys = default_series_keys("bar")
+    for chart in charts:
+        for i, sl in enumerate(chart.slices):
+            if sl.slice_id in out:
+                continue
+            color = resolve_color(keys[i % len(keys)], role="series_identity")
+            if color in used:
+                color = next(
+                    (
+                        resolve_color(k, role="series_identity")
+                        for k in keys
+                        if resolve_color(k, role="series_identity") not in used
+                    ),
+                    color,
+                )
+            out[sl.slice_id] = color
+            used.add(color)
+    return out
+
+
+def _slice_fill_hex(
+    chart: PieDonutVisual,
+    identity_colors: Mapping[str, str] | None,
+) -> list[str]:
+    defaults = resolve_series_colors("bar", count=len(chart.slices))
+    out: list[str] = []
+    for i, sl in enumerate(chart.slices):
+        if identity_colors and sl.slice_id in identity_colors:
+            out.append(identity_colors[sl.slice_id])
+        elif sl.color is not None:
+            out.append(resolve_color(sl.color, role="series_identity"))
+        else:
+            out.append(defaults[i])
+    return out
+
+
 def freeze_pie_donut(
     chart: PieDonutVisual,
     formats: Mapping[str, NumberFormat],
     *,
     box_w: int = PLOT_W + PAD_L + PAD_R,
     box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+    identity_colors: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Frozen radial mix plan: Chart.js doughnut + SVG wedges + D247 table."""
-    plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - PAD_L - PAD_R))
+    pad_x = PAD_R  # equal outside-name lanes (#322)
+    plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - 2 * pad_x))
     plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
-    cx = PAD_L + plot_w / 2.0
+    cx = pad_x + plot_w / 2.0
     cy = PAD_T + plot_h / 2.0
     radius = min(plot_w, plot_h) / 2.0 - 8.0
     cutout = 0.0 if chart.chart_type == "pie" else DONUT_CUTOUT
     inner_r = radius * cutout
-    colors = resolve_series_colors("bar", count=len(chart.slices))
+    colors = _slice_fill_hex(chart, identity_colors)
     amounts = [Decimal(s.value.value) for s in chart.slices]
     total = sum(amounts, Decimal(0))
     role_sizes = _role_sizes(chart)
     label_px = role_sizes["ordinary_values"]
     navy = resolve_color("navy", role="text_on_light")
     white = resolve_color("white", role="text_on_dark")
+    view_w = pad_x + plot_w + pad_x
+    view_h = PAD_T + plot_h + PAD_B
     slices: list[dict[str, Any]] = []
+    placements: list[dict[str, Any]] = []
+    label_overflow = False
     start = -math.pi / 2.0
     for i, sl in enumerate(chart.slices):
         fv = format_semantic_value(sl.value, formats)
@@ -2160,24 +2216,89 @@ def freeze_pie_donut(
         mid = start + sweep / 2.0
         color = colors[i]
         ink = white if contrast_ratio(white, color) >= 4.5 else navy
-        # Direct labels sit in the outer half of the ring (or pie radius).
+        # Mid-wedge point stays the fact-anchor; names sit outside the ring.
         label_r = inner_r + (radius - inner_r) * 0.62 if radius > inner_r else radius * 0.62
-        slices.append(
+        cos_m, sin_m = math.cos(mid), math.sin(mid)
+        name_r = radius + 10.0
+        name_x = cx + cos_m * name_r
+        name_y = cy + sin_m * name_r
+        name_anchor = "start" if cos_m >= 0 else "end"
+        name_x += 8.0 if name_anchor == "start" else -8.0
+        value_inside = frac + 1e-12 >= _SLICE_VALUE_INSIDE_MIN_FRAC
+        if value_inside:
+            value_x = cx + cos_m * label_r
+            value_y = cy + sin_m * label_r
+            value_ink = ink
+            value_anchor = "middle"
+        else:
+            value_x = name_x
+            value_y = name_y + label_px
+            value_ink = navy
+            value_anchor = name_anchor
+        name_w = max(20.0, len(sl.label) * label_px * 0.55)
+        val_w = max(20.0, len(fv.visible) * label_px * 0.55)
+
+        def _fits(x: float, y: float, w: float, anchor: str) -> bool:
+            if anchor == "start":
+                left, right = x, x + w
+            elif anchor == "end":
+                left, right = x - w, x
+            else:
+                left, right = x - w / 2.0, x + w / 2.0
+            return (
+                left >= 0
+                and right <= view_w
+                and y - label_px / 2.0 >= 0
+                and y + label_px / 2.0 <= view_h
+            )
+
+        if not _fits(name_x, name_y, name_w, name_anchor):
+            label_overflow = True
+        if not _fits(value_x, value_y, val_w, value_anchor):
+            label_overflow = True
+        rec = {
+            "slice_id": sl.slice_id,
+            "label": sl.label,
+            "short_label": sl.short_label,
+            "value": sl.value.value,
+            "numeric": float(amount),
+            "visible": fv.visible,
+            "accessible": fv.accessible,
+            "color": color,
+            "ink": ink,
+            "start": start,
+            "sweep": sweep,
+            "mid": mid,
+            "lx": cx + cos_m * label_r,
+            "ly": cy + sin_m * label_r,
+            "name_x": name_x,
+            "name_y": name_y,
+            "name_anchor": name_anchor,
+            "value_x": value_x,
+            "value_y": value_y,
+            "value_ink": value_ink,
+            "value_anchor": value_anchor,
+            "value_inside": value_inside,
+        }
+        slices.append(rec)
+        placements.append(
             {
+                "class": "slice_name",
                 "slice_id": sl.slice_id,
-                "label": sl.label,
-                "short_label": sl.short_label,
-                "value": sl.value.value,
-                "numeric": float(amount),
-                "visible": fv.visible,
-                "accessible": fv.accessible,
-                "color": color,
-                "ink": ink,
-                "start": start,
-                "sweep": sweep,
-                "mid": mid,
-                "lx": cx + math.cos(mid) * label_r,
-                "ly": cy + math.sin(mid) * label_r,
+                "x": name_x,
+                "y": name_y,
+                "text": sl.label,
+                "color": navy,
+            }
+        )
+        placements.append(
+            {
+                "class": "slice_value",
+                "slice_id": sl.slice_id,
+                "x": value_x,
+                "y": value_y,
+                "text": fv.visible,
+                "color": value_ink,
             }
         )
         start += sweep
@@ -2208,21 +2329,12 @@ def freeze_pie_donut(
             for sl in slices
         ],
         "points": [],
-        "placements": [
-            {
-                "class": "slice",
-                "x": sl["lx"],
-                "y": sl["ly"],
-                "text": sl["visible"],
-                "color": sl["ink"],
-            }
-            for sl in slices
-        ],
+        "placements": placements,
         "identity_strategy": None,
         "role_sizes": role_sizes,
         "geometry": {
-            "pad_l": PAD_L,
-            "pad_r": PAD_R,
+            "pad_l": pad_x,
+            "pad_r": pad_x,
             "pad_t": PAD_T,
             "pad_b": PAD_B,
             "plot_w": plot_w,
@@ -2231,13 +2343,14 @@ def freeze_pie_donut(
             "cy": cy,
             "radius": radius,
             "inner_r": inner_r,
-            "view_w": PAD_L + plot_w + PAD_R,
-            "view_h": PAD_T + plot_h + PAD_B,
+            "view_w": view_w,
+            "view_h": view_h,
         },
         "semantic_table": table,
         "category_axis": {"visible": False, "title": None},
         "value_axis": {"visible": False, "title": None},
         "gridlines": False,
+        "slice_label_overflow": label_overflow,
     }
 
 
@@ -2247,10 +2360,17 @@ def freeze_chart(
     *,
     box_w: int = PLOT_W + PAD_L + PAD_R,
     box_h: int = PLOT_H + PAD_T + PAD_B + 80,
+    identity_colors: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Dispatch freeze by chart_type (D238)."""
     if isinstance(chart, (PieChartVisual, DonutChartVisual)):
-        plan = freeze_pie_donut(chart, formats, box_w=box_w, box_h=box_h)
+        plan = freeze_pie_donut(
+            chart,
+            formats,
+            box_w=box_w,
+            box_h=box_h,
+            identity_colors=identity_colors,
+        )
         slice_cats = [
             {"category_id": sl["slice_id"], "x": sl["lx"], "y": sl["ly"]}
             for sl in plan["slices"]
@@ -2396,13 +2516,23 @@ def _paint_pie_donut_svg(
             )
     if chrome:
         px = plan["role_sizes"]["ordinary_values"]
+        navy = resolve_color("navy", role="text_on_light")
         for sl in plan.get("slices") or []:
             parts.append(
-                f'<text class="slice-label" data-slice="{_e(sl["slice_id"])}" '
-                f'x="{sl["lx"]:.1f}" y="{sl["ly"]:.1f}" text-anchor="middle" '
+                f'<text class="slice-name" data-slice="{_e(sl["slice_id"])}" '
+                f'x="{sl["name_x"]:.1f}" y="{sl["name_y"]:.1f}" '
+                f'text-anchor="{_e(sl["name_anchor"])}" '
                 f'dominant-baseline="middle" font-size="{px}" '
-                f'font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(sl["ink"])}">'
-                f'{_e(sl["label"])} {_e(sl["visible"])}</text>'
+                f'font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(navy)}">'
+                f'{_e(sl["label"])}</text>'
+            )
+            parts.append(
+                f'<text class="slice-value" data-slice="{_e(sl["slice_id"])}" '
+                f'x="{sl["value_x"]:.1f}" y="{sl["value_y"]:.1f}" '
+                f'text-anchor="{_e(sl["value_anchor"])}" '
+                f'dominant-baseline="middle" font-size="{px}" '
+                f'font-weight="{_CHART_LABEL_WEIGHT}" fill="{_e(sl["value_ink"])}">'
+                f'{_e(sl["visible"])}</text>'
             )
         ink_fact = resolve_color("navy", role="text_on_light")
         _paint_fact_chrome_svg(plan, parts, ink_fact)

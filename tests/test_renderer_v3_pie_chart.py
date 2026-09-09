@@ -1,10 +1,11 @@
-"""Renderer v3 pie/donut ChartVisual (#287).
+"""Renderer v3 pie/donut ChartVisual (#287/#322).
 
 Seams under test:
 - typed pie/donut slice visual (2–8 slices, semantic values, no cartesian axes)
 - single_chart + dual_chart envelopes (heatmap still forbidden on dual)
 - Chart.js doughnut + noscript SVG radial + D247 semantic table
 - D10/D47 320×240 plot floor; D304 navy ink on low-contrast slices
+- same-slide slice_id color identity; names outside the ring at ordinary_values floor
 """
 from __future__ import annotations
 
@@ -15,11 +16,11 @@ from pathlib import Path
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
-from impact_slides.renderer_v3.charts import freeze_chart
+from impact_slides.renderer_v3.charts import freeze_chart, paint_chart_svg
 from impact_slides.renderer_v3.models import DonutChartVisual, PieChartVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema, generate_schema
-from impact_slides.renderer_v3.theme import contrast_ratio
+from impact_slides.renderer_v3.theme import contrast_ratio, resolve_series_colors
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/minimal_donut.json"
@@ -90,12 +91,15 @@ def _cat_support() -> dict:
     }
 
 
-def _slice(slice_id: str, label: str, value: str) -> dict:
-    return {
+def _slice(slice_id: str, label: str, value: str, color: str | None = None) -> dict:
+    rec = {
         "slice_id": slice_id,
         "label": label,
         "value": {"type": "number", "value": value, "format_id": "pct_0"},
     }
+    if color is not None:
+        rec["color"] = color
+    return rec
 
 
 def _dual_raw() -> dict:
@@ -112,6 +116,32 @@ def _dual_raw() -> dict:
     ]
     raw["slides"][1]["layout_type"] = "dual_chart"
     raw["slides"][1]["title"] = "Mix pair"
+    raw["slides"][1]["payload"] = {"charts": [left, right]}
+    return raw
+
+
+def _s27_dual_raw() -> dict:
+    """Q4 s27 mix: 3-slice loans + 4-slice receivables, shared us/intl/sb."""
+    raw = _raw()
+    left = deepcopy(_chart(raw))
+    left["surface_id"] = "s27-loans"
+    left["heading"] = "Q4'21 Total Loan Mix"
+    left["slices"] = [
+        _slice("us", "U.S. Consumer", "68"),
+        _slice("intl", "Intl. Consumer", "12"),
+        _slice("sb", "Small Business", "20"),
+    ]
+    right = deepcopy(left)
+    right["surface_id"] = "s27-rec"
+    right["heading"] = "Q4'21 Card Member Receivables Mix"
+    right["slices"] = [
+        _slice("us", "U.S. Consumer", "28"),
+        _slice("intl", "Intl. Consumer", "14"),
+        _slice("corp", "Corporate Card", "24"),
+        _slice("sb", "Small Business", "34"),
+    ]
+    raw["slides"][1]["layout_type"] = "dual_chart"
+    raw["slides"][1]["title"] = "Worldwide mix"
     raw["slides"][1]["payload"] = {"charts": [left, right]}
     return raw
 
@@ -434,3 +464,115 @@ def test_playwright_dual_donuts_equal_panes(tmp_path: Path):
     joined = " ".join(geom["labels"])
     assert "Card" in joined or "68" in joined
     assert geom["axisCount"] == 0
+
+
+def _slice_by_id(plan: dict, slice_id: str) -> dict:
+    return next(s for s in plan["slices"] if s["slice_id"] == slice_id)
+
+
+def test_dual_shared_slice_id_reuses_fill_across_panes():
+    result = validate_handoff(_s27_dual_raw(), strict=True)
+    assert result.ok
+    plan = plan_deck(result.deck, strict=True)
+    left = next(s for s in plan.surfaces if s.surface_id == "s27-loans").chart_paint
+    right = next(s for s in plan.surfaces if s.surface_id == "s27-rec").chart_paint
+    for sid in ("us", "intl", "sb"):
+        assert _slice_by_id(left, sid)["color"] == _slice_by_id(right, sid)["color"]
+    assert _slice_by_id(left, "sb")["color"] != _slice_by_id(right, "corp")["color"]
+
+
+def test_identity_matches_slice_id_not_label():
+    raw = _s27_dual_raw()
+    left = raw["slides"][1]["payload"]["charts"][0]
+    right = raw["slides"][1]["payload"]["charts"][1]
+    left["slices"][2]["label"] = "Small Business"
+    right["slices"][3]["slice_id"] = "sb-right"
+    right["slices"][3]["label"] = "Small Business"
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    left_p = next(s for s in plan.surfaces if s.surface_id == "s27-loans").chart_paint
+    right_p = next(s for s in plan.surfaces if s.surface_id == "s27-rec").chart_paint
+    assert _slice_by_id(left_p, "sb")["color"] != _slice_by_id(right_p, "sb-right")["color"]
+
+
+def test_authored_slice_color_wins_sibling_omit():
+    raw = _s27_dual_raw()
+    right = raw["slides"][1]["payload"]["charts"][1]
+    for sl in right["slices"]:
+        if sl["slice_id"] == "sb":
+            sl["color"] = "neutral"
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    left = next(s for s in plan.surfaces if s.surface_id == "s27-loans").chart_paint
+    right_p = next(s for s in plan.surfaces if s.surface_id == "s27-rec").chart_paint
+    assert _slice_by_id(left, "sb")["color"] == _slice_by_id(right_p, "sb")["color"]
+    cycle = resolve_series_colors("bar", count=3)
+    assert _slice_by_id(left, "sb")["color"] != cycle[2]
+
+
+def test_strict_rejects_conflicting_authored_slice_colors():
+    raw = _s27_dual_raw()
+    left = raw["slides"][1]["payload"]["charts"][0]
+    right = raw["slides"][1]["payload"]["charts"][1]
+    for sl in left["slices"]:
+        if sl["slice_id"] == "sb":
+            sl["color"] = "neutral"
+    for sl in right["slices"]:
+        if sl["slice_id"] == "sb":
+            sl["color"] = "sky_blue"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_strict_rejects_unknown_slice_color():
+    raw = _raw()
+    raw["slides"][1]["payload"]["chart"]["slices"][0]["color"] = "not-a-token"
+    with pytest.raises(RendererValidationError):
+        validate_handoff(raw, strict=True)
+
+
+def test_omit_color_single_donut_keeps_ordinal_cycle():
+    result = validate_handoff(_raw(), strict=True)
+    frozen = freeze_chart(result.deck.slides[1].payload.chart, result.deck.number_formats)
+    cycle = resolve_series_colors("bar", count=3)
+    assert [s["color"] for s in frozen["slices"]] == cycle
+    schema = generate_schema()
+    assert "color" in schema["$defs"]["ChartSlice"]["properties"]
+
+
+def test_slice_names_paint_outside_ring():
+    result = validate_handoff(_raw(), strict=True)
+    frozen = freeze_chart(result.deck.slides[1].payload.chart, result.deck.number_formats)
+    g = frozen["geometry"]
+    radius = g["radius"]
+    for sl in frozen["slices"]:
+        dist = ((sl["name_x"] - g["cx"]) ** 2 + (sl["name_y"] - g["cy"]) ** 2) ** 0.5
+        assert dist > radius + 1
+        classes = {p["class"] for p in frozen["placements"] if p.get("slice_id") == sl["slice_id"]}
+        assert "slice_name" in classes
+    svg = paint_chart_svg(frozen)
+    assert 'class="slice-name"' in svg
+    assert 'class="slice-value"' in svg
+    assert "Card 68%" not in svg
+    assert ">Card<" in svg or ">Card</text>" in svg
+
+
+def test_small_wedge_keeps_ordinary_values_floor():
+    result = validate_handoff(_raw(), strict=True)
+    frozen = freeze_chart(result.deck.slides[1].payload.chart, result.deck.number_formats)
+    floor = frozen["role_sizes"]["ordinary_values"]
+    assert floor >= 18
+    intl = _slice_by_id(frozen, "consumer") if any(
+        s["slice_id"] == "consumer" for s in frozen["slices"]
+    ) else _slice_by_id(frozen, frozen["slices"][1]["slice_id"])
+    # 12% Consumer wedge: name lives outside; type stays at the floor.
+    g = frozen["geometry"]
+    name_r = ((intl["name_x"] - g["cx"]) ** 2 + (intl["name_y"] - g["cy"]) ** 2) ** 0.5
+    assert name_r > g["radius"]
+    assert intl["value_inside"] is False
+    card = _slice_by_id(frozen, "card")
+    assert card["value_inside"] is True
+    svg = paint_chart_svg(frozen)
+    assert f'font-size="{floor}"' in svg
+    assert 'font-size="12"' not in svg
+    assert 'font-size="10"' not in svg
