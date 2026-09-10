@@ -344,11 +344,30 @@ def fy_support(surface, stub, row_id, row_label, amt, yoy, vs19, amt_fmt="usd_1"
     }
 
 
-def wstep(cid, label, role, value=None):
+def wstep(cid, label, role, value=None, components=None):
     d = {"category_id": cid, "label": label, "role": role}
     if value is not None:
         d["value"] = str(value)
+    if components is not None:
+        d["components"] = components
     return d
+
+
+def wcomp(loans, receivables):
+    return [
+        {
+            "series_id": "loans",
+            "name": "Total Loans",
+            "value": str(loans),
+            "color": "primary_blue",
+        },
+        {
+            "series_id": "receivables",
+            "name": "Card Member Receivables",
+            "value": str(receivables),
+            "color": "navy",
+        },
+    ]
 
 
 def waterfall(surface, heading, steps, fmt="usd_1", subtitle=None):
@@ -1598,7 +1617,8 @@ def build():
     )
 
     # 13 Total Reserves — PDF visual: total walk $4.3 / +$1.5 / $5.8 / ($2.2) / $3.6 / ($0.2) / $3.4.
-    # Loan vs receivable interiors of the signed bridges are unlabeled as a split series; waterfall is the total flow.
+    # Two-tone loans + receivables on six steps; Change to Q4'21 stays component-less.
+    # Foot-adjust 5.55+0.25 / -1.95+-0.25 / 3.35+0.05 so interiors foot the net (#335).
     # Percent boxes sit under the four totals (Q1'20 4.6%/0.2%, not the extraction swap onto Q4'20).
     slides.append(
         ordinary(
@@ -1610,13 +1630,49 @@ def build():
                     "s13-rsv",
                     "Balance Sheet Credit Reserves*",
                     [
-                        wstep("q1-20-beg", "Q1'20 Beginning Reserves", "total", "4.3"),
-                        wstep("to-q4-20", "Change to Q4'20", "change", "1.5"),
-                        wstep("q4-20-end", "Q4'20 Ending Reserves", "total", "5.8"),
-                        wstep("to-q3-21", "Change to Q3'21", "change", "-2.2"),
-                        wstep("q3-21-end", "Q3'21 Ending Reserves", "total", "3.6"),
+                        wstep(
+                            "q1-20-beg",
+                            "Q1'20 Beginning Reserves",
+                            "total",
+                            "4.3",
+                            wcomp("4.2", "0.1"),
+                        ),
+                        wstep(
+                            "to-q4-20",
+                            "Change to Q4'20",
+                            "change",
+                            "1.5",
+                            wcomp("1.4", "0.1"),
+                        ),
+                        wstep(
+                            "q4-20-end",
+                            "Q4'20 Ending Reserves",
+                            "total",
+                            "5.8",
+                            wcomp("5.55", "0.25"),
+                        ),
+                        wstep(
+                            "to-q3-21",
+                            "Change to Q3'21",
+                            "change",
+                            "-2.2",
+                            wcomp("-1.95", "-0.25"),
+                        ),
+                        wstep(
+                            "q3-21-end",
+                            "Q3'21 Ending Reserves",
+                            "total",
+                            "3.6",
+                            wcomp("3.6", "0.0"),
+                        ),
                         wstep("to-q4-21", "Change to Q4'21", "change", "-0.2"),
-                        wstep("q4-21-end", "Q4'21 Ending Reserves", "total", "3.4"),
+                        wstep(
+                            "q4-21-end",
+                            "Q4'21 Ending Reserves",
+                            "total",
+                            "3.4",
+                            wcomp("3.35", "0.05"),
+                        ),
                     ],
                     fmt="usd_1",
                     subtitle="$ in billions",
@@ -1664,7 +1720,7 @@ def build():
                     "Notes",
                     [
                         "* Q1'20 - Q4'21 Balance Sheet credit reserve builds differ from P&L credit reserve builds due to other receivables and FX impacts. Reserve subtotals may not foot due to rounding.",
-                        "Waterfall is the labeled total walk. Loan vs receivable interiors of the $1.5 / ($2.2) / ($0.2) stacks are not a second waterfall series.",
+                        "Loan vs receivable interiors of the $1.5 / ($2.2) / ($0.2) stacks. Change to Q4'21 is the labeled ($0.2) net (no invented $0 loans slice).",
                     ],
                 ),
             },

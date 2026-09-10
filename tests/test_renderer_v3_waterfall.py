@@ -7,6 +7,7 @@ Seams under test:
 - Chart.js floating-bar / SVG geometry parity within 2px (D160/D248)
 - malformed sequence strict-fails; no role inference
 - optional 2–4 step components that foot the net (#319); omit = one-tone
+- thin/zero component caps stay visible and uncollide (#335); never fit-drop
 """
 from __future__ import annotations
 
@@ -664,26 +665,72 @@ def test_component_names_live_in_fallback_text():
     assert all(b.get("components") for b in cp["bars"])
 
 
-def test_segment_label_overflow_is_strict_fail():
+def _wf_box(p: dict, px: int) -> tuple[float, float, float, float]:
+    w = max(20.0, len(str(p["text"])) * px * 0.55)
+    return (
+        p["x"] - w / 2,
+        p["y"] - px / 2,
+        p["x"] + w / 2,
+        p["y"] + px / 2,
+    )
+
+
+def _assert_waterfall_column_uncollided(cp: dict) -> None:
+    lab_px = cp["role_sizes"]["structural_values"]
+    cats = {
+        p["category_id"]
+        for p in cp["placements"]
+        if p.get("kind") in {"segment", "structural"}
+        and p.get("class") != "suppressed"
+    }
+    for cat in cats:
+        col = [
+            p
+            for p in cp["placements"]
+            if p.get("category_id") == cat
+            and p.get("kind") in {"segment", "structural"}
+            and p.get("class") != "suppressed"
+        ]
+        for i, a in enumerate(col):
+            pa = _wf_box(a, lab_px)
+            for b in col[i + 1 :]:
+                pb = _wf_box(b, lab_px)
+                assert not (
+                    pa[0] < pb[2]
+                    and pa[2] > pb[0]
+                    and pa[1] < pb[3]
+                    and pa[3] > pb[1]
+                ), (cat, a.get("text"), a.get("class"), b.get("text"), b.get("class"))
+
+
+def test_thin_and_zero_component_caps_stay_visible_and_uncollided():
+    """#335: thin/zero waterfall caps stay; no all-or-nothing overflow."""
     raw = _wc()
     steps = _chart_slide(raw)["payload"]["chart"]["waterfall_data"]["steps"]
-    # Sliver + remainder still foots the net; sliver cannot hold its label.
+    # Footed 99/1 sliver plus a $0 receivables cap on the next total.
     steps[0]["components"][0]["value"] = "99"
     steps[0]["components"][1]["value"] = "1"
+    steps[2]["components"][0]["value"] = "120"
+    steps[2]["components"][1]["value"] = "0"
     deck = validate_handoff(raw, strict=True).deck
-    with pytest.raises(RendererValidationError) as excinfo:
-        plan_deck(deck, strict=True)
-    assert any(e.code == "plan.unresolved_overflow" for e in excinfo.value.events)
-    plan = plan_deck(deck, strict=False)
-    sp = plan.by_surface_id()["reserves-bridge"]
-    html_parts = __import__(
-        "impact_slides.renderer_v3.charts", fromlist=["paint_chart_html"]
-    ).paint_chart_html(sp.chart_paint, svg_only=True)
-    joined = "".join(html_parts)
-    assert "Total Loans" in joined
-    assert "Card Member Receivables" in joined
-    assert joined.count("waterfall-bar") == 7
-    assert "waterfall-segment" not in joined
+    cp = plan_deck(deck, strict=True).by_surface_id()["reserves-bridge"].chart_paint
+    assert not cp.get("component_label_overflow")
+    segs = [
+        p
+        for p in cp["placements"]
+        if p.get("kind") == "segment" and p.get("class") != "suppressed"
+    ]
+    texts = [p["text"] for p in segs]
+    assert "$1" in texts
+    assert "$0" in texts
+    assert "$99" in texts
+    stacked = [b for b in cp["bars"] if b.get("components")]
+    svg = paint_chart_svg(cp)
+    assert svg.count('class="bar waterfall-segment"') == sum(
+        len(b["components"]) for b in stacked
+    )
+    assert "waterfall-segment-label" in svg
+    _assert_waterfall_column_uncollided(cp)
 
 
 def test_mixed_omit_stack_chartjs_keeps_net_bars():

@@ -1109,13 +1109,11 @@ def freeze_waterfall_chart(
     zero_y = value_to_y(0.0)
     bars: list[dict[str, Any]] = []
     connectors: list[dict[str, Any]] = []
-    placements: list[dict[str, Any]] = []
     role_sizes = _waterfall_role_sizes(chart)
     lab_px = role_sizes["structural_values"]
     thick = geom["thickness"]
 
     prev_end_level: Optional[float] = None
-    component_overflow = False
     for i, step in enumerate(resolved):
         slot = geom["slots"][i]
         x = slot["origins"][0]
@@ -1162,29 +1160,6 @@ def freeze_waterfall_chart(
         )
         if comps:
             bar["components"] = comps
-            navy = resolve_color("navy", role="text_on_light")
-            white = resolve_color("white", role="text_on_dark")
-            for seg in comps:
-                if float(seg["height"]) + 1e-9 < lab_px:
-                    component_overflow = True
-                    continue
-                fill = seg["color"]
-                seg_ink = (
-                    white if contrast_ratio(white, fill) >= 3.0 else navy
-                )
-                placements.append(
-                    {
-                        "kind": "segment",
-                        "class": "inside",
-                        "series_id": seg["series_id"],
-                        "category_id": step["category_id"],
-                        "text": seg["visible"],
-                        "x": cx,
-                        "y": seg["y"] + seg["height"] / 2 + lab_px * 0.35,
-                        "color": seg_ink,
-                        "priority": "segment",
-                    }
-                )
         bars.append(bar)
         # Connector from previous step end level to this bar start (continuity only).
         if prev_end_level is not None and step["role"] == "change":
@@ -1199,20 +1174,9 @@ def freeze_waterfall_chart(
                     "x2": x,
                 }
             )
-        # Structural label above bar (mandatory; never suppressed).
-        placements.append(
-            {
-                "kind": "structural",
-                "class": "above",
-                "series_id": WATERFALL_SERIES_ID,
-                "category_id": step["category_id"],
-                "text": step["visible"],
-                "x": cx,
-                "y": top - 8,
-                "priority": "structural",
-            }
-        )
         prev_end_level = float(step["level"])
+
+    placements = _place_waterfall_stack_labels(bars, lab_px=lab_px)
 
     cat_centers = []
     for i, step in enumerate(resolved):
@@ -1312,7 +1276,7 @@ def freeze_waterfall_chart(
         "theme": chart_js_tokens(),
         "gridlines": False,
         "structural_label_px": lab_px,
-        "component_label_overflow": component_overflow,
+        "component_label_overflow": False,
     }
 
 
@@ -3319,7 +3283,7 @@ def _paint_waterfall_svg(
     if marks:
         for bar in plan.get("bars") or []:
             segs = bar.get("components") or []
-            if segs and not plan.get("component_label_overflow"):
+            if segs:
                 for seg in segs:
                     parts.append(
                         f'<rect class="bar waterfall-segment" '
@@ -3365,7 +3329,6 @@ def _paint_waterfall_labels(
     lab_px = plan["role_sizes"].get(
         "structural_values", plan.get("structural_label_px", 18)
     )
-    skip_segments = bool(plan.get("component_label_overflow"))
     for place in plan["placements"]:
         kind = place.get("kind")
         if kind == "structural":
@@ -3376,13 +3339,23 @@ def _paint_waterfall_labels(
                 f'data-placement="structural" data-category="{_e(place["category_id"])}">'
                 f'{_e(place["text"])}</text>'
             )
-        elif kind == "segment" and not skip_segments:
+        elif kind == "segment" and place.get("class") != "suppressed":
+            tx, ty = place["x"], place["y"]
             seg_ink = place.get("color") or ink
+            if place.get("class") == "leader":
+                parts.append(
+                    f'<line x1="{place.get("anchor_x", tx):.1f}" '
+                    f'y1="{place.get("anchor_y", ty):.1f}" '
+                    f'x2="{tx:.1f}" y2="{ty:.1f}" '
+                    f'stroke="{_e(place.get("connector_color") or seg_ink)}" '
+                    f'stroke-width="1" opacity="0.7"/>'
+                )
             parts.append(
-                f'<text class="waterfall-segment-label" x="{place["x"]:.1f}" '
-                f'y="{place["y"]:.1f}" text-anchor="middle" font-size="{lab_px}" '
+                f'<text class="waterfall-segment-label" x="{tx:.1f}" '
+                f'y="{ty:.1f}" text-anchor="middle" font-size="{lab_px}" '
                 f'font-weight="{_CHART_LABEL_WEIGHT}" font-variant-numeric="tabular-nums" '
                 f'fill="{_e(seg_ink)}" data-kind="segment" '
+                f'data-placement="{place.get("class") or "inside"}" '
                 f'data-category="{_e(place["category_id"])}">{_e(place["text"])}</text>'
             )
 
@@ -3563,6 +3536,135 @@ def _waterfall_component_segments(
             }
         )
     return out
+
+
+def _zero_waterfall_cap_y(
+    comps: list[dict[str, Any]], bar: dict[str, Any], lab_px: int
+) -> float:
+    """Zero-area cap sits on the finished same-column stack, not the baseline."""
+    pos_y = [
+        float(s["y"])
+        for s in comps
+        if float(s.get("height") or 0) > 0 and float(s.get("numeric") or 0) > 0
+    ]
+    if pos_y:
+        return min(pos_y) - 4.0
+    neg_bottom = [
+        float(s["y"]) + float(s["height"])
+        for s in comps
+        if float(s.get("height") or 0) > 0 and float(s.get("numeric") or 0) < 0
+    ]
+    if neg_bottom:
+        return max(neg_bottom) + float(lab_px) + 4.0
+    return float(bar.get("end_y", bar["y"])) - 4.0
+
+
+def _place_waterfall_stack_labels(
+    bars: list[dict[str, Any]], *, lab_px: int
+) -> list[dict[str, Any]]:
+    """Component + structural labels. Thin/zero caps stay; never fit-drop (#335)."""
+    placements: list[dict[str, Any]] = []
+    occupied_by_cat: dict[str, list[tuple[float, float, float, float]]] = {}
+    navy = resolve_color("navy", role="text_on_light")
+    white = resolve_color("white", role="text_on_dark")
+    deferred: list[tuple[dict[str, Any], dict[str, Any], int]] = []
+
+    for bar in bars:
+        comps = bar.get("components") or []
+        cx = bar["end_x"]
+        cat = bar["category_id"]
+        for seg in comps:
+            h = float(seg["height"])
+            numeric = float(seg["numeric"])
+            sign = 0 if numeric == 0 else (1 if numeric > 0 else -1)
+            fill = seg["color"]
+            contrast_ok = contrast_ratio(white, fill) >= 3.0
+            inside_ok = h >= lab_px + 6 and sign != 0 and contrast_ok
+            text = seg["visible"]
+            if inside_ok:
+                y = seg["y"] + h / 2 + lab_px * 0.35
+                placements.append(
+                    {
+                        "kind": "segment",
+                        "class": "inside",
+                        "series_id": seg["series_id"],
+                        "category_id": cat,
+                        "text": text,
+                        "x": cx,
+                        "y": y,
+                        "color": white,
+                        "priority": "segment",
+                    }
+                )
+                occupied_by_cat.setdefault(cat, []).append(
+                    _stack_text_box(cx, y, text, lab_px)
+                )
+            else:
+                deferred.append((bar, seg, sign))
+
+    for bar, seg, sign in deferred:
+        text = seg["visible"]
+        h = float(seg["height"])
+        w_est = max(20.0, len(text) * lab_px * 0.55)
+        cx = bar["end_x"]
+        cat = bar["category_id"]
+        comps = bar.get("components") or []
+        if sign < 0:
+            y = seg["y"] + h + lab_px + 4
+            cls = "outside_below"
+            away = 1.0
+        elif sign > 0:
+            y = seg["y"] - 4
+            cls = "outside_above"
+            away = -1.0
+        else:
+            y = _zero_waterfall_cap_y(comps, bar, lab_px)
+            cls = "outside_zero"
+            away = -1.0 if y <= float(bar.get("end_y", bar["y"])) else 1.0
+        x = cx
+        if w_est > bar["width"]:
+            x = cx + bar["width"] / 2 + w_est / 2 + 6
+            cls = "leader"
+        occupied = occupied_by_cat.setdefault(cat, [])
+        y, box = _nudge_stack_box(x, y, text, lab_px, occupied, away)
+        occupied.append(box)
+        placements.append(
+            {
+                "kind": "segment",
+                "class": cls,
+                "series_id": seg["series_id"],
+                "category_id": cat,
+                "text": text,
+                "x": x,
+                "y": y,
+                "color": navy,
+                "anchor_x": cx,
+                "anchor_y": seg["y"] + h / 2,
+                "connector_color": seg["color"],
+                "priority": "segment",
+            }
+        )
+
+    for bar in bars:
+        text = bar["visible"]
+        x = bar["end_x"]
+        y = bar["y"] - 8
+        occupied = occupied_by_cat.setdefault(bar["category_id"], [])
+        y, box = _nudge_stack_box(x, y, text, lab_px, occupied, -1.0)
+        occupied.append(box)
+        placements.append(
+            {
+                "kind": "structural",
+                "class": "above",
+                "series_id": WATERFALL_SERIES_ID,
+                "category_id": bar["category_id"],
+                "text": text,
+                "x": x,
+                "y": y,
+                "priority": "structural",
+            }
+        )
+    return placements
 
 
 def _resolve_waterfall_steps(
@@ -6097,9 +6199,7 @@ def _chartjs_waterfall_config(plan: dict[str, Any]) -> dict[str, Any]:
     category_pct = min(1.0, max(0.1, thick / pitch))
     bar_pct = 1.0
     bars = list(plan.get("bars") or [])
-    stacked = any(b.get("components") for b in bars) and not plan.get(
-        "component_label_overflow"
-    )
+    stacked = any(b.get("components") for b in bars)
     if stacked:
         series_ids: list[str] = []
         series_meta: dict[str, dict[str, Any]] = {}

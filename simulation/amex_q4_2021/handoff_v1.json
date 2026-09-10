@@ -3282,31 +3282,101 @@
                 "category_id": "q1-20-beg",
                 "label": "Q1'20 Beginning Reserves",
                 "role": "total",
-                "value": "4.3"
+                "value": "4.3",
+                "components": [
+                  {
+                    "series_id": "loans",
+                    "name": "Total Loans",
+                    "value": "4.2",
+                    "color": "primary_blue"
+                  },
+                  {
+                    "series_id": "receivables",
+                    "name": "Card Member Receivables",
+                    "value": "0.1",
+                    "color": "navy"
+                  }
+                ]
               },
               {
                 "category_id": "to-q4-20",
                 "label": "Change to Q4'20",
                 "role": "change",
-                "value": "1.5"
+                "value": "1.5",
+                "components": [
+                  {
+                    "series_id": "loans",
+                    "name": "Total Loans",
+                    "value": "1.4",
+                    "color": "primary_blue"
+                  },
+                  {
+                    "series_id": "receivables",
+                    "name": "Card Member Receivables",
+                    "value": "0.1",
+                    "color": "navy"
+                  }
+                ]
               },
               {
                 "category_id": "q4-20-end",
                 "label": "Q4'20 Ending Reserves",
                 "role": "total",
-                "value": "5.8"
+                "value": "5.8",
+                "components": [
+                  {
+                    "series_id": "loans",
+                    "name": "Total Loans",
+                    "value": "5.55",
+                    "color": "primary_blue"
+                  },
+                  {
+                    "series_id": "receivables",
+                    "name": "Card Member Receivables",
+                    "value": "0.25",
+                    "color": "navy"
+                  }
+                ]
               },
               {
                 "category_id": "to-q3-21",
                 "label": "Change to Q3'21",
                 "role": "change",
-                "value": "-2.2"
+                "value": "-2.2",
+                "components": [
+                  {
+                    "series_id": "loans",
+                    "name": "Total Loans",
+                    "value": "-1.95",
+                    "color": "primary_blue"
+                  },
+                  {
+                    "series_id": "receivables",
+                    "name": "Card Member Receivables",
+                    "value": "-0.25",
+                    "color": "navy"
+                  }
+                ]
               },
               {
                 "category_id": "q3-21-end",
                 "label": "Q3'21 Ending Reserves",
                 "role": "total",
-                "value": "3.6"
+                "value": "3.6",
+                "components": [
+                  {
+                    "series_id": "loans",
+                    "name": "Total Loans",
+                    "value": "3.6",
+                    "color": "primary_blue"
+                  },
+                  {
+                    "series_id": "receivables",
+                    "name": "Card Member Receivables",
+                    "value": "0.0",
+                    "color": "navy"
+                  }
+                ]
               },
               {
                 "category_id": "to-q4-21",
@@ -3318,7 +3388,21 @@
                 "category_id": "q4-21-end",
                 "label": "Q4'21 Ending Reserves",
                 "role": "total",
-                "value": "3.4"
+                "value": "3.4",
+                "components": [
+                  {
+                    "series_id": "loans",
+                    "name": "Total Loans",
+                    "value": "3.35",
+                    "color": "primary_blue"
+                  },
+                  {
+                    "series_id": "receivables",
+                    "name": "Card Member Receivables",
+                    "value": "0.05",
+                    "color": "navy"
+                  }
+                ]
               }
             ]
           },
@@ -3435,7 +3519,7 @@
               },
               {
                 "kind": "paragraph",
-                "text": "Waterfall is the labeled total walk. Loan vs receivable interiors of the $1.5 / ($2.2) / ($0.2) stacks are not a second waterfall series."
+                "text": "Loan vs receivable interiors of the $1.5 / ($2.2) / ($0.2) stacks. Change to Q4'21 is the labeled ($0.2) net (no invented $0 loans slice)."
               }
             ]
           }
