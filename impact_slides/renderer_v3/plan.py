@@ -370,6 +370,7 @@ def plan_deck(
 
     # Phase 2 — synchronize equivalent roles (D3/D4/D26/D69).
     _synchronize(surfaces, events)
+    _sync_dual_independent_support_max(surfaces, events)
 
     # Size-dependent events must describe the synchronized frozen sizes.
     events = [e for e in events if e.code != "plan.typography_grown"]
@@ -1824,6 +1825,62 @@ def _synchronize(surfaces: list[SurfacePlan], events: list[DiagnosticEvent]) -> 
                         input_meta={"type": "int", "value": target},
                     )
                 )
+
+
+def _sync_dual_independent_support_max(
+    surfaces: list[SurfacePlan], events: list[DiagnosticEvent]
+) -> None:
+    """dual_chart per-pane independent tables freeze at max(left, right) (#336)."""
+    by_slide: dict[int, list[SurfacePlan]] = {}
+    for sp in surfaces:
+        spec = sp._table_spec or {}
+        if (
+            sp.layout_type != "dual_chart"
+            or sp.role != "support_table"
+            or sp._mode != "adaptive"
+            or sp._explicit_size is not None
+            or sp._sync_group
+            or spec.get("alignment") != "independent"
+            or not spec.get("chart_surface_id")
+            or sp._fit_role != "table"
+        ):
+            continue
+        by_slide.setdefault(sp.slide_number, []).append(sp)
+    for members in by_slide.values():
+        if len(members) != 2 or any(m._overflow for m in members):
+            continue
+        fit = "table"
+        target = max(m.role_sizes[fit] for m in members)
+        band_h = max(m._box_h for m in members)
+        for m in members:
+            if m.role_sizes[fit] == target:
+                continue
+            saved_h = m._box_h
+            m._box_h = max(m._box_h, band_h)
+            ok, _, need_h = _table_fit_detail(
+                m._table_spec,
+                target,
+                m._box_w,
+                m._box_h,
+                allow_short=False,
+                allow_ellipsis=False,
+            )
+            m.role_sizes[fit] = target
+            floor = (
+                m._default_size
+                if m._default_size is not None
+                else SUPPORT_TABLE_FLOOR
+            )
+            if target > floor and "plan.typography_grown" not in m.adaptation_codes:
+                m.adaptation_codes.append("plan.typography_grown")
+            if ok:
+                m._box_h = max(saved_h, need_h)
+                m._overflow = False
+                _record_surface_adaptations(m, target, events)
+            else:
+                m._box_h = saved_h
+                m._overflow = True
+            _finalize_composition_roles(m, target)
 
 
 # ---------------------------------------------------------------------------
