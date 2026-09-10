@@ -1,8 +1,9 @@
-"""#316 — Q4 2021 s06/s07/s09 under-plot tables are independent navy grids.
+"""#316/#336 — Q4 2021 s06/s07/s09 under-plot tables are independent navy grids.
 
 Seams under test:
 - live Q4 handoff payload (`simulation/amex_q4_2021/handoff_v1.json`)
 - strict `render_deck` HTML chrome on those four supports
+- both per-pane independent tables freeze the larger type (24px)
 """
 from __future__ import annotations
 
@@ -11,7 +12,8 @@ import re
 from html import unescape
 from pathlib import Path
 
-from impact_slides.renderer_v3 import render_deck
+from impact_slides.renderer_v3 import render_deck, validate_handoff
+from impact_slides.renderer_v3.plan import plan_deck
 
 ROOT = Path(__file__).resolve().parents[1]
 HANDOFF = ROOT / "simulation" / "amex_q4_2021" / "handoff_v1.json"
@@ -142,6 +144,49 @@ def test_q4_s06_s07_s09_strict_render_paints_connected_navy_tables(
     assert "(33%)" in _section(html, 7)
     assert "(1%)" in _section(html, 9)
     assert "(36%)" in _section(html, 9)
+
+
+PAIRS = (
+    (6, "s06-mix-tbl", "s06-age-tbl"),
+    (7, "s07-mix-tbl", "s07-sme-tbl"),
+    (9, "s09-us-tbl", "s09-gs-tbl"),
+)
+
+
+def test_q4_s06_s07_s09_independent_tables_freeze_larger_type(
+    tmp_path: Path,
+) -> None:
+    plan = plan_deck(validate_handoff(_load(), strict=True).deck, strict=True)
+    by = plan.by_surface_id()
+    for _n, left_id, right_id in PAIRS:
+        left = by[left_id]
+        right = by[right_id]
+        assert left.role_sizes["table"] == right.role_sizes["table"] == 24
+        assert left.table_paint["alignment"] == "independent"
+        assert right.table_paint["alignment"] == "independent"
+        assert left.table_paint["col_widths"] != right.table_paint["col_widths"]
+    out = tmp_path / "out"
+    result = render_deck(HANDOFF, out, strict=True)
+    assert result["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    for n, left_id, right_id in PAIRS:
+        section = _section(html, n)
+        left = _pane_html(section, 0)
+        right = _pane_html(section, 1)
+        assert f'data-table-surface="{left_id}"' in left
+        assert f'data-table-surface="{right_id}"' in right
+        left_tbl = re.search(
+            rf'<table[^>]*data-table-surface="{re.escape(left_id)}"[^>]*>',
+            left,
+        ).group(0)
+        right_tbl = re.search(
+            rf'<table[^>]*data-table-surface="{re.escape(right_id)}"[^>]*>',
+            right,
+        ).group(0)
+        assert "font-size:24px" in left_tbl
+        assert "font-size:24px" in right_tbl
+        assert "font-size:14px" not in left_tbl
+        assert "font-size:14px" not in right_tbl
 
 
 def test_mutation_category_alignment_paints_boxes_not_navy_grid(

@@ -7,6 +7,7 @@ Seams under test:
 - metric strip complete content (D165/D265)
 - D10/D47 allocation preserves 320×240 plot floor
 - dual_chart per-pane `{chart, support?}` envelope plus shared-vs-per-pane mutex
+- dual_chart independent per-pane support tables freeze the larger type (#336)
 - n_rows≥2 category boxes freeze/paint one row gap (#323); one-row boxes unchanged
 """
 from __future__ import annotations
@@ -1397,6 +1398,7 @@ def test_dual_unequal_pane_rows_keep_shared_plot_height():
         assert g["plot_h"] >= 240
     left = next(s for s in plan.surfaces if s.surface_id == "left-support")
     right = next(s for s in plan.surfaces if s.surface_id == "right-support")
+    assert left.role_sizes["table"] == right.role_sizes["table"] == 24
     assert left._box_h > right._box_h
     tall_only = plan_deck(
         validate_handoff(
@@ -1455,4 +1457,68 @@ def test_paint_dual_per_pane_support_inside_each_pane(tmp_path: Path):
         'data-table-surface="right-support"'
     )
     assert 'data-table-surface="left-support"' not in panes[1]
+
+
+def test_dual_independent_per_pane_tables_freeze_larger_type(tmp_path: Path):
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support", extra_rows=2),
+        _pane_indep_table("right-support"),
+    )
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    left = next(s for s in plan.surfaces if s.surface_id == "left-support")
+    right = next(s for s in plan.surfaces if s.surface_id == "right-support")
+    assert left.role_sizes["table"] == right.role_sizes["table"] == 24
+    assert left.table_paint["alignment"] == "independent"
+    assert right.table_paint["alignment"] == "independent"
+    assert left.table_paint["col_widths"]
+    assert right.table_paint["col_widths"]
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    panes = html.split('class="dual-chart-pane"')[1:]
+    assert 'font-size:24px' in panes[0]
+    assert 'font-size:24px' in panes[1]
+
+
+def test_dual_category_per_pane_tables_stay_independent():
+    raw = _dual_pane_raw(_pane_cat_table("left-cat"), _pane_cat_table("right-cat"))
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    left = next(s for s in plan.surfaces if s.surface_id == "left-cat")
+    right = next(s for s in plan.surfaces if s.surface_id == "right-cat")
+    assert left.table_paint["alignment"] == "category"
+    assert right.table_paint["alignment"] == "category"
+    assert left.role_sizes["table"] != right.role_sizes["table"]
+
+
+def test_dual_authored_table_font_size_wins_on_that_table():
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support", extra_rows=2),
+        _pane_indep_table("right-support"),
+    )
+    raw["slides"][1]["payload"]["charts"][1]["support"]["table"]["typography"] = {
+        "mode": "adaptive",
+        "table_font_size": 14,
+    }
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    left = next(s for s in plan.surfaces if s.surface_id == "left-support")
+    right = next(s for s in plan.surfaces if s.surface_id == "right-support")
+    assert left.role_sizes["table"] == 24
+    assert right.role_sizes["table"] == 14
+
+
+def test_dual_authored_sync_group_keeps_largest_common_safe():
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support", extra_rows=2),
+        _pane_indep_table("right-support"),
+    )
+    for idx in (0, 1):
+        raw["slides"][1]["payload"]["charts"][idx]["support"]["table"][
+            "typography"
+        ] = {"mode": "adaptive", "sync_group": "pane-tables"}
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    left = next(s for s in plan.surfaces if s.surface_id == "left-support")
+    right = next(s for s in plan.surfaces if s.surface_id == "right-support")
+    assert left.role_sizes["table"] == right.role_sizes["table"] == 14
 
