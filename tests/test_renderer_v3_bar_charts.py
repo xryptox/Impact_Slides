@@ -723,7 +723,7 @@ def test_strict_rejects_q4_s20_unlabeled_hatch_split():
 
 
 def test_q4_s11_writeoff_panes_pin_fixed_0_to_5_domain():
-    """Q4 2021 s11 (#317/#346): both panes fixed 0-5%; NWO series only; DP-3 crush."""
+    """Q4 2021 s11 (#317/#346): both panes fixed 0-5%; NWO series only; generated path now 0-5 too (#344)."""
     raw = json.loads(Q4_HANDOFF.read_text(encoding="utf-8"))
     s11 = next(s for s in raw["slides"] if s["slide_number"] == 11)
     assert s11["layout_type"] == "dual_chart"
@@ -769,5 +769,6 @@ def test_q4_s11_writeoff_panes_pin_fixed_0_to_5_domain():
         validate_handoff(mutated, strict=True).deck, strict=True
     ).by_surface_id()["s11-loans"].chart_paint
     crushed_bar = next(b for b in crushed["bars"] if b["numeric"] == 2.5)
-    assert crushed_bar["height"] / crushed["geometry"]["plot_h"] < 0.25
-    assert float(crushed["domain"]["max"]) >= 15.0
+    # Generated 2.5% now uses the 5-point floor (#344), same occupancy as the pin.
+    assert crushed_bar["height"] / crushed["geometry"]["plot_h"] >= 0.40
+    assert float(crushed["domain"]["max"]) == 5.0
