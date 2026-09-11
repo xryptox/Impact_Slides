@@ -8,7 +8,7 @@ Seams under test:
 - D10/D47 allocation preserves 320×240 plot floor
 - dual_chart per-pane `{chart, support?}` envelope plus shared-vs-per-pane mutex
 - dual_chart independent per-pane support tables freeze the larger type (#336)
-- n_rows≥2 category boxes freeze/paint one row gap (#323); one-row boxes unchanged
+- n_rows≥2 category boxes freeze/paint a 24px row gap (#323/#342); grow-to-max cell_w; borderless stubs; one-row boxes unchanged
 """
 from __future__ import annotations
 
@@ -25,7 +25,12 @@ from impact_slides.renderer_v3.models import (
     OutlinedSupportVisual,
     SupportTableVisual,
 )
-from impact_slides.renderer_v3.plan import CATEGORY_SUPPORT_ROW_GAP, plan_deck
+from impact_slides.renderer_v3.plan import (
+    CATEGORY_SUPPORT_ROW_GAP,
+    OUTLINED_BOX_GAP,
+    OUTLINED_BOX_MAX,
+    plan_deck,
+)
 from impact_slides.renderer_v3.schema_export import check_schema
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -322,14 +327,14 @@ def test_paint_support_table_complete_rows(tmp_path: Path):
 
 
 def test_two_row_category_support_freezes_row_gap():
-    """#323: n_rows≥2 category boxes get one shared row gap; one-row stays 0."""
+    """#323/#342: n_rows≥2 category boxes get one shared 24px row gap; one-row stays 0."""
     two = validate_handoff(_with_support(_cat_support_table_two_rows()), strict=True)
     two_plan = plan_deck(two.deck, strict=True)
     two_sup = next(s for s in two_plan.surfaces if s.surface_id == "vol-support")
     assert two_sup.table_paint["n_rows"] == 2
     assert two_sup.table_paint["category_centered"] is True
     assert two_sup.table_paint["row_gap"] == CATEGORY_SUPPORT_ROW_GAP
-    assert two_sup.table_paint["row_gap"] >= 8
+    assert two_sup.table_paint["row_gap"] == 24
     assert two_sup.table_paint["row_h"] >= 28
 
     one = validate_handoff(_with_support(_cat_support_table()), strict=True)
@@ -369,6 +374,29 @@ def test_paint_two_row_category_support_separates_rows(tmp_path: Path):
     assert row_gap == CATEGORY_SUPPORT_ROW_GAP
     # Isolated boxes: no visual navy header band (sr-only table may still use it).
     assert re.search(r'class="support-cat-cell[^"]*\bhead\b', html) is None
+
+
+def test_category_support_grows_cell_w_to_stub_safe_max():
+    """#342: value boxes grow toward OUTLINED_BOX_MAX without entering the stub lane."""
+    two = validate_handoff(_with_support(_cat_support_table_two_rows()), strict=True)
+    two_plan = plan_deck(two.deck, strict=True)
+    two_sup = next(s for s in two_plan.surfaces if s.surface_id == "vol-support")
+    cell_w = int(two_sup.table_paint["cell_w"])
+    lane_w = int(two_sup.table_paint["label_lane_w"])
+    first_x = float(two_sup.table_paint["centers"][0]["x"])
+    first_left = first_x - cell_w / 2.0
+    assert cell_w <= OUTLINED_BOX_MAX
+    assert first_left >= lane_w + OUTLINED_BOX_GAP - 1e-6
+    pitch = min(
+        float(c["x"]) - float(p["x"])
+        for p, c in zip(
+            two_sup.table_paint["centers"], two_sup.table_paint["centers"][1:]
+        )
+    )
+    pitch_cap = int(pitch - OUTLINED_BOX_GAP)
+    stub_cap = int(2 * (first_x - (lane_w + OUTLINED_BOX_GAP)))
+    expected = min(OUTLINED_BOX_MAX, pitch_cap, stub_cap)
+    assert cell_w == expected
 
 
 def test_category_support_visible_cells_carry_table_chrome(tmp_path: Path):
@@ -459,13 +487,80 @@ def test_category_support_visible_cells_carry_table_chrome(tmp_path: Path):
         assert body["borderColor"] == navy_rgb
         assert body["bg"] != navy_rgb
     for stub in styles["stubs"]:
-        assert stub["borderTop"] == "1px"
-        assert stub["borderRight"] == "1px"
-        assert stub["borderBottom"] == "1px"
-        assert stub["borderLeft"] == "1px"
+        assert stub["borderTop"] == "0px"
+        assert stub["borderRight"] == "0px"
+        assert stub["borderBottom"] == "0px"
+        assert stub["borderLeft"] == "0px"
     painted_lefts = [h["left"] for h in styles["heads"]]
     for painted, frozen in zip(painted_lefts, cat_x):
         assert abs(painted - frozen) <= 2.0
+
+
+def test_category_stub_border_mutation_fails(tmp_path: Path):
+    """#342: reapplying hairline to .support-cat-stub makes computed borders visible."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    raw = _with_support(_cat_support_table())
+    raw["slides"][1]["payload"]["chart"]["category_axis"]["visible"] = False
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html_path = (out / "presentation.html").resolve()
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        before, after = page.evaluate(
+            """() => {
+              const vis = (el) => {
+                const r = el.getBoundingClientRect();
+                return r.width > 1 && r.height > 1;
+              };
+              const pack = (el) => {
+                const s = getComputedStyle(el);
+                return [
+                  s.borderTopWidth, s.borderRightWidth,
+                  s.borderBottomWidth, s.borderLeftWidth,
+                ];
+              };
+              const stubs = [...document.querySelectorAll(
+                '.support-table.category-aligned .support-cat-stub'
+              )].filter(vis);
+              const cells = [...document.querySelectorAll(
+                '.support-table.category-aligned .support-cat-cell'
+              )].filter(el => vis(el) && !el.classList.contains('head'));
+              const before = {stubs: stubs.map(pack), cells: cells.map(pack)};
+              const sheet = [...document.styleSheets].find(s => {
+                try { return [...s.cssRules].some(r =>
+                  r.selectorText && r.selectorText.includes('support-cat-stub'));
+                } catch (e) { return false; }
+              });
+              if (sheet) {
+                sheet.insertRule(
+                  '.support-table.category-aligned .support-cat-stub,' +
+                  '.support-table.category-aligned .support-cat-stub.head' +
+                  '{border:var(--border-width-hairline) solid var(--color-rule) !important}',
+                  sheet.cssRules.length
+                );
+              }
+              const after = {stubs: stubs.map(pack), cells: cells.map(pack)};
+              return [before, after];
+            }"""
+        )
+        browser.close()
+
+    assert before["stubs"] and before["cells"]
+    for stub in before["stubs"]:
+        assert all(w == "0px" for w in stub)
+    for cell in before["cells"]:
+        assert all(w == "1px" for w in cell)
+    for stub in after["stubs"]:
+        assert any(w != "0px" for w in stub)
+    for cell in after["cells"]:
+        assert all(w == "1px" for w in cell)
 
 
 def test_paint_outlined_support_alignment(tmp_path: Path):
