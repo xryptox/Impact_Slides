@@ -64,6 +64,8 @@ DONUT_CUTOUT = 0.55
 # % stays inside the ring at the ordinary_values floor when the wedge is
 # at least this share; smaller wedges sit with the outside name (#322).
 _SLICE_VALUE_INSIDE_MIN_FRAC = 0.20
+# 0.55em AABB underestimates Source Sans 3 ink vs Chart.js (~6px on s27-rec).
+_SLICE_OUTSIDE_DISK_PAD = 8
 BarChartVisual = Union[
     GroupedBarChartVisual, HorizontalBarChartVisual, StackedBarChartVisual
 ]
@@ -2190,7 +2192,7 @@ def freeze_pie_donut(
             left, top, right, bottom = box
             qx = min(max(cx, left), right)
             qy = min(max(cy, top), bottom)
-            return math.hypot(qx - cx, qy - cy) >= radius
+            return math.hypot(qx - cx, qy - cy) >= radius + _SLICE_OUTSIDE_DISK_PAD
 
         def _fits_view(box: tuple[float, float, float, float]) -> bool:
             left, top, right, bottom = box

@@ -665,7 +665,8 @@ def test_outside_name_aabb_does_not_intersect_ring():
     dist = math.hypot(corp["name_x"] - g["cx"], corp["name_y"] - g["cy"])
     assert dist > g["radius"] + 1
     box = _label_aabb(corp["name_x"], corp["name_y"], corp["label"], px, corp["name_anchor"])
-    assert _aabb_clears_disk(box, g["cx"], g["cy"], painted_r)
+    # Live SVG ink overshoots the 0.55em AABB by ~6px; require that much extra.
+    assert _aabb_clears_disk(box, g["cx"], g["cy"], painted_r + 6)
     for sl in frozen["slices"]:
         name_box = _label_aabb(sl["name_x"], sl["name_y"], sl["label"], px, sl["name_anchor"])
         assert _aabb_clears_disk(name_box, g["cx"], g["cy"], painted_r)
