@@ -1445,15 +1445,23 @@ def build():
     )
 
     # 11 credit metrics — PDF visual: loan NWO bars 2.5%..0.6%, rec NWO 2.0%..0.3%;
-    # 30+ strips under each pane; GCP strip has no dual_chart slot (Type B secondary).
-    # Extraction reading order swapped loan NWO onto rec 30+; use PDF coordinates.
+    # 30+ is an under-plot category strip, not a second series. Rec also has GCP.
     # #317: pin both panes to 0-5% so DP-3's 15-pt generated span does not crush bars.
+    # #346: author the strips as per-pane category support; Q2'21 GCP is (0.9) not s29 0.5.
     s11_domain = {
         "kind": "fixed",
         "min": "0",
         "max": "5",
         "ticks": ["0", "1", "2", "3", "4", "5"],
     }
+    s11_cats = [
+        ("q3-20", "Q3'20"),
+        ("q4-20", "Q4'20"),
+        ("q1-21", "Q1'21"),
+        ("q2-21", "Q2'21"),
+        ("q3-21", "Q3'21"),
+        ("q4-21", "Q4'21"),
+    ]
     slides.append(
         ordinary(
             11,
@@ -1461,61 +1469,74 @@ def build():
             "Card Member Credit Metrics",
             {
                 "charts": [
-                    gbar(
-                        "s11-loans",
-                        "Card Member Loans Net Write-off Rates",
-                        [
-                            ("q3-20", "Q3'20"),
-                            ("q4-20", "Q4'20"),
-                            ("q1-21", "Q1'21"),
-                            ("q2-21", "Q2'21"),
-                            ("q3-21", "Q3'21"),
-                            ("q4-21", "Q4'21"),
-                        ],
-                        [
-                            ser(
-                                "nwo",
-                                "Net Write-off Rates",
-                                ["2.5", "1.9", "1.4", "1.0", "0.6", "0.6"],
-                                "primary_blue",
-                            ),
-                            ser(
-                                "dq",
-                                "30+ Days Past Due",
-                                ["1.2", "1.0", "0.9", "0.6", "0.7", "0.7"],
-                                "navy",
-                            ),
-                        ],
-                        fmt="pct_1",
-                        domain=s11_domain,
+                    pane(
+                        gbar(
+                            "s11-loans",
+                            "Card Member Loans Net Write-off Rates",
+                            s11_cats,
+                            [
+                                ser(
+                                    "nwo",
+                                    "Net Write-off Rates",
+                                    ["2.5", "1.9", "1.4", "1.0", "0.6", "0.6"],
+                                    "primary_blue",
+                                ),
+                            ],
+                            fmt="pct_1",
+                            domain=s11_domain,
+                        ),
+                        cat_support(
+                            "s11-loans-tbl",
+                            "Rate",
+                            s11_cats,
+                            [
+                                mixed_row(
+                                    "dq",
+                                    "30+ Days Past Due",
+                                    s11_cats,
+                                    ["1.2", "1.0", "0.9", "0.6", "0.7", "0.7"],
+                                    "pct_1",
+                                ),
+                            ],
+                        ),
                     ),
-                    gbar(
-                        "s11-rec",
-                        "Card Member Receivables Net Write-off Rates",
-                        [
-                            ("q3-20", "Q3'20"),
-                            ("q4-20", "Q4'20"),
-                            ("q1-21", "Q1'21"),
-                            ("q2-21", "Q2'21"),
-                            ("q3-21", "Q3'21"),
-                            ("q4-21", "Q4'21"),
-                        ],
-                        [
-                            ser(
-                                "nwo",
-                                "Net Write-off Rates (excluding GCP)",
-                                ["2.0", "1.0", "0.5", "0.3", "0.2", "0.3"],
-                                "navy",
-                            ),
-                            ser(
-                                "dq",
-                                "30+ Days Past Due*",
-                                ["0.9", "0.6", "0.6", "0.5", "0.5", "0.6"],
-                                "primary_blue",
-                            ),
-                        ],
-                        fmt="pct_1",
-                        domain=s11_domain,
+                    pane(
+                        gbar(
+                            "s11-rec",
+                            "Card Member Receivables Net Write-off Rates",
+                            s11_cats,
+                            [
+                                ser(
+                                    "nwo",
+                                    "Net Write-off Rates (excluding GCP)",
+                                    ["2.0", "1.0", "0.5", "0.3", "0.2", "0.3"],
+                                    "navy",
+                                ),
+                            ],
+                            fmt="pct_1",
+                            domain=s11_domain,
+                        ),
+                        cat_support(
+                            "s11-rec-tbl",
+                            "Rate",
+                            s11_cats,
+                            [
+                                mixed_row(
+                                    "dq",
+                                    "30+ Days Past Due*",
+                                    s11_cats,
+                                    ["0.9", "0.6", "0.6", "0.5", "0.5", "0.6"],
+                                    "pct_1",
+                                ),
+                                mixed_row(
+                                    "gcp",
+                                    "GCP Net Write-off Rates**",
+                                    s11_cats,
+                                    ["2.4", "0.7", "0.4", "-0.9", "0.2", "0.2"],
+                                    "pct_1p",
+                                ),
+                            ],
+                        ),
                     ),
                 ]
             },
@@ -1524,7 +1545,6 @@ def build():
                     "s11-disc",
                     "Notes",
                     [
-                        "GCP Net Write-off Rates** ***: 2.4%, 0.7%, 0.4%, (0.9%), 0.2%, 0.2% for Q3'20-Q4'21. Third pane has no dual_chart slot (Type B: 3+ chart canvas).",
                         "* 30+ Days past due as a % of Global Consumer and Global Small Business Services Card Member receivables (unavailable for GCP). ** GCP net write off rates include principal and fees. *** Includes Corporate Client bankruptcy impact of ($37M) for Q2'21. See Slide 29 for adjusted rates.",
                     ],
                 )
@@ -2176,14 +2196,16 @@ def build():
                         ),
                     ],
                     fmt="pct_0",
-                )
+                ),
+                "support": fy_support(
+                    "s18-fy", "FY'21", "rev", "Revenue", "42.4", "17", "-3"
+                ),
             },
             extra={
                 "disclosure": disc(
                     "s18-disc",
                     "Notes",
                     [
-                        "FY'21 Revenue $42.4B, YoY 17%, vs '19 (3%).",
                         "* Total Revenue Net of Interest Expense adjusted for FX and the related growth rates are non-GAAP measures. See Annex 6. See Slide 2 for an explanation of FX-adjusted information.",
                         "Extraction residual: 2019 vs-2019 series is definitionally omitted (same year); Q1'19-Q4'19 vs-2019 points were not labeled.",
                     ],
@@ -3883,6 +3905,7 @@ def build():
             "usd_2": {"unit": "usd", "value_decimals": 2, "negative_style": "parentheses"},
             "pct_0": {"unit": "percent", "value_decimals": 0, "negative_style": "parentheses"},
             "pct_1": {"unit": "percent", "value_decimals": 1, "negative_style": "minus"},
+            "pct_1p": {"unit": "percent", "value_decimals": 1, "negative_style": "parentheses"},
             "pct_2": {"unit": "percent", "value_decimals": 2, "negative_style": "minus"},
             "num_0": {"value_decimals": 0, "negative_style": "minus"},
             "num_1": {"value_decimals": 1, "negative_style": "minus"},

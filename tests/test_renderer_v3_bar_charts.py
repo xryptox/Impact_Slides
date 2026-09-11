@@ -7,7 +7,7 @@ Seams under test:
 - category groups + boxed labels (D155/D237/D235)
 - Chart.js/SVG geometry parity within 2px (D160)
 - Q4 s20 unlabeled Value Injection hatch leftover reject (#298)
-- Q4 s11 write-off panes pin fixed 0-5% domain (#317)
+- Q4 s11 write-off panes pin fixed 0-5% domain (#317); NWO series only (#346)
 """
 from __future__ import annotations
 
@@ -723,7 +723,7 @@ def test_strict_rejects_q4_s20_unlabeled_hatch_split():
 
 
 def test_q4_s11_writeoff_panes_pin_fixed_0_to_5_domain():
-    """Q4 2021 s11 (#317): both panes fixed 0-5%; series unchanged; DP-3 crush."""
+    """Q4 2021 s11 (#317/#346): both panes fixed 0-5%; NWO series only; DP-3 crush."""
     raw = json.loads(Q4_HANDOFF.read_text(encoding="utf-8"))
     s11 = next(s for s in raw["slides"] if s["slide_number"] == 11)
     assert s11["layout_type"] == "dual_chart"
@@ -731,23 +731,22 @@ def test_q4_s11_writeoff_panes_pin_fixed_0_to_5_domain():
     expected_series = {
         "s11-loans": {
             "nwo": ["2.5", "1.9", "1.4", "1.0", "0.6", "0.6"],
-            "dq": ["1.2", "1.0", "0.9", "0.6", "0.7", "0.7"],
         },
         "s11-rec": {
             "nwo": ["2.0", "1.0", "0.5", "0.3", "0.2", "0.3"],
-            "dq": ["0.9", "0.6", "0.6", "0.5", "0.5", "0.6"],
         },
     }
     panes = s11["payload"]["charts"]
     assert len(panes) == 2
     for pane in panes:
-        domain = pane["value_axes"]["primary"]["domain"]
+        chart = pane["chart"] if "chart" in pane else pane
+        domain = chart["value_axes"]["primary"]["domain"]
         assert domain["kind"] == "fixed"
         assert domain["min"] == "0"
         assert domain["max"] == "5"
         assert domain["ticks"] == expected_ticks
-        got = {s["series_id"]: s["values"] for s in pane["chart_data"]["series"]}
-        assert got == expected_series[pane["surface_id"]]
+        got = {s["series_id"]: s["values"] for s in chart["chart_data"]["series"]}
+        assert got == expected_series[chart["surface_id"]]
 
     deck = validate_handoff(raw, strict=True).deck
     plan = plan_deck(deck, strict=True)
@@ -761,7 +760,8 @@ def test_q4_s11_writeoff_panes_pin_fixed_0_to_5_domain():
     mutated = deepcopy(raw)
     m11 = next(s for s in mutated["slides"] if s["slide_number"] == 11)
     for pane in m11["payload"]["charts"]:
-        pane["value_axes"]["primary"]["domain"] = {
+        chart = pane["chart"] if "chart" in pane else pane
+        chart["value_axes"]["primary"]["domain"] = {
             "kind": "generated",
             "target_ticks": 5,
         }

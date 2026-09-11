@@ -42,6 +42,11 @@
       "value_decimals": 1,
       "negative_style": "minus"
     },
+    "pct_1p": {
+      "unit": "percent",
+      "value_decimals": 1,
+      "negative_style": "parentheses"
+    },
     "pct_2": {
       "unit": "percent",
       "value_decimals": 2,
@@ -2889,179 +2894,341 @@
       "payload": {
         "charts": [
           {
-            "type": "chart",
-            "surface_id": "s11-loans",
-            "chart_type": "grouped_bar",
-            "heading": "Card Member Loans Net Write-off Rates",
-            "chart_data": {
-              "categories": [
-                {
-                  "category_id": "q3-20",
-                  "label": "Q3'20"
-                },
-                {
-                  "category_id": "q4-20",
-                  "label": "Q4'20"
-                },
-                {
-                  "category_id": "q1-21",
-                  "label": "Q1'21"
-                },
-                {
-                  "category_id": "q2-21",
-                  "label": "Q2'21"
-                },
-                {
-                  "category_id": "q3-21",
-                  "label": "Q3'21"
-                },
-                {
-                  "category_id": "q4-21",
-                  "label": "Q4'21"
+            "chart": {
+              "type": "chart",
+              "surface_id": "s11-loans",
+              "chart_type": "grouped_bar",
+              "heading": "Card Member Loans Net Write-off Rates",
+              "chart_data": {
+                "categories": [
+                  {
+                    "category_id": "q3-20",
+                    "label": "Q3'20"
+                  },
+                  {
+                    "category_id": "q4-20",
+                    "label": "Q4'20"
+                  },
+                  {
+                    "category_id": "q1-21",
+                    "label": "Q1'21"
+                  },
+                  {
+                    "category_id": "q2-21",
+                    "label": "Q2'21"
+                  },
+                  {
+                    "category_id": "q3-21",
+                    "label": "Q3'21"
+                  },
+                  {
+                    "category_id": "q4-21",
+                    "label": "Q4'21"
+                  }
+                ],
+                "series": [
+                  {
+                    "series_id": "nwo",
+                    "name": "Net Write-off Rates",
+                    "values": [
+                      "2.5",
+                      "1.9",
+                      "1.4",
+                      "1.0",
+                      "0.6",
+                      "0.6"
+                    ],
+                    "color": "primary_blue"
+                  }
+                ]
+              },
+              "category_axis": {
+                "visible": true
+              },
+              "value_axes": {
+                "primary": {
+                  "visible": true,
+                  "format_id": "pct_1",
+                  "domain": {
+                    "kind": "fixed",
+                    "min": "0",
+                    "max": "5",
+                    "ticks": [
+                      "0",
+                      "1",
+                      "2",
+                      "3",
+                      "4",
+                      "5"
+                    ]
+                  }
                 }
-              ],
-              "series": [
-                {
-                  "series_id": "nwo",
-                  "name": "Net Write-off Rates",
-                  "values": [
-                    "2.5",
-                    "1.9",
-                    "1.4",
-                    "1.0",
-                    "0.6",
-                    "0.6"
-                  ],
-                  "color": "primary_blue"
-                },
-                {
-                  "series_id": "dq",
-                  "name": "30+ Days Past Due",
-                  "values": [
-                    "1.2",
-                    "1.0",
-                    "0.9",
-                    "0.6",
-                    "0.7",
-                    "0.7"
-                  ],
-                  "color": "navy"
-                }
-              ]
-            },
-            "category_axis": {
-              "visible": true
-            },
-            "value_axes": {
-              "primary": {
-                "visible": true,
-                "format_id": "pct_1",
-                "domain": {
-                  "kind": "fixed",
-                  "min": "0",
-                  "max": "5",
-                  "ticks": [
-                    "0",
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5"
-                  ]
-                }
+              },
+              "display": {
+                "ordinary_values": "show",
+                "series_identity": "legend"
               }
             },
-            "display": {
-              "ordinary_values": "show",
-              "series_identity": "legend"
+            "support": {
+              "support_type": "support_table",
+              "alignment": "category",
+              "table": {
+                "surface_id": "s11-loans-tbl",
+                "stub_header": {
+                  "label": "Rate"
+                },
+                "columns": [
+                  {
+                    "column_id": "q3-20",
+                    "label": "Q3'20"
+                  },
+                  {
+                    "column_id": "q4-20",
+                    "label": "Q4'20"
+                  },
+                  {
+                    "column_id": "q1-21",
+                    "label": "Q1'21"
+                  },
+                  {
+                    "column_id": "q2-21",
+                    "label": "Q2'21"
+                  },
+                  {
+                    "column_id": "q3-21",
+                    "label": "Q3'21"
+                  },
+                  {
+                    "column_id": "q4-21",
+                    "label": "Q4'21"
+                  }
+                ],
+                "rows": [
+                  {
+                    "row_id": "dq",
+                    "label": "30+ Days Past Due",
+                    "cells": {
+                      "q3-20": {
+                        "type": "number",
+                        "value": "1.2",
+                        "format_id": "pct_1"
+                      },
+                      "q4-20": {
+                        "type": "number",
+                        "value": "1.0",
+                        "format_id": "pct_1"
+                      },
+                      "q1-21": {
+                        "type": "number",
+                        "value": "0.9",
+                        "format_id": "pct_1"
+                      },
+                      "q2-21": {
+                        "type": "number",
+                        "value": "0.6",
+                        "format_id": "pct_1"
+                      },
+                      "q3-21": {
+                        "type": "number",
+                        "value": "0.7",
+                        "format_id": "pct_1"
+                      },
+                      "q4-21": {
+                        "type": "number",
+                        "value": "0.7",
+                        "format_id": "pct_1"
+                      }
+                    }
+                  }
+                ]
+              }
             }
           },
           {
-            "type": "chart",
-            "surface_id": "s11-rec",
-            "chart_type": "grouped_bar",
-            "heading": "Card Member Receivables Net Write-off Rates",
-            "chart_data": {
-              "categories": [
-                {
-                  "category_id": "q3-20",
-                  "label": "Q3'20"
-                },
-                {
-                  "category_id": "q4-20",
-                  "label": "Q4'20"
-                },
-                {
-                  "category_id": "q1-21",
-                  "label": "Q1'21"
-                },
-                {
-                  "category_id": "q2-21",
-                  "label": "Q2'21"
-                },
-                {
-                  "category_id": "q3-21",
-                  "label": "Q3'21"
-                },
-                {
-                  "category_id": "q4-21",
-                  "label": "Q4'21"
+            "chart": {
+              "type": "chart",
+              "surface_id": "s11-rec",
+              "chart_type": "grouped_bar",
+              "heading": "Card Member Receivables Net Write-off Rates",
+              "chart_data": {
+                "categories": [
+                  {
+                    "category_id": "q3-20",
+                    "label": "Q3'20"
+                  },
+                  {
+                    "category_id": "q4-20",
+                    "label": "Q4'20"
+                  },
+                  {
+                    "category_id": "q1-21",
+                    "label": "Q1'21"
+                  },
+                  {
+                    "category_id": "q2-21",
+                    "label": "Q2'21"
+                  },
+                  {
+                    "category_id": "q3-21",
+                    "label": "Q3'21"
+                  },
+                  {
+                    "category_id": "q4-21",
+                    "label": "Q4'21"
+                  }
+                ],
+                "series": [
+                  {
+                    "series_id": "nwo",
+                    "name": "Net Write-off Rates (excluding GCP)",
+                    "values": [
+                      "2.0",
+                      "1.0",
+                      "0.5",
+                      "0.3",
+                      "0.2",
+                      "0.3"
+                    ],
+                    "color": "navy"
+                  }
+                ]
+              },
+              "category_axis": {
+                "visible": true
+              },
+              "value_axes": {
+                "primary": {
+                  "visible": true,
+                  "format_id": "pct_1",
+                  "domain": {
+                    "kind": "fixed",
+                    "min": "0",
+                    "max": "5",
+                    "ticks": [
+                      "0",
+                      "1",
+                      "2",
+                      "3",
+                      "4",
+                      "5"
+                    ]
+                  }
                 }
-              ],
-              "series": [
-                {
-                  "series_id": "nwo",
-                  "name": "Net Write-off Rates (excluding GCP)",
-                  "values": [
-                    "2.0",
-                    "1.0",
-                    "0.5",
-                    "0.3",
-                    "0.2",
-                    "0.3"
-                  ],
-                  "color": "navy"
-                },
-                {
-                  "series_id": "dq",
-                  "name": "30+ Days Past Due*",
-                  "values": [
-                    "0.9",
-                    "0.6",
-                    "0.6",
-                    "0.5",
-                    "0.5",
-                    "0.6"
-                  ],
-                  "color": "primary_blue"
-                }
-              ]
-            },
-            "category_axis": {
-              "visible": true
-            },
-            "value_axes": {
-              "primary": {
-                "visible": true,
-                "format_id": "pct_1",
-                "domain": {
-                  "kind": "fixed",
-                  "min": "0",
-                  "max": "5",
-                  "ticks": [
-                    "0",
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5"
-                  ]
-                }
+              },
+              "display": {
+                "ordinary_values": "show",
+                "series_identity": "legend"
               }
             },
-            "display": {
-              "ordinary_values": "show",
-              "series_identity": "legend"
+            "support": {
+              "support_type": "support_table",
+              "alignment": "category",
+              "table": {
+                "surface_id": "s11-rec-tbl",
+                "stub_header": {
+                  "label": "Rate"
+                },
+                "columns": [
+                  {
+                    "column_id": "q3-20",
+                    "label": "Q3'20"
+                  },
+                  {
+                    "column_id": "q4-20",
+                    "label": "Q4'20"
+                  },
+                  {
+                    "column_id": "q1-21",
+                    "label": "Q1'21"
+                  },
+                  {
+                    "column_id": "q2-21",
+                    "label": "Q2'21"
+                  },
+                  {
+                    "column_id": "q3-21",
+                    "label": "Q3'21"
+                  },
+                  {
+                    "column_id": "q4-21",
+                    "label": "Q4'21"
+                  }
+                ],
+                "rows": [
+                  {
+                    "row_id": "dq",
+                    "label": "30+ Days Past Due*",
+                    "cells": {
+                      "q3-20": {
+                        "type": "number",
+                        "value": "0.9",
+                        "format_id": "pct_1"
+                      },
+                      "q4-20": {
+                        "type": "number",
+                        "value": "0.6",
+                        "format_id": "pct_1"
+                      },
+                      "q1-21": {
+                        "type": "number",
+                        "value": "0.6",
+                        "format_id": "pct_1"
+                      },
+                      "q2-21": {
+                        "type": "number",
+                        "value": "0.5",
+                        "format_id": "pct_1"
+                      },
+                      "q3-21": {
+                        "type": "number",
+                        "value": "0.5",
+                        "format_id": "pct_1"
+                      },
+                      "q4-21": {
+                        "type": "number",
+                        "value": "0.6",
+                        "format_id": "pct_1"
+                      }
+                    }
+                  },
+                  {
+                    "row_id": "gcp",
+                    "label": "GCP Net Write-off Rates**",
+                    "cells": {
+                      "q3-20": {
+                        "type": "number",
+                        "value": "2.4",
+                        "format_id": "pct_1p"
+                      },
+                      "q4-20": {
+                        "type": "number",
+                        "value": "0.7",
+                        "format_id": "pct_1p"
+                      },
+                      "q1-21": {
+                        "type": "number",
+                        "value": "0.4",
+                        "format_id": "pct_1p"
+                      },
+                      "q2-21": {
+                        "type": "number",
+                        "value": "-0.9",
+                        "format_id": "pct_1p"
+                      },
+                      "q3-21": {
+                        "type": "number",
+                        "value": "0.2",
+                        "format_id": "pct_1p"
+                      },
+                      "q4-21": {
+                        "type": "number",
+                        "value": "0.2",
+                        "format_id": "pct_1p"
+                      }
+                    }
+                  }
+                ]
+              }
             }
           }
         ]
@@ -3075,10 +3242,6 @@
             "surface_id": "s11-disc",
             "title": "Notes",
             "items": [
-              {
-                "kind": "paragraph",
-                "text": "GCP Net Write-off Rates** ***: 2.4%, 0.7%, 0.4%, (0.9%), 0.2%, 0.2% for Q3'20-Q4'21. Third pane has no dual_chart slot (Type B: 3+ chart canvas)."
-              },
               {
                 "kind": "paragraph",
                 "text": "* 30+ Days past due as a % of Global Consumer and Global Small Business Services Card Member receivables (unavailable for GCP). ** GCP net write off rates include principal and fees. *** Includes Corporate Client bankruptcy impact of ($37M) for Q2'21. See Slide 29 for adjusted rates."
@@ -4682,6 +4845,53 @@
             "ordinary_values": "show",
             "series_identity": "legend"
           }
+        },
+        "support": {
+          "support_type": "support_table",
+          "alignment": "independent",
+          "table": {
+            "surface_id": "s18-fy",
+            "stub_header": {
+              "label": "FY'21"
+            },
+            "columns": [
+              {
+                "column_id": "amt",
+                "label": "$B"
+              },
+              {
+                "column_id": "yoy",
+                "label": "YoY"
+              },
+              {
+                "column_id": "vs19",
+                "label": "vs. '19"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "rev",
+                "label": "Revenue",
+                "cells": {
+                  "amt": {
+                    "type": "number",
+                    "value": "42.4",
+                    "format_id": "usd_1"
+                  },
+                  "yoy": {
+                    "type": "number",
+                    "value": "17",
+                    "format_id": "pct_0"
+                  },
+                  "vs19": {
+                    "type": "number",
+                    "value": "-3",
+                    "format_id": "pct_0"
+                  }
+                }
+              }
+            ]
+          }
         }
       },
       "evidence_ids": [
@@ -4693,10 +4903,6 @@
             "surface_id": "s18-disc",
             "title": "Notes",
             "items": [
-              {
-                "kind": "paragraph",
-                "text": "FY'21 Revenue $42.4B, YoY 17%, vs '19 (3%)."
-              },
               {
                 "kind": "paragraph",
                 "text": "* Total Revenue Net of Interest Expense adjusted for FX and the related growth rates are non-GAAP measures. See Annex 6. See Slide 2 for an explanation of FX-adjusted information."

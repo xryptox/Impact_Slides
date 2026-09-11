@@ -13,8 +13,8 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 | Handoff schema | 1 (`meta.handoff_schema_version`) |
 | Slides | 53 (`slide_number` 1..53; evidence `amex-q4-2021-p01`..`p53`) |
 | Renderer | renderer_v3 **3.0.0**, theme `boardroom_amex` |
-| Repository commit at render | parent `510eb564742b10eb382767933967506f20be0adf` plus #317 s11 domain pin |
-| Branch | `ticket-wave/031c70ad-4842-4187-9907-714f386441e1/issue-317` |
+| Repository commit at render | parent `988f09149184ebbf0fe8d07627345cd1c39c6aa9` plus #346 s18/s11 support tables |
+| Branch | `ticket-wave/12d15418-88bf-4b0f-bc97-d5695f566e60/issue-346` |
 | Render | strict, exit 0, `run_meta.status=clean`, `ok=true`, warnings=0 errors=0 |
 | HTML identity | 53 unique `data-slide-number` 1..53; `data-layout` matches authored `layout_type` |
 | Capture viewport | 1920x1080, `deviceScaleFactor=1`; stacked-deck fit transforms cleared before element screenshots |
@@ -24,13 +24,13 @@ Companion-mode AUTHORING + OBSERVATION. Handoff JSON and simulation artifacts on
 
 | Artifact | Bytes | SHA-256 |
 |----------|------:|---------|
-| presentation.html | 1048693 | `c62eb3679780c84bcb3f27a4c7046cc3f7439e9ae468c27684537fcaf4a718db` |
+| presentation.html | 1050427 | `75b853e25c79d08bf4e0d3e56afd1adb0efbc4ffb362c4d3a528ea40ba85e778` |
 | slide_notes.md | 3361 | `1e7f90090b726e5bf9cbbc081b9b557b5f7a04219b535fb087fac259a8984b41` |
 | evidence_manifest.json | 25051 | `94a606b0a1c4b791b7ea353195cea8dd75f394d700f0a846b5fad7dc0cb6375e` |
-| run_meta.json | 266474 | `338f602a5b071d3c35982f06c05e86667685b0b0db8b475154a6a617c5319673` |
+| run_meta.json | 271071 | `b1151471f33cbc4411b20416a7ceac34e5447a4b7e86cfbc84dfceaf48adbdda` |
 | handoff_schema_v1.json | 243791 | `9de1580a069bf164f14a2abb548f04735de377f028498ac955af62712dade5e5` |
 
-`run_meta` info events (not errors): 59 `plan.typography_grown`, 19 `plan.text_wrapped`, 15 `plan.synchronized`, 2 `plan.label_ellipsized`, 2 `plan.short_label_used`.
+`run_meta` info events (not errors): 62 `plan.typography_grown`, 19 `plan.text_wrapped`, 15 `plan.synchronized`, 2 `plan.label_ellipsized`, 2 `plan.short_label_used`.
 
 ## Scope audit
 
@@ -78,14 +78,14 @@ Counts: faithful 5; accepted Boardroom chrome 42; Type A 5; Type B 1; source/PDF
 | 8 | Billed Business T&E Growth | `data_table` | `passes/pass_01/compare/sbs/slide_08.png` | corpus/extraction residual (Type A) | PDF is T&E-by-customer 5-series vs-2019 line plus Q4 table. Page-8 glyphs: axis ticks (100)/(80)/(60)/(40)/(20)/0, quarter labels, series names (US Consumer / Total SME / Total T&E / Intl Consumer / Large & Global Corporate), Q4 table, and Q4'21 % of Q4'19 callouts 108/83/82/78/36. Those callouts are not vs-2019 plot glyphs. No interior vs-2019 labels (#297). Line leftover stands (5 series exceeds line max 4; two-finite-value rule). Table authored. Do not raise the line ceiling; do not plot 108/83/82/78/36 as vs-2019. |
 | 9 | Billed Business Growth by Region | `dual_chart` | `passes/pass_01/compare/sbs/slide_09.png` | accepted v3 design divergence | dual_chart per-pane support: US vs International grouped_bar of labeled Q4 vs-2019 16/(1)/12 plus independent navy-header Q4 table; G&S vs T&E by region grouped_bar of labeled Q4 vs-2019 26/19/24/(10)/(36)/(18) plus independent navy-header 6-col Q4 table (stub `Q4'21`; vs. '19 / YoY / % of Total). Both under-plot tables freeze 24px (#336). 8-quarter interiors unlabeled (#301 leftover). Page-9 glyphs: axis ticks (100)/(80)/(60)/(40)/(20)/0/20, quarter labels, series names, Q4 tables. No second labeled plot point. Boardroom bars vs Amex lines. |
 | 10 | Worldwide Total Loans and Card Member Receivables | `dual_chart` | `passes/pass_01/compare/sbs/slide_10.png` | accepted v3 design divergence | dual grouped_bar with boxed YoY and year groups. Dollar bars and YoY match ($88.1-$91.5 loans; $56.6-$53.6 receivables). Boardroom boxed labels vs in-bar YoY boxes. |
-| 11 | Card Member Credit Metrics | `dual_chart` | `passes/pass_01/compare/sbs/slide_11.png` | accepted v3 design divergence | dual grouped_bar restores loan write-offs 2.5% to 0.6% and receivables 2.0% to 0.3% with 30+ as a second series. Both panes pin `domain.kind=fixed` 0–5 with ticks 0/1/2/3/4/5 (#317) so DP-3's 15-pt generated span does not crush the 2.5%/2.0% bars. PDF 30+ strips sit under the plot; GCP write-off strip has no third canvas (Type B secondary). Boardroom grouped bars vs under-plot strips. |
+| 11 | Card Member Credit Metrics | `dual_chart` | `passes/pass_01/compare/sbs/slide_11.png` | accepted v3 design divergence | dual grouped_bar NWO bars only (loans 2.5% to 0.6%; rec excl. GCP 2.0% to 0.3%) plus per-pane category 30+ strips (loans 1.2/1.0/0.9/0.6/0.7/0.7; rec 0.9/0.6/0.6/0.5/0.5/0.6) and rec GCP 2.4/0.7/0.4/(0.9)/0.2/0.2. Both panes pin `domain.kind=fixed` 0–5 (#317). 30+ is not a second bar series (#346). Boardroom boxes vs PDF under-plot strips. |
 | 12 | Total Provision | `chart_hero_dual` | `passes/pass_01/compare/sbs/slide_12.png` | accepted v3 design divergence | chart_hero_dual stacked_bar (Write-offs navy, Reserve Build/(Release)* primary_blue) with `stack_segments: show` and authored stack totals $2,621 … $53. No Total Provision line. Hero KPIs $2,127 / $4,022 / $6,149 unchanged. Boardroom stack labels vs Amex in-bar furniture. |
 | 13 | Total Reserves | `single_chart` | `passes/pass_01/compare/sbs/slide_13.png` | accepted v3 design divergence | single_chart waterfall + percent support_table. Walk totals $4.3 / $1.5 / $5.8 / ($2.2) / $3.6 / ($0.2) / $3.4 and reserve % boxes match. Two-tone loans+receivables on six steps (foot-adjusted 5.55+0.25 / -1.95+-0.25 / 3.35+0.05 so painted labels stay $5.6/$0.3 / ($2.0)/($0.3) / $3.4/$0.1); Change to Q4'21 stays the ($0.2) net. Thin/$0.0 caps stay visible (#335). Boardroom 7-step walk vs PDF 4-column floating deltas is accepted chrome. |
 | 14 | Revenue Performance | `data_table` | `passes/pass_01/compare/sbs/slide_14.png` | accepted v3 design divergence | Six metrics x Q4/FY/% vs-2019 match the PDF grid. Boardroom table vs pill columns is accepted chrome. |
 | 15 | Discount Revenue | `chart_grouped_annex` | `passes/pass_01/compare/sbs/slide_15.png` | accepted v3 design divergence | grouped_bar $B + boxed YoY + Average Discount Rate annex (2.39 / 2.36 / 2.27 / 2.25 / 2.32 / 2.30) + FY'21 $25.7 peer. No rate line, no secondary axis. Boardroom annex vs PDF under-plot boxes. |
 | 16 | Net Card Fees | `single_chart` | `passes/pass_01/compare/sbs/slide_16.png` | accepted v3 design divergence | grouped_bar + boxed YoY + FY'21 $5.2 / 10% / 28% support_table. Bars $0.9 to $1.3 match. Boardroom boxed labels vs in-bar YoY boxes. |
 | 17 | Net Interest Income | `chart_grouped_annex` | `passes/pass_01/compare/sbs/slide_17.png` | accepted v3 design divergence | grouped_bar $B + boxed YoY + WW Net Interest Yield annex (11.2 / 11.3 / 11.6 / 11.4 / 10.8 / 10.3) + FY'21 $7.8 peer. No yield line, no secondary axis. Boardroom annex vs PDF under-plot boxes. |
-| 18 | Total Revenue Net of Interest Expense | `single_chart` | `passes/pass_01/compare/sbs/slide_18.png` | accepted v3 design divergence | Two-series line (YoY and vs-2019) matches the PDF path and labeled points. Boardroom chrome vs PDF inset FY'21 $42.4 box is accepted; support_table could hold the inset (Type A secondary). |
+| 18 | Total Revenue Net of Interest Expense | `single_chart` | `passes/pass_01/compare/sbs/slide_18.png` | accepted v3 design divergence | Two-series line (YoY and vs-2019) matches the PDF path and labeled points plus independent FY'21 Revenue $42.4 / 17% / (3%) support_table below the chart (#346; same recipe as s16-fy). Boardroom table vs PDF plot-inset box is accepted chrome. |
 | 19 | Expense Performance | `data_table` | `passes/pass_01/compare/sbs/slide_19.png` | accepted v3 design divergence | Expense grid including Variable CM Engagement and Effective Tax Rate matches. Boardroom table vs pill columns is accepted chrome. |
 | 20 | Marketing Investments and New Cards Acquired | `dual_chart` | `passes/pass_01/compare/sbs/slide_20.png` | corpus/extraction residual (Type A) | dual grouped_bar Marketing $1.1 to $1.6 and Proprietary NCA 1.4 to 2.7 match. Page-20 glyphs: Marketing totals $1.1/$1.0/$1.0/$1.3/$1.4/$1.6, NCA 1.4/1.7/2.1/2.4/2.6/2.7, Value Injection legend, FY'21 Marketing $5.3. Hatch has no numeric labels (#298). Hatch leftover stands; Marketing stays one total series. Do not invent hatch split dollars. Do not add a hatch fill recipe. FY $5.3 inset is optional on shared dual support and does not change Type A ownership. |
 | 21 | Capital | `dual_chart` | `passes/pass_01/compare/sbs/slide_21.png` | accepted v3 design divergence | dual_chart + shared metric_strip: CET1 bars 10.7/13.5/10.5, Capital Return $6.0/$2.3/$9.0, Q4 dividend $0.43 x3. PDF stack split (buybacks vs dividends) unread; authored one Capital Return series. Boardroom metric_strip vs PDF under-plot dividend row. |
@@ -162,7 +162,7 @@ s02 Notable Impacts callout remains folded into disclosure (`side_callout` shipp
 
 ### 4. Source/PDF artifact or capture failure
 
-None. s03 HTML/SBS recaptured (#315) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s11 HTML/SBS recaptured (#317) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, y-axis 0%–5%). s12 HTML/SBS recaptured (#318) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). s15 and s17 HTML/SBS recaptured (#320) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, two annex peers). s24 HTML/SBS recaptured (#321) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, six share chips, two peers). s06/s07/s09 HTML/SBS recaptured (#336) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, independent navy-header supports both at 24px). s28 HTML recaptured (#323) at 1920x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=stacked_bar`, category-aligned `s28-boxes`). s28 and s31 HTML recaptured (#324) at 1920x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=stacked_bar`; same-column stack labels uncollided; s31 1%/2%/4% still painted). s13 HTML/SBS recaptured (#335) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=waterfall`, two-tone loans+receivables; Change to Q4'21 component-less; thin/$0.0 caps still painted). s27 HTML recaptured (#340/#339) at 1920x1080; paint-ready identity held (`data-layout=dual_chart`, two donuts, names outside, ordinary_values 24px, smaller ring). s28 HTML/SBS recaptured this ticket (#342) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=stacked_bar`, category-aligned `s28-boxes` with frozen 24px gap, stub-safe wider centered boxes, borderless stubs). Other halves were not regenerated.
+None. s03 HTML/SBS recaptured (#315) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, Chart.js y −40…20). s11 HTML/SBS recaptured (#317) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, y-axis 0%–5%). s12 HTML/SBS recaptured (#318) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_hero_dual`, one Chart.js canvas, `data-chart-type=stacked_bar`). s15 and s17 HTML/SBS recaptured (#320) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, two annex peers). s24 HTML/SBS recaptured (#321) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=chart_grouped_annex`, one Chart.js canvas, six share chips, two peers). s06/s07/s09 HTML/SBS recaptured (#336) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart`, two Chart.js canvases, independent navy-header supports both at 24px). s28 HTML recaptured (#323) at 1920x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=stacked_bar`, category-aligned `s28-boxes`). s28 and s31 HTML recaptured (#324) at 1920x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=stacked_bar`; same-column stack labels uncollided; s31 1%/2%/4% still painted). s13 HTML/SBS recaptured (#335) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=waterfall`, two-tone loans+receivables; Change to Q4'21 component-less; thin/$0.0 caps still painted). s27 HTML recaptured (#340/#339) at 1920x1080; paint-ready identity held (`data-layout=dual_chart`, two donuts, names outside, ordinary_values 24px, smaller ring). s28 HTML/SBS recaptured (#342) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=single_chart`, `data-chart-type=stacked_bar`, category-aligned `s28-boxes` with frozen 24px gap, stub-safe wider centered boxes, borderless stubs). s11 and s18 HTML/SBS recaptured this ticket (#346) at 1920x1080 / 3840x1080; paint-ready identity held (`data-layout=dual_chart` / `single_chart`; s11 NWO bars only + per-pane 30+/GCP strips including Q2'21 (0.9%); s18 independent FY'21 $42.4 table). Other halves were not regenerated.
 
 ## Recipe coverage summary
 
@@ -190,13 +190,13 @@ Chart types actually painted:
 - s07: stacked_bar + grouped_bar
 - s09: grouped_bar + grouped_bar
 - s10: grouped_bar + grouped_bar
-- s11: grouped_bar + grouped_bar
+- s11: grouped_bar + grouped_bar + per-pane category support_table
 - s12: stacked_bar + hero
 - s13: waterfall + support_table
 - s15: grouped_bar + boxed_label + two annex peers
 - s16: grouped_bar + boxed_label + support_table
 - s17: grouped_bar + boxed_label + two annex peers
-- s18: line
+- s18: line + independent support_table
 - s20: grouped_bar + grouped_bar
 - s21: grouped_bar + grouped_bar + metric_strip
 - s24: grouped_bar + share chips + two annex peers
@@ -207,7 +207,7 @@ Chart types actually painted:
 - s31: stacked_bar
 - s32: grouped_bar + grouped_bar + independent support_table
 
-Also used: per-pane independent `support_table` on s06/s07/s09; shared `metric_strip` on s21; shared independent `support_table` on s04/s32; `chart_grouped_annex` on s15/s17/s24/s25 (s24 with share chips); donut on s27; compact `annex_table` on s37/s38/s40/s43; `support_table` on s03/s13/s16/s28/s29; `hero` on s12; `hierarchy` on s35; `feature_cards` on s22; `legal_notice` parts 1–6.
+Also used: per-pane independent `support_table` on s06/s07/s09; per-pane category `support_table` on s11; shared `metric_strip` on s21; shared independent `support_table` on s04/s32; `chart_grouped_annex` on s15/s17/s24/s25 (s24 with share chips); donut on s27; compact `annex_table` on s37/s38/s40/s43; `support_table` on s03/s13/s16/s18/s28/s29; `hero` on s12; `hierarchy` on s35; `feature_cards` on s22; `legal_notice` parts 1–6.
 
 ### Closed-set recipes not used
 
