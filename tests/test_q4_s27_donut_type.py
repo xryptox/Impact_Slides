@@ -1,14 +1,16 @@
-"""#339/#340 — Q4 2021 s27 dual donuts pin ordinary_values 24 on a smaller ring.
+"""#339/#340/#341 — Q4 2021 s27 dual donuts pin ordinary_values 24 outside the ring.
 
 Seams under test:
 - live Q4 handoff payload (`simulation/amex_q4_2021/handoff_v1.json`)
 - authored ChartTypography.ordinary_values on both donuts
 - freeze_pie_donut pad-from-name so names fit at 24 without slice_label_overflow
+- outside name/percent AABB vs frozen disk (#341)
 - strict `render_deck` SVG overlay for slide 27
 """
 from __future__ import annotations
 
 import json
+import math
 import re
 from html import unescape
 from pathlib import Path
@@ -42,6 +44,26 @@ def _slide(handoff: dict, n: int) -> dict:
         if int(s["slide_number"]) == n:
             return s
     raise AssertionError(f"missing slide_number={n}")
+
+
+def _label_aabb(x: float, y: float, text: str, px: float, anchor: str) -> tuple[float, float, float, float]:
+    w = max(20.0, len(text) * px * 0.55)
+    if anchor == "start":
+        left, right = x, x + w
+    elif anchor == "end":
+        left, right = x - w, x
+    else:
+        left, right = x - w / 2.0, x + w / 2.0
+    return left, y - px / 2.0, right, y + px / 2.0
+
+
+def _aabb_clears_disk(
+    box: tuple[float, float, float, float], cx: float, cy: float, radius: float
+) -> bool:
+    left, top, right, bottom = box
+    qx = min(max(cx, left), right)
+    qy = min(max(cy, top), bottom)
+    return math.hypot(qx - cx, qy - cy) >= radius
 
 
 def _section(html: str, n: int) -> str:
@@ -80,14 +102,22 @@ def test_q4_s27_plan_freezes_24_without_overflow() -> None:
         g = cp["geometry"]
         assert g["pad_l"] == g["pad_r"]
         assert g["pad_l"] > PAD_R
+        assert g["radius"] == min(g["plot_w"], g["plot_h"]) / 2.0
         by_id = {s["slice_id"]: s for s in cp["slices"]}
         for slice_id, value in mix:
             sl = by_id[slice_id]
             dist = ((sl["name_x"] - g["cx"]) ** 2 + (sl["name_y"] - g["cy"]) ** 2) ** 0.5
             assert dist > g["radius"] + 1
+            px = cp["role_sizes"]["ordinary_values"]
+            name_box = _label_aabb(sl["name_x"], sl["name_y"], sl["label"], px, sl["name_anchor"])
+            assert _aabb_clears_disk(name_box, g["cx"], g["cy"], g["radius"])
             frac = int(value) / 100
             if frac < 0.20:
                 assert sl["value_inside"] is False
+                val_box = _label_aabb(
+                    sl["value_x"], sl["value_y"], sl["visible"], px, sl["value_anchor"]
+                )
+                assert _aabb_clears_disk(val_box, g["cx"], g["cy"], g["radius"])
             else:
                 assert sl["value_inside"] is True
 

@@ -7,10 +7,12 @@ Seams under test:
 - D10/D47 320×240 plot floor; D304 navy ink on low-contrast slices
 - same-slide slice_id color identity; names outside the ring at ordinary_values floor
 - outside-name pad grows with type so the ring shrinks (#340); D47 floor still holds
+- outside name/percent AABB must clear the frozen disk (#341); in-wedge percents stay inside
 """
 from __future__ import annotations
 
 import json
+import math
 from copy import deepcopy
 from pathlib import Path
 
@@ -471,6 +473,27 @@ def _slice_by_id(plan: dict, slice_id: str) -> dict:
     return next(s for s in plan["slices"] if s["slice_id"] == slice_id)
 
 
+def _label_aabb(x: float, y: float, text: str, px: float, anchor: str) -> tuple[float, float, float, float]:
+    """Same 0.55em width heuristic freeze_pie_donut uses for overflow."""
+    w = max(20.0, len(text) * px * 0.55)
+    if anchor == "start":
+        left, right = x, x + w
+    elif anchor == "end":
+        left, right = x - w, x
+    else:
+        left, right = x - w / 2.0, x + w / 2.0
+    return left, y - px / 2.0, right, y + px / 2.0
+
+
+def _aabb_clears_disk(
+    box: tuple[float, float, float, float], cx: float, cy: float, radius: float
+) -> bool:
+    left, top, right, bottom = box
+    qx = min(max(cx, left), right)
+    qy = min(max(cy, top), bottom)
+    return math.hypot(qx - cx, qy - cy) >= radius
+
+
 def test_dual_shared_slice_id_reuses_fill_across_panes():
     result = validate_handoff(_s27_dual_raw(), strict=True)
     assert result.ok
@@ -623,3 +646,60 @@ def test_long_24px_names_shrink_ring_instead_of_overflow():
     omit_r = next(s for s in omit.surfaces if s.surface_id == "s27-loans").chart_paint["geometry"]["radius"]
     pin_r = next(s for s in plan.surfaces if s.surface_id == "s27-loans").chart_paint["geometry"]["radius"]
     assert pin_r < omit_r
+
+
+def test_outside_name_aabb_does_not_intersect_ring():
+    """#341: Corporate Card AABB must clear the disk even when the anchor is outside."""
+    raw = _s27_dual_raw()
+    for pane in raw["slides"][1]["payload"]["charts"]:
+        pane["typography"] = {"ordinary_values": 24}
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    frozen = next(s for s in plan.surfaces if s.surface_id == "s27-rec").chart_paint
+    g = frozen["geometry"]
+    px = frozen["role_sizes"]["ordinary_values"]
+    assert px == 24
+    assert not frozen.get("slice_label_overflow")
+    painted_r = min(g["plot_w"], g["plot_h"]) / 2.0
+    assert g["radius"] == painted_r
+    corp = _slice_by_id(frozen, "corp")
+    dist = math.hypot(corp["name_x"] - g["cx"], corp["name_y"] - g["cy"])
+    assert dist > g["radius"] + 1
+    box = _label_aabb(corp["name_x"], corp["name_y"], corp["label"], px, corp["name_anchor"])
+    # Live SVG ink overshoots the 0.55em AABB by ~6px; require that much extra.
+    assert _aabb_clears_disk(box, g["cx"], g["cy"], painted_r + 6)
+    for sl in frozen["slices"]:
+        name_box = _label_aabb(sl["name_x"], sl["name_y"], sl["label"], px, sl["name_anchor"])
+        assert _aabb_clears_disk(name_box, g["cx"], g["cy"], painted_r)
+        if sl["value_inside"]:
+            val_r = math.hypot(sl["value_x"] - g["cx"], sl["value_y"] - g["cy"])
+            assert val_r < g["radius"]
+        else:
+            val_box = _label_aabb(
+                sl["value_x"], sl["value_y"], sl["visible"], px, sl["value_anchor"]
+            )
+            assert _aabb_clears_disk(val_box, g["cx"], g["cy"], painted_r)
+
+
+def test_floor_hit_still_colliding_is_overflow():
+    """#341: D47 floor + still overlapping the disk is slice_label_overflow, not a type shrink."""
+    raw = _s27_dual_raw()
+    rec = raw["slides"][1]["payload"]["charts"][1]
+    rec["typography"] = {"ordinary_values": 24}
+    rec["slices"] = [
+        _slice("us", "X" * 80, "28"),
+        _slice("intl", "Y" * 80, "14"),
+        _slice("corp", "Z" * 80, "24"),
+        _slice("sb", "W" * 80, "34"),
+    ]
+    result = validate_handoff(raw, strict=True)
+    frozen = freeze_chart(
+        result.deck.slides[1].payload.charts[1].chart,
+        result.deck.number_formats,
+        box_w=852,
+        box_h=700,
+    )
+    g = frozen["geometry"]
+    assert frozen["role_sizes"]["ordinary_values"] == 24
+    assert g["plot_w"] >= 320
+    assert g["plot_h"] >= 240
+    assert frozen.get("slice_label_overflow") is True

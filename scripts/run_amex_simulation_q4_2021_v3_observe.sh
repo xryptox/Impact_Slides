@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # GNHF Q4 2021 observation: reset gnhf/objective-given-the-d60385 onto
-# origin/main (renderer_v3 through #339/#340), recapture 53 SBS on that
+# origin/main (renderer_v3 through #339/#340/#341), recapture 53 SBS on that
 # corpus, refresh identity hashes + ledger.
 # No re-author. Reset, not rebase: the branch's Type B commits add/add-conflict
 # the Q4 corpus already on main. Does not --push.
@@ -106,14 +106,14 @@ Continue on branch `gnhf/objective-given-the-d60385`. Do not create another
 worktree. Do not merge to main. Do not amend existing commits. Do not push.
 
 This is Companion-mode OBSERVATION of the Q4 2021 deck on current
-renderer_v3 (origin/main through #339/#340). The worktree was already
+renderer_v3 (origin/main through #339/#340/#341). The worktree was already
 reset hard onto origin/main.
 
 No further production path edits. No new recipes/schema/painters. No
 GitHub issues. Do NOT re-author slides. Do NOT invent numbers. Do NOT
 change build_handoff.py, handoff_v1.json, charts.py, or tests unless a
 strict render proves the existing handoff is now illegal — then stop
-and name the blocker. Do NOT revert #339/#340.
+and name the blocker. Do NOT revert #339/#340/#341.
 
 Read every applicable AGENTS.md and wiki/AGENT_LEARNINGS.md if present.
 Use CONTEXT.md Type A vs Type B vocabulary.
@@ -138,7 +138,7 @@ the orchestrator dies.
 
 === ALREADY ON THIS BRANCH — DO NOT REDO ===
 
-Keep the current Q4 handoff (includes #335 s13 two-tone and #339/#340 s27 24px).
+Keep the current Q4 handoff (includes #335 s13 two-tone and #339/#340/#341 s27 24px).
 Named Type A leftovers stay leftovers (do not invent unread plot points):
 s05, s08, s20, s26, s30.
 #301 unlabeled interiors on s06/s07/s09/s25/s32 stay leftovers.
@@ -169,6 +169,9 @@ in the ledger with fresh identity hashes. Do not "fix" by re-authoring.
 #339/#340 s27: both donuts ordinary_values 24px; equal outside pads grow so
   the ring shrinks (pad_l == pad_r > 160); no slice_label_overflow; mix
   percents unchanged (loans 68/12/20, rec 28/14/24/34).
+#341 s27: outside name/percent AABB clears the painted disk (not just the
+  name anchor); Corporate Card does not cross the ring; still 24px; still
+  no slice_label_overflow at 1920x1080.
 #323/#342 s28: two-row category-aligned Total Loans / CM Receivables boxes with
   frozen 24px row gap, stub-safe wider centered boxes, borderless stubs;
   not a navy IR table; figures unchanged.
@@ -210,9 +213,9 @@ Type A leftovers stay 5.
 
 Create exactly two NEW commits after origin/main
 (you make them; GNHF must see a clean tree):
-1. `sim: recapture Q4 2021 on post-#340 renderer_v3`
+1. `sim: recapture Q4 2021 on post-#341 renderer_v3`
    `git add -f simulation/amex_q4_2021/` then commit
-2. `docs: refresh Q4 2021 recipe-coverage after #315-#340`
+2. `docs: refresh Q4 2021 recipe-coverage after #315-#341`
    add only wiki/baseline_q4_2021_RECIPE_COVERAGE.md then commit
 
 `git status` clean. Do not push (wincredman). Push is outside this worker.
@@ -222,7 +225,7 @@ Stop when:
 - report copies byte-identical
 - identity table hashes match this render's presentation.html and run_meta.json
 - handoff 53 / schema 1 / p01..p53
-- each #315-#340 check above is pass or a named residual
+- each #315-#341 check above is pass or a named residual
 - s35 still Type B; s05/s08/s20/s26/s30 still named Type A leftovers
 - strict render clean or fully labeled degraded
 - all 53 PDF/HTML/SBS exist at exact sizes
@@ -240,5 +243,5 @@ gnhf \
   --max-tokens 10000000 \
   --current-branch \
   --prevent-sleep on \
-  --stop-when "Q4 2021 observation on gnhf/objective-given-the-d60385 is done: worktree is origin/main plus two new commits; existing Q4 handoff strictly rendered; 53 SBS recaptured; GAP identity hashes match this render; wiki report byte-identical; #315-#340 checks are pass or named residuals; s35 stays Type B; Type A leftovers stay; working tree clean; no re-author, no production path changes, no image scoring." \
+  --stop-when "Q4 2021 observation on gnhf/objective-given-the-d60385 is done: worktree is origin/main plus two new commits; existing Q4 handoff strictly rendered; 53 SBS recaptured; GAP identity hashes match this render; wiki report byte-identical; #315-#341 checks are pass or named residuals; s35 stays Type B; Type A leftovers stay; working tree clean; no re-author, no production path changes, no image scoring." \
   "$PROMPT"
