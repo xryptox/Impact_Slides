@@ -169,8 +169,9 @@ in the ledger with fresh identity hashes. Do not "fix" by re-authoring.
 #339/#340 s27: both donuts ordinary_values 24px; equal outside pads grow so
   the ring shrinks (pad_l == pad_r > 160); no slice_label_overflow; mix
   percents unchanged (loans 68/12/20, rec 28/14/24/34).
-#323 s28: two-row category-aligned Total Loans / CM Receivables boxes with
-  frozen 8px row gap; not a navy IR table; figures unchanged.
+#323/#342 s28: two-row category-aligned Total Loans / CM Receivables boxes with
+  frozen 24px row gap, stub-safe wider centered boxes, borderless stubs;
+  not a navy IR table; figures unchanged.
 #324 s28/s31: same-column stack labels do not share an AABB; $0.0 CPR stays
   a cap; s31 4%/1%/2% still visible; never fit-drop non-zero.
 

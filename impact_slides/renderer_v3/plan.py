@@ -90,7 +90,7 @@ OUTLINED_BOX_MIN: Final = 48
 OUTLINED_BOX_MAX: Final = 120  # content-sized; not full category pitch
 OUTLINED_BOX_GAP: Final = 8
 OUTLINED_LABEL_LANE_MIN: Final = 40  # grows with label; capped by first-box edge
-CATEGORY_SUPPORT_ROW_GAP: Final = 8  # n_rows≥2 category boxes (#323); 1-row stays 0
+CATEGORY_SUPPORT_ROW_GAP: Final = 24  # n_rows≥2 category boxes (#342); 1-row stays 0
 OUTLINED_PAD_Y: Final = 12
 OUTLINED_BOX_PAD_Y: Final = 16
 OUTLINED_ROW_EXTRA: Final = 12
@@ -5100,12 +5100,13 @@ def _apply_category_table_widths(
     *,
     size: int | None = None,
 ) -> bool:
-    """Freeze content-sized cell width + lane for center-positioned paint (D167/D266).
+    """Freeze grow-to-max cell width + lane for center-positioned paint (D167/D266/#342).
 
     Contiguous HTML colgroups cannot center on chart x when cat0 sits at pad_l;
     painters place cells at frozen centers instead (same contract as outlined_support).
-    Returns True when category-centered geometry is sealed; False when freeze fails
-    (caller must demote to independent / mark overflow).
+    Value boxes grow toward OUTLINED_BOX_MAX, capped by neighbor pitch and first-
+    column stub-lane clearance. Returns True when category-centered geometry is
+    sealed; False when freeze fails (caller must demote to independent / mark overflow).
     """
     n = len(centers)
     if n == 0 or n != int(spec.get("n_cols") or 0):
@@ -5127,29 +5128,33 @@ def _apply_category_table_widths(
         for row in cells:
             if i < len(row):
                 cell_w = max(cell_w, _text_width(row[i], px) + 16)
-    cell_w = int(math.ceil(min(float(OUTLINED_BOX_MAX), max(40.0, cell_w))))
+    content_w = int(math.ceil(min(float(OUTLINED_BOX_MAX), max(40.0, cell_w))))
     xs = [float(c["x"]) for c in centers]
-    first_left = xs[0] - cell_w / 2.0
-    lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
+    # Freeze the stub lane from content-min geometry. Do not wrap stubs further
+    # to buy value-box width (#342).
+    content_left = xs[0] - content_w / 2.0
+    lane_cap = max(8, int(content_left - OUTLINED_BOX_GAP))
     lane_w = min(max(int(math.ceil(stub_need)), OUTLINED_LABEL_LANE_MIN), lane_cap)
-    if lane_w > first_left + 2:
+    if lane_w > content_left + 2:
         spec.pop("category_centered", None)
         return False
-    # Ensure cells don't overlap neighbors when pitch is tight.
+    pitch_cap = OUTLINED_BOX_MAX
     if n >= 2:
         pitch = min(xs[i + 1] - xs[i] for i in range(n - 1))
-        if cell_w > pitch - OUTLINED_BOX_GAP:
-            cell_w = max(24, int(math.floor(pitch - OUTLINED_BOX_GAP)))
-            first_left = xs[0] - cell_w / 2.0
-            lane_cap = max(8, int(first_left - OUTLINED_BOX_GAP))
-            lane_w = min(lane_w, lane_cap)
-            if lane_w > first_left + 2 or cell_w < 24:
-                spec.pop("category_centered", None)
-                return False
+        pitch_cap = max(24, int(math.floor(pitch - OUTLINED_BOX_GAP)))
+    stub_cap = int(math.floor(2 * (xs[0] - (lane_w + OUTLINED_BOX_GAP))))
+    cell_w = min(OUTLINED_BOX_MAX, pitch_cap, stub_cap)
+    if cell_w < 24:
+        spec.pop("category_centered", None)
+        return False
+    first_left = xs[0] - cell_w / 2.0
+    if first_left < lane_w + OUTLINED_BOX_GAP - 1e-6:
+        spec.pop("category_centered", None)
+        return False
     if xs[-1] + cell_w / 2.0 > box_w + 2:
         spec.pop("category_centered", None)
         return False
-    spec["cell_w"] = cell_w
+    spec["cell_w"] = int(cell_w)
     spec["label_lane_w"] = lane_w
     spec["category_centered"] = True
     _freeze_category_support_rows(
