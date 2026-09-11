@@ -5321,6 +5321,12 @@ def _freeze_share_chip_geometry(sp: SurfacePlan, size: int) -> bool:
     if stub:
         stub_need = int(math.ceil(_min_wrap_width(stub, size, 3, strong=True))) + 8
     aligned = _ids_match_in_order(chip_ids, centers)
+    chip_row_h = max(
+        48,
+        int(sp._box_h) + 2 * SHARE_CHIP_PAD_Y + 2 * SHARE_CHIP_BORDER
+        if sp._box_h
+        else 48,
+    )
     if not aligned:
         leftover = row_w
         stub_lane = 0
@@ -5333,7 +5339,7 @@ def _freeze_share_chip_geometry(sp: SurfacePlan, size: int) -> bool:
         spec["stub_lane_w"] = stub_lane
         inner = max(1, cell_w - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER)
         sp._box_w = inner
-        spec["row_h"] = max(48, int(sp._box_h + sp._chrome_h) if sp._box_h else 48)
+        spec["row_h"] = chip_row_h
         return True
     xs = [float(c["x"]) for c in centers]
     pitch = min(xs[i + 1] - xs[i] for i in range(n - 1)) if n >= 2 else float(row_w)
@@ -5357,7 +5363,7 @@ def _freeze_share_chip_geometry(sp: SurfacePlan, size: int) -> bool:
     spec["centers"] = centers
     inner = max(1, cell_w - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER)
     sp._box_w = inner
-    spec["row_h"] = max(48, int(sp._box_h + sp._chrome_h) if sp._box_h else 48)
+    spec["row_h"] = chip_row_h
     return True
 
 

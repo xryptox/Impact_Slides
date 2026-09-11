@@ -13,7 +13,12 @@ from html import unescape
 from pathlib import Path
 
 from impact_slides.renderer_v3 import render_deck, validate_handoff
-from impact_slides.renderer_v3.plan import plan_deck
+from impact_slides.renderer_v3.plan import (
+    BLOCK_MARGIN_Y,
+    SHARE_CHIP_BORDER,
+    SHARE_CHIP_PAD_Y,
+    plan_deck,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 HANDOFF = ROOT / "simulation" / "amex_q4_2021" / "handoff_v1.json"
@@ -70,6 +75,9 @@ def test_q4_s24_plan_freezes_stub_type_and_bar_centers() -> None:
     assert chips.role_sizes["label"] == chips.role_sizes["value"]
     assert paint["stub"] == STUB
     assert paint["category_centered"] is True
+    row_h = int(paint["row_h"])
+    assert row_h == int(chips._box_h) + 2 * SHARE_CHIP_PAD_Y + 2 * SHARE_CHIP_BORDER
+    assert row_h == int(chips._box_h + chips._chrome_h) - BLOCK_MARGIN_Y
     g = chart.chart_paint["geometry"]
     assert g["plot_w"] >= 320
     assert g["plot_h"] >= 240
