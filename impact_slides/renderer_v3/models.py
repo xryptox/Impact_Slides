@@ -620,16 +620,19 @@ class ShareChip(ClosedModel):
 
 
 class ShareChips(ClosedModel):
-    """Optional outlined share-chip row on chart_grouped_annex (#294)."""
+    """Optional outlined share-chip row on chart_grouped_annex (#294/#345)."""
 
     surface_id: SemanticId
     chips: list[ShareChip] = Field(min_length=1, max_length=8)
+    stub: Optional[NonEmptyStr] = None
 
     @model_validator(mode="after")
     def _unique_share_ids(self) -> ShareChips:
         ids = [c.share_id for c in self.chips]
         if len(ids) != len(set(ids)):
             raise ValueError("share_id values must be unique within share_chips")
+        if self.stub is not None and ("<" in self.stub or ">" in self.stub):
+            raise ValueError("share chip stub must be plain text, not HTML")
         return self
 
 

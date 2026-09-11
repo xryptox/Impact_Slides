@@ -564,6 +564,43 @@ def test_nonstrict_allowlists_share_chips_key():
     assert not hasattr(result.deck.slides[1].payload, "unexpected")
 
 
+def test_omit_stub_and_id_mismatch_stays_equal_flex():
+    result = validate_handoff(_handoff(share_chips=_shares()), strict=True)
+    chips = plan_deck(result.deck, strict=True).by_surface_id()["cga-shares"]
+    paint = chips.table_paint
+    assert not paint.get("stub")
+    assert paint.get("category_centered") is not True
+    assert paint.get("stub_lane_w", 0) == 0
+
+
+def test_matching_ids_center_on_bar_categories():
+    chart = _chart_from(BAR)
+    chart.pop("auxiliary_series", None)
+    chart.pop("category_groups", None)
+    shares = {
+        "surface_id": "cga-shares",
+        "stub": "% of Total Network Volumes",
+        "chips": [
+            {
+                "share_id": cat["category_id"],
+                "label": cat["label"],
+                "value": {"type": "number", "value": "10.0", "format_id": "pct_1"},
+            }
+            for cat in chart["chart_data"]["categories"]
+        ],
+    }
+    raw = _handoff(chart=chart, tables=_peers(1), share_chips=shares)
+    raw["number_formats"].pop("usd_0", None)
+    plan = plan_deck(validate_handoff(raw, strict=True).deck, strict=True)
+    by = plan.by_surface_id()
+    paint = by["cga-shares"].table_paint
+    assert paint["stub"] == "% of Total Network Volumes"
+    assert paint["category_centered"] is True
+    cat_x = {c["category_id"]: c["x"] for c in by["cga-chart"].chart_paint["categories"]}
+    for c in paint["centers"]:
+        assert abs(c["x"] - cat_x[c["category_id"]]) <= 2.0
+
+
 Q4_HANDOFF = ROOT / "simulation/amex_q4_2021/handoff_v1.json"
 Q3Q4_CATS = ("q3-19", "q4-19", "q3-20", "q4-20", "q3-21", "q4-21")
 

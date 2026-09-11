@@ -2527,6 +2527,7 @@ def build():
                 ),
                 "share_chips": {
                     "surface_id": "s24-shares",
+                    "stub": "% of Total Network Volumes",
                     "chips": [
                         {
                             "share_id": "us-cons",
