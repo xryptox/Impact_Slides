@@ -204,7 +204,24 @@ def test_q4_s29_strict_render_ticks_stop_at_5(tmp_path: Path) -> None:
     s29 = _section(html, 29)
     assert 'data-layout="single_chart"' in s29
     assert 'data-chart-type="grouped_bar"' in s29
-    ticks = re.findall(r'data-tick="([^"]+)"', s29)
-    if ticks:
-        assert "10" not in ticks and "15" not in ticks and "20" not in ticks
-        assert "5" in ticks
+    m = re.search(r'id="cfg-s29-gcp">(.*?)</script>', s29, re.S)
+    assert m is not None
+    cfg = json.loads(m.group(1))
+    ticks = [str(t) for t in cfg["v3"]["domain_ticks"]]
+    assert ticks == list(S29_TICKS)
+    assert cfg["v3"]["tick_labels"] == [
+        "0.0%",
+        "1.0%",
+        "2.0%",
+        "3.0%",
+        "4.0%",
+        "5.0%",
+    ]
+    assert cfg["options"]["scales"]["y"]["max"] == 5.0
+    noscript = re.search(r"<noscript>(.*?)</noscript>", s29, re.S)
+    assert noscript is not None
+    svg = noscript.group(1)
+    for label in cfg["v3"]["tick_labels"]:
+        assert f">{label}</text>" in svg
+    for label in ("10.0%", "15.0%", "20.0%"):
+        assert f">{label}</text>" not in svg
