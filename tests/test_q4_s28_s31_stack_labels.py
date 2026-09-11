@@ -1,9 +1,10 @@
-"""#324 — Q4 2021 s28/s31 stacked segment labels do not share an AABB.
+"""#324/#343 — Q4 2021 s28/s31 stacked labels stay below the crown.
 
 Seams under test:
 - live Q4 handoff payload (`simulation/amex_q4_2021/handoff_v1.json`)
 - frozen `_place_stack_labels` placements on s28-frp / s31-fund
 - strict `render_deck` SVG overlay for those slides
+- inside-navy on tall sky bands; $ totals own the above-stack lane
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from pathlib import Path
 
 from impact_slides.renderer_v3 import render_deck, validate_handoff
 from impact_slides.renderer_v3.plan import plan_deck
+from impact_slides.renderer_v3.theme import resolve_color
 
 ROOT = Path(__file__).resolve().parents[1]
 HANDOFF = ROOT / "simulation" / "amex_q4_2021" / "handoff_v1.json"
@@ -66,6 +68,41 @@ def _box(p: dict, px: int) -> tuple[float, float, float, float]:
         p["x"] + w / 2,
         p["y"] + px / 2,
     )
+
+
+def _column_stack_top(cp: dict, cat: str) -> float:
+    ys = [
+        float(b["y"])
+        for b in cp["bars"]
+        if b.get("category_id") == cat
+        and b.get("finite")
+        and not b.get("missing")
+        and float(b.get("height") or 0) > 0
+    ]
+    assert ys, cat
+    return min(ys)
+
+
+def _assert_crown_owned(cp: dict) -> None:
+    seg_px = cp["role_sizes"]["segment_labels"]
+    tot_px = cp["role_sizes"]["stack_totals"]
+    cats = {
+        p["category_id"]
+        for p in cp["placements"]
+        if p.get("kind") in {"segment", "stack_total"}
+        and p.get("class") != "suppressed"
+    }
+    for cat in cats:
+        crown = _column_stack_top(cp, cat)
+        for p in cp["placements"]:
+            if p.get("category_id") != cat or p.get("class") == "suppressed":
+                continue
+            if p.get("kind") == "segment":
+                top = _box(p, seg_px)[1]
+                assert top >= crown, (cat, p.get("text"), p.get("class"), top, crown)
+            elif p.get("kind") == "stack_total":
+                top = _box(p, tot_px)[1]
+                assert top < crown, (cat, p.get("text"), top, crown)
 
 
 def _assert_uncollided(cp: dict) -> None:
@@ -151,8 +188,36 @@ def test_q4_s28_s31_plan_uncollides_column_labels() -> None:
         assert token in segs31
     for token in S31_TOTS:
         assert token in tots31
+    navy = resolve_color("navy", role="text_on_light")
+    sky_inside = [
+        p
+        for p in s31.chart_paint["placements"]
+        if p.get("kind") == "segment" and p.get("text") in {"53%", "66%", "67%"}
+    ]
+    assert len(sky_inside) == 3
+    for p in sky_inside:
+        assert p["class"] == "inside", p
+        assert p["color"] == navy, p
+    cpr = next(
+        p
+        for p in s28.chart_paint["placements"]
+        if p.get("kind") == "segment" and p.get("text") == "$8.5"
+    )
+    assert cpr["class"] == "inside"
+    assert cpr["color"] == navy
+    zeros = [
+        p
+        for p in s28.chart_paint["placements"]
+        if p.get("kind") == "segment" and p.get("text") == "$0.0"
+    ]
+    assert zeros
+    for p in zeros:
+        assert p["class"] != "suppressed"
+        assert p["class"] != "outside_above"
     _assert_uncollided(s28.chart_paint)
     _assert_uncollided(s31.chart_paint)
+    _assert_crown_owned(s28.chart_paint)
+    _assert_crown_owned(s31.chart_paint)
 
 
 def test_q4_s28_s31_strict_render_paints_uncollided_labels(tmp_path: Path) -> None:

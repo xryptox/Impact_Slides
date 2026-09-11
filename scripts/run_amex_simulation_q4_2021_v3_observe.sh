@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # GNHF Q4 2021 observation: reset gnhf/objective-given-the-d60385 onto
-# origin/main (renderer_v3 through #339/#340/#341), recapture 53 SBS on that
+# origin/main (renderer_v3 through #339/#340/#341/#343), recapture 53 SBS on that
+
 # corpus, refresh identity hashes + ledger.
 # No re-author. Reset, not rebase: the branch's Type B commits add/add-conflict
 # the Q4 corpus already on main. Does not --push.
@@ -106,14 +107,16 @@ Continue on branch `gnhf/objective-given-the-d60385`. Do not create another
 worktree. Do not merge to main. Do not amend existing commits. Do not push.
 
 This is Companion-mode OBSERVATION of the Q4 2021 deck on current
-renderer_v3 (origin/main through #339/#340/#341). The worktree was already
+renderer_v3 (origin/main through #339/#340/#341/#343). The worktree was already
+
 reset hard onto origin/main.
 
 No further production path edits. No new recipes/schema/painters. No
 GitHub issues. Do NOT re-author slides. Do NOT invent numbers. Do NOT
 change build_handoff.py, handoff_v1.json, charts.py, or tests unless a
 strict render proves the existing handoff is now illegal — then stop
-and name the blocker. Do NOT revert #339/#340/#341.
+and name the blocker. Do NOT revert #339/#340/#341/#343.
+
 
 Read every applicable AGENTS.md and wiki/AGENT_LEARNINGS.md if present.
 Use CONTEXT.md Type A vs Type B vocabulary.
@@ -177,6 +180,9 @@ in the ledger with fresh identity hashes. Do not "fix" by re-authoring.
   not a navy IR table; figures unchanged.
 #324 s28/s31: same-column stack labels do not share an AABB; $0.0 CPR stays
   a cap; s31 4%/1%/2% still visible; never fit-drop non-zero.
+#343 s28/s31: Deposits 53/66/67 and Apr'20 $8.5 stay inside with navy;
+  segment AABB.top ≥ stack_top; $ totals only above each stack; $0.0 CPR stays
+  a visible cap not in the total lane; s31 4%/1%/2% stay below the crown.
 
 If a kernel result is missing or still collides at 1920×1080, name it as a
 residual in the ledger. Do not drop labels, shrink floors, or invent recipes.
@@ -213,9 +219,10 @@ Type A leftovers stay 5.
 
 Create exactly two NEW commits after origin/main
 (you make them; GNHF must see a clean tree):
-1. `sim: recapture Q4 2021 on post-#341 renderer_v3`
+1. `sim: recapture Q4 2021 on post-#343 renderer_v3`
    `git add -f simulation/amex_q4_2021/` then commit
-2. `docs: refresh Q4 2021 recipe-coverage after #315-#341`
+2. `docs: refresh Q4 2021 recipe-coverage after #315-#343`
+
    add only wiki/baseline_q4_2021_RECIPE_COVERAGE.md then commit
 
 `git status` clean. Do not push (wincredman). Push is outside this worker.
@@ -225,7 +232,8 @@ Stop when:
 - report copies byte-identical
 - identity table hashes match this render's presentation.html and run_meta.json
 - handoff 53 / schema 1 / p01..p53
-- each #315-#341 check above is pass or a named residual
+- each #315-#343 check above is pass or a named residual
+
 - s35 still Type B; s05/s08/s20/s26/s30 still named Type A leftovers
 - strict render clean or fully labeled degraded
 - all 53 PDF/HTML/SBS exist at exact sizes
@@ -243,5 +251,6 @@ gnhf \
   --max-tokens 10000000 \
   --current-branch \
   --prevent-sleep on \
-  --stop-when "Q4 2021 observation on gnhf/objective-given-the-d60385 is done: worktree is origin/main plus two new commits; existing Q4 handoff strictly rendered; 53 SBS recaptured; GAP identity hashes match this render; wiki report byte-identical; #315-#341 checks are pass or named residuals; s35 stays Type B; Type A leftovers stay; working tree clean; no re-author, no production path changes, no image scoring." \
+  --stop-when "Q4 2021 observation on gnhf/objective-given-the-d60385 is done: worktree is origin/main plus two new commits; existing Q4 handoff strictly rendered; 53 SBS recaptured; GAP identity hashes match this render; wiki report byte-identical; #315-#343 checks are pass or named residuals; s35 stays Type B; Type A leftovers stay; working tree clean; no re-author, no production path changes, no image scoring." \
+
   "$PROMPT"

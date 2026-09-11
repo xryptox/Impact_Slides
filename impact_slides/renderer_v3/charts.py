@@ -4259,9 +4259,11 @@ def _place_stack_labels(
 ) -> list[dict[str, Any]]:
     """Segment + total labels for stacked bars (D79/D242/D304). Never fit-drop.
 
-    Thin/zero bands reuse the #272 AABB nudge for segment-vs-segment and
-    segment-vs-total. Zero-area values stay a cap label on the finished
-    stack (D247 still records the zero).
+    Tall bands stay inside: white ink if white-on-fill holds, else navy when
+    navy-on-fill holds (#343). Thin/zero bands reuse the #272 AABB nudge
+    in-column and stay at/below the finished-stack crown; $ totals own the
+    above-stack lane. Zero-area values stay a visible cap on the crown edge
+    (D247 still records the zero).
     """
     placements: list[dict[str, Any]] = []
     series_by_id = {s["series_id"]: s for s in series_plans}
@@ -4269,6 +4271,23 @@ def _place_stack_labels(
     white = resolve_color("white", role="text_on_dark")
     occupied_by_cat: dict[str, list[tuple[float, float, float, float]]] = {}
     deferred: list[dict[str, Any]] = []
+    crown_by_cat: dict[str, float] = {}
+    for b in bars:
+        if b.get("missing") or not b.get("finite"):
+            continue
+        if float(b.get("height") or 0) <= 0:
+            continue
+        cat = b["category_id"]
+        yb = float(b["y"])
+        prev = crown_by_cat.get(cat)
+        if prev is None or yb < prev:
+            crown_by_cat[cat] = yb
+
+    def _keep_below_crown(cat: str, y: float) -> float:
+        crown = crown_by_cat.get(cat)
+        if crown is None:
+            return y
+        return max(y, crown + segment_px / 2.0)
 
     for b in bars:
         if b.get("missing") or not b.get("finite"):
@@ -4288,12 +4307,14 @@ def _place_stack_labels(
                 }
             )
             continue
-        # Prefer inside when tall enough AND white-on-fill contrast holds (D304).
         h = float(b["height"])
         fill = series_by_id[b["series_id"]]["color"]
-        contrast_ok = contrast_ratio(white, fill) >= 3.0
+        white_ok = contrast_ratio(white, fill) >= 3.0
+        navy_ok = contrast_ratio(navy, fill) >= 3.0
         inside_ok = (
-            h >= segment_px + 6 and b.get("sign", 0) != 0 and contrast_ok
+            h >= segment_px + 6
+            and b.get("sign", 0) != 0
+            and (white_ok or navy_ok)
         )
         cx = b["end_x"]
         if inside_ok:
@@ -4307,7 +4328,7 @@ def _place_stack_labels(
                     "x": cx,
                     "y": y,
                     "text": text,
-                    "color": white,
+                    "color": white if white_ok else navy,
                     "priority": "segment",
                 }
             )
@@ -4317,32 +4338,37 @@ def _place_stack_labels(
         else:
             deferred.append(b)
 
-    # Thin/zero/contrast-fail: leader/lateral/nudge in-column. Never park on
-    # another label's crown. Non-zero labels are never fit-dropped (#324).
+    # Thin/zero/both-inks-fail: stay in-column below the crown. Never park in
+    # the $ total's above-stack lane. Non-zero labels are never fit-dropped.
     for b in deferred:
         text = b["visible"]
         h = float(b["height"])
         w_est = max(20.0, len(text) * segment_px * 0.55)
         cx = b["end_x"]
         sign = b.get("sign", 0)
+        cat = b["category_id"]
         if sign < 0:
             y = b["y"] + h + segment_px + 4
             cls = "outside_below"
             away = 1.0
         elif sign > 0:
-            y = b["y"] - 4
+            y = _keep_below_crown(cat, float(b.get("mid_y", b["y"] + h / 2)))
             cls = "outside_above"
-            away = -1.0
+            away = 1.0
         else:
-            y = _zero_stack_cap_y(b, bars, segment_px)
+            y = _keep_below_crown(
+                cat, _zero_stack_cap_y(b, bars, segment_px)
+            )
             cls = "outside_zero"
-            away = -1.0 if y <= float(b.get("end_y", b["y"])) else 1.0
+            away = 1.0
         x = cx
         if w_est > b["width"]:
             x = cx + b["width"] / 2 + w_est / 2 + 6
             cls = "leader"
-        occupied = occupied_by_cat.setdefault(b["category_id"], [])
+        occupied = occupied_by_cat.setdefault(cat, [])
         y, box = _nudge_stack_box(x, y, text, segment_px, occupied, away)
+        y = _keep_below_crown(cat, y)
+        box = _stack_text_box(x, y, text, segment_px)
         occupied.append(box)
         placements.append(
             {

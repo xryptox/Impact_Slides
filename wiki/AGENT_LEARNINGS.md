@@ -100,3 +100,6 @@ Q4 s27 dual donuts overflow at `ordinary_values` 20+ because outside names sit a
 
 ## 58. Pie/donut outside names must clear the painted disk (#341, 2026-09-11)
 `#340` only tested name **anchor** vs `radius+1` and view-box overflow. Frozen `radius` was `min(plot)/2-8`, so Corporate Card's 0.55em AABB could sit ~0.6px outside that inset while still crossing Chart.js' full plot disk. Freeze `radius` to the painted disk; require outside name/percent AABB to clear it (nudge out, then grow pad); floor-hit collision is `slice_label_overflow`, not a type shrink. The 0.55em width heuristic still underestimates Source Sans 3 ink (~6px on s27-rec Corporate Card); pad the disk by 8px so the same AABB loop clears live SVG.
+
+## 59. Stacked inside-navy + crown ownership (#343, 2026-09-11)
+#324 uncollided thin/zero caps but left the inside gate white-only, so s31 Deposits 53/66/67 and s28 Apr'20 $8.5 ejected `outside_above` onto the $ total (sky `#80c8ff` white 1.81, navy 9.15). Tall bands stay `inside`: white if white-on-fill ≥3, else navy if navy-on-fill holds. Thin/zero caps nudge **down** the column; segment AABB.top ≥ `stack_top`. `$` totals are the only labels allowed above the finished stack. Do not hide `stack_segments` or swap corpus fills.
