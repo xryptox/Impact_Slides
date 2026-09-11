@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 cli.py",
+    "locale": "en",
+    "output": "cli.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "render-cmd",
+        "label": "Render command",
+        "focus": [
+          "argv",
+          "parser",
+          "render",
+          "exit"
+        ],
+        "note": "Default path: --handoff and --out call render_deck."
+      },
+      {
+        "id": "schema-cmd",
+        "label": "Schema command",
+        "focus": [
+          "argv",
+          "parser",
+          "schema"
+        ],
+        "note": "schema / bare --check still route to schema_export."
+      },
+      {
+        "id": "failures",
+        "label": "Failure print",
+        "focus": [
+          "render",
+          "stderr",
+          "exit"
+        ],
+        "note": "Typed failures print one D309 line per warning or error."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "argv",
+      "type": "external",
+      "label": "argv",
+      "sublabel": "flags",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "parser",
+      "type": "backend",
+      "label": "main",
+      "sublabel": "route flags",
+      "tag": "D249",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/cli.py",
+          "line": 20,
+          "label": "build_parser",
+          "end_line": 63
+        },
+        {
+          "path": "impact_slides/renderer_v3/cli.py",
+          "line": 66,
+          "label": "main",
+          "end_line": 126
+        }
+      ]
+    },
+    {
+      "id": "schema",
+      "type": "backend",
+      "label": "schema_export",
+      "sublabel": "write or check",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/schema_export.py",
+          "line": 67,
+          "label": "schema main"
+        }
+      ]
+    },
+    {
+      "id": "render",
+      "type": "backend",
+      "label": "render_deck",
+      "sublabel": "strict default",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/render.py",
+          "line": 27,
+          "label": "render_deck"
+        }
+      ]
+    },
+    {
+      "id": "stderr",
+      "type": "messagebus",
+      "label": "stderr lines",
+      "sublabel": "D309",
+      "row": 2,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/cli.py",
+          "line": 129,
+          "label": "print failure",
+          "end_line": 154
+        }
+      ]
+    },
+    {
+      "id": "exit",
+      "type": "external",
+      "label": "exit code",
+      "sublabel": "0 / 1 / 2",
+      "row": 1,
+      "col": 3
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "cli.py",
+      "wraps": [
+        "parser",
+        "stderr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "callees",
+      "wraps": [
+        "schema",
+        "render"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-argv-parser",
+      "from": "argv",
+      "to": "parser",
+      "label": "parse",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-parser-schema",
+      "from": "parser",
+      "to": "schema",
+      "label": "schema",
+      "variant": "dashed",
+      "labelDy": -24
+    },
+    {
+      "id": "c-parser-render",
+      "from": "parser",
+      "to": "render",
+      "label": "render",
+      "labelDy": 24
+    },
+    {
+      "id": "c-render-exit",
+      "from": "render",
+      "to": "exit",
+      "label": "0 or 2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-render-stderr",
+      "from": "render",
+      "to": "stderr",
+      "label": "degraded",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "c-stderr-exit",
+      "from": "stderr",
+      "to": "exit",
+      "label": "1 or 2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Commands",
+      "items": [
+        "Render needs --handoff and --out",
+        "schema --check is the D121 gate"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Flags",
+      "items": [
+        "--no-strict, --debug, --svg-only",
+        "No theme, CDN, or seed flags"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Exit",
+      "items": [
+        "0 clean, 2 degraded, 1 failed",
+        "Stderr is closed diagnostic lines"
+      ]
+    }
+  ]
+}

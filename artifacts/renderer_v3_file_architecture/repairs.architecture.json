@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 repairs.py",
+    "locale": "en",
+    "output": "repairs.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "registry",
+        "label": "Registry",
+        "focus": [
+          "entry",
+          "assume",
+          "drop",
+          "payload"
+        ],
+        "note": "Stable order: assume v1, drop unknowns, then payload repairs."
+      },
+      {
+        "id": "charts",
+        "label": "Chart repairs",
+        "focus": [
+          "payload",
+          "chart",
+          "out"
+        ],
+        "note": "Domain and heatmap repairs run after table/typography work."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "validate_handoff",
+      "sublabel": "non-strict",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "entry",
+      "type": "backend",
+      "label": "apply repairs",
+      "sublabel": "stable order",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/repairs.py",
+          "line": 1907,
+          "label": "apply_allowlisted_repairs",
+          "end_line": 1917
+        }
+      ]
+    },
+    {
+      "id": "assume",
+      "type": "security",
+      "label": "assume_schema_v1",
+      "sublabel": "D311 first",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/repairs.py",
+          "line": 22,
+          "label": "assume_schema_v1"
+        }
+      ]
+    },
+    {
+      "id": "drop",
+      "type": "backend",
+      "label": "drop_unknown_fields",
+      "sublabel": "never unlocks assume",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/repairs.py",
+          "line": 238,
+          "label": "drop_unknown_fields"
+        }
+      ]
+    },
+    {
+      "id": "payload",
+      "type": "backend",
+      "label": "payload repairs",
+      "sublabel": "table / type / footer",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/repairs.py",
+          "line": 1894,
+          "label": "REPAIR_REGISTRY"
+        }
+      ]
+    },
+    {
+      "id": "chart",
+      "type": "frontend",
+      "label": "chart repairs",
+      "sublabel": "domain heatmap cards",
+      "row": 2,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/repairs.py",
+          "line": 1297,
+          "label": "domain and heatmap"
+        }
+      ]
+    },
+    {
+      "id": "out",
+      "type": "external",
+      "label": "repaired dict",
+      "sublabel": "plus events",
+      "row": 1,
+      "col": 4
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "repairs.py",
+      "wraps": [
+        "entry",
+        "assume",
+        "drop",
+        "payload",
+        "chart"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-caller-entry",
+      "from": "caller",
+      "to": "entry",
+      "label": "raw",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-entry-assume",
+      "from": "entry",
+      "to": "assume",
+      "label": "first"
+    },
+    {
+      "id": "c-assume-drop",
+      "from": "assume",
+      "to": "drop",
+      "label": "then",
+      "labelDy": 24
+    },
+    {
+      "id": "c-drop-payload",
+      "from": "drop",
+      "to": "payload",
+      "label": "then"
+    },
+    {
+      "id": "c-payload-chart",
+      "from": "payload",
+      "to": "chart",
+      "label": "then",
+      "labelDy": 24
+    },
+    {
+      "id": "c-chart-out",
+      "from": "chart",
+      "to": "out",
+      "label": "dict + events",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Order",
+      "items": [
+        "Ten named repairs, fixed registry order",
+        "assume_schema_v1 runs first"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Assume",
+      "items": [
+        "Keeps the edit only when input is exact v1",
+        "Unknown-field drops never unlock it"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Scope",
+      "items": [
+        "No free-form mutation",
+        "Events stay on the closed catalog"
+      ]
+    }
+  ]
+}

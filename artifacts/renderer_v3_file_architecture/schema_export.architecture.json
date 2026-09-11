@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 schema_export.py",
+    "locale": "en",
+    "output": "schema_export.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "write-path",
+        "label": "Write path",
+        "focus": [
+          "cli",
+          "generate",
+          "models",
+          "file"
+        ],
+        "note": "Default writes handoff_schema_v1.json from Deck."
+      },
+      {
+        "id": "check-path",
+        "label": "Check path",
+        "focus": [
+          "cli",
+          "generate",
+          "file"
+        ],
+        "note": "--check exits non-zero on drift from models."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "external",
+      "label": "CLI",
+      "sublabel": "schema / --check",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "main",
+      "type": "backend",
+      "label": "main",
+      "sublabel": "write or check",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/schema_export.py",
+          "line": 67,
+          "label": "main",
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "generate",
+      "type": "backend",
+      "label": "generate_schema",
+      "sublabel": "model_json_schema",
+      "tag": "D121",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/schema_export.py",
+          "line": 13,
+          "label": "generate_schema",
+          "end_line": 28
+        }
+      ]
+    },
+    {
+      "id": "models",
+      "type": "database",
+      "label": "Deck",
+      "sublabel": "models.py",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 4350,
+          "label": "class Deck"
+        }
+      ]
+    },
+    {
+      "id": "file",
+      "type": "external",
+      "label": "schema JSON",
+      "sublabel": "committed artifact",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/schema_export.py",
+          "line": 10,
+          "label": "SCHEMA_RELATIVE_PATH"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "schema_export.py",
+      "wraps": [
+        "main",
+        "generate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "models.py",
+      "wraps": [
+        "models"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-cli-main",
+      "from": "cli",
+      "to": "main",
+      "label": "argv",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-main-generate",
+      "from": "main",
+      "to": "generate",
+      "label": "build"
+    },
+    {
+      "id": "c-models-generate",
+      "from": "models",
+      "to": "generate",
+      "label": "schema",
+      "labelDy": 24
+    },
+    {
+      "id": "c-generate-file",
+      "from": "generate",
+      "to": "file",
+      "label": "write / check",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Source",
+      "items": [
+        "Generated from Deck, never hand-edited",
+        "Draft 2020-12 JSON Schema"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Check",
+      "items": [
+        "LF comparison on Windows",
+        "CI uses --check"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Path",
+      "items": [
+        "impact_slides/renderer_v3/schema/",
+        "handoff_schema_v1.json"
+      ]
+    }
+  ]
+}

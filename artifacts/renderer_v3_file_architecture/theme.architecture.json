@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 theme/__init__.py",
+    "locale": "en",
+    "output": "theme/__init__.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "resolve",
+        "label": "Resolve color",
+        "focus": [
+          "caller",
+          "resolve",
+          "palette",
+          "hex"
+        ],
+        "note": "resolve_color allows only roles listed on the palette entry."
+      },
+      {
+        "id": "css",
+        "label": "CSS",
+        "focus": [
+          "palette",
+          "css",
+          "hex"
+        ],
+        "note": "generate_theme_css emits :root tokens from _CSS_TOKENS."
+      },
+      {
+        "id": "series",
+        "label": "Series",
+        "focus": [
+          "resolve",
+          "series",
+          "hex"
+        ],
+        "note": "Line and bar families cycle closed identity keys."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "painters",
+      "sublabel": "publish / charts",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "resolve",
+      "type": "backend",
+      "label": "resolve_color",
+      "sublabel": "role-gated",
+      "tag": "D131",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 193,
+          "label": "resolve_color",
+          "end_line": 203
+        }
+      ]
+    },
+    {
+      "id": "palette",
+      "type": "database",
+      "label": "_PALETTE",
+      "sublabel": "boardroom_amex",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 12,
+          "label": "THEME_ID"
+        }
+      ]
+    },
+    {
+      "id": "series",
+      "type": "backend",
+      "label": "series colors",
+      "sublabel": "line / bar",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 206,
+          "label": "resolve_series_colors"
+        }
+      ]
+    },
+    {
+      "id": "css",
+      "type": "frontend",
+      "label": "generate_theme_css",
+      "sublabel": ":root tokens",
+      "row": 2,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 222,
+          "label": "generate_theme_css",
+          "end_line": 260
+        }
+      ]
+    },
+    {
+      "id": "hex",
+      "type": "external",
+      "label": "hex / CSS",
+      "sublabel": "Chart.js + HTML",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 285,
+          "label": "chart_js_tokens"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "theme/__init__.py",
+      "wraps": [
+        "resolve",
+        "palette",
+        "series",
+        "css"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-caller-resolve",
+      "from": "caller",
+      "to": "resolve",
+      "label": "key + role",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "c-resolve-palette",
+      "from": "resolve",
+      "to": "palette",
+      "label": "lookup"
+    },
+    {
+      "id": "c-caller-series",
+      "from": "caller",
+      "to": "series",
+      "label": "family",
+      "variant": "dashed",
+      "labelDy": -24
+    },
+    {
+      "id": "c-series-resolve",
+      "from": "series",
+      "to": "resolve",
+      "label": "identity",
+      "labelDy": 24
+    },
+    {
+      "id": "c-palette-css",
+      "from": "palette",
+      "to": "css",
+      "label": "_CSS_TOKENS",
+      "labelDy": 24
+    },
+    {
+      "id": "c-css-hex",
+      "from": "css",
+      "to": "hex",
+      "label": "var(--color-*)"
+    },
+    {
+      "id": "c-palette-hex",
+      "from": "palette",
+      "to": "hex",
+      "label": "hex",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Manifest",
+      "items": [
+        "One Python source of truth",
+        "THEME_ID is boardroom_amex"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Roles",
+      "items": [
+        "series_identity, fill, text, surface, border, band",
+        "sky_blue is fill-identity only"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Charts",
+      "items": [
+        "Plot/body stay transparent and flat",
+        "Painters never hard-code theme hex"
+      ]
+    }
+  ]
+}

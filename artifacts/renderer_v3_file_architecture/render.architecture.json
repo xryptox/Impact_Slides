@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 render.py",
+    "locale": "en",
+    "output": "render.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Happy path",
+        "focus": [
+          "handoff",
+          "api",
+          "validate",
+          "plan",
+          "publish"
+        ],
+        "note": "Read JSON, validate, freeze, then publish five artifacts."
+      },
+      {
+        "id": "config",
+        "label": "Config gate",
+        "focus": [
+          "api",
+          "options"
+        ],
+        "note": "_resolve_options rejects seed, theme, CDN, and extra features."
+      },
+      {
+        "id": "publish",
+        "label": "Publish",
+        "focus": [
+          "plan",
+          "stage",
+          "publish"
+        ],
+        "note": "Stage in memory, then directory-swap. No partial writes."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "handoff",
+      "type": "external",
+      "label": "Handoff JSON",
+      "sublabel": "schema-v1",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "render_deck",
+      "sublabel": "orchestrator",
+      "tag": "strict",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/render.py",
+          "line": 27,
+          "label": "render_deck",
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "options",
+      "type": "security",
+      "label": "_resolve_options",
+      "sublabel": "D249 gate",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/render.py",
+          "line": 212,
+          "label": "_resolve_options",
+          "end_line": 267
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "type": "security",
+      "label": "validate_handoff",
+      "sublabel": "typed Deck",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 54,
+          "label": "validate_handoff"
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "type": "backend",
+      "label": "plan_deck",
+      "sublabel": "freeze sizes",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 310,
+          "label": "plan_deck"
+        }
+      ]
+    },
+    {
+      "id": "stage",
+      "type": "frontend",
+      "label": "stage_artifacts",
+      "sublabel": "five payloads",
+      "row": 2,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 3685,
+          "label": "stage_artifacts"
+        }
+      ]
+    },
+    {
+      "id": "publish",
+      "type": "external",
+      "label": "out_dir",
+      "sublabel": "atomic swap",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 3732,
+          "label": "publish_transaction"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "render.py",
+      "wraps": [
+        "api",
+        "options"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "callees",
+      "wraps": [
+        "validate",
+        "plan",
+        "stage"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-handoff-api",
+      "from": "handoff",
+      "to": "api",
+      "label": "read JSON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-api-options",
+      "from": "api",
+      "to": "options",
+      "label": "config"
+    },
+    {
+      "id": "c-api-validate",
+      "from": "api",
+      "to": "validate",
+      "label": "validate"
+    },
+    {
+      "id": "c-validate-plan",
+      "from": "validate",
+      "to": "plan",
+      "label": "Deck",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-plan-stage",
+      "from": "plan",
+      "to": "stage",
+      "label": "frozen",
+      "labelDy": 24
+    },
+    {
+      "id": "c-stage-publish",
+      "from": "stage",
+      "to": "publish",
+      "label": "swap",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Order",
+      "items": [
+        "Validate and plan before any write",
+        "Failed calls leave prior output"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Config",
+      "items": [
+        "delivery must be self-contained",
+        "suppress_features may be charts"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Status",
+      "items": [
+        "clean vs degraded in the result dict",
+        "ok is false when repaired or warned"
+      ]
+    }
+  ]
+}

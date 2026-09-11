@@ -6,6 +6,7 @@ Seams under test:
 - Chart.js doughnut + noscript SVG radial + D247 semantic table
 - D10/D47 320×240 plot floor; D304 navy ink on low-contrast slices
 - same-slide slice_id color identity; names outside the ring at ordinary_values floor
+- outside-name pad grows with type so the ring shrinks (#340); D47 floor still holds
 """
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from impact_slides.renderer_v3 import RendererValidationError, render_deck, validate_handoff
-from impact_slides.renderer_v3.charts import freeze_chart, paint_chart_svg
+from impact_slides.renderer_v3.charts import PAD_R, freeze_chart, paint_chart_svg
 from impact_slides.renderer_v3.models import DonutChartVisual, PieChartVisual, SingleChartSlide
 from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema, generate_schema
@@ -545,6 +546,8 @@ def test_slice_names_paint_outside_ring():
     frozen = freeze_chart(result.deck.slides[1].payload.chart, result.deck.number_formats)
     g = frozen["geometry"]
     radius = g["radius"]
+    assert g["pad_l"] == PAD_R
+    assert g["pad_r"] == PAD_R
     for sl in frozen["slices"]:
         dist = ((sl["name_x"] - g["cx"]) ** 2 + (sl["name_y"] - g["cy"]) ** 2) ** 0.5
         assert dist > radius + 1
@@ -596,3 +599,27 @@ def test_small_upper_wedge_percent_stays_outside_with_name():
     assert name_r > g["radius"]
     assert val_r > g["radius"]
     assert pair <= frozen["role_sizes"]["ordinary_values"] * 1.5
+
+
+def test_long_24px_names_shrink_ring_instead_of_overflow():
+    raw = _s27_dual_raw()
+    for pane in raw["slides"][1]["payload"]["charts"]:
+        pane["typography"] = {"ordinary_values": 24}
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    for sid in ("s27-loans", "s27-rec"):
+        frozen = next(s for s in plan.surfaces if s.surface_id == sid).chart_paint
+        g = frozen["geometry"]
+        assert frozen["role_sizes"]["ordinary_values"] == 24
+        assert not frozen.get("slice_label_overflow")
+        assert g["pad_l"] == g["pad_r"]
+        assert g["pad_l"] > PAD_R
+        assert g["plot_w"] >= 320
+        assert g["plot_h"] >= 240
+        for sl in frozen["slices"]:
+            dist = ((sl["name_x"] - g["cx"]) ** 2 + (sl["name_y"] - g["cy"]) ** 2) ** 0.5
+            assert dist > g["radius"] + 1
+    omit = plan_deck(validate_handoff(_s27_dual_raw(), strict=True).deck, strict=True)
+    omit_r = next(s for s in omit.surfaces if s.surface_id == "s27-loans").chart_paint["geometry"]["radius"]
+    pin_r = next(s for s in plan.surfaces if s.surface_id == "s27-loans").chart_paint["geometry"]["radius"]
+    assert pin_r < omit_r

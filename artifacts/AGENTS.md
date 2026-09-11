@@ -8,6 +8,7 @@ Committed, reproducible evidence artifacts for source-fidelity and rendering cla
 
 - Issue-scoped capture/report directories.
 - Versioned renderer-3 release evidence under `renderer_3_release/`.
+- Package/file architecture diagrams: `renderer-v3-architecture.*` (package) and `renderer_v3_file_architecture/` (per-file).
 - Artifacts must include their inputs or refer only to tracked repository inputs.
 
 ## Local Contracts
@@ -27,3 +28,4 @@ Committed, reproducible evidence artifacts for source-fidelity and rendering cla
 
 - `issue_156_slide27/AGENTS.md` — archived-v10 and corrected slide-27 paint-ready captures.
 - `renderer_3_release/AGENTS.md` — immutable D315 versioned acceptance bundle (3.0.0).
+- `renderer_v3_file_architecture/AGENTS.md` — Archify per-file renderer_v3 diagrams; package-level `renderer-v3-architecture.*` stays owned here.

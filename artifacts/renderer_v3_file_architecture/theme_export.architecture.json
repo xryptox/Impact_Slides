@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 theme_export.py",
+    "locale": "en",
+    "output": "theme_export.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "write-css",
+        "label": "Write CSS",
+        "focus": [
+          "cli",
+          "main",
+          "cssfn",
+          "file"
+        ],
+        "note": "Default writes boardroom_amex.tokens.css from the manifest."
+      },
+      {
+        "id": "check-css",
+        "label": "Check CSS",
+        "focus": [
+          "cli",
+          "main",
+          "file"
+        ],
+        "note": "--check fails when committed CSS drifts."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "external",
+      "label": "CLI",
+      "sublabel": "--check",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "main",
+      "type": "backend",
+      "label": "main",
+      "sublabel": "write or check",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme_export.py",
+          "line": 43,
+          "label": "main",
+          "end_line": 67
+        }
+      ]
+    },
+    {
+      "id": "cssfn",
+      "type": "backend",
+      "label": "generate_theme_css",
+      "sublabel": "theme manifest",
+      "tag": "D129",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 222,
+          "label": "generate_theme_css"
+        }
+      ]
+    },
+    {
+      "id": "manifest",
+      "type": "database",
+      "label": "THEME_ID",
+      "sublabel": "boardroom_amex",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 12,
+          "label": "THEME_ID"
+        }
+      ]
+    },
+    {
+      "id": "file",
+      "type": "external",
+      "label": "tokens.css",
+      "sublabel": "committed CSS",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme_export.py",
+          "line": 8,
+          "label": "THEME_RELATIVE_PATH"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "theme_export.py",
+      "wraps": [
+        "main"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "theme package",
+      "wraps": [
+        "cssfn",
+        "manifest"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-cli-main",
+      "from": "cli",
+      "to": "main",
+      "label": "argv",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-main-css",
+      "from": "main",
+      "to": "cssfn",
+      "label": "build"
+    },
+    {
+      "id": "c-manifest-css",
+      "from": "manifest",
+      "to": "cssfn",
+      "label": "tokens",
+      "labelDy": 24
+    },
+    {
+      "id": "c-css-file",
+      "from": "cssfn",
+      "to": "file",
+      "label": "write / check",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Source",
+      "items": [
+        "Python manifest is the source of truth",
+        "Never hand-edit the CSS"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Check",
+      "items": [
+        "LF comparison on Windows",
+        "CI uses --check"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Path",
+      "items": [
+        "theme/boardroom_amex.tokens.css"
+      ]
+    }
+  ]
+}

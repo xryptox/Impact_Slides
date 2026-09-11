@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 ids.py",
+    "locale": "en",
+    "output": "ids.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "id-check",
+        "label": "ID check",
+        "focus": [
+          "raw",
+          "fn",
+          "pattern",
+          "ok"
+        ],
+        "note": "Authored IDs must match ^[a-z][a-z0-9_-]{0,63}$."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "raw",
+      "type": "external",
+      "label": "candidate",
+      "sublabel": "string or other",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "fn",
+      "type": "security",
+      "label": "is_semantic_id",
+      "sublabel": "D115",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/ids.py",
+          "line": 9,
+          "label": "is_semantic_id",
+          "end_line": 10
+        }
+      ]
+    },
+    {
+      "id": "pattern",
+      "type": "database",
+      "label": "ID_PATTERN",
+      "sublabel": "fullmatch",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/ids.py",
+          "line": 6,
+          "label": "ID_PATTERN"
+        }
+      ]
+    },
+    {
+      "id": "models",
+      "type": "backend",
+      "label": "Deck model",
+      "sublabel": "format ids",
+      "row": 2,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 4350,
+          "label": "class Deck"
+        }
+      ]
+    },
+    {
+      "id": "migrate",
+      "type": "backend",
+      "label": "migrator slugs",
+      "sublabel": "migrate.py",
+      "row": 2,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/migrate.py",
+          "line": 251,
+          "label": "_slug"
+        }
+      ]
+    },
+    {
+      "id": "ok",
+      "type": "external",
+      "label": "bool",
+      "sublabel": "accept / reject",
+      "row": 1,
+      "col": 3
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ids.py",
+      "wraps": [
+        "fn",
+        "pattern"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "consumers",
+      "wraps": [
+        "models",
+        "migrate"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-raw-fn",
+      "from": "raw",
+      "to": "fn",
+      "label": "value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-fn-pattern",
+      "from": "fn",
+      "to": "pattern",
+      "label": "fullmatch"
+    },
+    {
+      "id": "c-pattern-ok",
+      "from": "pattern",
+      "to": "ok",
+      "label": "yes / no",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-fn-models",
+      "from": "fn",
+      "to": "models",
+      "label": "validate",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "c-fn-migrate",
+      "from": "fn",
+      "to": "migrate",
+      "label": "slug",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Rule",
+      "items": [
+        "Lowercase start, 1\u201364 chars",
+        "Digits, hyphen, underscore ok"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Use",
+      "items": [
+        "Deck format and evidence keys",
+        "Migrator slug output"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Reject",
+      "items": [
+        "Non-strings always fail",
+        "Uppercase and spaces fail"
+      ]
+    }
+  ]
+}

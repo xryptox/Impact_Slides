@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\Users\\Ag1Le\\Documents\\Impact_Slides\\artifacts\\renderer_v3_file_architecture\\repairs.architecture.json",
+  "output": "C:\\Users\\Ag1Le\\Documents\\Impact_Slides\\artifacts\\renderer_v3_file_architecture\\repairs.html",
+  "specification": {
+    "sha256": "14ac20e0432dae71e91b267b0c2c6b223e91e544e2af10392e479c542060329f",
+    "bytes": 4567
+  },
+  "artifact": {
+    "sha256": "d7e2fde00b12155349b5b75a179a5a119ba6fc3e4da73e945b375370fa95ed40",
+    "bytes": 805535
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  },
+  "evidence": {
+    "verified": true,
+    "repository": "https://github.com/xryptox/Impact_Slides",
+    "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f",
+    "references": 5
+  }
+}

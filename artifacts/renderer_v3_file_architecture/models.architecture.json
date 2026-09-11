@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 models.py",
+    "locale": "en",
+    "output": "models.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "envelope",
+        "label": "Deck envelope",
+        "focus": [
+          "closed",
+          "deck",
+          "slides"
+        ],
+        "note": "ClosedModel forbids unknown fields and null placeholders."
+      },
+      {
+        "id": "layouts",
+        "label": "Layouts",
+        "focus": [
+          "deck",
+          "slides",
+          "payloads"
+        ],
+        "note": "Each slide discriminates a kernel payload type."
+      },
+      {
+        "id": "facts",
+        "label": "Facts",
+        "focus": [
+          "values",
+          "payloads"
+        ],
+        "note": "Semantic values, formats, and evidence are typed facts."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "raw",
+      "type": "external",
+      "label": "handoff dict",
+      "sublabel": "after validate",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "closed",
+      "type": "security",
+      "label": "ClosedModel",
+      "sublabel": "extra=forbid",
+      "tag": "D118",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 178,
+          "label": "ClosedModel",
+          "end_line": 191
+        }
+      ]
+    },
+    {
+      "id": "deck",
+      "type": "database",
+      "label": "Deck",
+      "sublabel": "envelope",
+      "tag": "D211",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 4350,
+          "label": "class Deck"
+        }
+      ]
+    },
+    {
+      "id": "slides",
+      "type": "backend",
+      "label": "Slide",
+      "sublabel": "layout_type",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 38,
+          "label": "LAYOUT_TYPES"
+        }
+      ]
+    },
+    {
+      "id": "payloads",
+      "type": "frontend",
+      "label": "payloads",
+      "sublabel": "charts tables cards",
+      "row": 1,
+      "col": 4
+    },
+    {
+      "id": "values",
+      "type": "database",
+      "label": "SemanticValue",
+      "sublabel": "D213 tagged",
+      "row": 2,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 417,
+          "label": "NumberValue"
+        }
+      ]
+    },
+    {
+      "id": "schema",
+      "type": "external",
+      "label": "JSON Schema",
+      "sublabel": "schema_export",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/schema_export.py",
+          "line": 13,
+          "label": "generate_schema"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "models.py",
+      "wraps": [
+        "closed",
+        "deck",
+        "slides",
+        "payloads",
+        "values"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-raw-closed",
+      "from": "raw",
+      "to": "closed",
+      "label": "validate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-closed-deck",
+      "from": "closed",
+      "to": "deck",
+      "label": "envelope"
+    },
+    {
+      "id": "c-deck-slides",
+      "from": "deck",
+      "to": "slides",
+      "label": "slides[]"
+    },
+    {
+      "id": "c-slides-payloads",
+      "from": "slides",
+      "to": "payloads",
+      "label": "discriminate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-deck-values",
+      "from": "deck",
+      "to": "values",
+      "label": "formats",
+      "labelDy": 24
+    },
+    {
+      "id": "c-deck-schema",
+      "from": "deck",
+      "to": "schema",
+      "label": "export"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Closed",
+      "items": [
+        "Unknown fields forbidden",
+        "null must be omitted, not sent"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Deck",
+      "items": [
+        "meta, sections, formats, evidence, slides",
+        "IDs must be semantic"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Kernel",
+      "items": [
+        "LAYOUT_TYPES is the closed set",
+        "Painters consume this model only"
+      ]
+    }
+  ]
+}

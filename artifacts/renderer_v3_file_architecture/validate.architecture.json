@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 validate.py",
+    "locale": "en",
+    "output": "validate.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "strict-path",
+        "label": "Strict path",
+        "focus": [
+          "raw",
+          "precheck",
+          "deck",
+          "result"
+        ],
+        "note": "Strict aggregates errors and never repairs."
+      },
+      {
+        "id": "repair-path",
+        "label": "Non-strict",
+        "focus": [
+          "raw",
+          "repairs",
+          "precheck",
+          "deck"
+        ],
+        "note": "Non-strict runs allowlisted repairs, then revalidates."
+      },
+      {
+        "id": "graphs",
+        "label": "Graphs",
+        "focus": [
+          "deck",
+          "graphs",
+          "result"
+        ],
+        "note": "Relationship layouts get closed graph/assignment checks."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "raw",
+      "type": "external",
+      "label": "raw dict",
+      "sublabel": "handoff JSON",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "entry",
+      "type": "security",
+      "label": "validate_handoff",
+      "sublabel": "strict default",
+      "tag": "D122",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 54,
+          "label": "validate_handoff",
+          "end_line": 72
+        }
+      ]
+    },
+    {
+      "id": "repairs",
+      "type": "backend",
+      "label": "repairs",
+      "sublabel": "non-strict only",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/repairs.py",
+          "line": 1907,
+          "label": "apply_allowlisted_repairs"
+        }
+      ]
+    },
+    {
+      "id": "precheck",
+      "type": "security",
+      "label": "_precheck",
+      "sublabel": "aggregate probes",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 343,
+          "label": "_precheck"
+        }
+      ]
+    },
+    {
+      "id": "deck",
+      "type": "database",
+      "label": "Deck.model_validate",
+      "sublabel": "typed Deck",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 4350,
+          "label": "class Deck"
+        }
+      ]
+    },
+    {
+      "id": "graphs",
+      "type": "backend",
+      "label": "relationship graphs",
+      "sublabel": "closed defects",
+      "row": 2,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 181,
+          "label": "analyze_relationship_structure"
+        }
+      ]
+    },
+    {
+      "id": "result",
+      "type": "external",
+      "label": "ValidationResult",
+      "sublabel": "deck + events",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 38,
+          "label": "ValidationResult",
+          "end_line": 51
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "validate.py",
+      "wraps": [
+        "entry",
+        "precheck",
+        "graphs"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "repairs.py",
+      "wraps": [
+        "repairs"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "models.py",
+      "wraps": [
+        "deck"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-raw-entry",
+      "from": "raw",
+      "to": "entry",
+      "label": "dict",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-entry-repairs",
+      "from": "entry",
+      "to": "repairs",
+      "label": "non-strict",
+      "variant": "dashed",
+      "labelDy": -28
+    },
+    {
+      "id": "c-entry-precheck",
+      "from": "entry",
+      "to": "precheck",
+      "label": "probe"
+    },
+    {
+      "id": "c-precheck-deck",
+      "from": "precheck",
+      "to": "deck",
+      "label": "pydantic"
+    },
+    {
+      "id": "c-deck-graphs",
+      "from": "deck",
+      "to": "graphs",
+      "label": "layouts",
+      "labelDy": 24
+    },
+    {
+      "id": "c-deck-result",
+      "from": "deck",
+      "to": "result",
+      "label": "paint input",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Contract",
+      "items": [
+        "Painters consume result.deck only",
+        "Raw dict is never a paint input"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Strict",
+      "items": [
+        "Aggregate detectable errors",
+        "Raise RendererValidationError"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Non-strict",
+      "items": [
+        "Allowlisted repairs only",
+        "Heatmap scale repair paints uncolored"
+      ]
+    }
+  ]
+}

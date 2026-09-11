@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 migrate.py",
+    "locale": "en",
+    "output": "migrate.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "inventory",
+        "label": "Inventory",
+        "focus": [
+          "legacy",
+          "entry",
+          "inventory",
+          "convert"
+        ],
+        "note": "Every D313 input gets one inventory disposition."
+      },
+      {
+        "id": "convert",
+        "label": "Convert",
+        "focus": [
+          "inventory",
+          "convert",
+          "validate"
+        ],
+        "note": "Only mechanically proven slides become v1 payloads."
+      },
+      {
+        "id": "write",
+        "label": "Write",
+        "focus": [
+          "validate",
+          "out"
+        ],
+        "note": "v1 marker withheld until unresolved is zero and validation is clean."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "legacy",
+      "type": "external",
+      "label": "legacy JSON",
+      "sublabel": "never mutated",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "entry",
+      "type": "backend",
+      "label": "migrate_handoff",
+      "sublabel": "offline",
+      "tag": "D119",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/migrate.py",
+          "line": 1312,
+          "label": "migrate_handoff"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "database",
+      "label": "LEGACY_INVENTORY",
+      "sublabel": "57 inputs",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/migrate.py",
+          "line": 29,
+          "label": "InventoryEntry"
+        }
+      ]
+    },
+    {
+      "id": "convert",
+      "type": "backend",
+      "label": "slide convert",
+      "sublabel": "or unresolved",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/migrate.py",
+          "line": 234,
+          "label": "MigrationResult"
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "type": "security",
+      "label": "validate_handoff",
+      "sublabel": "candidate gate",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 54,
+          "label": "validate_handoff"
+        }
+      ]
+    },
+    {
+      "id": "out",
+      "type": "external",
+      "label": "candidate + report",
+      "sublabel": "or --check",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/migrate.py",
+          "line": 1655,
+          "label": "CLI main"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "migrate.py",
+      "wraps": [
+        "entry",
+        "inventory",
+        "convert"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "validate.py",
+      "wraps": [
+        "validate"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-legacy-entry",
+      "from": "legacy",
+      "to": "entry",
+      "label": "read",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-entry-inventory",
+      "from": "entry",
+      "to": "inventory",
+      "label": "classify"
+    },
+    {
+      "id": "c-inventory-convert",
+      "from": "inventory",
+      "to": "convert",
+      "label": "deterministic",
+      "labelDy": 24
+    },
+    {
+      "id": "c-convert-validate",
+      "from": "convert",
+      "to": "validate",
+      "label": "v1 candidate"
+    },
+    {
+      "id": "c-validate-out",
+      "from": "validate",
+      "to": "out",
+      "label": "write / check",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Offline",
+      "items": [
+        "Never mutates sources or renderer_v2",
+        "Writes a separate candidate directory"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Inventory",
+      "items": [
+        "57 D313 inputs, one disposition each",
+        "human and failed proofs stay unresolved"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Marker",
+      "items": [
+        "handoff_v1.json only when clean",
+        "Otherwise handoff_candidate.json"
+      ]
+    }
+  ]
+}

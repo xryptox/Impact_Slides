@@ -2151,7 +2151,12 @@ def freeze_pie_donut(
     identity_colors: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Frozen radial mix plan: Chart.js doughnut + SVG wedges + D247 table."""
-    pad_x = PAD_R  # equal outside-name lanes (#322)
+    role_sizes = _role_sizes(chart)
+    label_px = role_sizes["ordinary_values"]
+    # Longest outside name owns both equal pads; the ring shrinks so names fit (#340).
+    # name_r = radius+10 and ±8 inset; leftover is pad - 10 - name_w when plot_w limits.
+    name_w_max = max(max(20.0, len(s.label) * label_px * 0.55) for s in chart.slices)
+    pad_x = max(PAD_R, int(math.ceil(name_w_max + 10.0)))
     plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - 2 * pad_x))
     plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
     cx = pad_x + plot_w / 2.0
@@ -2162,8 +2167,6 @@ def freeze_pie_donut(
     colors = _slice_fill_hex(chart, identity_colors)
     amounts = [Decimal(s.value.value) for s in chart.slices]
     total = sum(amounts, Decimal(0))
-    role_sizes = _role_sizes(chart)
-    label_px = role_sizes["ordinary_values"]
     navy = resolve_color("navy", role="text_on_light")
     white = resolve_color("white", role="text_on_dark")
     view_w = pad_x + plot_w + pad_x

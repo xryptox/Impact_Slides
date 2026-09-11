@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 diagnostics.py",
+    "locale": "en",
+    "output": "diagnostics.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "event-path",
+        "label": "Event path",
+        "focus": [
+          "caller",
+          "factory",
+          "codes",
+          "eventrec"
+        ],
+        "note": "event() rejects unknown codes, then builds DiagnosticEvent."
+      },
+      {
+        "id": "failure-path",
+        "label": "Failure path",
+        "focus": [
+          "factory",
+          "failure",
+          "report"
+        ],
+        "note": "Typed failures carry ordered events and to_report()."
+      },
+      {
+        "id": "order",
+        "label": "Order and merge",
+        "focus": [
+          "eventrec",
+          "sort",
+          "report"
+        ],
+        "note": "sort_events and merge_duplicate_events stabilize reports."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "kernel callers",
+      "sublabel": "validate / plan",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "factory",
+      "type": "backend",
+      "label": "event()",
+      "sublabel": "closed factory",
+      "tag": "D309",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 225,
+          "label": "event",
+          "end_line": 257
+        }
+      ]
+    },
+    {
+      "id": "codes",
+      "type": "database",
+      "label": "CLOSED_CODES",
+      "sublabel": "four catalogs",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 14,
+          "label": "code catalogs"
+        }
+      ]
+    },
+    {
+      "id": "eventrec",
+      "type": "database",
+      "label": "DiagnosticEvent",
+      "sublabel": "typed record",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 206,
+          "label": "DiagnosticEvent",
+          "end_line": 222
+        }
+      ]
+    },
+    {
+      "id": "sort",
+      "type": "backend",
+      "label": "sort + merge",
+      "sublabel": "stable report",
+      "row": 2,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 320,
+          "label": "sort_events"
+        },
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 347,
+          "label": "merge_duplicate_events"
+        }
+      ]
+    },
+    {
+      "id": "failure",
+      "type": "security",
+      "label": "typed failures",
+      "sublabel": "three classes",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 260,
+          "label": "failure types",
+          "end_line": 310
+        }
+      ]
+    },
+    {
+      "id": "report",
+      "type": "external",
+      "label": "to_report()",
+      "sublabel": "JSON payload",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 284,
+          "label": "to_report"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "diagnostics.py",
+      "wraps": [
+        "factory",
+        "codes",
+        "eventrec",
+        "sort",
+        "failure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-caller-factory",
+      "from": "caller",
+      "to": "factory",
+      "label": "emit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-factory-codes",
+      "from": "factory",
+      "to": "codes",
+      "label": "allowlist"
+    },
+    {
+      "id": "c-factory-event",
+      "from": "factory",
+      "to": "eventrec",
+      "label": "build"
+    },
+    {
+      "id": "c-event-sort",
+      "from": "eventrec",
+      "to": "sort",
+      "label": "order",
+      "labelDy": 24
+    },
+    {
+      "id": "c-event-fail",
+      "from": "eventrec",
+      "to": "failure",
+      "label": "raise"
+    },
+    {
+      "id": "c-fail-report",
+      "from": "failure",
+      "to": "report",
+      "label": "dump",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Catalog",
+      "items": [
+        "Validation, repair, plan, publication",
+        "Unknown codes raise ValueError"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Event",
+      "items": [
+        "Closed action and result names",
+        "Optional expected contract"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Failures",
+      "items": [
+        "Validation, configuration, publication",
+        "No free-form stderr interface"
+      ]
+    }
+  ]
+}

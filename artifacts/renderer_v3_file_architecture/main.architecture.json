@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 __main__.py",
+    "locale": "en",
+    "output": "__main__.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "module-entry",
+        "label": "Module entry",
+        "focus": [
+          "python",
+          "mainmod",
+          "climain",
+          "exit"
+        ],
+        "note": "python -m impact_slides.renderer_v3 forwards to cli.main."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "python",
+      "type": "external",
+      "label": "python -m",
+      "sublabel": "module run",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "mainmod",
+      "type": "backend",
+      "label": "__main__",
+      "sublabel": "thin shim",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/__main__.py",
+          "line": 1,
+          "label": "module entry",
+          "end_line": 6
+        }
+      ]
+    },
+    {
+      "id": "climain",
+      "type": "backend",
+      "label": "cli.main",
+      "sublabel": "CLI",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/cli.py",
+          "line": 66,
+          "label": "main"
+        }
+      ]
+    },
+    {
+      "id": "exit",
+      "type": "external",
+      "label": "SystemExit",
+      "sublabel": "process code",
+      "row": 1,
+      "col": 3
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "__main__.py",
+      "wraps": [
+        "mainmod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "cli.py",
+      "wraps": [
+        "climain"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-py-main",
+      "from": "python",
+      "to": "mainmod",
+      "label": "-m",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-main-cli",
+      "from": "mainmod",
+      "to": "climain",
+      "label": "main()"
+    },
+    {
+      "id": "c-cli-exit",
+      "from": "climain",
+      "to": "exit",
+      "label": "raise",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Role",
+      "items": [
+        "Six-line module entry",
+        "No flags parsed here"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Handoff",
+      "items": [
+        "Always calls cli.main",
+        "Exit code is SystemExit"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Limit",
+      "items": [
+        "Schema and render live in cli.py"
+      ]
+    }
+  ]
+}

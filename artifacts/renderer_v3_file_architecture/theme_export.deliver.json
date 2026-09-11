@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\Users\\Ag1Le\\Documents\\Impact_Slides\\artifacts\\renderer_v3_file_architecture\\theme_export.architecture.json",
+  "output": "C:\\Users\\Ag1Le\\Documents\\Impact_Slides\\artifacts\\renderer_v3_file_architecture\\theme_export.html",
+  "specification": {
+    "sha256": "6c096f338871c8624f34193cbe642702938c0cfec264b5ea584d27ef60a9f8fc",
+    "bytes": 3755
+  },
+  "artifact": {
+    "sha256": "2c4d50804c0c3aa4283655d8abe98111dc9390ec82a7ef2f082499f2940199ec",
+    "bytes": 801835
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  },
+  "evidence": {
+    "verified": true,
+    "repository": "https://github.com/xryptox/Impact_Slides",
+    "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f",
+    "references": 4
+  }
+}

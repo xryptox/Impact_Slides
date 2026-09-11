@@ -540,8 +540,8 @@ def metric_strip(surface, metrics):
     return {"support_type": "metric_strip", "surface_id": surface, "metrics": metrics}
 
 
-def donut(surface, heading, slices):
-    return {
+def donut(surface, heading, slices, typography=None):
+    d = {
         "type": "chart",
         "surface_id": surface,
         "chart_type": "donut",
@@ -555,6 +555,9 @@ def donut(surface, heading, slices):
             for sid, lab, val in slices
         ],
     }
+    if typography is not None:
+        d["typography"] = typography
+    return d
 
 
 def build():
@@ -2793,6 +2796,8 @@ def build():
     )
 
     # 27 two mix donuts. Loan 68/12/20; Receivables 28/14/24/34. Do not kernel-enforce sum-to-100.
+    # #340/#339: smaller ring frees outside names at ordinary_values 24.
+    s27_type = {"ordinary_values": 24}
     slides.append(
         ordinary(
             27,
@@ -2809,6 +2814,7 @@ def build():
                                 ("intl", "Intl. Consumer", "12"),
                                 ("sb", "Small Business", "20"),
                             ],
+                            typography=s27_type,
                         )
                     ),
                     pane(
@@ -2821,6 +2827,7 @@ def build():
                                 ("corp", "Corporate Card", "24"),
                                 ("sb", "Small Business", "34"),
                             ],
+                            typography=s27_type,
                         )
                     ),
                 ]

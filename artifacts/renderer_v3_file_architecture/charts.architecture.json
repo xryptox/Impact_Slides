@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 charts.py",
+    "locale": "en",
+    "output": "charts.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "freeze",
+        "label": "Freeze",
+        "focus": [
+          "visual",
+          "dispatch",
+          "axis",
+          "html"
+        ],
+        "note": "freeze_chart dispatches by chart_type, then attaches facts."
+      },
+      {
+        "id": "paint",
+        "label": "Paint",
+        "focus": [
+          "dispatch",
+          "html",
+          "svg"
+        ],
+        "note": "HTML is canvas plus noscript SVG plus a semantic table."
+      },
+      {
+        "id": "heatmap",
+        "label": "Heatmap",
+        "focus": [
+          "visual",
+          "heatmap",
+          "html"
+        ],
+        "note": "Heatmaps freeze separately and paint native HTML."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "visual",
+      "type": "external",
+      "label": "ChartVisual",
+      "sublabel": "from DeckPlan",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "dispatch",
+      "type": "backend",
+      "label": "freeze_chart",
+      "sublabel": "by chart_type",
+      "tag": "D238",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/charts.py",
+          "line": 2321,
+          "label": "freeze_chart",
+          "end_line": 2351
+        }
+      ]
+    },
+    {
+      "id": "axis",
+      "type": "backend",
+      "label": "axis freezes",
+      "sublabel": "line bar combo water",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/charts.py",
+          "line": 142,
+          "label": "freeze_line_chart"
+        }
+      ]
+    },
+    {
+      "id": "heatmap",
+      "type": "backend",
+      "label": "freeze_heatmap",
+      "sublabel": "native HTML",
+      "row": 2,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/charts.py",
+          "line": 6657,
+          "label": "freeze_heatmap"
+        }
+      ]
+    },
+    {
+      "id": "html",
+      "type": "frontend",
+      "label": "paint_chart_html",
+      "sublabel": "canvas + table",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/charts.py",
+          "line": 2354,
+          "label": "paint_chart_html"
+        }
+      ]
+    },
+    {
+      "id": "svg",
+      "type": "frontend",
+      "label": "paint_chart_svg",
+      "sublabel": "noscript SVG",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/charts.py",
+          "line": 2420,
+          "label": "paint_chart_svg"
+        }
+      ]
+    },
+    {
+      "id": "theme",
+      "type": "database",
+      "label": "theme tokens",
+      "sublabel": "resolve_color",
+      "row": 2,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 193,
+          "label": "resolve_color"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "charts.py",
+      "wraps": [
+        "dispatch",
+        "axis",
+        "heatmap",
+        "html",
+        "svg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "theme",
+      "wraps": [
+        "theme"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-visual-dispatch",
+      "from": "visual",
+      "to": "dispatch",
+      "label": "chart",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-dispatch-axis",
+      "from": "dispatch",
+      "to": "axis",
+      "label": "axis types",
+      "labelDy": -24
+    },
+    {
+      "id": "c-visual-heat",
+      "from": "visual",
+      "to": "heatmap",
+      "label": "heatmap",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "c-dispatch-html",
+      "from": "dispatch",
+      "to": "html",
+      "label": "plan",
+      "labelDy": 24
+    },
+    {
+      "id": "c-html-svg",
+      "from": "html",
+      "to": "svg",
+      "label": "noscript",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-theme-html",
+      "from": "theme",
+      "to": "html",
+      "label": "hex"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Freeze",
+      "items": [
+        "Geometry frozen before paint",
+        "Facts attach context and measurements"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dual paint",
+      "items": [
+        "Chart.js canvas plus noscript SVG",
+        "One D247 semantic table"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Heatmap",
+      "items": [
+        "Native HTML, no Chart.js",
+        "No measurements or data_point anchors"
+      ]
+    }
+  ]
+}

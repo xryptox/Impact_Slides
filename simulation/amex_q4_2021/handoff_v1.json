@@ -6092,7 +6092,10 @@
                     "format_id": "pct_0"
                   }
                 }
-              ]
+              ],
+              "typography": {
+                "ordinary_values": 24
+              }
             }
           },
           {
@@ -6138,7 +6141,10 @@
                     "format_id": "pct_0"
                   }
                 }
-              ]
+              ],
+              "typography": {
+                "ordinary_values": 24
+              }
             }
           }
         ]

@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 publish.py",
+    "locale": "en",
+    "output": "publish.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "html",
+        "label": "HTML shell",
+        "focus": [
+          "plan",
+          "html",
+          "body",
+          "charts"
+        ],
+        "note": "build_presentation_html embeds fonts, CSS, and painted slides."
+      },
+      {
+        "id": "paint",
+        "label": "Paint body",
+        "focus": [
+          "html",
+          "body",
+          "charts"
+        ],
+        "note": "_paint_slide_body dispatches by layout_type."
+      },
+      {
+        "id": "tx",
+        "label": "Transaction",
+        "focus": [
+          "html",
+          "stage",
+          "swap"
+        ],
+        "note": "Five artifacts stage in memory, then directory-swap."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "plan",
+      "type": "external",
+      "label": "DeckPlan",
+      "sublabel": "frozen sizes",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "html",
+      "type": "frontend",
+      "label": "presentation HTML",
+      "sublabel": "shell + CSS",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 71,
+          "label": "build_presentation_html"
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "type": "frontend",
+      "label": "_paint_slide_body",
+      "sublabel": "layout dispatch",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 698,
+          "label": "_paint_slide_body"
+        }
+      ]
+    },
+    {
+      "id": "charts",
+      "type": "frontend",
+      "label": "chart painters",
+      "sublabel": "charts.py",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/charts.py",
+          "line": 2354,
+          "label": "paint_chart_html"
+        }
+      ]
+    },
+    {
+      "id": "stage",
+      "type": "backend",
+      "label": "stage_artifacts",
+      "sublabel": "five bytes maps",
+      "tag": "D250",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 3685,
+          "label": "stage_artifacts",
+          "end_line": 3730
+        }
+      ]
+    },
+    {
+      "id": "swap",
+      "type": "external",
+      "label": "publish_transaction",
+      "sublabel": "directory swap",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 3732,
+          "label": "publish_transaction"
+        }
+      ]
+    },
+    {
+      "id": "theme",
+      "type": "database",
+      "label": "theme CSS",
+      "sublabel": "boardroom_amex",
+      "row": 2,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 222,
+          "label": "generate_theme_css"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "publish.py",
+      "wraps": [
+        "html",
+        "body",
+        "stage"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "charts.py",
+      "wraps": [
+        "charts"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "theme",
+      "wraps": [
+        "theme"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-plan-html",
+      "from": "plan",
+      "to": "html",
+      "label": "role_sizes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-html-body",
+      "from": "html",
+      "to": "body",
+      "label": "slides"
+    },
+    {
+      "id": "c-body-charts",
+      "from": "body",
+      "to": "charts",
+      "label": "chart layouts"
+    },
+    {
+      "id": "c-theme-html",
+      "from": "theme",
+      "to": "html",
+      "label": "CSS",
+      "labelAt": [
+        346,
+        458
+      ]
+    },
+    {
+      "id": "c-stage-swap",
+      "from": "stage",
+      "to": "swap",
+      "label": "atomic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-body-stage",
+      "from": "body",
+      "to": "stage",
+      "label": "bytes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Shell",
+      "items": [
+        "Self-contained 1920\u00d71080 stage",
+        "Embedded Source Sans 3 and IBM Plex"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Artifacts",
+      "items": [
+        "HTML, notes, evidence, run_meta, schema",
+        "Stage complete set, then swap"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Paint",
+      "items": [
+        "Inline frozen role_sizes only",
+        "Chart.js inlined unless svg_only"
+      ]
+    }
+  ]
+}

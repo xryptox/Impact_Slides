@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 __init__.py",
+    "locale": "en",
+    "output": "__init__.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "public-api",
+        "label": "Public API",
+        "focus": ["caller", "pkg", "render", "validate"],
+        "note": "Callers import render_deck and validate_handoff from the package."
+      },
+      {
+        "id": "errors",
+        "label": "Typed errors",
+        "focus": ["pkg", "errors", "version"],
+        "note": "Failure types and version are re-exported, not implemented here."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "import package",
+      "row": 0,
+      "col": 0
+    },
+    {
+      "id": "pkg",
+      "type": "backend",
+      "label": "__init__",
+      "sublabel": "re-export surface",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/__init__.py",
+          "line": 1,
+          "label": "public surface",
+          "end_line": 28
+        }
+      ]
+    },
+    {
+      "id": "render",
+      "type": "backend",
+      "label": "render_deck",
+      "sublabel": "render.py",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/render.py",
+          "line": 27,
+          "label": "render_deck"
+        }
+      ]
+    },
+    {
+      "id": "errors",
+      "type": "messagebus",
+      "label": "typed errors",
+      "sublabel": "diagnostics.py",
+      "row": 1,
+      "col": 0,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 295,
+          "label": "failure types",
+          "end_line": 310
+        }
+      ]
+    },
+    {
+      "id": "version",
+      "type": "database",
+      "label": "__version__",
+      "sublabel": "3.0.0",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/_version.py",
+          "line": 1,
+          "label": "__version__"
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "type": "security",
+      "label": "validate_handoff",
+      "sublabel": "validate.py",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 54,
+          "label": "validate_handoff"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "__init__.py",
+      "wraps": ["pkg"]
+    },
+    {
+      "kind": "region",
+      "label": "owned elsewhere",
+      "wraps": ["render", "validate", "errors", "version"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-caller-pkg",
+      "from": "caller",
+      "to": "pkg",
+      "label": "import",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-pkg-render",
+      "from": "pkg",
+      "to": "render",
+      "label": "API"
+    },
+    {
+      "id": "c-pkg-validate",
+      "from": "pkg",
+      "to": "validate",
+      "label": "API",
+      "labelDy": 24
+    },
+    {
+      "id": "c-pkg-errors",
+      "from": "pkg",
+      "to": "errors",
+      "label": "errors",
+      "labelDy": 24
+    },
+    {
+      "id": "c-pkg-version",
+      "from": "pkg",
+      "to": "version",
+      "label": "version",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Surface",
+      "items": [
+        "Public names live in __all__",
+        "No rendering logic in this file"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Exports",
+      "items": [
+        "render_deck and validate_handoff",
+        "SELF_CONTAINED delivery constant"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Failures",
+      "items": [
+        "Three typed renderer errors",
+        "Version is 3.0.0"
+      ]
+    }
+  ]
+}

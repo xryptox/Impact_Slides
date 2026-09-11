@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 format.py",
+    "locale": "en",
+    "output": "format.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "format-path",
+        "label": "Format path",
+        "focus": [
+          "value",
+          "dispatch",
+          "number",
+          "out"
+        ],
+        "note": "One tagged value becomes visible and accessible text."
+      },
+      {
+        "id": "number-path",
+        "label": "Number path",
+        "focus": [
+          "dispatch",
+          "registry",
+          "number",
+          "out"
+        ],
+        "note": "Numbers use the deck format registry, never float."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "value",
+      "type": "external",
+      "label": "SemanticValue",
+      "sublabel": "D213 tagged",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "dispatch",
+      "type": "backend",
+      "label": "format value",
+      "sublabel": "kind switch",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/format.py",
+          "line": 40,
+          "label": "format_semantic_value",
+          "end_line": 70
+        }
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "NumberFormat",
+      "sublabel": "deck registry",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 224,
+          "label": "NumberFormat"
+        }
+      ]
+    },
+    {
+      "id": "number",
+      "type": "backend",
+      "label": "_format_number",
+      "sublabel": "Decimal scale",
+      "tag": "D77",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/format.py",
+          "line": 73,
+          "label": "_format_number",
+          "end_line": 129
+        }
+      ]
+    },
+    {
+      "id": "out",
+      "type": "frontend",
+      "label": "FormattedValue",
+      "sublabel": "visible + a11y",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/format.py",
+          "line": 31,
+          "label": "FormattedValue",
+          "end_line": 37
+        }
+      ]
+    },
+    {
+      "id": "missing",
+      "type": "messagebus",
+      "label": "missing token",
+      "sublabel": "em dash",
+      "row": 2,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/format.py",
+          "line": 12,
+          "label": "MISSING_VISIBLE"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "format.py",
+      "wraps": [
+        "dispatch",
+        "number",
+        "out",
+        "missing"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "models.py",
+      "wraps": [
+        "registry"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-value-dispatch",
+      "from": "value",
+      "to": "dispatch",
+      "label": "kind",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-dispatch-number",
+      "from": "dispatch",
+      "to": "number",
+      "label": "number / range"
+    },
+    {
+      "id": "c-registry-number",
+      "from": "registry",
+      "to": "number",
+      "label": "format_id",
+      "labelDy": 24
+    },
+    {
+      "id": "c-dispatch-missing",
+      "from": "dispatch",
+      "to": "missing",
+      "label": "missing",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "c-number-out",
+      "from": "number",
+      "to": "out",
+      "label": "text",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-missing-out",
+      "from": "missing",
+      "to": "out",
+      "label": "dash"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Kinds",
+      "items": [
+        "missing, text, number, range",
+        "Unknown kinds raise TypeError"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Numbers",
+      "items": [
+        "Decimal, half-away-from-zero",
+        "Units: usd, percent, pp, bps"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "A11y",
+      "items": [
+        "Visible and accessible strings",
+        "Missing is em dash / Missing"
+      ]
+    }
+  ]
+}

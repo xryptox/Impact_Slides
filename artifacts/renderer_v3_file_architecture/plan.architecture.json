@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 plan.py",
+    "locale": "en",
+    "output": "plan.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "measure",
+        "label": "Measure",
+        "focus": [
+          "deck",
+          "collect",
+          "measure",
+          "sync"
+        ],
+        "note": "Collect surfaces, measure independently, then synchronize."
+      },
+      {
+        "id": "freeze",
+        "label": "Freeze",
+        "focus": [
+          "sync",
+          "geometry",
+          "seal"
+        ],
+        "note": "Allocate geometry and seal digests before any paint."
+      },
+      {
+        "id": "overflow",
+        "label": "Overflow",
+        "focus": [
+          "measure",
+          "seal"
+        ],
+        "note": "Strict overflow raises; non-strict sets fallback."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "deck",
+      "type": "external",
+      "label": "typed Deck",
+      "sublabel": "validate result",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "collect",
+      "type": "backend",
+      "label": "_collect_surfaces",
+      "sublabel": "one per slot",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 544,
+          "label": "_collect_surfaces"
+        }
+      ]
+    },
+    {
+      "id": "measure",
+      "type": "backend",
+      "label": "_measure_surface",
+      "sublabel": "design stage",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 1345,
+          "label": "_measure_surface"
+        }
+      ]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "_synchronize",
+      "sublabel": "shared roles",
+      "tag": "D69",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 1738,
+          "label": "_synchronize"
+        }
+      ]
+    },
+    {
+      "id": "geometry",
+      "type": "frontend",
+      "label": "_allocate_geometry",
+      "sublabel": "whole pixels",
+      "row": 2,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 990,
+          "label": "_allocate_geometry"
+        }
+      ]
+    },
+    {
+      "id": "seal",
+      "type": "database",
+      "label": "DeckPlan",
+      "sublabel": "frozen sizes",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 213,
+          "label": "SurfacePlan"
+        },
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 299,
+          "label": "DeckPlan"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "plan.py",
+      "wraps": [
+        "collect",
+        "measure",
+        "sync",
+        "geometry",
+        "seal"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-deck-collect",
+      "from": "deck",
+      "to": "collect",
+      "label": "slides",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-collect-measure",
+      "from": "collect",
+      "to": "measure",
+      "label": "surfaces"
+    },
+    {
+      "id": "c-measure-sync",
+      "from": "measure",
+      "to": "sync",
+      "label": "sizes"
+    },
+    {
+      "id": "c-sync-geometry",
+      "from": "sync",
+      "to": "geometry",
+      "label": "fit",
+      "labelDy": 24
+    },
+    {
+      "id": "c-geometry-seal",
+      "from": "geometry",
+      "to": "seal",
+      "label": "digests",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Freeze",
+      "items": [
+        "Whole-pixel role_sizes before paint",
+        "Painters never replan"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Sync",
+      "items": [
+        "Equivalent roles share one size",
+        "Invalid mixed sync groups fail strict"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Overflow",
+      "items": [
+        "Strict raises validation.fit",
+        "Non-strict sets fallback_unresolved"
+      ]
+    }
+  ]
+}

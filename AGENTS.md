@@ -107,5 +107,5 @@ When the user requests a durable behavior change, record it here or in the relev
 - `tests/AGENTS.md` — pytest suite, fixtures, CI expectations
 - `wiki/AGENTS.md` — historical archive + stale-doc marker policy; generated layout index; live `AGENT_LEARNINGS.md` pointer
 - `scripts/AGENTS.md` — repo tooling (`gen_layout_index.py`, helpers)
-- `artifacts/AGENTS.md` — committed reproducible capture evidence; children cover the #156 slide-27 recapture and the D315 renderer-3.0.0 release bundle
+- `artifacts/AGENTS.md` — committed reproducible capture evidence; children cover the #156 slide-27 recapture, the D315 renderer-3.0.0 release bundle, and renderer_v3 Archify diagrams
 - Root-owned: `CONTEXT.md`, `README.md`, `AGENTS.md`, `pytest.ini`, `requirements-ci.txt`, `.github/`, root `step*.py` entry shims, `config.example.yaml`

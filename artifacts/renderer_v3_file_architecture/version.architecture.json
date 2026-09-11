@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "renderer_v3 _version.py",
+    "locale": "en",
+    "output": "_version.py.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "version-flow",
+        "label": "Version flow",
+        "focus": [
+          "const",
+          "pkg",
+          "cli",
+          "html"
+        ],
+        "note": "One string feeds package, CLI, failures, and HTML generator meta."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "const",
+      "type": "database",
+      "label": "__version__",
+      "sublabel": "3.0.0",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/_version.py",
+          "line": 1,
+          "label": "__version__"
+        }
+      ]
+    },
+    {
+      "id": "pkg",
+      "type": "backend",
+      "label": "package",
+      "sublabel": "__init__.py",
+      "row": 0,
+      "col": 0,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/__init__.py",
+          "line": 16,
+          "label": "import version"
+        }
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "backend",
+      "label": "CLI --version",
+      "sublabel": "cli.py",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/cli.py",
+          "line": 20,
+          "label": "build_parser"
+        }
+      ]
+    },
+    {
+      "id": "fail",
+      "type": "messagebus",
+      "label": "failure reports",
+      "sublabel": "diagnostics.py",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/diagnostics.py",
+          "line": 265,
+          "label": "renderer_version"
+        }
+      ]
+    },
+    {
+      "id": "html",
+      "type": "frontend",
+      "label": "HTML generator",
+      "sublabel": "publish.py",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 71,
+          "label": "generator meta"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "_version.py",
+      "wraps": [
+        "const"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "consumers",
+      "wraps": [
+        "pkg",
+        "cli",
+        "fail",
+        "html"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-const-pkg",
+      "from": "const",
+      "to": "pkg",
+      "label": "export"
+    },
+    {
+      "id": "c-const-cli",
+      "from": "const",
+      "to": "cli",
+      "label": "--version"
+    },
+    {
+      "id": "c-const-fail",
+      "from": "const",
+      "to": "fail",
+      "label": "stamp",
+      "labelDy": 24
+    },
+    {
+      "id": "c-const-html",
+      "from": "const",
+      "to": "html",
+      "label": "meta",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Source",
+      "items": [
+        "Single assignment, no logic",
+        "Canonical renderer version"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Consumers",
+      "items": [
+        "Package export and CLI",
+        "Failure reports and HTML meta"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Rule",
+      "items": [
+        "Do not duplicate the string"
+      ]
+    }
+  ]
+}

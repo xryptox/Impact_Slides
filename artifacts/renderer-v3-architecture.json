@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Renderer v3 kernel",
+    "locale": "en",
+    "output": "renderer-v3-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/xryptox/Impact_Slides",
+      "provider": "github",
+      "revision": "5492f72e95fea8b077e27dd72ebac3256b03307f"
+    },
+    "views": [
+      {
+        "id": "render-path",
+        "label": "Render path",
+        "focus": ["handoff", "api", "validate", "plan", "publish"],
+        "note": "One strict call: validate, freeze, then atomic five-artifact publish."
+      },
+      {
+        "id": "typed-deck",
+        "label": "Typed Deck",
+        "focus": ["validate", "models", "repairs", "plan"],
+        "note": "Painters consume result.deck only; repairs run solely on the non-strict path."
+      },
+      {
+        "id": "paint-publish",
+        "label": "Paint and publish",
+        "focus": ["plan", "publish", "theme"],
+        "note": "Frozen role_sizes plus boardroom_amex tokens paint HTML, SVG, and Chart.js."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 96,
+    "gapY": 88,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "handoff",
+      "type": "external",
+      "label": "Handoff JSON",
+      "sublabel": "schema-v1",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "render_deck",
+      "sublabel": "CLI + API",
+      "tag": "strict default",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/render.py",
+          "line": 26,
+          "end_line": 47,
+          "label": "render_deck"
+        },
+        {
+          "path": "impact_slides/renderer_v3/cli.py",
+          "line": 66,
+          "label": "CLI main"
+        },
+        {
+          "path": "impact_slides/renderer_v3/__init__.py",
+          "line": 1,
+          "end_line": 28,
+          "label": "public surface"
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "type": "security",
+      "label": "validate_handoff",
+      "sublabel": "typed Deck",
+      "tag": "D122",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/validate.py",
+          "line": 54,
+          "end_line": 72,
+          "label": "validate_handoff"
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "type": "backend",
+      "label": "plan_deck",
+      "sublabel": "measure + freeze",
+      "tag": "D69",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/plan.py",
+          "line": 310,
+          "end_line": 318,
+          "label": "plan_deck"
+        }
+      ]
+    },
+    {
+      "id": "publish",
+      "type": "frontend",
+      "label": "publish",
+      "sublabel": "five artifacts",
+      "tag": "D250",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/publish.py",
+          "line": 3685,
+          "end_line": 3732,
+          "label": "stage_artifacts"
+        },
+        {
+          "path": "impact_slides/renderer_v3/charts.py",
+          "line": 2354,
+          "label": "paint_chart_html"
+        }
+      ]
+    },
+    {
+      "id": "migrate",
+      "type": "backend",
+      "label": "Migrator",
+      "sublabel": "legacy to v1",
+      "tag": "offline",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/migrate.py",
+          "line": 1,
+          "end_line": 20,
+          "label": "migrate"
+        }
+      ]
+    },
+    {
+      "id": "repairs",
+      "type": "backend",
+      "label": "repairs",
+      "sublabel": "allowlisted only",
+      "row": 2,
+      "col": 1,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/repairs.py",
+          "line": 1907,
+          "label": "apply_allowlisted_repairs"
+        }
+      ]
+    },
+    {
+      "id": "models",
+      "type": "database",
+      "label": "Deck model",
+      "sublabel": "models.py",
+      "tag": "only paint input",
+      "row": 2,
+      "col": 2,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/models.py",
+          "line": 4350,
+          "label": "class Deck"
+        },
+        {
+          "path": "impact_slides/renderer_v3/schema_export.py",
+          "line": 13,
+          "end_line": 28,
+          "label": "schema export"
+        }
+      ]
+    },
+    {
+      "id": "theme",
+      "type": "frontend",
+      "label": "boardroom_amex",
+      "sublabel": "theme tokens",
+      "row": 2,
+      "col": 4,
+      "sources": [
+        {
+          "path": "impact_slides/renderer_v3/theme/__init__.py",
+          "line": 12,
+          "label": "THEME_ID"
+        },
+        {
+          "path": "impact_slides/renderer_v3/theme_export.py",
+          "line": 1,
+          "end_line": 10,
+          "label": "theme CSS export"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "renderer_v3 kernel",
+      "wraps": ["api", "validate", "plan", "publish", "repairs", "models", "theme"]
+    },
+    {
+      "kind": "region",
+      "label": "offline migrator",
+      "wraps": ["migrate"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "handoff-to-api",
+      "from": "handoff",
+      "to": "api",
+      "label": "JSON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-validate",
+      "from": "api",
+      "to": "validate",
+      "label": "validate"
+    },
+    {
+      "id": "validate-to-plan",
+      "from": "validate",
+      "to": "plan",
+      "label": "Deck",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plan-to-publish",
+      "from": "plan",
+      "to": "publish",
+      "label": "frozen sizes"
+    },
+    {
+      "id": "validate-to-models",
+      "from": "validate",
+      "to": "models",
+      "label": "typed Deck",
+      "labelDy": 24
+    },
+    {
+      "id": "validate-to-repairs",
+      "from": "validate",
+      "to": "repairs",
+      "label": "non-strict",
+      "variant": "dashed"
+    },
+    {
+      "id": "publish-to-theme",
+      "from": "publish",
+      "to": "theme",
+      "label": "tokens",
+      "labelDy": 24
+    },
+    {
+      "id": "migrate-to-validate",
+      "from": "migrate",
+      "to": "validate",
+      "label": "v1 candidate",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Kernel",
+      "items": [
+        "Public API is render_deck plus validate_handoff",
+        "Painters consume the typed Deck only",
+        "plan_deck freezes whole-pixel role sizes before paint"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Publication",
+      "items": [
+        "Five artifacts: HTML, notes, evidence, run_meta, schema",
+        "Stage in memory, then directory-swap (D250)",
+        "boardroom_amex tokens plus vendored Chart.js"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Isolation",
+      "items": [
+        "Must not import renderer_v2",
+        "Migrator is offline and never mutates v2",
+        "Strict is default; repairs are allowlisted only"
+      ]
+    }
+  ]
+}
