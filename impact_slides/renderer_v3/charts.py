@@ -2154,121 +2154,176 @@ def freeze_pie_donut(
     role_sizes = _role_sizes(chart)
     label_px = role_sizes["ordinary_values"]
     # Longest outside name owns both equal pads; the ring shrinks so names fit (#340).
-    # name_r = radius+10 and ±8 inset; leftover is pad - 10 - name_w when plot_w limits.
+    # Frozen radius is the Chart.js disk (plot/2). Outside AABB must clear it (#341).
     name_w_max = max(max(20.0, len(s.label) * label_px * 0.55) for s in chart.slices)
-    pad_x = max(PAD_R, int(math.ceil(name_w_max + 10.0)))
-    plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - 2 * pad_x))
-    plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
-    cx = pad_x + plot_w / 2.0
-    cy = PAD_T + plot_h / 2.0
-    radius = min(plot_w, plot_h) / 2.0 - 8.0
-    cutout = 0.0 if chart.chart_type == "pie" else DONUT_CUTOUT
-    inner_r = radius * cutout
+    max_pad = max(PAD_R, (box_w - PLOT_FLOOR_W) // 2)
+    pad_x = min(max(PAD_R, int(math.ceil(name_w_max + 10.0))), max_pad)
     colors = _slice_fill_hex(chart, identity_colors)
     amounts = [Decimal(s.value.value) for s in chart.slices]
     total = sum(amounts, Decimal(0))
     navy = resolve_color("navy", role="text_on_light")
     white = resolve_color("white", role="text_on_dark")
-    view_w = pad_x + plot_w + pad_x
-    view_h = PAD_T + plot_h + PAD_B
-    slices: list[dict[str, Any]] = []
-    placements: list[dict[str, Any]] = []
-    label_overflow = False
-    start = -math.pi / 2.0
-    for i, sl in enumerate(chart.slices):
-        fv = format_semantic_value(sl.value, formats)
-        amount = amounts[i]
-        frac = float(amount / total) if total > 0 else 1.0 / len(chart.slices)
-        sweep = frac * 2.0 * math.pi
-        mid = start + sweep / 2.0
-        color = colors[i]
-        ink = white if contrast_ratio(white, color) >= 4.5 else navy
-        # Mid-wedge point stays the fact-anchor; names sit outside the ring.
-        label_r = inner_r + (radius - inner_r) * 0.62 if radius > inner_r else radius * 0.62
-        cos_m, sin_m = math.cos(mid), math.sin(mid)
-        name_r = radius + 10.0
-        name_x = cx + cos_m * name_r
-        name_y = cy + sin_m * name_r
-        name_anchor = "start" if cos_m >= 0 else "end"
-        name_x += 8.0 if name_anchor == "start" else -8.0
-        value_inside = frac + 1e-12 >= _SLICE_VALUE_INSIDE_MIN_FRAC
-        if value_inside:
-            value_x = cx + cos_m * label_r
-            value_y = cy + sin_m * label_r
-            value_ink = ink
-            value_anchor = "middle"
+    cutout = 0.0 if chart.chart_type == "pie" else DONUT_CUTOUT
+
+    def _label_box(
+        x: float, y: float, w: float, anchor: str
+    ) -> tuple[float, float, float, float]:
+        if anchor == "start":
+            left, right = x, x + w
+        elif anchor == "end":
+            left, right = x - w, x
         else:
-            value_x = name_x
-            value_y = name_y + (label_px if sin_m >= 0 else -label_px)
-            value_ink = navy
-            value_anchor = name_anchor
-        name_w = max(20.0, len(sl.label) * label_px * 0.55)
-        val_w = max(20.0, len(fv.visible) * label_px * 0.55)
+            left, right = x - w / 2.0, x + w / 2.0
+        return left, y - label_px / 2.0, right, y + label_px / 2.0
 
-        def _fits(x: float, y: float, w: float, anchor: str) -> bool:
-            if anchor == "start":
-                left, right = x, x + w
-            elif anchor == "end":
-                left, right = x - w, x
-            else:
-                left, right = x - w / 2.0, x + w / 2.0
-            return (
-                left >= 0
-                and right <= view_w
-                and y - label_px / 2.0 >= 0
-                and y + label_px / 2.0 <= view_h
+    def _layout(pad: int) -> tuple[bool, list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+        plot_w = max(PLOT_FLOOR_W, min(PLOT_W, box_w - 2 * pad))
+        plot_h = max(PLOT_FLOOR_H, min(PLOT_H, box_h - PAD_T - PAD_B - 40))
+        cx = pad + plot_w / 2.0
+        cy = PAD_T + plot_h / 2.0
+        radius = min(plot_w, plot_h) / 2.0
+        inner_r = radius * cutout
+        view_w = pad + plot_w + pad
+        view_h = PAD_T + plot_h + PAD_B
+
+        def _clears_disk(box: tuple[float, float, float, float]) -> bool:
+            left, top, right, bottom = box
+            qx = min(max(cx, left), right)
+            qy = min(max(cy, top), bottom)
+            return math.hypot(qx - cx, qy - cy) >= radius
+
+        def _fits_view(box: tuple[float, float, float, float]) -> bool:
+            left, top, right, bottom = box
+            return left >= 0 and right <= view_w and top >= 0 and bottom <= view_h
+
+        slices: list[dict[str, Any]] = []
+        placements: list[dict[str, Any]] = []
+        overflow = False
+        start = -math.pi / 2.0
+        for i, sl in enumerate(chart.slices):
+            fv = format_semantic_value(sl.value, formats)
+            amount = amounts[i]
+            frac = float(amount / total) if total > 0 else 1.0 / len(chart.slices)
+            sweep = frac * 2.0 * math.pi
+            mid = start + sweep / 2.0
+            color = colors[i]
+            ink = white if contrast_ratio(white, color) >= 4.5 else navy
+            label_r = (
+                inner_r + (radius - inner_r) * 0.62 if radius > inner_r else radius * 0.62
             )
-
-        if not _fits(name_x, name_y, name_w, name_anchor):
-            label_overflow = True
-        if not _fits(value_x, value_y, val_w, value_anchor):
-            label_overflow = True
-        rec = {
-            "slice_id": sl.slice_id,
-            "label": sl.label,
-            "short_label": sl.short_label,
-            "value": sl.value.value,
-            "numeric": float(amount),
-            "visible": fv.visible,
-            "accessible": fv.accessible,
-            "color": color,
-            "ink": ink,
-            "start": start,
-            "sweep": sweep,
-            "mid": mid,
-            "lx": cx + cos_m * label_r,
-            "ly": cy + sin_m * label_r,
-            "name_x": name_x,
-            "name_y": name_y,
-            "name_anchor": name_anchor,
-            "value_x": value_x,
-            "value_y": value_y,
-            "value_ink": value_ink,
-            "value_anchor": value_anchor,
-            "value_inside": value_inside,
+            cos_m, sin_m = math.cos(mid), math.sin(mid)
+            name_anchor = "start" if cos_m >= 0 else "end"
+            inset = 8.0 if name_anchor == "start" else -8.0
+            value_inside = frac + 1e-12 >= _SLICE_VALUE_INSIDE_MIN_FRAC
+            name_w = max(20.0, len(sl.label) * label_px * 0.55)
+            val_w = max(20.0, len(fv.visible) * label_px * 0.55)
+            name_r = radius + 10.0
+            while True:
+                name_x = cx + cos_m * name_r + inset
+                name_y = cy + sin_m * name_r
+                if value_inside:
+                    value_x = cx + cos_m * label_r
+                    value_y = cy + sin_m * label_r
+                    value_ink = ink
+                    value_anchor = "middle"
+                else:
+                    value_x = name_x
+                    value_y = name_y + (label_px if sin_m >= 0 else -label_px)
+                    value_ink = navy
+                    value_anchor = name_anchor
+                name_box = _label_box(name_x, name_y, name_w, name_anchor)
+                val_box = _label_box(value_x, value_y, val_w, value_anchor)
+                outside = [name_box] + ([] if value_inside else [val_box])
+                if all(_clears_disk(b) and _fits_view(b) for b in outside):
+                    break
+                name_r += 1.0
+                trial = _label_box(
+                    cx + cos_m * name_r + inset,
+                    cy + sin_m * name_r,
+                    name_w,
+                    name_anchor,
+                )
+                if not _fits_view(trial) or name_r > math.hypot(view_w, view_h):
+                    overflow = True
+                    break
+            if not _fits_view(name_box) or not _fits_view(val_box):
+                overflow = True
+            if any(not _clears_disk(b) for b in outside):
+                overflow = True
+            slices.append(
+                {
+                    "slice_id": sl.slice_id,
+                    "label": sl.label,
+                    "short_label": sl.short_label,
+                    "value": sl.value.value,
+                    "numeric": float(amount),
+                    "visible": fv.visible,
+                    "accessible": fv.accessible,
+                    "color": color,
+                    "ink": ink,
+                    "start": start,
+                    "sweep": sweep,
+                    "mid": mid,
+                    "lx": cx + cos_m * label_r,
+                    "ly": cy + sin_m * label_r,
+                    "name_x": name_x,
+                    "name_y": name_y,
+                    "name_anchor": name_anchor,
+                    "value_x": value_x,
+                    "value_y": value_y,
+                    "value_ink": value_ink,
+                    "value_anchor": value_anchor,
+                    "value_inside": value_inside,
+                }
+            )
+            placements.append(
+                {
+                    "class": "slice_name",
+                    "slice_id": sl.slice_id,
+                    "x": name_x,
+                    "y": name_y,
+                    "text": sl.label,
+                    "color": navy,
+                }
+            )
+            placements.append(
+                {
+                    "class": "slice_value",
+                    "slice_id": sl.slice_id,
+                    "x": value_x,
+                    "y": value_y,
+                    "text": fv.visible,
+                    "color": value_ink,
+                }
+            )
+            start += sweep
+        geometry = {
+            "pad_l": pad,
+            "pad_r": pad,
+            "pad_t": PAD_T,
+            "pad_b": PAD_B,
+            "plot_w": plot_w,
+            "plot_h": plot_h,
+            "cx": cx,
+            "cy": cy,
+            "radius": radius,
+            "inner_r": inner_r,
+            "view_w": view_w,
+            "view_h": view_h,
         }
-        slices.append(rec)
-        placements.append(
-            {
-                "class": "slice_name",
-                "slice_id": sl.slice_id,
-                "x": name_x,
-                "y": name_y,
-                "text": sl.label,
-                "color": navy,
-            }
-        )
-        placements.append(
-            {
-                "class": "slice_value",
-                "slice_id": sl.slice_id,
-                "x": value_x,
-                "y": value_y,
-                "text": fv.visible,
-                "color": value_ink,
-            }
-        )
-        start += sweep
+        return overflow, slices, placements, geometry
+
+    while True:
+        label_overflow, slices, placements, geometry = _layout(pad_x)
+        if not label_overflow:
+            break
+        next_pad = pad_x + 1
+        if next_pad > max_pad:
+            break
+        next_plot = max(PLOT_FLOOR_W, min(PLOT_W, box_w - 2 * next_pad))
+        if next_plot == geometry["plot_w"]:
+            break
+        pad_x = next_pad
     table = {
         "columns": [{"label": "Value"}],
         "rows": [
@@ -2299,20 +2354,7 @@ def freeze_pie_donut(
         "placements": placements,
         "identity_strategy": None,
         "role_sizes": role_sizes,
-        "geometry": {
-            "pad_l": pad_x,
-            "pad_r": pad_x,
-            "pad_t": PAD_T,
-            "pad_b": PAD_B,
-            "plot_w": plot_w,
-            "plot_h": plot_h,
-            "cx": cx,
-            "cy": cy,
-            "radius": radius,
-            "inner_r": inner_r,
-            "view_w": view_w,
-            "view_h": view_h,
-        },
+        "geometry": geometry,
         "semantic_table": table,
         "category_axis": {"visible": False, "title": None},
         "value_axis": {"visible": False, "title": None},

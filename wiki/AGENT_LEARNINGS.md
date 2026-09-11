@@ -97,3 +97,6 @@ A full-day Herdr/Pi session pegged physical RAM at 99% while process working set
 
 ## 57. Pie/donut 24px names need a smaller ring, not a type shrink (#339/#340, 2026-09-10)
 Q4 s27 dual donuts overflow at `ordinary_values` 20+ because outside names sit at `radius+10` in a fixed `PAD_R` lane. Dual-pane box is 852px; **Intl. Consumer** clips left. Do not shrink type, ellipsize names, or drop percents. Grow equal outside pads from the longest name at the frozen size so the ring shrinks; Chart.js `layout.padding` already tracks frozen pads. Short 18px names keep `PAD_R`.
+
+## 58. Pie/donut outside names must clear the painted disk (#341, 2026-09-11)
+`#340` only tested name **anchor** vs `radius+1` and view-box overflow. Frozen `radius` was `min(plot)/2-8`, so Corporate Card's 0.55em AABB could sit ~0.6px outside that inset while still crossing Chart.js' full plot disk. Freeze `radius` to the painted disk; require outside name/percent AABB to clear it (nudge out, then grow pad); floor-hit collision is `slice_label_overflow`, not a type shrink.
