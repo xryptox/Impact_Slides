@@ -1383,8 +1383,7 @@ roles/backgrounds; other use is malformed under D98.
 Every bar series resolves one series-identity palette key (D131/#248). Bars, legend swatches,
 connectors, and direct identity treatments derive from that same key. Ordinary
 numeric bar-value text remains dark navy under D80 rather than inheriting the
-fill. A stacked label inside a segment uses white only when contrast passes;
-otherwise it moves outside and uses dark navy with a series-colored connector.
+fill. A stacked label inside a segment uses white when white-on-fill contrast holds, else navy when navy-on-fill holds (#343); only when neither ink holds does it move outside with dark navy and a series-colored connector.
 No separate author fields split fill from identity color. Semantic increase,
 decrease, warning, or total roles override a series key only where those roles
 carry actual chart-family meaning, such as waterfall.
@@ -4303,8 +4302,8 @@ and signed extents. Null preserves missing slot; zero is data without area.
 Computed totals separately sum source positive/negative sides in axis format and
 withhold a side if any contributor there is missing. Segment/total labels default
 hide independently. Shown nonzero segments use complete format at auto 14–24px,
-prefer inside, but insufficient space/contrast moves navy text outside with series
-connector; never fit-drop. Shown zero labels anchor zero distinctly. Computed
+prefer inside (white if white-on-fill holds, else navy if navy-on-fill holds; #343); insufficient space or both-inks-fail moves navy text outside with series
+connector, staying at/below stack crown; never fit-drop. Shown zero labels anchor zero distinctly. Computed
 signed totals use auto 14–24px beyond stack edge and never fit-suppress. D299
 authored totals may per-category visually override without geometry/domain change,
 may differ format and use signed edge. Complete author-order legend is mandatory;
@@ -4314,7 +4313,7 @@ owns occupancy/segments/edges/gutters with painter centers/rects/edges/anchors
 within 2px. Label lanes may reserve head/foot/side/category/callout space; bounds
 stay fixed. Unfit required labels strict-fail or non-strict D102 fallback, never
 overlap/drop. Palette author order uses primary/navy/accents; fill/swatch/connector
-match, white inside only with contrast else navy outside. D247 includes all data,
+match, white or navy inside by fill contrast else navy outside below the crown. D247 includes all data,
 missing, complete computed sign totals, authored totals/groups/coverage/facts.
 Authored stack/formula/position/style/label/geometry/painter controls invalid.
 Strict rejects counts/domain/data/identity/display/facts/family/fit. Non-strict
