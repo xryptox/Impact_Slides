@@ -8,6 +8,7 @@ Seams under test:
 - identity + semantic table completeness (D247)
 - Q4 2021 s12 stacked write-off/reserve labels (#318)
 - thin/zero segment AABB uncollide without fit-drop (#324)
+- tall sky contrast-fail stays inside with navy; segments stay below stack crown (#343)
 """
 from __future__ import annotations
 
@@ -32,6 +33,7 @@ from impact_slides.renderer_v3.format import MISSING_ACCESSIBLE, MISSING_VISIBLE
 from impact_slides.renderer_v3.models import SingleChartSlide, StackedBarChartVisual
 from impact_slides.renderer_v3.plan import plan_deck
 from impact_slides.renderer_v3.schema_export import check_schema
+from impact_slides.renderer_v3.theme import resolve_color
 
 ROOT = Path(__file__).resolve().parents[1]
 STACKED = ROOT / "tests/fixtures/renderer_v3/minimal_stacked_bar.json"
@@ -428,6 +430,42 @@ def _stack_box(p: dict, px: int) -> tuple[float, float, float, float]:
     )
 
 
+def _column_stack_top(cp: dict, cat: str) -> float:
+    ys = [
+        float(b["y"])
+        for b in cp["bars"]
+        if b.get("category_id") == cat
+        and b.get("finite")
+        and not b.get("missing")
+        and float(b.get("height") or 0) > 0
+    ]
+    assert ys, cat
+    return min(ys)
+
+
+def _assert_crown_owned(cp: dict) -> None:
+    """Segments stay at/below the finished stack; totals sit above it."""
+    seg_px = cp["role_sizes"]["segment_labels"]
+    tot_px = cp["role_sizes"]["stack_totals"]
+    cats = {
+        p["category_id"]
+        for p in cp["placements"]
+        if p.get("kind") in {"segment", "stack_total"}
+        and p.get("class") != "suppressed"
+    }
+    for cat in cats:
+        crown = _column_stack_top(cp, cat)
+        for p in cp["placements"]:
+            if p.get("category_id") != cat or p.get("class") == "suppressed":
+                continue
+            if p.get("kind") == "segment":
+                top = _stack_box(p, seg_px)[1]
+                assert top >= crown, (cat, p.get("text"), p.get("class"), top, crown)
+            elif p.get("kind") == "stack_total":
+                top = _stack_box(p, tot_px)[1]
+                assert top < crown, (cat, p.get("text"), top, crown)
+
+
 def _assert_column_labels_uncollided(cp: dict) -> None:
     seg_px = cp["role_sizes"]["segment_labels"]
     tot_px = cp["role_sizes"]["stack_totals"]
@@ -484,6 +522,7 @@ def test_stack_total_nudges_off_outside_segment_crown():
         assert any(p["text"] == "$2" for p in segs)
         assert any(p["text"] == "$82" for p in tots)
     _assert_column_labels_uncollided(cp)
+    _assert_crown_owned(cp)
 
 
 def test_thin_and_zero_segment_labels_do_not_share_aabb():
@@ -514,6 +553,7 @@ def test_thin_and_zero_segment_labels_do_not_share_aabb():
         p.get("kind") == "stack_total" and p["text"] == "$115" for p in cp["placements"]
     )
     _assert_column_labels_uncollided(cp)
+    _assert_crown_owned(cp)
 
 
 def test_thin_percent_caps_stay_visible_and_uncollided():
@@ -542,7 +582,14 @@ def test_thin_percent_caps_stay_visible_and_uncollided():
     assert any(
         p.get("kind") == "stack_total" and p["text"] == "$132" for p in cp["placements"]
     )
+    navy = resolve_color("navy", role="text_on_light")
+    for token in ("53%", "66%", "67%"):
+        hits = [p for p in segs if p["text"] == token]
+        assert hits, token
+        assert hits[0]["class"] == "inside", (token, hits[0].get("class"))
+        assert hits[0]["color"] == navy, (token, hits[0].get("color"))
     _assert_column_labels_uncollided(cp)
+    _assert_crown_owned(cp)
 
 
 # ---------------------------------------------------------------------------
