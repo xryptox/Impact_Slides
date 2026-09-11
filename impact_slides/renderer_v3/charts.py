@@ -1081,7 +1081,7 @@ def freeze_waterfall_chart(
     fmt = formats[chart.value_axes.primary.format_id]
     steps = list(chart.waterfall_data.steps)
     resolved = _resolve_waterfall_steps(steps, formats, fmt_id=chart.value_axes.primary.format_id)
-    domain = _resolve_waterfall_domain(chart, resolved)
+    domain = _resolve_waterfall_domain(chart, resolved, fmt=fmt)
     ticks = list(domain["ticks"])
 
     pad_l = PAD_L
@@ -2077,24 +2077,19 @@ def _resolve_combo_domain(
     if lo == hi:
         lo -= Decimal("1")
         hi += Decimal("1")
-    if axis.leading_break is None:
-        lo, hi = _apply_percent_min_span(lo, hi, fmt)
-    pad = (hi - lo) * Decimal("0.08")
-    lo_f = lo if (include_zero and lo == 0) else lo - pad
-    hi_f = hi + pad
-    if include_zero:
-        if lo_f > 0:
-            lo_f = Decimal(0)
-        if hi_f < 0:
-            hi_f = Decimal(0)
-    target = axis.domain.target_ticks or 5
-    ticks = _nice_ticks(float(lo_f), float(hi_f), target)
-    return {
-        "kind": "generated",
-        "min": _plain_decimal(ticks[0]),
-        "max": _plain_decimal(ticks[-1]),
-        "ticks": [_plain_decimal(t) for t in ticks],
-    }
+    lead_to = (
+        Decimal(axis.leading_break.to) if axis.leading_break is not None else None
+    )
+    return _nice_generated_domain(
+        lo,
+        hi,
+        include_zero=include_zero,
+        leading=lead_to,
+        fmt=fmt,
+        target=axis.domain.target_ticks or 5,
+        source_min=data_min,
+        source_max=data_max,
+    )
 
 
 def pie_donut_identity_colors(charts: list[PieDonutVisual]) -> dict[str, str]:
@@ -2395,6 +2390,12 @@ def freeze_chart(
         plan = freeze_waterfall_chart(chart, formats, box_w=box_w, box_h=box_h)
     else:
         plan = freeze_bar_chart(chart, formats, box_w=box_w, box_h=box_h)
+    overflow = False
+    for key in ("domain", "secondary_domain"):
+        dom = plan.get(key)
+        if isinstance(dom, dict) and dom.get("kind") == "generated":
+            overflow = overflow or bool(dom.get("occupancy_overflow"))
+    plan["domain_occupancy_overflow"] = overflow
     return _attach_chart_facts(plan, chart, formats)
 
 
@@ -3785,7 +3786,10 @@ def _resolve_waterfall_steps(
 
 
 def _resolve_waterfall_domain(
-    chart: WaterfallChartVisual, resolved: list[dict[str, Any]]
+    chart: WaterfallChartVisual,
+    resolved: list[dict[str, Any]],
+    *,
+    fmt: NumberFormat | None = None,
 ) -> dict[str, Any]:
     axis = chart.value_axes.primary
     levels: list[Decimal] = [Decimal(0)]
@@ -3813,25 +3817,16 @@ def _resolve_waterfall_domain(
     if lo == hi:
         lo -= Decimal("1")
         hi += Decimal("1")
-    pad = (hi - lo) * Decimal("0.08")
-    lo_f = Decimal(0) if lo == 0 else lo - pad
-    hi_f = hi + pad
-    if lo_f > 0:
-        lo_f = Decimal(0)
-    if hi_f < 0:
-        hi_f = Decimal(0)
-    target = axis.domain.target_ticks or 5
-    ticks = _nice_ticks(float(lo_f), float(hi_f), target)
-    if 0.0 not in ticks and ticks[0] <= 0 <= ticks[-1]:
-        ticks = sorted(set(ticks + [0.0]))
-    return {
-        "kind": "generated",
-        "min": _plain_decimal(ticks[0]),
-        "max": _plain_decimal(ticks[-1]),
-        "ticks": [_plain_decimal(t) for t in ticks],
-        "source_min": _plain_decimal(float(data_min)),
-        "source_max": _plain_decimal(float(data_max)),
-    }
+    return _nice_generated_domain(
+        lo,
+        hi,
+        include_zero=True,
+        leading=None,
+        fmt=fmt,
+        target=axis.domain.target_ticks or 5,
+        source_min=data_min,
+        source_max=data_max,
+    )
 
 
 def _waterfall_semantic_table(
@@ -3973,24 +3968,88 @@ def _resolve_series(
     return out
 
 
-_PCT_MIN_SPAN = Decimal("15")
+_PCT_MIN_SPAN = Decimal("5")
+_DOMAIN_OCCUPANCY_FLOOR = Decimal("0.40")
 
 
 def _apply_percent_min_span(
     lo: Decimal, hi: Decimal, fmt: NumberFormat | None
 ) -> tuple[Decimal, Decimal]:
-    """Keep low-variance percent auto-domains from collapsing (DP-3)."""
+    """Keep low-variance percent auto-domains from collapsing (DP-3 / #344)."""
     if fmt is None or fmt.unit != "percent":
         return lo, hi
     span = hi - lo
     if span >= _PCT_MIN_SPAN:
         return lo, hi
-    if lo >= 0 and lo < _PCT_MIN_SPAN:
-        return Decimal(0), max(hi, _PCT_MIN_SPAN)
-    if hi <= 0 and hi > -_PCT_MIN_SPAN:
-        return min(lo, -_PCT_MIN_SPAN), Decimal(0)
+    # 0 … <5 data sits on a 5-point floor (s29 2.4% → 0–5). Wider
+    # bands already track data+headroom via the caller.
+    if lo >= 0 and hi < _PCT_MIN_SPAN:
+        return Decimal(0), _PCT_MIN_SPAN
+    if hi <= 0 and lo > -_PCT_MIN_SPAN:
+        return -_PCT_MIN_SPAN, Decimal(0)
     extra = _PCT_MIN_SPAN - span
     return lo - extra / 2, hi + extra / 2
+
+
+def _domain_occupancy(
+    source_min: Decimal, source_max: Decimal, dmin: Decimal, dmax: Decimal
+) -> Decimal:
+    denom = max(abs(dmin), abs(dmax))
+    if denom == 0:
+        return Decimal(1)
+    if dmin == 0:
+        return abs(source_max) / abs(dmax)
+    return max(abs(source_min), abs(source_max)) / denom
+
+
+def _nice_generated_domain(
+    lo: Decimal,
+    hi: Decimal,
+    *,
+    include_zero: bool,
+    leading: Decimal | None,
+    fmt: NumberFormat | None,
+    target: int,
+    source_min: Decimal,
+    source_max: Decimal,
+) -> dict[str, Any]:
+    """Shared generated-axis recipe: 8% headroom, then percent floor, occupancy (#344)."""
+    pad = (hi - lo) * Decimal("0.08")
+    lo_f = lo if (include_zero and lo == 0) or leading is not None else lo - pad
+    hi_f = hi + pad
+    if include_zero and leading is None:
+        if lo_f > 0:
+            lo_f = Decimal(0)
+        if hi_f < 0:
+            hi_f = Decimal(0)
+    if leading is None:
+        lo_f, hi_f = _apply_percent_min_span(lo_f, hi_f, fmt)
+    ticks = _nice_ticks(float(lo_f), float(hi_f), target)
+    if leading is not None:
+        br = float(leading)
+        ticks = [t for t in ticks if t >= br - 1e-12]
+        if not ticks or abs(ticks[0] - br) > 1e-9:
+            ticks = [br] + [t for t in ticks if t > br + 1e-12]
+        if len(ticks) < 2:
+            ticks.append(br + max(1.0, abs(br) * 0.25))
+    if include_zero and leading is None and 0.0 not in ticks:
+        if ticks[0] <= 0 <= ticks[-1]:
+            ticks = sorted(set(ticks + [0.0]))
+    occupancy = _domain_occupancy(
+        source_min,
+        source_max,
+        Decimal(str(ticks[0])),
+        Decimal(str(ticks[-1])),
+    )
+    return {
+        "kind": "generated",
+        "min": _plain_decimal(ticks[0]),
+        "max": _plain_decimal(ticks[-1]),
+        "ticks": [_plain_decimal(t) for t in ticks],
+        "source_min": _plain_decimal(float(source_min)),
+        "source_max": _plain_decimal(float(source_max)),
+        "occupancy_overflow": occupancy < _DOMAIN_OCCUPANCY_FLOOR,
+    }
 
 
 def _resolve_domain(
@@ -4040,9 +4099,10 @@ def _resolve_domain(
     # generated
     lo = Decimal(axis.domain.min) if axis.domain.min is not None else data_min
     hi = Decimal(axis.domain.max) if axis.domain.max is not None else data_max
-    if leading is not None:
+    lead_to = Decimal(leading.to) if leading is not None else None
+    if lead_to is not None:
         # Visible domain starts at break target; source min retained for D106.
-        lo = Decimal(leading.to)
+        lo = lead_to
         if hi <= lo:
             hi = lo + Decimal("1")
     elif include_zero:
@@ -4053,41 +4113,16 @@ def _resolve_domain(
     if lo == hi:
         lo -= Decimal("1")
         hi += Decimal("1")
-    if leading is None:
-        lo, hi = _apply_percent_min_span(lo, hi, fmt)
-    # headroom ~8% (label clearance D72)
-    pad = (hi - lo) * Decimal("0.08")
-    lo_f = lo if (include_zero and lo == 0) or leading is not None else lo - pad
-    hi_f = hi + pad
-    if include_zero and leading is None:
-        if lo_f > 0:
-            lo_f = Decimal(0)
-        if hi_f < 0:
-            hi_f = Decimal(0)
-    target = axis.domain.target_ticks or 5
-    ticks = _nice_ticks(float(lo_f), float(hi_f), target)
-    source_min = float(data_min)
-    source_max = float(data_max)
-    if leading is not None:
-        # First visible tick equals break target (D157/D230).
-        br = float(Decimal(leading.to))
-        ticks = [t for t in ticks if t >= br - 1e-12]
-        if not ticks or abs(ticks[0] - br) > 1e-9:
-            ticks = [br] + [t for t in ticks if t > br + 1e-12]
-        if len(ticks) < 2:
-            ticks.append(br + max(1.0, abs(br) * 0.25))
-    if include_zero and leading is None and 0.0 not in ticks:
-        # Keep zero when analytically inside span.
-        if ticks[0] <= 0 <= ticks[-1]:
-            ticks = sorted(set(ticks + [0.0]))
-    return {
-        "kind": "generated",
-        "min": _plain_decimal(ticks[0]),
-        "max": _plain_decimal(ticks[-1]),
-        "ticks": [_plain_decimal(t) for t in ticks],
-        "source_min": _plain_decimal(source_min),
-        "source_max": _plain_decimal(source_max),
-    }
+    return _nice_generated_domain(
+        lo,
+        hi,
+        include_zero=include_zero,
+        leading=lead_to,
+        fmt=fmt,
+        target=axis.domain.target_ticks or 5,
+        source_min=data_min,
+        source_max=data_max,
+    )
 
 
 def _bar_identity_strategy(

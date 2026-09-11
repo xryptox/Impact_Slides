@@ -594,7 +594,7 @@ def _wide_context_labels(n: int) -> list[dict]:
 
 
 def _pin_tight_percent_domain(vis: dict) -> None:
-    # Relocation tests need the pre-DP-3 vertical spread, not the 0–15 floor.
+    # Relocation tests need a tight authored frame, not generated headroom.
     vis["value_axes"]["primary"]["domain"] = {
         "kind": "fixed",
         "min": "0",

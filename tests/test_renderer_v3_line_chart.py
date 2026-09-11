@@ -6,6 +6,7 @@ Seams under test:
 - one semantic accessibility table (D106/D247)
 - frozen plan drives Chart.js + noscript SVG (D53/D57/D69/D248)
 - identity, point labels, transparent surfaces, no gridlines, readiness
+- DP-3/#344 generated percent floor (5-pt when data sits in 0…<5) + occupancy ≥40%
 """
 from __future__ import annotations
 
@@ -1091,11 +1092,14 @@ def test_generated_percent_domain_enforces_minimum_span():
     cp = plan_deck(deck, strict=True).by_surface_id()["vol-trend"].chart_paint
     lo = float(cp["domain"]["min"])
     hi = float(cp["domain"]["max"])
-    assert lo <= 0.0
-    assert hi >= 15.0
-    assert hi - lo >= 15.0
-    ys = [p["y"] for p in cp["points"] if p["finite"]]
-    assert max(ys) - min(ys) < 0.15 * cp["geometry"]["plot_h"]
+    # 9–10% sits above the 5-point floor; track data+headroom, not 0–15 (#344).
+    assert lo <= 9.0
+    assert hi >= 10.0
+    assert hi <= 12.0
+    assert hi - lo < 8.0
+    src_max = max(abs(float(cp["domain"]["source_min"])), abs(float(cp["domain"]["source_max"])))
+    denom = max(abs(lo), abs(hi))
+    assert src_max / denom >= 0.40
 
 
 def test_generated_non_percent_domain_still_tracks_low_variance():
