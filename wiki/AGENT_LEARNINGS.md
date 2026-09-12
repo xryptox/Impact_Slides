@@ -103,3 +103,6 @@ Q4 s27 dual donuts overflow at `ordinary_values` 20+ because outside names sit a
 
 ## 59. Stacked inside-navy + crown ownership (#343, 2026-09-11)
 #324 uncollided thin/zero caps but left the inside gate white-only, so s31 Deposits 53/66/67 and s28 Apr'20 $8.5 ejected `outside_above` onto the $ total (sky `#80c8ff` white 1.81, navy 9.15). Tall bands stay `inside`: white if white-on-fill ≥3, else navy if navy-on-fill holds. Thin/zero caps nudge **down** the column; segment AABB.top ≥ `stack_top`. `$` totals are the only labels allowed above the finished stack. Do not hide `stack_segments` or swap corpus fills.
+
+## 60. Share-chip 24px overflows s24 leftover after D47 + annex (#345, 2026-09-11)
+Q4 s24 `chart_grouped_annex` can freeze chips at 20px with a 3-line stub lane and category-center shrink-to-align. 24px needs 3-line labels (`Large & Global Corporate*`) plus a stub wider than cat0 leftover, so it either collides the stub lane or starves the D47 plot / annex peers. Grow chips from leftover after the plot floor (actual `pad_t`+`pad_b`, not the 28+64 constant); do not take plot surplus before chips. Omit stub + id mismatch stays equal-flex.

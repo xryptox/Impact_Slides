@@ -119,7 +119,7 @@ METRIC_STRIP_GAP: Final = 16
 METRIC_STRIP_PAD_Y: Final = 16
 METRIC_STRIP_PAD_X: Final = 16
 SHARE_CHIP_FLOOR: Final = 14
-SHARE_CHIP_CEIL: Final = 14  # outlined facts; growing starves the D47 plot
+SHARE_CHIP_CEIL: Final = 20  # 24px 3-line stub + 3-line labels overflow s24
 SHARE_CHIP_GAP: Final = 12
 SHARE_CHIP_PAD_Y: Final = 8
 SHARE_CHIP_PAD_X: Final = 12
@@ -473,6 +473,13 @@ def plan_deck(
         if sp.role == "outlined_support" and sp._table_spec is not None:
             size = sp.role_sizes.get("table") or OUTLINED_SUPPORT_FLOOR
             _freeze_outlined_geometry(sp._table_spec, size)
+        if sp.role == "share_chips" and sp._table_spec is not None:
+            size = sp.role_sizes.get("label") or SHARE_CHIP_FLOOR
+            if not _freeze_share_chip_geometry(sp, size):
+                was = sp._overflow
+                sp._overflow = True
+                if not was:
+                    late_overflow.append(sp)
         _seal_digests(sp)
 
     if late_overflow:
@@ -1001,7 +1008,17 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     def need(sp: SurfacePlan, size: int) -> int:
         if sp._chart_spec is not None and sp.role in _AXIS_CHART_ROLES:
             # D47: only space above the solved chart floor may feed support.
-            return max(CHART_VIEW_MIN_H, CHART_VIEW_FLOOR_H)
+            floor = max(CHART_VIEW_MIN_H, CHART_VIEW_FLOOR_H)
+            # Grouped-bar pad_t is 40, not the 28 baked into CHART_VIEW_FLOOR_H.
+            if sp.layout_type == "chart_grouped_annex":
+                g = sp._chart_spec.get("geometry") or {}
+                min_view = (
+                    CHART_PLOT_FLOOR_H
+                    + int(g.get("pad_t") or 0)
+                    + int(g.get("pad_b") or 0)
+                )
+                floor = max(floor, min_view)
+            return floor
         if sp._table_spec is not None and sp._table_spec.get("kind") == "outlined_support":
             lab_px = size
             val_px = sp.role_sizes.get("table", size)
@@ -1042,11 +1059,22 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
                 h = max(h, lab * _line_box(size) + _line_box(value_px) + det * _line_box(size))
             return h
         if sp._table_spec is not None and sp._table_spec.get("kind") == "share_chips":
-            chips = sp._table_spec["chips"]
+            if not _freeze_share_chip_geometry(sp, size):
+                return 10**9
+            spec = sp._table_spec
+            inner = max(1, int(spec.get("cell_w") or sp._box_w) - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER)
             h = 0
-            for chip in chips:
-                lab = max(1, len(_wrap_label_lines(chip["label"], size, sp._box_w)))
-                val = max(1, len(_wrap_label_lines(chip["visible"], size, sp._box_w)))
+            stub = spec.get("stub") or ""
+            lane = int(spec.get("stub_lane_w") or 0)
+            if stub:
+                h = max(
+                    h,
+                    len(_wrap_label_lines(stub, size, max(1, lane or inner), strong=True))
+                    * _line_box(size),
+                )
+            for chip in spec["chips"]:
+                lab = max(1, len(_wrap_label_lines(chip["label"], size, inner)))
+                val = max(1, len(_wrap_label_lines(chip["visible"], size, inner)))
                 h = max(
                     h,
                     lab * _line_box(size) + SHARE_CHIP_LABEL_MB + val * _line_box(size),
@@ -1194,7 +1222,9 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
         )
         groups.setdefault((sp._fit_role, key), []).append(i)
 
-    for indexes in groups.values():
+    group_items = list(groups.values())
+    group_items.sort(key=lambda idxs: 0 if surfaces[idxs[0]].role == "share_chips" else 1)
+    for indexes in group_items:
         members = [surfaces[i] for i in indexes]
         floor = max(sp._default_size or 0 for sp in members)
         ceiling = min(sp._maximum_size or floor for sp in members)
@@ -1302,6 +1332,16 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
     for sp in surfaces:
         spec = sp._table_spec
         if not spec:
+            continue
+        if spec.get("kind") == "share_chips":
+            chart_sp = chart_by_id.get(spec.get("chart_surface_id") or "")
+            if chart_sp is not None and chart_sp._chart_spec:
+                sp._table_spec = dict(spec)
+                sp._table_spec["centers"] = _share_chip_centers_from_chart(
+                    chart_sp._chart_spec
+                )
+                size = sp.role_sizes.get("label") or SHARE_CHIP_FLOOR
+                _freeze_share_chip_geometry(sp, size)
             continue
         if spec.get("kind") not in {"outlined_support", "support_table"}:
             continue
@@ -3045,6 +3085,16 @@ def _collect_grouped_annex_body(
     return len(plans), plans
 
 
+def _share_chip_centers_from_chart(chart_spec: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not chart_spec:
+        return []
+    return [
+        {"category_id": c["category_id"], "x": float(c.get("x") or 0.0)}
+        for c in list(chart_spec.get("categories") or [])
+        if "x" in c
+    ]
+
+
 def _share_chips_plan(
     chips: Any,
     deck: Deck,
@@ -3055,11 +3105,15 @@ def _share_chips_plan(
     region: int,
     slot_order: int,
     box_w: int = CONTENT_W,
+    chart_plan: SurfacePlan | None = None,
 ) -> SurfacePlan:
     from .format import format_semantic_value
 
     items = []
     texts: list[tuple[str, bool]] = []
+    stub = getattr(chips, "stub", None)
+    if stub:
+        texts.append((stub, True))
     for chip in chips.chips:
         fv = format_semantic_value(chip.value, deck.number_formats)
         items.append(
@@ -3075,7 +3129,18 @@ def _share_chips_plan(
     n = max(1, len(items))
     cell_w = (box_w - SHARE_CHIP_GAP * (n - 1)) // n
     inner_w = cell_w - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER
-    return SurfacePlan(
+    spec: dict[str, Any] = {
+        "kind": "share_chips",
+        "chips": items,
+        "n": n,
+        "stub": stub or "",
+        "row_w": box_w,
+        "chart_surface_id": chart_plan.surface_id if chart_plan is not None else None,
+        "centers": _share_chip_centers_from_chart(
+            chart_plan._chart_spec if chart_plan is not None else None
+        ),
+    }
+    sp = SurfacePlan(
         surface_id=chips.surface_id,
         role="share_chips",
         slide_number=sn,
@@ -3092,8 +3157,10 @@ def _share_chips_plan(
         _chrome_h=2 * SHARE_CHIP_PAD_Y + 2 * SHARE_CHIP_BORDER + BLOCK_MARGIN_Y,
         _default_size=SHARE_CHIP_FLOOR,
         _maximum_size=SHARE_CHIP_CEIL,
-        _table_spec={"kind": "share_chips", "chips": items, "n": n},
+        _table_spec=spec,
     )
+    _freeze_share_chip_geometry(sp, SHARE_CHIP_FLOOR)
+    return sp
 
 
 def _collect_chart_grouped_annex_body(
@@ -3128,6 +3195,7 @@ def _collect_chart_grouped_annex_body(
                 lt=lt,
                 region=region,
                 slot_order=slot,
+                chart_plan=chart_plan,
             )
         )
         slot += 1
@@ -5231,16 +5299,97 @@ def _metric_strip_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     return fits, wrapped
 
 
+def _ids_match_in_order(
+    chip_ids: list[str], centers: list[dict[str, Any]]
+) -> bool:
+    cat_ids = [c["category_id"] for c in centers]
+    return bool(chip_ids) and chip_ids == cat_ids
+
+
+def _freeze_share_chip_geometry(sp: SurfacePlan, size: int) -> bool:
+    """Equal-flex fallback, or shrink-to-align on matching category centers (#345)."""
+    spec = sp._table_spec
+    if spec is None:
+        return False
+    chips = list(spec.get("chips") or [])
+    n = max(1, len(chips))
+    row_w = int(spec.get("row_w") or CONTENT_W)
+    stub = spec.get("stub") or ""
+    centers = list(spec.get("centers") or [])
+    chip_ids = [c["share_id"] for c in chips]
+    stub_need = 0
+    if stub:
+        stub_need = int(math.ceil(_min_wrap_width(stub, size, 3, strong=True))) + 8
+    aligned = _ids_match_in_order(chip_ids, centers)
+    chip_row_h = max(
+        48,
+        int(sp._box_h) + 2 * SHARE_CHIP_PAD_Y + 2 * SHARE_CHIP_BORDER
+        if sp._box_h
+        else 48,
+    )
+    if not aligned:
+        leftover = row_w
+        stub_lane = 0
+        if stub_need:
+            leftover = max(1, row_w - stub_need - SHARE_CHIP_GAP)
+            stub_lane = stub_need
+        cell_w = max(1, (leftover - SHARE_CHIP_GAP * (n - 1)) // n)
+        spec["category_centered"] = False
+        spec["cell_w"] = cell_w
+        spec["stub_lane_w"] = stub_lane
+        inner = max(1, cell_w - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER)
+        sp._box_w = inner
+        spec["row_h"] = chip_row_h
+        return True
+    xs = [float(c["x"]) for c in centers]
+    pitch = min(xs[i + 1] - xs[i] for i in range(n - 1)) if n >= 2 else float(row_w)
+    cell_w = max(24, int(math.floor(pitch - SHARE_CHIP_GAP)))
+    stub_lane = 0
+    if stub_need:
+        # first chip left >= stub lane + gap, centered on cat0.
+        max_cell = int(math.floor(2 * (xs[0] - stub_need - SHARE_CHIP_GAP)))
+        cell_w = min(cell_w, max(24, max_cell))
+        first_left = xs[0] - cell_w / 2.0
+        if first_left < stub_need + SHARE_CHIP_GAP - 2 or cell_w < 24:
+            spec.pop("category_centered", None)
+            return False
+        stub_lane = stub_need
+    if xs[-1] + cell_w / 2.0 > row_w + 2:
+        spec.pop("category_centered", None)
+        return False
+    spec["category_centered"] = True
+    spec["cell_w"] = cell_w
+    spec["stub_lane_w"] = stub_lane
+    spec["centers"] = centers
+    inner = max(1, cell_w - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER)
+    sp._box_w = inner
+    spec["row_h"] = chip_row_h
+    return True
+
+
 def _share_chips_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
     """Outlined percent chips: one label + value per chip, CSS pad/gap owned."""
     assert sp._table_spec is not None
-    chips = sp._table_spec["chips"]
-    cell_w = sp._box_w
+    if not _freeze_share_chip_geometry(sp, size):
+        return False, True
+    spec = sp._table_spec
+    chips = spec["chips"]
+    cell_w = max(1, int(spec.get("cell_w") or sp._box_w))
+    inner = max(1, cell_w - 2 * SHARE_CHIP_PAD_X - 2 * SHARE_CHIP_BORDER)
     wrapped = False
     total_h = 2 * SHARE_CHIP_PAD_Y
+    stub = spec.get("stub") or ""
+    if stub:
+        stub_w = max(1, int(spec.get("stub_lane_w") or inner))
+        stub_lines = _wrap_label_lines(stub, size, stub_w, strong=True)
+        if len(stub_lines) > 3:
+            return False, True
+        if len(stub_lines) > 1:
+            wrapped = True
+        total_h = max(total_h, 2 * SHARE_CHIP_PAD_Y + len(stub_lines) * _line_box(size))
     for chip in chips:
-        lab_lines = _wrap_label_lines(chip["label"], size, cell_w)
-        val_lines = _wrap_label_lines(chip["visible"], size, cell_w)
+        lab_lines = _wrap_label_lines(chip["label"], size, inner)
+        val_lines = _wrap_label_lines(chip["visible"], size, inner)
         if len(lab_lines) > 2 or len(val_lines) > 1:
             return False, True
         if len(lab_lines) > 1:
@@ -5252,7 +5401,7 @@ def _share_chips_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, bool]:
             + SHARE_CHIP_LABEL_MB
             + len(val_lines) * _line_box(size),
         )
-        if _text_width(chip["visible"], size, strong=True) > cell_w:
+        if _text_width(chip["visible"], size, strong=True) > inner:
             return False, wrapped
     if sp._box_h <= 0:
         return True, wrapped
@@ -5788,6 +5937,8 @@ def _finalize_composition_roles(sp: SurfacePlan, size: int) -> None:
     elif sp.role == "share_chips":
         sp.role_sizes["label"] = size
         sp.role_sizes["value"] = size
+        if sp._table_spec is not None:
+            _freeze_share_chip_geometry(sp, size)
     elif sp.role == "metric_overview":
         sp.role_sizes["body"] = size
         sp.role_sizes.setdefault("heading", HERO_HEADING_PX)

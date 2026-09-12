@@ -7879,7 +7879,7 @@
     },
     "ShareChips": {
       "additionalProperties": false,
-      "description": "Optional outlined share-chip row on chart_grouped_annex (#294).",
+      "description": "Optional outlined share-chip row on chart_grouped_annex (#294/#345).",
       "properties": {
         "surface_id": {
           "pattern": "^[a-z][a-z0-9_-]{0,63}$",
@@ -7894,6 +7894,19 @@
           "minItems": 1,
           "title": "Chips",
           "type": "array"
+        },
+        "stub": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stub"
         }
       },
       "required": [

@@ -175,10 +175,12 @@ def build_presentation_html(
             ".grouped-annex-divider{position:absolute;inset:0 auto 0 50%;width:1px;background:var(--color-rule)}",
             # Metric strip (D165/D265).
             ".metric-strip{display:flex;flex-direction:row;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
-            ".share-chips{display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;width:100%;margin:0 0 var(--space-sm)}",
-            ".share-chip{flex:1 1 0;min-width:0;padding:8px 12px;border:var(--border-width-hairline) solid var(--color-navy);box-sizing:border-box;background:transparent}",
-            ".share-chip .share-chip-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis)}",
-            ".share-chip .share-chip-value{margin:0;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis)}",
+            ".share-chips{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:12px;width:100%;margin:0 0 var(--space-sm);position:relative}",
+            ".share-chips.category-aligned{display:block;min-height:48px}",
+            ".share-chip-stub{flex:0 0 auto;margin:0;font-weight:var(--font-weight-emphasis);box-sizing:border-box;display:flex;align-items:center;text-align:left}",
+            ".share-chip{flex:1 1 0;min-width:0;padding:8px 12px;border:var(--border-width-hairline) solid var(--color-navy);box-sizing:border-box;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}",
+            ".share-chip .share-chip-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis);text-align:center}",
+            ".share-chip .share-chip-value{margin:0;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis);text-align:center}",
 ".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
 ".dual-chart-pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column}",
 ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
@@ -1637,18 +1639,53 @@ def _paint_share_chips(
     items = paint.get("chips") or []
     label_px = sp.role_sizes.get("label")
     value_px = sp.role_sizes.get("value")
+    stub = paint.get("stub") or ""
+    centered = bool(paint.get("category_centered") and paint.get("centers"))
+    cell_w = int(paint.get("cell_w") or 0)
+    lane_w = int(paint.get("stub_lane_w") or 0)
+    cls = "share-chips category-aligned" if centered else "share-chips"
+    row_style = ""
+    if centered:
+        row_h = int(paint.get("row_h") or 48)
+        row_style = f' style="position:relative;height:{max(48, row_h)}px"'
     out = [
-        f'<div class="share-chips" {_plan_attrs(sp, events_by_surface)} '
-        f'data-share-chips="{_escape(chips.surface_id)}">'
+        f'<div class="{cls}" {_plan_attrs(sp, events_by_surface)} '
+        f'data-share-chips="{_escape(chips.surface_id)}"{row_style}>'
     ]
-    for item in items:
+    if stub:
+        stub_style = _style_font(label_px)
+        if centered:
+            extra = f"position:absolute;left:0;top:0;width:{lane_w}px;height:100%;margin:0"
+            stub_style = (
+                f' style="font-size:{label_px}px;{extra}"'
+                if label_px is not None
+                else f' style="{extra}"'
+            )
+        elif lane_w:
+            extra = f"flex:0 0 {lane_w}px;width:{lane_w}px"
+            stub_style = (
+                f' style="font-size:{label_px}px;{extra}"'
+                if label_px is not None
+                else f' style="{extra}"'
+            )
+        out.append(
+            f'<p class="share-chip-stub"{stub_style}>{_soft_break_html(stub)}</p>'
+        )
+    for i, item in enumerate(items):
         aria = (
             f' aria-label="{_escape(item["accessible"])}"'
             if item["accessible"] != item["visible"]
             else ""
         )
+        chip_style = ""
+        if centered:
+            cx = float(paint["centers"][i]["x"]) if i < len(paint["centers"]) else 0.0
+            chip_style = (
+                f' style="position:absolute;left:{cx:.1f}px;top:0;width:{cell_w}px;'
+                f'height:100%;transform:translateX(-50%);box-sizing:border-box"'
+            )
         out.append(
-            f'<div class="share-chip" data-share-id="{_escape(item["share_id"])}">'
+            f'<div class="share-chip" data-share-id="{_escape(item["share_id"])}"{chip_style}>'
         )
         out.append(
             f'<p class="share-chip-label"{_style_font(label_px)}>'

@@ -57,6 +57,7 @@ Repo tooling invoked by agents and CI — not product runtime.
 - `pytest -q tests/test_amex_s12_nca_stack.py` (#228/#260/#268/#273 s12 three-band NCA stack + stack segment labels + PDF hero KPI sentences; hero/`metric_overview` body 27 + wrapping KPI labels)
 - `pytest -q tests/test_amex_s17_s18_furniture.py` (#229/#258/#271 s17 $B + CAGR + qualification + dated pane headings; s18 $ NII + YoY boxes + folded Volume/Margin driver labels)
 - `pytest -q tests/test_amex_s21_s24_s28_furniture.py` (#230/#248/#254/#260 s21 shares line + ROE + stack segment dollars; s24 above groups + $486B + outlined shares; s28 FDIC + navy/blue/sky/gray stacks)
+- `pytest -q tests/test_q4_s24_share_chips.py` (#345 s24 share-chip stub + 20px bar-centered type)
 - `python scripts/renderer_3_release.py --verify`
 - `pytest -q tests/test_renderer_v3_release_evidence.py` (#198 / D315)
 
