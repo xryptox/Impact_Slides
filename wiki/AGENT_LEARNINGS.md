@@ -106,3 +106,6 @@ Q4 s27 dual donuts overflow at `ordinary_values` 20+ because outside names sit a
 
 ## 60. Share-chip 24px overflows s24 leftover after D47 + annex (#345, 2026-09-11)
 Q4 s24 `chart_grouped_annex` can freeze chips at 20px with a 3-line stub lane and category-center shrink-to-align. 24px needs 3-line labels (`Large & Global Corporate*`) plus a stub wider than cat0 leftover, so it either collides the stub lane or starves the D47 plot / annex peers. Grow chips from leftover after the plot floor (actual `pad_t`+`pad_b`, not the 28+64 constant); do not take plot surplus before chips. Omit stub + id mismatch stays equal-flex.
+
+## 61. Watcher must not auto-cleanup; supervisor owns teardown (2026-09-12)
+`cleanupOnAllMerged` launched `$true` since 2026-08-08 (`ff7360d`), but a dead watcher never ran closeout (wave `12d15418`). Reverted: new waves write `cleanupOnAllMerged: false`. The watcher stays event-only. After collecting a ticket's final report, the supervisor closes that tab; merged subsets use `cleanup-ticket-wave.ps1` dry-run then `-Apply`; once every issue is CLOSED, `teardown-ticket-wave.ps1` dry-run then `-Apply`. Windows leftover `nul` files can make `git worktree remove --force` fail (`Directory not empty`); delete via `\\?\` + `DeleteFileW` before retrying.
