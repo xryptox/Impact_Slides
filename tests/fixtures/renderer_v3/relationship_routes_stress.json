@@ -1,0 +1,1532 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "decision_tree",
+      "label": "Decision tree"
+    },
+    {
+      "section_id": "stakeholder_map",
+      "label": "Stakeholder map"
+    }
+  ],
+  "number_formats": {},
+  "evidence_registry": {
+    "layout-stress-p021": {
+      "source_name": "ITIL incident triage",
+      "locator": {
+        "kind": "note",
+        "text": "ITIL incident triage"
+      }
+    },
+    "layout-stress-p022": {
+      "source_name": "ITIL incident triage",
+      "locator": {
+        "kind": "note",
+        "text": "ITIL yes/no/escalate; 5-node 3-way is illegal without shared targets, shrunk to 4"
+      }
+    },
+    "layout-stress-p023": {
+      "source_name": "HIPAA Privacy Rule",
+      "locator": {
+        "kind": "note",
+        "text": "HIPAA Privacy Rule use and disclosure"
+      }
+    },
+    "layout-stress-p024": {
+      "source_name": "FDA device classification",
+      "locator": {
+        "kind": "note",
+        "text": "FDA device classification path"
+      }
+    },
+    "layout-stress-p025": {
+      "source_name": "OWASP ASVS 4.0",
+      "locator": {
+        "kind": "note",
+        "text": "OWASP ASVS 4.0 level gate"
+      }
+    },
+    "layout-stress-p026": {
+      "source_name": "GDPR Article 6",
+      "locator": {
+        "kind": "note",
+        "text": "GDPR Art. 6; 15-node all-3-way is impossible (3D=14), shrunk to 13"
+      }
+    },
+    "layout-stress-p027": {
+      "source_name": "GDPR Chapter V",
+      "locator": {
+        "kind": "note",
+        "text": "GDPR transfer triage with wrapping headings"
+      }
+    },
+    "layout-stress-p028": {
+      "source_name": "COSO / SOX ICFR",
+      "locator": {
+        "kind": "note",
+        "text": "COSO internal-control deficiency path"
+      }
+    },
+    "layout-stress-p029": {
+      "source_name": "RACI",
+      "locator": {
+        "kind": "note",
+        "text": "RACI Accountable rule"
+      }
+    },
+    "layout-stress-p030": {
+      "source_name": "PCI DSS / HIPAA scoping",
+      "locator": {
+        "kind": "note",
+        "text": "PCI DSS vs HIPAA scoping; depth 4 chain plus 3-way root"
+      }
+    },
+    "layout-stress-p061": {
+      "source_name": "GDPR controller",
+      "locator": {
+        "kind": "note",
+        "text": "GDPR controller hub, two undirected spokes"
+      }
+    },
+    "layout-stress-p062": {
+      "source_name": "PCI DSS network",
+      "locator": {
+        "kind": "note",
+        "text": "PCI DSS card-network, to_focal"
+      }
+    },
+    "layout-stress-p063": {
+      "source_name": "NIST CSF Govern",
+      "locator": {
+        "kind": "note",
+        "text": "NIST CSF Govern, from_focal"
+      }
+    },
+    "layout-stress-p064": {
+      "source_name": "EU MDR actors",
+      "locator": {
+        "kind": "note",
+        "text": "EU MDR actors, bidirectional"
+      }
+    },
+    "layout-stress-p065": {
+      "source_name": "SAFe PI stakeholders",
+      "locator": {
+        "kind": "note",
+        "text": "SAFe PI stakeholders, mixed directions"
+      }
+    },
+    "layout-stress-p066": {
+      "source_name": "COSO / SOX board",
+      "locator": {
+        "kind": "note",
+        "text": "COSO / SOX board map, wrapping relationship_label"
+      }
+    },
+    "layout-stress-p067": {
+      "source_name": "Kubernetes control plane",
+      "locator": {
+        "kind": "note",
+        "text": "Kubernetes control plane, all four directions"
+      }
+    },
+    "layout-stress-p068": {
+      "source_name": "Porter five forces",
+      "locator": {
+        "kind": "note",
+        "text": "Porter five forces minus substitutes, heading-only"
+      }
+    },
+    "layout-stress-p069": {
+      "source_name": "GDPR DPO",
+      "locator": {
+        "kind": "note",
+        "text": "GDPR DPO focal heading length"
+      }
+    },
+    "layout-stress-p070": {
+      "source_name": "One-word stakeholders",
+      "locator": {
+        "kind": "note",
+        "text": "One-word eight-spoke density"
+      }
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 21,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v1 triage binary",
+      "payload": {
+        "root_id": "d-urgent",
+        "nodes": [
+          {
+            "node_id": "d-urgent",
+            "kind": "decision",
+            "heading": "Urgent?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-now"
+              },
+              {
+                "label": "No",
+                "target_id": "o-queue"
+              }
+            ]
+          },
+          {
+            "node_id": "o-now",
+            "kind": "outcome",
+            "heading": "Page on-call"
+          },
+          {
+            "node_id": "o-queue",
+            "kind": "outcome",
+            "heading": "Ticket queue"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p021"
+      ],
+      "content": {
+        "subtitle": "ITIL incident triage"
+      }
+    },
+    {
+      "slide_number": 22,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v2 three-way root",
+      "payload": {
+        "root_id": "d-path",
+        "nodes": [
+          {
+            "node_id": "d-path",
+            "kind": "decision",
+            "heading": "Path?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-go"
+              },
+              {
+                "label": "No",
+                "target_id": "o-stop"
+              },
+              {
+                "label": "Escalate",
+                "target_id": "o-esc"
+              }
+            ]
+          },
+          {
+            "node_id": "o-go",
+            "kind": "outcome",
+            "heading": "Proceed"
+          },
+          {
+            "node_id": "o-stop",
+            "kind": "outcome",
+            "heading": "Reject"
+          },
+          {
+            "node_id": "o-esc",
+            "kind": "outcome",
+            "heading": "Escalate"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p022"
+      ],
+      "content": {
+        "subtitle": "ITIL yes/no/escalate; 5-node 3-way is illegal without shared targets, shrunk to 4"
+      }
+    },
+    {
+      "slide_number": 23,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v3 depth three",
+      "payload": {
+        "root_id": "d-phi",
+        "nodes": [
+          {
+            "node_id": "d-phi",
+            "kind": "decision",
+            "heading": "PHI involved?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "d-auth"
+              },
+              {
+                "label": "No",
+                "target_id": "d-min"
+              }
+            ]
+          },
+          {
+            "node_id": "d-auth",
+            "kind": "decision",
+            "heading": "Authorized?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-use"
+              },
+              {
+                "label": "No",
+                "target_id": "o-deny"
+              }
+            ]
+          },
+          {
+            "node_id": "d-min",
+            "kind": "decision",
+            "heading": "Minimum necessary?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-min"
+              },
+              {
+                "label": "No",
+                "target_id": "o-skip"
+              }
+            ]
+          },
+          {
+            "node_id": "o-use",
+            "kind": "outcome",
+            "heading": "Use under HIPAA"
+          },
+          {
+            "node_id": "o-deny",
+            "kind": "outcome",
+            "heading": "Do not disclose"
+          },
+          {
+            "node_id": "o-min",
+            "kind": "outcome",
+            "heading": "Limit the set"
+          },
+          {
+            "node_id": "o-skip",
+            "kind": "outcome",
+            "heading": "Do not use PHI"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p023"
+      ],
+      "content": {
+        "subtitle": "HIPAA Privacy Rule use and disclosure"
+      }
+    },
+    {
+      "slide_number": 24,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v4 mixed branching",
+      "payload": {
+        "root_id": "d-class",
+        "nodes": [
+          {
+            "node_id": "d-class",
+            "kind": "decision",
+            "heading": "Device class?",
+            "branches": [
+              {
+                "label": "I",
+                "target_id": "o-reg"
+              },
+              {
+                "label": "II",
+                "target_id": "d-510"
+              },
+              {
+                "label": "III",
+                "target_id": "d-pma"
+              }
+            ]
+          },
+          {
+            "node_id": "o-reg",
+            "kind": "outcome",
+            "heading": "General controls"
+          },
+          {
+            "node_id": "d-510",
+            "kind": "decision",
+            "heading": "Predicate?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-k"
+              },
+              {
+                "label": "No",
+                "target_id": "o-de"
+              },
+              {
+                "label": "Unsure",
+                "target_id": "o-q"
+              }
+            ]
+          },
+          {
+            "node_id": "d-pma",
+            "kind": "decision",
+            "heading": "PMA needed?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-pma"
+              },
+              {
+                "label": "No",
+                "target_id": "o-alt"
+              }
+            ]
+          },
+          {
+            "node_id": "o-k",
+            "kind": "outcome",
+            "heading": "510(k)"
+          },
+          {
+            "node_id": "o-de",
+            "kind": "outcome",
+            "heading": "De novo"
+          },
+          {
+            "node_id": "o-q",
+            "kind": "outcome",
+            "heading": "Q-Sub"
+          },
+          {
+            "node_id": "o-pma",
+            "kind": "outcome",
+            "heading": "PMA"
+          },
+          {
+            "node_id": "o-alt",
+            "kind": "outcome",
+            "heading": "Reclassify path"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p024"
+      ],
+      "content": {
+        "subtitle": "FDA device classification path"
+      }
+    },
+    {
+      "slide_number": 25,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v5 eleven nodes",
+      "payload": {
+        "root_id": "d-owasp",
+        "nodes": [
+          {
+            "node_id": "d-owasp",
+            "kind": "decision",
+            "heading": "ASVS level?",
+            "branches": [
+              {
+                "label": "L1",
+                "target_id": "d-l1"
+              },
+              {
+                "label": "L2",
+                "target_id": "d-l2"
+              },
+              {
+                "label": "L3",
+                "target_id": "d-l3"
+              }
+            ]
+          },
+          {
+            "node_id": "d-l1",
+            "kind": "decision",
+            "heading": "L1 gaps?",
+            "branches": [
+              {
+                "label": "None",
+                "target_id": "o-pass"
+              },
+              {
+                "label": "Some",
+                "target_id": "o-fix"
+              },
+              {
+                "label": "Many",
+                "target_id": "o-block"
+              }
+            ]
+          },
+          {
+            "node_id": "d-l2",
+            "kind": "decision",
+            "heading": "Auth strong?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-l2"
+              },
+              {
+                "label": "No",
+                "target_id": "o-mfa"
+              }
+            ]
+          },
+          {
+            "node_id": "d-l3",
+            "kind": "decision",
+            "heading": "Design review?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-l3"
+              },
+              {
+                "label": "No",
+                "target_id": "o-arch"
+              }
+            ]
+          },
+          {
+            "node_id": "o-pass",
+            "kind": "outcome",
+            "heading": "L1 met"
+          },
+          {
+            "node_id": "o-fix",
+            "kind": "outcome",
+            "heading": "Close L1 gaps"
+          },
+          {
+            "node_id": "o-block",
+            "kind": "outcome",
+            "heading": "Hold release"
+          },
+          {
+            "node_id": "o-l2",
+            "kind": "outcome",
+            "heading": "L2 met"
+          },
+          {
+            "node_id": "o-mfa",
+            "kind": "outcome",
+            "heading": "Add MFA"
+          },
+          {
+            "node_id": "o-l3",
+            "kind": "outcome",
+            "heading": "L3 met"
+          },
+          {
+            "node_id": "o-arch",
+            "kind": "outcome",
+            "heading": "Architecture review"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p025"
+      ],
+      "content": {
+        "subtitle": "OWASP ASVS 4.0 level gate"
+      }
+    },
+    {
+      "slide_number": 26,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v6 fifteen-node ceiling",
+      "payload": {
+        "root_id": "d1",
+        "nodes": [
+          {
+            "node_id": "d1",
+            "kind": "decision",
+            "heading": "Lawful basis?",
+            "branches": [
+              {
+                "label": "Consent",
+                "target_id": "d2"
+              },
+              {
+                "label": "Contract",
+                "target_id": "d3"
+              },
+              {
+                "label": "Other",
+                "target_id": "d4"
+              }
+            ]
+          },
+          {
+            "node_id": "d2",
+            "kind": "decision",
+            "heading": "Consent valid?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o1"
+              },
+              {
+                "label": "No",
+                "target_id": "o2"
+              },
+              {
+                "label": "Unclear",
+                "target_id": "o3"
+              }
+            ]
+          },
+          {
+            "node_id": "d3",
+            "kind": "decision",
+            "heading": "Necessary?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o4"
+              },
+              {
+                "label": "No",
+                "target_id": "o5"
+              },
+              {
+                "label": "Partial",
+                "target_id": "o6"
+              }
+            ]
+          },
+          {
+            "node_id": "d4",
+            "kind": "decision",
+            "heading": "Art. 6 other?",
+            "branches": [
+              {
+                "label": "Legitimate",
+                "target_id": "o7"
+              },
+              {
+                "label": "Legal",
+                "target_id": "o8"
+              },
+              {
+                "label": "Vital",
+                "target_id": "o9"
+              }
+            ]
+          },
+          {
+            "node_id": "o1",
+            "kind": "outcome",
+            "heading": "Process on consent"
+          },
+          {
+            "node_id": "o2",
+            "kind": "outcome",
+            "heading": "Stop processing"
+          },
+          {
+            "node_id": "o3",
+            "kind": "outcome",
+            "heading": "Re-collect consent"
+          },
+          {
+            "node_id": "o4",
+            "kind": "outcome",
+            "heading": "Process on contract"
+          },
+          {
+            "node_id": "o5",
+            "kind": "outcome",
+            "heading": "Do not process"
+          },
+          {
+            "node_id": "o6",
+            "kind": "outcome",
+            "heading": "Limit purpose"
+          },
+          {
+            "node_id": "o7",
+            "kind": "outcome",
+            "heading": "Legitimate interests"
+          },
+          {
+            "node_id": "o8",
+            "kind": "outcome",
+            "heading": "Legal obligation"
+          },
+          {
+            "node_id": "o9",
+            "kind": "outcome",
+            "heading": "Vital interests"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p026"
+      ],
+      "content": {
+        "subtitle": "GDPR Art. 6; 15-node all-3-way is impossible (3D=14), shrunk to 13"
+      }
+    },
+    {
+      "slide_number": 27,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v7 wrapping headings",
+      "payload": {
+        "root_id": "d-w",
+        "nodes": [
+          {
+            "node_id": "d-w",
+            "kind": "decision",
+            "heading": "Record the event, classify impact and urgency, and assign a resolver before restoration work begins",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-a"
+              },
+              {
+                "label": "No",
+                "target_id": "d-w2"
+              },
+              {
+                "label": "Unsure",
+                "target_id": "o-d"
+              }
+            ]
+          },
+          {
+            "node_id": "d-w2",
+            "kind": "decision",
+            "heading": "Confirm whether personal data leaves the EEA without an Article 46 transfer tool in place",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-b"
+              },
+              {
+                "label": "No",
+                "target_id": "o-c"
+              }
+            ]
+          },
+          {
+            "node_id": "o-a",
+            "kind": "outcome",
+            "heading": "Open a P1 incident and preserve logs for the ICO timeline"
+          },
+          {
+            "node_id": "o-b",
+            "kind": "outcome",
+            "heading": "Stop the transfer and notify the controller"
+          },
+          {
+            "node_id": "o-c",
+            "kind": "outcome",
+            "heading": "Continue under GDPR Chapter V"
+          },
+          {
+            "node_id": "o-d",
+            "kind": "outcome",
+            "heading": "Hold and request legal review of the transfer tool"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p027"
+      ],
+      "content": {
+        "subtitle": "GDPR transfer triage with wrapping headings"
+      }
+    },
+    {
+      "slide_number": 28,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v8 outcome detail only",
+      "payload": {
+        "root_id": "d-coso",
+        "nodes": [
+          {
+            "node_id": "d-coso",
+            "kind": "decision",
+            "heading": "Control failed?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "d-mat"
+              },
+              {
+                "label": "No",
+                "target_id": "o-ok"
+              },
+              {
+                "label": "Unknown",
+                "target_id": "o-inv"
+              }
+            ]
+          },
+          {
+            "node_id": "d-mat",
+            "kind": "decision",
+            "heading": "Material?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-mw"
+              },
+              {
+                "label": "No",
+                "target_id": "d-sig"
+              }
+            ]
+          },
+          {
+            "node_id": "d-sig",
+            "kind": "decision",
+            "heading": "Significant?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-sig"
+              },
+              {
+                "label": "No",
+                "target_id": "o-def"
+              }
+            ]
+          },
+          {
+            "node_id": "o-ok",
+            "kind": "outcome",
+            "heading": "Operate as designed",
+            "detail": "No deficiency noted under COSO."
+          },
+          {
+            "node_id": "o-inv",
+            "kind": "outcome",
+            "heading": "Investigate",
+            "detail": "Insufficient evidence; expand testing."
+          },
+          {
+            "node_id": "o-mw",
+            "kind": "outcome",
+            "heading": "Material weakness",
+            "detail": "SOX: report a material weakness."
+          },
+          {
+            "node_id": "o-sig",
+            "kind": "outcome",
+            "heading": "Significant deficiency",
+            "detail": "Escalate to the audit committee."
+          },
+          {
+            "node_id": "o-def",
+            "kind": "outcome",
+            "heading": "Deficiency",
+            "detail": "Document and remediate the deficiency."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p028"
+      ],
+      "content": {
+        "subtitle": "COSO internal-control deficiency path"
+      }
+    },
+    {
+      "slide_number": 29,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v9 decision detail only",
+      "payload": {
+        "root_id": "d-raci",
+        "nodes": [
+          {
+            "node_id": "d-raci",
+            "kind": "decision",
+            "heading": "Accountable named?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o-go"
+              },
+              {
+                "label": "No",
+                "target_id": "o-stop"
+              },
+              {
+                "label": "Shared",
+                "target_id": "o-split"
+              }
+            ],
+            "detail": "RACI requires one Accountable owner."
+          },
+          {
+            "node_id": "o-go",
+            "kind": "outcome",
+            "heading": "Proceed"
+          },
+          {
+            "node_id": "o-stop",
+            "kind": "outcome",
+            "heading": "Name an owner"
+          },
+          {
+            "node_id": "o-split",
+            "kind": "outcome",
+            "heading": "Split the role"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p029"
+      ],
+      "content": {
+        "subtitle": "RACI Accountable rule"
+      }
+    },
+    {
+      "slide_number": 30,
+      "layout_type": "decision_tree",
+      "section_id": "decision_tree",
+      "title": "decision_tree v10 skinny plus bushy",
+      "payload": {
+        "root_id": "d-r",
+        "nodes": [
+          {
+            "node_id": "d-r",
+            "kind": "decision",
+            "heading": "In scope?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "d-a"
+              },
+              {
+                "label": "No",
+                "target_id": "d-b"
+              },
+              {
+                "label": "Defer",
+                "target_id": "o1"
+              }
+            ]
+          },
+          {
+            "node_id": "d-a",
+            "kind": "decision",
+            "heading": "PCI DSS?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "d-c"
+              },
+              {
+                "label": "No",
+                "target_id": "o2"
+              }
+            ]
+          },
+          {
+            "node_id": "d-b",
+            "kind": "decision",
+            "heading": "HIPAA?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o3"
+              },
+              {
+                "label": "No",
+                "target_id": "o4"
+              }
+            ]
+          },
+          {
+            "node_id": "d-c",
+            "kind": "decision",
+            "heading": "Card data?",
+            "branches": [
+              {
+                "label": "Yes",
+                "target_id": "o5"
+              },
+              {
+                "label": "No",
+                "target_id": "o6"
+              }
+            ]
+          },
+          {
+            "node_id": "o1",
+            "kind": "outcome",
+            "heading": "Park"
+          },
+          {
+            "node_id": "o2",
+            "kind": "outcome",
+            "heading": "Not PCI"
+          },
+          {
+            "node_id": "o3",
+            "kind": "outcome",
+            "heading": "Apply HIPAA"
+          },
+          {
+            "node_id": "o4",
+            "kind": "outcome",
+            "heading": "Out of both"
+          },
+          {
+            "node_id": "o5",
+            "kind": "outcome",
+            "heading": "SAQ / RoC"
+          },
+          {
+            "node_id": "o6",
+            "kind": "outcome",
+            "heading": "Network segment"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p030"
+      ],
+      "content": {
+        "subtitle": "PCI DSS vs HIPAA scoping; depth 4 chain plus 3-way root"
+      }
+    },
+    {
+      "slide_number": 61,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v1 min undirected",
+      "payload": {
+        "focal": {
+          "entity_id": "ctrl",
+          "heading": "Controller"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "proc",
+            "heading": "Processor",
+            "relationship_label": "Art. 28",
+            "direction": "undirected"
+          },
+          {
+            "entity_id": "ds",
+            "heading": "Data subject",
+            "relationship_label": "Art. 12-22",
+            "direction": "undirected"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p061"
+      ],
+      "content": {
+        "subtitle": "GDPR controller hub, two undirected spokes"
+      }
+    },
+    {
+      "slide_number": 62,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v2 to_focal",
+      "payload": {
+        "focal": {
+          "entity_id": "issuer",
+          "heading": "Issuer"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "holder",
+            "heading": "Cardholder",
+            "relationship_label": "pays issuer",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "scheme",
+            "heading": "Scheme",
+            "relationship_label": "licenses issuer",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "acquirer",
+            "heading": "Acquirer",
+            "relationship_label": "settles to issuer",
+            "direction": "to_focal"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p062"
+      ],
+      "content": {
+        "subtitle": "PCI DSS card-network, to_focal"
+      }
+    },
+    {
+      "slide_number": 63,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v3 from_focal",
+      "payload": {
+        "focal": {
+          "entity_id": "ciso",
+          "heading": "CISO"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "soc",
+            "heading": "SOC",
+            "relationship_label": "directs",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "ir",
+            "heading": "IR team",
+            "relationship_label": "directs",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "eng",
+            "heading": "Engineering",
+            "relationship_label": "directs",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "vend",
+            "heading": "Vendors",
+            "relationship_label": "directs",
+            "direction": "from_focal"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p063"
+      ],
+      "content": {
+        "subtitle": "NIST CSF Govern, from_focal"
+      }
+    },
+    {
+      "slide_number": 64,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v4 bidirectional",
+      "payload": {
+        "focal": {
+          "entity_id": "ce",
+          "heading": "Notified body"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "mfr",
+            "heading": "Manufacturer",
+            "relationship_label": "conformity",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "ca",
+            "heading": "Competent authority",
+            "relationship_label": "oversight",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "auth",
+            "heading": "Authorized rep",
+            "relationship_label": "mandate",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "imp",
+            "heading": "Importer",
+            "relationship_label": "placing",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "dist",
+            "heading": "Distributor",
+            "relationship_label": "supply",
+            "direction": "bidirectional"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p064"
+      ],
+      "content": {
+        "subtitle": "EU MDR actors, bidirectional"
+      }
+    },
+    {
+      "slide_number": 65,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v5 mixed directions",
+      "payload": {
+        "focal": {
+          "entity_id": "pi",
+          "heading": "Product owner"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "rte",
+            "heading": "RTE",
+            "relationship_label": "facilitates PI",
+            "direction": "undirected"
+          },
+          {
+            "entity_id": "team",
+            "heading": "Agile team",
+            "relationship_label": "delivers",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "arch",
+            "heading": "Architect",
+            "relationship_label": "guides",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "bus",
+            "heading": "Business owner",
+            "relationship_label": "accepts",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "sys",
+            "heading": "System team",
+            "relationship_label": "enables",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "ux",
+            "heading": "UX",
+            "relationship_label": "researches",
+            "direction": "from_focal"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p065"
+      ],
+      "content": {
+        "subtitle": "SAFe PI stakeholders, mixed directions"
+      }
+    },
+    {
+      "slide_number": 66,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v6 wrapping labels",
+      "payload": {
+        "focal": {
+          "entity_id": "board",
+          "heading": "Board"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "ac",
+            "heading": "Audit committee",
+            "relationship_label": "oversees internal control and external audit under COSO",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "risk",
+            "heading": "Risk committee",
+            "relationship_label": "reviews residual risk appetite against ISO 31000 criteria",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "mgmt",
+            "heading": "Management",
+            "relationship_label": "executes the control environment and reports deficiencies",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "ext",
+            "heading": "External auditor",
+            "relationship_label": "opines on ICFR and communicates significant deficiencies",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "reg",
+            "heading": "Regulator",
+            "relationship_label": "receives required filings and examines the control program",
+            "direction": "undirected"
+          },
+          {
+            "entity_id": "int",
+            "heading": "Internal audit",
+            "relationship_label": "provides independent assurance to the audit committee",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "own",
+            "heading": "Control owners",
+            "relationship_label": "operate key controls and remediate testing exceptions",
+            "direction": "from_focal"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p066"
+      ],
+      "content": {
+        "subtitle": "COSO / SOX board map, wrapping relationship_label"
+      }
+    },
+    {
+      "slide_number": 67,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v7 max eight",
+      "payload": {
+        "focal": {
+          "entity_id": "cluster",
+          "heading": "Cluster",
+          "detail": "Kubernetes control plane."
+        },
+        "stakeholders": [
+          {
+            "entity_id": "user",
+            "heading": "User",
+            "relationship_label": "kubectl",
+            "direction": "to_focal",
+            "detail": "API requests."
+          },
+          {
+            "entity_id": "sched",
+            "heading": "Scheduler",
+            "relationship_label": "binds pods",
+            "direction": "from_focal",
+            "detail": "Assignments."
+          },
+          {
+            "entity_id": "cm",
+            "heading": "Controller manager",
+            "relationship_label": "reconciles",
+            "direction": "bidirectional",
+            "detail": "Desired state."
+          },
+          {
+            "entity_id": "etcd",
+            "heading": "etcd",
+            "relationship_label": "stores state",
+            "direction": "bidirectional",
+            "detail": "Cluster store."
+          },
+          {
+            "entity_id": "kubelet",
+            "heading": "Kubelet",
+            "relationship_label": "runs pods",
+            "direction": "from_focal",
+            "detail": "Node agent."
+          },
+          {
+            "entity_id": "cni",
+            "heading": "CNI",
+            "relationship_label": "networks",
+            "direction": "undirected",
+            "detail": "Pod net."
+          },
+          {
+            "entity_id": "cri",
+            "heading": "CRI",
+            "relationship_label": "runs containers",
+            "direction": "undirected",
+            "detail": "Runtime."
+          },
+          {
+            "entity_id": "adm",
+            "heading": "Admission",
+            "relationship_label": "mutates",
+            "direction": "to_focal",
+            "detail": "Webhooks."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p067"
+      ],
+      "content": {
+        "subtitle": "Kubernetes control plane, all four directions"
+      }
+    },
+    {
+      "slide_number": 68,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v8 heading-only spokes",
+      "payload": {
+        "focal": {
+          "entity_id": "firm",
+          "heading": "Firm"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "riv",
+            "heading": "Rivals",
+            "relationship_label": "compete",
+            "direction": "undirected"
+          },
+          {
+            "entity_id": "buy",
+            "heading": "Buyers",
+            "relationship_label": "demand",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "sup",
+            "heading": "Suppliers",
+            "relationship_label": "input",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "ent",
+            "heading": "Entrants",
+            "relationship_label": "threaten",
+            "direction": "bidirectional"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p068"
+      ],
+      "content": {
+        "subtitle": "Porter five forces minus substitutes, heading-only"
+      }
+    },
+    {
+      "slide_number": 69,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v9 long focal heading",
+      "payload": {
+        "focal": {
+          "entity_id": "dpo",
+          "heading": "Data Protection Officer for the Union establishment under GDPR Articles 37 to 39"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "ctrl",
+            "heading": "Controller",
+            "relationship_label": "advises",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "sa",
+            "heading": "Supervisory authority",
+            "relationship_label": "contact",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "ds",
+            "heading": "Data subjects",
+            "relationship_label": "receives",
+            "direction": "to_focal"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p069"
+      ],
+      "content": {
+        "subtitle": "GDPR DPO focal heading length"
+      }
+    },
+    {
+      "slide_number": 70,
+      "layout_type": "stakeholder_map",
+      "section_id": "stakeholder_map",
+      "title": "stakeholder_map v10 one-word density",
+      "payload": {
+        "focal": {
+          "entity_id": "hub",
+          "heading": "Hub"
+        },
+        "stakeholders": [
+          {
+            "entity_id": "a",
+            "heading": "Ops",
+            "relationship_label": "runs",
+            "direction": "undirected"
+          },
+          {
+            "entity_id": "b",
+            "heading": "Risk",
+            "relationship_label": "checks",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "c",
+            "heading": "Legal",
+            "relationship_label": "opines",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "d",
+            "heading": "Audit",
+            "relationship_label": "tests",
+            "direction": "bidirectional"
+          },
+          {
+            "entity_id": "e",
+            "heading": "IT",
+            "relationship_label": "hosts",
+            "direction": "undirected"
+          },
+          {
+            "entity_id": "f",
+            "heading": "HR",
+            "relationship_label": "hires",
+            "direction": "to_focal"
+          },
+          {
+            "entity_id": "g",
+            "heading": "Fin",
+            "relationship_label": "funds",
+            "direction": "from_focal"
+          },
+          {
+            "entity_id": "h",
+            "heading": "Cust",
+            "relationship_label": "buys",
+            "direction": "bidirectional"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p070"
+      ],
+      "content": {
+        "subtitle": "One-word eight-spoke density"
+      }
+    }
+  ]
+}
