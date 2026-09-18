@@ -483,6 +483,88 @@ def test_long_branch_label_overflows_at_painted_edge_width(tmp_path: Path):
     assert result["status"] == "degraded"
 
 
+def test_bushy_edge_row_wrap_overflows_when_labels_fill_max_width(tmp_path: Path):
+    """Nine max-width edge labels wrap to a second row and must not freeze as fit-ok."""
+    wrap_label = "Alpha bravo charlie delta echo foxtrot golf hotel india"
+    heading = (
+        "Please record the event, classify impact and urgency, assign a named "
+        "resolver, and freeze restoration work before processing resumes today"
+    )
+    detail = (
+        "Please document the rationale, residual risk, compensating controls, "
+        "named owner, and restoration path before any processing resumes under "
+        "the written policy."
+    )
+    nodes = [
+        {
+            "node_id": "d1",
+            "kind": "decision",
+            "heading": heading,
+            "detail": detail,
+            "branches": [
+                {"label": "A", "target_id": "d2"},
+                {"label": "B", "target_id": "d3"},
+                {"label": "C", "target_id": "d4"},
+            ],
+        },
+        {
+            "node_id": "d2",
+            "kind": "decision",
+            "heading": heading,
+            "detail": detail,
+            "branches": [
+                {"label": f"{wrap_label} one", "target_id": "o1"},
+                {"label": f"{wrap_label} two", "target_id": "o2"},
+                {"label": f"{wrap_label} three", "target_id": "o3"},
+            ],
+        },
+        {
+            "node_id": "d3",
+            "kind": "decision",
+            "heading": heading,
+            "detail": detail,
+            "branches": [
+                {"label": f"{wrap_label} four", "target_id": "o4"},
+                {"label": f"{wrap_label} five", "target_id": "o5"},
+                {"label": f"{wrap_label} six", "target_id": "o6"},
+            ],
+        },
+        {
+            "node_id": "d4",
+            "kind": "decision",
+            "heading": heading,
+            "detail": detail,
+            "branches": [
+                {"label": f"{wrap_label} seven", "target_id": "o7"},
+                {"label": f"{wrap_label} eight", "target_id": "o8"},
+                {"label": f"{wrap_label} nine", "target_id": "o9"},
+            ],
+        },
+    ]
+    for i in range(1, 10):
+        nodes.append(
+            {
+                "node_id": f"o{i}",
+                "kind": "outcome",
+                "heading": heading,
+                "detail": detail,
+            }
+        )
+    slide = next(s for s in _raw()["slides"] if s["layout_type"] == "decision_tree")
+    slide["payload"] = {"root_id": "d1", "nodes": nodes}
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_deck([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=False)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "decision_tree")
+    assert plan["fallback"] == "accessible_nested_outline"
+    assert 'data-node-id="d1"' in html
+    assert 'data-node-id="o9"' in html
+    assert result["status"] == "degraded"
+
+
 def test_nonstrict_repairs_drop_unknown_relationship_fields():
     raw = _raw()
     for slide in raw["slides"]:

@@ -154,6 +154,7 @@ LINEAR_CARD_MARGIN: Final = 4
 LINEAR_CONNECTOR_H: Final = 24
 LINEAR_INNER_GAP: Final = 8
 LINEAR_LAYER_GAP: Final = 20
+REL_EDGE_MIN_W: Final = 72  # .rel-edge min-width
 REL_EDGE_MAX_W: Final = 200  # .rel-edge max-width
 
 # Cards/reviews: D60 fixed for quotation/evidence/risk/rec/state;
@@ -5985,14 +5986,33 @@ def _relationship_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
             ]
             edge_h = LINEAR_CONNECTOR_H
             if edge_labels:
-                flex_share = box_w // max(3, len(edge_labels)) - 8
-                inner = max(40, min(REL_EDGE_MAX_W, flex_share))
+                inner = REL_EDGE_MAX_W
                 lab_h = 0
+                edge_widths: list[int] = []
                 for lab in edge_labels:
                     lines, fit = _linear_lines(lab, meta_px, inner, max_lines=2)
                     ok = ok and fit
                     lab_h = max(lab_h, len(lines) * _line_box(meta_px))
+                    natural = max(
+                        (_text_width(ln, meta_px) for ln in lines),
+                        default=0,
+                    )
+                    edge_widths.append(
+                        min(
+                            REL_EDGE_MAX_W,
+                            max(REL_EDGE_MIN_W, int(math.ceil(natural))),
+                        )
+                    )
                 edge_h += lab_h
+                n_rows = 1
+                used = 0
+                for w in edge_widths:
+                    if used and used + LINEAR_GAP + w > box_w:
+                        n_rows += 1
+                        used = w
+                    else:
+                        used = w if not used else used + LINEAR_GAP + w
+                edge_h = edge_h * n_rows + LINEAR_GAP * (n_rows - 1)
             parts.append(edge_h)
         total = sum(parts) + tree_gap * max(0, len(parts) - 1) + BLOCK_MARGIN_Y
     elif kind == "feedback_loop":
