@@ -463,6 +463,26 @@ def test_nonstrict_overflow_decision_tree_outline(tmp_path: Path):
     assert result["status"] == "degraded"
 
 
+def test_long_branch_label_overflows_at_painted_edge_width(tmp_path: Path):
+    """A label that wraps past .rel-edge max-width falls back; freeze is not fit-ok."""
+    slide = next(s for s in _raw()["slides"] if s["layout_type"] == "decision_tree")
+    long_label = (
+        "Continue with enhanced documentation review before proceeding to underwriting"
+    )
+    slide["payload"]["nodes"][0]["branches"][0]["label"] = long_label
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_deck([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=False)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "decision_tree")
+    assert plan["fallback"] == "accessible_nested_outline"
+    assert 'data-node-id="d_risk"' in html
+    assert long_label in html
+    assert result["status"] == "degraded"
+
+
 def test_nonstrict_repairs_drop_unknown_relationship_fields():
     raw = _raw()
     for slide in raw["slides"]:

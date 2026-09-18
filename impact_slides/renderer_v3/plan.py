@@ -154,6 +154,7 @@ LINEAR_CARD_MARGIN: Final = 4
 LINEAR_CONNECTOR_H: Final = 24
 LINEAR_INNER_GAP: Final = 8
 LINEAR_LAYER_GAP: Final = 20
+REL_EDGE_MAX_W: Final = 200  # .rel-edge max-width
 
 # Cards/reviews: D60 fixed for quotation/evidence/risk/rec/state;
 # feature_cards adapts heading/detail 22–28px (D201/D281).
@@ -5984,7 +5985,8 @@ def _relationship_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
             ]
             edge_h = LINEAR_CONNECTOR_H
             if edge_labels:
-                inner = max(40, box_w // max(3, len(edge_labels)) - 8)
+                flex_share = box_w // max(3, len(edge_labels)) - 8
+                inner = max(40, min(REL_EDGE_MAX_W, flex_share))
                 lab_h = 0
                 for lab in edge_labels:
                     lines, fit = _linear_lines(lab, meta_px, inner, max_lines=2)
