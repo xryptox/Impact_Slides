@@ -1774,6 +1774,20 @@ def _line_box(px: int) -> int:
     return int(math.ceil(px * LINE_HEIGHT))
 
 
+def _feedback_cycle_row_inner(box_w: int, n_items: int, *, trailing_connector: bool) -> int:
+    """Card inner width for one feedback-loop row (items + connectors + flex gaps)."""
+    if n_items <= 0:
+        return 40
+    connectors = n_items if trailing_connector else max(0, n_items - 1)
+    children = n_items + connectors
+    gaps = max(0, children - 1)
+    col_w = max(
+        40,
+        (box_w - LINEAR_GAP * gaps - LINEAR_CONNECTOR_H * connectors) // n_items,
+    )
+    return max(40, col_w - 2 * LINEAR_CARD_PAD)
+
+
 # ---------------------------------------------------------------------------
 # Synchronize
 # ---------------------------------------------------------------------------
@@ -4167,7 +4181,7 @@ def _card_fit_detail(sp: SurfacePlan, size: int) -> tuple[bool, int]:
         h = len(ls) * _line_box(meta_px) + BLOCK_MARGIN_Y + CARD_INNER_GAP
         for i, s in enumerate(steps):
             h += TRANSITION_STEP_PAD + b_y
-            ls = lines(s["heading"], heading_px, step_inner_w, strong=True, max_lines=2)
+            ls = lines(s["heading"], heading_px, step_inner_w, strong=True, max_lines=4)
             h += len(ls) * _line_box(heading_px) + CARD_MARGIN
             if s.get("detail"):
                 ls = lines(s["detail"], body_px, step_inner_w, max_lines=3)
@@ -5751,33 +5765,75 @@ def _relationship_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
     elif kind == "feedback_loop":
         items = spec["items"]
         n = len(items)
-        col_w = max(40, (box_w - LINEAR_GAP * n) // max(1, n))
-        heights = []
-        for it in items:
+
+        def item_h(it: dict[str, Any], inner: int, heading_max: int) -> int:
+            nonlocal ok
             meta = it.get("effect") or it.get("relationship_label")
-            inner = max(40, col_w - 2 * LINEAR_CARD_PAD)
             h = 2 * LINEAR_CARD_PAD
             if meta:
                 lines, fit = _linear_lines(str(meta), meta_px, inner, max_lines=2)
                 ok = ok and fit
                 h += len(lines) * _line_box(meta_px) + LINEAR_CARD_MARGIN
             lines, fit = _linear_lines(
-                it["heading"], heading_px, inner, strong=True, max_lines=3
+                it["heading"], heading_px, inner, strong=True, max_lines=heading_max
             )
             ok = ok and fit
             h += len(lines) * _line_box(heading_px)
             if it.get("detail"):
-                lines, fit = _linear_lines(it["detail"], detail_px, inner, max_lines=3)
+                lines, fit = _linear_lines(
+                    it["detail"], detail_px, inner, max_lines=3
+                )
                 ok = ok and fit
                 h += len(lines) * _line_box(detail_px)
-            heights.append(h)
-        total = max(heights) + 2 * LINEAR_CONNECTOR_H + BLOCK_MARGIN_Y
-        if spec.get("classification"):
+            return h
+
+        def class_h() -> int:
+            nonlocal ok
+            if not spec.get("classification"):
+                return 0
             lines, fit = _linear_lines(
                 str(spec["classification"]), meta_px, box_w, strong=True, max_lines=1
             )
             ok = ok and fit
-            total += len(lines) * _line_box(meta_px) + LINEAR_GAP
+            return len(lines) * _line_box(meta_px) + LINEAR_GAP
+
+        # One-row sequential cycle (s034 8 short procedural items).
+        saved_ok = ok
+        col_w = max(40, (box_w - LINEAR_GAP * n) // max(1, n))
+        inner = max(40, col_w - 2 * LINEAR_CARD_PAD)
+        heights = [item_h(it, inner, 3) for it in items]
+        one_ok = ok
+        one_total = max(heights) + 2 * LINEAR_CONNECTOR_H + BLOCK_MARGIN_Y + class_h()
+        if one_ok and one_total <= box_h:
+            spec["cycle_wrap"] = False
+            spec.pop("cycle_cols", None)
+            total = one_total
+        elif n >= 7:
+            # 7–8 wrapping items: two rows of cards at type floors (#355).
+            ok = saved_ok
+            cols = math.ceil(n / 2)
+            top, bot = items[:cols], items[cols:]
+            top_inner = _feedback_cycle_row_inner(
+                box_w, len(top), trailing_connector=True
+            )
+            bot_inner = _feedback_cycle_row_inner(
+                box_w, len(bot), trailing_connector=True
+            )
+            row1 = max(item_h(it, top_inner, 8) for it in top)
+            row2 = max(item_h(it, bot_inner, 8) for it in bot) if bot else 0
+            total = (
+                row1
+                + (LINEAR_GAP if row2 else 0)
+                + row2
+                + BLOCK_MARGIN_Y
+                + class_h()
+            )
+            spec["cycle_wrap"] = True
+            spec["cycle_cols"] = cols
+        else:
+            spec["cycle_wrap"] = False
+            spec.pop("cycle_cols", None)
+            total = one_total
     elif kind == "hierarchy":
         nodes = spec["nodes"]
         row_h = max(card_h(n["heading"], n.get("detail")) for n in nodes)

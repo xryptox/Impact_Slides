@@ -157,6 +157,86 @@ def test_state_transition_reading_order(tmp_path: Path):
     assert "Before" in html and "After" in html and "Transition" in html
 
 
+def test_state_transition_wrapping_headings_plus_step_stay_recipe(tmp_path: Path):
+    """Wrapping Before/After titles plus one wrapping step stay the recipe at floors (#355)."""
+    raw = _raw()
+    st = next(s for s in raw["slides"] if s["layout_type"] == "state_transition")
+    before_h = (
+        "As-is incident handling without a named ITIL process owner or known-error database"
+    )
+    after_h = (
+        "To-be ITIL incident and problem practices with restore confirmation and known-error reuse"
+    )
+    step_h = (
+        "Contain the incident, communicate status to users, and protect evidence for later problem review"
+    )
+    st["payload"] = {
+        "before": {
+            "surface_id": "before-wrap",
+            "heading": before_h,
+            "blocks": [
+                {
+                    "block_id": "b1",
+                    "type": "paragraphs",
+                    "paragraphs": [
+                        {
+                            "runs": [
+                                {
+                                    "text": (
+                                        "Record the event, classify impact and urgency, "
+                                        "and assign a resolver before restoration work begins"
+                                    )
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+        },
+        "after": {
+            "surface_id": "after-wrap",
+            "heading": after_h,
+            "blocks": [
+                {
+                    "block_id": "a1",
+                    "type": "paragraphs",
+                    "paragraphs": [
+                        {
+                            "runs": [
+                                {
+                                    "text": (
+                                        "Restore the agreed service, confirm resolution with "
+                                        "the user, and close the ITIL incident record"
+                                    )
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+        },
+        "transition_steps": [{"step_id": "t1", "heading": step_h}],
+    }
+    raw["slides"] = [st]
+    raw["evidence_registry"] = {"src-a": raw["evidence_registry"]["src-a"]}
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "state_transition")
+    assert result["status"] == "clean"
+    assert plan["fallback"] is None
+    assert plan["role_sizes"]["heading"] == 22
+    assert 'class="state-transition' in html
+    assert 'class="card-comp-fallback' not in html
+    assert 'data-fallback=' not in html
+    assert 'data-step-id="t1"' in html
+    painted = html.replace("<wbr>", "")
+    assert before_h in painted and after_h in painted and step_h in painted
+
+
 def test_feature_cards_rejects_unknown_icon():
     raw = _raw()
     slide = next(s for s in raw["slides"] if s["layout_type"] == "feature_cards")

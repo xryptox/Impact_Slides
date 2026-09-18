@@ -330,7 +330,10 @@ def build_presentation_html(
             ".rel-node{flex:1 1 160px;max-width:280px;min-width:0}",
             ".rel-branch{margin:4px 0 0;font-style:italic}",
             ".feedback-loop{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
+            ".feedback-loop.cycle-wrap{flex-direction:column;flex-wrap:nowrap;align-items:stretch}",
+            ".feedback-cycle-row{display:flex;flex-direction:row;flex-wrap:nowrap;gap:16px;width:100%;align-items:stretch}",
             ".feedback-item{flex:1 1 0;min-width:120px}",
+            ".feedback-loop.cycle-wrap .feedback-item{min-width:0}",
             ".loop-classification{margin:0 0 var(--space-sm);font-weight:var(--font-weight-emphasis);text-transform:capitalize}",
             ".stakeholder-map{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm);align-items:center}",
             ".stakeholder-focal{max-width:320px;width:100%}",
@@ -2857,13 +2860,14 @@ def _paint_feedback_loop(
             f'<p class="loop-classification"{_style_font(meta_px)} data-loop-class="'
             f'{_escape(spec["classification"])}">{_escape(spec["classification"])} loop</p>'
         )
+    wrap = bool(spec.get("cycle_wrap"))
+    wrap_cls = " cycle-wrap" if wrap else ""
     out.append(
-        f'<div class="feedback-loop{overflow_cls}" role="list" {plan_attrs} '
+        f'<div class="feedback-loop{wrap_cls}{overflow_cls}" role="list" {plan_attrs} '
         f'data-loop-kind="{_escape(spec["loop_kind"])}">'
     )
-    for i, it in enumerate(items):
-        if i:
-            out.append('<div class="linear-connector" aria-hidden="true">→</div>')
+
+    def paint_item(it: dict[str, Any]) -> None:
         out.append(
             f'<div class="feedback-item" role="listitem" data-item-id="{_escape(it["id"])}">'
         )
@@ -2887,8 +2891,31 @@ def _paint_feedback_loop(
                 f'{_soft_break_html(it["relationship_label"])}</p>'
             )
         out.append("</div></div>")
-    # Closing edge back to first.
-    out.append('<div class="linear-connector" aria-hidden="true">↻</div>')
+
+    if wrap:
+        cols = int(spec.get("cycle_cols") or ((len(items) + 1) // 2))
+        rows = [items[:cols], items[cols:]]
+        for ri, row in enumerate(rows):
+            if not row:
+                continue
+            out.append('<div class="feedback-cycle-row">')
+            for i, it in enumerate(row):
+                if i:
+                    out.append(
+                        '<div class="linear-connector" aria-hidden="true">→</div>'
+                    )
+                paint_item(it)
+            closer = "↻" if ri == len(rows) - 1 or not rows[ri + 1] else "→"
+            out.append(
+                f'<div class="linear-connector" aria-hidden="true">{closer}</div>'
+            )
+            out.append("</div>")
+    else:
+        for i, it in enumerate(items):
+            if i:
+                out.append('<div class="linear-connector" aria-hidden="true">→</div>')
+            paint_item(it)
+        out.append('<div class="linear-connector" aria-hidden="true">↻</div>')
     out.append("</div>")
     return out
 
