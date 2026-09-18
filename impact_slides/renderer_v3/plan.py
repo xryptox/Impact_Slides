@@ -5993,14 +5993,13 @@ def _relationship_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
                     lines, fit = _linear_lines(lab, meta_px, inner, max_lines=2)
                     ok = ok and fit
                     lab_h = max(lab_h, len(lines) * _line_box(meta_px))
-                    natural = max(
-                        (_text_width(ln, meta_px) for ln in lines),
-                        default=0,
-                    )
                     edge_widths.append(
                         min(
                             REL_EDGE_MAX_W,
-                            max(REL_EDGE_MIN_W, int(math.ceil(natural))),
+                            max(
+                                REL_EDGE_MIN_W,
+                                int(math.ceil(_text_width(lab, meta_px))),
+                            ),
                         )
                     )
                 edge_h += lab_h

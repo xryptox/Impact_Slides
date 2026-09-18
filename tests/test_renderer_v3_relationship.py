@@ -485,7 +485,7 @@ def test_long_branch_label_overflows_at_painted_edge_width(tmp_path: Path):
 
 def test_bushy_edge_row_wrap_overflows_when_labels_fill_max_width(tmp_path: Path):
     """Nine max-width edge labels wrap to a second row and must not freeze as fit-ok."""
-    wrap_label = "Alpha bravo charlie delta echo foxtrot golf hotel india"
+    wrap_label = "Named owner signs residual risk today"
     heading = (
         "Please record the event, classify impact and urgency, assign a named "
         "resolver, and freeze restoration work before processing resumes today"
