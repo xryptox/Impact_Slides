@@ -181,8 +181,10 @@ def build_presentation_html(
             ".share-chip{flex:1 1 0;min-width:0;padding:8px 12px;border:var(--border-width-hairline) solid var(--color-navy);box-sizing:border-box;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}",
             ".share-chip .share-chip-label{margin:0 0 4px;font-weight:var(--font-weight-emphasis);text-align:center}",
             ".share-chip .share-chip-value{margin:0;font-variant-numeric:tabular-nums lining-nums;font-weight:var(--font-weight-emphasis);text-align:center}",
-".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
-".dual-chart-pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column}",
+".dual-chart{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto;column-gap:24px;width:100%;align-items:stretch}",
+".dual-chart-pane{display:grid;grid-template-rows:subgrid;grid-row:1 / span 2;min-width:0}",
+".dual-chart-pane > .chart-body{grid-row:1}",
+".dual-chart-pane > .dual-pane-support{grid-row:2;align-self:start}",
 ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
 ".chart-hero-left{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
 ".chart-hero-right{flex:1 1 0;min-width:0}",
@@ -345,8 +347,10 @@ def build_presentation_html(
             ".relationship-unresolved{font-style:italic}",
     # axis charts: line + grouped/horizontal/stacked bars + waterfall (D5/D6/D63/D106/D247/D304)
             # dual / hero / metric boards (D149–D153/D189)
-            ".dual-chart{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
-            ".dual-chart-pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column}",
+            ".dual-chart{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto;column-gap:24px;width:100%;align-items:stretch}",
+            ".dual-chart-pane{display:grid;grid-template-rows:subgrid;grid-row:1 / span 2;min-width:0}",
+            ".dual-chart-pane > .chart-body{grid-row:1}",
+            ".dual-chart-pane > .dual-pane-support{grid-row:2;align-self:start}",
             ".chart-hero-dual{display:flex;flex-direction:row;gap:24px;width:100%;align-items:stretch}",
             ".chart-hero-left{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}",
             ".chart-hero-right{flex:1 1 0;min-width:0}",
@@ -538,9 +542,11 @@ def _paint_dual_chart(
             )
         )
         if pane.support is not None:
+            out.append('<div class="dual-pane-support">')
             out.extend(
                 _paint_chart_support(pane.support, plans_by_id, events_by_surface)
             )
+            out.append("</div>")
         out.append("</div>")
     out.append("</div>")
     support = getattr(slide.payload, "support", None)

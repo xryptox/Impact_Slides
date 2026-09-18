@@ -8,6 +8,7 @@ Seams under test:
 - D10/D47 allocation preserves 320×240 plot floor
 - dual_chart per-pane `{chart, support?}` envelope plus shared-vs-per-pane mutex
 - dual_chart independent per-pane support tables freeze the larger type (#336)
+- dual_chart per-pane supports share one top edge; leftover sits below the shorter table (#353)
 - n_rows≥2 category boxes freeze/paint a 24px row gap (#323/#342); grow-to-max cell_w; borderless stubs; one-row boxes unchanged
 """
 from __future__ import annotations
@@ -1616,4 +1617,45 @@ def test_dual_authored_sync_group_keeps_largest_common_safe():
     left = next(s for s in plan.surfaces if s.surface_id == "left-support")
     right = next(s for s in plan.surfaces if s.surface_id == "right-support")
     assert left.role_sizes["table"] == right.role_sizes["table"] == 14
+
+
+def test_playwright_dual_unequal_rows_share_support_top(tmp_path: Path):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    raw = _dual_pane_raw(
+        _pane_indep_table("left-support", extra_rows=2),
+        _pane_indep_table("right-support"),
+    )
+    raw["slides"][1]["payload"]["charts"][0]["chart"]["subtitle"] = (
+        "$ in Billions, % of Total"
+    )
+    handoff = tmp_path / "h.json"
+    handoff.write_text(json.dumps(raw), encoding="utf-8")
+    out = tmp_path / "out"
+    assert render_deck(handoff, out, strict=True)["ok"] is True
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        geom = page.evaluate(
+            """() => {
+              const r = (el) => {
+                const b = el.getBoundingClientRect();
+                return {top: b.top, bottom: b.bottom, height: b.height};
+              };
+              const left = document.querySelector(
+                '[data-table-surface="left-support"]'
+              );
+              const right = document.querySelector(
+                '[data-table-surface="right-support"]'
+              );
+              return {left: r(left), right: r(right)};
+            }"""
+        )
+        browser.close()
+    assert abs(geom["left"]["top"] - geom["right"]["top"]) <= 2
+    assert geom["left"]["height"] > geom["right"]["height"]
+    assert geom["left"]["bottom"] > geom["right"]["bottom"] + 2
 

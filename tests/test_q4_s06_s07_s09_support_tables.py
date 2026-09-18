@@ -4,6 +4,7 @@ Seams under test:
 - live Q4 handoff payload (`simulation/amex_q4_2021/handoff_v1.json`)
 - strict `render_deck` HTML chrome on those four supports
 - both per-pane independent tables freeze the larger type (24px)
+- per-pane supports share one top edge at 1920×1080 (#353)
 """
 from __future__ import annotations
 
@@ -187,6 +188,48 @@ def test_q4_s06_s07_s09_independent_tables_freeze_larger_type(
         assert "font-size:24px" in right_tbl
         assert "font-size:14px" not in left_tbl
         assert "font-size:14px" not in right_tbl
+
+
+def test_q4_s06_s07_s09_per_pane_supports_share_top(
+    tmp_path: Path,
+) -> None:
+    import pytest
+
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    out = tmp_path / "out"
+    assert render_deck(HANDOFF, out, strict=True)["ok"] is True
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        geom = page.evaluate(
+            """() => {
+              const r = (el) => el.getBoundingClientRect().top;
+              const pack = (n, leftId, rightId) => {
+                const slide = document.querySelector(
+                  `section.slide[data-slide-number="${n}"]`
+                );
+                const left = slide.querySelector(
+                  `[data-table-surface="${leftId}"]`
+                );
+                const right = slide.querySelector(
+                  `[data-table-surface="${rightId}"]`
+                );
+                return {n, left: r(left), right: r(right)};
+              };
+              return [
+                pack(6, "s06-mix-tbl", "s06-age-tbl"),
+                pack(7, "s07-mix-tbl", "s07-sme-tbl"),
+                pack(9, "s09-us-tbl", "s09-gs-tbl"),
+              ];
+            }"""
+        )
+        browser.close()
+    for row in geom:
+        assert abs(row["left"] - row["right"]) <= 2, row
 
 
 def test_mutation_category_alignment_paints_boxes_not_navy_grid(

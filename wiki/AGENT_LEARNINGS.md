@@ -1,6 +1,6 @@
 # Agent Learnings
 
-Operational learnings from supervised ticket-wave delivery. **Live document: delegated-wave supervisors and implementers must read this before starting wave work.** Update it after every wave that produces durable lessons; delete entries that stop being true instead of keeping history.
+Operational learnings from supervised ticket-wave delivery. **Live document: delegated-wave supervisors and implementers must read this before starting wave work.** Current-tense reflexes live in `.agents/skills/delegated-delivery/`; harvest into that skill, do not copy stories. Update this log after every wave that produces durable lessons; delete entries that stop being true instead of keeping history.
 
 Source: renderer-v3 wave `ab6a85b4` (2026-08-11; #184/#186/#189/#193/#194/#196 — four merged, two parked to #215/#216).
 
@@ -109,3 +109,7 @@ Q4 s24 `chart_grouped_annex` can freeze chips at 20px with a 3-line stub lane an
 
 ## 61. Watcher must not auto-cleanup; supervisor owns teardown (2026-09-12)
 `cleanupOnAllMerged` launched `$true` since 2026-08-08 (`ff7360d`), but a dead watcher never ran closeout (wave `12d15418`). Reverted: new waves write `cleanupOnAllMerged: false`. The watcher stays event-only. After collecting a ticket's final report, the supervisor closes that tab; merged subsets use `cleanup-ticket-wave.ps1` dry-run then `-Apply`; once every issue is CLOSED, `teardown-ticket-wave.ps1` dry-run then `-Apply`. Windows leftover `nul` files can make `git worktree remove --force` fail (`Directory not empty`); delete via `\\?\` + `DeleteFileW` before retrying.
+
+## 62. Dual per-pane supports share a band top, not equal row counts (#353, 2026-09-12)
+Q4 s06/s07 1-row vs 3-row independent tables match the PDF. `#336` already shares type and plot floor; leftover stayed in the shorter pane so the 1-row table sat higher. Do not pad blank rows. Paint both panes on a two-row CSS subgrid so support tables share one top edge; leftover sits below the shorter table.
+

@@ -2,6 +2,8 @@
 
 Use this workflow for parallel issue implementation, adversarial host review, no-mistakes correction, and approved PR merging.
 
+Pi procedure for a supervising or implementer turn: `.agents/skills/delegated-delivery/SKILL.md`. This file remains the contract and script catalog.
+
 ## External prerequisites
 
 This process depends on user-global tools and configuration, not files vendored in this repository:
