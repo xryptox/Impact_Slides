@@ -238,7 +238,8 @@ def build_presentation_html(
             # Linear + grouping compositions (D192/D193/D196/D197/D272-D277).
             ".process-flow,.timeline,.data-pipeline{display:flex;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
             ".process-flow.horizontal,.timeline.horizontal,.data-pipeline.horizontal{flex-direction:row}",
-            ".process-flow.vertical,.timeline.vertical,.data-pipeline.vertical{flex-direction:column}",
+            ".process-flow.vertical,.timeline.vertical,.data-pipeline.vertical,.process-flow.wrap,.timeline.wrap,.data-pipeline.wrap{flex-direction:column}",
+            ".linear-row{display:flex;flex-direction:row;gap:16px;width:100%;align-items:stretch}",
             ".process-step,.timeline-milestone,.pipeline-stage{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px}",
             ".pipeline-stage h3{margin:0 0 4px;font-weight:var(--font-weight-emphasis)}",
             ".linear-card{background:var(--color-panel);border:var(--border-width-hairline) solid var(--color-panel-border);padding:16px;box-sizing:border-box;min-width:0}",
@@ -1876,73 +1877,10 @@ def _paint_linear_composition(
             lt, spec, sp, events_by_surface, heading_px, detail_px, meta_px, overflow_cls
         )
 
-    if lt == "process_flow":
-        orientation = spec.get("orientation", "horizontal")
-        items = spec["items"]
-        out = [
-            f'<div class="process-flow {orientation}{overflow_cls}" '
-            f'role="list" {plan_attrs}>'
-        ]
-        for i, it in enumerate(items):
-            if i:
-                arrow = "→" if orientation == "horizontal" else "↓"
-                out.append(
-                    f'<div class="linear-connector" aria-hidden="true">{arrow}</div>'
-                )
-            out.append(
-                f'<div class="process-step" role="listitem" '
-                f'data-step-id="{_escape(it["id"])}">'
-            )
-            out.append('<div class="linear-card card-panel">')
-            out.append(
-                f'<p class="linear-meta"{_style_font(meta_px)}>'
-                f'{int(it["ordinal"])}</p>'
-            )
-            out.append(
-                f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>'
-            )
-            if it.get("detail"):
-                out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>'
-                    f'{_soft_break_html(it["detail"])}</p>'
-                )
-            out.append("</div></div>")
-        out.append("</div>")
-        return out
-
-    if lt == "timeline":
-        orientation = spec.get("orientation", "horizontal")
-        items = spec["items"]
-        out = [
-            f'<div class="timeline {orientation}{overflow_cls}" '
-            f'role="list" {plan_attrs}>'
-        ]
-        for i, it in enumerate(items):
-            if i:
-                arrow = "→" if orientation == "horizontal" else "↓"
-                out.append(
-                    f'<div class="linear-connector" aria-hidden="true">{arrow}</div>'
-                )
-            out.append(
-                f'<div class="timeline-milestone" role="listitem" '
-                f'data-milestone-id="{_escape(it["id"])}">'
-            )
-            out.append('<div class="linear-card card-panel">')
-            out.append(
-                f'<p class="linear-meta"{_style_font(meta_px)}>'
-                f'{_soft_break_html(it["time_label"])}</p>'
-            )
-            out.append(
-                f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>'
-            )
-            if it.get("detail"):
-                out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>'
-                    f'{_soft_break_html(it["detail"])}</p>'
-                )
-            out.append("</div></div>")
-        out.append("</div>")
-        return out
+    if lt in ("process_flow", "timeline", "data_pipeline"):
+        return _paint_linear_sequence(
+            lt, spec, plan_attrs, overflow_cls, heading_px, detail_px, meta_px
+        )
 
     if lt == "layered_architecture":
         out = [
@@ -1975,50 +1913,122 @@ def _paint_linear_composition(
         out.append("</div>")
         return out
 
-    # data_pipeline
+    raise RuntimeError(f"unhandled linear layout {lt}")
+
+
+def _paint_linear_sequence(
+    lt: str,
+    spec: dict[str, Any],
+    plan_attrs: str,
+    overflow_cls: str,
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+) -> list[str]:
     orientation = spec.get("orientation", "horizontal")
-    stages = spec["stages"]
-    out = [
-        f'<div class="data-pipeline {orientation}{overflow_cls}" '
-        f'role="list" {plan_attrs}>'
-    ]
-    for i, st in enumerate(stages):
-        if i:
-            arrow = "→" if orientation == "horizontal" else "↓"
-            out.append(
-                f'<div class="linear-connector" aria-hidden="true">{arrow}</div>'
-            )
-        out.append(
-            f'<div class="pipeline-stage" role="listitem" '
-            f'data-stage-id="{_escape(st["id"])}">'
-        )
-        out.append(
-            f'<h3{_style_font(heading_px)}>{_soft_break_html(st["heading"])}</h3>'
-        )
-        out.append('<div class="pipeline-components">')
-        for c in st["components"]:
-            out.append(
-                f'<div class="linear-card card-panel" '
-                f'data-component-id="{_escape(c["id"])}">'
-            )
-            out.append(
-                f'<h4{_style_font(detail_px)}>{_soft_break_html(c["heading"])}</h4>'
-            )
-            if c.get("detail"):
+    cls = {
+        "process_flow": "process-flow",
+        "timeline": "timeline",
+        "data_pipeline": "data-pipeline",
+    }[lt]
+    items = spec["items"] if lt != "data_pipeline" else spec["stages"]
+    rows = spec.get("row_counts") if orientation == "wrap" else [len(items)]
+    out = [f'<div class="{cls} {orientation}{overflow_cls}" role="list" {plan_attrs}>']
+    idx = 0
+    for r, count in enumerate(rows or [len(items)]):
+        chunk = items[idx : idx + count]
+        if r:
+            out.append('<div class="linear-connector" aria-hidden="true">↓</div>')
+        if orientation == "wrap":
+            out.append('<div class="linear-row">')
+        for j, it in enumerate(chunk):
+            gi = idx + j
+            if j or (orientation != "wrap" and gi):
+                arrow = "→" if orientation != "vertical" else "↓"
                 out.append(
-                    f'<p class="linear-detail"{_style_font(detail_px)}>'
-                    f'{_soft_break_html(c["detail"])}</p>'
+                    f'<div class="linear-connector" aria-hidden="true">{arrow}</div>'
                 )
+            if lt == "process_flow":
+                out.extend(_paint_process_step(it, heading_px, detail_px, meta_px))
+            elif lt == "timeline":
+                out.extend(_paint_timeline_milestone(it, heading_px, detail_px, meta_px))
+            else:
+                nxt = items[gi + 1]["heading"] if gi + 1 < len(items) else ""
+                out.extend(_paint_pipeline_stage(it, nxt, heading_px, detail_px, meta_px))
+        if orientation == "wrap":
             out.append("</div>")
-        out.append("</div>")
-        if st.get("transfer_label"):
-            nxt = stages[i + 1]["heading"] if i + 1 < len(stages) else ""
+        idx += count
+    out.append("</div>")
+    return out
+
+
+def _paint_process_step(
+    it: dict[str, Any], heading_px: int | None, detail_px: int | None, meta_px: int | None
+) -> list[str]:
+    out = [
+        f'<div class="process-step" role="listitem" data-step-id="{_escape(it["id"])}">',
+        '<div class="linear-card card-panel">',
+        f'<p class="linear-meta"{_style_font(meta_px)}>{int(it["ordinal"])}</p>',
+        f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>',
+    ]
+    if it.get("detail"):
+        out.append(
+            f'<p class="linear-detail"{_style_font(detail_px)}>'
+            f'{_soft_break_html(it["detail"])}</p>'
+        )
+    out.append("</div></div>")
+    return out
+
+
+def _paint_timeline_milestone(
+    it: dict[str, Any], heading_px: int | None, detail_px: int | None, meta_px: int | None
+) -> list[str]:
+    out = [
+        f'<div class="timeline-milestone" role="listitem" '
+        f'data-milestone-id="{_escape(it["id"])}">',
+        '<div class="linear-card card-panel">',
+        f'<p class="linear-meta"{_style_font(meta_px)}>{_soft_break_html(it["time_label"])}</p>',
+        f'<h3{_style_font(heading_px)}>{_soft_break_html(it["heading"])}</h3>',
+    ]
+    if it.get("detail"):
+        out.append(
+            f'<p class="linear-detail"{_style_font(detail_px)}>'
+            f'{_soft_break_html(it["detail"])}</p>'
+        )
+    out.append("</div></div>")
+    return out
+
+
+def _paint_pipeline_stage(
+    st: dict[str, Any],
+    nxt: str,
+    heading_px: int | None,
+    detail_px: int | None,
+    meta_px: int | None,
+) -> list[str]:
+    out = [
+        f'<div class="pipeline-stage" role="listitem" data-stage-id="{_escape(st["id"])}">',
+        f'<h3{_style_font(heading_px)}>{_soft_break_html(st["heading"])}</h3>',
+        '<div class="pipeline-components">',
+    ]
+    for c in st["components"]:
+        out.append(
+            f'<div class="linear-card card-panel" data-component-id="{_escape(c["id"])}">'
+        )
+        out.append(f'<h4{_style_font(detail_px)}>{_soft_break_html(c["heading"])}</h4>')
+        if c.get("detail"):
             out.append(
-                f'<p class="pipeline-transfer"{_style_font(meta_px)}>'
-                f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
-                f'{_soft_break_html(st["transfer_label"])}</p>'
+                f'<p class="linear-detail"{_style_font(detail_px)}>'
+                f'{_soft_break_html(c["detail"])}</p>'
             )
         out.append("</div>")
+    out.append("</div>")
+    if st.get("transfer_label"):
+        out.append(
+            f'<p class="pipeline-transfer"{_style_font(meta_px)}>'
+            f'{_soft_break_html(st["heading"])} to {_soft_break_html(nxt)}: '
+            f'{_soft_break_html(st["transfer_label"])}</p>'
+        )
     out.append("</div>")
     return out
 

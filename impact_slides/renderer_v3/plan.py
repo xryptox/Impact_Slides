@@ -1194,6 +1194,16 @@ def _allocate_geometry(surfaces: list[SurfacePlan], available_h: int) -> None:
             if i not in dual_secondary
         ),
     )
+    for i, sp in enumerate(surfaces):
+        if i in dual_secondary or sp._linear_spec is None:
+            continue
+        sibling = sum(
+            floors[j]
+            for j in range(len(surfaces))
+            if j != i and j not in dual_secondary and floors[j] < 10**8
+        )
+        _choose_linear_packing(sp, max(0, remaining - sibling))
+        floors[i] = need(sp, baseline_sizes[i])
     allocations = [0] * len(surfaces)
     priority = sorted(
         range(len(surfaces)),
@@ -1405,6 +1415,8 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
                 sp._overflow = True
             return
         if sp._linear_spec is not None:
+            leftover = sp._box_h if sp._box_h > 0 else 10**9
+            _choose_linear_packing(sp, leftover)
             ok, _h = _linear_fit_detail(sp)
             if not ok:
                 sp._overflow = True
@@ -5480,7 +5492,59 @@ def _linear_lines(
     return lines, True
 
 
-def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
+def _linear_wrap_candidates(n: int) -> list[list[int]]:
+    """Balanced row splits for n>4; two rows first, then three."""
+    if n <= 4:
+        return []
+    out: list[list[int]] = []
+    for first in range((n + 1) // 2, n - 1):
+        second = n - first
+        if second < 2:
+            continue
+        out.append([first, second])
+        if first != second:
+            out.append([second, first])
+    if n >= 7:
+        for a in range(2, n - 3):
+            for b in range(2, n - a - 1):
+                c = n - a - b
+                if c >= 2:
+                    out.append([a, b, c])
+    seen: list[list[int]] = []
+    for rows in out:
+        if rows not in seen:
+            seen.append(rows)
+    return seen
+
+
+def _choose_linear_packing(sp: SurfacePlan, leftover: int) -> None:
+    """Wrap process/timeline/pipeline only when the default strip misses leftover."""
+    spec = sp._linear_spec
+    if spec is None:
+        return
+    kind = spec.get("kind")
+    if kind not in ("process_flow", "timeline", "data_pipeline"):
+        return
+    n = len(spec.get("items") or spec.get("stages") or [])
+    default = "horizontal" if n <= 4 else "vertical"
+    spec.pop("row_counts", None)
+    spec["orientation"] = default
+    ok, _h = _linear_fit_detail(sp, leftover)
+    if ok or n <= 4:
+        return
+    for rows in _linear_wrap_candidates(n):
+        spec["orientation"] = "wrap"
+        spec["row_counts"] = rows
+        ok, _h = _linear_fit_detail(sp, leftover)
+        if ok:
+            return
+    spec["orientation"] = default
+    spec.pop("row_counts", None)
+
+
+def _linear_fit_detail(
+    sp: SurfacePlan, box_h: int | None = None
+) -> tuple[bool, int]:
     """Fixed D60 geometry fit for linear + relationship compositions."""
     assert sp._linear_spec is not None
     spec = sp._linear_spec
@@ -5489,7 +5553,8 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
     detail_px = sp.role_sizes.get("detail", LINEAR_DETAIL_PX)
     meta_px = sp.role_sizes.get("meta", LINEAR_META_PX)
     box_w = sp._box_w
-    box_h = sp._box_h if sp._box_h > 0 else 10**9
+    if box_h is None:
+        box_h = sp._box_h if sp._box_h > 0 else 10**9
     ok = True
 
     if kind in KERNEL_RELATIONSHIP_LAYOUTS:
@@ -5499,6 +5564,62 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
         items = spec["items"]
         n = len(items)
         orientation = spec.get("orientation", "horizontal")
+        if orientation == "wrap":
+            counts = spec.get("row_counts") or []
+            if not counts:
+                return False, 10**9
+            idx = 0
+            row_heights: list[int] = []
+            for count in counts:
+                chunk = items[idx : idx + count]
+                idx += count
+                col_w = max(
+                    40,
+                    (
+                        box_w
+                        - 2 * LINEAR_GAP * (count - 1)
+                        - LINEAR_CONNECTOR_H * (count - 1)
+                    )
+                    // max(1, count),
+                )
+                heights = []
+                for it in chunk:
+                    meta = (
+                        str(it.get("ordinal", ""))
+                        if kind == "process_flow"
+                        else it.get("time_label")
+                    )
+                    inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
+                    h = LINEAR_CARD_PAD
+                    if meta:
+                        lines, fit = _linear_lines(
+                            str(meta), meta_px, inner_w, strong=True, max_lines=2
+                        )
+                        ok = ok and fit
+                        h += len(lines) * _line_box(meta_px)
+                    lines, fit = _linear_lines(
+                        it["heading"], heading_px, inner_w, strong=True, max_lines=3
+                    )
+                    ok = ok and fit
+                    h += len(lines) * _line_box(heading_px)
+                    if it.get("detail"):
+                        lines, fit = _linear_lines(
+                            it["detail"], detail_px, inner_w, max_lines=4
+                        )
+                        ok = ok and fit
+                        h += len(lines) * _line_box(detail_px)
+                    h += LINEAR_CARD_PAD + 2 * LINEAR_CARD_MARGIN
+                    heights.append(h)
+                row_heights.append(max(heights) if heights else 0)
+            n_rows = len(counts)
+            total = (
+                sum(row_heights)
+                + max(0, n_rows - 1) * (LINEAR_CONNECTOR_H + 2 * LINEAR_GAP)
+                + BLOCK_MARGIN_Y
+            )
+            if not ok:
+                return False, 10**9
+            return total <= box_h, total
         if orientation == "horizontal":
             col_w = max(
                 40,
@@ -5616,6 +5737,79 @@ def _linear_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
     stages = spec["stages"]
     n = len(stages)
     orientation = spec.get("orientation", "horizontal")
+    if orientation == "wrap":
+        counts = spec.get("row_counts") or []
+        if not counts:
+            return False, 10**9
+        idx = 0
+        row_heights: list[int] = []
+        for count in counts:
+            chunk = stages[idx : idx + count]
+            col_w = max(
+                40,
+                (
+                    box_w
+                    - 2 * LINEAR_GAP * (count - 1)
+                    - LINEAR_CONNECTOR_H * (count - 1)
+                )
+                // max(1, count),
+            )
+            inner_w = max(40, col_w - 2 * LINEAR_CARD_PAD)
+            heights = []
+            for j, st in enumerate(chunk):
+                gi = idx + j
+                lines, fit = _linear_lines(
+                    st["heading"], heading_px, col_w, strong=True, max_lines=3
+                )
+                ok = ok and fit
+                h = (
+                    len(lines) * _line_box(heading_px)
+                    + LINEAR_CARD_MARGIN
+                    + LINEAR_INNER_GAP
+                )
+                for c in st["components"]:
+                    lines, fit = _linear_lines(
+                        c["heading"], detail_px, inner_w, strong=True, max_lines=3
+                    )
+                    ok = ok and fit
+                    h += (
+                        2 * LINEAR_CARD_PAD
+                        + LINEAR_CARD_MARGIN
+                        + len(lines) * _line_box(detail_px)
+                    )
+                    if c.get("detail"):
+                        lines, fit = _linear_lines(
+                            c["detail"], detail_px, inner_w, max_lines=3
+                        )
+                        ok = ok and fit
+                        h += len(lines) * _line_box(detail_px)
+                h += LINEAR_INNER_GAP * max(0, len(st["components"]) - 1)
+                if st.get("transfer_label"):
+                    nxt = stages[gi + 1]["heading"] if gi + 1 < n else ""
+                    lines, fit = _linear_lines(
+                        f"{st['heading']} to {nxt}: {st['transfer_label']}",
+                        meta_px,
+                        col_w,
+                        max_lines=2,
+                    )
+                    ok = ok and fit
+                    h += (
+                        LINEAR_INNER_GAP
+                        + LINEAR_CARD_MARGIN
+                        + len(lines) * _line_box(meta_px)
+                    )
+                heights.append(h)
+            row_heights.append(max(heights) if heights else 0)
+            idx += count
+        n_rows = len(counts)
+        total = (
+            sum(row_heights)
+            + max(0, n_rows - 1) * (LINEAR_CONNECTOR_H + 2 * LINEAR_GAP)
+            + BLOCK_MARGIN_Y
+        )
+        if not ok:
+            return False, 10**9
+        return total <= box_h, total
     if orientation == "horizontal":
         col_w = max(
             40,

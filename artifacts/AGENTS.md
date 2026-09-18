@@ -27,5 +27,6 @@ Committed, reproducible evidence artifacts for source-fidelity and rendering cla
 ## Child DOX Index
 
 - `issue_156_slide27/AGENTS.md` — archived-v10 and corrected slide-27 paint-ready captures.
+- `issue_354_linear_wrap/AGENTS.md` — 1920×1080 wrap recapture of layout-stress process_flow / timeline / data_pipeline slides (#354).
 - `renderer_3_release/AGENTS.md` — immutable D315 versioned acceptance bundle (3.0.0).
 - `renderer_v3_file_architecture/AGENTS.md` — Archify per-file renderer_v3 diagrams; package-level `renderer-v3-architecture.*` stays owned here.

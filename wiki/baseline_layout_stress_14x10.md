@@ -2,6 +2,21 @@
 
 Companion-mode AUTHORING + OBSERVATION of the 14 renderer_v3 layouts never painted in Amex PDF replicas, plus unused chart types pie and heatmap. Strict freeze overflowed 9 leftover non-pie slides; the four dense pies (s146/s147/s148/s150) pack at ordinary_values 18 (#356). The published deck is still DEGRADED (`--no-strict`) for those leftover compositions. HTML was not hand-edited.
 
+## #354 wrap recapture (linear recipes)
+
+Kernel wrap packing (#354) re-renders the linear subset strict from `tests/fixtures/renderer_v3/linear_wrap_stress.json`. s005 / s016 / s017 / s020 / s055 / s056 / s059 now freeze as the recipe (not list fallback) at type floors. Recapture: `artifacts/issue_354_linear_wrap/` at 1920×1080, stacked-deck transforms cleared, no image scoring, no D314 rewrite. Remaining overflow families (feedback_loop / state_transition / pie) are unchanged.
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `tests/fixtures/renderer_v3/linear_wrap_stress.json` | 45835 | `85714abf165b31afe90eead778deb104d9a8963dfa80d10a855350bfd19b905b` |
+| `artifacts/issue_354_linear_wrap/html/slide_005.png` | 44736 | `b06bd84aaeaee0dde19d6325209bf9e2f389631db179e648881cf81d2f5f0bb7` |
+| `artifacts/issue_354_linear_wrap/html/slide_016.png` | 37382 | `b00dd27146fe6221979eae2c40175f4fc5d8511705048c86832aa6934b6073c1` |
+| `artifacts/issue_354_linear_wrap/html/slide_017.png` | 49768 | `78c7c502c82235e76e41a296bc9aac1cc4e47073f9aeedce8aae06b9c27f6555` |
+| `artifacts/issue_354_linear_wrap/html/slide_020.png` | 51907 | `a8f784b3de0be927ec906dbda7135287f24adfa21d0769c670aacfc46ab2e516` |
+| `artifacts/issue_354_linear_wrap/html/slide_055.png` | 53272 | `33f4ecfbdfdb07a7d75c905d163df14eedef23e7e869f5a7d3916226db254c70` |
+| `artifacts/issue_354_linear_wrap/html/slide_056.png` | 81562 | `a10da9aa09cc345efce5a0064c1d731f9deaeeca2d0b414f584be137c78eac88` |
+| `artifacts/issue_354_linear_wrap/html/slide_059.png` | 49453 | `0fb3817bec48b258be3d9db695ffe879b1245a68ebb2be1c7be18293f9f642df` |
+
 ## Identity
 
 | Artifact | Bytes | SHA-256 |
@@ -32,7 +47,7 @@ Each of the 14 layouts plus pie and heatmap appears exactly 10 times. Families a
 | 2 | 002 | NIST CSF 2.0 | 3 steps | detail 3/3 | painted clean | process-flow horizontal step cards with connectors. |
 | 3 | 003 | SHRM staffing funnel | 4 steps | detail 4/4 | painted clean | process-flow horizontal step cards with connectors. |
 | 4 | 004 | FDA CDRH 510(k) | 5 steps | detail 0/5 | painted clean | process-flow horizontal step cards with connectors. |
-| 5 | 005 | Toyota Production System | 6 steps | detail 6/6 | overflow-fallback | Freeze overflow; recipe painted linear-fallback linear-overflow (not the 6-step process-flow). Six steps with every detail plus subtitle exceeds the floor. |
+| 5 | 005 | Toyota Production System | 6 steps | detail 6/6 | painted clean | process-flow wrap 3+3 with sequential connectors; all 6 details at type floor. |
 | 6 | 006 | Deming PDCA | 6 steps | detail 0/6 | painted clean | process-flow horizontal step cards with connectors. |
 | 7 | 007 | ITIL 4 Incident Management | 3 steps | detail 0/3 | painted clean | process-flow horizontal step cards with connectors. |
 | 8 | 008 | COSO Internal Control | 4 steps | detail 4/4 | painted clean | process-flow horizontal step cards with connectors. |
@@ -48,11 +63,11 @@ Each of the 14 layouts plus pie and heatmap appears exactly 10 times. Families a
 | 3 | 013 | PCI DSS versions | 4 milestones | detail 4/4 | painted clean | timeline recipe (not fallback). |
 | 4 | 014 | IETF RFC HTTP chronology | 5 milestones | detail 0/5 | painted clean | timeline recipe (not fallback). |
 | 5 | 015 | GDPR / EU data protection | 6 milestones | detail 0/6 | painted clean | timeline recipe (not fallback). |
-| 6 | 016 | IPCC assessment reports | 7 milestones | detail 0/7 | overflow-fallback | Freeze overflow; chronological ordered-list fallback (linear-fallback linear-overflow). Seven IPCC year labels plus subtitle do not fit the timeline recipe. |
-| 7 | 017 | Kubernetes / CNCF releases | 8 milestones | detail 8/8 | overflow-fallback | Freeze overflow; chronological ordered-list fallback. Max 8 Kubernetes milestones with all details exceeds the timeline floor. |
+| 6 | 016 | IPCC assessment reports | 7 milestones | detail 0/7 | painted clean | timeline wrap 4+3; authored year labels unchanged. |
+| 7 | 017 | Kubernetes / CNCF releases | 8 milestones | detail 8/8 | painted clean | timeline wrap 4+4; all 8 details at type floor. |
 | 8 | 018 | HIPAA / HITECH | 4 milestones | detail 0/4 | painted clean | timeline recipe (not fallback). |
 | 9 | 019 | NIST CSF 2.0 | 3 milestones | detail 0/3 | painted clean | timeline recipe (not fallback). |
-| 10 | 020 | PCI DSS versions | 8 milestones | detail 0/8 | overflow-fallback | Freeze overflow; chronological ordered-list fallback. Eight mixed short/wrapping time_label values exceed the timeline floor. |
+| 10 | 020 | PCI DSS versions | 8 milestones | detail 0/8 | painted clean | timeline wrap 4+4; wrapping time_label kept verbatim. |
 
 ## 3. decision_tree
 
@@ -107,11 +122,11 @@ Each of the 14 layouts plus pie and heatmap appears exactly 10 times. Families a
 | 2 | 052 | Medallion ingest/serve | 2 stages x [3, 3] | transfer 1; detail 0 | painted clean | data_pipeline recipe (not fallback). |
 | 3 | 053 | Medallion | 3 stages x [2, 2, 2] | transfer 2; detail 0 | painted clean | data_pipeline recipe (not fallback). |
 | 4 | 054 | ML scoring chain | 4 stages x [1, 1, 1, 1] | transfer 3; detail 0 | painted clean | data_pipeline recipe (not fallback). |
-| 5 | 055 | NIST Detect/Respond | 5 stages x [2, 2, 2, 2, 2] | transfer 4; detail 0 | overflow-fallback | Freeze overflow; linear-fallback with transfer paragraphs. 5x2 Detect/Respond pipeline exceeds the data_pipeline floor. |
-| 6 | 056 | DAMA-style pipeline | 6 stages x [3, 3, 3, 3, 3, 3] | transfer 5; detail 18 | overflow-fallback | Freeze overflow; linear-fallback. Max 6x3 with transfers 1-5 and all details exceeds the data_pipeline floor. |
+| 5 | 055 | NIST Detect/Respond | 5 stages x [2, 2, 2, 2, 2] | transfer 4; detail 0 | painted clean | data_pipeline wrap 3+2; transfer labels retained. |
+| 6 | 056 | DAMA-style pipeline | 6 stages x [3, 3, 3, 3, 3, 3] | transfer 5; detail 18 | painted clean | data_pipeline wrap 3+3; 6x3 + transfers + details still fit leftover at floors. |
 | 7 | 057 | SOX close pipeline | 4 stages x [3, 3, 3, 3] | transfer 3; detail 0 | painted clean | data_pipeline recipe (not fallback). |
 | 8 | 058 | Three-stage chain | 3 stages x [1, 1, 1] | transfer 0; detail 0 | painted clean | data_pipeline recipe (not fallback). |
-| 9 | 059 | Index pipeline | 6 stages x [1, 1, 1, 1, 1, 1] | transfer 5; detail 0 | overflow-fallback | Freeze overflow; linear-fallback. 6x1 long chain exceeds the data_pipeline floor. |
+| 9 | 059 | Index pipeline | 6 stages x [1, 1, 1, 1, 1, 1] | transfer 5; detail 0 | painted clean | data_pipeline wrap 3+3; 6x1 chain at type floor. |
 | 10 | 060 | HIPAA TPO | 2 stages x [3, 3] | transfer 0; detail 6 | painted clean | data_pipeline recipe (not fallback). |
 
 ## 7. stakeholder_map
