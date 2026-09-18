@@ -1,10 +1,10 @@
 # Unused-layout + pie + heatmap stress (14x10)
 
-Companion-mode AUTHORING + OBSERVATION of the 14 renderer_v3 layouts never painted in Amex PDF replicas, plus unused chart types pie and heatmap. Strict freeze overflowed 9 leftover non-pie slides; the four dense pies (s146/s147/s148/s150) pack at ordinary_values 18 (#356). The published deck is still DEGRADED (`--no-strict`) for those leftover compositions. HTML was not hand-edited.
+Companion-mode AUTHORING + OBSERVATION of the 14 renderer_v3 layouts never painted in Amex PDF replicas, plus unused chart types pie and heatmap. The original 160-slide strict freeze overflowed 9 leftover non-pie slides; the four dense pies (s146/s147/s148/s150) pack at ordinary_values 18 (#356). The published deck is still DEGRADED (`--no-strict`) for those leftover compositions. HTML was not hand-edited. #354 later added kernel wrap packing for max-cardinality `process_flow` / `timeline` / `data_pipeline` (linear subset recapture below); remaining overflow families are unchanged.
 
 ## #354 wrap recapture (linear recipes)
 
-Kernel wrap packing (#354) re-renders the linear subset strict from `tests/fixtures/renderer_v3/linear_wrap_stress.json`. s005 / s016 / s017 / s020 / s055 / s056 / s059 now freeze as the recipe (not list fallback) at type floors. Recapture: `artifacts/issue_354_linear_wrap/` at 1920×1080, stacked-deck transforms cleared, no image scoring, no D314 rewrite. Remaining overflow families (feedback_loop / state_transition / pie) are unchanged.
+Kernel wrap packing (#354) re-renders the linear subset strict from `tests/fixtures/renderer_v3/linear_wrap_stress.json`. s005 / s016 / s017 / s020 / s055 / s056 / s059 now freeze as the recipe (not list fallback) at type floors. This leftover still fits s056 6x3 so it wraps as the recipe; 6x3+all-details may still overflow if leftover is gone (legal overflow). Recapture: `artifacts/issue_354_linear_wrap/` at 1920×1080, stacked-deck transforms cleared, no image scoring, no D314 rewrite. Remaining overflow families (feedback_loop / state_transition) are unchanged. Identity hashes below are the original 160-slide degraded capture (full deck not re-run).
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -32,10 +32,14 @@ Kernel wrap packing (#354) re-renders the linear subset strict from `tests/fixtu
 
 ## Counts
 
+Original 160-slide `--no-strict` observation (Identity hashes above; #356 pies packed):
+
 - painted clean: 149
 - overflow-fallback: 9
 - validation-shrunk: 2
 - total: 160 = 149 + 9 + 2
+
+After #354 wrap recapture of the linear subset, s005 / s016 / s017 / s020 / s055 / s056 / s059 freeze as recipes. Remaining overflow-fallback in this ledger: s039 (feedback_loop), s127 (state_transition). Full 160-slide HTML was not re-captured.
 
 Each of the 14 layouts plus pie and heatmap appears exactly 10 times. Families are not paraphrases: cardinality, optional fields, and domain differ per variation.
 

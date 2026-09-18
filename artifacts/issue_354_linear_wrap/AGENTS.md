@@ -14,7 +14,7 @@
 
 - Source fixture is `tests/fixtures/renderer_v3/linear_wrap_stress.json` (extracted from `gnhf/objective-stress-tes-430fd8` layout-stress 14x10; no D314 rewrite).
 - Capture uses Playwright at 1920×1080, `deviceScaleFactor=1`; no image scoring.
-- s005 / s016 / s017 / s020 / s055 / s059 must paint the recipe (not list fallback). s056 may wrap or remain overflow.
+- s005 / s016 / s017 / s020 / s055 / s056 / s059 must paint the recipe (not list fallback). This leftover still fits s056 6x3 so it wraps; 6x3+all-details may still overflow if leftover is gone (legal overflow, do not drop stages).
 
 ## Work Guidance
 
