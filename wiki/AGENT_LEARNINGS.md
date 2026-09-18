@@ -113,3 +113,6 @@ Q4 s24 `chart_grouped_annex` can freeze chips at 20px with a 3-line stub lane an
 ## 62. Dual per-pane supports share a band top, not equal row counts (#353, 2026-09-12)
 Q4 s06/s07 1-row vs 3-row independent tables match the PDF. `#336` already shares type and plot floor; leftover stayed in the shorter pane so the 1-row table sat higher. Do not pad blank rows. Paint both panes on a two-row CSS subgrid so support tables share one top edge; leftover sits below the shorter table.
 
+## 63. Pie pad growth must skip the PLOT_W no-op (#356, 2026-09-12)
+`#340` grew equal pads so the ring shrinks, but `_layout` caps `plot_w` at `PLOT_W`. While `box_w - 2*pad >= 1400`, every `+1` pad is a no-op and the old `next_plot == plot_w: break` bailed at `PAD_R`. Dense pies (8-way, zero wedge, below-plot context, joint support) then overflowed at ordinary_values 18 because pole percents stacked off `view_h`. Jump pad until `plot_w` actually shrinks; sit pole `%` beside the name when stacked `%` clips; pie `context_labels` go below the plot in existing `pad_b`. Do not lower type floors or ellipsize names.
+

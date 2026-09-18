@@ -8,6 +8,7 @@ Seams under test:
 - same-slide slice_id color identity; names outside the ring at ordinary_values floor
 - outside-name pad grows with type so the ring shrinks (#340); D47 floor still holds
 - outside name/percent AABB must clear the frozen disk (#341); in-wedge percents stay inside
+- dense pie packing at ordinary_values floor (#356): 8-way, zero wedge, below-plot context, joint support
 """
 from __future__ import annotations
 
@@ -94,7 +95,13 @@ def _cat_support() -> dict:
     }
 
 
-def _slice(slice_id: str, label: str, value: str, color: str | None = None) -> dict:
+def _slice(
+    slice_id: str,
+    label: str,
+    value: str,
+    color: str | None = None,
+    short_label: str | None = None,
+) -> dict:
     rec = {
         "slice_id": slice_id,
         "label": label,
@@ -102,6 +109,8 @@ def _slice(slice_id: str, label: str, value: str, color: str | None = None) -> d
     }
     if color is not None:
         rec["color"] = color
+    if short_label is not None:
+        rec["short_label"] = short_label
     return rec
 
 
@@ -703,3 +712,182 @@ def test_floor_hit_still_colliding_is_overflow():
     assert g["plot_w"] >= 320
     assert g["plot_h"] >= 240
     assert frozen.get("slice_label_overflow") is True
+
+
+# ---------------------------------------------------------------------------
+# #356 dense pie packing at ordinary_values floor
+# ---------------------------------------------------------------------------
+
+_EIGHT_WAY = (
+    ("coal", "Coal", "36", "Coal"),
+    ("gas", "Gas", "22", "Gas"),
+    ("hydro", "Hydro", "15", "Hydro"),
+    ("wind", "Wind", "8", "Wind"),
+    ("solar", "Solar", "5", "Solar"),
+    ("nuclear", "Nuclear", "9", "Nuc"),
+    ("bio", "Bioenergy", "3", "Bio"),
+    ("other", "Other", "2", "Oth"),
+)
+
+
+def _eight_way_pie(*, short_label: bool) -> dict:
+    raw = _raw()
+    vis = _chart(raw)
+    vis["chart_type"] = "pie"
+    vis["heading"] = "IEA eight-way mix"
+    vis["slices"] = [
+        _slice(sid, label, value, short_label=short if short_label else None)
+        for sid, label, value, short in _EIGHT_WAY
+    ]
+    return raw
+
+
+def _assert_outside_names_clear(frozen: dict) -> None:
+    g = frozen["geometry"]
+    px = frozen["role_sizes"]["ordinary_values"]
+    painted_r = min(g["plot_w"], g["plot_h"]) / 2.0
+    assert g["radius"] == painted_r
+    assert px >= 18
+    for sl in frozen["slices"]:
+        name_box = _label_aabb(sl["name_x"], sl["name_y"], sl["label"], px, sl["name_anchor"])
+        assert _aabb_clears_disk(name_box, g["cx"], g["cy"], painted_r)
+        if sl["value_inside"]:
+            val_r = math.hypot(sl["value_x"] - g["cx"], sl["value_y"] - g["cy"])
+            assert val_r < g["radius"]
+        else:
+            val_box = _label_aabb(
+                sl["value_x"], sl["value_y"], sl["visible"], px, sl["value_anchor"]
+            )
+            assert _aabb_clears_disk(val_box, g["cx"], g["cy"], painted_r)
+            assert val_box[1] >= 0
+            assert val_box[3] <= g["view_h"]
+        name_box_h = name_box[3] - name_box[1]
+        assert name_box[1] >= 0
+        assert name_box[3] <= g["view_h"]
+        assert name_box_h >= px * 0.5
+
+
+def test_eight_slice_pie_packs_at_floor():
+    """#356 s146: 8-slice pie freezes clean; names outside; percents inside when ≥20%."""
+    result = validate_handoff(_eight_way_pie(short_label=True), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    frozen = next(s for s in plan.surfaces if s.role == "pie_chart").chart_paint
+    g = frozen["geometry"]
+    assert frozen["role_sizes"]["ordinary_values"] >= 18
+    assert not frozen.get("slice_label_overflow")
+    assert g["pad_l"] == PAD_R
+    assert g["pad_r"] == PAD_R
+    assert g["plot_w"] >= 320
+    assert g["plot_h"] >= 240
+    assert len(frozen["slices"]) == 8
+    by = {s["slice_id"]: s for s in frozen["slices"]}
+    assert by["coal"]["value_inside"] is True
+    assert by["gas"]["value_inside"] is True
+    assert by["wind"]["value_inside"] is False
+    assert by["bio"]["value_inside"] is False
+    for sl in frozen["slices"]:
+        assert sl["label"]  # full names, not ellipsized
+        assert sl["visible"]  # percents kept
+    _assert_outside_names_clear(frozen)
+    svg = paint_chart_svg(frozen)
+    assert ">Bioenergy<" in svg or ">Bioenergy</text>" in svg
+    assert "3%" in svg
+    assert "36%" in svg
+
+
+def test_zero_wedge_pie_still_names_the_slice():
+    """#356 s147: 0-value slice still owns a name that does not collide."""
+    raw = _raw()
+    vis = _chart(raw)
+    vis["chart_type"] = "pie"
+    vis["heading"] = "Mix with zero"
+    vis["slices"] = [
+        _slice("renew", "Renewables", "30"),
+        _slice("nuclear", "Nuclear", "10"),
+        _slice("zero", "Unspecified", "0"),
+    ]
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    frozen = next(s for s in plan.surfaces if s.role == "pie_chart").chart_paint
+    assert frozen["role_sizes"]["ordinary_values"] >= 18
+    assert not frozen.get("slice_label_overflow")
+    zero = _slice_by_id(frozen, "zero")
+    assert zero["numeric"] == 0.0
+    assert zero["label"] == "Unspecified"
+    assert zero["value_inside"] is False
+    _assert_outside_names_clear(frozen)
+    svg = paint_chart_svg(frozen)
+    assert ">Unspecified<" in svg or ">Unspecified</text>" in svg
+    assert svg.count('data-slice="zero"') >= 2  # wedge + name (and value)
+
+
+def test_pie_context_labels_freeze_below_plot():
+    """#356 s148: two context_labels freeze below the plot; view_h does not grow."""
+    raw = _raw()
+    vis = _chart(raw)
+    vis["chart_type"] = "pie"
+    vis["heading"] = "Mix"
+    vis["slices"] = [
+        _slice("coal", "Coal", "36"),
+        _slice("gas", "Gas", "22"),
+        _slice("lowc", "Low-carbon", "40"),
+        _slice("other", "Other", "2"),
+    ]
+    vis["context_labels"] = [
+        {"context_id": "cx1", "label": "Source", "value": {"type": "text", "text": "IEA"}},
+        {"context_id": "cx2", "label": "Year", "value": {"type": "text", "text": "published mix"}},
+    ]
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    frozen = next(s for s in plan.surfaces if s.role == "pie_chart").chart_paint
+    assert frozen["role_sizes"]["ordinary_values"] >= 18
+    assert not frozen.get("slice_label_overflow")
+    g = frozen["geometry"]
+    assert float(g["view_h"]) == pytest.approx(
+        float(g["pad_t"]) + float(g["plot_h"]) + float(g["pad_b"])
+    )
+    placed = frozen["context_labels"]
+    assert {p["context_id"] for p in placed} == {"cx1", "cx2"}
+    assert {p["class"] for p in placed} == {"below_plot"}
+    codes = [d["code"] for d in frozen["fact_chrome"]["diagnostics"]]
+    assert "plan.surface_relocated" in codes
+    assert "plan.unresolved_overflow" not in codes
+    plot_bottom = float(g["pad_t"]) + float(g["plot_h"])
+    for p in placed:
+        assert float(p["y"]) > plot_bottom
+        assert float(p["y"]) <= float(g["view_h"])
+    _assert_outside_names_clear(frozen)
+    svg = paint_chart_svg(frozen)
+    assert 'data-context-id="cx1"' in svg
+    assert 'data-context-id="cx2"' in svg
+
+
+def test_eight_slice_pie_with_independent_support_keeps_floor_and_table():
+    """#356 s150: 8 slices + independent support keep D47 floor and complete table."""
+    raw = _eight_way_pie(short_label=False)
+    vis = _chart(raw)
+    vis["heading"] = "Mix"
+    vis["slices"] = [
+        _slice(sid, short, value)
+        for sid, _label, value, short in _EIGHT_WAY
+    ]
+    raw["slides"][1]["payload"]["support"] = _indep_support()
+    result = validate_handoff(raw, strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    pie = next(s for s in plan.surfaces if s.role == "pie_chart")
+    support = next(s for s in plan.surfaces if s.role == "support_table")
+    frozen = pie.chart_paint
+    g = frozen["geometry"]
+    assert frozen["role_sizes"]["ordinary_values"] >= 18
+    assert g["plot_w"] >= 320
+    assert g["plot_h"] >= 240
+    assert not support._overflow
+    assert len(frozen["slices"]) == 8
+    if frozen.get("slice_label_overflow"):
+        # leftover cannot hold both floors — keep overflow, do not drop the table
+        assert support._table_spec is not None
+        assert len((support._table_spec.get("rows") or [])) >= 1
+    else:
+        _assert_outside_names_clear(frozen)
+    svg = paint_chart_svg(frozen)
+    assert ">Coal<" in svg or ">Coal</text>" in svg

@@ -2215,6 +2215,16 @@ def freeze_pie_donut(
             name_w = max(20.0, len(sl.label) * label_px * 0.55)
             val_w = max(20.0, len(fv.visible) * label_px * 0.55)
             name_r = radius + 10.0
+
+            def _stacked_value(nx: float, ny: float) -> tuple[float, float, str]:
+                return nx, ny + (label_px if sin_m >= 0 else -label_px), name_anchor
+
+            def _beside_value(nx: float, ny: float) -> tuple[float, float, str]:
+                gap = 6.0
+                if name_anchor == "start":
+                    return nx + name_w + gap, ny, "start"
+                return nx - name_w - gap, ny, "end"
+
             while True:
                 name_x = cx + cos_m * name_r + inset
                 name_y = cy + sin_m * name_r
@@ -2223,14 +2233,22 @@ def freeze_pie_donut(
                     value_y = cy + sin_m * label_r
                     value_ink = ink
                     value_anchor = "middle"
+                    val_box = _label_box(value_x, value_y, val_w, value_anchor)
+                    outside_vals: list[tuple[float, float, float, float]] = []
                 else:
-                    value_x = name_x
-                    value_y = name_y + (label_px if sin_m >= 0 else -label_px)
                     value_ink = navy
-                    value_anchor = name_anchor
+                    stacked = _stacked_value(name_x, name_y)
+                    stacked_box = _label_box(stacked[0], stacked[1], val_w, stacked[2])
+                    if _clears_disk(stacked_box) and _fits_view(stacked_box):
+                        value_x, value_y, value_anchor = stacked
+                        val_box = stacked_box
+                    else:
+                        # Pole % stacked off the view; keep it with the name (#356).
+                        value_x, value_y, value_anchor = _beside_value(name_x, name_y)
+                        val_box = _label_box(value_x, value_y, val_w, value_anchor)
+                    outside_vals = [val_box]
                 name_box = _label_box(name_x, name_y, name_w, name_anchor)
-                val_box = _label_box(value_x, value_y, val_w, value_anchor)
-                outside = [name_box] + ([] if value_inside else [val_box])
+                outside = [name_box] + outside_vals
                 if all(_clears_disk(b) and _fits_view(b) for b in outside):
                     break
                 name_r += 1.0
@@ -2310,6 +2328,9 @@ def freeze_pie_donut(
         }
         return overflow, slices, placements, geometry
 
+    def _plot_w(pad: int) -> int:
+        return max(PLOT_FLOOR_W, min(PLOT_W, box_w - 2 * pad))
+
     while True:
         label_overflow, slices, placements, geometry = _layout(pad_x)
         if not label_overflow:
@@ -2317,9 +2338,17 @@ def freeze_pie_donut(
         next_pad = pad_x + 1
         if next_pad > max_pad:
             break
-        next_plot = max(PLOT_FLOOR_W, min(PLOT_W, box_w - 2 * next_pad))
-        if next_plot == geometry["plot_w"]:
-            break
+        # PLOT_W cap holds plot_w flat for several pad steps; skip those
+        # no-ops so equal pads can keep growing until the ring actually
+        # shrinks (plot_w < plot_h) inside the D47 floor (#356).
+        if _plot_w(next_pad) == geometry["plot_w"]:
+            jump = next_pad
+            while jump < max_pad and _plot_w(jump) == geometry["plot_w"]:
+                jump += 1
+            if _plot_w(jump) == geometry["plot_w"]:
+                break
+            pad_x = jump
+            continue
         pad_x = next_pad
     table = {
         "columns": [{"label": "Value"}],
@@ -4504,6 +4533,34 @@ def _place_context_block(
     return placed
 
 
+def _place_context_row(
+    items: list[tuple[Any, Any, str]],
+    *,
+    x_center: float,
+    y: float,
+    px: float,
+    line_h: float,
+    occupied: list[tuple[float, float, float, float]],
+    gap: float = 24.0,
+) -> list[tuple[Any, Any, str, float, float, float, float]] | None:
+    """One below-plot row so two pie context items fit pad_b (#356)."""
+    measured: list[tuple[Any, Any, str, float, float]] = []
+    for lab, fv, display in items:
+        _box, w, h = _context_item_box(0.0, y, display, px, line_h)
+        measured.append((lab, fv, display, w, h))
+    total = sum(m[3] for m in measured) + gap * max(0, len(measured) - 1)
+    x = x_center - total / 2.0
+    placed: list[tuple[Any, Any, str, float, float, float, float]] = []
+    for lab, fv, display, w, h in measured:
+        cx = x + w / 2.0
+        box = _fact_box(cx, y, w, h)
+        if _overlaps(box, occupied):
+            return None
+        placed.append((lab, fv, display, cx, y, w, h))
+        x += w + gap
+    return placed
+
+
 def _freeze_context_labels(
     chart: Any,
     formats: Mapping[str, NumberFormat],
@@ -4573,32 +4630,61 @@ def _freeze_context_labels(
     used_short = False
     relocated = False
     overflow = False
-    placed = _place_context_block(
-        full_items, x=x_ext, y0=y0, px=px, line_h=line_h, occupied=occupied
-    )
+    # Pie/donut names already own the exterior pad; context goes below the
+    # plot in the existing pad_b (same relocated-context rule, #356).
+    pie_mix = getattr(chart, "chart_type", None) in ("pie", "donut")
+    placed = None
     cls = "exterior"
-    if placed is None:
+    if not pie_mix:
         placed = _place_context_block(
-            short_items, x=x_ext, y0=y0, px=px, line_h=line_h, occupied=occupied
+            full_items, x=x_ext, y0=y0, px=px, line_h=line_h, occupied=occupied
         )
-        if placed is not None:
-            used_short = True
-            cls = "exterior_short"
-    if placed is None:
+        if placed is None:
+            placed = _place_context_block(
+                short_items, x=x_ext, y0=y0, px=px, line_h=line_h, occupied=occupied
+            )
+            if placed is not None:
+                used_short = True
+                cls = "exterior_short"
+    if placed is None and survivors:
         x_below = pad_l + plot_w / 2
         y_below = pad_t + plot_h + 40
-        placed = _place_context_block(
-            short_items,
-            x=x_below,
-            y0=y_below,
-            px=px,
-            line_h=line_h,
-            occupied=occupied,
-        )
+        if pie_mix:
+            # Slice names already occupy pad_b corners; the below-plot
+            # lane is the center. Skip occupied so two context items can
+            # share one row inside pad_b (#356).
+            placed = _place_context_row(
+                full_items,
+                x_center=x_below,
+                y=y_below,
+                px=px,
+                line_h=line_h,
+                occupied=[],
+            )
+            if placed is None:
+                placed = _place_context_row(
+                    short_items,
+                    x_center=x_below,
+                    y=y_below,
+                    px=px,
+                    line_h=line_h,
+                    occupied=[],
+                )
+                if placed is not None:
+                    used_short = True
+        if placed is None:
+            placed = _place_context_block(
+                short_items,
+                x=x_below,
+                y0=y_below,
+                px=px,
+                line_h=line_h,
+                occupied=occupied,
+            )
+            used_short = any(
+                (lab.short_label or lab.label) != lab.label for lab, _fv in survivors
+            )
         relocated = True
-        used_short = any(
-            (lab.short_label or lab.label) != lab.label for lab, _fv in survivors
-        )
         cls = "below_plot"
         if placed is None:
             overflow = True
