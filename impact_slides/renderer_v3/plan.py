@@ -5949,11 +5949,50 @@ def _relationship_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
 
     if kind == "decision_tree":
         nodes = spec["nodes"]
-        # Depth-banded layout: up to 4 rows of cards.
-        row_h = max(card_h(n["heading"], n.get("detail"), meta=n["kind"]) for n in nodes)
-        # Estimate depth from node count (conservative 4 bands).
-        bands = min(4, max(2, (len(nodes) + 2) // 3))
-        total = bands * row_h + (bands - 1) * LINEAR_LAYER_GAP + BLOCK_MARGIN_Y
+        by_id = {n["id"]: n for n in nodes}
+        children: dict[str, list] = {n["id"]: [] for n in nodes}
+        for n in nodes:
+            for br in n.get("branches") or []:
+                if br["target_id"] in by_id:
+                    children[n["id"]].append(br)
+        bands: list[list[dict[str, Any]]] = []
+        seen: set[str] = set()
+        queue = [spec["root_id"]]
+        while queue:
+            band = [by_id[nid] for nid in queue if nid in by_id and nid not in seen]
+            if not band:
+                break
+            for n in band:
+                seen.add(n["id"])
+            bands.append(band)
+            nxt: list[str] = []
+            for n in band:
+                nxt.extend(br["target_id"] for br in children.get(n["id"], []))
+            queue = nxt
+        if not bands:
+            bands = [nodes]
+        parts: list[int] = []
+        tree_gap = 8  # .decision-tree{gap:8px} between bands and edge rows
+        for i, band in enumerate(bands):
+            parts.append(
+                max(card_h(n["heading"], n.get("detail"), meta=n["kind"]) for n in band)
+            )
+            if i == len(bands) - 1:
+                continue
+            edge_labels = [
+                br["label"] for n in band for br in children.get(n["id"], [])
+            ]
+            edge_h = LINEAR_CONNECTOR_H
+            if edge_labels:
+                inner = max(40, box_w // max(3, len(edge_labels)) - 8)
+                lab_h = 0
+                for lab in edge_labels:
+                    lines, fit = _linear_lines(lab, meta_px, inner, max_lines=2)
+                    ok = ok and fit
+                    lab_h = max(lab_h, len(lines) * _line_box(meta_px))
+                edge_h += lab_h
+            parts.append(edge_h)
+        total = sum(parts) + tree_gap * max(0, len(parts) - 1) + BLOCK_MARGIN_Y
     elif kind == "feedback_loop":
         items = spec["items"]
         n = len(items)
@@ -6052,7 +6091,13 @@ def _relationship_fit_detail(sp: SurfacePlan) -> tuple[bool, int]:
             )
             for s in spokes
         )
-        total = hub + spoke_h + 2 * LINEAR_LAYER_GAP + BLOCK_MARGIN_Y
+        total = (
+            hub
+            + LINEAR_CONNECTOR_H
+            + spoke_h
+            + LINEAR_LAYER_GAP
+            + BLOCK_MARGIN_Y
+        )
     else:  # quadrant_matrix
         items = spec["items"]
         # 2x2 grid; within-quadrant stack preserves order.

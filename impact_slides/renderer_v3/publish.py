@@ -327,9 +327,13 @@ def build_presentation_html(
             ".strategy-footer{padding:16px;box-sizing:border-box}",
                     # Relationship + decision compositions (D194–D200/D274–D280).
             ".decision-tree,.hierarchy-tree{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm)}",
+            ".decision-tree{gap:8px}",
             ".rel-band{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center}",
             ".rel-node{flex:1 1 160px;max-width:280px;min-width:0}",
+            ".rel-edges{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center;align-items:flex-end}",
+            ".rel-edge{display:flex;flex-direction:column;align-items:center;min-width:72px;max-width:200px}",
             ".rel-branch{margin:4px 0 0;font-style:italic}",
+            ".rel-edge .rel-branch{margin:0;text-align:center}",
             ".feedback-loop{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
             ".feedback-loop.cycle-wrap{flex-direction:column;flex-wrap:nowrap;align-items:stretch}",
             ".feedback-cycle-row{display:flex;flex-direction:row;flex-wrap:nowrap;gap:16px;width:100%;align-items:stretch}",
@@ -339,7 +343,8 @@ def build_presentation_html(
             ".stakeholder-map{display:flex;flex-direction:column;gap:20px;width:100%;margin:0 0 var(--space-sm);align-items:center}",
             ".stakeholder-focal{max-width:320px;width:100%}",
             ".stakeholder-spokes{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center}",
-            ".stakeholder-spoke{flex:1 1 160px;max-width:260px;min-width:0}",
+            ".stakeholder-spoke-col{flex:1 1 160px;max-width:260px;min-width:0;display:flex;flex-direction:column;align-items:stretch}",
+            ".stakeholder-spoke{width:100%;min-width:0}",
             ".quadrant-matrix{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;margin:0 0 var(--space-sm)}",
             ".quadrant-cell{border:var(--border-width-hairline) solid var(--color-rule);padding:12px;min-height:80px;box-sizing:border-box}",
             ".quadrant-label{margin:0 0 8px;font-weight:var(--font-weight-emphasis)}",
@@ -2843,14 +2848,26 @@ def _paint_decision_tree(
                     f'<p class="linear-detail"{_style_font(detail_px)}>'
                     f'{_soft_break_html(n["detail"])}</p>'
                 )
-            for lab, tid in children.get(nid, []):
-                tgt = by_id.get(tid, {})
-                out.append(
-                    f'<p class="rel-branch"{_style_font(meta_px)}>'
-                    f'{_soft_break_html(lab)} → {_soft_break_html(tgt.get("heading", tid))}</p>'
-                )
             out.append("</div>")
         out.append("</div>")
+        edges: list[tuple[str, str]] = []
+        for nid in band:
+            edges.extend(children.get(nid, []))
+        if edges:
+            out.append('<div class="rel-edges">')
+            for lab, tid in edges:
+                out.append(
+                    f'<div class="rel-edge" data-target-id="{_escape(tid)}">'
+                )
+                out.append(
+                    f'<p class="rel-branch"{_style_font(meta_px)}>' 
+                    f'{_soft_break_html(lab)}</p>'
+                )
+                out.append(
+                    '<div class="linear-connector" aria-hidden="true">↓</div>'
+                )
+                out.append("</div>")
+            out.append("</div>")
     out.append("</div>")
     return out
 
@@ -3005,15 +3022,29 @@ def _paint_stakeholder_map(
         )
     out.append("</div>")
     out.append('<div class="stakeholder-spokes">')
+    _spoke_arrow = {
+        "to_focal": "↑",
+        "from_focal": "↓",
+        "bidirectional": "↕",
+        "undirected": "│",
+    }
     for s in spec["stakeholders"]:
+        direction = s["direction"]
+        out.append(
+            f'<div class="stakeholder-spoke-col" data-direction="{_escape(direction)}">'
+        )
+        out.append(
+            f'<div class="linear-connector" aria-hidden="true">'
+            f'{_spoke_arrow.get(direction, "│")}</div>'
+        )
         out.append(
             f'<div class="stakeholder-spoke linear-card card-panel" '
-            f'data-entity-id="{_escape(s["id"])}" data-direction="{_escape(s["direction"])}">'
+            f'data-entity-id="{_escape(s["id"])}" data-direction="{_escape(direction)}">'
         )
         out.append(
             f'<p class="linear-meta"{_style_font(meta_px)}>'
             f'{_soft_break_html(s["relationship_label"])} '
-            f'({_escape(s["direction"].replace("_", " "))})</p>'
+            f'({_escape(direction.replace("_", " "))})</p>'
         )
         out.append(
             f'<h3{_style_font(heading_px)}>{_soft_break_html(s["heading"])}</h3>'
@@ -3023,7 +3054,7 @@ def _paint_stakeholder_map(
                 f'<p class="linear-detail"{_style_font(detail_px)}>'
                 f'{_soft_break_html(s["detail"])}</p>'
             )
-        out.append("</div>")
+        out.append("</div></div>")
     out.append("</div></div>")
     return out
 

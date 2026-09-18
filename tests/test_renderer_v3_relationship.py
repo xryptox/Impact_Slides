@@ -35,6 +35,14 @@ from impact_slides.renderer_v3.models import (
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/renderer_v3/relationship_compositions.json"
+STRESS_FIXTURE = ROOT / "tests/fixtures/renderer_v3/relationship_routes_stress.json"
+
+_DIR_ARROW = {
+    "to_focal": "↑",
+    "from_focal": "↓",
+    "bidirectional": "↕",
+    "undirected": "│",
+}
 
 
 def _raw() -> dict:
@@ -94,6 +102,8 @@ def test_paint_preserves_ids_and_semantics(tmp_path: Path):
     assert "class=\"hierarchy-tree" in html
     assert "class=\"stakeholder-map" in html
     assert "class=\"quadrant-matrix" in html
+    hierarchy = _slide_html(html, 3)
+    assert "class=\"linear-connector\"" not in hierarchy
 
 
 def test_decision_tree_rejects_shared_target_strict():
@@ -145,6 +155,9 @@ def test_decision_tree_nonstrict_preserves_unresolved_without_reconnect(tmp_path
     # Must not invent a replacement edge or drop the dangling label.
     assert ">High → missing_node<" in html or "High → missing_node" in html
     assert result["status"] == "degraded"
+    # Fallback table must not invent recipe geometry or reconnect.
+    assert 'class="linear-connector"' not in html
+    assert 'class="decision-tree' not in html
 
 
 def test_hierarchy_rejects_cycle_strict():
@@ -562,3 +575,175 @@ def test_decision_tree_depth_limit():
     payload = DecisionTreePayload(root_id="r", nodes=nodes)
     defects = analyze_relationship_structure("decision_tree", payload)
     assert "decision_tree.depth_exceeded" in defects
+
+
+def _slide_html(html: str, slide_number: int) -> str:
+    marker = f'data-slide-number="{slide_number}"'
+    start = html.index(marker)
+    nxt = html.find('class="slide"', start + 1)
+    return html[start:] if nxt < 0 else html[start:nxt]
+
+
+def test_decision_tree_paints_branch_connectors_not_in_card_text(tmp_path: Path):
+    """D274: branch labels sit on renderer-owned edges, not inside parent cards."""
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_raw()), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    tree = _slide_html(html, 1)
+    assert result["status"] == "clean"
+    assert 'class="decision-tree' in tree
+    assert 'class="linear-connector"' in tree
+    assert 'aria-hidden="true"' in tree
+    assert tree.count('class="linear-connector"') == 4  # authored branches only
+    assert "Low" in tree and "High" in tree and "Yes" in tree and "No" in tree
+    # In-card "label → child heading" is not the route.
+    assert "Low → Docs complete?" not in tree
+    assert "High → Decline" not in tree
+    assert "Yes → Approve" not in tree
+    assert "No → Hold for docs" not in tree
+    assert 'data-node-id="d_risk"' in tree
+    assert 'data-node-id="o_approve"' in tree
+
+
+def test_stakeholder_map_paints_directed_spokes_and_wording(tmp_path: Path):
+    """D279: hub/spoke arrows follow authored direction; wording is not arrows alone."""
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_raw()), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    m = _slide_html(html, 4)
+    assert result["status"] == "clean"
+    assert 'class="stakeholder-map' in m
+    assert m.count('class="linear-connector"') == 3
+    assert 'data-direction="to_focal"' in m
+    assert 'data-direction="from_focal"' in m
+    assert 'data-direction="bidirectional"' in m
+    assert _DIR_ARROW["to_focal"] in m
+    assert _DIR_ARROW["from_focal"] in m
+    assert _DIR_ARROW["bidirectional"] in m
+    assert "accepts network" in m
+    assert "membership" in m
+    assert "partnership" in m
+    assert "to focal" in m
+    assert "from focal" in m
+    assert "bidirectional" in m
+    assert 'data-entity-id="amex"' in m
+    assert 'data-entity-id="merchants"' in m
+
+
+def test_layout_stress_s023_and_s065_paint_routes_at_floors(tmp_path: Path):
+    """#357 proof: s023 7-node tree and s065 6 mixed spokes freeze with visible routes."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    out = tmp_path / "out"
+    result = render_deck(STRESS_FIXTURE, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert result["ok"] is True
+    assert result["status"] == "clean"
+    assert meta["severity_counts"].get("error", 0) == 0
+
+    tree = _slide_html(html, 23)
+    assert 'class="decision-tree' in tree
+    assert "linear-fallback" not in tree
+    assert tree.count('class="linear-connector"') == 6
+    assert "Yes" in tree and "No" in tree
+    assert "Yes → Authorized?" not in tree
+    assert "Yes → Use under HIPAA" not in tree
+    assert 'data-node-id="d-phi"' in tree
+    assert 'data-node-id="o-use"' in tree
+
+    spoke = _slide_html(html, 65)
+    assert 'class="stakeholder-map' in spoke
+    assert "linear-fallback" not in spoke
+    assert spoke.count('class="linear-connector"') == 6
+    for direction, glyph in _DIR_ARROW.items():
+        assert f'data-direction="{direction}"' in spoke
+        assert glyph in spoke
+    assert "facilitates PI" in spoke
+    assert "undirected" in spoke
+    assert "to focal" in spoke
+    assert "from focal" in spoke
+    assert "bidirectional" in spoke
+
+    html_path = (out / "presentation.html").resolve()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page.goto(html_path.as_uri(), wait_until="networkidle")
+        try:
+            for sn, sel, n_conn in (
+                (23, ".decision-tree .linear-connector", 6),
+                (65, ".stakeholder-map .linear-connector", 6),
+            ):
+                box = page.evaluate(
+                    """({sn, sel, n}) => {
+                      const slide = document.querySelector(
+                        'section.slide[data-slide-number="' + sn + '"]'
+                      );
+                      slide.scrollIntoView();
+                      const conns = [...slide.querySelectorAll(sel)];
+                      const slideBox = slide.getBoundingClientRect();
+                      const rects = conns.map((el) => {
+                        const r = el.getBoundingClientRect();
+                        const s = getComputedStyle(el);
+                        return {
+                          w: r.width, h: r.height,
+                          vis: s.visibility, display: s.display,
+                          text: (el.textContent || '').trim(),
+                          hidden: el.getAttribute('aria-hidden'),
+                          inside: r.top >= slideBox.top - 1
+                            && r.bottom <= slideBox.bottom + 1
+                            && r.left >= slideBox.left - 1
+                            && r.right <= slideBox.right + 1,
+                        };
+                      });
+                      return {
+                        n: conns.length,
+                        expected: n,
+                        overflow: slide.classList.contains('linear-overflow')
+                          || !!slide.querySelector('.linear-overflow'),
+                        slideW: slideBox.width,
+                        slideH: slideBox.height,
+                        rects,
+                      };
+                    }""",
+                    {"sn": sn, "sel": sel, "n": n_conn},
+                )
+                assert box["n"] == n_conn, box
+                assert box["overflow"] is False, box
+                assert box["slideW"] == 1920 and box["slideH"] == 1080, box
+                for r in box["rects"]:
+                    assert r["hidden"] == "true", r
+                    assert r["display"] != "none", r
+                    assert r["vis"] != "hidden", r
+                    assert r["w"] > 0 and r["h"] > 0, r
+                    assert r["inside"] is True, r
+                    assert r["text"], r
+        finally:
+            browser.close()
+
+
+def test_layout_stress_tree_and_map_families_still_freeze_at_floors(tmp_path: Path):
+    """s021–s030 and s061–s070 stay at type floors; adding routes must not overflow."""
+    out = tmp_path / "out"
+    result = render_deck(STRESS_FIXTURE, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert result["ok"] is True, meta.get("severity_counts")
+    assert result["status"] == "clean"
+    overflows = [
+        p
+        for p in meta["plans"]
+        if p.get("role") in {"decision_tree", "stakeholder_map"} and p.get("fallback")
+    ]
+    assert overflows == []
+    for sn in list(range(21, 31)) + list(range(61, 71)):
+        block = _slide_html(html, sn)
+        assert "linear-overflow" not in block, sn
+        assert "linear-fallback" not in block, sn
+        assert "class=\"linear-connector\"" in block, sn
