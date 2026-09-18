@@ -333,7 +333,7 @@ def build_presentation_html(
             ".rel-edges{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;justify-content:center;align-items:flex-end}",
             ".rel-edge{display:flex;flex-direction:column;align-items:center;min-width:72px;max-width:200px}",
             ".rel-branch{margin:4px 0 0;font-style:italic}",
-            ".rel-edge .rel-branch{margin:0;text-align:center}",
+            ".rel-edge p.rel-branch{margin:0;text-align:center}",
             ".feedback-loop{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;width:100%;margin:0 0 var(--space-sm);align-items:stretch}",
             ".feedback-loop.cycle-wrap{flex-direction:column;flex-wrap:nowrap;align-items:stretch}",
             ".feedback-cycle-row{display:flex;flex-direction:row;flex-wrap:nowrap;gap:16px;width:100%;align-items:stretch}",
