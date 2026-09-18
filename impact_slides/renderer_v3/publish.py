@@ -2860,7 +2860,7 @@ def _paint_decision_tree(
                     f'<div class="rel-edge" data-target-id="{_escape(tid)}">'
                 )
                 out.append(
-                    f'<p class="rel-branch"{_style_font(meta_px)}>' 
+                    f'<p class="rel-branch"{_style_font(meta_px)}>'
                     f'{_soft_break_html(lab)}</p>'
                 )
                 out.append(
