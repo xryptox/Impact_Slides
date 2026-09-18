@@ -1415,8 +1415,6 @@ def _measure_surface(sp: SurfacePlan, events: list[DiagnosticEvent]) -> None:
                 sp._overflow = True
             return
         if sp._linear_spec is not None:
-            leftover = sp._box_h if sp._box_h > 0 else 10**9
-            _choose_linear_packing(sp, leftover)
             ok, _h = _linear_fit_detail(sp)
             if not ok:
                 sp._overflow = True

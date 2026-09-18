@@ -629,3 +629,22 @@ def test_wrap_mutation_without_row_pack_still_overflows():
     sp._linear_spec = spec
     ok, _h = _linear_fit_detail(sp)
     assert ok is False
+
+
+def test_wrap_miss_does_not_steal_subtitle_band():
+    """Wrap that only fits leftover+subtitle stays overflow, not wrap."""
+    raw = _raw()
+    pf = next(s for s in raw["slides"] if s["layout_type"] == "process_flow")
+    pf["payload"]["steps"] = [
+        {"step_id": f"s{i}", "heading": f"Step {i}", "detail": "Short."}
+        for i in range(6)
+    ]
+    pf.pop("takeaway", None)
+    pf.pop("source_footer", None)
+    pf["content"] = {"subtitle": " ".join(["Subtitle"] * 400)}
+    raw["slides"] = [pf]
+    result = validate_handoff(raw, strict=False)
+    plan = plan_deck(result.deck, strict=False)
+    linear = next(p for p in plan.surfaces if p.role == "process_flow")
+    assert linear._linear_spec.get("orientation") != "wrap"
+    assert linear._overflow is True
