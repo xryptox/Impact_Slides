@@ -1,0 +1,1717 @@
+{
+  "meta": {
+    "handoff_schema_version": 1
+  },
+  "sections": [
+    {
+      "section_id": "process_flow",
+      "label": "Process flow"
+    },
+    {
+      "section_id": "timeline",
+      "label": "Timeline"
+    },
+    {
+      "section_id": "data_pipeline",
+      "label": "Data pipeline"
+    }
+  ],
+  "number_formats": {},
+  "evidence_registry": {
+    "layout-stress-p001": {
+      "source_name": "ITIL 4 Incident Management",
+      "locator": {
+        "kind": "note",
+        "text": "ITIL 4 Incident Management: detect then restore"
+      }
+    },
+    "layout-stress-p002": {
+      "source_name": "NIST CSF 2.0",
+      "locator": {
+        "kind": "note",
+        "text": "NIST CSF 2.0 Identify, Protect, Detect"
+      }
+    },
+    "layout-stress-p003": {
+      "source_name": "SHRM staffing funnel",
+      "locator": {
+        "kind": "note",
+        "text": "SHRM staffing funnel stages"
+      }
+    },
+    "layout-stress-p004": {
+      "source_name": "FDA CDRH 510(k)",
+      "locator": {
+        "kind": "note",
+        "text": "FDA CDRH 510(k) program"
+      }
+    },
+    "layout-stress-p005": {
+      "source_name": "Toyota Production System",
+      "locator": {
+        "kind": "note",
+        "text": "Toyota Production System pillars and rules"
+      }
+    },
+    "layout-stress-p006": {
+      "source_name": "Deming PDCA",
+      "locator": {
+        "kind": "note",
+        "text": "PDCA plus lock-in, Deming cycle"
+      }
+    },
+    "layout-stress-p007": {
+      "source_name": "ITIL 4 Incident Management",
+      "locator": {
+        "kind": "note",
+        "text": "ITIL 4 incident path with wrapping headings"
+      }
+    },
+    "layout-stress-p008": {
+      "source_name": "COSO Internal Control",
+      "locator": {
+        "kind": "note",
+        "text": "Month-end close sequence, COSO reporting cycle"
+      }
+    },
+    "layout-stress-p009": {
+      "source_name": "SAFe PI Planning",
+      "locator": {
+        "kind": "note",
+        "text": "SAFe PI Planning agenda"
+      }
+    },
+    "layout-stress-p010": {
+      "source_name": "ITIL 4 Incident Management",
+      "locator": {
+        "kind": "note",
+        "text": "ITIL 4 density vs wrapping extremes"
+      }
+    },
+    "layout-stress-p011": {
+      "source_name": "IETF RFC 791 / CERN WWW",
+      "locator": {
+        "kind": "note",
+        "text": "RFC 791 and the CERN WWW proposal"
+      }
+    },
+    "layout-stress-p012": {
+      "source_name": "Public communications history",
+      "locator": {
+        "kind": "note",
+        "text": "Public communications milestones"
+      }
+    },
+    "layout-stress-p013": {
+      "source_name": "PCI DSS versions",
+      "locator": {
+        "kind": "note",
+        "text": "PCI Security Standards Council DSS versions"
+      }
+    },
+    "layout-stress-p014": {
+      "source_name": "IETF RFC HTTP chronology",
+      "locator": {
+        "kind": "note",
+        "text": "IETF RFC chronology for IP and HTTP"
+      }
+    },
+    "layout-stress-p015": {
+      "source_name": "GDPR / EU data protection",
+      "locator": {
+        "kind": "note",
+        "text": "GDPR and related EU data-protection dates"
+      }
+    },
+    "layout-stress-p016": {
+      "source_name": "IPCC assessment reports",
+      "locator": {
+        "kind": "note",
+        "text": "IPCC assessment reports"
+      }
+    },
+    "layout-stress-p017": {
+      "source_name": "Kubernetes / CNCF releases",
+      "locator": {
+        "kind": "note",
+        "text": "Kubernetes release history, CNCF"
+      }
+    },
+    "layout-stress-p018": {
+      "source_name": "HIPAA / HITECH",
+      "locator": {
+        "kind": "note",
+        "text": "HIPAA statute and rule years"
+      }
+    },
+    "layout-stress-p019": {
+      "source_name": "NIST CSF 2.0",
+      "locator": {
+        "kind": "note",
+        "text": "NIST CSF 2.0 2024 quarters"
+      }
+    },
+    "layout-stress-p020": {
+      "source_name": "PCI DSS versions",
+      "locator": {
+        "kind": "note",
+        "text": "PCI DSS versions with mixed labels"
+      }
+    },
+    "layout-stress-p051": {
+      "source_name": "ETL",
+      "locator": {
+        "kind": "note",
+        "text": "Minimal ETL, no transfer_label"
+      }
+    },
+    "layout-stress-p052": {
+      "source_name": "Medallion ingest/serve",
+      "locator": {
+        "kind": "note",
+        "text": "Ingest to serve, transfer on first only"
+      }
+    },
+    "layout-stress-p053": {
+      "source_name": "Medallion",
+      "locator": {
+        "kind": "note",
+        "text": "Medallion-style, transfers on both non-final"
+      }
+    },
+    "layout-stress-p054": {
+      "source_name": "ML scoring chain",
+      "locator": {
+        "kind": "note",
+        "text": "Four-stage ML scoring chain"
+      }
+    },
+    "layout-stress-p055": {
+      "source_name": "NIST Detect/Respond",
+      "locator": {
+        "kind": "note",
+        "text": "NIST Detect/Respond telemetry pipeline"
+      }
+    },
+    "layout-stress-p056": {
+      "source_name": "DAMA-style pipeline",
+      "locator": {
+        "kind": "note",
+        "text": "DAMA-style pipeline, transfers on stages 1-5"
+      }
+    },
+    "layout-stress-p057": {
+      "source_name": "SOX close pipeline",
+      "locator": {
+        "kind": "note",
+        "text": "SOX close pipeline, wrapping transfer_label"
+      }
+    },
+    "layout-stress-p058": {
+      "source_name": "Three-stage chain",
+      "locator": {
+        "kind": "note",
+        "text": "Heading-only three-stage chain"
+      }
+    },
+    "layout-stress-p059": {
+      "source_name": "Index pipeline",
+      "locator": {
+        "kind": "note",
+        "text": "Index pipeline, six-stage chain"
+      }
+    },
+    "layout-stress-p060": {
+      "source_name": "HIPAA TPO",
+      "locator": {
+        "kind": "note",
+        "text": "HIPAA TPO pipeline, no transfer_label"
+      }
+    }
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v1 ITIL incident",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "detect",
+            "heading": "Detect"
+          },
+          {
+            "step_id": "restore",
+            "heading": "Restore"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p001"
+      ],
+      "content": {
+        "subtitle": "ITIL 4 Incident Management: detect then restore"
+      }
+    },
+    {
+      "slide_number": 2,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v2 NIST CSF core",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "identify",
+            "heading": "Identify",
+            "detail": "CSF Identify function."
+          },
+          {
+            "step_id": "protect",
+            "heading": "Protect",
+            "detail": "CSF Protect function."
+          },
+          {
+            "step_id": "detect",
+            "heading": "Detect",
+            "detail": "CSF Detect function."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p002"
+      ],
+      "content": {
+        "subtitle": "NIST CSF 2.0 Identify, Protect, Detect"
+      }
+    },
+    {
+      "slide_number": 3,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v3 hiring funnel",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "source",
+            "heading": "Source",
+            "detail": "Inbound and outbound requisitions."
+          },
+          {
+            "step_id": "screen",
+            "heading": "Screen",
+            "detail": "Recruiter screen against the role."
+          },
+          {
+            "step_id": "interview",
+            "heading": "Interview",
+            "detail": "Structured panel."
+          },
+          {
+            "step_id": "offer",
+            "heading": "Offer",
+            "detail": "Written offer and close."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p003"
+      ],
+      "content": {
+        "subtitle": "SHRM staffing funnel stages"
+      }
+    },
+    {
+      "slide_number": 4,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v4 FDA 510(k) path",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "prepare",
+            "heading": "Prepare the Traditional 510(k) premarket notification package"
+          },
+          {
+            "step_id": "rta",
+            "heading": "FDA Refuse-to-Accept administrative completeness review"
+          },
+          {
+            "step_id": "substantive",
+            "heading": "Substantive review of substantial equivalence evidence"
+          },
+          {
+            "step_id": "ai",
+            "heading": "Additional Information request and sponsor response cycle"
+          },
+          {
+            "step_id": "clear",
+            "heading": "SE determination and 510(k) clearance letter"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p004"
+      ],
+      "content": {
+        "subtitle": "FDA CDRH 510(k) program"
+      }
+    },
+    {
+      "slide_number": 5,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v5 Toyota TPS",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "std",
+            "heading": "Standardize",
+            "detail": "Std work."
+          },
+          {
+            "step_id": "flow",
+            "heading": "Flow",
+            "detail": "Takt."
+          },
+          {
+            "step_id": "pull",
+            "heading": "Pull",
+            "detail": "Kanban."
+          },
+          {
+            "step_id": "jidoka",
+            "heading": "Jidoka",
+            "detail": "Andon."
+          },
+          {
+            "step_id": "heijunka",
+            "heading": "Heijunka",
+            "detail": "Level."
+          },
+          {
+            "step_id": "kaizen",
+            "heading": "Kaizen",
+            "detail": "Waste."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p005"
+      ],
+      "content": {
+        "subtitle": "Toyota Production System pillars and rules"
+      }
+    },
+    {
+      "slide_number": 6,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v6 one-word density",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "plan",
+            "heading": "Plan"
+          },
+          {
+            "step_id": "do",
+            "heading": "Do"
+          },
+          {
+            "step_id": "check",
+            "heading": "Check"
+          },
+          {
+            "step_id": "act",
+            "heading": "Act"
+          },
+          {
+            "step_id": "share",
+            "heading": "Share"
+          },
+          {
+            "step_id": "lock",
+            "heading": "Lock"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p006"
+      ],
+      "content": {
+        "subtitle": "PDCA plus lock-in, Deming cycle"
+      }
+    },
+    {
+      "slide_number": 7,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v7 wrapping headings",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "w1",
+            "heading": "Record the event, classify impact and urgency, and assign a resolver before restoration work begins"
+          },
+          {
+            "step_id": "w2",
+            "heading": "Contain the incident, communicate status to users, and protect evidence for later problem review"
+          },
+          {
+            "step_id": "w3",
+            "heading": "Restore the agreed service, confirm resolution with the user, and close the ITIL incident record"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p007"
+      ],
+      "content": {
+        "subtitle": "ITIL 4 incident path with wrapping headings"
+      }
+    },
+    {
+      "slide_number": 8,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v8 finance close",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "capture",
+            "heading": "Capture",
+            "detail": "Subledger activity."
+          },
+          {
+            "step_id": "reconcile",
+            "heading": "Reconcile",
+            "detail": "Balance-sheet reconciliations."
+          },
+          {
+            "step_id": "review",
+            "heading": "Review",
+            "detail": "Controller review."
+          },
+          {
+            "step_id": "publish",
+            "heading": "Publish",
+            "detail": "Issue the close pack."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p008"
+      ],
+      "content": {
+        "subtitle": "Month-end close sequence, COSO reporting cycle"
+      }
+    },
+    {
+      "slide_number": 9,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v9 SAFe PI planning",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "brief",
+            "heading": "Context brief"
+          },
+          {
+            "step_id": "plan",
+            "heading": "Team planning"
+          },
+          {
+            "step_id": "draft",
+            "heading": "Draft plan review"
+          },
+          {
+            "step_id": "roam",
+            "heading": "ROAM risks"
+          },
+          {
+            "step_id": "vote",
+            "heading": "Confidence vote"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p009"
+      ],
+      "content": {
+        "subtitle": "SAFe PI Planning agenda"
+      }
+    },
+    {
+      "slide_number": 10,
+      "layout_type": "process_flow",
+      "section_id": "process_flow",
+      "title": "process_flow v10 extreme labels",
+      "payload": {
+        "steps": [
+          {
+            "step_id": "a",
+            "heading": "A"
+          },
+          {
+            "step_id": "wrap",
+            "heading": "Record the event, classify impact and urgency, and assign a resolver before restoration work begins",
+            "detail": "ITIL restore confirmation, including user validation and known-error link if a problem record already exists."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p010"
+      ],
+      "content": {
+        "subtitle": "ITIL 4 density vs wrapping extremes"
+      }
+    },
+    {
+      "slide_number": 11,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v1 TCP/IP and WWW",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "rfc791",
+            "time_label": "1981",
+            "heading": "RFC 791",
+            "detail": "Internet Protocol."
+          },
+          {
+            "milestone_id": "www",
+            "time_label": "1989",
+            "heading": "WWW proposal",
+            "detail": "CERN, Tim Berners-Lee."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p011"
+      ],
+      "content": {
+        "subtitle": "RFC 791 and the CERN WWW proposal"
+      }
+    },
+    {
+      "slide_number": 12,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v2 three headings",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "morse",
+            "time_label": "1844",
+            "heading": "Morse line"
+          },
+          {
+            "milestone_id": "bell",
+            "time_label": "1876",
+            "heading": "Telephone"
+          },
+          {
+            "milestone_id": "eth",
+            "time_label": "1973",
+            "heading": "Ethernet"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p012"
+      ],
+      "content": {
+        "subtitle": "Public communications milestones"
+      }
+    },
+    {
+      "slide_number": 13,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v3 PCI-DSS versions",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "v1",
+            "time_label": "2004",
+            "heading": "PCI DSS 1.0",
+            "detail": "First standard."
+          },
+          {
+            "milestone_id": "v2",
+            "time_label": "2010",
+            "heading": "PCI DSS 2.0",
+            "detail": "Version 2.0."
+          },
+          {
+            "milestone_id": "v3",
+            "time_label": "2013",
+            "heading": "PCI DSS 3.0",
+            "detail": "Version 3.0."
+          },
+          {
+            "milestone_id": "v4",
+            "time_label": "2022",
+            "heading": "PCI DSS 4.0",
+            "detail": "Version 4.0."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p013"
+      ],
+      "content": {
+        "subtitle": "PCI Security Standards Council DSS versions"
+      }
+    },
+    {
+      "slide_number": 14,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v4 wrapping time labels",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "t1",
+            "time_label": "September 1981 RFC 791 Internet Protocol published as a full Internet Standard document",
+            "heading": "IPv4"
+          },
+          {
+            "milestone_id": "t2",
+            "time_label": "December 1995 RFC 1945 HTTP/1.0 informational status for the early web",
+            "heading": "HTTP/1.0"
+          },
+          {
+            "milestone_id": "t3",
+            "time_label": "June 1999 RFC 2616 HTTP/1.1 as a Draft Standard on the IETF standards track",
+            "heading": "HTTP/1.1"
+          },
+          {
+            "milestone_id": "t4",
+            "time_label": "May 2015 RFC 7540 HTTP/2 published as a Proposed Standard by the IETF",
+            "heading": "HTTP/2"
+          },
+          {
+            "milestone_id": "t5",
+            "time_label": "June 2022 RFC 9114 HTTP/3 published as a Proposed Standard on QUIC",
+            "heading": "HTTP/3"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p014"
+      ],
+      "content": {
+        "subtitle": "IETF RFC chronology for IP and HTTP"
+      }
+    },
+    {
+      "slide_number": 15,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v5 GDPR milestones",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "prop",
+            "time_label": "2012",
+            "heading": "Commission proposal"
+          },
+          {
+            "milestone_id": "adopt",
+            "time_label": "2016",
+            "heading": "Regulation adopted"
+          },
+          {
+            "milestone_id": "apply",
+            "time_label": "2018",
+            "heading": "Became applicable"
+          },
+          {
+            "milestone_id": "schrems",
+            "time_label": "2020",
+            "heading": "Schrems II"
+          },
+          {
+            "milestone_id": "sccs",
+            "time_label": "2021",
+            "heading": "New SCCs"
+          },
+          {
+            "milestone_id": "dma",
+            "time_label": "2023",
+            "heading": "DMA application"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p015"
+      ],
+      "content": {
+        "subtitle": "GDPR and related EU data-protection dates"
+      }
+    },
+    {
+      "slide_number": 16,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v6 IPCC reports",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "far",
+            "time_label": "1990",
+            "heading": "FAR"
+          },
+          {
+            "milestone_id": "sar",
+            "time_label": "1995",
+            "heading": "SAR"
+          },
+          {
+            "milestone_id": "tar",
+            "time_label": "2001",
+            "heading": "TAR"
+          },
+          {
+            "milestone_id": "ar4",
+            "time_label": "2007",
+            "heading": "AR4"
+          },
+          {
+            "milestone_id": "ar5",
+            "time_label": "2013",
+            "heading": "AR5"
+          },
+          {
+            "milestone_id": "sr15",
+            "time_label": "2018",
+            "heading": "SR1.5"
+          },
+          {
+            "milestone_id": "ar6",
+            "time_label": "2021",
+            "heading": "AR6 WGI"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p016"
+      ],
+      "content": {
+        "subtitle": "IPCC assessment reports"
+      }
+    },
+    {
+      "slide_number": 17,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v7 Kubernetes releases",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "k10",
+            "time_label": "2015",
+            "heading": "1.0",
+            "detail": "First production release."
+          },
+          {
+            "milestone_id": "k12",
+            "time_label": "2016",
+            "heading": "1.2",
+            "detail": "Deployments GA path."
+          },
+          {
+            "milestone_id": "k14",
+            "time_label": "2016",
+            "heading": "1.4",
+            "detail": "Scheduled jobs alpha era."
+          },
+          {
+            "milestone_id": "k16",
+            "time_label": "2017",
+            "heading": "1.6",
+            "detail": "RBAC default."
+          },
+          {
+            "milestone_id": "k18",
+            "time_label": "2017",
+            "heading": "1.8",
+            "detail": "Role-based access mature."
+          },
+          {
+            "milestone_id": "k110",
+            "time_label": "2018",
+            "heading": "1.10",
+            "detail": "Storage upgrades."
+          },
+          {
+            "milestone_id": "k114",
+            "time_label": "2019",
+            "heading": "1.14",
+            "detail": "Windows node GA."
+          },
+          {
+            "milestone_id": "k119",
+            "time_label": "2020",
+            "heading": "1.19",
+            "detail": "Ingress GA."
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p017"
+      ],
+      "content": {
+        "subtitle": "Kubernetes release history, CNCF"
+      }
+    },
+    {
+      "slide_number": 18,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v8 year-only labels",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "y1",
+            "time_label": "1996",
+            "heading": "HIPAA enacted"
+          },
+          {
+            "milestone_id": "y2",
+            "time_label": "2003",
+            "heading": "Privacy Rule"
+          },
+          {
+            "milestone_id": "y3",
+            "time_label": "2005",
+            "heading": "Security Rule"
+          },
+          {
+            "milestone_id": "y4",
+            "time_label": "2009",
+            "heading": "HITECH"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p018"
+      ],
+      "content": {
+        "subtitle": "HIPAA statute and rule years"
+      }
+    },
+    {
+      "slide_number": 19,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v9 quarter labels",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "q1",
+            "time_label": "Q1'24",
+            "heading": "CSF 2.0 out"
+          },
+          {
+            "milestone_id": "q2",
+            "time_label": "Q2'24",
+            "heading": "Implementation examples"
+          },
+          {
+            "milestone_id": "q3",
+            "time_label": "Q4'24",
+            "heading": "Profile uptake"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p019"
+      ],
+      "content": {
+        "subtitle": "NIST CSF 2.0 2024 quarters"
+      }
+    },
+    {
+      "slide_number": 20,
+      "layout_type": "timeline",
+      "section_id": "timeline",
+      "title": "timeline v10 mixed time labels",
+      "payload": {
+        "milestones": [
+          {
+            "milestone_id": "a",
+            "time_label": "v1",
+            "heading": "DSS 1.0"
+          },
+          {
+            "milestone_id": "b",
+            "time_label": "2010",
+            "heading": "DSS 2.0"
+          },
+          {
+            "milestone_id": "c",
+            "time_label": "Q4'13",
+            "heading": "DSS 3.0"
+          },
+          {
+            "milestone_id": "d",
+            "time_label": "September 1981 RFC 791 Internet Protocol published as a full Internet Standard document",
+            "heading": "IPv4 aside"
+          },
+          {
+            "milestone_id": "e",
+            "time_label": "2018",
+            "heading": "DSS 3.2.1"
+          },
+          {
+            "milestone_id": "f",
+            "time_label": "Mar 2022",
+            "heading": "DSS 4.0"
+          },
+          {
+            "milestone_id": "g",
+            "time_label": "Q1'24",
+            "heading": "4.0 future-dated"
+          },
+          {
+            "milestone_id": "h",
+            "time_label": "2025",
+            "heading": "4.0 required"
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p020"
+      ],
+      "content": {
+        "subtitle": "PCI DSS versions with mixed labels"
+      }
+    },
+    {
+      "slide_number": 51,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v1 min no transfer",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "extract",
+            "heading": "Extract",
+            "components": [
+              {
+                "component_id": "src",
+                "heading": "Source"
+              }
+            ]
+          },
+          {
+            "stage_id": "load",
+            "heading": "Load",
+            "components": [
+              {
+                "component_id": "tgt",
+                "heading": "Target"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p051"
+      ],
+      "content": {
+        "subtitle": "Minimal ETL, no transfer_label"
+      }
+    },
+    {
+      "slide_number": 52,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v2 transfer first only",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "in",
+            "heading": "Ingest",
+            "components": [
+              {
+                "component_id": "a",
+                "heading": "API"
+              },
+              {
+                "component_id": "b",
+                "heading": "Files"
+              },
+              {
+                "component_id": "c",
+                "heading": "Bus"
+              }
+            ],
+            "transfer_label": "validated batch"
+          },
+          {
+            "stage_id": "out",
+            "heading": "Serve",
+            "components": [
+              {
+                "component_id": "d",
+                "heading": "BI"
+              },
+              {
+                "component_id": "e",
+                "heading": "API"
+              },
+              {
+                "component_id": "f",
+                "heading": "Export"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p052"
+      ],
+      "content": {
+        "subtitle": "Ingest to serve, transfer on first only"
+      }
+    },
+    {
+      "slide_number": 53,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v3 both non-final",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "raw",
+            "heading": "Raw",
+            "components": [
+              {
+                "component_id": "land",
+                "heading": "Landing"
+              },
+              {
+                "component_id": "chk",
+                "heading": "Checks"
+              }
+            ],
+            "transfer_label": "quarantine pass"
+          },
+          {
+            "stage_id": "cur",
+            "heading": "Curated",
+            "components": [
+              {
+                "component_id": "model",
+                "heading": "Model"
+              },
+              {
+                "component_id": "dq",
+                "heading": "DQ"
+              }
+            ],
+            "transfer_label": "published facts"
+          },
+          {
+            "stage_id": "srv",
+            "heading": "Serve",
+            "components": [
+              {
+                "component_id": "cube",
+                "heading": "Cube"
+              },
+              {
+                "component_id": "api",
+                "heading": "API"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p053"
+      ],
+      "content": {
+        "subtitle": "Medallion-style, transfers on both non-final"
+      }
+    },
+    {
+      "slide_number": 54,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v4 four by one",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "s1",
+            "heading": "Capture",
+            "components": [
+              {
+                "component_id": "c1",
+                "heading": "Capture"
+              }
+            ],
+            "transfer_label": "batch"
+          },
+          {
+            "stage_id": "s2",
+            "heading": "Clean",
+            "components": [
+              {
+                "component_id": "c2",
+                "heading": "Clean"
+              }
+            ],
+            "transfer_label": "clean set"
+          },
+          {
+            "stage_id": "s3",
+            "heading": "Fit",
+            "components": [
+              {
+                "component_id": "c3",
+                "heading": "Fit"
+              }
+            ],
+            "transfer_label": "scores"
+          },
+          {
+            "stage_id": "s4",
+            "heading": "Serve",
+            "components": [
+              {
+                "component_id": "c4",
+                "heading": "Serve"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p054"
+      ],
+      "content": {
+        "subtitle": "Four-stage ML scoring chain"
+      }
+    },
+    {
+      "slide_number": 55,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v5 five by two",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "s1",
+            "heading": "Collect",
+            "components": [
+              {
+                "component_id": "a1",
+                "heading": "Logs"
+              },
+              {
+                "component_id": "a2",
+                "heading": "Flows"
+              }
+            ],
+            "transfer_label": "raw"
+          },
+          {
+            "stage_id": "s2",
+            "heading": "Parse",
+            "components": [
+              {
+                "component_id": "b1",
+                "heading": "ETL"
+              },
+              {
+                "component_id": "b2",
+                "heading": "Enrich"
+              }
+            ],
+            "transfer_label": "events"
+          },
+          {
+            "stage_id": "s3",
+            "heading": "Detect",
+            "components": [
+              {
+                "component_id": "c1",
+                "heading": "Sigma"
+              },
+              {
+                "component_id": "c2",
+                "heading": "UEBA"
+              }
+            ],
+            "transfer_label": "alerts"
+          },
+          {
+            "stage_id": "s4",
+            "heading": "Triage",
+            "components": [
+              {
+                "component_id": "d1",
+                "heading": "SOC"
+              },
+              {
+                "component_id": "d2",
+                "heading": "SOAR"
+              }
+            ],
+            "transfer_label": "cases"
+          },
+          {
+            "stage_id": "s5",
+            "heading": "Respond",
+            "components": [
+              {
+                "component_id": "e1",
+                "heading": "IR"
+              },
+              {
+                "component_id": "e2",
+                "heading": "Ticket"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p055"
+      ],
+      "content": {
+        "subtitle": "NIST Detect/Respond telemetry pipeline"
+      }
+    },
+    {
+      "slide_number": 56,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v6 max 6x3",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "s1",
+            "heading": "Source",
+            "components": [
+              {
+                "component_id": "a1",
+                "heading": "OLTP",
+                "detail": "System of record."
+              },
+              {
+                "component_id": "a2",
+                "heading": "SaaS",
+                "detail": "Exports."
+              },
+              {
+                "component_id": "a3",
+                "heading": "Files",
+                "detail": "SFTP."
+              }
+            ],
+            "transfer_label": "CDC"
+          },
+          {
+            "stage_id": "s2",
+            "heading": "Land",
+            "components": [
+              {
+                "component_id": "b1",
+                "heading": "Object",
+                "detail": "Raw zone."
+              },
+              {
+                "component_id": "b2",
+                "heading": "Bus",
+                "detail": "Events."
+              },
+              {
+                "component_id": "b3",
+                "heading": "Scan",
+                "detail": "PII tags."
+              }
+            ],
+            "transfer_label": "raw objects"
+          },
+          {
+            "stage_id": "s3",
+            "heading": "Conform",
+            "components": [
+              {
+                "component_id": "c1",
+                "heading": "Schema",
+                "detail": "Contracts."
+              },
+              {
+                "component_id": "c2",
+                "heading": "DQ",
+                "detail": "Rules."
+              },
+              {
+                "component_id": "c3",
+                "heading": "PII",
+                "detail": "Redact."
+              }
+            ],
+            "transfer_label": "conformed"
+          },
+          {
+            "stage_id": "s4",
+            "heading": "Model",
+            "components": [
+              {
+                "component_id": "d1",
+                "heading": "Star",
+                "detail": "Facts."
+              },
+              {
+                "component_id": "d2",
+                "heading": "Slow",
+                "detail": "SCD2."
+              },
+              {
+                "component_id": "d3",
+                "heading": "KPI",
+                "detail": "Metrics."
+              }
+            ],
+            "transfer_label": "curated"
+          },
+          {
+            "stage_id": "s5",
+            "heading": "Govern",
+            "components": [
+              {
+                "component_id": "e1",
+                "heading": "Catalog",
+                "detail": "Lineage."
+              },
+              {
+                "component_id": "e2",
+                "heading": "Access",
+                "detail": "RBAC."
+              },
+              {
+                "component_id": "e3",
+                "heading": "Retain",
+                "detail": "Policy."
+              }
+            ],
+            "transfer_label": "approved"
+          },
+          {
+            "stage_id": "s6",
+            "heading": "Serve",
+            "components": [
+              {
+                "component_id": "f1",
+                "heading": "BI",
+                "detail": "Dashboards."
+              },
+              {
+                "component_id": "f2",
+                "heading": "API",
+                "detail": "Services."
+              },
+              {
+                "component_id": "f3",
+                "heading": "ML",
+                "detail": "Features."
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p056"
+      ],
+      "content": {
+        "subtitle": "DAMA-style pipeline, transfers on stages 1-5"
+      }
+    },
+    {
+      "slide_number": 57,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v7 wrapping transfer",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "s1",
+            "heading": "Extract",
+            "components": [
+              {
+                "component_id": "a",
+                "heading": "Extract"
+              },
+              {
+                "component_id": "b",
+                "heading": "Validate"
+              },
+              {
+                "component_id": "c",
+                "heading": "Tag"
+              }
+            ],
+            "transfer_label": "hand the validated extract to transform only after schema and PII checks pass"
+          },
+          {
+            "stage_id": "s2",
+            "heading": "Transform",
+            "components": [
+              {
+                "component_id": "d",
+                "heading": "Map"
+              },
+              {
+                "component_id": "e",
+                "heading": "Join"
+              },
+              {
+                "component_id": "f",
+                "heading": "Test"
+              }
+            ],
+            "transfer_label": "publish curated facts to the serve stage after reconciliation to the source totals"
+          },
+          {
+            "stage_id": "s3",
+            "heading": "Load",
+            "components": [
+              {
+                "component_id": "g",
+                "heading": "Warehouse"
+              },
+              {
+                "component_id": "h",
+                "heading": "Cube"
+              },
+              {
+                "component_id": "i",
+                "heading": "API"
+              }
+            ],
+            "transfer_label": "notify downstream subscribers that a new period is ready for consumption"
+          },
+          {
+            "stage_id": "s4",
+            "heading": "Consume",
+            "components": [
+              {
+                "component_id": "j",
+                "heading": "Board pack"
+              },
+              {
+                "component_id": "k",
+                "heading": "Alerts"
+              },
+              {
+                "component_id": "l",
+                "heading": "Audit"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p057"
+      ],
+      "content": {
+        "subtitle": "SOX close pipeline, wrapping transfer_label"
+      }
+    },
+    {
+      "slide_number": 58,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v8 heading-only 3x1",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "a",
+            "heading": "Ingest",
+            "components": [
+              {
+                "component_id": "a1",
+                "heading": "Ingest"
+              }
+            ]
+          },
+          {
+            "stage_id": "b",
+            "heading": "Store",
+            "components": [
+              {
+                "component_id": "b1",
+                "heading": "Store"
+              }
+            ]
+          },
+          {
+            "stage_id": "c",
+            "heading": "Query",
+            "components": [
+              {
+                "component_id": "c1",
+                "heading": "Query"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p058"
+      ],
+      "content": {
+        "subtitle": "Heading-only three-stage chain"
+      }
+    },
+    {
+      "slide_number": 59,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v9 long chain 6x1",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "s1",
+            "heading": "Tap",
+            "components": [
+              {
+                "component_id": "c1",
+                "heading": "Tap"
+              }
+            ],
+            "transfer_label": "bytes"
+          },
+          {
+            "stage_id": "s2",
+            "heading": "Parse",
+            "components": [
+              {
+                "component_id": "c2",
+                "heading": "Parse"
+              }
+            ],
+            "transfer_label": "rows"
+          },
+          {
+            "stage_id": "s3",
+            "heading": "Filter",
+            "components": [
+              {
+                "component_id": "c3",
+                "heading": "Filter"
+              }
+            ],
+            "transfer_label": "kept"
+          },
+          {
+            "stage_id": "s4",
+            "heading": "Hash",
+            "components": [
+              {
+                "component_id": "c4",
+                "heading": "Hash"
+              }
+            ],
+            "transfer_label": "keys"
+          },
+          {
+            "stage_id": "s5",
+            "heading": "Index",
+            "components": [
+              {
+                "component_id": "c5",
+                "heading": "Index"
+              }
+            ],
+            "transfer_label": "postings"
+          },
+          {
+            "stage_id": "s6",
+            "heading": "Search",
+            "components": [
+              {
+                "component_id": "c6",
+                "heading": "Search"
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p059"
+      ],
+      "content": {
+        "subtitle": "Index pipeline, six-stage chain"
+      }
+    },
+    {
+      "slide_number": 60,
+      "layout_type": "data_pipeline",
+      "section_id": "data_pipeline",
+      "title": "data_pipeline v10 long component detail",
+      "payload": {
+        "stages": [
+          {
+            "stage_id": "src",
+            "heading": "Source",
+            "components": [
+              {
+                "component_id": "ehr",
+                "heading": "EHR extract",
+                "detail": "HIPAA Security Rule: ePHI from the designated record set."
+              },
+              {
+                "component_id": "pay",
+                "heading": "Payer files",
+                "detail": "Eligibility and claims files under the same BA."
+              },
+              {
+                "component_id": "lab",
+                "heading": "Lab feeds",
+                "detail": "Results limited to treatment, payment, operations."
+              }
+            ]
+          },
+          {
+            "stage_id": "use",
+            "heading": "Use",
+            "components": [
+              {
+                "component_id": "tpo",
+                "heading": "TPO use",
+                "detail": "HIPAA TPO without authorization when applicable."
+              },
+              {
+                "component_id": "min",
+                "heading": "Minimum necessary",
+                "detail": "Limit fields to the task."
+              },
+              {
+                "component_id": "log",
+                "heading": "Audit log",
+                "detail": "Retain access logs for the required period."
+              }
+            ]
+          }
+        ]
+      },
+      "evidence_ids": [
+        "layout-stress-p060"
+      ],
+      "content": {
+        "subtitle": "HIPAA TPO pipeline, no transfer_label"
+      }
+    }
+  ]
+}

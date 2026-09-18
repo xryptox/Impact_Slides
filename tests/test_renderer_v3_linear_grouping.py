@@ -87,7 +87,18 @@ def _painted_linear_height(sp) -> float:
             meta = str(it.get("ordinal", "")) if kind == "process_flow" else it.get("time_label")
             return card(it["heading"], it.get("detail"), heading_px, detail_px, inner, meta=meta)
 
-        if spec.get("orientation", "horizontal") == "horizontal":
+        orientation = spec.get("orientation", "horizontal")
+        if orientation == "wrap":
+            rows = spec["row_counts"]
+            idx = 0
+            total = 0.0
+            for r, count in enumerate(rows):
+                chunk = items[idx : idx + count]
+                step_w = (box_w - (count - 1) * (2 * _L_GAP + _L_CONN)) / count
+                total += max(item_card(it, step_w - 2 * _L_PAD) for it in chunk)
+                idx += count
+            return total + (len(rows) - 1) * (_L_CONN + 2 * _L_GAP)
+        if orientation == "horizontal":
             step_w = (box_w - (n - 1) * (2 * _L_GAP + _L_CONN)) / n
             return max(item_card(it, step_w - 2 * _L_PAD) for it in items)
         inner = box_w - 2 * _L_PAD
@@ -123,7 +134,25 @@ def _painted_linear_height(sp) -> float:
             h += _L_INNER + _L_MARGIN + lines(text, meta_px, stage_w) * _line_box(meta_px)
         return h
 
-    if spec.get("orientation", "horizontal") == "horizontal":
+    orientation = spec.get("orientation", "horizontal")
+    if orientation == "wrap":
+        rows = spec["row_counts"]
+        idx = 0
+        total = 0.0
+        for r, count in enumerate(rows):
+            chunk = stages[idx : idx + count]
+            stage_w = (box_w - (count - 1) * (2 * _L_GAP + _L_CONN)) / count
+            total += max(
+                stage(
+                    st,
+                    stages[idx + j + 1]["heading"] if idx + j + 1 < k else "",
+                    stage_w,
+                )
+                for j, st in enumerate(chunk)
+            )
+            idx += count
+        return total + (len(rows) - 1) * (_L_CONN + 2 * _L_GAP)
+    if orientation == "horizontal":
         stage_w = (box_w - (k - 1) * (2 * _L_GAP + _L_CONN)) / k
         return max(
             stage(st, stages[i + 1]["heading"] if i + 1 < k else "", stage_w)
@@ -176,9 +205,9 @@ def test_linear_measure_reserves_painted_height_vertical_deck():
     ]
     surfaces = _linear_surfaces(_deck(slides), strict=False)
     seen = {sp.role: sp._linear_spec.get("orientation") for sp in surfaces}
-    assert seen["process_flow"] == "vertical"
-    assert seen["timeline"] == "vertical"
-    assert seen["data_pipeline"] == "vertical"
+    assert seen["process_flow"] in {"vertical", "wrap"}
+    assert seen["timeline"] in {"vertical", "wrap"}
+    assert seen["data_pipeline"] in {"vertical", "wrap"}
     for sp in surfaces:
         _ok, measured = _linear_fit_detail(sp)
         assert measured >= _painted_linear_height(sp), sp.role
@@ -233,7 +262,8 @@ def test_vertical_pipeline_components_measured_inside_card_padding():
     ]
     surfaces = _linear_surfaces(_deck(slides), strict=False)
     sp = next(p for p in surfaces if p.role == "data_pipeline")
-    assert sp._linear_spec["orientation"] == "vertical"
+    sp._linear_spec["orientation"] = "vertical"
+    sp._linear_spec.pop("row_counts", None)
     _ok, measured = _linear_fit_detail(sp)
     assert measured >= _painted_linear_height(sp)
 
@@ -471,3 +501,150 @@ def test_nonstrict_repairs_drop_unknown_linear_fields():
         "data_pipeline",
     ):
         assert repaired[lt].disclosure is None
+
+
+STRESS = ROOT / "tests/fixtures/renderer_v3/linear_wrap_stress.json"
+_WRAP_STRICT = (5, 16, 17, 20, 55, 59)
+_ONE_STRIP = tuple(range(1, 5)) + tuple(range(11, 16)) + tuple(range(51, 55))
+
+
+def _stress() -> dict:
+    return json.loads(STRESS.read_text(encoding="utf-8"))
+
+
+def _stress_subset(numbers: tuple[int, ...] | list[int]) -> dict:
+    raw = _stress()
+    keep = set(numbers)
+    slides = [s for s in raw["slides"] if s["slide_number"] in keep]
+    eids = {e for s in slides for e in s.get("evidence_ids") or []}
+    used_sections = {s["section_id"] for s in slides}
+    raw["slides"] = slides
+    raw["sections"] = [s for s in raw["sections"] if s["section_id"] in used_sections]
+    raw["evidence_registry"] = {
+        k: v for k, v in raw["evidence_registry"].items() if k in eids
+    }
+    return raw
+
+
+def _linear_plan_for(slide_number: int, *, strict: bool):
+    result = validate_handoff(_stress_subset([slide_number]), strict=strict)
+    plan = plan_deck(result.deck, strict=strict)
+    return next(sp for sp in plan.surfaces if sp._linear_spec is not None)
+
+
+def test_stress_max_cardinality_wraps_instead_of_list_fallback(tmp_path: Path):
+    """s005/s016/s017/s020/s055/s059 freeze as the recipe at type floors."""
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_stress_subset(_WRAP_STRICT)), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=True)
+    assert result["ok"] is True
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    assert 'class="linear-fallback' not in html
+    by_slide = {}
+    for sp in meta["plans"]:
+        if sp["role"] in {"process_flow", "timeline", "data_pipeline"}:
+            by_slide[sp["slide_number"]] = sp
+    assert set(by_slide) == set(_WRAP_STRICT)
+    for sn, sp in by_slide.items():
+        assert sp["fallback"] in (None, ""), sn
+        sizes = sp["role_sizes"]
+        assert sizes["heading"] == 22, sn
+        assert sizes["detail"] == 16, sn
+        assert sizes["meta"] == 14, sn
+    assert 'class="process-flow wrap"' in html
+    assert 'class="timeline wrap"' in html
+    assert 'class="data-pipeline wrap"' in html
+    assert "Std work." in html and "Waste." in html
+    assert html.index('data-step-id="std"') < html.index('data-step-id="kaizen"')
+    assert html.index('data-milestone-id="far"') < html.index('data-milestone-id="ar6"')
+    assert html.index('data-stage-id="s1"') < html.index('data-stage-id="s5"')
+
+
+def test_stress_already_fitting_strips_do_not_wrap():
+    for sn in _ONE_STRIP:
+        sp = _linear_plan_for(sn, strict=True)
+        assert sp._linear_spec.get("orientation") != "wrap", sn
+        assert not sp._overflow, sn
+        assert sp.fallback is None, sn
+
+
+def test_stress_max_pipeline_wraps_when_leftover_allows():
+    result = validate_handoff(_stress_subset([56]), strict=True)
+    plan = plan_deck(result.deck, strict=True)
+    sp = next(p for p in plan.surfaces if p.role == "data_pipeline")
+    assert sp._overflow is False
+    assert sp.fallback is None
+    assert sp._linear_spec.get("orientation") == "wrap"
+    assert sum(sp._linear_spec["row_counts"]) == 6
+
+
+def test_unfittable_after_wrap_keeps_unresolved_overflow():
+    raw = _raw()
+    pf = next(s for s in raw["slides"] if s["layout_type"] == "process_flow")
+    token = "X" * 80
+    for step in pf["payload"]["steps"]:
+        step["heading"] = token
+        step["detail"] = token
+    while len(pf["payload"]["steps"]) < 6:
+        i = len(pf["payload"]["steps"])
+        pf["payload"]["steps"].append(
+            {"step_id": f"extra{i}", "heading": token, "detail": token}
+        )
+    raw["slides"] = [pf]
+    result = validate_handoff(raw, strict=False)
+    plan = plan_deck(result.deck, strict=False)
+    sp = next(p for p in plan.surfaces if p.role == "process_flow")
+    assert sp._overflow is True
+    assert sp.fallback == "accessible_ordered_list"
+    with pytest.raises(RendererValidationError) as err:
+        plan_deck(result.deck, strict=True)
+    assert any(e.code == "plan.unresolved_overflow" for e in err.value.events)
+
+
+def test_wrapped_process_flow_keeps_sequential_connectors(tmp_path: Path):
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_stress_subset([5])), encoding="utf-8")
+    out = tmp_path / "out"
+    render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    assert "linear-row" in html
+    assert "→" in html and "↓" in html
+    body = html.split("<body>", 1)[1]
+    assert 'class="linear-fallback' not in body
+    ids = ["std", "flow", "pull", "jidoka", "heijunka", "kaizen"]
+    positions = [html.index(f'data-step-id="{i}"') for i in ids]
+    assert positions == sorted(positions)
+
+
+def test_wrap_mutation_without_row_pack_still_overflows():
+    """If wrap packing is skipped, six detailed TPS steps still miss leftover."""
+    result = validate_handoff(_stress_subset([5]), strict=False)
+    plan = plan_deck(result.deck, strict=False)
+    sp = next(p for p in plan.surfaces if p.role == "process_flow")
+    spec = dict(sp._linear_spec)
+    spec["orientation"] = "vertical"
+    spec.pop("row_counts", None)
+    sp._linear_spec = spec
+    ok, _h = _linear_fit_detail(sp)
+    assert ok is False
+
+
+def test_wrap_miss_does_not_steal_subtitle_band():
+    """Wrap that only fits leftover+subtitle stays overflow, not wrap."""
+    raw = _raw()
+    pf = next(s for s in raw["slides"] if s["layout_type"] == "process_flow")
+    pf["payload"]["steps"] = [
+        {"step_id": f"s{i}", "heading": f"Step {i}", "detail": "Short."}
+        for i in range(6)
+    ]
+    pf.pop("takeaway", None)
+    pf.pop("source_footer", None)
+    pf["content"] = {"subtitle": " ".join(["Subtitle"] * 400)}
+    raw["slides"] = [pf]
+    result = validate_handoff(raw, strict=False)
+    plan = plan_deck(result.deck, strict=False)
+    linear = next(p for p in plan.surfaces if p.role == "process_flow")
+    assert linear._linear_spec.get("orientation") != "wrap"
+    assert linear._overflow is True
