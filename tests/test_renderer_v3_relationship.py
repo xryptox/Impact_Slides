@@ -281,6 +281,118 @@ def test_feedback_loop_missing_effect_strict_fails():
         validate_handoff(_deck([slide]), strict=True)
 
 
+_WRAP_CAUSAL_HEADINGS = (
+    "Record the event, classify impact and urgency, and assign a resolver before restoration work begins",
+    "Contain the incident, communicate status to users, and protect evidence for later problem review",
+    "Restore the agreed service, confirm resolution with the user, and close the ITIL incident record",
+    "Publish the known-error record so future incidents reuse the workaround instead of rediscovering it",
+    "Measure restore time against the ITIL service-level target after each major incident review",
+    "Feed problem-management output back into change so the failing component is actually removed",
+    "Reassess residual risk under ISO 31000 after the change window closes",
+    "Update the service-continuity plan when restore steps no longer match the runbook",
+)
+
+
+def test_feedback_loop_eight_wrapping_causal_items_paint_cycle(tmp_path: Path):
+    """Max-cardinality wrapping causal items stay the cycle recipe at type floors (#355)."""
+    slide = next(s for s in _raw()["slides"] if s["layout_type"] == "feedback_loop")
+    slide["title"] = "Wrapping causal cycle"
+    slide["payload"] = {
+        "kind": "causal",
+        "items": [
+            {
+                "item_id": f"i{i}",
+                "heading": heading,
+                "effect": (
+                    "same_direction" if i % 2 else "opposite_direction"
+                ),
+            }
+            for i, heading in enumerate(_WRAP_CAUSAL_HEADINGS, start=1)
+        ],
+    }
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_deck([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "feedback_loop")
+    assert result["status"] == "clean"
+    assert plan["fallback"] is None
+    assert plan["role_sizes"]["heading"] == 22
+    assert 'data-fallback=' not in html
+    assert 'class="feedback-loop cycle-wrap' in html
+    assert 'data-loop-class="reinforcing"' in html
+    assert "reinforcing loop" in html
+    painted = html.replace("<wbr>", "")
+    for i, heading in enumerate(_WRAP_CAUSAL_HEADINGS, start=1):
+        assert f'data-item-id="i{i}"' in html
+        assert heading in painted
+    assert "↻" in html
+    assert "accessible_ordered_relationship_list" not in html
+
+
+def test_feedback_loop_six_wrapping_causal_items_still_overflow(tmp_path: Path):
+    """Wrap packing is 7–8 only; six wrapping causal items stay leftover overflow (#355)."""
+    slide = next(s for s in _raw()["slides"] if s["layout_type"] == "feedback_loop")
+    slide["payload"] = {
+        "kind": "causal",
+        "items": [
+            {
+                "item_id": f"i{i}",
+                "heading": heading,
+                "effect": "same_direction" if i % 2 else "opposite_direction",
+            }
+            for i, heading in enumerate(_WRAP_CAUSAL_HEADINGS[:6], start=1)
+        ],
+    }
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_deck([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    with pytest.raises(RendererValidationError):
+        render_deck(handoff, out, strict=True)
+    result = render_deck(handoff, out, strict=False)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "feedback_loop")
+    assert result["status"] == "degraded"
+    assert plan["fallback"] == "accessible_ordered_relationship_list"
+    assert 'class="feedback-loop cycle-wrap' not in html
+    assert 'data-item-id="i1"' in html and 'data-item-id="i6"' in html
+
+
+def test_feedback_loop_eight_short_procedural_stays_one_row(tmp_path: Path):
+    """Already-fitting 8-item procedural cycle keeps one-row geometry (#355)."""
+    slide = next(s for s in _raw()["slides"] if s["layout_type"] == "feedback_loop")
+    slide["title"] = "Short procedural cycle"
+    slide["payload"] = {
+        "kind": "procedural",
+        "items": [
+            {"item_id": "s", "heading": "Scan", "detail": "ITIL continual improvement."},
+            {"item_id": "p", "heading": "Plan"},
+            {"item_id": "d", "heading": "Do"},
+            {"item_id": "c", "heading": "Check"},
+            {"item_id": "a", "heading": "Act"},
+            {"item_id": "r", "heading": "Report"},
+            {"item_id": "g", "heading": "Govern"},
+            {"item_id": "l", "heading": "Learn", "detail": "Close the CSI register."},
+        ],
+    }
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_deck([slide])), encoding="utf-8")
+    out = tmp_path / "out"
+    result = render_deck(handoff, out, strict=True)
+    html = (out / "presentation.html").read_text(encoding="utf-8")
+    meta = json.loads((out / "run_meta.json").read_text(encoding="utf-8"))
+    plan = next(p for p in meta["plans"] if p["role"] == "feedback_loop")
+    assert result["status"] == "clean"
+    assert plan["fallback"] is None
+    assert 'class="feedback-loop' in html
+    assert 'class="feedback-loop cycle-wrap' not in html
+    assert 'data-item-id="s"' in html and 'data-item-id="l"' in html
+    assert "↻" in html
+
+
 def test_stakeholder_map_rejects_duplicate_entity():
     with pytest.raises(Exception):
         StakeholderMapPayload(
